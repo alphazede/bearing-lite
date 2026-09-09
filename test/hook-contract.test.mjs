@@ -70,7 +70,9 @@ export function reportHookCoverage(client, opts = {}) {
 
 describe("CMD-HOOK-01 hook-contract (SEIT-HOOK-CLASS-01, SEIT-HOOK-COVERAGE-01)", () => {
   it("ships exactly four hook class modules under hooks/", () => {
-    const files = readdirSync(HOOKS_DIR).filter((f) => f.endsWith(".cjs")).sort();
+    const files = readdirSync(HOOKS_DIR)
+      .filter((f) => f.endsWith(".cjs") && f !== "planning-review.cjs")
+      .sort();
     assert.deepEqual(files, [
       "activation.cjs",
       "closeout.cjs",

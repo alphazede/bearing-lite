@@ -35,7 +35,9 @@ Fresh planning node. The Router writes Journey state and owns owner conversation
    Journey-level proof or published-standard clause coverage.
 3. Map the implementation graph and propose the Explorer Journey or Expedition,
    active/standby/unused role states, lineup, reasoning, and
-   `review_cadence: at-end`. Use supplied identities; never invent them.
+   `review_cadence: at-end`. Bind the planning-review slots to owner-supplied
+   primary and ordered fallback route references under one candidate ref,
+   revision, and digest. Use supplied identities; never invent them.
 4. After those stable source inputs, generate `implementation.md` and the
    self-contained offline `review.html` together. Each includes the proposed
    route, lineup, role states, reasoning, cadence, traceability, waves,

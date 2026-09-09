@@ -16,6 +16,7 @@ procedural.
 | Kimi Code | `.kimi-plugin/plugin.json` | manifest `hooks` array | partial |
 | AGY | `.agy/` (strict `plugin.json`) | none | skills-only |
 | Pi | `package.json` `"pi"` + `pi-package` | none (TypeScript extensions, not command hooks) | skills-only |
+| DeepCode | `.deepcode/skills` or interoperable `.agents/skills` discovery | none | skills-only |
 
 Do **not** set `hooks` on Claude, Codex, or Grok host manifests. Those hosts
 auto-load `hooks/hooks.json`; declaring both is a duplicate-file error.
@@ -31,6 +32,14 @@ adapters into global hook configuration.
 | `SessionStart`, `sessionStart`, `session_start` | activation | yes, advisory |
 | `Stop`, `stop` | closeout | yes, advisory only |
 | any other host event | none | unmapped; fail open as `UNAVAILABLE` |
+
+The shared planning-review evaluator is used by transition and closeout when a
+client supplies a structured `planning_review` record. Current session-start /
+stop mappings cannot derive that nested record safely, so Claude Code, Codex,
+Grok Build, Cursor, and Kimi remain partial and the check is procedural there.
+AGY, Pi, and DeepCode remain skills-only. Do not claim full planning-review
+enforcement for any of these hosts until a native event supplies the complete
+record.
 
 The adapter accepts snake_case and camelCase (`hook_event_name` /
 `hookEventName`, `cwd` / `workspaceRoot`).
