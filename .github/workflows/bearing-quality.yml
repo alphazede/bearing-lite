@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   quality:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
 
     steps:
@@ -40,6 +40,28 @@ jobs:
 
       - name: Test public Lite contract
         run: node --test test/*.test.mjs
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: '3.12'
+          architecture: x64
+
+      - name: Validate Lite artifact schemas
+        env:
+          BEARING_LITE_SCHEMA_ISOLATED_ROOT: ${{ runner.temp }}/lite-schema-validator
+        run: |
+          python3 -m pip install \
+            --isolated \
+            --disable-pip-version-check \
+            --no-input \
+            --no-compile \
+            --upgrade-strategy only-if-needed \
+            --target "${BEARING_LITE_SCHEMA_ISOLATED_ROOT}" \
+            --require-hashes \
+            --no-deps \
+            -r test/schema-validator-requirements.txt
+          python3 test/schema-validation.py
 
       - name: Audit
         run: pnpm audit --audit-level=moderate

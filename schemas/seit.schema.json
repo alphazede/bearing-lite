@@ -2,10 +2,154 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/alphazede/bearing-lite/schemas/seit.schema.json",
   "title": "Bearing Lite seit.json",
-  "description": "Canonical JSON Schema-validated tailored V&V plan. Always-on SEIT sections: scope/baseline; responsibility/change authority; applicable documents/precedence; requirements flowdown/architecture context; V&V methods; verification and validation matrices; levels/integration sequence; environments/fixtures/data/simulations/support; procedures/commands; evidence/pass-fail; anomaly/corrective/closure. System fields only where applicable.",
+  "description": "Canonical JSON Schema-validated tailored V&V plan. Always-on SEIT sections: scope/baseline; responsibility/change authority; applicable documents/precedence; requirements flowdown/architecture context; V&V methods; verification and validation matrices; levels/integration sequence; environments/fixtures/data/simulations/support; procedures/commands; evidence/pass-fail; anomaly/corrective/closure. System fields only where applicable. Accepts the synthetic always_on_sections array and equivalent named-section documents. Proof cases require method plus evidence (evidence or observable_evidence) plus pass/fail (pass_fail or pass_fail_rule).",
   "type": "object",
   "additionalProperties": true,
-  "required": ["schema_version"],
+  "required": ["schema_version", "proof_cases"],
+  "$defs": {
+    "alwaysOnSectionName": {
+      "type": "string",
+      "enum": [
+        "scope/baseline",
+        "responsibility/change authority",
+        "applicable documents/precedence",
+        "requirements flowdown/architecture context",
+        "V&V methods",
+        "verification and validation matrices",
+        "levels/integration sequence",
+        "environments/fixtures/data/simulations/support",
+        "procedures/commands",
+        "evidence/pass-fail",
+        "anomaly/corrective/closure"
+      ]
+    },
+    "completeAlwaysOnSectionList": {
+      "type": "array",
+      "minItems": 11,
+      "maxItems": 11,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/alwaysOnSectionName" }
+    },
+    "sectionValue": {
+      "type": ["object", "array", "string"]
+    },
+    "proofCase": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["method"],
+      "properties": {
+        "id": { "type": "string" },
+        "method": { "type": "string" },
+        "evidence": {},
+        "observable_evidence": {},
+        "pass_fail": {},
+        "pass_fail_rule": {}
+      },
+      "allOf": [
+        {
+          "anyOf": [
+            { "required": ["evidence"] },
+            { "required": ["observable_evidence"] }
+          ]
+        },
+        {
+          "anyOf": [
+            { "required": ["pass_fail"] },
+            { "required": ["pass_fail_rule"] }
+          ]
+        }
+      ]
+    },
+    "alwaysOnPresent": {
+      "anyOf": [
+        {
+          "required": ["always_on_sections"],
+          "properties": {
+            "always_on_sections": { "$ref": "#/$defs/completeAlwaysOnSectionList" }
+          }
+        },
+        {
+          "allOf": [
+            {
+              "anyOf": [
+                { "required": ["scope_and_baseline"] },
+                { "required": ["scope_baseline"] },
+                { "required": ["source_baseline"] },
+                { "required": ["scope/baseline"] }
+              ]
+            },
+            {
+              "anyOf": [
+                { "required": ["responsibility_and_change_authority"] },
+                { "required": ["responsibility/change authority"] }
+              ]
+            },
+            {
+              "anyOf": [
+                { "required": ["applicable_documents_and_precedence"] },
+                { "required": ["applicable documents/precedence"] }
+              ]
+            },
+            {
+              "anyOf": [
+                { "required": ["requirements_flowdown_and_architecture_context"] },
+                { "required": ["system_description_and_requirements_flowdown"] },
+                { "required": ["requirements flowdown/architecture context"] }
+              ]
+            },
+            {
+              "anyOf": [
+                { "required": ["vv_methods"] },
+                { "required": ["V&V methods"] }
+              ]
+            },
+            {
+              "anyOf": [
+                { "required": ["verification_and_validation_matrices"] },
+                { "required": ["verification and validation matrices"] },
+                { "required": ["proof_cases"] }
+              ]
+            },
+            {
+              "anyOf": [
+                { "required": ["levels_and_integration_sequence"] },
+                { "required": ["levels/integration sequence"] },
+                { "required": ["levels", "integration_vv_sequence"] },
+                { "required": ["levels", "integration_sequence"] }
+              ]
+            },
+            {
+              "anyOf": [
+                { "required": ["environments_fixtures_data_simulations_support"] },
+                { "required": ["environments/fixtures/data/simulations/support"] }
+              ]
+            },
+            {
+              "anyOf": [
+                { "required": ["procedures_and_commands"] },
+                { "required": ["procedures/commands"] }
+              ]
+            },
+            {
+              "anyOf": [
+                { "required": ["evidence_and_pass_fail"] },
+                { "required": ["evidence/pass-fail"] }
+              ]
+            },
+            {
+              "anyOf": [
+                { "required": ["anomaly_corrective_closure"] },
+                { "required": ["anomaly/corrective/closure"] }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "allOf": [
+    { "$ref": "#/$defs/alwaysOnPresent" }
+  ],
   "properties": {
     "schema_version": {
       "type": "string"
@@ -22,23 +166,40 @@
     "always_on_sections": {
       "type": "array",
       "description": "CONTRACT-EMV-007 always-on sections",
-      "items": {
-        "type": "string",
-        "enum": [
-          "scope/baseline",
-          "responsibility/change authority",
-          "applicable documents/precedence",
-          "requirements flowdown/architecture context",
-          "V&V methods",
-          "verification and validation matrices",
-          "levels/integration sequence",
-          "environments/fixtures/data/simulations/support",
-          "procedures/commands",
-          "evidence/pass-fail",
-          "anomaly/corrective/closure"
-        ]
-      }
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/alwaysOnSectionName" }
     },
+    "scope_and_baseline": { "$ref": "#/$defs/sectionValue" },
+    "scope_baseline": { "$ref": "#/$defs/sectionValue" },
+    "source_baseline": { "type": "object", "additionalProperties": true },
+    "scope/baseline": { "$ref": "#/$defs/sectionValue" },
+    "responsibility_and_change_authority": { "$ref": "#/$defs/sectionValue" },
+    "responsibility/change authority": { "$ref": "#/$defs/sectionValue" },
+    "applicable_documents_and_precedence": { "$ref": "#/$defs/sectionValue" },
+    "applicable documents/precedence": { "$ref": "#/$defs/sectionValue" },
+    "requirements_flowdown_and_architecture_context": { "$ref": "#/$defs/sectionValue" },
+    "system_description_and_requirements_flowdown": { "$ref": "#/$defs/sectionValue" },
+    "requirements flowdown/architecture context": { "$ref": "#/$defs/sectionValue" },
+    "vv_methods": { "$ref": "#/$defs/sectionValue" },
+    "V&V methods": { "$ref": "#/$defs/sectionValue" },
+    "verification_and_validation_matrices": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/proofCase" }
+    },
+    "verification and validation matrices": { "$ref": "#/$defs/sectionValue" },
+    "levels_and_integration_sequence": { "$ref": "#/$defs/sectionValue" },
+    "levels/integration sequence": { "$ref": "#/$defs/sectionValue" },
+    "levels": { "$ref": "#/$defs/sectionValue" },
+    "integration_vv_sequence": { "$ref": "#/$defs/sectionValue" },
+    "integration_sequence": { "$ref": "#/$defs/sectionValue" },
+    "environments_fixtures_data_simulations_support": { "$ref": "#/$defs/sectionValue" },
+    "environments/fixtures/data/simulations/support": { "$ref": "#/$defs/sectionValue" },
+    "procedures_and_commands": { "$ref": "#/$defs/sectionValue" },
+    "procedures/commands": { "$ref": "#/$defs/sectionValue" },
+    "evidence_and_pass_fail": { "$ref": "#/$defs/sectionValue" },
+    "evidence/pass-fail": { "$ref": "#/$defs/sectionValue" },
+    "anomaly_corrective_closure": { "$ref": "#/$defs/sectionValue" },
+    "anomaly/corrective/closure": { "$ref": "#/$defs/sectionValue" },
     "decision_baseline": {
       "type": "object",
       "additionalProperties": true,
@@ -51,7 +212,7 @@
     },
     "proof_cases": {
       "type": "array",
-      "items": { "type": "object", "additionalProperties": true }
+      "items": { "$ref": "#/$defs/proofCase" }
     }
   }
 }
