@@ -2,10 +2,10 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/alphazede/bearing-lite/schemas/implementation.schema.json",
   "title": "Bearing Lite implementation.json",
-  "description": "Nested execution authority. XLSX is never authority. Owner-configured n, k, and c have no assistant default integers.",
+  "description": "Nested execution authority. XLSX is never authority. Owner-configured n, k, and c have no assistant default integers. Every slice requires CONTRACT-EMV-008 fields. human_decision may be a string, object, or null. authority_id is a string on dispatchable slices and may be null only when dispatchable is false or slice_status is publication-blocked.",
   "type": "object",
   "additionalProperties": true,
-  "required": ["schema_version"],
+  "required": ["schema_version", "slices"],
   "properties": {
     "schema_version": { "type": "string" },
     "artifact": {
@@ -46,6 +46,8 @@
           "seit_proof_rows",
           "design_lenses",
           "model_route",
+          "reasoning",
+          "review_path",
           "write_set",
           "command_ids",
           "stop_condition",
@@ -67,8 +69,29 @@
           "write_set": { "type": "array", "items": { "type": "string" } },
           "command_ids": { "type": "array", "items": { "type": "string" } },
           "stop_condition": { "type": "string" },
-          "human_decision": { "type": "string" },
-          "authority_id": { "type": "string" }
+          "human_decision": { "type": ["string", "object", "null"] },
+          "authority_id": { "type": ["string", "null"] },
+          "dispatchable": { "type": "boolean" },
+          "slice_status": { "type": "string" }
+        },
+        "if": {
+          "not": {
+            "anyOf": [
+              {
+                "properties": { "dispatchable": { "const": false } },
+                "required": ["dispatchable"]
+              },
+              {
+                "properties": { "slice_status": { "const": "publication-blocked" } },
+                "required": ["slice_status"]
+              }
+            ]
+          }
+        },
+        "then": {
+          "properties": {
+            "authority_id": { "type": "string" }
+          }
         }
       }
     }

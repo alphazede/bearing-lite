@@ -54,7 +54,32 @@ checkout):
 node --test test/diagram-sync.test.mjs
 node --test test/public-boundary.test.mjs
 node --test test/skills-conformance.test.mjs
+python3 test/schema-validation.py
 ```
+
+Schema validation requires Python 3.12. `python3 test/schema-validation.py` is
+the required developer and CI gate (`CMD-LITE-SCHEMA-VALIDATE`). It installs the
+pinned hashes from `test/schema-validator-requirements.txt` into an isolated
+temporary directory with `pip install --isolated --require-hashes --no-deps` and
+runs Draft 2020-12 validation with no remote `$ref` retrieval. Do not install
+those packages globally, with `--user`, or as production dependencies of this
+package.
+
+CI on `ubuntu-24.04` with Python 3.12 x64 performs the same isolated
+`--require-hashes --no-deps` install into a job-local target directory, then
+runs `python3 test/schema-validation.py`. To reuse a local isolated tree instead
+of a temporary install:
+
+```sh
+python3.12 -m venv .venv-schema-validator
+.venv-schema-validator/bin/python -m pip install \
+  --isolated --require-hashes --no-deps \
+  -r test/schema-validator-requirements.txt
+BEARING_LITE_SCHEMA_ISOLATED_ROOT=.venv-schema-validator/lib/python3.12/site-packages \
+  python3 test/schema-validation.py
+```
+
+Keep that virtualenv uncommitted.
 
 Keep skills lean. Prefer references and assets only when progressive disclosure
 needs them. Do not add dependencies or change the lockfile without explicit

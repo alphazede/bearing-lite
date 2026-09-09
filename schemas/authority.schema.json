@@ -2,10 +2,38 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/alphazede/bearing-lite/schemas/authority.schema.json",
   "title": "Bearing Lite authority.json",
-  "description": "Current machine-enforced authority envelope. Lineup or route selection is not a grant.",
+  "description": "Current machine-enforced authority envelope. Lineup or route selection is not a grant. CONTRACT-EMV-009 envelope fields are required.",
   "type": "object",
   "additionalProperties": true,
-  "required": ["schema_version", "id", "state"],
+  "required": [
+    "schema_version",
+    "schema",
+    "id",
+    "state",
+    "subject",
+    "repositories",
+    "baseline",
+    "allowed",
+    "prohibited",
+    "role_grants",
+    "effective",
+    "supersedes",
+    "approval_receipt"
+  ],
+  "allOf": [
+    {
+      "anyOf": [
+        { "required": ["granting_owner_decision"] },
+        { "required": ["granting_owner_decisions"] }
+      ]
+    },
+    {
+      "anyOf": [
+        { "required": ["expiry"] },
+        { "required": ["expiry_conditions"] }
+      ]
+    }
+  ],
   "properties": {
     "schema_version": { "type": "string" },
     "schema": { "type": "string", "description": "Envelope schema identity" },
@@ -19,6 +47,7 @@
     "allowed": {
       "type": "object",
       "additionalProperties": true,
+      "required": ["scope", "actions", "paths"],
       "properties": {
         "scope": { "type": "array", "items": { "type": "string" } },
         "actions": { "type": "array", "items": { "type": "string" } },
@@ -28,6 +57,7 @@
     "prohibited": {
       "type": "object",
       "additionalProperties": true,
+      "required": ["scope", "actions", "paths"],
       "properties": {
         "scope": { "type": "array", "items": { "type": "string" } },
         "actions": { "type": "array", "items": { "type": "string" } },
@@ -37,6 +67,7 @@
     "role_grants": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
     "effective": { "type": ["boolean", "string"] },
     "expiry": { "type": ["string", "null"] },
+    "expiry_conditions": { "type": ["object", "string", "null"] },
     "supersedes": { "type": "array", "items": { "type": "string" } },
     "approval_receipt": { "type": "object", "additionalProperties": true }
   }

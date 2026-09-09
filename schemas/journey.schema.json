@@ -5,10 +5,17 @@
   "description": "Append-only decisions and authority-event history plus the generation-bound checkout lease. The full mutable file digest is not the stable SEIT execution baseline.",
   "type": "object",
   "additionalProperties": true,
-  "required": ["schema_version"],
+  "required": ["schema_version", "journey", "checkout_lease"],
   "properties": {
     "schema_version": { "type": "string" },
-    "journey": { "type": "object", "additionalProperties": true },
+    "journey": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string" }
+      }
+    },
     "checkout_lease": {
       "type": "object",
       "additionalProperties": false,
@@ -53,6 +60,18 @@
       "type": "array",
       "description": "Append-only authority grant, amend, revoke, or supersede events",
       "items": { "type": "object", "additionalProperties": true }
+    },
+    "open_decisions": {
+      "type": "array",
+      "items": { "type": "object", "additionalProperties": true }
+    },
+    "planning_receipts": {
+      "type": "array",
+      "items": { "type": "object", "additionalProperties": true }
+    },
+    "lineup_selection": {
+      "type": "object",
+      "additionalProperties": true
     }
   }
 }
