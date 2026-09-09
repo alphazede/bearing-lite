@@ -3,8 +3,10 @@
  * ROUTER-EMV-002-001 populated user-catalog fixture and S21 procedure presence.
  *
  * Structure pass/fail lives in CMD-LITE-SCHEMA-VALIDATE (test/schema-validation.py).
- * This file inspects shipped empty bytes, the synthetic fixture, and future S21
- * files. It does not implement selection, save, or catalog policy.
+ * This file inspects shipped empty bytes, the synthetic fixture, and the S21
+ * candidate procedure. Extra oracles in schema-validation.py stay structure
+ * tests, not shipped-procedure proof. This file does not implement selection,
+ * save, freeze, or catalog policy.
  */
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
@@ -86,6 +88,96 @@ const LINEUPS_MD_STATEMENTS = [
     meaning: "selection is not an authority grant",
   },
 ];
+
+/** ROUTER-EMV-002-001 load/save/freeze bindings the candidate procedure must state. */
+const LINEUPS_MD_PROCEDURE_BINDINGS = [
+  {
+    id: "named_and_save_valid_catalog",
+    patterns: [
+      /named\s+(?:selection|choice)s?\s+and\s+save[\s\S]{0,40}valid\s+catalog|valid\s+catalog[\s\S]{0,60}named\s+(?:selection|choice)s?\s+and\s+save/i,
+    ],
+    meaning: "named selection and save require a valid catalog",
+  },
+  {
+    id: "schema_draft_before_named_or_save",
+    patterns: [
+      /schemas\/lineups\.schema\.json/,
+      /Draft 2020-12/,
+      /before\s+named\s+(?:selection|choice)\s+or\s+save/i,
+      /not\s+a\s+second\s+search\s+root(?:\s+for\s+user\s+data)?/i,
+    ],
+    meaning:
+      "bind schemas/lineups.schema.json Draft 2020-12 validation before named selection or save (not a second search root for user data)",
+  },
+  {
+    id: "duplicate_raw_keys_no_collapse",
+    patterns: [
+      /duplicate\s+raw\s+JSON\s+keys?/i,
+      /(?:do\s+not|not)\s+silently\s+collapse/i,
+    ],
+    meaning: "reject duplicate raw JSON keys; do not silently collapse",
+  },
+  {
+    id: "duplicate_roles_per_phase",
+    patterns: [/duplicate\s+role\s+assignments?\s+within\s+each\s+phase/i],
+    meaning: "reject duplicate role assignments within each phase",
+  },
+  {
+    id: "ascii_casefold_load_and_save",
+    patterns: [
+      /ASCII\s+case-fold\s+collisions?(?:\s+consistently)?\s+on(?:\s+both)?\s+(?:load\s+and\s+save|save\s+and\s+load)/i,
+    ],
+    meaning: "reject ASCII case-fold collisions on both load and save",
+  },
+  {
+    id: "defaults_resolve_exactly",
+    patterns: [
+      /(?:defaults?\s+keys?|references)\s+must\s+resolve\s+exactly/i,
+      /unresolved\s+defaults?\s+fail(?:s)?\s+closed/i,
+    ],
+    meaning: "defaults keys must resolve exactly; unresolved defaults fail closed",
+  },
+  {
+    id: "invalid_structure_or_name_load_save",
+    patterns: [
+      /invalid\s+structure\s+or\s+name\s+fails\s+closed\s+on(?:\s+both)?\s+(?:load\s+and\s+save|save\s+and\s+load)/i,
+    ],
+    meaning: "invalid structure or name fails closed on load and save",
+  },
+  {
+    id: "freeze_sha256_configuration_digest",
+    patterns: [
+      /copy\s+selected\s+entries/i,
+      /fallback(?:\s+array)?\s+order/i,
+      /SHA-256/i,
+      /configuration\s+digest/i,
+      /frozen\s+snapshot\s+copy/i,
+    ],
+    meaning:
+      "freeze copies selected entries, preserves fallback order, and binds a SHA-256 configuration digest of that frozen snapshot copy",
+  },
+  {
+    id: "later_edits_preserve_frozen_digest",
+    patterns: [
+      /later\s+catalog\s+edits\s+do\s+not\s+mutate\s+(?:a\s+|the\s+)?frozen\s+snapshot(?:\s+copy)?\s+or\s+(?:its|the)\s+digest/i,
+    ],
+    meaning: "later catalog edits do not mutate the frozen snapshot or its digest",
+  },
+];
+
+/**
+ * @param {string} text
+ * @param {{ id: string, pattern?: RegExp, patterns?: RegExp[], meaning: string }[]} rows
+ * @returns {string[]}
+ */
+function missingStatementMeanings(text, rows) {
+  return rows
+    .filter((row) => {
+      const regexes = row.patterns ?? (row.pattern ? [row.pattern] : []);
+      return regexes.some((re) => !re.test(text));
+    })
+    .map((row) => `${row.id}: ${row.meaning}`);
+}
 
 /**
  * @param {object} assignment
@@ -207,9 +299,22 @@ describe("AC-EMV-026 populated lineups catalog (SEIT-EMV-026 / ROUTER-EMV-002-00
       "expected red on 1058f5b: missing skills/bearing-lite/references/lineups.md",
     );
     const text = readFileSync(LINEUPS_REF_PATH, "utf8");
-    const missing = LINEUPS_MD_STATEMENTS.filter((row) => !row.pattern.test(text)).map(
-      (row) => `${row.id}: ${row.meaning}`,
-    );
+    const missing = missingStatementMeanings(text, LINEUPS_MD_STATEMENTS);
     assert.deepEqual(missing, [], `references/lineups.md missing decided rules: ${missing.join("; ")}`);
+  });
+
+  it("references/lineups.md binds schema validation, semantic load/save checks, and freeze digests", () => {
+    assert.equal(
+      existsSync(LINEUPS_REF_PATH),
+      true,
+      "skills/bearing-lite/references/lineups.md must exist",
+    );
+    const text = readFileSync(LINEUPS_REF_PATH, "utf8");
+    const missing = missingStatementMeanings(text, LINEUPS_MD_PROCEDURE_BINDINGS);
+    assert.deepEqual(
+      missing,
+      [],
+      `references/lineups.md missing ROUTER-EMV-002-001 load/save/freeze bindings: ${missing.join("; ")}`,
+    );
   });
 });
