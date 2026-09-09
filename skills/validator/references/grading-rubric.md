@@ -1,8 +1,9 @@
-# Grading rubric (Validator scoring)
+# Grading rubric (optional Assurance Test Engineer scoring)
 
 Use only when the task, owner, or phase gate requests **explicit rubric scoring**.
-Sufficiency checks always run when Validator is active. Scoring is optional and
-never makes independent assurance automatic.
+Sufficiency checks always run when Assurance Test Engineer is active. Scoring is
+optional and never makes independent assurance automatic. Validator is
+compatibility-only and does not score active Journeys.
 
 ## Dimensions (equal weight unless the plan overrides)
 
@@ -27,7 +28,7 @@ Sum dimension scores (0–12).
 
 1. Run sufficiency on the exact candidate first.
 2. If scoring is requested, score the same candidate with this rubric.
-3. Final Validator outcome:
+3. Final Assurance Test Engineer outcome:
    - `FAIL` if either check fails
    - `NEEDS_MORE_EVIDENCE` if either needs more proof
    - `PASS` only when sufficiency passes and (scoring was not requested, or scoring supports PASS)

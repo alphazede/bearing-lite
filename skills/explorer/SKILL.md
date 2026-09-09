@@ -40,7 +40,7 @@ Wave authority. Coordinates more and implements less than Crewmate.
    conversation history. Independent work, a changed envelope, or owner choice
    starts a fresh Crewmate.
 4. Inspect compact returns against write sets and acceptance; integrate
-   evidence without implementing. Update `implementation.md` and `review.html`
+   evidence without implementing. Update `implementation.json` and `review.html`
    once per wave, plus owner-decision or blocker changes.
 5. Dispatch declared assurance only at-end on the final integrated candidate.
    Expedition waves defer assurance to the Router's final Journey boundary.

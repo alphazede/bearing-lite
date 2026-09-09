@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/alphazede/bearing-lite/schemas/seit.schema.json",
+  "title": "Bearing Lite seit.json",
+  "description": "Canonical JSON Schema-validated tailored V&V plan. Always-on SEIT sections: scope/baseline; responsibility/change authority; applicable documents/precedence; requirements flowdown/architecture context; V&V methods; verification and validation matrices; levels/integration sequence; environments/fixtures/data/simulations/support; procedures/commands; evidence/pass-fail; anomaly/corrective/closure. System fields only where applicable.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["schema_version"],
+  "properties": {
+    "schema_version": {
+      "type": "string"
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "type": { "const": "seit.json" },
+        "role": { "type": "string" },
+        "authority": { "type": "string" }
+      }
+    },
+    "always_on_sections": {
+      "type": "array",
+      "description": "CONTRACT-EMV-007 always-on sections",
+      "items": {
+        "type": "string",
+        "enum": [
+          "scope/baseline",
+          "responsibility/change authority",
+          "applicable documents/precedence",
+          "requirements flowdown/architecture context",
+          "V&V methods",
+          "verification and validation matrices",
+          "levels/integration sequence",
+          "environments/fixtures/data/simulations/support",
+          "procedures/commands",
+          "evidence/pass-fail",
+          "anomaly/corrective/closure"
+        ]
+      }
+    },
+    "decision_baseline": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Stable decision-baseline projection of confirmed decision identities and open-item statuses. Not the whole-file journey.json digest.",
+      "properties": {
+        "kind": { "type": "string" },
+        "confirmed_decisions": { "type": "object", "additionalProperties": true },
+        "open_items": { "type": "array", "items": { "type": "object", "additionalProperties": true } }
+      }
+    },
+    "proof_cases": {
+      "type": "array",
+      "items": { "type": "object", "additionalProperties": true }
+    }
+  }
+}

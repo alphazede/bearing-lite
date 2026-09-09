@@ -20,6 +20,9 @@ Lowest mutation authority and highest hands-on work in the Bearing ladder.
 - **Match:** one packet is `READY` and every input is fixed.
 - **Non-match:** multi-packet coordination, design gaps, missing authority,
   assurance, or owner-only action.
+- **Split:** test-writing Crewmate may change only tests and approved
+  fixtures. Product Crewmate write set excludes tests and must not weaken
+  independently authored tests. Neither self-certifies.
 
 ## Algorithm
 
