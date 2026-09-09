@@ -20,8 +20,28 @@ of that file.
 
 Missing user file means no named profiles. Do not auto-create the live
 catalog. An empty `lineups` object is valid and is not an error. A
-malformed or unreadable unused catalog fails closed and cannot override
-explicit inline owner choices.
+malformed unused catalog cannot override explicit inline owner choices.
+
+## Validity
+
+Named selection and save require a valid catalog. Bind
+`schemas/lineups.schema.json` Draft 2020-12 validation before named
+selection or save. That schema is the validation document, not a second
+search root for user data. Do not add a runtime catalog library.
+
+On load and on save, inspect raw object members first. Reject duplicate
+raw JSON keys; do not silently collapse. Then parse and apply Draft 2020-12
+validation against package-root `schemas/lineups.schema.json`. Fail closed
+as follows even when the schema cannot express the check:
+
+- Reject duplicate role assignments within each phase.
+- Reject ASCII case-fold collisions on both load and save. Do not trim
+  or case-fold names.
+- Defaults keys must resolve exactly. Unresolved defaults fail closed.
+- Invalid structure or name fails closed on both load and save.
+
+Refuse named selection or save on any of those failures. Do not invent a
+fallback profile and do not read packaged bytes as user data.
 
 ## Selection
 
@@ -38,8 +58,12 @@ recommendations requiring selection or confirmation. They are never a silent
 grant and not an authority grant. Do not apply them without that
 confirmation. Do not invent a packaged default.
 
-Copy selected entries into the Journey snapshot. Preserve fallback array
-order. Later catalog edits do not mutate a frozen snapshot.
+Copy selected entries into the Journey snapshot as a frozen snapshot copy.
+Preserve fallback array order. Bind a SHA-256 configuration digest of that
+frozen snapshot copy. Digest that copy only: selected entries with fallback
+order and selection sources. Exclude N/K/C, review cadence, route, and
+authority. Canonical JSON: UTF-8, sort_keys, compact separators.
+Later catalog edits do not mutate the frozen snapshot copy or its digest.
 
 ## Save
 
