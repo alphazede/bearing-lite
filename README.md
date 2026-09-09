@@ -34,7 +34,8 @@ complete five-artifact package (`<journey-topic>-technical-plan.md`,
 `design.md`, `seit.json`, `implementation.json`, and two-state `review.html`)
 with proposed route, lineup, role states, reasoning, and at-end cadence. One
 integrated owner review approves or changes that package before bounded
-sessions dispatch with visible Markdown state.
+sessions dispatch, with visible Markdown task state over those JSON
+authorities.
 
 If Bearing Lite helps keep a long agent task scoped and reviewable,
 [star the repository](https://github.com/alphazede/bearing-lite). It helps other
@@ -105,7 +106,15 @@ register hooks. That path remains first-class. See
    primary/fallback lineup, role states, reasoning, at-end cadence, and plan.
 4. **Dispatch bounded sessions** with compact receipts. Crewmate and Explorer may
    continue in-wave; assurance always starts fresh at the end.
-5. **Record state visibly** in human-readable Markdown artifacts only.
+5. **Record state visibly.** The project's human-readable Markdown plan is the
+   only task-state record: task blocks, task states, and their transitions. The
+   Journey, execution, V&V, and authority records are machine-readable JSON
+   validated against `schemas/`: `journey.json` (Journey identity, checkout
+   lease, decisions, planning receipts, lineup selection), `seit.json` (V&V
+   proof rows), `implementation.json` (nested execution authority, waves,
+   slices, dispatch), and `authority.json` (authority envelope). `review.html`
+   and diagrams present state; like diagrams, they never authorize a
+   transition, create state, or grant authority.
 
 Bearing Lite never selects models, providers, credentials, or launchers. The
 owner provides each role's primary/fallback agent or harness, model, and

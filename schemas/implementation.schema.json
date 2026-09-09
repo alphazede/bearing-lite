@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/alphazede/bearing-lite/schemas/implementation.schema.json",
   "title": "Bearing Lite implementation.json",
-  "description": "Nested execution authority. XLSX is never authority. Owner-configured n, k, and c have no assistant default integers. Every slice requires CONTRACT-EMV-008 fields including reasoning_level (object), not a sibling reasoning string. human_decision may be a string, object, or null. authority_id is a string on dispatchable slices and may be null only when dispatchable is false or slice_status is publication-blocked. Extra lifecycle metadata is allowed.",
+  "description": "Nested execution authority. XLSX is never authority. Owner-configured n, k, and c have no assistant default integers. Every slice requires CONTRACT-EMV-008 fields including reasoning_level (object), not a sibling reasoning string. human_decision may be a string, object, or null. authority_id is a nonempty string on dispatchable slices and may be null only when dispatchable is false or slice_status is publication-blocked. Extra lifecycle metadata is allowed.",
   "type": "object",
   "additionalProperties": true,
   "required": [
@@ -82,7 +82,7 @@
       },
       "then": {
         "properties": {
-          "authority_id": { "type": "string" }
+          "authority_id": { "type": "string", "minLength": 1 }
         }
       }
     }

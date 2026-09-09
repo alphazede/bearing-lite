@@ -847,6 +847,11 @@ def cases() -> list[tuple[str, str, str, object, str]]:
         ("SEIT-EMV-024", "authority_sparse_expiry", "authority", omit(
             complete_authority(), "expiry_conditions"
         ) | {"expiry": None}, "reject"),
+        # R1: effective is a boolean gate. The string "false" is truthy under
+        # ordinary consumption, so a string must be rejected outright.
+        ("SEIT-EMV-024", "authority_effective_string_false", "authority", complete_authority(
+            effective="false"
+        ), "reject"),
         ("SEIT-EMV-024", "authority_expiry_conditions_object", "authority", complete_authority(
             expiry_conditions={"note": "synthetic-object-expiry"}
         ), "reject"),
@@ -966,6 +971,11 @@ def cases() -> list[tuple[str, str, str, object, str]]:
         ), "accept"),
         ("SEIT-EMV-022", "authority_id_null_on_dispatchable", "implementation", complete_implementation(
             slices=[complete_slice(authority_id=None, dispatchable=True)]
+        ), "reject"),
+        # R1: a dispatchable slice must name a real authority envelope. An empty
+        # string is not an identity, so it must be rejected exactly like null.
+        ("SEIT-EMV-022", "authority_id_empty_string_on_dispatchable", "implementation", complete_implementation(
+            slices=[complete_slice(authority_id="", dispatchable=True)]
         ), "reject"),
         ("SEIT-EMV-022", "authority_id_null_on_not_dispatchable", "implementation", complete_implementation(
             slices=[complete_slice(
