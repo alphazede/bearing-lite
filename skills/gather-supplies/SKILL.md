@@ -25,7 +25,13 @@ Planning node, not a persona or plan-state writer.
 ## Algorithm
 
 1. Inspect the repository and available evidence before asking. Never ask the
-   owner for a fact tools can establish.
+   owner for a fact tools can establish. Maintain a coverage ledger from
+   required roles and artifacts. Cells are `DISCOVERABLE`, `OPEN`, `DECIDED`,
+   `DEFERRED`, `NOT_APPLICABLE`, or `BLOCKED`. Exit is falsifiable: zero
+   `OPEN`; `DECIDED` cites owner decision and source; `DEFERRED` has a bounded
+   owner-approved destination or trigger; `NOT_APPLICABLE` has a reason;
+   `BLOCKED` is surfaced. Planning is a fan-out/fan-in DAG with Scribe as an
+   event side lane.
 2. Select the earliest unresolved decision whose dependencies are satisfied.
 3. Ask exactly one question, relayed to the owner through the Router. Lead
    with the recommended answer and why, then explain only material

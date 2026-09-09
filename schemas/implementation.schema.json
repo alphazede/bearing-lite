@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/alphazede/bearing-lite/schemas/implementation.schema.json",
+  "title": "Bearing Lite implementation.json",
+  "description": "Nested execution authority. XLSX is never authority. Owner-configured n, k, and c have no assistant default integers.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["schema_version"],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "type": { "const": "implementation.json" },
+        "authority_id": { "type": "string" }
+      }
+    },
+    "journey_settings": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "review_cardinality": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Owner-configured reviewer count n, repair bound k, and confirmation count c. No default integers.",
+          "properties": {
+            "n": { "type": "integer", "minimum": 0 },
+            "k": { "type": "integer", "minimum": 0 },
+            "c": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "slices": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "role",
+          "goal",
+          "type",
+          "requirement_ids",
+          "design_ids",
+          "seit_proof_rows",
+          "design_lenses",
+          "model_route",
+          "write_set",
+          "command_ids",
+          "stop_condition",
+          "human_decision",
+          "authority_id"
+        ],
+        "properties": {
+          "id": { "type": "string" },
+          "role": { "type": "string" },
+          "goal": { "type": "string", "maxLength": 512 },
+          "type": { "type": "string" },
+          "requirement_ids": { "type": "array", "items": { "type": "string" } },
+          "design_ids": { "type": "array", "items": { "type": "string" } },
+          "seit_proof_rows": { "type": "array", "items": { "type": "string" } },
+          "design_lenses": { "type": "array", "items": { "type": "string" } },
+          "model_route": { "type": "object", "additionalProperties": true },
+          "reasoning": { "type": ["string", "object"] },
+          "review_path": { "type": "object", "additionalProperties": true },
+          "write_set": { "type": "array", "items": { "type": "string" } },
+          "command_ids": { "type": "array", "items": { "type": "string" } },
+          "stop_condition": { "type": "string" },
+          "human_decision": { "type": "string" },
+          "authority_id": { "type": "string" }
+        }
+      }
+    }
+  }
+}

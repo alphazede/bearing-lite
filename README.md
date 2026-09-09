@@ -30,9 +30,11 @@ Then give your agent a real task:
 > responses. Require one independent review at the end.
 
 Bearing Lite fills missing planning stages, then Map the Route creates the
-complete five-artifact package with proposed route, lineup, role states,
-reasoning, and at-end cadence. One integrated owner review approves or changes
-that package before bounded sessions dispatch with visible Markdown state.
+complete five-artifact package (`<journey-topic>-technical-plan.md`,
+`design.md`, `seit.json`, `implementation.json`, and two-state `review.html`)
+with proposed route, lineup, role states, reasoning, and at-end cadence. One
+integrated owner review approves or changes that package before bounded
+sessions dispatch with visible Markdown state.
 
 If Bearing Lite helps keep a long agent task scoped and reviewable,
 [star the repository](https://github.com/alphazede/bearing-lite). It helps other
@@ -97,7 +99,8 @@ register hooks. That path remains first-class. See
 1. **Fill only missing planning stages:** Repository Fit → Set Bearings → Gather
    Supplies.
 2. **Invoke Map the Route** after material intent is settled. It creates
-   specification, design, SEIT, implementation, and `review.html` together.
+   technical-plan, `design.md`, `seit.json`, `implementation.json`, and
+   two-state `review.html` together.
 3. **Review once:** approve or change the proposed route, user-owned
    primary/fallback lineup, role states, reasoning, at-end cadence, and plan.
 4. **Dispatch bounded sessions** with compact receipts. Crewmate and Explorer may
@@ -133,8 +136,8 @@ invokes only missing planning stages, has Map the Route generate all five
 artifacts with proposed lineup and `review_cadence: at-end`, then presents one
 integrated owner review before dispatching an Explorer Journey or Expedition. Explorer
 coordinates proven-independent in-wave lanes without a nested coordinator.
-Validator, Park Ranger, and Surveyor appear only when declared and only at the
-end on the final integrated candidate. Diagrams
+Assurance Test Engineer, Park Ranger, and Surveyor appear only when declared
+and only at the end on the final integrated candidate. Diagrams
 explain orientation; they never authorize a transition.
 
 ## Roles and authority
@@ -144,14 +147,24 @@ explain orientation; they never authorize a transition.
 | **Router** | Stateful planning controller | no | User-facing; planning-state writer; Expedition sequencing |
 | **Navigator** | Compatibility diagnostic | no | Not a normal role; existing plans reroute to Router |
 | **Explorer** | One-wave controller | no | Dispatches Crewmates; owns proven-independent lanes |
-| **Crewmate** | Bounded implementer | yes | Most hands-on work; exact write set |
-| **Validator** | Evidence sufficiency | no | Independent of the author |
-| **Park Ranger** | Defect review | no | Independent of the author |
-| **Surveyor** | User-facing acceptance | no | Read-only outcome judgment |
+| **Crewmate** | Bounded implementer | yes | Split test-writing versus product; neither self-certifies |
+| **Scribe** | Event side lane | no | Transcribes; cannot activate authority |
+| **Plan Integrator** | Artifact reconciliation | no | Generates `implementation.json` and `review.html` |
+| **Systems Modeler** | Engineering views | no | After requirements; before design finalization |
+| **Integration Engineer** | Progressive assembly | no | Dual planning and execution sessions |
+| **Test Engineer** | Planning and Assurance V&V | no | Retires Validator; Validator is not an active role |
+| **Park Ranger** | Defect review | no | Consumes Assurance Test Engineer; no routine TE |
+| **Surveyor** | User-facing acceptance | no | Read-only RE, SysML Modeling, and TE |
 | **Owner Authority** | Human decision | n/a | Never an agent role |
 
-**Independent review:** a candidate author never provides their own Validator,
-Park Ranger, or Surveyor verdict.
+**Independent review:** a candidate author never provides their own Assurance
+Test Engineer, Park Ranger, or Surveyor verdict.
+
+Public Bearing Lite remains usable without AlphaZede-specific skills
+(`requirements-engineering`, `sysml-modeling`, `test-engineering`,
+`integration-engineering`). Unselected absence is not a global failure. A
+selected missing required capability is a typed capability gap, not success
+or invented behavior.
 
 Failure escalates to the nearest role whose scope can see it:
 
@@ -204,6 +217,8 @@ flowchart LR
 | `plugin.json` | Agent Plugins v1.0.0 manifest |
 | `skills/` | Router, planning stages, and role skills |
 | `hooks/` | Four portable class adapters plus the verified Claude Code / Codex mapping |
+| `lineups.json` | Empty shipped catalog; no packaged providers, models, or defaults |
+| `schemas/` | JSON Schema for `seit.json`, `implementation.json`, `authority.json`, and `journey.json` |
 | `README.md` and governance docs | Public product and conduct surfaces |
 
 There is no `mcp.json`, `bin` entrypoint, postinstall, or runtime dependency on

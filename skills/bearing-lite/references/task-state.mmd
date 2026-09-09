@@ -12,7 +12,7 @@ stateDiagram-v2
     IN_PROGRESS --> OWNER_DECISION_REQUIRED
     CORRECTION_REQUIRED --> READY
     CORRECTION_REQUIRED --> OWNER_DECISION_REQUIRED: third failed correction
-    EVIDENCE_READY --> VALIDATING: Validator required
+    EVIDENCE_READY --> VALIDATING: Assurance Test Engineer required
     EVIDENCE_READY --> REVIEWING: Park Ranger required
     EVIDENCE_READY --> ACCEPTANCE: Surveyor, owner, or coordinator when required_assurance is none
     EVIDENCE_READY --> WAITING_ON: assurance dispatch unavailable

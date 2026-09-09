@@ -3,18 +3,26 @@
 Apply this closed grammar while authoring or validating planning artifacts.
 Bearing rejects deviations with typed findings.
 
+The canonical Journey planning artifacts are exactly
+`<journey-topic>-technical-plan.md` with `type: technical-plan`, `design.md`,
+`seit.json`, `implementation.json`, and `review.html`. Markdown carries
+technical-plan and design reasoning; the JSON files are schema-validated
+machine authorities; `review.html` is their complete integrated human
+projection. There is no sixth canonical planning artifact. XLSX may be an
+optional derived export and is never authority.
+
 ## Shared artifact rules
 
-1. Frontmatter declares `type` as `plan-spec`, `design`, `seit`, or
-   `implementation`, and `status` as `complete` or `amended`.
+1. Frontmatter declares `type` as `technical-plan` or `design`, and `status` as
+   `complete` or `amended`.
 2. Journey-authored requirement IDs use `AC-*` or `RISK-*`; references to an
    existing requirements register keep that register's identities verbatim.
    Design IDs use `DES-*` or `CONTRACT-*`; SEIT rows use `SEIT-*`; commands
    use `CMD-*` or `PROC-*`. Suffixes contain only uppercase letters, digits,
    dots, or hyphens.
-3. `<journey-topic>-spec.md` declares requirements, Entry criteria, Exit criteria,
-   Rollback or repair, and Accountable controller. `design.md` declares design
-   IDs. `seit.md` declares SEIT rows and commands.
+3. `<journey-topic>-technical-plan.md` declares requirements, Entry criteria,
+   Exit criteria, Rollback or repair, and Accountable controller. `design.md`
+   declares design IDs. `seit.json` declares SEIT rows and commands.
 4. Preserve stable IDs. Every implementation reference resolves to a declared
    requirement, design contract, SEIT row, and command.
 5. Owner-supplied lineup identities and proposed `review_cadence: at-end` are
@@ -39,7 +47,7 @@ Bearing rejects deviations with typed findings.
    to registered identities (no restated text), derivations from them
    (`AC-X derives from REG-ID`), or Journey-local `AC-*`/`RISK-*` criteria about
    write sets, seams, gates, or concurrency. Do not restate registered content.
-4. `seit.md` references verification allocations where the register provides
+4. `seit.json` references verification allocations where the register provides
    them. Where the register provides none for a referenced requirement, author
    Journey-level proof for it or return `NEEDS_OWNER_DECISION` when register
    authority is unclear; do not silently drop coverage. Journey-level proof
@@ -59,37 +67,44 @@ Bearing rejects deviations with typed findings.
 
 ## SEIT rules
 
-1. Include non-empty `Required Commands`, `Traceability Matrix`, and
-   `Cross-cutting Checks` sections.
-2. Declare each command as `- **<CMD/PROC-id>** — description`.
-3. Use one flat traceability table with exactly these columns: SEIT row ID |
+1. `seit.json` is the canonical JSON Schema-validated tailored V&V plan.
+   Always-on sections: scope/baseline; responsibility/change authority;
+   applicable documents/precedence; requirements flowdown/architecture context;
+   V&V methods; verification and validation matrices; levels/integration
+   sequence; environments/fixtures/data/simulations/support;
+   procedures/commands; evidence/pass-fail; anomaly/corrective/closure.
+   System fields only where applicable.
+2. Include non-empty `Required Commands`, `Traceability Matrix`, and
+   `Cross-cutting Checks` sections or JSON equivalents.
+3. Declare each command with a `CMD-*` or `PROC-*` id and description.
+4. Use one flat traceability table with exactly these columns: SEIT row ID |
    Acceptance/risk ID | Design/contract ID | Boundary/test layer | Positive
    case | Negative/failure case | Command/procedure ID | Evidence.
-4. Every row carries exactly one SEIT row ID, requirement ID, design ID, and
+5. Every row carries exactly one SEIT row ID, requirement ID, design ID, and
    command ID, and names an observable failure.
-5. If procedure narratives are used, title each `### SEIT-<id> <title>` under
-   a procedures section and restate Command, Positive case, Negative case, and
-   Evidence exactly. Every PROC row then has exactly one matching narrative.
+6. Bind a stable decision-baseline projection of confirmed decision identities
+   and open-item statuses rather than the whole-file `journey.json` digest.
 
 ## Implementation rules
 
-1. Slice headings are `### Slice <id>` and manifests are
-   `### <id> execution manifest`. IDs are a letter-run plus an integer or
-   dotted integer. Every slice has exactly one matching manifest.
-2. Every slice declares Goal, Requirement IDs, Design IDs, SEIT proof rows,
-   Type, Design lenses, named implementation role, owner-selected model route,
-   reasoning level, and review path. Goals are at most 512 characters.
-3. Every manifest declares Write set, Command IDs, Stop condition, and Human
-   decision. Optional fields are Shared interfaces (`path#Symbol`), Integration
-   boundary, Published standard (`doc#clause`) when applicable, and Parallel
-   safe (`yes` or `no` plus reason).
+1. Regular JSON is the nested execution authority for Journey settings, lineup
+   snapshots, waves, slices, dependencies, traceability, and manifests.
+2. Every slice declares one named role plus goal, type, requirement IDs, design
+   IDs, SEIT proof rows, exact design-lens names sourced from `design.md`,
+   owner-selected model route, reasoning, review path, write set, command IDs,
+   stop condition, human decision, and `authority_id`. Goals are at most 512
+   characters. Slice actions and write sets are subsets of current authority.
+3. Optional fields are Shared interfaces (`path#Symbol`), Integration
+   boundary, Published standard (`doc#clause`) when applicable, SysML and
+   integration fields when selected, and Parallel safe (`yes` or `no` plus
+   reason).
 4. Write sets use one line: `Write only `path``. Paths are bounded, normalized,
    repository-relative literals. Put prohibitions in prose, not the write set.
 5. Multi-slice plans declare consecutive `Wave <n>: <ids>` lines. Every slice
    belongs to one wave. Dependencies use acyclic `S1 --> S2` arrows.
-6. Optional phase graphs use Phase | Slices | Depends on phases | Integration
-   checkpoints. Optional Inputs and Produces name metric denominator, ledger
-   key, or contract field values in backticks.
+6. Ordered integration steps, resources, ownership, and rollback live here.
+   Owner-configured reviewer count `n`, repair bound `k`, and confirmation
+   count `c` are explicit fields with no assistant default integers.
 7. Plans may contain at most 128 slices, manifests, write paths, and commands.
    Aim for at most 500 estimated tokens per slice plus manifest; split larger
    packets when practical.
@@ -113,12 +128,15 @@ placeholders, bare negations, or deferral language.
 1. Select review-oriented feature diagrams (flow diagrams, state-machine diagrams, or process/sequence diagrams) when they materially clarify architecture or lifecycle behavior for owner review.
 2. Major features select a justified subset or full set of diagrams based on architectural complexity. Trivial features or minor fixes do not require unnecessary diagrams.
 3. Every feature diagram must include canonical, reviewable source (such as Mermaid code blocks), render visually inside generated `review.html`, and retain nearby authoritative explanatory text.
+4. Non-trivial technical plans include words plus context/boundary, use-case/outcome, and operational-flow views. In MBSE mode record model revision/digest; never silently substitute Mermaid for mandated SysML. Trivial work may record `diagram_not_required` with a concrete rationale.
 
 ## Completion boundary
 
-Author specification, design, SEIT, implementation, and review HTML in that
+Author technical-plan, design, SEIT, implementation, and review HTML in that
 dependency order with internal prospective checks; generate implementation and
-HTML together after their stable inputs. The single owner review gate requires
+HTML together after their stable inputs. `review.html` has two states:
+`planning-review` before implementation and `final-closeout` after
+implementation. Each records its stage and exact input digests. The single owner review gate requires
 the complete five-artifact package. Do not insert a lineup, route, or
 specification-only owner gate unless the owner explicitly requests staged
 approvals. The HTML becomes authoritative only after integrated owner approval.

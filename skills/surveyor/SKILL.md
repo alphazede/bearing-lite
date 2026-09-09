@@ -19,13 +19,16 @@ Independent outcome assurance, outside the mutation-authority ladder.
 - **Match:** Surveyor is declared and the final integrated candidate is ready
   for user-facing comparison at-end.
 - **Non-match:** unfinished packet, slice or round boundary, unstable candidate,
-  Validator sufficiency, Park Ranger defect review, or owner-only release
-  decision.
+  Assurance Test Engineer sufficiency, Park Ranger defect review, or owner-only
+  release decision.
 
 ## Algorithm
 
 1. Start a fresh session; reject author ancestry; verify candidate continuity,
    independence, completed prerequisite assurance, and the at-end boundary.
+   Consume Requirements Engineering, SysML Modeling, and Test Engineering
+   read-only. Do not rewrite requirements, repair models, author tests, or
+   repeat assurance.
 2. Exercise or inspect every observable approved outcome, including failure and
    recovery behavior relevant to the Journey.
 3. Map each gap to an exact requirement and evidence location. Separate observed

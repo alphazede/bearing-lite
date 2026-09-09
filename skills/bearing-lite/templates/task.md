@@ -34,7 +34,7 @@ pre-Map lineup or route-review gate is allowed.
 final integrated candidate, not at a slice or round boundary, and not as
 task-level tests or author self-checks. Never infer it from
 `required_assurance` on an individual task. The proposal is visible in
-`implementation.md` and `review.html`, then becomes authoritative only after
+`implementation.json` and `review.html`, then becomes authoritative only after
 the integrated owner approval; do not offer `per-slice` or `per-round`.
 `journey` stays a proposal until the mapped implementation graph exists and the
 integrated owner review approves it. `lineup_snapshot` is authoritative after
@@ -122,10 +122,14 @@ Field rules:
 ```markdown
 - scope: <allowed paths, systems, and boundaries>
 - authority: <approved envelope; protected actions remain owner-only>
-- required_assurance: [Validator]
+- required_assurance: [Assurance Test Engineer]
 ```
 
-`required_assurance` lists only roles that must accept the same candidate (for example `Validator`, and `Park Ranger` or `Surveyor` when their triggers apply).
+`required_assurance` lists only roles that must accept the same candidate (for example `Assurance Test Engineer`, and `Park Ranger` or `Surveyor` when their triggers apply).
+
+test-writing Crewmate write set is tests and approved fixtures only. Product
+write set excludes tests and must not weaken independently authored tests.
+Neither self-certifies.
 
 ## After candidate work (add when evidence exists)
 
@@ -163,4 +167,4 @@ review. Any source or candidate change during deployment is separately scoped.
 
 ## Single-writer reminder
 
-Only the parent coordinator updates this block after rereading it. Crewmate, Validator, Park Ranger, and Surveyor return compact receipts (`verdict`, `candidate_ref`, `changed_paths`, `tests`, `findings`, `blocker`); the coordinator records transitions. Router alone changes cross-wave dependencies or global sequencing. Update `implementation.md` and `review.html` once per wave, plus owner-decision or blocker changes.
+Only the parent coordinator updates this block after rereading it. Crewmate, Test Engineer, Park Ranger, and Surveyor return compact receipts (`verdict`, `candidate_ref`, `changed_paths`, `tests`, `findings`, `blocker`); the coordinator records transitions. Router alone changes cross-wave dependencies or global sequencing. Update `implementation.json` and `review.html` once per wave, plus owner-decision or blocker changes.

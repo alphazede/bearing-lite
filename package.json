@@ -35,6 +35,8 @@
     "CODE_OF_CONDUCT.md",
     "CONTRIBUTING.md",
     "SECURITY.md",
-    "LICENSE-APACHE"
+    "LICENSE-APACHE",
+    "lineups.json",
+    "schemas/"
   ]
 }

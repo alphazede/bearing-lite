@@ -19,12 +19,14 @@ Independent defect assurance, outside the mutation-authority ladder.
 - **Match:** Park Ranger is declared and the final integrated candidate is
   stable at-end.
 - **Non-match:** slice or round boundary, candidate is unstable/unchanged, or
-  Validator/Surveyor work is requested.
+  Surveyor/Test Engineer work is requested.
 
 ## Algorithm
 
 1. Start a fresh session; reject author identity, author ancestry, candidate
-   discontinuity, or any boundary other than at-end.
+   discontinuity, or any boundary other than at-end. Consume the Assurance
+   Test Engineer receipt. Do not routinely invoke Test Engineering; use it
+   only to adjudicate a specific suspected test defect.
 2. Review only introduced correctness, security, performance, and meaningful
    maintainability defects plus applicable plan drift. When the candidate
    implements a published standard, compare the change against the cited text
