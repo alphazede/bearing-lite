@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/alphazede/bearing-lite/schemas/lineups.schema.json",
   "title": "Bearing Lite lineups.json",
-  "description": "User-owned named lineup catalog. Packaged bytes stay an empty catalog with no defaults. Selection is not an authority grant. Duplicate raw keys, duplicate roles, ASCII case-fold collisions, and unresolved defaults are extra oracles, not silent collapses.",
+  "description": "User-owned named lineup catalog. Packaged bytes stay an empty catalog with no defaults. Selection is not an authority grant.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -28,7 +28,7 @@
     },
     "defaults": {
       "type": "object",
-      "description": "Optional user-owned recommendations. Keys must resolve exactly; extra oracles reject unresolved names. Not a grant.",
+      "description": "Optional user-owned recommendations. Not a grant.",
       "additionalProperties": false,
       "properties": {
         "planning": {
