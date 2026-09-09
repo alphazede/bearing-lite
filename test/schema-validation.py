@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """CMD-LITE-SCHEMA-VALIDATE — Draft 2020-12 regressions for Lite artifact schemas.
 
-Binds pass/fail to SEIT-EMV-021/022/024/028 (AC-EMV-021/022/024/028).
+Binds pass/fail to SEIT-EMV-021/022/024/028 (AC-EMV-021/022/024/028) and
+SEIT-EMV-026 populated lineups structure (ROUTER-EMV-002-001).
 Required fields come from CONTRACT-EMV-007/008/009, design interfaces/data,
-and the public checkout-lease identity — not from candidate schema required
-arrays. Fixtures are public-safe synthetics of the approved structures.
+the public checkout-lease identity, and the selected lineup catalog contract —
+not from candidate schema required arrays. Fixtures are public-safe synthetics
+of the approved structures. Lineups extra oracles stay in this test file.
 """
 from __future__ import annotations
 
@@ -168,6 +170,28 @@ FORBIDDEN_SLICE_ALIASES = ("reasoning",)
 FORBIDDEN_AUTHORITY_ALIASES = ("granting_owner_decision", "expiry")
 FORBIDDEN_PROOF_ALIASES = ("evidence", "pass_fail")
 
+LINEUPS_SCHEMA_NAME = "lineups.schema.json"
+LINEUPS_FIXTURE_PATH = ROOT / "test" / "fixtures" / "lineups-populated.example.json"
+LINEUPS_SHIPPED_PATH = ROOT / "lineups.json"
+LINEUPS_MISSING_SCHEMA = f"missing schemas/{LINEUPS_SCHEMA_NAME}"
+LINEUPS_PHASE_FIELDS = (
+    "planned_planning_assignments",
+    "implementation_assignments",
+)
+LINEUPS_ASSIGNMENT_FIELDS = ("role", "primary", "ordered_fallbacks")
+LINEUPS_PRIMARY_FIELDS = ("harness", "model", "reasoning")
+LINEUPS_FALLBACK_FIELDS = ("condition", "harness", "model", "reasoning")
+LINEUPS_PACKAGED_DEFAULT_FIELDS = ("default", "providers", "models")
+LINEUPS_ROOT_FIELDS = ("schema_version", "lineups")
+LINEUPS_DEFAULT_FIELDS = ("planning", "implementation")
+LINEUPS_INVALID_NAMES = (
+    ("profile_name_leading_digit", "1fixture"),
+    ("profile_name_with_space", "fixture alpha"),
+    ("profile_name_path_like", "fixture/alpha"),
+    ("profile_name_leading_underscore", "_fixture"),
+    ("profile_name_empty", ""),
+)
+
 
 def die_env(message: str, code: int = 2) -> None:
     print(f"ENVIRONMENT_FAILURE: {message}", file=sys.stderr)
@@ -226,20 +250,26 @@ def bootstrap() -> None:
         shutil.rmtree(target, ignore_errors=True)
 
 
-def load_schemas() -> dict[str, dict]:
+def load_schemas() -> dict[str, dict | None]:
     names = {
         "journey": "journey.schema.json",
         "authority": "authority.schema.json",
         "implementation": "implementation.schema.json",
         "seit": "seit.schema.json",
     }
-    out: dict[str, dict] = {}
+    out: dict[str, dict | None] = {}
     for key, filename in names.items():
         path = SCHEMAS_DIR / filename
         if not path.is_file():
             die_env(f"missing {path.relative_to(ROOT)}")
         with path.open(encoding="utf-8") as fh:
             out[key] = json.load(fh)
+    lineups_path = SCHEMAS_DIR / LINEUPS_SCHEMA_NAME
+    if lineups_path.is_file():
+        with lineups_path.open(encoding="utf-8") as fh:
+            out["lineups"] = json.load(fh)
+    else:
+        out["lineups"] = None
     return out
 
 
@@ -667,6 +697,117 @@ def has_content(value: object) -> bool:
     return True
 
 
+def empty_shipped_catalog() -> dict:
+    with LINEUPS_SHIPPED_PATH.open(encoding="utf-8") as fh:
+        return copy.deepcopy(json.load(fh))
+
+
+def complete_user_catalog(**overrides: object) -> dict:
+    with LINEUPS_FIXTURE_PATH.open(encoding="utf-8") as fh:
+        doc = json.load(fh)
+    doc.update(overrides)
+    return doc
+
+
+def complete_profile() -> dict:
+    return copy.deepcopy(complete_user_catalog()["lineups"]["fixture-alpha"])
+
+
+def catalog_named(name: str) -> dict:
+    return {
+        "schema_version": 1,
+        "lineups": {name: complete_profile()},
+    }
+
+
+def duplicate_raw_key_messages(raw: str) -> list[str]:
+    found: list[str] = []
+
+    def hook(pairs: list[tuple[str, object]]) -> dict:
+        seen: dict[str, object] = {}
+        for key, value in pairs:
+            if key in seen:
+                found.append(f'duplicate raw JSON key "{key}"')
+            seen[key] = value
+        return seen
+
+    try:
+        json.loads(raw, object_pairs_hook=hook)
+    except json.JSONDecodeError:
+        found.append("catalog is not JSON")
+    return found
+
+
+def lineups_extra_oracle_messages(instance: object, raw: str | None) -> list[str]:
+    """Checks JSON Schema cannot solely express. Not a catalog service."""
+    messages: list[str] = []
+    if raw is not None:
+        messages.extend(duplicate_raw_key_messages(raw))
+    if not isinstance(instance, dict):
+        return messages
+    lineups = instance.get("lineups")
+    if isinstance(lineups, dict):
+        folded: dict[str, str] = {}
+        for name in lineups:
+            key = name.lower()
+            prior = folded.get(key)
+            if prior is not None and prior != name:
+                messages.append(
+                    f"lineups: ASCII case-fold collision {prior!r} and {name!r}"
+                )
+            else:
+                folded[key] = name
+        for name, profile in lineups.items():
+            if not isinstance(profile, dict):
+                continue
+            for phase in LINEUPS_PHASE_FIELDS:
+                assignments = profile.get(phase)
+                if not isinstance(assignments, list):
+                    continue
+                seen_roles: list[str] = []
+                for item in assignments:
+                    if not isinstance(item, dict):
+                        continue
+                    role = item.get("role")
+                    if isinstance(role, str):
+                        if role in seen_roles:
+                            messages.append(
+                                f"lineups.{name}.{phase}: duplicate role {role!r}"
+                            )
+                        else:
+                            seen_roles.append(role)
+    defaults = instance.get("defaults")
+    if isinstance(defaults, dict) and isinstance(lineups, dict):
+        for field in LINEUPS_DEFAULT_FIELDS:
+            if field not in defaults:
+                continue
+            value = defaults[field]
+            if value not in lineups:
+                messages.append(
+                    f"defaults.{field}: does not resolve to an existing lineup name"
+                )
+    return messages
+
+
+def lineups_errors(schema: dict, instance: object, raw: str | None) -> list[str]:
+    parsed = instance
+    if parsed is None and raw is not None:
+        parsed = json.loads(raw)
+    messages = errors_for(schema, parsed)
+    messages.extend(lineups_extra_oracle_messages(parsed, raw))
+    return messages
+
+
+def raw_duplicate_profile_keys() -> str:
+    profile = json.dumps(complete_profile(), separators=(",", ":"))
+    return (
+        '{"schema_version":1,"lineups":{'
+        f'"fixture-alpha":{profile},'
+        f'"fixture-alpha":{profile}'
+        "}}"
+    )
+
+
 def cases() -> list[tuple[str, str, str, object, str]]:
     """(seit_id, name, schema_key, instance, expect accept|reject)."""
     out: list[tuple[str, str, str, object, str]] = [
@@ -844,6 +985,148 @@ def cases() -> list[tuple[str, str, str, object, str]]:
             )]
         ), "accept"),
     ])
+    return out
+
+
+def lineups_cases() -> list[tuple[str, str, object, str, str | None]]:
+    """(seit_id, name, instance, expect accept|reject, raw)."""
+    wrong_assignments = complete_user_catalog()
+    wrong_assignments["lineups"]["fixture-alpha"]["planned_planning_assignments"] = {}
+    wrong_primary = complete_user_catalog()
+    wrong_primary["lineups"]["fixture-alpha"]["planned_planning_assignments"][0]["primary"] = "harness-a"
+    wrong_fallbacks = complete_user_catalog()
+    wrong_fallbacks["lineups"]["fixture-alpha"]["planned_planning_assignments"][0]["ordered_fallbacks"] = {
+        "condition": "condition-first",
+    }
+    dup_planning = complete_user_catalog()
+    planning_dup = copy.deepcopy(
+        dup_planning["lineups"]["fixture-alpha"]["planned_planning_assignments"][0]
+    )
+    planning_dup["primary"]["model"] = "model-dup"
+    dup_planning["lineups"]["fixture-alpha"]["planned_planning_assignments"].append(planning_dup)
+    dup_impl = complete_user_catalog()
+    impl_dup = copy.deepcopy(
+        dup_impl["lineups"]["fixture-alpha"]["implementation_assignments"][0]
+    )
+    impl_dup["primary"]["model"] = "model-dup"
+    dup_impl["lineups"]["fixture-alpha"]["implementation_assignments"].append(impl_dup)
+    collision = complete_user_catalog()
+    collision["lineups"]["Fixture-Alpha"] = copy.deepcopy(collision["lineups"]["fixture-alpha"])
+
+    out: list[tuple[str, str, object, str, str | None]] = [
+        ("SEIT-EMV-026", "empty_shipped_catalog_without_defaults", empty_shipped_catalog(), "accept", None),
+        ("SEIT-EMV-026", "complete_populated_user_catalog_with_resolving_defaults", complete_user_catalog(), "accept", None),
+        ("SEIT-EMV-026", "populated_catalog_without_defaults_field", omit(complete_user_catalog(), "defaults"), "accept", None),
+        ("SEIT-EMV-026", "unlimited_lineup_keys", {
+            "schema_version": 1,
+            "lineups": {
+                "fixture-alpha": complete_profile(),
+                "fixture-beta": complete_profile(),
+                "fixture-gamma": complete_profile(),
+            },
+            "defaults": {
+                "planning": "fixture-alpha",
+                "implementation": "fixture-gamma",
+            },
+        }, "accept", None),
+        ("SEIT-EMV-026", "long_profile_name_no_128_ceiling", catalog_named("A" + ("a" * 128)), "accept", None),
+        ("SEIT-EMV-026", "schema_version_string_1", complete_user_catalog(schema_version="1"), "reject", None),
+        ("SEIT-EMV-026", "schema_version_not_1", complete_user_catalog(schema_version=2), "reject", None),
+        ("SEIT-EMV-026", "lineups_array_not_object", complete_user_catalog(lineups=[]), "reject", None),
+        ("SEIT-EMV-026", "profile_not_object", {
+            "schema_version": 1,
+            "lineups": {"fixture-alpha": "not-an-object"},
+        }, "reject", None),
+        ("SEIT-EMV-026", "assignments_not_array", wrong_assignments, "reject", None),
+        ("SEIT-EMV-026", "primary_not_object", wrong_primary, "reject", None),
+        ("SEIT-EMV-026", "ordered_fallbacks_not_array", wrong_fallbacks, "reject", None),
+        ("SEIT-EMV-026", "duplicate_raw_json_keys", None, "reject", raw_duplicate_profile_keys()),
+        ("SEIT-EMV-026", "duplicate_role_in_planning_phase", dup_planning, "reject", None),
+        ("SEIT-EMV-026", "duplicate_role_in_implementation_phase", dup_impl, "reject", None),
+        ("SEIT-EMV-026", "ascii_case_fold_collision", collision, "reject", None),
+        ("SEIT-EMV-026", "defaults_planning_does_not_resolve", complete_user_catalog(
+            defaults={"planning": "missing-profile", "implementation": "fixture-beta"}
+        ), "reject", None),
+        ("SEIT-EMV-026", "defaults_implementation_does_not_resolve", complete_user_catalog(
+            defaults={"planning": "fixture-alpha", "implementation": "missing-profile"}
+        ), "reject", None),
+    ]
+
+    for field in LINEUPS_ROOT_FIELDS:
+        out.append((
+            "SEIT-EMV-026",
+            f"catalog_missing_{field}",
+            omit_nested(complete_user_catalog(), field),
+            "reject",
+            None,
+        ))
+    for field in LINEUPS_PHASE_FIELDS:
+        out.append((
+            "SEIT-EMV-026",
+            f"profile_missing_{field}",
+            omit_nested(complete_user_catalog(), "lineups", "fixture-alpha", field),
+            "reject",
+            None,
+        ))
+        emptied = complete_user_catalog()
+        emptied["lineups"]["fixture-alpha"][field] = []
+        out.append((
+            "SEIT-EMV-026",
+            f"profile_empty_{field}",
+            emptied,
+            "reject",
+            None,
+        ))
+    for field in LINEUPS_ASSIGNMENT_FIELDS:
+        out.append((
+            "SEIT-EMV-026",
+            f"assignment_missing_{field}",
+            omit_nested(
+                complete_user_catalog(),
+                "lineups", "fixture-alpha", "planned_planning_assignments", "0", field,
+            ),
+            "reject",
+            None,
+        ))
+    for field in LINEUPS_PRIMARY_FIELDS:
+        out.append((
+            "SEIT-EMV-026",
+            f"primary_missing_{field}",
+            omit_nested(
+                complete_user_catalog(),
+                "lineups", "fixture-alpha", "planned_planning_assignments", "0", "primary", field,
+            ),
+            "reject",
+            None,
+        ))
+    for field in LINEUPS_FALLBACK_FIELDS:
+        out.append((
+            "SEIT-EMV-026",
+            f"fallback_missing_{field}",
+            omit_nested(
+                complete_user_catalog(),
+                "lineups", "fixture-alpha", "planned_planning_assignments", "0",
+                "ordered_fallbacks", "0", field,
+            ),
+            "reject",
+            None,
+        ))
+    for field in LINEUPS_PACKAGED_DEFAULT_FIELDS:
+        out.append((
+            "SEIT-EMV-026",
+            f"extra_packaged_{field}_field",
+            complete_user_catalog() | {field: {"fixture": "no"}},
+            "reject",
+            None,
+        ))
+    for name, value in LINEUPS_INVALID_NAMES:
+        out.append((
+            "SEIT-EMV-026",
+            name,
+            catalog_named(value),
+            "reject",
+            None,
+        ))
     return out
 
 
@@ -1025,6 +1308,34 @@ def run_cases() -> int:
     else:
         print(f"FAIL {line}: {detail}")
         failed += 1
+
+    lineups_schema = schemas.get("lineups")
+    try:
+        lineup_case_list = lineups_cases()
+    except OSError as exc:
+        print(f"FAIL SEIT-EMV-026 lineups_populated_fixture: {exc}")
+        failed += 1
+        lineup_case_list = []
+    for seit_id, name, instance, expect, raw in lineup_case_list:
+        line = f"{seit_id} {name}"
+        if not isinstance(lineups_schema, dict):
+            print(f"FAIL {line}: {LINEUPS_MISSING_SCHEMA}")
+            failed += 1
+            continue
+        messages = lineups_errors(lineups_schema, instance, raw)
+        accepted = not messages
+        want_accept = expect == "accept"
+        ok = accepted if want_accept else not accepted
+        if ok:
+            print(f"PASS {line}")
+            passed += 1
+            continue
+        failed += 1
+        if want_accept:
+            first = messages[0] if messages else "rejected with no message"
+            print(f"FAIL {line}: rejected (expected accept): {first}")
+        else:
+            print(f"FAIL {line}: accepted (expected reject)")
 
     print(f"# passed={passed} failed={failed}")
     return 1 if failed else 0
