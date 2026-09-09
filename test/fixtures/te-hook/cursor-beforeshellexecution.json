@@ -1,0 +1,7 @@
+{
+  "sessionId": "te-fixture-shell",
+  "hookEventName": "beforeShellExecution",
+  "cwd": "__WORKSPACE__",
+  "workspaceRoot": "__WORKSPACE__",
+  "command": "node --test test/te-example.test.mjs"
+}

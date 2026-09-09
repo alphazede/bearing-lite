@@ -1,0 +1,8 @@
+{
+  "session_id": "te-fixture-subagent-stop",
+  "cwd": "__WORKSPACE__",
+  "hook_event_name": "SubagentStop",
+  "stop_hook_active": false,
+  "agent_id": "child-1",
+  "agent_type": "Crewmate"
+}

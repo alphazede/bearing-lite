@@ -1,0 +1,11 @@
+{
+  "session_id": "te-fixture-test-write",
+  "transcript_path": "/tmp/te-fixture.jsonl",
+  "cwd": "__WORKSPACE__",
+  "hook_event_name": "PreToolUse",
+  "tool_name": "Write",
+  "tool_input": {
+    "file_path": "test/te-example.test.mjs",
+    "content": "import { it } from \"node:test\";\n"
+  }
+}
