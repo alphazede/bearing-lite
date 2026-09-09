@@ -22,6 +22,11 @@ Bearing rejects deviations with typed findings.
    drafting. Do not offer `per-slice` or `per-round`. Map the proposed Journey
    type and active/standby/unused role states before generating implementation;
    the final implementation and `review.html` record those proposals together.
+6. The lineup snapshot contains the Journey-owned `planning_review` binding:
+   policy reference, one candidate ref/revision/digest, and unique abstract
+   reviewer slots with a primary route reference plus ordered fallback route
+   references. Slot count satisfies the referenced core policy. Do not put route
+   identities in the core policy or map these slots to implementation assurance.
 
 ## Requirements register
 

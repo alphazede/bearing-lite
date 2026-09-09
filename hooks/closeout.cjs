@@ -10,6 +10,7 @@
 const HOOK_CLASS = "closeout";
 const OUTCOMES = Object.freeze(["ADVISE", "REROUTE", "BLOCK", "UNAVAILABLE"]);
 const ENFORCEMENT = "procedural";
+const { evaluatePlanningReview } = require("./planning-review.cjs");
 
 const HANDOFF_FIELDS = Object.freeze([
   "verdict",
@@ -145,6 +146,10 @@ function evaluate(input) {
         ? "protected_completion"
         : "advisory";
 
+    const planningVerdict = input.planning_review
+      ? evaluatePlanningReview(input.planning_review)
+      : null;
+
     const { missing, invalid } = inspectHandoffFields(input);
     const required = normalizeAssurance(input.required_assurance);
     const accepted = Array.isArray(input.assurance_accepted)
@@ -169,6 +174,9 @@ function evaluate(input) {
       }
       if (!candidateMatched) blockers.push("candidate_mismatch");
       if (unresolvedBlocker) blockers.push("unresolved_blocker");
+      if (planningVerdict && planningVerdict.outcome !== "PASS") {
+        blockers.push("planning_review:" + planningVerdict.outcome);
+      }
 
       if (blockers.length > 0) {
         return result(
@@ -184,6 +192,16 @@ function evaluate(input) {
         "protected_completion_ready",
         RECOVERY_COMPLETE,
         { protected_action: "completion" }
+      );
+    }
+
+    if (planningVerdict) {
+      return result(
+        planningVerdict.outcome === "PASS" ? "ADVISE" : "REROUTE",
+        "planning_review:" + planningVerdict.outcome + ":" + planningVerdict.reason,
+        planningVerdict.outcome === "PASS"
+          ? "Planning-review record is complete; continue to the integrated owner gate"
+          : "Keep dispatch closed and complete, repair, or amend the planning-review record"
       );
     }
 

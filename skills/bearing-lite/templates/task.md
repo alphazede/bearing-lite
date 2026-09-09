@@ -13,7 +13,21 @@ pre-Map lineup or route-review gate is allowed.
 - journey: <Explorer Journey | Expedition>
 - review_cadence: at-end
 - choice_basis: <proposed recommendation and reason; owner-approved at integrated review>
-- lineup_snapshot: <named primary/fallback instances; proposed role-state classification and reasoning>
+- lineup_snapshot: <named implementation/assurance instances plus the planning_review binding below>
+- planning_review:
+  - policy_ref: skills/bearing-lite/references/review-policy.md
+  - candidate_ref: <shared planning-package reference>
+  - candidate_revision: <shared planning-package revision>
+  - candidate_digest: <shared planning-package digest>
+  - reviewer_slots:
+    - slot_id: <abstract unique slot>
+      primary_route_ref: <owner-selected lineup route reference>
+      fallback_route_refs: [<ordered owner-selected route references>]
+  - round_number: 1
+  - completed_rounds: <0-1>
+  - receipts: <one isolated receipt per slot, including the distinct selected_route_ref>
+  - aggregated_repairs: <0-1>
+  - deterministic_gate: <PASS after repair; otherwise omitted>
 ```
 
 `review_cadence` is `at-end` only. The single independent review runs on the
@@ -29,6 +43,11 @@ edits to `~/.agents/bearing-lite/default-role-lineup.md` have no effect.
 Replace it only through an explicit owner-confirmed dated visible amendment.
 Record the amendment date beside the replacement values. Dispatch identities
 come from this snapshot, not from the current global defaults file.
+
+Every configured planning-review slot uses the same candidate ref, revision,
+and digest. Findings stay isolated until one aggregation. Slot exhaustion is
+`FAIL_ROUND`; policy violations halt or require an owner amendment. The binding
+does not populate `required_assurance` and does not dispatch reviewers.
 
 ## Checkout lease (record before any planning write)
 

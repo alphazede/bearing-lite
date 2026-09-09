@@ -68,13 +68,25 @@ agy plugin install /path/to/bearing-lite/.agy
 
 # Pi — skills package, no command hooks
 pi install npm:@alphazede/bearing-lite
+
+# DeepCode — discover the packaged skills through ~/.deepcode/skills or ~/.agents/skills;
+# DeepCode has no plugin-install or command-hook surface
 ```
 
 Claude Code, Codex, Grok Build, Cursor, and Kimi Code are **partial** hook
 clients: session start runs the activation advisory and stop runs the closeout
-advisory. AGY and Pi are **skills-only**. Transition-order and protected-action
-checks stay in the skills on every host. Node.js must be on `PATH` for the
-hook adapters.
+advisory. AGY, Pi, and DeepCode are **skills-only**. Transition-order and
+protected-action checks stay in the skills on every host. Node.js must be on
+`PATH` for the hook adapters.
+
+Planning-review constraints live only in
+[`skills/bearing-lite/references/review-policy.md`](skills/bearing-lite/references/review-policy.md);
+the shared evaluator is `hooks/planning-review.cjs`. Journey-specific abstract
+slot IDs and owner-selected primary/ordered fallback route references belong
+only in the approved `lineup_snapshot`. Existing host mappings cannot safely
+derive the nested record from session events, so they preserve partial or
+skills-only coverage and apply this gate procedurally. Planning review is a
+pre-dispatch plan gate; implementation `max_assurance_rounds` remains separate.
 
 **Skills-only copy** of `skills/` into a host skills directory does not
 register hooks. That path remains first-class. See

@@ -10,6 +10,7 @@
 const HOOK_CLASS = "transition";
 const OUTCOMES = Object.freeze(["ADVISE", "REROUTE", "BLOCK", "UNAVAILABLE"]);
 const ENFORCEMENT = "procedural";
+const { evaluatePlanningReview } = require("./planning-review.cjs");
 
 const RECOVERY_UNAVAILABLE =
   "Keep the current state, run the transition checklist procedurally, and record the result before retrying";
@@ -123,6 +124,18 @@ function evaluate(input) {
 
     if (SAFE_CHANNELS.has(input.channel) || SAFE_CHANNELS.has(input.action_kind)) {
       return result("ADVISE", "channel_open", RECOVERY_CHANNEL);
+    }
+
+    if (input.action_kind === "planning_review_transition") {
+      const verdict = evaluatePlanningReview(input.planning_review);
+      if (verdict.outcome === "PASS") {
+        return result("ADVISE", "planning_review:PASS", RECOVERY_ALLOW);
+      }
+      return result(
+        verdict.outcome === "NEEDS_MORE_EVIDENCE" ? "REROUTE" : "BLOCK",
+        "planning_review:" + verdict.outcome + ":" + verdict.reason,
+        "Keep dispatch closed and repair or amend the planning-review record"
+      );
     }
 
     const from = typeof input.from_state === "string" ? input.from_state.trim() : "";
