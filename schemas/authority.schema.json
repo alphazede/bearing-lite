@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/alphazede/bearing-lite/schemas/authority.schema.json",
   "title": "Bearing Lite authority.json",
-  "description": "Current machine-enforced authority envelope. Lineup or route selection is not a grant. CONTRACT-EMV-009 envelope fields are required. Canonical keys are granting_owner_decisions (array) and expiry_conditions (array of strings). Extra lifecycle metadata is allowed.",
+  "description": "Current machine-enforced authority envelope. Lineup or route selection is not a grant. CONTRACT-EMV-009 envelope fields are required. Canonical keys are granting_owner_decisions (array) and expiry_conditions (array of strings). effective is boolean only. Extra lifecycle metadata is allowed.",
   "type": "object",
   "additionalProperties": true,
   "required": [
@@ -61,7 +61,7 @@
       "type": "array",
       "items": { "type": "object", "additionalProperties": true }
     },
-    "effective": { "type": ["boolean", "string"] },
+    "effective": { "type": "boolean", "description": "Machine-enforced effectiveness. Boolean only: a string is not an effectiveness decision." },
     "expiry_conditions": {
       "type": "array",
       "items": { "type": "string", "minLength": 1 }
