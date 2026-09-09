@@ -11,8 +11,16 @@ const CONFIG = readFileSync(
 );
 
 const ROLES = [
-  "Router", "Explorer",
-  "Crewmate", "Validator", "Park Ranger", "Surveyor",
+  "Router",
+  "Explorer",
+  "Crewmate",
+  "Test Engineer",
+  "Scribe",
+  "Plan Integrator",
+  "Systems Modeler",
+  "Integration Engineer",
+  "Park Ranger",
+  "Surveyor",
 ];
 
 describe("Journey defaults", () => {
@@ -27,6 +35,8 @@ describe("Journey defaults", () => {
       assert.match(CONFIG, new RegExp(`\\| ${role.replace("-", "\\-")} \\|`));
     }
     assert.doesNotMatch(CONFIG, /Trail Boss|Sub-Explorer|trail-boss|sub-explorer/);
+    assert.doesNotMatch(CONFIG, /\|\s*Validator\s*\|/);
+    assert.match(CONFIG, /Validator is not a normal lineup role/);
     assert.match(CONFIG, /Primary agent\/harness/);
     assert.match(CONFIG, /Fallback agent\/harness/);
     assert.match(CONFIG, /Primary reasoning/);

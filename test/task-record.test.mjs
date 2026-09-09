@@ -177,7 +177,13 @@ export function validateTaskRecord(task, ctx = {}) {
   // Single-writer: only parent coordinator may write transitions.
   const parent = ctx.parentCoordinator ?? "explorer";
   if (ctx.writer !== undefined && ctx.writer !== parent) {
-    const workerRoles = new Set(["crewmate", "validator", "park-ranger", "surveyor"]);
+    const workerRoles = new Set([
+      "crewmate",
+      "test-engineer",
+      "validator",
+      "park-ranger",
+      "surveyor",
+    ]);
     if (workerRoles.has(ctx.writer) || ctx.writer !== parent) {
       diagnostics.push({
         code: "wrong_writer",
@@ -716,6 +722,21 @@ describe("CMD-TASK-01 task-record (SEIT-TASK-RECORD-01, SEIT-SINGLE-WRITER-01)",
     assert.match(TEMPLATE, /complete five-artifact package/i);
     assert.match(TEMPLATE, /integrated owner review approves or changes/i);
     assert.match(TEMPLATE, /no\s+pre-Map lineup or route-review gate/i);
+    assert.match(TEMPLATE, /implementation\.json/);
+    assert.doesNotMatch(TEMPLATE, /implementation\.md/);
+  });
+
+  it("template lists Test Engineer assurance and forbids Validator as an active owner", () => {
+    assert.match(TEMPLATE, /Test Engineer/);
+    assert.match(TEMPLATE, /Assurance Test Engineer|required_assurance:.*Test Engineer/s);
+    assert.doesNotMatch(TEMPLATE, /required_assurance:\s*\[Validator\]/);
+    assert.doesNotMatch(TEMPLATE, /Crewmate, Validator, Park Ranger/);
+  });
+
+  it("template records split Crewmate write sets and no self-certification", () => {
+    assert.match(TEMPLATE, /test-writing/);
+    assert.match(TEMPLATE, /product write set excludes tests|excludes tests/i);
+    assert.match(TEMPLATE, /self-certif/i);
   });
 
   it("template records snapshot precedence and the dated amendment path", () => {

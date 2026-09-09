@@ -4,7 +4,7 @@
  */
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -20,6 +20,45 @@ const APPROVED_FILES_ALLOWLIST = [
   "CONTRIBUTING.md",
   "SECURITY.md",
   "LICENSE-APACHE",
+  "lineups.json",
+  "schemas/",
+];
+
+const REQUIRED_SCHEMA_FILES = [
+  "schemas/seit.schema.json",
+  "schemas/implementation.schema.json",
+  "schemas/authority.schema.json",
+  "schemas/journey.schema.json",
+];
+
+const ALWAYS_ON_SEIT_SECTIONS = [
+  "scope/baseline",
+  "responsibility/change authority",
+  "applicable documents/precedence",
+  "requirements flowdown/architecture context",
+  "V&V methods",
+  "verification and validation matrices",
+  "levels/integration sequence",
+  "environments/fixtures/data/simulations/support",
+  "procedures/commands",
+  "evidence/pass-fail",
+  "anomaly/corrective/closure",
+];
+
+const IMPLEMENTATION_SLICE_FIELDS = [
+  "role",
+  "goal",
+  "type",
+  "requirement_ids",
+  "design_ids",
+  "seit_proof_rows",
+  "design_lenses",
+  "model_route",
+  "write_set",
+  "command_ids",
+  "stop_condition",
+  "human_decision",
+  "authority_id",
 ];
 
 const PROHIBITED_PACK_PATTERNS = [
@@ -168,6 +207,39 @@ export function validateLockfileConsistency(lockfileContent) {
   return { ok: true };
 }
 
+/**
+ * Collect JSON Schema property nodes, including nested properties.
+ * @param {unknown} schema
+ * @returns {Map<string, Record<string, unknown>>}
+ */
+export function collectSchemaProperties(schema) {
+  /** @type {Map<string, Record<string, unknown>>} */
+  const found = new Map();
+  /**
+   * @param {unknown} node
+   */
+  function walk(node) {
+    if (!node || typeof node !== "object") return;
+    const rec = /** @type {Record<string, unknown>} */ (node);
+    if (rec.properties && typeof rec.properties === "object" && !Array.isArray(rec.properties)) {
+      for (const [key, value] of Object.entries(
+        /** @type {Record<string, unknown>} */ (rec.properties)
+      )) {
+        if (value && typeof value === "object" && !Array.isArray(value)) {
+          found.set(key, /** @type {Record<string, unknown>} */ (value));
+        } else {
+          found.set(key, {});
+        }
+      }
+    }
+    for (const value of Object.values(rec)) {
+      if (value && typeof value === "object") walk(value);
+    }
+  }
+  walk(schema);
+  return found;
+}
+
 describe("CMD-PACKAGE-01 package-boundary (SEIT-PACKAGE-01)", () => {
   it("package.json name is @alphazede/bearing-lite with public-only files allowlist", () => {
     const pkg = JSON.parse(readFileSync(path.join(ROOT, "package.json"), "utf8"));
@@ -198,6 +270,22 @@ describe("CMD-PACKAGE-01 package-boundary (SEIT-PACKAGE-01)", () => {
     assert.ok(!paths.some((p) => p.includes(".bearing")));
     assert.ok(!paths.some((p) => p.startsWith("src/") || p.startsWith("dist/")));
     assert.ok(!paths.some((p) => p.startsWith("server/") || /(^|\/)cli(\.|\/)/.test(p)));
+    const packVerdict = validatePackFileList(paths);
+    assert.equal(packVerdict.ok, true, JSON.stringify(packVerdict));
+  });
+
+  it("npm pack includes lineups.json and schema files and no private paths", () => {
+    const out = execFileSync("npm", ["pack", "--dry-run", "--json"], {
+      cwd: ROOT,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    const parsed = JSON.parse(out);
+    const paths = parsed[0].files.map(/** @param {{path:string}} f */ (f) => f.path);
+    assert.ok(paths.includes("lineups.json"));
+    for (const rel of REQUIRED_SCHEMA_FILES) {
+      assert.ok(paths.includes(rel), `npm pack must include ${rel}`);
+    }
     const packVerdict = validatePackFileList(paths);
     assert.equal(packVerdict.ok, true, JSON.stringify(packVerdict));
   });
@@ -238,6 +326,48 @@ describe("CMD-PACKAGE-01 package-boundary (SEIT-PACKAGE-01)", () => {
       assert.ok(verdict.diagnostics.some((d) => d.path === "mcp.json"));
       assert.ok(verdict.diagnostics.some((d) => d.path === "bin/cli.js"));
       assert.ok(verdict.diagnostics.some((d) => d.path === ".bearing/state.json"));
+    }
+  });
+
+  it("JSON Schema files declare always-on SEIT sections, slice fields, and N/K/C names without integer defaults", () => {
+    for (const rel of REQUIRED_SCHEMA_FILES) {
+      assert.equal(existsSync(path.join(ROOT, rel)), true, `${rel} must exist`);
+    }
+    const seit = JSON.parse(readFileSync(path.join(ROOT, "schemas/seit.schema.json"), "utf8"));
+    const implementation = JSON.parse(
+      readFileSync(path.join(ROOT, "schemas/implementation.schema.json"), "utf8")
+    );
+    const authority = JSON.parse(
+      readFileSync(path.join(ROOT, "schemas/authority.schema.json"), "utf8")
+    );
+    const journey = JSON.parse(readFileSync(path.join(ROOT, "schemas/journey.schema.json"), "utf8"));
+    assert.equal(seit && typeof seit, "object");
+    assert.equal(implementation && typeof implementation, "object");
+    assert.equal(authority && typeof authority, "object");
+    assert.equal(journey && typeof journey, "object");
+
+    const seitText = JSON.stringify(seit);
+    for (const section of ALWAYS_ON_SEIT_SECTIONS) {
+      assert.ok(
+        seitText.toLowerCase().includes(section.toLowerCase()),
+        `seit schema must declare ${section}`
+      );
+    }
+
+    const implText = JSON.stringify(implementation);
+    for (const field of IMPLEMENTATION_SLICE_FIELDS) {
+      assert.ok(implText.includes(`"${field}"`), `implementation schema must declare ${field}`);
+    }
+
+    const props = collectSchemaProperties(implementation);
+    for (const name of ["n", "k", "c"]) {
+      const node = props.get(name) || props.get(name.toUpperCase());
+      assert.ok(node, `implementation schema must declare ${name} without inventing a value`);
+      assert.equal(
+        typeof node.default === "number",
+        false,
+        `${name} must not have a default integer value`
+      );
     }
   });
 

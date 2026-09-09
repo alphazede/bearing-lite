@@ -18,15 +18,26 @@ const PLANNING = [
   "gather-supplies",
   "map-the-route",
 ];
-const ROLES = [
+const ACTIVE_ROLES = [
   "crewmate",
   "explorer",
-  "navigator",
-  "validator",
   "park-ranger",
   "surveyor",
+  "test-engineer",
+  "scribe",
+  "plan-integrator",
+  "systems-modeler",
+  "integration-engineer",
 ];
-const EXPECTED_CATALOG = [ROUTER, ...PLANNING, ...ROLES];
+const COMPATIBILITY_ROLES = ["navigator", "validator"];
+const REQUIRED_CATALOG = [ROUTER, ...PLANNING, "navigator", ...ACTIVE_ROLES];
+const HQ_METHOD_SKILLS = [
+  "requirements-engineering",
+  "sysml-modeling",
+  "test-engineering",
+  "integration-engineering",
+];
+const PROHIBITED_LITE_ROLES = ["trail-boss", "sub-explorer"];
 /** Core skill body soft limit (bytes). Oversized fixtures must fail. */
 const CORE_SKILL_SIZE_LIMIT = 12_000;
 
@@ -153,11 +164,11 @@ export function validateCatalog(catalogNames) {
   if (set.has("grader")) {
     diagnostics.push({
       code: "standalone_grader_present",
-      message: "standalone grader skill is prohibited; Validator retains grading",
+      message: "standalone grader skill is prohibited",
       skill: "grader",
     });
   }
-  for (const expected of EXPECTED_CATALOG) {
+  for (const expected of REQUIRED_CATALOG) {
     if (!set.has(expected)) {
       diagnostics.push({
         code: "missing_role",
@@ -180,9 +191,25 @@ export function validateCatalog(catalogNames) {
       });
     }
   }
-  // Extra non-catalog skills with SKILL.md are catalog violations for Lite surface.
+  const allowed = new Set([...REQUIRED_CATALOG, ...COMPATIBILITY_ROLES]);
   for (const name of catalogNames) {
-    if (!EXPECTED_CATALOG.includes(name) && name !== "grader") {
+    if (HQ_METHOD_SKILLS.includes(name)) {
+      diagnostics.push({
+        code: "unexpected_skill",
+        message: `AlphaZede method skill "${name}" is not a public Lite catalog entry`,
+        skill: name,
+      });
+      continue;
+    }
+    if (PROHIBITED_LITE_ROLES.includes(name)) {
+      diagnostics.push({
+        code: "unexpected_skill",
+        message: `unexpected skill "${name}" outside Lite catalog`,
+        skill: name,
+      });
+      continue;
+    }
+    if (!allowed.has(name) && name !== "grader") {
       diagnostics.push({
         code: "unexpected_skill",
         message: `unexpected skill "${name}" outside Lite catalog`,
@@ -205,11 +232,29 @@ function listSkillDirsWithSkillMd() {
 describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)", () => {
   const skillDirs = listSkillDirsWithSkillMd();
 
-  it("catalog is exactly 1 router + 4 planning + 6 roles = 11 SKILL.md", () => {
-    assert.equal(EXPECTED_CATALOG.length, 11);
-    assert.deepEqual(skillDirs, [...EXPECTED_CATALOG].sort());
+  it("catalog requires the Lite engineering roles and does not require HQ method skills", () => {
+    for (const name of REQUIRED_CATALOG) {
+      assert.ok(skillDirs.includes(name), `catalog missing required skill "${name}"`);
+    }
+    for (const name of [...PROHIBITED_LITE_ROLES, ...HQ_METHOD_SKILLS]) {
+      assert.ok(!skillDirs.includes(name), `catalog must not include "${name}"`);
+    }
     const catalogVerdict = validateCatalog(skillDirs);
     assert.equal(catalogVerdict.ok, true, JSON.stringify(catalogVerdict));
+    const withoutHq = validateCatalog([...REQUIRED_CATALOG]);
+    assert.equal(withoutHq.ok, true, JSON.stringify(withoutHq));
+    const withHq = validateCatalog([...REQUIRED_CATALOG, "requirements-engineering"]);
+    assert.equal(withHq.ok, false);
+    assert.ok(
+      withHq.diagnostics.some(
+        (d) => d.code === "unexpected_skill" && d.skill === "requirements-engineering"
+      )
+    );
+    assert.ok(
+      !withHq.diagnostics.some(
+        (d) => d.code === "missing_role" && d.skill === "requirements-engineering"
+      )
+    );
   });
 
   it("no standalone grader skill remains", () => {
@@ -233,7 +278,7 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
   });
 
   it("no Trail Boss or Sub-Explorer skill remains", () => {
-    for (const name of ["trail-boss", "sub-explorer"]) {
+    for (const name of PROHIBITED_LITE_ROLES) {
       assert.ok(!skillDirs.includes(name));
       assert.ok(!existsSync(path.join(SKILLS_DIR, name, "SKILL.md")));
       const negative = validateCatalog([...skillDirs, name]);
@@ -277,7 +322,6 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
       ["crewmate", "implement packet with write-set change as crewmate"],
       ["explorer", "orchestrate wave of crewmate packets as explorer"],
       ["navigator", "sequence expedition waves as navigator"],
-      ["validator", "validator sufficiency check for candidate"],
       ["repository-fit", "repository fit choose repo workspace"],
     ];
     for (const [name, query] of cases) {
@@ -450,12 +494,8 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     assert.match(router, /deployment[\s\S]*without reopening review/i);
   });
 
-  it("Validator and Park Ranger declare terminal versus bounded-correction outcomes", () => {
-    const validator = readFileSync(path.join(SKILLS_DIR, "validator", "SKILL.md"), "utf8");
+  it("Park Ranger declares terminal versus bounded-correction outcomes", () => {
     const park = readFileSync(path.join(SKILLS_DIR, "park-ranger", "SKILL.md"), "utf8");
-    assert.match(validator, /`PASS` is terminal/);
-    assert.match(validator, /`NEEDS_MORE_EVIDENCE` and `FAIL` permit bounded\s+correction/);
-    assert.match(validator, /max_assurance_rounds/);
     assert.match(park, /`ACCEPT`, `ACCEPT_WITH_FINDINGS`, and `BLOCK` are terminal/);
     assert.match(park, /`REPAIR_REQUIRED`\s+permits bounded correction/);
     assert.match(park, /ACCEPT_WITH_FINDINGS` accepts residual/);
@@ -463,6 +503,58 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     assert.match(park, /max_assurance_rounds/);
     assert.match(park, /of 1/);
     assert.match(park, /Do not\s+review or repair that Journey again/);
+  });
+
+  it("Validator is absent from active roles; remaining validator skill is compatibility-only", () => {
+    const lineup = readFileSync(
+      path.join(SKILLS_DIR, "bearing-lite", "templates", "default-role-lineup.md"),
+      "utf8"
+    );
+    const readme = readFileSync(path.join(ROOT, "README.md"), "utf8");
+    const taskState = readFileSync(
+      path.join(SKILLS_DIR, "bearing-lite", "references", "task-state.md"),
+      "utf8"
+    );
+    const routing = readFileSync(
+      path.join(SKILLS_DIR, "bearing-lite", "references", "role-routing.mmd"),
+      "utf8"
+    );
+    const peer = readFileSync(
+      path.join(SKILLS_DIR, "bearing-lite", "references", "peer-synthesis.md"),
+      "utf8"
+    );
+    assert.doesNotMatch(lineup, /\|\s*Validator\s*\|/);
+    assert.doesNotMatch(readme, /\|\s*\*\*Validator\*\*/);
+    assert.doesNotMatch(taskState, /\|\s*`VALIDATING`\s*\|\s*Validator\s*\|/);
+    assert.doesNotMatch(routing, /Validator declared/);
+    assert.doesNotMatch(peer, /\|\s*Validator\s*\|/);
+    const validatorPath = path.join(SKILLS_DIR, "validator", "SKILL.md");
+    if (existsSync(validatorPath)) {
+      const validator = readFileSync(validatorPath, "utf8");
+      assert.match(validator, /Compatibility only|compatibility-only|not an active/i);
+      assert.doesNotMatch(validator, /Independent assurance responsibility/);
+    }
+  });
+
+  it("one Test Engineer role names Planning and Assurance sessions", () => {
+    const skillPath = path.join(SKILLS_DIR, "test-engineer", "SKILL.md");
+    assert.ok(existsSync(skillPath), "test-engineer/SKILL.md must exist");
+    const text = readFileSync(skillPath, "utf8");
+    assert.match(text, /Planning Test Engineer/);
+    assert.match(text, /Assurance Test Engineer/);
+    assert.match(text, /retires Validator|replaces Validator|absent from active roles/i);
+    assert.match(text, /published standard/);
+  });
+
+  it("split Crewmate separates test-writing from product and neither self-certifies", () => {
+    const crewmate = readFileSync(path.join(SKILLS_DIR, "crewmate", "SKILL.md"), "utf8");
+    assert.match(crewmate, /test-writing/);
+    assert.match(crewmate, /product Crewmate|product implementation/i);
+    assert.match(
+      crewmate,
+      /excludes tests|must not weaken independently authored tests/i
+    );
+    assert.match(crewmate, /Neither.*self-certif|must not self-certify/i);
   });
 
   it("Gather Supplies converges one recommended question at a time", () => {
@@ -481,6 +573,44 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     assert.doesNotMatch(gather, /Return each confirmed decision immediately/);
   });
 
+  it("canonical planning artifacts are technical-plan, design.md, seit.json, implementation.json, and review.html", () => {
+    const mapRoute = readFileSync(path.join(SKILLS_DIR, "map-the-route", "SKILL.md"), "utf8");
+    const grammar = readFileSync(
+      path.join(SKILLS_DIR, "map-the-route", "references", "artifact-grammar.md"),
+      "utf8"
+    );
+    const explorer = readFileSync(path.join(SKILLS_DIR, "explorer", "SKILL.md"), "utf8");
+    const task = readFileSync(
+      path.join(SKILLS_DIR, "bearing-lite", "templates", "task.md"),
+      "utf8"
+    );
+    const readme = readFileSync(path.join(ROOT, "README.md"), "utf8");
+    assert.match(grammar, /five canonical|canonical Journey planning artifacts are exactly/i);
+    assert.match(grammar, /technical-plan/);
+    assert.match(grammar, /type:\s*technical-plan|type` as `technical-plan/);
+    assert.match(grammar, /design\.md/);
+    assert.match(grammar, /seit\.json/);
+    assert.match(grammar, /implementation\.json/);
+    assert.match(grammar, /review\.html/);
+    assert.match(grammar, /xlsx/i);
+    assert.match(grammar, /never authority|not authority|is not authority/i);
+    assert.doesNotMatch(grammar, /plan-spec/);
+    for (const [name, text] of [
+      ["artifact-grammar", grammar],
+      ["map-the-route", mapRoute],
+      ["explorer", explorer],
+      ["task-template", task],
+      ["README", readme],
+    ]) {
+      assert.doesNotMatch(text, /seit\.md/, `${name} must not treat seit.md as canonical`);
+      assert.doesNotMatch(
+        text,
+        /implementation\.md/,
+        `${name} must not treat implementation.md as canonical`
+      );
+    }
+  });
+
   it("matching settled intent produces five artifacts before one integrated owner review", () => {
     const mapRoute = readFileSync(
       path.join(SKILLS_DIR, "map-the-route", "SKILL.md"),
@@ -490,7 +620,7 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
       path.join(SKILLS_DIR, "map-the-route", "references", "artifact-grammar.md"),
       "utf8"
     );
-    const implementation = mapRoute.indexOf("generate `implementation.md`");
+    const implementation = mapRoute.indexOf("generate `implementation.json`");
     const html = mapRoute.indexOf("`review.html` together");
     const review = mapRoute.indexOf("exactly one integrated owner review");
     assert.ok(implementation >= 0 && html >= implementation && review > html);
@@ -504,7 +634,7 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     const mapRoute = readFileSync(path.join(SKILLS_DIR, "map-the-route", "SKILL.md"), "utf8");
     const router = readFileSync(path.join(SKILLS_DIR, "bearing-lite", "SKILL.md"), "utf8");
     assert.match(mapRoute, /unresolved material scope, behavior, authority, risk, or\s+acceptance intent returns `REROUTE_GATHER_SUPPLIES`/);
-    assert.match(mapRoute, /generate no\s+`implementation\.md` or `review\.html`/);
+    assert.match(mapRoute, /generate no\s+`implementation\.json` or `review\.html`/);
     assert.match(router, /Gather Supplies[\s\S]*unresolved\s+material intent blocks Map the Route/);
   });
 
@@ -513,7 +643,6 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     const mapRoute = readFileSync(path.join(SKILLS_DIR, "map-the-route", "SKILL.md"), "utf8");
     const gather = readFileSync(path.join(SKILLS_DIR, "gather-supplies", "SKILL.md"), "utf8");
     const crewmate = readFileSync(path.join(SKILLS_DIR, "crewmate", "SKILL.md"), "utf8");
-    const validator = readFileSync(path.join(SKILLS_DIR, "validator", "SKILL.md"), "utf8");
     const parkRanger = readFileSync(path.join(SKILLS_DIR, "park-ranger", "SKILL.md"), "utf8");
     const grammar = readFileSync(
       path.join(SKILLS_DIR, "map-the-route", "references", "artifact-grammar.md"),
@@ -536,7 +665,6 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     assert.match(grammar, /cite the exact document and clause/);
     assert.match(grammar, /passing cross-boundary test does not substitute/);
     assert.match(crewmate, /published standard/);
-    assert.match(validator, /published\s+standard/);
     assert.match(parkRanger, /published standard/);
   });
 
@@ -545,9 +673,10 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     const explorer = readFileSync(path.join(SKILLS_DIR, "explorer", "SKILL.md"), "utf8");
     const crewmate = readFileSync(path.join(SKILLS_DIR, "crewmate", "SKILL.md"), "utf8");
     const navigator = readFileSync(path.join(SKILLS_DIR, "navigator", "SKILL.md"), "utf8");
-    const validator = readFileSync(path.join(SKILLS_DIR, "validator", "SKILL.md"), "utf8");
     const park = readFileSync(path.join(SKILLS_DIR, "park-ranger", "SKILL.md"), "utf8");
     const surveyor = readFileSync(path.join(SKILLS_DIR, "surveyor", "SKILL.md"), "utf8");
+    const validatorPath = path.join(SKILLS_DIR, "validator", "SKILL.md");
+    const testEngineerPath = path.join(SKILLS_DIR, "test-engineer", "SKILL.md");
     const compact =
       /verdict,\s*candidate_ref,\s*changed_paths,\s*tests,\s*findings,\s*and blocker/;
     assert.match(router, /may continue in-wave/);
@@ -558,21 +687,32 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     assert.match(explorer, /do not\s+reread every accepted artifact/);
     assert.match(navigator, /Compatibility only/);
     assert.match(navigator, /REROUTED/);
-    for (const [name, text] of [
+    /** @type {Array<[string, string]>} */
+    const compactRoles = [
       ["crewmate", crewmate],
       ["explorer", explorer],
       ["navigator", navigator],
-      ["validator", validator],
       ["park-ranger", park],
       ["surveyor", surveyor],
-    ]) {
+    ];
+    if (existsSync(validatorPath)) {
+      compactRoles.push(["validator", readFileSync(validatorPath, "utf8")]);
+    }
+    if (existsSync(testEngineerPath)) {
+      compactRoles.push(["test-engineer", readFileSync(testEngineerPath, "utf8")]);
+    }
+    for (const [name, text] of compactRoles) {
       assert.match(text, compact, `${name} must return the six-field receipt`);
     }
-    for (const [name, text] of [
-      ["validator", validator],
+    /** @type {Array<[string, string]>} */
+    const assuranceRoles = [
       ["park-ranger", park],
       ["surveyor", surveyor],
-    ]) {
+    ];
+    if (existsSync(testEngineerPath)) {
+      assuranceRoles.push(["test-engineer", readFileSync(testEngineerPath, "utf8")]);
+    }
+    for (const [name, text] of assuranceRoles) {
       assert.match(text, /fresh session/, `${name} must start fresh`);
       assert.match(text, /author ancestry/, `${name} must reject author ancestry`);
       assert.match(text, /slice or round/, `${name} must refuse slice/round boundaries`);
@@ -588,7 +728,7 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
   });
 
   it("negative: missing role fails with typed diagnostic", () => {
-    const incomplete = EXPECTED_CATALOG.filter((n) => n !== "crewmate");
+    const incomplete = REQUIRED_CATALOG.filter((n) => n !== "crewmate");
     const verdict = validateCatalog(incomplete);
     assert.equal(verdict.ok, false);
     assert.ok(verdict.diagnostics.some((d) => d.code === "missing_role" && d.skill === "crewmate"));
@@ -609,7 +749,7 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
   });
 
   it("negative: duplicate contract fails with typed diagnostic", () => {
-    const verdict = validateCatalog([...EXPECTED_CATALOG, "crewmate"]);
+    const verdict = validateCatalog([...REQUIRED_CATALOG, "crewmate"]);
     assert.equal(verdict.ok, false);
     assert.ok(verdict.diagnostics.some((d) => d.code === "duplicate_contract"));
   });

@@ -4,8 +4,13 @@
  */
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-/** @typedef {'crewmate'|'explorer'|'navigator'|'validator'|'park-ranger'|'surveyor'} Role */
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+
+/** @typedef {'crewmate'|'explorer'|'navigator'|'validator'|'park-ranger'|'surveyor'|'test-engineer'} Role */
 
 /**
  * @typedef {{
@@ -18,6 +23,9 @@ import assert from "node:assert/strict";
  *   forceControllersOnSinglePacket?: boolean,
  *   omitWaveCoordination?: boolean,
  *   assignNavigator?: boolean,
+ *   assignValidator?: boolean,
+ *   assignTrailBoss?: boolean,
+ *   assignSubExplorer?: boolean,
  * }} RouteInput
  *
  * @typedef {{
@@ -40,6 +48,7 @@ const ALL_ROLES = /** @type {const} */ ([
   "validator",
   "park-ranger",
   "surveyor",
+  "test-engineer",
 ]);
 
 /**
@@ -77,6 +86,23 @@ export function selectRoute(input) {
       message: "Navigator is a compatibility diagnostic; Router owns sequencing",
     };
   }
+  const requestedAssurance = (input.requiredAssurance ?? []).map((role) =>
+    String(role).toLowerCase().replace(/[\s_]+/g, "-")
+  );
+  if (requestedAssurance.includes("validator") || input.assignValidator === true) {
+    return {
+      ok: false,
+      code: "validator_not_active_role",
+      message: "Validator is compatibility-only and is not an active assurance role",
+    };
+  }
+  if (input.assignTrailBoss === true || input.assignSubExplorer === true) {
+    return {
+      ok: false,
+      code: "full_bearing_topology_not_in_lite",
+      message: "Trail Boss and Sub-Explorer stay out of Lite",
+    };
+  }
 
   /** @type {Role[]} */
   const active = [];
@@ -95,10 +121,15 @@ export function selectRoute(input) {
     };
   }
 
-  const assurance = input.requiredAssurance ?? [];
-  for (const role of assurance) {
-    const key = String(role).toLowerCase().replace(/[\s_]+/g, "-");
-    if (key === "validator" && !active.includes("validator")) active.push("validator");
+  for (const key of requestedAssurance) {
+    if (
+      (key === "test-engineer" ||
+        key === "assurance-test-engineer" ||
+        key === "planning-test-engineer") &&
+      !active.includes("test-engineer")
+    ) {
+      active.push("test-engineer");
+    }
     if ((key === "park-ranger" || key === "parkranger") && !active.includes("park-ranger")) {
       active.push("park-ranger");
     }
@@ -179,6 +210,43 @@ describe("CMD-ROUTING-01 role-routing (SEIT-ROUTING-01)", () => {
     const verdict = selectRoute({ kind: "expedition", assignNavigator: true });
     assert.equal(verdict.ok, false);
     if (!verdict.ok) assert.equal(verdict.code, "navigator_not_normal_role");
+  });
+
+  it("Validator is not an active route role; assurance is Test Engineer then Park Ranger then Surveyor", () => {
+    const routing = readFileSync(
+      path.join(ROOT, "skills/bearing-lite/references/role-routing.mmd"),
+      "utf8"
+    );
+    const readme = readFileSync(path.join(ROOT, "README.md"), "utf8");
+    assert.doesNotMatch(routing, /Validator declared/);
+    assert.match(routing, /Assurance Test Engineer|Test Engineer/);
+    assert.match(routing, /Park Ranger/);
+    assert.match(routing, /Surveyor/);
+    assert.doesNotMatch(readme, /Validator, Park Ranger, and Surveyor appear only when declared/);
+    assert.match(readme, /Assurance Test Engineer, Park Ranger, and Surveyor/);
+    const rejected = selectRoute({ kind: "direct", requiredAssurance: ["validator"] });
+    assert.equal(rejected.ok, false);
+    if (!rejected.ok) assert.equal(rejected.code, "validator_not_active_role");
+    const ok = selectRoute({
+      kind: "direct",
+      requiredAssurance: ["test-engineer", "park-ranger", "surveyor"],
+    });
+    assert.equal(ok.ok, true);
+    if (ok.ok) {
+      assert.ok(ok.active.includes("test-engineer"));
+      assert.ok(ok.active.includes("park-ranger"));
+      assert.ok(ok.active.includes("surveyor"));
+      assert.ok(!ok.active.includes("validator"));
+    }
+  });
+
+  it("negative: Trail Boss and Sub-Explorer are not Lite routes", () => {
+    const trail = selectRoute({ kind: "expedition", assignTrailBoss: true });
+    assert.equal(trail.ok, false);
+    if (!trail.ok) assert.equal(trail.code, "full_bearing_topology_not_in_lite");
+    const sub = selectRoute({ kind: "expedition", assignSubExplorer: true });
+    assert.equal(sub.ok, false);
+    if (!sub.ok) assert.equal(sub.code, "full_bearing_topology_not_in_lite");
   });
 
   it("negative: removed delegated route is rejected", () => {
@@ -807,7 +875,10 @@ describe("CMD-ROUTING-01 checkout-lease revalidation", () => {
  * @param {ContinuationInput} input
  */
 export function selectContinuation(input) {
-  const assurance = new Set(["validator", "park-ranger", "surveyor"]);
+  const assurance = new Set(["test-engineer", "park-ranger", "surveyor"]);
+  if (input.role === "validator") {
+    return { ok: false, code: "validator_not_active_role", fresh: false, continue: false };
+  }
   if (input.role === "navigator") {
     return { ok: false, code: "navigator_not_normal_role", fresh: false, continue: false };
   }
@@ -854,7 +925,10 @@ describe("CMD-ROUTING-01 same-wave continuation and at-end assurance", () => {
   });
 
   it("non-matching: assurance cannot reuse author context or run before the end", () => {
-    for (const role of /** @type {const} */ (["validator", "park-ranger", "surveyor"])) {
+    const retired = selectContinuation({ role: "validator", boundary: "at-end" });
+    assert.equal(retired.ok, false);
+    if (!retired.ok) assert.equal(retired.code, "validator_not_active_role");
+    for (const role of /** @type {const} */ (["test-engineer", "park-ranger", "surveyor"])) {
       const slice = selectContinuation({ role, boundary: "slice" });
       assert.equal(slice.ok, false);
       if (!slice.ok) assert.equal(slice.code, "assurance_not_at_end");

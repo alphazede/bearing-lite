@@ -40,7 +40,7 @@ export const STATE_OWNERS = Object.freeze({
   WAITING_ON: "Parent coordinator",
   IN_PROGRESS: "Assigned worker or coordinator",
   EVIDENCE_READY: "Parent coordinator",
-  VALIDATING: "Validator",
+  VALIDATING: "Assurance Test Engineer",
   REVIEWING: "Park Ranger when required",
   ACCEPTANCE:
     "Surveyor, Owner Authority, or parent coordinator when required_assurance is none",
@@ -154,6 +154,28 @@ describe("CMD-STATE-01 task-state (SEIT-STATE-01)", () => {
    * required_assurance: none (design.md / plan-spec written tables).
    * Fails until task-state.md ACCEPTANCE row is aligned.
    */
+  it("VALIDATING is owned by Assurance Test Engineer, not Validator", () => {
+    const row = TASK_STATE.match(/\|\s*`VALIDATING`\s*\|\s*([^|\n]+)\|/);
+    assert.ok(row, "VALIDATING owner table row must exist");
+    const ownerCell = row[1].trim();
+    assert.doesNotMatch(ownerCell, /Validator/);
+    assert.match(ownerCell, /Assurance Test Engineer/);
+    assert.equal(STATE_OWNERS.VALIDATING, ownerCell.replace(/`/g, "").trim());
+    const mermaid = readFileSync(
+      path.join(ROOT, "skills/bearing-lite/references/task-state.mmd"),
+      "utf8"
+    );
+    assert.doesNotMatch(mermaid, /VALIDATING: Validator required/);
+    assert.match(mermaid, /Assurance Test Engineer|Test Engineer required/);
+    assert.match(TASK_STATE, /Assurance Test Engineer/);
+    assert.match(TASK_STATE, /Park Ranger/);
+    assert.match(TASK_STATE, /Surveyor/);
+    assert.doesNotMatch(
+      TASK_STATE,
+      /accepted Validator or Park Ranger handoff/
+    );
+  });
+
   it("ACCEPTANCE names parent coordinator only when required_assurance is none", () => {
     const row = TASK_STATE.match(/\|\s*`ACCEPTANCE`\s*\|\s*([^|\n]+)\|/);
     assert.ok(row, "ACCEPTANCE owner table row must exist");
@@ -220,7 +242,7 @@ describe("CMD-STATE-01 task-state (SEIT-STATE-01)", () => {
     const verdict = validateTransition("ACCEPTANCE", "COMPLETE", {
       owner: STATE_OWNERS.ACCEPTANCE,
       skipAssurance: true,
-      requiredAssurance: ["Validator"],
+      requiredAssurance: ["Assurance Test Engineer"],
       assuranceCompleted: [],
     });
     assert.equal(verdict.ok, false);
