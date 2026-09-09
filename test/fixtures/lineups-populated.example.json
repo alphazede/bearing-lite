@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "lineups": {
+    "fixture-alpha": {
+      "planned_planning_assignments": [
+        {
+          "role": "FixturePlanner",
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": [
+            {
+              "condition": "condition-first",
+              "harness": "harness-b",
+              "model": "model-b",
+              "reasoning": "reasoning-b"
+            },
+            {
+              "condition": "condition-second",
+              "harness": "harness-c",
+              "model": "model-c",
+              "reasoning": "reasoning-c"
+            }
+          ]
+        }
+      ],
+      "implementation_assignments": [
+        {
+          "role": "FixtureImplementer",
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": []
+        }
+      ]
+    },
+    "fixture-beta": {
+      "planned_planning_assignments": [
+        {
+          "role": "FixturePlanner",
+          "primary": {
+            "harness": "harness-b",
+            "model": "model-b",
+            "reasoning": "reasoning-b"
+          },
+          "ordered_fallbacks": []
+        }
+      ],
+      "implementation_assignments": [
+        {
+          "role": "FixtureImplementer",
+          "primary": {
+            "harness": "harness-b",
+            "model": "model-b",
+            "reasoning": "reasoning-b"
+          },
+          "ordered_fallbacks": [
+            {
+              "condition": "condition-first",
+              "harness": "harness-a",
+              "model": "model-a",
+              "reasoning": "reasoning-a"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "defaults": {
+    "planning": "fixture-alpha",
+    "implementation": "fixture-beta"
+  }
+}
