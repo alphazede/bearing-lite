@@ -18,6 +18,7 @@ planning nodes return owner questions. Plugin hosts are partial; skill-copy is s
 4. Run Repository Fit → Set Bearings → Gather Supplies; unresolved material intent blocks Map the Route.
 5. Invoke Map the Route after settled intent. Do not ask for lineup or route
    before it; carry owner-supplied lineup and `review_cadence: at-end` as proposals.
+   Follow `references/lineups.md` for catalog selection and save.
 6. Enforce `references/review-policy.md`. Show one integrated
    approval-or-change gate for outcome, design, route, lineup, role states,
    reasoning, cadence, and plan. Record the approved Journey type and snapshot; regenerate changes.
@@ -26,14 +27,13 @@ planning nodes return owner questions. Plugin hosts are partial; skill-copy is s
 7. Dispatch from the snapshot. Crewmate and Explorer may continue in-wave unchanged.
    Use the visible wave receipt and update implementation and review once per wave.
 
-Return `READY`, `WAITING_ON`, `OWNER_DECISION_REQUIRED`, or `COMPLETE`. Three
-evidence-changing corrections outside assurance.
+Return `READY`, `WAITING_ON`, `OWNER_DECISION_REQUIRED`, or `COMPLETE`.
 `max_assurance_rounds` is 1 per Journey; Direct route checks `assurance_rounds`, never
 dispatch Navigator, and one review may authorize one repair. Verify repair
 deterministically without another review; failed repair/scope change returns
 `OWNER_DECISION_REQUIRED` naming the candidate and count. Only a separately scoped,
 materially changed new Journey resets review allowance. `COMPLETE` ends Bearing assurance.
-Authorized deployment keeps checks without reopening review.
+Authorized deployment without reopening review.
 Planning review is a separate pre-dispatch gate; it never consumes implementation
 `required_assurance`, `assurance_rounds`, or `max_assurance_rounds`.
 Release the lease once: release the checkout lease exactly once on `COMPLETE` or `CANCELLED`;

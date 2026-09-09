@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/alphazede/bearing-lite/schemas/lineups.schema.json",
+  "title": "Bearing Lite lineups.json",
+  "description": "User-owned named lineup catalog. Packaged bytes stay an empty catalog with no defaults. Selection is not an authority grant. Duplicate raw keys, duplicate roles, ASCII case-fold collisions, and unresolved defaults are extra oracles, not silent collapses.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "lineups"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Integer 1. The string \"1\" used by Journey artifacts is invalid here."
+    },
+    "lineups": {
+      "type": "object",
+      "description": "Named profiles. Empty object is valid. Unlimited keys; no maxProperties.",
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/profile"
+      }
+    },
+    "defaults": {
+      "type": "object",
+      "description": "Optional user-owned recommendations. Keys must resolve exactly; extra oracles reject unresolved names. Not a grant.",
+      "additionalProperties": false,
+      "properties": {
+        "planning": {
+          "type": "string",
+          "minLength": 1
+        },
+        "implementation": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  },
+  "$defs": {
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "harness",
+        "model",
+        "reasoning"
+      ],
+      "properties": {
+        "harness": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reasoning": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "fallback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "condition",
+        "harness",
+        "model",
+        "reasoning"
+      ],
+      "properties": {
+        "condition": {
+          "type": "string",
+          "minLength": 1
+        },
+        "harness": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reasoning": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "assignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "role",
+        "primary",
+        "ordered_fallbacks"
+      ],
+      "properties": {
+        "role": {
+          "type": "string",
+          "minLength": 1
+        },
+        "primary": {
+          "$ref": "#/$defs/identity"
+        },
+        "ordered_fallbacks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/fallback"
+          }
+        }
+      }
+    },
+    "phase": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/assignment"
+      }
+    },
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "planned_planning_assignments",
+        "implementation_assignments"
+      ],
+      "properties": {
+        "planned_planning_assignments": {
+          "$ref": "#/$defs/phase"
+        },
+        "implementation_assignments": {
+          "$ref": "#/$defs/phase"
+        }
+      }
+    }
+  }
+}
