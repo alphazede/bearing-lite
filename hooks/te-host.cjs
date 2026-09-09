@@ -218,6 +218,8 @@ const EMPTY_ASSIGNMENT = Object.freeze({
   role_instance: null,
   write_set: Object.freeze([]),
   authority: null,
+  authority_id: null,
+  candidate_revision: null,
   type: null,
 });
 
@@ -225,6 +227,11 @@ const EMPTY_ASSIGNMENT = Object.freeze({
  * Trusted assignment and diff base, taken only from the coordinator-authored
  * plan in the workspace. The writer's own tool payload and transcript are
  * never a source here.
+ *
+ * `authority_id` and `candidate_revision` are the evaluator's spellings for
+ * the plan's own `authority` and checkout-lease revision. They are the same
+ * trusted values under the names the consumer reads; the writer's payload
+ * still never reaches them.
  */
 function readTrustedPlan(root) {
   for (const file of planFiles(root)) {
@@ -248,15 +255,19 @@ function readTrustedPlan(root) {
       tasks[0] ||
       null;
     const revision = text.match(LEASE_REVISION);
+    const diffBase = revision ? revision[1] : null;
+    const authority = active ? presentString(active.authority) ?? null : null;
 
     return {
-      diff_base: revision ? revision[1] : null,
+      diff_base: diffBase,
       assignment: {
         task_id: active ? presentString(active.task_id) ?? null : null,
         assigned_role: active ? presentString(active.assigned_role) ?? null : null,
         role_instance: active ? presentString(active.role_instance) ?? null : null,
         write_set: splitScope(active ? active.scope : ""),
-        authority: active ? presentString(active.authority) ?? null : null,
+        authority,
+        authority_id: authority,
+        candidate_revision: diffBase,
         type: active ? presentString(active.type) ?? null : null,
       },
     };
@@ -334,12 +345,8 @@ function relativeTarget(root, value) {
 }
 
 /** Paths the host event names. Advisory only: never a source of authority. */
-function readTargetPaths(input, root) {
-  const toolInput = isPlainObject(input.tool_input)
-    ? input.tool_input
-    : isPlainObject(input.toolInput)
-      ? input.toolInput
-      : {};
+function readTargetPaths(input, root, resolvedToolInput) {
+  const toolInput = resolvedToolInput || {};
   const out = new Set();
   for (const value of [
     toolInput.file_path,
@@ -386,15 +393,36 @@ function readArtifact(root, file) {
   return { path: relative, exists: true, raw };
 }
 
+/**
+ * One request, spelled the way the evaluator reads it. `workspaceRoot`,
+ * `tool_name`, `tool_input`, `revision` and `diff_base` are the supported
+ * consumer fields (S25-INT-001); each carries a value Lite already computed
+ * from the envelope, the trusted plan, or the real checkout, so nothing here
+ * is a second source of truth. The existing `workspace_root` field and the
+ * nested `candidate`, `assignment`, `target_paths`, `handoff` and `receipt`
+ * records stay for Lite's own consumers; `workspace_root` and `workspaceRoot`
+ * are the one resolved envelope root under both spellings.
+ */
 function buildRequest(hookClass, event, input, root, host) {
   const plan = readTrustedPlan(root);
+  const candidate = readCandidate(root, plan.diff_base, plan.assignment.write_set);
+  const toolInput = isPlainObject(input.tool_input)
+    ? input.tool_input
+    : isPlainObject(input.toolInput)
+      ? input.toolInput
+      : null;
   return {
     hook_class: hookClass,
     event: typeof event === "string" ? event.trim() : "",
     workspace_root: root,
-    candidate: readCandidate(root, plan.diff_base, plan.assignment.write_set),
+    workspaceRoot: root,
+    candidate,
     assignment: plan.assignment,
-    target_paths: readTargetPaths(input, root),
+    revision: candidate.revision,
+    diff_base: candidate.diff_base,
+    tool_name: presentString(input.tool_name) ?? presentString(input.toolName) ?? null,
+    tool_input: toolInput,
+    target_paths: readTargetPaths(input, root, toolInput),
     handoff: readArtifact(root, HANDOFF_FILE),
     receipt: readArtifact(root, RECEIPT_FILE),
     host,
