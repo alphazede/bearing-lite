@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/alphazede/bearing-lite/schemas/authority.schema.json",
   "title": "Bearing Lite authority.json",
-  "description": "Current machine-enforced authority envelope. Lineup or route selection is not a grant. CONTRACT-EMV-009 envelope fields are required.",
+  "description": "Current machine-enforced authority envelope. Lineup or route selection is not a grant. CONTRACT-EMV-009 envelope fields are required. Canonical keys are granting_owner_decisions (array) and expiry_conditions (array of strings). Extra lifecycle metadata is allowed.",
   "type": "object",
   "additionalProperties": true,
   "required": [
@@ -13,37 +13,30 @@
     "subject",
     "repositories",
     "baseline",
+    "granting_owner_decisions",
     "allowed",
     "prohibited",
     "role_grants",
     "effective",
+    "expiry_conditions",
     "supersedes",
     "approval_receipt"
   ],
-  "allOf": [
-    {
-      "anyOf": [
-        { "required": ["granting_owner_decision"] },
-        { "required": ["granting_owner_decisions"] }
-      ]
-    },
-    {
-      "anyOf": [
-        { "required": ["expiry"] },
-        { "required": ["expiry_conditions"] }
-      ]
-    }
-  ],
   "properties": {
-    "schema_version": { "type": "string" },
-    "schema": { "type": "string", "description": "Envelope schema identity" },
-    "id": { "type": "string", "description": "Authority envelope ID" },
-    "state": { "type": "string" },
-    "subject": { "type": "object", "additionalProperties": true },
-    "repositories": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
-    "baseline": { "type": "object", "additionalProperties": true },
-    "granting_owner_decision": { "type": "string" },
-    "granting_owner_decisions": { "type": "array", "items": { "type": "string" } },
+    "schema_version": { "type": "string", "minLength": 1 },
+    "schema": { "type": "string", "minLength": 1, "description": "Envelope schema identity" },
+    "id": { "type": "string", "minLength": 1, "description": "Authority envelope ID" },
+    "state": { "type": "string", "minLength": 1 },
+    "subject": { "type": "object", "minProperties": 1, "additionalProperties": true },
+    "repositories": {
+      "type": "array",
+      "items": { "type": "object", "additionalProperties": true }
+    },
+    "baseline": { "type": "object", "minProperties": 1, "additionalProperties": true },
+    "granting_owner_decisions": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
     "allowed": {
       "type": "object",
       "additionalProperties": true,
@@ -64,11 +57,19 @@
         "paths": { "type": "array", "items": { "type": "string" } }
       }
     },
-    "role_grants": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+    "role_grants": {
+      "type": "array",
+      "items": { "type": "object", "additionalProperties": true }
+    },
     "effective": { "type": ["boolean", "string"] },
-    "expiry": { "type": ["string", "null"] },
-    "expiry_conditions": { "type": ["object", "string", "null"] },
-    "supersedes": { "type": "array", "items": { "type": "string" } },
+    "expiry_conditions": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "supersedes": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
     "approval_receipt": { "type": "object", "additionalProperties": true }
   }
 }

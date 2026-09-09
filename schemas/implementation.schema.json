@@ -2,28 +2,105 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/alphazede/bearing-lite/schemas/implementation.schema.json",
   "title": "Bearing Lite implementation.json",
-  "description": "Nested execution authority. XLSX is never authority. Owner-configured n, k, and c have no assistant default integers. Every slice requires CONTRACT-EMV-008 fields. human_decision may be a string, object, or null. authority_id is a string on dispatchable slices and may be null only when dispatchable is false or slice_status is publication-blocked.",
+  "description": "Nested execution authority. XLSX is never authority. Owner-configured n, k, and c have no assistant default integers. Every slice requires CONTRACT-EMV-008 fields including reasoning_level (object), not a sibling reasoning string. human_decision may be a string, object, or null. authority_id is a string on dispatchable slices and may be null only when dispatchable is false or slice_status is publication-blocked. Extra lifecycle metadata is allowed.",
   "type": "object",
   "additionalProperties": true,
-  "required": ["schema_version", "slices"],
-  "properties": {
-    "schema_version": { "type": "string" },
-    "artifact": {
+  "required": [
+    "schema_version",
+    "artifact",
+    "source_baseline",
+    "journey_settings",
+    "lineup_freeze",
+    "waves",
+    "dependencies",
+    "slices",
+    "traceability"
+  ],
+  "$defs": {
+    "contentfulObject": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": true
+    },
+    "stringList": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "slice": {
       "type": "object",
       "additionalProperties": true,
+      "required": [
+        "role",
+        "goal",
+        "type",
+        "requirement_ids",
+        "design_ids",
+        "seit_proof_rows",
+        "design_lenses",
+        "model_route",
+        "reasoning_level",
+        "review_path",
+        "write_set",
+        "command_ids",
+        "stop_condition",
+        "human_decision",
+        "authority_id"
+      ],
       "properties": {
-        "type": { "const": "implementation.json" },
-        "authority_id": { "type": "string" }
+        "id": { "type": "string" },
+        "role": { "type": "string", "minLength": 1 },
+        "goal": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "type": { "type": "string", "minLength": 1 },
+        "requirement_ids": { "$ref": "#/$defs/stringList" },
+        "design_ids": { "$ref": "#/$defs/stringList" },
+        "seit_proof_rows": { "$ref": "#/$defs/stringList" },
+        "design_lenses": { "$ref": "#/$defs/stringList" },
+        "model_route": { "$ref": "#/$defs/contentfulObject" },
+        "reasoning_level": { "$ref": "#/$defs/contentfulObject" },
+        "review_path": { "$ref": "#/$defs/contentfulObject" },
+        "write_set": { "$ref": "#/$defs/stringList" },
+        "command_ids": { "$ref": "#/$defs/stringList" },
+        "stop_condition": { "type": "string", "minLength": 1 },
+        "human_decision": { "type": ["string", "object", "null"] },
+        "authority_id": { "type": ["string", "null"] },
+        "dispatchable": { "type": "boolean" },
+        "slice_status": { "type": "string" }
+      },
+      "if": {
+        "not": {
+          "anyOf": [
+            {
+              "properties": { "dispatchable": { "const": false } },
+              "required": ["dispatchable"]
+            },
+            {
+              "properties": { "slice_status": { "const": "publication-blocked" } },
+              "required": ["slice_status"]
+            }
+          ]
+        }
+      },
+      "then": {
+        "properties": {
+          "authority_id": { "type": "string" }
+        }
       }
-    },
+    }
+  },
+  "properties": {
+    "schema_version": { "type": "string", "minLength": 1 },
+    "artifact": { "$ref": "#/$defs/contentfulObject" },
+    "source_baseline": { "$ref": "#/$defs/contentfulObject" },
     "journey_settings": {
       "type": "object",
       "additionalProperties": true,
+      "required": ["review_cardinality"],
       "properties": {
         "review_cardinality": {
           "type": "object",
           "additionalProperties": true,
           "description": "Owner-configured reviewer count n, repair bound k, and confirmation count c. No default integers.",
+          "required": ["n", "k", "c"],
           "properties": {
             "n": { "type": "integer", "minimum": 0 },
             "k": { "type": "integer", "minimum": 0 },
@@ -32,68 +109,19 @@
         }
       }
     },
+    "lineup_freeze": { "$ref": "#/$defs/contentfulObject" },
+    "waves": {
+      "type": "array",
+      "items": { "type": "object", "additionalProperties": true }
+    },
+    "dependencies": {
+      "type": "array",
+      "items": { "type": "object", "additionalProperties": true }
+    },
     "slices": {
       "type": "array",
-      "items": {
-        "type": "object",
-        "additionalProperties": true,
-        "required": [
-          "role",
-          "goal",
-          "type",
-          "requirement_ids",
-          "design_ids",
-          "seit_proof_rows",
-          "design_lenses",
-          "model_route",
-          "reasoning",
-          "review_path",
-          "write_set",
-          "command_ids",
-          "stop_condition",
-          "human_decision",
-          "authority_id"
-        ],
-        "properties": {
-          "id": { "type": "string" },
-          "role": { "type": "string" },
-          "goal": { "type": "string", "maxLength": 512 },
-          "type": { "type": "string" },
-          "requirement_ids": { "type": "array", "items": { "type": "string" } },
-          "design_ids": { "type": "array", "items": { "type": "string" } },
-          "seit_proof_rows": { "type": "array", "items": { "type": "string" } },
-          "design_lenses": { "type": "array", "items": { "type": "string" } },
-          "model_route": { "type": "object", "additionalProperties": true },
-          "reasoning": { "type": ["string", "object"] },
-          "review_path": { "type": "object", "additionalProperties": true },
-          "write_set": { "type": "array", "items": { "type": "string" } },
-          "command_ids": { "type": "array", "items": { "type": "string" } },
-          "stop_condition": { "type": "string" },
-          "human_decision": { "type": ["string", "object", "null"] },
-          "authority_id": { "type": ["string", "null"] },
-          "dispatchable": { "type": "boolean" },
-          "slice_status": { "type": "string" }
-        },
-        "if": {
-          "not": {
-            "anyOf": [
-              {
-                "properties": { "dispatchable": { "const": false } },
-                "required": ["dispatchable"]
-              },
-              {
-                "properties": { "slice_status": { "const": "publication-blocked" } },
-                "required": ["slice_status"]
-              }
-            ]
-          }
-        },
-        "then": {
-          "properties": {
-            "authority_id": { "type": "string" }
-          }
-        }
-      }
-    }
+      "items": { "$ref": "#/$defs/slice" }
+    },
+    "traceability": { "$ref": "#/$defs/contentfulObject" }
   }
 }

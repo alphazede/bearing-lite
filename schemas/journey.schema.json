@@ -2,18 +2,29 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/alphazede/bearing-lite/schemas/journey.schema.json",
   "title": "Bearing Lite journey.json",
-  "description": "Append-only decisions and authority-event history plus the generation-bound checkout lease. The full mutable file digest is not the stable SEIT execution baseline.",
+  "description": "Append-only decisions and authority-event history plus the generation-bound checkout lease. The full mutable file digest is not the stable SEIT execution baseline. Extra lifecycle metadata is allowed at the document root. Lease identity fields stay closed.",
   "type": "object",
   "additionalProperties": true,
-  "required": ["schema_version", "journey", "checkout_lease"],
+  "required": [
+    "schema_version",
+    "journey",
+    "checkout_lease",
+    "decisions",
+    "open_decisions",
+    "planning_receipts",
+    "lineup_selection"
+  ],
   "properties": {
-    "schema_version": { "type": "string" },
+    "schema_version": { "type": "string", "minLength": 1 },
     "journey": {
       "type": "object",
       "additionalProperties": true,
-      "required": ["id"],
+      "required": ["id", "title", "status", "planning_repository"],
       "properties": {
-        "id": { "type": "string" }
+        "id": { "type": "string", "minLength": 1 },
+        "title": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "minLength": 1 },
+        "planning_repository": { "type": "string", "minLength": 1 }
       }
     },
     "checkout_lease": {
@@ -31,13 +42,13 @@
         "state"
       ],
       "properties": {
-        "journey": { "type": "string" },
-        "controller": { "type": "string" },
-        "repository": { "type": "string" },
-        "checkout": { "type": "string" },
-        "branch": { "type": "string" },
-        "candidate_revision": { "type": "string" },
-        "acquired_at": { "type": "string" },
+        "journey": { "type": "string", "minLength": 1 },
+        "controller": { "type": "string", "minLength": 1 },
+        "repository": { "type": "string", "minLength": 1 },
+        "checkout": { "type": "string", "minLength": 1 },
+        "branch": { "type": "string", "minLength": 1 },
+        "candidate_revision": { "type": "string", "minLength": 1 },
+        "acquired_at": { "type": "string", "minLength": 1 },
         "generation": { "type": "integer", "minimum": 1 },
         "state": { "enum": ["active", "released"] }
       }
@@ -45,7 +56,7 @@
     "history": {
       "type": "object",
       "additionalProperties": true,
-      "description": "Append-only Journey history",
+      "description": "Optional append-only Journey history wrapper",
       "properties": {
         "decisions": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
         "authority_events": { "type": "array", "items": { "type": "object", "additionalProperties": true } }
