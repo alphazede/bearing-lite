@@ -39,6 +39,8 @@ Planning review is a separate pre-dispatch gate; it never consumes implementatio
 Release the lease once: release the checkout lease exactly once on `COMPLETE` or `CANCELLED`;
 recovery needs explicit recorded generation increment.
 Recovery cannot steal a live lease.
-Selected missing required capability is a typed capability gap, not success.
-Unselected AlphaZede-specific skill absence is not a global failure.
+Selected or required capabilities activate. Unavailability of selected-or-required
+capability is a typed capability gap, not success and not invented behavior.
+Selected-only missing and required-only missing are typed gaps. Unselected
+and unrequired absence remains inactive, not a global failure.
 Never implement, self-assure, select models, or publish.
