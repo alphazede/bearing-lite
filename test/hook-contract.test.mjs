@@ -1,10 +1,20 @@
 /**
  * CMD-HOOK-01 / SEIT-HOOK-CLASS-01, SEIT-HOOK-COVERAGE-01
- * Exactly four hook classes; outcomes ADVISE|REROUTE|BLOCK|UNAVAILABLE; coverage honesty.
+ * The four original hook classes; outcomes ADVISE|REROUTE|BLOCK|UNAVAILABLE;
+ * coverage honesty.
+ *
+ * CMD-LITE-TE-HOOK-TEST / SEIT-EMV-017 amendment: the Test Engineering classes
+ * `te_test_write` and `te_completion` ship as *additional* classes in
+ * `hooks/te-capability.cjs` and `hooks/te-host.cjs`
+ * (ROUTER-EMV-003-001 `exact_write_sets.Lite_product`). They do not replace,
+ * rename, or extend the original four, and they do not reuse the original four
+ * outcomes. The module list below is therefore open to those two TE files and
+ * closed to everything else; it is no longer an "exactly four .cjs files"
+ * assertion.
  */
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { readdirSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -19,6 +29,15 @@ const EXPECTED_CLASSES = new Set([
   "transition",
   "protected_action",
 ]);
+const ORIGINAL_CLASS_FILES = Object.freeze([
+  "activation.cjs",
+  "closeout.cjs",
+  "protected-action.cjs",
+  "transition-order.cjs",
+]);
+/** Additional TE class modules, allowed but not yet required by this case. */
+const TE_CLASS_FILES = Object.freeze(["te-capability.cjs", "te-host.cjs"]);
+const TE_CLASSES = Object.freeze(["te_test_write", "te_completion"]);
 const ALLOWED_OUTCOMES = new Set(["ADVISE", "REROUTE", "BLOCK", "UNAVAILABLE"]);
 
 const activation = require(path.join(HOOKS_DIR, "activation.cjs"));
@@ -69,19 +88,58 @@ export function reportHookCoverage(client, opts = {}) {
 }
 
 describe("CMD-HOOK-01 hook-contract (SEIT-HOOK-CLASS-01, SEIT-HOOK-COVERAGE-01)", () => {
-  it("ships exactly four hook class modules under hooks/", () => {
+  it("ships the four original hook class modules under hooks/", () => {
     const files = readdirSync(HOOKS_DIR)
       .filter((f) => f.endsWith(".cjs") && f !== "planning-review.cjs")
       .sort();
-    assert.deepEqual(files, [
-      "activation.cjs",
-      "closeout.cjs",
-      "protected-action.cjs",
-      "transition-order.cjs",
-    ]);
+    for (const required of ORIGINAL_CLASS_FILES) {
+      assert.ok(files.includes(required), `hooks/${required} must ship`);
+    }
+    // Open to the two Router-authorized TE modules; closed to anything else.
+    const allowed = new Set([...ORIGINAL_CLASS_FILES, ...TE_CLASS_FILES]);
+    for (const file of files) {
+      assert.ok(allowed.has(file), `unauthorized hook module hooks/${file}`);
+    }
     const classes = new Set(HOOKS.map((h) => h.mod.HOOK_CLASS));
     assert.deepEqual([...classes].sort(), [...EXPECTED_CLASSES].sort());
     assert.equal(classes.size, 4);
+  });
+
+  it("TE ships te_test_write and te_completion as additional distinct classes", () => {
+    for (const file of TE_CLASS_FILES) {
+      assert.ok(
+        existsSync(path.join(HOOKS_DIR, file)),
+        `hooks/${file} must exist (ROUTER-EMV-003-001 exact_write_sets.Lite_product)`
+      );
+    }
+    const teHost = require(path.join(HOOKS_DIR, "te-host.cjs"));
+    const teCapability = require(path.join(HOOKS_DIR, "te-capability.cjs"));
+
+    assert.deepEqual([...teHost.TE_CLASSES].sort(), [...TE_CLASSES].sort());
+    assert.equal(teCapability.CAPABILITY, "test-engineering");
+
+    // Additional, not replacements: no overlap with the original four classes,
+    // and no reuse of the original four outcome tokens as TE verdicts.
+    for (const teClass of teHost.TE_CLASSES) {
+      assert.ok(!EXPECTED_CLASSES.has(teClass), `${teClass} collides with an original class`);
+    }
+    for (const original of HOOKS) {
+      assert.ok(
+        !teHost.TE_CLASSES.includes(original.mod.HOOK_CLASS),
+        original.file
+      );
+      for (const outcome of original.mod.OUTCOMES) {
+        assert.ok(ALLOWED_OUTCOMES.has(outcome), `${original.file} ${outcome}`);
+      }
+    }
+    for (const verdict of teHost.VERDICTS) {
+      assert.ok(
+        !ALLOWED_OUTCOMES.has(verdict) || verdict === "UNAVAILABLE",
+        `TE verdict ${verdict} must not reuse an original-four outcome`
+      );
+    }
+    assert.ok(teHost.VERDICTS.includes("DENY_ROUTE_TO_TE"));
+    assert.ok(teHost.VERDICTS.includes("DENY_RECEIPT_REQUIRED"));
   });
 
   it("each hook exports evaluate() and OUTCOMES limited to ADVISE|REROUTE|BLOCK|UNAVAILABLE", () => {

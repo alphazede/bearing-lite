@@ -1,0 +1,7 @@
+{
+  "session_id": "te-fixture-stop",
+  "transcript_path": "/tmp/te-fixture.jsonl",
+  "cwd": "__WORKSPACE__",
+  "hook_event_name": "Stop",
+  "stop_hook_active": false
+}

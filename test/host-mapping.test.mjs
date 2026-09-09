@@ -5,7 +5,14 @@
  */
 import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdtempSync,
+  mkdirSync,
+  writeFileSync,
+  rmSync,
+  readFileSync,
+} from "node:fs";
 import { spawnSync } from "node:child_process";
 import os from "node:os";
 import path from "node:path";
@@ -119,27 +126,78 @@ describe("verified host mapping", () => {
     rmSync(tmp, { recursive: true, force: true });
   });
 
-  it("ships hooks.json for SessionStart and Stop only", () => {
+  it("keeps the SessionStart activation and Stop closeout handlers on host.cjs", () => {
     const manifest = JSON.parse(readFileSync(path.join(ROOT, "hooks/hooks.json"), "utf8"));
-    assert.deepEqual(Object.keys(manifest.hooks).sort(), ["SessionStart", "Stop"]);
-    assert.ok(!manifest.hooks.PreToolUse);
     assert.ok(!manifest.hooks.PostToolUse);
-    const command = manifest.hooks.SessionStart[0].hooks[0];
-    assert.equal(command.type, "command");
-    assert.equal(command.command, "node");
-    assert.deepEqual(command.args, [
-      "${CLAUDE_PLUGIN_ROOT}/hooks/com.anthropic.claude-code/host.cjs",
-    ]);
+    for (const event of ["SessionStart", "Stop"]) {
+      const handlers = manifest.hooks[event].flatMap((entry) => entry.hooks);
+      const activationOrCloseout = handlers.filter((command) =>
+        command.args?.some((arg) => arg.endsWith("com.anthropic.claude-code/host.cjs"))
+      );
+      assert.equal(activationOrCloseout.length, 1, event);
+      assert.equal(activationOrCloseout[0].type, "command");
+      assert.equal(activationOrCloseout[0].command, "node");
+      assert.deepEqual(activationOrCloseout[0].args, [
+        "${CLAUDE_PLUGIN_ROOT}/hooks/com.anthropic.claude-code/host.cjs",
+      ]);
+    }
   });
 
-  it("maps host events to activation or closeout only", () => {
+  it("registers TE on PreToolUse, Stop, and SubagentStop through te-host.cjs", () => {
+    const manifest = JSON.parse(readFileSync(path.join(ROOT, "hooks/hooks.json"), "utf8"));
+    for (const event of ["PreToolUse", "Stop", "SubagentStop"]) {
+      assert.ok(
+        manifest.hooks[event],
+        `hooks.json must register ${event} for the TE classes (ROUTER-EMV-003-001)`
+      );
+      const handlers = manifest.hooks[event].flatMap((entry) => entry.hooks);
+      const te = handlers.filter((command) =>
+        command.args?.some((arg) => arg.endsWith("hooks/te-host.cjs"))
+      );
+      assert.equal(te.length, 1, `${event} must route to hooks/te-host.cjs`);
+      assert.equal(te[0].command, "node");
+    }
+    // Stop-only registration is not child enforcement; SubagentStop is its own
+    // handler, not an alias of Stop.
+    assert.notEqual(manifest.hooks.SubagentStop, manifest.hooks.Stop);
+    const preToolUse = manifest.hooks.PreToolUse[0];
+    assert.match(
+      String(preToolUse.matcher),
+      /Write|Edit|MultiEdit|apply_patch|Bash/,
+      "PreToolUse must match the write family"
+    );
+  });
+
+  it("maps host events on the original adapter to activation or closeout only", () => {
     assert.equal(host.classForEvent("SessionStart"), "activation");
     assert.equal(host.classForEvent("sessionStart"), "activation");
     assert.equal(host.classForEvent("session_start"), "activation");
     assert.equal(host.classForEvent("Stop"), "closeout");
     assert.equal(host.classForEvent("stop"), "closeout");
+    // The activation/closeout adapter owns no TE class. `te-host.cjs` maps the
+    // TE events; this adapter is not rewritten to fake TE coverage.
     assert.equal(host.classForEvent("PreToolUse"), null);
     assert.equal(host.classForEvent("PostToolUse"), null);
+    assert.equal(host.classForEvent("beforeShellExecution"), null);
+  });
+
+  it("te-host.cjs is the mapped class for the TE write and completion events", () => {
+    const teHostPath = path.join(ROOT, "hooks/te-host.cjs");
+    assert.ok(
+      existsSync(teHostPath),
+      "hooks/te-host.cjs must exist (ROUTER-EMV-003-001 exact_write_sets.Lite_product)"
+    );
+    const teHost = require(teHostPath);
+    for (const event of ["PreToolUse", "preToolUse", "beforeShellExecution"]) {
+      assert.equal(teHost.classForEvent(event), "te_test_write", event);
+    }
+    for (const event of ["Stop", "stop", "SubagentStop", "subagentStop"]) {
+      assert.equal(teHost.classForEvent(event), "te_completion", event);
+    }
+    // Unmapped stays unmapped on both adapters.
+    for (const event of ["SessionStart", "UserPromptSubmit", "PostToolUse"]) {
+      assert.equal(teHost.classForEvent(event), null, event);
+    }
   });
 
   it("accepts Grok/Cursor camelCase session envelopes", () => {
@@ -156,13 +214,43 @@ describe("verified host mapping", () => {
     assert.match(response.hookSpecificOutput.additionalContext, /context_ready/);
   });
 
-  it("ships Cursor camelCase hooks without PreToolUse", () => {
+  it("keeps Cursor camelCase sessionStart and stop on the activation adapter", () => {
     const cursorHooks = JSON.parse(
       readFileSync(path.join(ROOT, "hooks/com.cursor/hooks.json"), "utf8")
     );
-    assert.deepEqual(Object.keys(cursorHooks.hooks).sort(), ["sessionStart", "stop"]);
-    assert.ok(!cursorHooks.hooks.PreToolUse);
+    assert.ok(!cursorHooks.hooks.PreToolUse, "Cursor uses camelCase event names");
     assert.match(cursorHooks.hooks.sessionStart[0].command, /host\.cjs/);
+    assert.match(cursorHooks.hooks.stop[0].command, /host\.cjs/);
+  });
+
+  it("adds Cursor write-time TE hooks without claiming a hard completion deny", () => {
+    const cursorHooks = JSON.parse(
+      readFileSync(path.join(ROOT, "hooks/com.cursor/hooks.json"), "utf8")
+    );
+    for (const event of ["preToolUse", "beforeShellExecution"]) {
+      assert.ok(
+        cursorHooks.hooks[event],
+        `Cursor must register ${event} for te_test_write (ROUTER-EMV-003-001)`
+      );
+      assert.match(cursorHooks.hooks[event][0].command, /te-host\.cjs/, event);
+    }
+    // Cursor write-time deny may exist. Cursor `stop` `followup_message` is not
+    // a hard completion block, and Cursor child stop is not a hard deny; the
+    // manifest must not register either as one.
+    assert.ok(
+      !cursorHooks.hooks.subagentStop,
+      "Cursor subagentStop must not be advertised as a hard completion deny"
+    );
+    const stopCommands = cursorHooks.hooks.stop.map((entry) => entry.command);
+    assert.ok(
+      stopCommands.every((command) => !/te-host\.cjs/.test(command)),
+      "Cursor stop must not be registered as a native TE completion deny"
+    );
+    assert.doesNotMatch(
+      JSON.stringify(cursorHooks),
+      /followup_message/,
+      "followup_message is not a completion block"
+    );
   });
 
   it("derives plan_present, role, and next_action from visible Markdown", () => {
@@ -502,5 +590,61 @@ describe("verified host mapping", () => {
     assert.match(mapping, /journey marker/);
     assert.match(mapping, /Receipt `verdict`/);
     assert.match(mapping, /task `outcome` is approved intent/);
+  });
+
+  it("mapping.md documents the TE classes and stays honest about unsupported hosts", () => {
+    const mapping = readFileSync(
+      path.join(ROOT, "hooks/com.anthropic.claude-code/mapping.md"),
+      "utf8"
+    );
+    // TE classes are documented where native events exist.
+    assert.match(mapping, /te_test_write/);
+    assert.match(mapping, /te_completion/);
+    assert.match(mapping, /PreToolUse/);
+    assert.match(mapping, /SubagentStop/);
+    assert.match(mapping, /beforeShellExecution/);
+    // Unmapped events stay UNAVAILABLE.
+    assert.match(mapping, /unmapped[\s\S]{0,80}UNAVAILABLE/i);
+
+    // Host honesty. Grok / Codex / Claude Code carry the mapped child stop.
+    for (const host of ["Grok", "Codex", "Claude Code"]) {
+      assert.match(mapping, new RegExp(host), host);
+    }
+    // Cursor: no native completion or child-stop deny claim.
+    const cursorRow = mapping
+      .split("\n")
+      .find((line) => /^\|\s*Cursor\b/.test(line) && /te_completion|completion/i.test(line));
+    assert.ok(
+      cursorRow,
+      "mapping.md must carry a Cursor TE completion row stating UNAVAILABLE"
+    );
+    // Cursor write-time deny may be claimed. Completion and child stop may not:
+    // a `stop` `followup_message` is not a hard completion block.
+    const cursorCompletionCells = cursorRow
+      .split("|")
+      .map((cell) => cell.trim())
+      .filter((cell) => /completion|stop/i.test(cell));
+    assert.ok(cursorCompletionCells.length > 0, "Cursor completion cell missing");
+    for (const cell of cursorCompletionCells) {
+      assert.match(cell, /UNAVAILABLE/, cell);
+      assert.doesNotMatch(
+        cell,
+        /\bnative\b|hard (?:block|deny)/i,
+        `Cursor completion must not be advertised as a hard native block: ${cell}`
+      );
+    }
+    assert.doesNotMatch(
+      cursorRow,
+      /followup_message/i,
+      "followup_message is not a hard completion block"
+    );
+    // Kimi / Pi / AGY / DeepCode remain UNAVAILABLE for native TE blocking.
+    for (const host of ["Kimi", "Pi", "AGY", "DeepCode"]) {
+      const row = mapping
+        .split("\n")
+        .find((line) => new RegExp(`^\\|\\s*${host}\\b`).test(line) && /te_|TE\b/.test(line));
+      assert.ok(row, `mapping.md must state TE support for ${host}`);
+      assert.match(row, /UNAVAILABLE/, host);
+    }
   });
 });

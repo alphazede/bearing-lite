@@ -1,0 +1,6 @@
+{
+  "session_id": "te-fixture-unmapped",
+  "cwd": "__WORKSPACE__",
+  "hook_event_name": "UserPromptSubmit",
+  "prompt": "keep going"
+}
