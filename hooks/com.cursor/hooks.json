@@ -1,5 +1,5 @@
 {
-  "description": "Bearing Lite Cursor mapping. Partial coverage: sessionStart activation, stop closeout. Transition-order and protected-action remain procedural.",
+  "description": "Bearing Lite Cursor mapping. Partial coverage: sessionStart activation, stop closeout, and write-time te_test_write on preToolUse and beforeShellExecution. Cursor exposes no hard completion or child-stop deny, so te_completion stays procedural. Transition-order and protected-action remain procedural.",
   "hooks": {
     "sessionStart": [
       {
@@ -9,6 +9,16 @@
     "stop": [
       {
         "command": "node ./hooks/com.anthropic.claude-code/host.cjs"
+      }
+    ],
+    "preToolUse": [
+      {
+        "command": "node ./hooks/te-host.cjs --host=cursor"
+      }
+    ],
+    "beforeShellExecution": [
+      {
+        "command": "node ./hooks/te-host.cjs --host=cursor"
       }
     ]
   }

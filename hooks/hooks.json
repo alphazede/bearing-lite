@@ -1,5 +1,5 @@
 {
-  "description": "Bearing Lite verified Claude Code and Codex mapping. Partial coverage: activation on SessionStart, closeout on Stop. Transition-order and protected-action remain procedural.",
+  "description": "Bearing Lite verified Claude Code and Codex mapping. Partial coverage: activation on SessionStart, closeout on Stop, and the Test Engineering classes te_test_write on PreToolUse and te_completion on Stop and SubagentStop. Transition-order and protected-action remain procedural.",
   "hooks": {
     "SessionStart": [
       {
@@ -16,6 +16,22 @@
         ]
       }
     ],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit|NotebookEdit|apply_patch|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/te-host.cjs"
+            ],
+            "timeout": 15,
+            "statusMessage": "Bearing Lite test-engineering write check"
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
@@ -27,6 +43,34 @@
             ],
             "timeout": 15,
             "statusMessage": "Bearing Lite closeout"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/te-host.cjs"
+            ],
+            "timeout": 15,
+            "statusMessage": "Bearing Lite test-engineering completion check"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/te-host.cjs"
+            ],
+            "timeout": 15,
+            "statusMessage": "Bearing Lite test-engineering child completion check"
           }
         ]
       }
