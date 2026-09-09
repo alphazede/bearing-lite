@@ -42,13 +42,20 @@
  *     evaluateCompletion(request) -> { verdict, reason }
  *
  *   request (built by Lite from real state)
- *     { hook_class, event, workspace_root,
+ *     { hook_class, event, workspaceRoot,
  *       candidate: { checkout, branch, revision, diff_base, scope_paths,
  *                    changed_paths },
  *       assignment: { task_id, assigned_role, role_instance, write_set,
  *                     authority, type },
- *       target_paths, handoff: { path, exists, raw },
+ *       tool_name, tool_input, target_paths,
+ *       handoff: { path, exists, raw },
  *       receipt: { path, exists, raw }, host }
+ *
+ *     `workspaceRoot`, `tool_name` and `tool_input` are the field names the
+ *     evaluator actually reads (S25-INT-001). Lite is the producer here, so a
+ *     request that carries the same information under any other spelling is
+ *     empty to the consumer and fails open. See
+ *     `installSupportedContractEvaluator` below.
  */
 import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
@@ -224,6 +231,117 @@ module.exports = {
 `
   );
   setVerdict(dir, { verdict: "ALLOW", reason: "evaluator_double_default" });
+}
+
+/**
+ * Install a real, loadable evaluator double that consumes **only** the request
+ * fields the pinned HQ evaluator supports (S25-INT-001).
+ *
+ * Supported input surface of `te-evaluator.cjs`:
+ *   resolveRoot(input)       reads `input.workspaceRoot`, then
+ *                            `TE_WORKSPACE_ROOT`, then `process.cwd()`
+ *   evaluateTestWrite(input) reads `input.tool_name` and `input.tool_input`
+ *
+ * It reproduces that field surface and nothing else: no classifier, no scope
+ * fingerprint, no receipt or handoff schema, no gate codes. A crude filename
+ * check and a bare file-existence check stand in for HQ policy on purpose, so
+ * this file cannot drift into a clone of the evaluator. It deliberately does
+ * not read `workspace_root` or `target_paths`, because the real consumer does
+ * not: a producer that emits only those names is invisible to it.
+ */
+function installSupportedContractEvaluator(dir) {
+  writeFile(
+    dir,
+    "skills/test-engineering/hooks/te-evaluator.cjs",
+    `"use strict";
+const fs = require("node:fs");
+const path = require("node:path");
+const WS = path.resolve(__dirname, "..", "..", "..");
+const CALLS = path.join(WS, "te-calls.json");
+const STORE = [".bearing", "test-engineering"];
+
+function resolveRoot(request) {
+  const candidate =
+    (request && request.workspaceRoot) ||
+    process.env.TE_WORKSPACE_ROOT ||
+    process.cwd();
+  return path.resolve(candidate);
+}
+
+function writeTargets(request) {
+  const payload =
+    request && typeof request.tool_input === "object" && request.tool_input
+      ? request.tool_input
+      : {};
+  const out = [];
+  for (const key of ["file_path", "path", "target_file", "notebook_path", "filePath"]) {
+    if (typeof payload[key] === "string") out.push(payload[key]);
+  }
+  return out;
+}
+
+function record(fn, request, observed, result) {
+  const calls = fs.existsSync(CALLS)
+    ? JSON.parse(fs.readFileSync(CALLS, "utf8"))
+    : [];
+  calls.push({ fn, request, observed, result });
+  fs.writeFileSync(CALLS, JSON.stringify(calls, null, 2));
+  return result;
+}
+
+module.exports = {
+  evaluateTestWrite(request) {
+    const root = resolveRoot(request);
+    const targets = writeTargets(request);
+    const tests = targets.filter((rel) => /\\.test\\.[a-z]+$/i.test(rel));
+    const handoff = fs.existsSync(path.join(root, ...STORE, "handoff.json"));
+    const observed = {
+      resolved_root: root,
+      tool_name: request ? request.tool_name : undefined,
+      write_targets: targets,
+      test_targets: tests,
+      handoff_present: handoff,
+    };
+    let result;
+    if (!targets.length) {
+      result = { verdict: "ALLOW", reason: "no write target in this tool call" };
+    } else if (!tests.length) {
+      result = { verdict: "ALLOW", reason: "no executable test code in this write" };
+    } else if (handoff) {
+      result = { verdict: "ALLOW", reason: "a method=test handoff covers this write" };
+    } else {
+      result = {
+        verdict: "DENY_ROUTE_TO_TE",
+        reason: "test code requires a Test Engineering method selection",
+      };
+    }
+    return record("evaluateTestWrite", request, observed, result);
+  },
+  evaluateCompletion(request) {
+    const root = resolveRoot(request);
+    const receipt = fs.existsSync(path.join(root, ...STORE, "receipt.json"));
+    const observed = { resolved_root: root, receipt_present: receipt };
+    const result = receipt
+      ? { verdict: "ALLOW", reason: "a receipt binds the resolved workspace" }
+      : {
+          verdict: "DENY_RECEIPT_REQUIRED",
+          reason: "scoped change with no receipt in the resolved workspace",
+        };
+    return record("evaluateCompletion", request, observed, result);
+  },
+};
+`
+  );
+}
+
+/** The last recorded call: the request plus what the double could observe. */
+function lastCall(dir) {
+  const recorded = calls(dir);
+  assert.ok(
+    recorded.length > 0,
+    "te-host must hand the request to the loaded evaluator, not decide locally"
+  );
+  return recorded[recorded.length - 1];
 }
 
 function setVerdict(dir, verdict) {
@@ -831,5 +949,171 @@ describe("Lite TE host adapter (hooks/te-host.cjs)", () => {
       );
       assert.equal(parsed.continue, undefined);
     }
+  });
+
+  // -------------------------------------------------------------------------
+  // S25-INT-001. The adapter is the producer of the evaluator request, so the
+  // request it emits must be spelled in the field names the pinned HQ
+  // evaluator actually reads. A request that carries the same information
+  // under names the consumer does not read is silently empty to it, and an
+  // empty request fails open into an ALLOW that verifies nothing. These two
+  // cases pin the producer side of that seam.
+  // -------------------------------------------------------------------------
+
+  it("forwards the host tool call so the evaluator recovers the literal write target", () => {
+    const teHost = loadTe("te-host.cjs");
+    const dir = workspace("supported-write");
+    installSupportedContractEvaluator(dir);
+    writeFile(dir, "test/te-example.test.mjs", "// seed\n");
+    const dirBase = commitAll(dir, "baseline");
+    writePlan(dir, {
+      task_id: "T-TE-6",
+      assigned_role: "Test-writing Crewmate",
+      role_instance: "TW-SUPPORTED-WRITE",
+      write_set: ["test/te-example.test.mjs"],
+      authority: "AUTH-EMV-001",
+      type: "test-first",
+      diff_base: dirBase,
+    });
+
+    // No method handoff on disk: an unhanded-off test write routes to TE.
+    const denied = teHost.handle(
+      envelope("claude-pretooluse-test-write.json", dir),
+      { selected: true }
+    );
+    const call = lastCall(dir);
+    assert.equal(
+      call.request.tool_name,
+      "Write",
+      "te-host must forward the supported HQ request field tool_name; " +
+        `the recorded request carries: ${Object.keys(call.request).sort().join(", ")}`
+    );
+    assert.deepEqual(
+      call.request.tool_input,
+      {
+        file_path: "test/te-example.test.mjs",
+        content: 'import { it } from "node:test";\n',
+      },
+      "te-host must forward the supported HQ request field tool_input with the " +
+        "host's literal target intent intact; the recorded request carries " +
+        `tool_input=${JSON.stringify(call.request.tool_input)}`
+    );
+    assert.deepEqual(
+      call.observed.test_targets,
+      ["test/te-example.test.mjs"],
+      "the evaluator must be able to recover the test write from the request " +
+        `it was handed; it recovered ${JSON.stringify(call.observed.write_targets)}`
+    );
+    assert.equal(
+      denied.hookSpecificOutput.verdict,
+      "DENY_ROUTE_TO_TE",
+      "an unhanded-off test write must not ALLOW through Lite; the evaluator " +
+        `answered ${JSON.stringify(call.result)} on the request Lite built`
+    );
+    assert.equal(denied.hookSpecificOutput.permissionDecision, "deny");
+
+    // The double discriminates: the same forwarded call ALLOWs once a handoff
+    // covers it, so the red above is the request contract and not a stub that
+    // denies unconditionally.
+    writeHandoff(dir, {
+      schema_version: 1,
+      kind: "test-engineering-handoff",
+      task_id: "T-TE-6",
+      method: "test",
+      authorizes_write_tests: true,
+      write_scope: ["test/te-example.test.mjs"],
+      revision: dirBase,
+      completion_receipt_id: null,
+    });
+    const allowed = teHost.handle(
+      envelope("claude-pretooluse-test-write.json", dir),
+      { selected: true }
+    );
+    const allowedCall = lastCall(dir);
+    assert.equal(
+      allowedCall.observed.handoff_present,
+      true,
+      "the evaluator must see the handoff in the envelope workspace; it looked " +
+        `in ${allowedCall.observed.resolved_root}`
+    );
+    assert.equal(allowed.hookSpecificOutput.verdict, "ALLOW");
+    assert.notEqual(allowed.hookSpecificOutput.permissionDecision, "deny");
+  });
+
+  it("forwards the envelope workspace as workspaceRoot for completion even when the process cwd differs", () => {
+    const teHostPath = path.join(HOOKS_DIR, "te-host.cjs");
+    assert.ok(existsSync(teHostPath), "hooks/te-host.cjs must exist");
+
+    const dir = workspace("supported-completion");
+    installSupportedContractEvaluator(dir);
+    writeFile(dir, "src/engine.mjs", "export const engine = 1;\n");
+    const dirBase = commitAll(dir, "baseline");
+    writePlan(dir, {
+      task_id: "T-TE-7",
+      assigned_role: "Product Crewmate",
+      role_instance: "PC-SUPPORTED-COMPLETION",
+      write_set: ["src/"],
+      authority: "AUTH-EMV-001",
+      type: "product",
+      diff_base: dirBase,
+    });
+    // Unreceipted scoped change in the workspace the host envelope names.
+    writeFile(dir, "src/engine.mjs", "export const engine = 2;\n");
+    assert.ok(!existsSync(path.join(dir, RECEIPT_STORE, "receipt.json")));
+
+    // A different, receipted directory stands in for the process cwd. Nothing
+    // in it belongs to the envelope's candidate.
+    const decoy = workspace("supported-completion-cwd");
+    writeReceipt(decoy, {
+      schema_version: 1,
+      kind: "test-engineering-receipt",
+      outcome: "PASS",
+      producer: { role: "Test Engineering", skill: "test-engineering" },
+      quality_gate: { status: "PASS", failures: [] },
+      authority_boundaries: {
+        grants_planning: false,
+        grants_acceptance: false,
+        grants_publication: false,
+      },
+    });
+
+    const env = { ...process.env, BEARING_TEST_ENGINEERING_SELECTED: "1" };
+    delete env.TE_WORKSPACE_ROOT;
+    const result = spawnSync(process.execPath, [teHostPath], {
+      input: JSON.stringify(envelope("claude-stop.json", dir)),
+      cwd: decoy,
+      env,
+      encoding: "utf8",
+      timeout: 10_000,
+    });
+    assert.equal(result.status, 0, result.stderr);
+    const response = JSON.parse(result.stdout);
+    const call = lastCall(dir);
+
+    assert.equal(
+      call.request.workspaceRoot,
+      dir,
+      "te-host must forward the supported HQ request field workspaceRoot; " +
+        `the recorded request carries: ${Object.keys(call.request).sort().join(", ")}`
+    );
+    assert.equal(
+      call.observed.resolved_root,
+      dir,
+      "the evaluator must resolve the envelope workspace; it resolved " +
+        `${call.observed.resolved_root} while the envelope named ${dir}`
+    );
+    assert.notEqual(
+      call.observed.resolved_root,
+      decoy,
+      "completion must never be evaluated against the process cwd"
+    );
+    assert.equal(
+      response.hookSpecificOutput.verdict,
+      "DENY_RECEIPT_REQUIRED",
+      "an unreceipted scoped change must not ALLOW because a foreign cwd " +
+        `carries a receipt; the evaluator answered ${JSON.stringify(call.result)}`
+    );
+    assert.equal(response.decision, "block");
+    assert.equal(response.continue, undefined);
   });
 });
