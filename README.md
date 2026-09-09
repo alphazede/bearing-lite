@@ -162,9 +162,11 @@ Test Engineer, Park Ranger, or Surveyor verdict.
 
 Public Bearing Lite remains usable without AlphaZede-specific skills
 (`requirements-engineering`, `sysml-modeling`, `test-engineering`,
-`integration-engineering`). Unselected absence is not a global failure. A
-selected missing required capability is a typed capability gap, not success
-or invented behavior.
+`integration-engineering`). Specialized capabilities activate when selected
+or required. Unavailability of a selected-or-required capability is a typed capability gap,
+not success and not invented behavior. Selected-only missing and required-only
+missing are each typed gaps. Only unselected and unrequired absence remains
+inactive / not a global failure.
 
 Failure escalates to the nearest role whose scope can see it:
 
