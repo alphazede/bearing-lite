@@ -227,6 +227,25 @@ describe("CMD-HANDOFF-01 role-handoff (SEIT-HANDOFF-01)", () => {
     }
   });
 
+  it("assurance sequence is Assurance Test Engineer, Park Ranger, then Surveyor", () => {
+    const taskState = readFileSync(
+      path.join(ROOT, "skills/bearing-lite/references/task-state.md"),
+      "utf8"
+    );
+    const routing = readFileSync(
+      path.join(ROOT, "skills/bearing-lite/references/role-routing.mmd"),
+      "utf8"
+    );
+    const template = readFileSync(
+      path.join(ROOT, "skills/bearing-lite/templates/task.md"),
+      "utf8"
+    );
+    assert.match(taskState, /Assurance Test Engineer/);
+    assert.match(routing, /Assurance Test Engineer|Test Engineer/);
+    assert.match(template, /Assurance Test Engineer|Test Engineer/);
+    assert.doesNotMatch(template, /required_assurance:\s*\[Validator\]/);
+  });
+
   it("Direct and Expedition bound exhaustion name candidate and count", () => {
     const router = readFileSync(
       path.join(ROOT, "skills/bearing-lite/SKILL.md"),

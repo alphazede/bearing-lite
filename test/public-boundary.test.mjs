@@ -38,7 +38,16 @@ const SCAN_ROOTS = [
   ".agy/README.md",
   "hooks",
   "skills",
+  "lineups.json",
+  "schemas",
   ...PACKED_PUBLIC_DOCS,
+];
+
+const ALPHAZDE_METHOD_SKILLS = [
+  "requirements-engineering",
+  "sysml-modeling",
+  "test-engineering",
+  "integration-engineering",
 ];
 
 const OLD_PACKAGE_NAME_COUPLING = {
@@ -191,6 +200,33 @@ describe("CMD-PUBLIC-01 public-boundary (SEIT-PUBLIC-01, SEIT-MODEL-01, SEIT-IND
     assert.ok(!PACKAGE.files.includes("src/"));
     assert.ok(!PACKAGE.files.includes("dist/"));
     assert.ok(!PACKAGE.files.includes("mcp.json"));
+  });
+
+  it("files allowlist includes shipped lineups.json and schemas/", () => {
+    assert.ok(PACKAGE.files.includes("lineups.json"));
+    assert.ok(PACKAGE.files.includes("schemas/"));
+  });
+
+  it("public core does not ship AlphaZede method skills", () => {
+    for (const name of ALPHAZDE_METHOD_SKILLS) {
+      assert.equal(
+        existsSync(path.join(ROOT, "skills", name, "SKILL.md")),
+        false,
+        name
+      );
+    }
+  });
+
+  it("scans shipped lineups.json and schema files as public surfaces", () => {
+    const verdict = scanPublicLiteSurfaces();
+    assert.ok(verdict.scanned.includes("lineups.json"), "lineups.json must be a scanned public surface");
+    assert.ok(
+      verdict.scanned.includes("schemas/seit.schema.json"),
+      "schemas/seit.schema.json must be a scanned public surface"
+    );
+    assert.ok(verdict.scanned.includes("schemas/implementation.schema.json"));
+    assert.ok(verdict.scanned.includes("schemas/authority.schema.json"));
+    assert.ok(verdict.scanned.includes("schemas/journey.schema.json"));
   });
 
   it("packaged public surfaces scan clean of secrets, private paths, model pins, deep coupling", () => {
