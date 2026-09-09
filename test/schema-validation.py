@@ -4,10 +4,11 @@
 Binds pass/fail to SEIT-EMV-021/022/024/028 (AC-EMV-021/022/024/028).
 Required fields come from CONTRACT-EMV-007/008/009, design interfaces/data,
 and the public checkout-lease identity — not from candidate schema required
-arrays. Fixtures are public-safe synthetics.
+arrays. Fixtures are public-safe synthetics of the approved structures.
 """
 from __future__ import annotations
 
+import copy
 import json
 import os
 import shutil
@@ -22,8 +23,9 @@ REQUIREMENTS = Path(__file__).resolve().parent / "schema-validator-requirements.
 ISOLATED_ROOT_ENV = "BEARING_LITE_SCHEMA_ISOLATED_ROOT"
 WHEELHOUSE_ENV = "BEARING_LITE_SCHEMA_WHEELHOUSE"
 
-# CONTRACT-EMV-007 always-on sections.
-ALWAYS_ON_SECTIONS = (
+# CONTRACT-EMV-007 labels retained only as the former sparse always_on_sections
+# dialect. Complete documents use named section objects, not this label array.
+SPARSE_ALWAYS_ON_SECTION_LABELS = (
     "scope/baseline",
     "responsibility/change authority",
     "applicable documents/precedence",
@@ -35,6 +37,22 @@ ALWAYS_ON_SECTIONS = (
     "procedures/commands",
     "evidence/pass-fail",
     "anomaly/corrective/closure",
+)
+
+# Approved named always-on SEIT sections (objects/lists with content).
+NAMED_SEIT_SECTIONS = (
+    "source_baseline",
+    "decision_baseline",
+    "responsibility_and_change_authority",
+    "applicable_documents_and_precedence",
+    "system_description_and_requirements_flowdown",
+    "vv_methods",
+    "levels",
+    "environments_fixtures_data_simulations_support",
+    "procedures_and_commands",
+    "evidence_and_pass_fail",
+    "anomaly_corrective_closure",
+    "integration_vv_sequence",
 )
 
 # Public checkout_lease identity (skills/bearing-lite/templates/task.md).
@@ -50,7 +68,24 @@ LEASE_IDENTITY_FIELDS = (
     "state",
 )
 
-# CONTRACT-EMV-008 slice fields.
+JOURNEY_IDENTITY_FIELDS = (
+    "id",
+    "title",
+    "status",
+    "planning_repository",
+)
+
+JOURNEY_TOP_FIELDS = (
+    "schema_version",
+    "journey",
+    "checkout_lease",
+    "decisions",
+    "open_decisions",
+    "planning_receipts",
+    "lineup_selection",
+)
+
+# CONTRACT-EMV-008 slice fields with the canonical reasoning_level object.
 SLICE_FIELDS = (
     "role",
     "goal",
@@ -60,7 +95,7 @@ SLICE_FIELDS = (
     "seit_proof_rows",
     "design_lenses",
     "model_route",
-    "reasoning",
+    "reasoning_level",
     "review_path",
     "write_set",
     "command_ids",
@@ -69,7 +104,21 @@ SLICE_FIELDS = (
     "authority_id",
 )
 
-# CONTRACT-EMV-009 envelope fields.
+IMPLEMENTATION_TOP_FIELDS = (
+    "schema_version",
+    "artifact",
+    "source_baseline",
+    "journey_settings",
+    "lineup_freeze",
+    "waves",
+    "dependencies",
+    "slices",
+    "traceability",
+)
+
+CARDINALITY_FIELDS = ("n", "k", "c")
+
+# CONTRACT-EMV-009 envelope fields with canonical array names/types.
 ENVELOPE_FIELDS = (
     "schema",
     "id",
@@ -77,18 +126,47 @@ ENVELOPE_FIELDS = (
     "subject",
     "repositories",
     "baseline",
-    "granting_owner_decision",
+    "granting_owner_decisions",
     "allowed",
     "prohibited",
     "role_grants",
     "effective",
-    "expiry",
+    "expiry_conditions",
     "supersedes",
     "approval_receipt",
 )
 
+AUTHORITY_TOP_FIELDS = ("schema_version",) + ENVELOPE_FIELDS
+
+ALLOWED_PROHIBITED_FIELDS = ("scope", "actions", "paths")
+
+PROOF_FIELDS = (
+    "id",
+    "kind",
+    "requirement_id",
+    "design_id",
+    "command_id",
+    "method",
+    "preconditions",
+    "stimulus_or_procedure",
+    "expected_result",
+    "observable_evidence",
+    "pass_fail_rule",
+    "method_fields",
+    "negative_or_failure_case",
+)
+
 SYN_JOURNEY = "synthetic-core-schema-fixture"
 SYN_AUTH = "AUTH-SYN-001"
+SYN_SLICE = "SYN-S1"
+SYN_WAVE = "SYN-W1"
+SYN_PROOF = "SEIT-SYN-001"
+SYN_DEC = "DEC-SYN-001"
+SYN_REV = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+FORBIDDEN_SLICE_ALIASES = ("reasoning",)
+FORBIDDEN_AUTHORITY_ALIASES = ("granting_owner_decision", "expiry")
+FORBIDDEN_PROOF_ALIASES = ("evidence", "pass_fail")
 
 
 def die_env(message: str, code: int = 2) -> None:
@@ -211,7 +289,7 @@ def complete_lease(**overrides: object) -> dict:
         "repository": "example/bearing-lite",
         "checkout": "synthetic-checkout",
         "branch": "synthetic-branch",
-        "candidate_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "candidate_revision": SYN_REV,
         "acquired_at": "2026-01-01T00:00:00Z",
         "generation": 1,
         "state": "active",
@@ -223,9 +301,32 @@ def complete_lease(**overrides: object) -> dict:
 def complete_journey(**overrides: object) -> dict:
     doc = {
         "schema_version": "1",
-        "journey": {"id": SYN_JOURNEY},
+        "journey": {
+            "id": SYN_JOURNEY,
+            "title": "Synthetic portable schema fixture",
+            "status": "planning",
+            "planning_repository": "example/bearing-lite",
+        },
         "checkout_lease": complete_lease(),
-        "decisions": [],
+        "decisions": [
+            {
+                "id": SYN_DEC,
+                "status": "confirmed",
+                "decision": "Public schema tests use synthetic portable fixtures.",
+            }
+        ],
+        "open_decisions": [],
+        "planning_receipts": [
+            {
+                "id": "SYN-RECEIPT-PLAN-001",
+                "role": "Router",
+                "status": "recorded",
+            }
+        ],
+        "lineup_selection": {
+            "status": "owner-confirmed",
+            "selection_is_authority_grant": False,
+        },
     }
     doc.update(overrides)
     return doc
@@ -239,8 +340,8 @@ def complete_authority(**overrides: object) -> dict:
         "state": "active",
         "subject": {"journey_id": SYN_JOURNEY},
         "repositories": [{"identity": "example/bearing-lite"}],
-        "baseline": {"candidate_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
-        "granting_owner_decision": "DEC-SYN-001",
+        "baseline": {"candidate_revision": SYN_REV},
+        "granting_owner_decisions": [SYN_DEC],
         "allowed": {
             "scope": ["synthetic-schema-tests"],
             "actions": ["validate"],
@@ -253,7 +354,10 @@ def complete_authority(**overrides: object) -> dict:
         },
         "role_grants": [{"role": "Crewmate"}],
         "effective": True,
-        "expiry": None,
+        "expiry_conditions": [
+            "The granting owner revokes this synthetic envelope.",
+            "A later synthetic envelope supersedes this one.",
+        ],
         "supersedes": [],
         "approval_receipt": {"id": "SYN-RECEIPT-001"},
     }
@@ -261,19 +365,27 @@ def complete_authority(**overrides: object) -> dict:
     return doc
 
 
+def complete_reasoning_level() -> dict:
+    return {"status": "owner-selected", "value": "synthetic"}
+
+
+def complete_review_path() -> dict:
+    return {"status": "owner-selected"}
+
+
 def complete_slice(**overrides: object) -> dict:
     slice_ = {
-        "id": "SYN-S1",
+        "id": SYN_SLICE,
         "role": "Crewmate",
         "goal": "Validate portable Lite artifact schemas with synthetic fixtures.",
         "type": "test-first",
         "requirement_ids": ["AC-SYN-001"],
         "design_ids": ["CONTRACT-SYN-008"],
-        "seit_proof_rows": ["SEIT-SYN-001"],
+        "seit_proof_rows": [SYN_PROOF],
         "design_lenses": ["synthetic-portable-lens"],
         "model_route": {"status": "owner-selected"},
-        "reasoning": "synthetic owner-selected route",
-        "review_path": {"status": "owner-selected"},
+        "reasoning_level": complete_reasoning_level(),
+        "review_path": complete_review_path(),
         "write_set": ["test/schema-validation.py"],
         "command_ids": ["CMD-LITE-SCHEMA-VALIDATE"],
         "stop_condition": "Stop after schema contract cases.",
@@ -286,10 +398,52 @@ def complete_slice(**overrides: object) -> dict:
 
 
 def complete_implementation(slices: list[dict] | None = None, **overrides: object) -> dict:
+    resolved = slices if slices is not None else [complete_slice()]
+    slice_ids = [
+        item["id"]
+        for item in resolved
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    ] or [SYN_SLICE]
     doc = {
         "schema_version": "1",
-        "journey_settings": {"review_cardinality": {}},
-        "slices": slices if slices is not None else [complete_slice()],
+        "artifact": {
+            "id": "SYN-IMPL-001",
+            "type": "implementation.json",
+            "status": "draft",
+        },
+        "source_baseline": {
+            "planning_repository": "example/bearing-lite",
+            "branch": "synthetic-branch",
+            "candidate_revision": SYN_REV,
+        },
+        "journey_settings": {
+            "review_cardinality": {
+                "n": 3,
+                "k": 2,
+                "c": 1,
+            }
+        },
+        "lineup_freeze": {
+            "state": "frozen",
+            "selection_is_authority_grant": False,
+        },
+        "waves": [
+            {
+                "id": SYN_WAVE,
+                "name": "synthetic-schema-wave",
+                "slice_ids": slice_ids,
+                "execution_authorized": True,
+                "entry": "Synthetic artifacts are complete before the wave starts.",
+                "exit": "Synthetic schema-contract evidence is recorded.",
+            }
+        ],
+        "dependencies": [{"from": SYN_WAVE, "to": slice_ids[0]}],
+        "slices": resolved,
+        "traceability": {
+            "requirements": [{"id": "AC-SYN-001"}],
+            "contracts": [{"id": "CONTRACT-SYN-008"}],
+            "seit_proof_rows": [{"id": SYN_PROOF}],
+        },
     }
     doc.update(overrides)
     return doc
@@ -297,10 +451,41 @@ def complete_implementation(slices: list[dict] | None = None, **overrides: objec
 
 def complete_proof(**overrides: object) -> dict:
     proof = {
-        "id": "SEIT-SYN-001",
+        "id": SYN_PROOF,
+        "kind": "verification",
+        "requirement_id": "AC-SYN-001",
+        "design_id": "CONTRACT-SYN-007",
+        "command_id": "CMD-LITE-SCHEMA-VALIDATE",
         "method": "inspection",
-        "evidence": "synthetic observable artifact bytes",
-        "pass_fail": "PASS if required structure is present; FAIL if it is missing",
+        "preconditions": [
+            "Synthetic portable schema documents exist.",
+            "CMD-LITE-SCHEMA-VALIDATE uses isolated Draft 2020-12 validation.",
+        ],
+        "stimulus_or_procedure": (
+            "Validate the synthetic SEIT record, including named always-on "
+            "sections and the complete proof-case field set."
+        ),
+        "expected_result": (
+            "Draft 2020-12 accepts a complete synthetic SEIT and rejects "
+            "labels-only sections and four-field proof stubs."
+        ),
+        "observable_evidence": (
+            "CMD-LITE-SCHEMA-VALIDATE pass/fail lines for synthetic SEIT fixtures."
+        ),
+        "pass_fail_rule": (
+            "PASS if named sections and complete proof fields are present and "
+            "incomplete records are rejected; FAIL otherwise."
+        ),
+        "method_fields": {
+            "inspection_article": "synthetic seit.json",
+            "inspection_criteria": (
+                "named always-on sections with content and complete proof-case fields"
+            ),
+            "inspection_record": "CMD-LITE-SCHEMA-VALIDATE output",
+        },
+        "negative_or_failure_case": (
+            "Reject always_on_sections labels and method/evidence/pass_fail stubs."
+        ),
     }
     proof.update(overrides)
     return proof
@@ -309,12 +494,140 @@ def complete_proof(**overrides: object) -> dict:
 def complete_seit(**overrides: object) -> dict:
     doc = {
         "schema_version": "1",
-        "always_on_sections": list(ALWAYS_ON_SECTIONS),
-        "decision_baseline": {"kind": "stable-identities-and-statuses"},
+        "source_baseline": {
+            "planning_repository": "example/bearing-lite",
+            "branch": "synthetic-branch",
+            "candidate_revision": SYN_REV,
+        },
+        "decision_baseline": {
+            "kind": "stable-identities-and-statuses",
+            "not_whole_file_journey_digest": True,
+            "confirmed_decisions": {
+                "first_id": SYN_DEC,
+                "last_id": SYN_DEC,
+                "count": 1,
+                "status": "confirmed",
+            },
+            "open_items": [],
+        },
+        "responsibility_and_change_authority": {
+            "author": "Planning Test Engineer",
+            "change_authority": "owner-approved planning artifacts",
+            "publication_not_implied": True,
+        },
+        "applicable_documents_and_precedence": {
+            "order": [
+                "synthetic-technical-plan",
+                "synthetic-design",
+                "synthetic-seit",
+            ],
+            "tailoring": "Always-on V&V sections stay required for portable Lite artifacts.",
+        },
+        "system_description_and_requirements_flowdown": {
+            "system": "synthetic portable planning engine",
+            "flowdown": "Acceptance rows allocate to named V&V sections and proof cases.",
+            "architecture_context": "Public schema tests use synthetic fixtures only.",
+        },
+        "vv_methods": {
+            "analysis": {"use": "structure and allocation checks"},
+            "inspection": {"use": "artifact field inspection"},
+            "demonstration": {"use": "command output observation"},
+            "test": {"use": "executable schema regressions"},
+            "evaluation": {"use": "independent assurance later"},
+        },
+        "levels": [
+            {"id": "SYN-L1", "description": "Synthetic artifact completeness"},
+            {"id": "SYN-L2", "description": "Synthetic integration of the four documents"},
+        ],
+        "environments_fixtures_data_simulations_support": {
+            "environments": [{"id": "SYN-ENV-LOCAL", "kind": "isolated-python"}],
+            "fixtures": [{"id": "SYN-FIX-SCHEMA", "kind": "public-safe-json"}],
+            "datasets": ["synthetic-schema-records"],
+            "simulations": "none",
+            "support": ["python3.12", "isolated-jsonschema"],
+        },
+        "procedures_and_commands": [
+            {
+                "id": "CMD-LITE-SCHEMA-VALIDATE",
+                "type": "existing-command",
+                "command": "python3 test/schema-validation.py",
+                "source": "alphazede/bearing-lite",
+            }
+        ],
+        "evidence_and_pass_fail": {
+            "rules": [
+                "Complete synthetic records of the approved structures must be accepted.",
+                "Labels-only sections and four-field proof stubs must be rejected.",
+            ]
+        },
+        "anomaly_corrective_closure": {
+            "on_anomaly": "Record the schema mismatch and stop.",
+            "rollback": "Do not edit product schemas from this test packet.",
+            "closure": "Close after a later product repair makes complete synthetics pass.",
+        },
+        "integration_vv_sequence": [
+            {
+                "step": 1,
+                "name": "validate-synthetic-seit",
+                "post_step_proof_ids": [SYN_PROOF],
+            }
+        ],
         "proof_cases": [complete_proof()],
     }
     doc.update(overrides)
     return doc
+
+
+def sparse_slice() -> dict:
+    """Former complete_slice: sibling reasoning string, no reasoning_level."""
+    return {
+        "id": SYN_SLICE,
+        "role": "Crewmate",
+        "goal": "Validate portable Lite artifact schemas with synthetic fixtures.",
+        "type": "test-first",
+        "requirement_ids": ["AC-SYN-001"],
+        "design_ids": ["CONTRACT-SYN-008"],
+        "seit_proof_rows": [SYN_PROOF],
+        "design_lenses": ["synthetic-portable-lens"],
+        "model_route": {"status": "owner-selected"},
+        "reasoning": "synthetic owner-selected route",
+        "review_path": {"status": "owner-selected"},
+        "write_set": ["test/schema-validation.py"],
+        "command_ids": ["CMD-LITE-SCHEMA-VALIDATE"],
+        "stop_condition": "Stop after schema contract cases.",
+        "human_decision": "none",
+        "authority_id": SYN_AUTH,
+        "dispatchable": True,
+    }
+
+
+def sparse_implementation() -> dict:
+    """Former complete_implementation: schema_version, empty cardinality, one slice."""
+    return {
+        "schema_version": "1",
+        "journey_settings": {"review_cardinality": {}},
+        "slices": [sparse_slice()],
+    }
+
+
+def sparse_proof() -> dict:
+    """Former four-field proof stub."""
+    return {
+        "id": SYN_PROOF,
+        "method": "inspection",
+        "evidence": "synthetic observable artifact bytes",
+        "pass_fail": "PASS if required structure is present; FAIL if it is missing",
+    }
+
+
+def sparse_seit() -> dict:
+    """Former complete_seit: always_on_sections labels plus four-field proof."""
+    return {
+        "schema_version": "1",
+        "always_on_sections": list(SPARSE_ALWAYS_ON_SECTION_LABELS),
+        "decision_baseline": {"kind": "stable-identities-and-statuses"},
+        "proof_cases": [sparse_proof()],
+    }
 
 
 def omit(doc: dict, *keys: str) -> dict:
@@ -324,16 +637,39 @@ def omit(doc: dict, *keys: str) -> dict:
     return out
 
 
+def omit_nested(doc: dict, *keys: str) -> dict:
+    out = copy.deepcopy(doc)
+    cur: object = out
+    for key in keys[:-1]:
+        if isinstance(cur, list):
+            cur = cur[int(key)]
+        elif isinstance(cur, dict):
+            cur = cur[key]
+        else:
+            raise TypeError(f"cannot descend into {type(cur).__name__} at {keys}")
+    last = keys[-1]
+    if isinstance(cur, dict):
+        cur.pop(last, None)
+    elif isinstance(cur, list):
+        del cur[int(last)]
+    else:
+        raise TypeError(f"cannot omit from {type(cur).__name__}")
+    return out
+
+
+def has_content(value: object) -> bool:
+    if value is None:
+        return False
+    if isinstance(value, str):
+        return bool(value.strip())
+    if isinstance(value, (list, dict)):
+        return len(value) > 0
+    return True
+
+
 def cases() -> list[tuple[str, str, str, object, str]]:
     """(seit_id, name, schema_key, instance, expect accept|reject)."""
-    missing_lease_journey = complete_journey(
-        checkout_lease=omit(complete_lease(), "journey")
-    )
-    missing_lease_controller = complete_journey(
-        checkout_lease=omit(complete_lease(), "controller")
-    )
-    slice_missing_contract_fields = omit(complete_slice(), "reasoning", "review_path")
-    return [
+    out: list[tuple[str, str, str, object, str]] = [
         ("SEIT-EMV-024", "incomplete_journey_document", "journey", {"schema_version": "1"}, "reject"),
         ("SEIT-EMV-024", "incomplete_authority_document", "authority", {
             "schema_version": "1",
@@ -343,28 +679,134 @@ def cases() -> list[tuple[str, str, str, object, str]]:
         }, "reject"),
         ("SEIT-EMV-022", "incomplete_implementation_document", "implementation", {"schema_version": "1"}, "reject"),
         ("SEIT-EMV-021", "incomplete_seit_document", "seit", {"schema_version": "1"}, "reject"),
-        ("SEIT-EMV-021", "seit_missing_always_on_sections", "seit", omit(complete_seit(), "always_on_sections"), "reject"),
-        ("SEIT-EMV-021", "seit_partial_always_on_sections", "seit", complete_seit(
-            always_on_sections=["scope/baseline"]
+        ("SEIT-EMV-021", "sparse_complete_seit_labels_only", "seit", sparse_seit(), "reject"),
+        ("SEIT-EMV-021", "seit_four_field_proof_stub", "seit", complete_seit(
+            proof_cases=[sparse_proof()]
         ), "reject"),
         ("SEIT-EMV-021", "seit_empty_proof_case", "seit", complete_seit(proof_cases=[{}]), "reject"),
         ("SEIT-EMV-021", "seit_proof_case_missing_structure", "seit", complete_seit(
             proof_cases=[{"id": "SEIT-SYN-002", "method": "inspection"}]
         ), "reject"),
-        ("SEIT-EMV-022", "slice_empty_object", "implementation", complete_implementation(slices=[{}]), "reject"),
-        ("SEIT-EMV-022", "slice_missing_contract_fields", "implementation", complete_implementation(
-            slices=[slice_missing_contract_fields]
+        ("SEIT-EMV-022", "sparse_complete_implementation", "implementation", sparse_implementation(), "reject"),
+        ("SEIT-EMV-022", "implementation_sparse_reasoning_string", "implementation", complete_implementation(
+            slices=[omit(complete_slice(), "reasoning_level") | {"reasoning": "synthetic owner-selected route"}]
         ), "reject"),
-        ("SEIT-EMV-024", "checkout_lease_missing_journey", "journey", missing_lease_journey, "reject"),
-        ("SEIT-EMV-024", "checkout_lease_missing_controller", "journey", missing_lease_controller, "reject"),
+        ("SEIT-EMV-022", "slice_empty_object", "implementation", complete_implementation(slices=[{}]), "reject"),
         ("SEIT-EMV-024", "invalid_lease_generation_type", "journey", complete_journey(
             checkout_lease=complete_lease(generation="1")
         ), "reject"),
         ("SEIT-EMV-022", "invalid_human_decision_type", "implementation", complete_implementation(
             slices=[complete_slice(human_decision=3)]
         ), "reject"),
-        ("SEIT-EMV-022", "invalid_slices_type", "implementation", complete_implementation(slices={"id": "SYN-S1"}), "reject"),
+        ("SEIT-EMV-022", "invalid_slices_type", "implementation", complete_implementation(slices={"id": SYN_SLICE}), "reject"),
         ("SEIT-EMV-021", "invalid_proof_cases_type", "seit", complete_seit(proof_cases={}), "reject"),
+        ("SEIT-EMV-024", "authority_sparse_granting_owner_decision", "authority", omit(
+            complete_authority(), "granting_owner_decisions"
+        ) | {"granting_owner_decision": SYN_DEC}, "reject"),
+        ("SEIT-EMV-024", "authority_sparse_expiry", "authority", omit(
+            complete_authority(), "expiry_conditions"
+        ) | {"expiry": None}, "reject"),
+        ("SEIT-EMV-024", "authority_expiry_conditions_object", "authority", complete_authority(
+            expiry_conditions={"note": "synthetic-object-expiry"}
+        ), "reject"),
+    ]
+
+    for field in JOURNEY_TOP_FIELDS:
+        out.append((
+            "SEIT-EMV-024",
+            f"journey_missing_{field}",
+            "journey",
+            omit_nested(complete_journey(), field),
+            "reject",
+        ))
+    for field in JOURNEY_IDENTITY_FIELDS:
+        out.append((
+            "SEIT-EMV-024",
+            f"journey_identity_missing_{field}",
+            "journey",
+            omit_nested(complete_journey(), "journey", field),
+            "reject",
+        ))
+    for field in LEASE_IDENTITY_FIELDS:
+        out.append((
+            "SEIT-EMV-024",
+            f"checkout_lease_missing_{field}",
+            "journey",
+            omit_nested(complete_journey(), "checkout_lease", field),
+            "reject",
+        ))
+    for field in AUTHORITY_TOP_FIELDS:
+        out.append((
+            "SEIT-EMV-024",
+            f"authority_missing_{field}",
+            "authority",
+            omit_nested(complete_authority(), field),
+            "reject",
+        ))
+    for field in ALLOWED_PROHIBITED_FIELDS:
+        out.append((
+            "SEIT-EMV-024",
+            f"authority_allowed_missing_{field}",
+            "authority",
+            omit_nested(complete_authority(), "allowed", field),
+            "reject",
+        ))
+        out.append((
+            "SEIT-EMV-024",
+            f"authority_prohibited_missing_{field}",
+            "authority",
+            omit_nested(complete_authority(), "prohibited", field),
+            "reject",
+        ))
+    for field in IMPLEMENTATION_TOP_FIELDS:
+        out.append((
+            "SEIT-EMV-022",
+            f"implementation_missing_{field}",
+            "implementation",
+            omit_nested(complete_implementation(), field),
+            "reject",
+        ))
+    for field in CARDINALITY_FIELDS:
+        out.append((
+            "SEIT-EMV-028",
+            f"implementation_cardinality_missing_{field}",
+            "implementation",
+            omit_nested(complete_implementation(), "journey_settings", "review_cardinality", field),
+            "reject",
+        ))
+    for field in SLICE_FIELDS:
+        out.append((
+            "SEIT-EMV-022",
+            f"slice_missing_{field}",
+            "implementation",
+            omit_nested(complete_implementation(), "slices", "0", field),
+            "reject",
+        ))
+    for field in NAMED_SEIT_SECTIONS:
+        out.append((
+            "SEIT-EMV-021",
+            f"seit_missing_{field}",
+            "seit",
+            omit_nested(complete_seit(), field),
+            "reject",
+        ))
+    out.append((
+        "SEIT-EMV-021",
+        "seit_missing_proof_cases",
+        "seit",
+        omit_nested(complete_seit(), "proof_cases"),
+        "reject",
+    ))
+    for field in PROOF_FIELDS:
+        out.append((
+            "SEIT-EMV-021",
+            f"proof_missing_{field}",
+            "seit",
+            omit_nested(complete_seit(), "proof_cases", "0", field),
+            "reject",
+        ))
+
+    out.extend([
         ("SEIT-EMV-024", "complete_journey_document", "journey", complete_journey(), "accept"),
         ("SEIT-EMV-024", "complete_authority_document", "authority", complete_authority(), "accept"),
         ("SEIT-EMV-022", "complete_implementation_document", "implementation", complete_implementation(), "accept"),
@@ -377,6 +819,9 @@ def cases() -> list[tuple[str, str, str, object, str]]:
         ), "accept"),
         ("SEIT-EMV-022", "human_decision_object", "implementation", complete_implementation(
             slices=[complete_slice(human_decision={"required": False, "status": "none"})]
+        ), "accept"),
+        ("SEIT-EMV-022", "dispatchable_slice_with_authority_id", "implementation", complete_implementation(
+            slices=[complete_slice(authority_id=SYN_AUTH, dispatchable=True)]
         ), "accept"),
         ("SEIT-EMV-022", "authority_id_null_on_dispatchable", "implementation", complete_implementation(
             slices=[complete_slice(authority_id=None, dispatchable=True)]
@@ -398,7 +843,8 @@ def cases() -> list[tuple[str, str, str, object, str]]:
                 slice_status="publication-blocked",
             )]
         ), "accept"),
-    ]
+    ])
+    return out
 
 
 def check_remote_ref_fails_closed() -> tuple[bool, str]:
@@ -415,26 +861,100 @@ def check_remote_ref_fails_closed() -> tuple[bool, str]:
 
 
 def check_fixture_contract_fields() -> tuple[bool, str]:
-    missing = []
+    problems = []
     slice_ = complete_slice()
     for field in SLICE_FIELDS:
         if field not in slice_:
-            missing.append(f"slice.{field}")
+            problems.append(f"slice.{field}")
+    for alias in FORBIDDEN_SLICE_ALIASES:
+        if alias in slice_:
+            problems.append(f"slice uses forbidden alias {alias}")
+    if not isinstance(slice_.get("reasoning_level"), dict) or not slice_["reasoning_level"]:
+        problems.append("slice.reasoning_level must be a non-empty object")
+    if not isinstance(slice_.get("review_path"), dict):
+        problems.append("slice.review_path must be an object")
+
     authority = complete_authority()
     for field in ENVELOPE_FIELDS:
         if field not in authority:
-            missing.append(f"authority.{field}")
+            problems.append(f"authority.{field}")
+    for alias in FORBIDDEN_AUTHORITY_ALIASES:
+        if alias in authority:
+            problems.append(f"authority uses forbidden alias {alias}")
+    expiry = authority.get("expiry_conditions")
+    if not isinstance(expiry, list) or not expiry or not all(isinstance(item, str) and item for item in expiry):
+        problems.append("authority.expiry_conditions must be a non-empty array of strings")
+    grants = authority.get("granting_owner_decisions")
+    if not isinstance(grants, list) or not grants:
+        problems.append("authority.granting_owner_decisions must be a non-empty array")
+
     lease = complete_lease()
     for field in LEASE_IDENTITY_FIELDS:
         if field not in lease:
-            missing.append(f"checkout_lease.{field}")
-    sections = complete_seit()["always_on_sections"]
-    for field in ALWAYS_ON_SECTIONS:
-        if field not in sections:
-            missing.append(f"always_on_sections:{field}")
-    if missing:
-        return False, "complete fixtures omit " + ", ".join(missing)
-    return True, "complete fixtures include CONTRACT-EMV-007/008/009 and lease identity fields"
+            problems.append(f"checkout_lease.{field}")
+
+    journey = complete_journey()
+    for field in JOURNEY_TOP_FIELDS:
+        if field not in journey:
+            problems.append(f"journey.{field}")
+    identity = journey.get("journey")
+    if not isinstance(identity, dict):
+        problems.append("journey.journey must be an object")
+    else:
+        for field in JOURNEY_IDENTITY_FIELDS:
+            if field not in identity:
+                problems.append(f"journey.journey.{field}")
+
+    implementation = complete_implementation()
+    for field in IMPLEMENTATION_TOP_FIELDS:
+        if field not in implementation:
+            problems.append(f"implementation.{field}")
+    cardinality = (
+        implementation.get("journey_settings", {}).get("review_cardinality")
+        if isinstance(implementation.get("journey_settings"), dict)
+        else None
+    )
+    if not isinstance(cardinality, dict):
+        problems.append("implementation.journey_settings.review_cardinality must be an object")
+    else:
+        for field in CARDINALITY_FIELDS:
+            if not isinstance(cardinality.get(field), int):
+                problems.append(f"implementation.review_cardinality.{field}")
+
+    seit = complete_seit()
+    if "always_on_sections" in seit:
+        problems.append("complete_seit uses labels-only always_on_sections")
+    for field in NAMED_SEIT_SECTIONS:
+        if field not in seit:
+            problems.append(f"seit.{field}")
+        elif not has_content(seit[field]):
+            problems.append(f"seit.{field} lacks content")
+    if "proof_cases" not in seit:
+        problems.append("seit.proof_cases")
+    proof = complete_proof()
+    for field in PROOF_FIELDS:
+        if field not in proof:
+            problems.append(f"proof.{field}")
+        elif not has_content(proof[field]):
+            problems.append(f"proof.{field} lacks content")
+    for alias in FORBIDDEN_PROOF_ALIASES:
+        if alias in proof:
+            problems.append(f"proof uses forbidden alias {alias}")
+
+    names = {name for _seit, name, _schema, _instance, _expect in cases()}
+    for required in (
+        "sparse_complete_seit_labels_only",
+        "sparse_complete_implementation",
+        "dispatchable_slice_with_authority_id",
+        "authority_id_null_on_not_dispatchable",
+        "authority_id_null_on_publication_blocked",
+    ):
+        if required not in names:
+            problems.append(f"missing case {required}")
+
+    if problems:
+        return False, "complete fixtures omit or misuse " + ", ".join(problems)
+    return True, "complete fixtures include CONTRACT-EMV-007/008/009 named structures and lease identity fields"
 
 
 def check_nkc(implementation_schema: dict) -> tuple[bool, str]:
