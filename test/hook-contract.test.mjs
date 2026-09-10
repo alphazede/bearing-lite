@@ -431,6 +431,24 @@ describe("CMD-HOOK-01 hook-contract (SEIT-HOOK-CLASS-01, SEIT-HOOK-COVERAGE-01)"
     );
   });
 
+  it("W12-R4: Assurance Test Engineer reaches the VALIDATING assurance state", () => {
+    const edge = (role) =>
+      transition.evaluate({
+        from_state: "EVIDENCE_READY",
+        to_state: "VALIDATING",
+        prerequisites_met: true,
+        required_assurance: [role],
+        assurance_completed: [],
+      });
+
+    const retired = edge("Validator");
+    assert.equal(retired.outcome, "ADVISE");
+
+    const current = edge("Assurance Test Engineer");
+    assert.equal(current.outcome, "ADVISE");
+    assert.match(String(current.reason), /transition_allowed:EVIDENCE_READY->VALIDATING/);
+  });
+
   it("T-LITE-11: safe channels stay ADVISE while the unit budget is exhausted", () => {
     const spent = assuranceFixture(SPENT_W3);
     assert.equal(

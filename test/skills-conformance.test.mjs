@@ -775,6 +775,7 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     "test-engineer/SKILL.md": path.join(SKILLS_DIR, "test-engineer", "SKILL.md"),
     "bearing-lite/templates/task.md": path.join(SKILLS_DIR, "bearing-lite", "templates", "task.md"),
     "bearing-lite/references/role-routing.mmd": path.join(LITE_REF, "role-routing.mmd"),
+    "bearing-lite/references/task-state.md": path.join(LITE_REF, "task-state.md"),
   });
   /** PLANNING-cadence text; explicitly exempt from the assurance prohibition. */
   const CADENCE_EXEMPT = Object.freeze([
@@ -805,7 +806,7 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     assert.match(document, /separate/i);
   });
 
-  it("T-LITE-14: no residual Journey-final or per-slice assurance text governs the unit", () => {
+  it("T-LITE-14 / W12-R5: no residual Journey-final or per-slice assurance text governs the unit", () => {
     /** @type {Record<string, RegExp[]>} */
     const prohibited = {
       "bearing-lite/SKILL.md": [
@@ -828,6 +829,9 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
         /materially changed new Journey starts at 0/,
       ],
       "bearing-lite/references/role-routing.mmd": [/Final integrated candidate at-end\?/],
+      "bearing-lite/references/task-state.md": [
+        /One Journey receives at most one assurance round/i,
+      ],
     };
     for (const [label, file] of Object.entries(CADENCE_GOVERNED)) {
       const text = readFileSync(file, "utf8");
@@ -854,7 +858,7 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     assert.ok(existsSync(path.join(SKILLS_DIR, "map-the-route", "SKILL.md")));
   });
 
-  it("T-LITE-15: role text agrees with the declared phase or wave unit", () => {
+  it("T-LITE-15 / W12-R5: role text agrees with the declared phase or wave unit", () => {
     for (const [label, file] of Object.entries(CADENCE_GOVERNED)) {
       const text = readFileSync(file, "utf8");
       assert.match(
