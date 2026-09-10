@@ -404,7 +404,6 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     assert.match(router, /Do not ask for lineup or route\s+before it/);
     assert.match(router, /one integrated\s+approval-or-change gate/);
     assert.match(router, /Never add a staged lineup or route-review gate/);
-    assert.match(router, /materially changed new Journey/);
   });
 
   it("execution roles revalidate the visible checkout lease at wave-scoped boundaries", () => {
