@@ -33,6 +33,8 @@ const POLICY = Object.freeze({
 const DIRECT = "direct";
 const PENDING_RECEIPTS = new Set(["WAITING_ON", "UNAVAILABLE"]);
 
+const isCount = (value) => Number.isInteger(value) && value >= 0;
+
 const isPlainObject = (value) =>
   value !== null && typeof value === "object" && !Array.isArray(value);
 
@@ -91,6 +93,15 @@ function evaluateAssuranceBudget(input) {
     if (!record) {
       return verdict("NEEDS_MORE_EVIDENCE", "task_record_unreadable");
     }
+    // The budget key is `journey + unit_kind + unit_id`; a record from another
+    // Journey never answers for this one.
+    if (
+      typeof record.journey === "string" &&
+      typeof input.journey === "string" &&
+      record.journey !== input.journey
+    ) {
+      return verdict("NEEDS_MORE_EVIDENCE", "task_record_journey_mismatch");
+    }
 
     const declared = declaredUnits(declaration);
     const requested =
@@ -111,14 +122,29 @@ function evaluateAssuranceBudget(input) {
     const units = Array.isArray(record.units) ? record.units : [];
     const spent = units.find((unit) => {
       if (!isPlainObject(unit)) return false;
-      const id =
-        typeof unit.assurance_unit === "string" && unit.assurance_unit
-          ? unit.assurance_unit
-          : DIRECT;
-      return id === requested;
+      const unitId = unit.unit_id || unit.assurance_unit;
+      const id = typeof unitId === "string" && unitId ? unitId : DIRECT;
+      if (id !== requested) return false;
+      if (typeof unit.journey === "string" && unit.journey !== input.journey) return false;
+      if (
+        typeof unit.unit_kind === "string" &&
+        typeof input.unit_kind === "string" &&
+        unit.unit_kind !== input.unit_kind
+      ) {
+        return false;
+      }
+      return true;
     });
-    const rounds = Number(spent && spent.assurance_rounds) || 0;
-    const repairs = Number(spent && spent.assurance_repairs) || 0;
+    const counter = (field) => {
+      const value = spent && spent[field];
+      return value === undefined || value === null ? 0 : value;
+    };
+    const rounds = counter("assurance_rounds");
+    const repairs = counter("assurance_repairs");
+    // A corrupt counter is not a spent-zero budget.
+    if (!isCount(rounds) || !isCount(repairs)) {
+      return verdict("NEEDS_MORE_EVIDENCE", "invalid_assurance_counter");
+    }
 
     if (repairs > POLICY.aggregated_repairs_max) {
       return verdict("HALT", "assurance_repair_limit");

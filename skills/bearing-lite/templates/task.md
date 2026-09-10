@@ -148,9 +148,7 @@ Neither self-certifies.
 `assurance_rounds` counts this declared phase or wave's single submission to
 required assurance against Bearing Lite `max_assurance_rounds`. A repair or
 replacement candidate does not reset it; the next distinct declared phase or
-wave carries its own budget. Only a separately scoped,
-materially changed new Journey resets the Journey-level allowance:
-that new Journey starts at 0, and a new Journey is not a way around the bound. The parent
+wave carries its own budget. The parent
 coordinator writes the count before dispatch. If the review permits correction, spend at
 most one remaining `attempts` repair, run deterministic coordinator verification,
 and close the gate without another review. A failed repair or scope change

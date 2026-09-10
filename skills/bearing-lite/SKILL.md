@@ -32,8 +32,7 @@ Return `READY`, `WAITING_ON`, `OWNER_DECISION_REQUIRED`, or `COMPLETE`.
 Direct route checks `assurance_rounds`, never
 dispatch Navigator, and one review may authorize one repair. Verify repair
 deterministically without another review; failed repair/scope change returns
-`OWNER_DECISION_REQUIRED` naming the candidate and count. Only a separately scoped,
-materially changed new Journey resets it. `COMPLETE` ends Bearing assurance.
+`OWNER_DECISION_REQUIRED` naming the candidate and count. `COMPLETE` ends Bearing assurance.
 Authorized deployment without reopening review.
 Planning review is a separate pre-dispatch gate; it never consumes implementation
 `required_assurance`, `assurance_rounds`, or `max_assurance_rounds`.
