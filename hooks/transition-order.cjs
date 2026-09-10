@@ -213,7 +213,7 @@ function evaluate(input) {
     }
 
     // The legal edge stays legal; the per-declared-unit budget bounds it.
-    if (from === "EVIDENCE_READY" && to === "REVIEWING" && input.assurance !== undefined) {
+    if (from === "EVIDENCE_READY" && to === "REVIEWING") {
       const budget = evaluateAssuranceBudget(input.assurance);
       if (budget.outcome !== "PASS") {
         return result(
