@@ -546,6 +546,29 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     assert.match(crewmate, /Neither.*self-certif|must not self-certify/i);
   });
 
+  it("Set Bearings enforces bounded discovery, workspace.md template, and anti-hallucination guard", () => {
+    const setBearings = readFileSync(
+      path.join(SKILLS_DIR, "set-bearings", "SKILL.md"),
+      "utf8"
+    );
+    const templatePath = path.join(SKILLS_DIR, "set-bearings", "templates", "workspace.md");
+    assert.ok(existsSync(templatePath), "templates/workspace.md must exist");
+    const templateText = readFileSync(templatePath, "utf8");
+
+    // Positive assertions
+    assert.match(setBearings, /depth 2,\s*max 40 paths,\s*max 64 KiB/i);
+    assert.match(setBearings, /templates\/workspace\.md/);
+    assert.match(setBearings, /NEEDS_EVIDENCE/);
+    assert.match(setBearings, /observed, not run/i);
+    assert.match(setBearings, /WORKSPACE_RESUMED/);
+
+    // Negative assertions (paired checks)
+    assert.doesNotMatch(templateText, /(^|[\s"`'])\/home\/[A-Za-z0-9._-]+\//, "template must not contain absolute /home/ paths");
+    assert.doesNotMatch(templateText, /\/Users\/[A-Za-z0-9._-]+\//, "template must not contain /Users/ paths");
+    assert.doesNotMatch(setBearings, /<journey-topic>/, "set-bearings must not pre-derive journey topic filename");
+    assert.doesNotMatch(setBearings, /-technical-plan\.md/, "set-bearings must not create technical-plan filename");
+  });
+
   it("Gather Supplies converges one recommended question at a time", () => {
     const gather = readFileSync(
       path.join(SKILLS_DIR, "gather-supplies", "SKILL.md"),
