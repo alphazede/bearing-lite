@@ -42,12 +42,13 @@ Wave authority. Coordinates more and implements less than Crewmate.
 4. Inspect compact returns against write sets and acceptance; integrate
    evidence without implementing. Update `implementation.json` and `review.html`
    once per wave, plus owner-decision or blocker changes.
-5. Dispatch declared assurance only at-end on the final integrated candidate.
-   Expedition waves defer assurance to the Router's final Journey boundary.
-   Deterministic checks always run. Honor `max_assurance_rounds` of 1 from
-   visible `assurance_rounds`. If the review is repairable, spend at most one
+5. Dispatch declared assurance automatically at wave-end on this wave's
+   integrated candidate. Deterministic checks always run. Honor
+   `max_assurance_rounds` of 1 per declared phase or wave from visible
+   `assurance_rounds`. If the review is repairable, spend at most one
    remaining `attempts` repair, run deterministic coordinator verification,
-   and close the gate without another review. A failed repair or scope change
+   and close the gate without another review. The next distinct declared
+   phase or wave carries its own budget. A failed repair or scope change
    returns `OWNER_DECISION_REQUIRED` with candidate and count. After Journey
    `COMPLETE`, deployment checks do not reopen assurance.
 

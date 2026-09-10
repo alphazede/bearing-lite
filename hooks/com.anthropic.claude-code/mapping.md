@@ -48,6 +48,15 @@ AGY, Pi, and DeepCode remain skills-only. Do not claim full planning-review
 enforcement for any of these hosts until a native event supplies the complete
 record.
 
+The per-declared-phase-or-wave assurance record
+(`skills/bearing-lite/references/assurance-policy.md`) is evaluated by the same
+`transition` class through the `assurance_transition` action_kind. No mapped
+host exposes a hook event that carries the frozen declaration and the visible
+task record, so the assurance budget is procedural on every mapped host:
+Claude Code, Codex, Grok Build, Cursor, and Kimi Code stay partial, and AGY,
+Pi, and DeepCode stay skills-only. No host may advertise an enforcement of the
+assurance budget it cannot perform.
+
 The adapter accepts snake_case and camelCase (`hook_event_name` /
 `hookEventName`, `cwd` / `workspaceRoot`).
 
