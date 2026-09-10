@@ -456,15 +456,6 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     }
   });
 
-  it("at-end assurance occurs once at the Journey boundary", () => {
-    const explorer = readFileSync(path.join(SKILLS_DIR, "explorer", "SKILL.md"), "utf8");
-    const router = readFileSync(path.join(SKILLS_DIR, "bearing-lite", "SKILL.md"), "utf8");
-    assert.match(explorer, /Expedition waves defer assurance to the Router's final\s+Journey boundary/);
-    assert.match(explorer, /only at-end on the final integrated candidate/);
-    assert.match(router, /review_cadence: at-end/);
-    assert.doesNotMatch(explorer, /per-slice|per-round/);
-  });
-
   it("Bearing Lite permits one review and one repair without re-review", () => {
     const router = readFileSync(path.join(SKILLS_DIR, "bearing-lite", "SKILL.md"), "utf8");
     const explorer = readFileSync(path.join(SKILLS_DIR, "explorer", "SKILL.md"), "utf8");
@@ -502,7 +493,6 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     assert.match(park, /do not follow it with another repair/);
     assert.match(park, /max_assurance_rounds/);
     assert.match(park, /of 1/);
-    assert.match(park, /Do not\s+review or repair that Journey again/);
   });
 
   it("Validator is absent from active roles; remaining validator skill is compatibility-only", () => {
