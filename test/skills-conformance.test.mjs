@@ -771,4 +771,136 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     assert.match(mermaid, /checkout-lease conflict/);
     assert.match(mermaid, /WAITING_ON/);
   });
+  /**
+   * ROUTER-EMV-CADENCE-IMPLEMENTATION-001 (S70 test-first for S71).
+   * The assurance budget is scoped to each DECLARED phase or wave, dispatched
+   * automatically at that unit's end. Journey-final and per-slice scopes are
+   * both refused. RED until S71 ships the corrected role, template, and routing
+   * text plus skills/bearing-lite/references/assurance-policy.md.
+   */
+  const LITE_REF = path.join(SKILLS_DIR, "bearing-lite", "references");
+  const CADENCE_GOVERNED = Object.freeze({
+    "bearing-lite/SKILL.md": path.join(SKILLS_DIR, "bearing-lite", "SKILL.md"),
+    "explorer/SKILL.md": path.join(SKILLS_DIR, "explorer", "SKILL.md"),
+    "park-ranger/SKILL.md": path.join(SKILLS_DIR, "park-ranger", "SKILL.md"),
+    "surveyor/SKILL.md": path.join(SKILLS_DIR, "surveyor", "SKILL.md"),
+    "test-engineer/SKILL.md": path.join(SKILLS_DIR, "test-engineer", "SKILL.md"),
+    "bearing-lite/templates/task.md": path.join(SKILLS_DIR, "bearing-lite", "templates", "task.md"),
+    "bearing-lite/references/role-routing.mmd": path.join(LITE_REF, "role-routing.mmd"),
+  });
+  /** PLANNING-cadence text; explicitly exempt from the assurance prohibition. */
+  const CADENCE_EXEMPT = Object.freeze([
+    path.join(SKILLS_DIR, "map-the-route", "SKILL.md"),
+    path.join(SKILLS_DIR, "bearing-lite", "templates", "default-role-lineup.md"),
+    path.join(LITE_REF, "review-policy.md"),
+  ]);
+
+  it("T-LITE-12R: the declared assurance policy states the per-declared-unit budget", () => {
+    const policyPath = path.join(LITE_REF, "assurance-policy.md");
+    assert.ok(existsSync(policyPath), "skills/bearing-lite/references/assurance-policy.md must ship");
+    const document = readFileSync(policyPath, "utf8");
+    const block = document.match(/```json\n([\s\S]*?)\n```/);
+    assert.ok(block, "the policy must publish one machine-readable JSON block");
+    const policy = JSON.parse(block[1]);
+    assert.equal(policy.budget_scope, "per_declared_phase_or_wave");
+    assert.equal(policy.review_rounds, 1);
+    assert.equal(policy.aggregated_repairs_max, 1);
+    assert.equal(policy.automatic_per_slice_review, "prohibited");
+    assert.equal(policy.automatic_phase_or_wave_end_review, "required");
+    assert.equal(policy.post_repair_rereview, "prohibited");
+    assert.match(document, /records no route, provider, model, harness, account, or agent identity/);
+    for (const identity of ["provider:", "model:", "harness:", "account:", "agent:"]) {
+      assert.doesNotMatch(document, new RegExp(`"${identity.slice(0, -1)}"\\s*:`), identity);
+    }
+    // The separate pre-dispatch planning gate is not folded in.
+    assert.match(document, /planning review/i);
+    assert.match(document, /separate/i);
+  });
+
+  it("T-LITE-14: no residual Journey-final or per-slice assurance text governs the unit", () => {
+    /** @type {Record<string, RegExp[]>} */
+    const prohibited = {
+      "bearing-lite/SKILL.md": [
+        /`max_assurance_rounds` is\s+1 per Journey/,
+        /materially changed new Journey resets review allowance/,
+      ],
+      "explorer/SKILL.md": [
+        /Dispatch declared assurance only at-end/,
+        /defer assurance to the Router's final\s+Journey boundary/,
+      ],
+      "park-ranger/SKILL.md": [
+        /any boundary other than at-end/,
+        /Do not\s+review or repair that Journey again/,
+      ],
+      "surveyor/SKILL.md": [/at-end boundary/, /comparison at-end/],
+      "test-engineer/SKILL.md": [/at-end V&V/, /candidate at-end only/, /at-end boundary/],
+      "bearing-lite/templates/task.md": [
+        /`review_cadence` is `at-end` only/,
+        /completed assurance rounds for this Journey/,
+        /materially changed new Journey starts at 0/,
+      ],
+      "bearing-lite/references/role-routing.mmd": [/Final integrated candidate at-end\?/],
+    };
+    for (const [label, file] of Object.entries(CADENCE_GOVERNED)) {
+      const text = readFileSync(file, "utf8");
+      for (const pattern of prohibited[label]) {
+        assert.doesNotMatch(text, pattern, `${label} keeps superseded assurance text ${pattern}`);
+      }
+      // A per-slice assurance round is never declared anywhere in scope.
+      assert.doesNotMatch(
+        text,
+        /assurance (round|review)[^.\n]*per[- ]slice|per[- ]slice[^.\n]*assurance (round|review)/i,
+        `${label} must not declare a per-slice assurance round`
+      );
+    }
+    // The planning-cadence occurrences stay untouched and out of this scan.
+    for (const exempt of CADENCE_EXEMPT) {
+      assert.ok(
+        !Object.values(CADENCE_GOVERNED).includes(exempt),
+        `${exempt} is planning cadence and is exempt`
+      );
+    }
+    assert.ok(existsSync(path.join(SKILLS_DIR, "map-the-route", "SKILL.md")));
+  });
+
+  it("T-LITE-15: role text agrees with the declared phase or wave unit", () => {
+    for (const [label, file] of Object.entries(CADENCE_GOVERNED)) {
+      const text = readFileSync(file, "utf8");
+      assert.match(
+        text,
+        /declared (phase or wave|wave or phase)/i,
+        `${label} must name the declared phase-or-wave unit`
+      );
+    }
+    for (const role of ["park-ranger", "surveyor", "test-engineer", "explorer"]) {
+      const text = readFileSync(path.join(SKILLS_DIR, role, "SKILL.md"), "utf8");
+      assert.match(text, /max_assurance_rounds/, `${role} must honor the bound`);
+      assert.match(text, /\bof 1\b|\b1 per declared\b/, `${role} must fix the bound at one round`);
+      assert.match(text, /one[\s\S]{0,120}repair/i, `${role} must allow at most one aggregate repair`);
+      assert.match(text, /deterministic/i, `${role} must close deterministically`);
+      assert.match(
+        text,
+        /without another review|no rereview|not.{0,40}review.{0,40}again/i,
+        `${role} must not rereview the repaired unit`
+      );
+      assert.match(text, /distinct declared/i, `${role} must state the next distinct unit rule`);
+      assert.match(text, /own budget|its own (1\/1 )?(round|budget|allowance)/i, `${role} must give it its own budget`);
+    }
+    // Wave-end dispatch is the required trigger, and the router owns it.
+    const router = readFileSync(path.join(SKILLS_DIR, "bearing-lite", "SKILL.md"), "utf8");
+    const explorer = readFileSync(path.join(SKILLS_DIR, "explorer", "SKILL.md"), "utf8");
+    for (const [name, text] of [["router", router], ["explorer", explorer]]) {
+      assert.match(
+        text,
+        /(wave|phase)[- ]end|end of (each|the) declared (phase or wave|wave|phase)/i,
+        `${name} must dispatch assurance at the declared unit end`
+      );
+    }
+    // The separate pre-dispatch planning gate is still not folded in.
+    assert.match(
+      router,
+      /Planning review is a separate pre-dispatch gate/,
+      "the planning-review 1/1 gate stays separate"
+    );
+  });
 });

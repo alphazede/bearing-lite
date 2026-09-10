@@ -12,9 +12,10 @@
  * closed to everything else; it is no longer an "exactly four .cjs files"
  * assertion.
  */
-import { describe, it } from "node:test";
+import { after, describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -22,6 +23,12 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const HOOKS_DIR = path.join(ROOT, "hooks");
 const require = createRequire(import.meta.url);
+
+/** Temp fixture roots for the per-declared-unit assurance cases. */
+const assuranceTempDirs = [];
+after(() => {
+  for (const dir of assuranceTempDirs) rmSync(dir, { recursive: true, force: true });
+});
 
 const EXPECTED_CLASSES = new Set([
   "activation",
@@ -35,6 +42,14 @@ const ORIGINAL_CLASS_FILES = Object.freeze([
   "protected-action.cjs",
   "transition-order.cjs",
 ]);
+/**
+ * Shared pure evaluators consumed by an existing class adapter. They declare no
+ * HOOK_CLASS and register no host event, so they are not hook-class modules:
+ * `planning-review.cjs` is consumed by transition and closeout, and
+ * `assurance-budget.cjs` is consumed by transition through the
+ * `assurance_transition` action_kind (ROUTER-EMV-CADENCE-IMPLEMENTATION-001).
+ */
+const EVALUATOR_MODULES = new Set(["planning-review.cjs", "assurance-budget.cjs"]);
 /** Additional TE class modules, allowed but not yet required by this case. */
 const TE_CLASS_FILES = Object.freeze(["te-capability.cjs", "te-host.cjs"]);
 const TE_CLASSES = Object.freeze(["te_test_write", "te_completion"]);
@@ -90,7 +105,7 @@ export function reportHookCoverage(client, opts = {}) {
 describe("CMD-HOOK-01 hook-contract (SEIT-HOOK-CLASS-01, SEIT-HOOK-COVERAGE-01)", () => {
   it("ships the four original hook class modules under hooks/", () => {
     const files = readdirSync(HOOKS_DIR)
-      .filter((f) => f.endsWith(".cjs") && f !== "planning-review.cjs")
+      .filter((f) => f.endsWith(".cjs") && !EVALUATOR_MODULES.has(f))
       .sort();
     for (const required of ORIGINAL_CLASS_FILES) {
       assert.ok(files.includes(required), `hooks/${required} must ship`);
@@ -321,5 +336,140 @@ describe("CMD-HOOK-01 hook-contract (SEIT-HOOK-CLASS-01, SEIT-HOOK-COVERAGE-01)"
       claimExecutable: ["protected_action"],
     });
     assert.equal(partialBad.ok, false);
+  });
+  /**
+   * ROUTER-EMV-CADENCE-IMPLEMENTATION-001 / PROC-CADENCE-UNIT-BUDGET (S70).
+   * The per-declared-phase-or-wave assurance budget joins the enumerated hook
+   * contract as a second pure evaluator behind the existing `transition` class.
+   * No new hook class and no new host event. RED until S71 ships
+   * `hooks/assurance-budget.cjs`, the `assurance_transition` action_kind, and
+   * the corrected `hooks/com.anthropic.claude-code/mapping.md` text.
+   */
+  const assuranceFixture = (units, declaration = { waves: [{ id: "W3" }, { id: "W4" }] }) => {
+    const dir = mkdtempSync(path.join(tmpdir(), "lite-hook-assurance-"));
+    assuranceTempDirs.push(dir);
+    const declaration_path = path.join(dir, "declaration.json");
+    const task_record_path = path.join(dir, "task-record.json");
+    writeFileSync(declaration_path, JSON.stringify(declaration));
+    writeFileSync(task_record_path, JSON.stringify({ journey: "J", units }));
+    return {
+      journey: "J",
+      unit_kind: "wave",
+      assurance_unit: "W3",
+      request_scope: "wave",
+      declaration_path,
+      task_record_path,
+    };
+  };
+  const SPENT_W3 = [
+    { unit_kind: "wave", assurance_unit: "W3", assurance_rounds: 1, assurance_repairs: 0 },
+  ];
+
+  it("T-LITE-09R: assurance_transition delegates to the assurance-budget evaluator", () => {
+    const budget = require(path.join(HOOKS_DIR, "assurance-budget.cjs"));
+    assert.equal(typeof budget.evaluateAssuranceBudget, "function");
+    assert.equal(budget.HOOK_CLASS, undefined, "the evaluator declares no hook class");
+
+    const open = assuranceFixture([]);
+    const spent = assuranceFixture(SPENT_W3);
+    const repairTwice = assuranceFixture([
+      { unit_kind: "wave", assurance_unit: "W3", assurance_rounds: 1, assurance_repairs: 2 },
+    ]);
+    const pending = { ...open, receipts: [{ verdict: "WAITING_ON" }] };
+    const rereview = { ...spent, automatic_rereview_requested: true };
+
+    /** @type {Array<[object, string, string]>} */
+    const mapping = [
+      [open, "ADVISE", "PASS"],
+      [pending, "REROUTE", "NEEDS_MORE_EVIDENCE"],
+      [spent, "BLOCK", "HALT"],
+      [repairTwice, "BLOCK", "HALT"],
+      [rereview, "BLOCK", "OWNER_AMENDMENT_REQUIRED"],
+    ];
+    for (const [assurance, outcome, verdictName] of mapping) {
+      const evaluated = budget.evaluateAssuranceBudget(assurance);
+      assert.equal(evaluated.outcome, verdictName, JSON.stringify(assurance));
+      const adapted = transition.evaluate({ action_kind: "assurance_transition", assurance });
+      assert.equal(adapted.hook_class, "transition", "no new hook class");
+      assert.ok(ALLOWED_OUTCOMES.has(adapted.outcome), adapted.outcome);
+      assert.equal(adapted.outcome, outcome, JSON.stringify(assurance));
+      assert.match(String(adapted.reason), /^assurance_budget:/);
+      assert.match(String(adapted.reason), new RegExp(verdictName));
+    }
+    // Same shape as the planning_review_transition branch it mirrors.
+    assert.equal(transition.HOOK_CLASS, "transition");
+    assert.deepEqual([...transition.OUTCOMES].sort(), [...ALLOWED_OUTCOMES].sort());
+  });
+
+  it("T-LITE-10R: EVIDENCE_READY -> REVIEWING is bounded per declared unit", () => {
+    const spent = assuranceFixture(SPENT_W3);
+    const edge = (assurance) =>
+      transition.evaluate({
+        from_state: "EVIDENCE_READY",
+        to_state: "REVIEWING",
+        prerequisites_met: true,
+        assurance,
+      });
+
+    const closedLoop = edge(spent);
+    assert.equal(closedLoop.outcome, "REROUTE");
+    assert.match(String(closedLoop.reason), /assurance_round_limit/);
+
+    const nextUnit = edge({ ...spent, assurance_unit: "W4" });
+    assert.equal(nextUnit.outcome, "ADVISE");
+    assert.match(String(nextUnit.reason), /transition_allowed:EVIDENCE_READY->REVIEWING/);
+
+    // The legal edge table itself is unchanged; only the per-unit budget bounds it.
+    assert.ok(transition.LEGAL.EVIDENCE_READY.includes("REVIEWING"));
+    assert.ok(transition.LEGAL.REVIEWING.includes("EVIDENCE_READY"));
+    assert.equal(edge(undefined).outcome, "ADVISE");
+  });
+
+  it("T-LITE-11: safe channels stay ADVISE while the unit budget is exhausted", () => {
+    const spent = assuranceFixture(SPENT_W3);
+    assert.equal(
+      transition.evaluate({ action_kind: "assurance_transition", assurance: spent }).outcome,
+      "BLOCK",
+      "the unit budget must actually be exhausted for this case to mean anything"
+    );
+    for (const channel of ["repair", "status", "owner_communication", "safe_rollback"]) {
+      for (const key of ["channel", "action_kind"]) {
+        const open = transition.evaluate({ [key]: channel, assurance: spent });
+        assert.equal(open.outcome, "ADVISE", `${key}=${channel}`);
+        assert.match(String(open.reason), /channel_open/, `${key}=${channel}`);
+      }
+    }
+  });
+
+  it("T-LITE-13: the host mapping keeps the per-unit assurance record honest", () => {
+    const mapping = readFileSync(
+      path.join(HOOKS_DIR, "com.anthropic.claude-code", "mapping.md"),
+      "utf8"
+    );
+    assert.match(mapping, /assurance/i, "the mapping must classify the per-unit assurance record");
+    for (const host of ["Claude Code", "Codex", "Grok Build", "Cursor", "Kimi Code"]) {
+      assert.match(
+        mapping,
+        new RegExp(`\\| ${host} \\|[^\n]*\\| partial \\|`),
+        `${host} must stay partial`
+      );
+    }
+    for (const host of ["AGY", "Pi", "DeepCode"]) {
+      assert.match(
+        mapping,
+        new RegExp(`\\| ${host} \\|[^\n]*\\| skills-only \\|`),
+        `${host} must stay skills-only`
+      );
+    }
+    assert.doesNotMatch(
+      mapping,
+      /native[^.\n]*assurance (budget|enforcement|record)/i,
+      "no host may claim native assurance enforcement"
+    );
+    assert.match(
+      mapping,
+      /assurance[\s\S]{0,400}procedural/i,
+      "the per-unit assurance record stays procedural on every mapped host"
+    );
   });
 });
