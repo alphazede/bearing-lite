@@ -30,8 +30,9 @@ pre-Map lineup or route-review gate is allowed.
   - deterministic_gate: <PASS after repair; otherwise omitted>
 ```
 
-`review_cadence` is `at-end` only. The single independent review runs on the
-final integrated candidate, not at a slice or round boundary, and not as
+`review_cadence` is `at-end` for each declared phase or wave. The single
+independent review runs on that unit's integrated candidate at its end, not at
+a slice or round boundary, and not as
 task-level tests or author self-checks. Never infer it from
 `required_assurance` on an individual task. The proposal is visible in
 `implementation.json` and `review.html`, then becomes authoritative only after
@@ -139,14 +140,17 @@ Neither self-certifies.
 - tests: <commands run and observed results>
 - findings: <labeled inferences and gaps>
 - verdict: <closed role-return token>
-- assurance_rounds: <0-1 completed assurance rounds for this Journey>
+- assurance_rounds: <0-1 completed assurance rounds for this declared phase or wave>
 ```
 
 `verdict` is one of `ACCEPT`, `ACCEPT_WITH_FINDINGS`, `BLOCK`, `CANDIDATE_READY`, `FAIL`, `GAPS`, `NEEDS_MORE_EVIDENCE`, `OWNER_DECISION_REQUIRED`, `PARTIAL`, `PASS`, `READY`, `REPAIR_REQUIRED`, `REROUTED`, `WAITING_ON`. Do not copy task `outcome` into `verdict`.
 `candidate_ref` must not claim stronger provenance than the client can prove.
-`assurance_rounds` counts the Journey's single submission to required assurance
-against Bearing Lite `max_assurance_rounds`. A repair or replacement candidate
-does not reset it; only a separately scoped, materially changed new Journey starts at 0, and a new Journey is not a way around the bound. The parent
+`assurance_rounds` counts this declared phase or wave's single submission to
+required assurance against Bearing Lite `max_assurance_rounds`. A repair or
+replacement candidate does not reset it; the next distinct declared phase or
+wave carries its own budget. Only a separately scoped,
+materially changed new Journey resets the Journey-level allowance:
+that new Journey starts at 0, and a new Journey is not a way around the bound. The parent
 coordinator writes the count before dispatch. If the review permits correction, spend at
 most one remaining `attempts` repair, run deterministic coordinator verification,
 and close the gate without another review. A failed repair or scope change

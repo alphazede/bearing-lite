@@ -11,11 +11,14 @@ const HOOK_CLASS = "transition";
 const OUTCOMES = Object.freeze(["ADVISE", "REROUTE", "BLOCK", "UNAVAILABLE"]);
 const ENFORCEMENT = "procedural";
 const { evaluatePlanningReview } = require("./planning-review.cjs");
+const { evaluateAssuranceBudget } = require("./assurance-budget.cjs");
 
 const RECOVERY_UNAVAILABLE =
   "Keep the current state, run the transition checklist procedurally, and record the result before retrying";
 const RECOVERY_ALLOW =
   "Proceed with the requested transition and update the project plan as the only task record";
+const RECOVERY_ASSURANCE =
+  "Keep the declared phase or wave closed; the next distinct declared unit carries its own budget";
 const RECOVERY_CHANNEL =
   "Keep repair, status, owner communication, and safe rollback available; do not treat them as sequence violations";
 
@@ -138,6 +141,18 @@ function evaluate(input) {
       );
     }
 
+    if (input.action_kind === "assurance_transition") {
+      const budget = evaluateAssuranceBudget(input.assurance);
+      if (budget.outcome === "PASS") {
+        return result("ADVISE", "assurance_budget:PASS", RECOVERY_ALLOW);
+      }
+      return result(
+        budget.outcome === "NEEDS_MORE_EVIDENCE" ? "REROUTE" : "BLOCK",
+        "assurance_budget:" + budget.outcome + ":" + budget.reason,
+        RECOVERY_ASSURANCE
+      );
+    }
+
     const from = typeof input.from_state === "string" ? input.from_state.trim() : "";
     const to = typeof input.to_state === "string" ? input.to_state.trim() : "";
     if (!from || !to) {
@@ -195,6 +210,18 @@ function evaluate(input) {
         "missing_prerequisite:" + missing,
         "Perform missing step `" + missing + "` and record evidence before retrying " + from + "->" + to
       );
+    }
+
+    // The legal edge stays legal; the per-declared-unit budget bounds it.
+    if (from === "EVIDENCE_READY" && to === "REVIEWING" && input.assurance !== undefined) {
+      const budget = evaluateAssuranceBudget(input.assurance);
+      if (budget.outcome !== "PASS") {
+        return result(
+          "REROUTE",
+          "assurance_budget:" + budget.outcome + ":" + budget.reason,
+          RECOVERY_ASSURANCE
+        );
+      }
     }
 
     // Completing while required assurance is still open.

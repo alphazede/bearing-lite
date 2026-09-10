@@ -14,10 +14,10 @@ Independent outcome assurance, outside the mutation-authority ladder.
 ## Inputs and match
 
 - **Inputs:** approved specification/review baseline, exact integrated candidate,
-  author identities, user-facing evidence, at-end boundary, prior required
-  assurance, and compact return schema.
-- **Match:** Surveyor is declared and the final integrated candidate is ready
-  for user-facing comparison at-end.
+  author identities, user-facing evidence, declared phase or wave end boundary,
+  prior required assurance, and compact return schema.
+- **Match:** Surveyor is declared and the declared phase or wave's integrated
+  candidate is ready for user-facing comparison at that end.
 - **Non-match:** unfinished packet, slice or round boundary, unstable candidate,
   Assurance Test Engineer sufficiency, Park Ranger defect review, or owner-only
   release decision.
@@ -25,7 +25,8 @@ Independent outcome assurance, outside the mutation-authority ladder.
 ## Algorithm
 
 1. Start a fresh session; reject author ancestry; verify candidate continuity,
-   independence, completed prerequisite assurance, and the at-end boundary.
+   independence, completed prerequisite assurance, and the declared phase or
+   wave end boundary.
    Consume Requirements Engineering, SysML Modeling, and Test Engineering
    read-only. Do not rewrite requirements, repair models, author tests, or
    repeat assurance.
@@ -39,7 +40,9 @@ Independent outcome assurance, outside the mutation-authority ladder.
 
 Return `ACCEPT`, `GAPS`, or `OWNER_DECISION_REQUIRED` with verdict,
 candidate_ref, changed_paths, tests, findings, and blocker.
-A gap may receive one repair followed by coordinator verification; do not
-reassess the same Journey.
+Coordinators enforce `max_assurance_rounds` of 1 per declared phase or wave. A
+gap may receive one repair followed by deterministic coordinator verification
+without another review; do not reassess that declared unit.
+The next distinct declared phase or wave carries its own budget.
 
 Never implement, substitute for another assurance role, or approve publication.

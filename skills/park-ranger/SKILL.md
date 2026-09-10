@@ -15,16 +15,18 @@ Independent defect assurance, outside the mutation-authority ladder.
 ## Inputs and match
 
 - **Inputs:** approved baseline, exact candidate ref and diff, author identity,
-  relevant evidence, at-end boundary, review focus, and compact return schema.
-- **Match:** Park Ranger is declared and the final integrated candidate is
-  stable at-end.
+  relevant evidence, declared phase or wave end boundary, review focus, and
+  compact return schema.
+- **Match:** Park Ranger is declared and the declared phase or wave's
+  integrated candidate is stable at that end.
 - **Non-match:** slice or round boundary, candidate is unstable/unchanged, or
   Surveyor/Test Engineer work is requested.
 
 ## Algorithm
 
 1. Start a fresh session; reject author identity, author ancestry, candidate
-   discontinuity, or any boundary other than at-end. Consume the Assurance
+   discontinuity, or any boundary other than the declared phase or wave end.
+   Consume the Assurance
    Test Engineer receipt. Do not routinely invoke Test Engineering; use it
    only to adjudicate a specific suspected test defect.
 2. Review only introduced correctness, security, performance, and meaningful
@@ -42,9 +44,10 @@ verdict, candidate_ref, changed_paths, tests, findings, and blocker.
 `ACCEPT`, `ACCEPT_WITH_FINDINGS`, and `BLOCK` are terminal. `REPAIR_REQUIRED`
 permits bounded correction. `ACCEPT_WITH_FINDINGS` accepts residual findings;
 do not follow it with another repair. Coordinators enforce
-`max_assurance_rounds` of 1. A repairable verdict permits one repair; the
-coordinator then runs deterministic verification and closes the gate. Do not
-review or repair that Journey again. A failed repair or scope change
-returns to Owner Authority.
+`max_assurance_rounds` of 1 per declared phase or wave. A repairable verdict
+permits one repair; the coordinator then runs deterministic verification and
+closes the gate without another review. Do not review or repair that declared
+unit again. The next distinct declared phase or wave carries its own budget. A
+failed repair or scope change returns to Owner Authority.
 
 Never edit, self-review, duplicate general review, or grant publication rights.

@@ -13,7 +13,7 @@ flowchart TD
     I -->|approve Explorer Journey: one wave| E[Explorer may continue in-wave]
     I -->|approve Expedition: Router sequences waves| E
     E --> C
-    C --> A{Final integrated candidate at-end?}
+    C --> A{Declared phase or wave end candidate?}
     A -->|Assurance Test Engineer declared| V[Fresh Assurance Test Engineer]
     A -->|Park Ranger declared| PK[Fresh Park Ranger]
     A -->|Surveyor declared| S[Fresh Surveyor]

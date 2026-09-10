@@ -24,15 +24,16 @@ planning nodes return owner questions. Plugin hosts are partial; skill-copy is s
    reasoning, cadence, and plan. Record the approved Journey type and snapshot; regenerate changes.
    Never add a staged lineup or route-review gate.
    Dispatch only after approval.
-7. Dispatch from the snapshot. Crewmate and Explorer may continue in-wave unchanged.
+7. Crewmate and Explorer may continue in-wave.
    Use the visible wave receipt and update implementation and review once per wave.
 
 Return `READY`, `WAITING_ON`, `OWNER_DECISION_REQUIRED`, or `COMPLETE`.
-`max_assurance_rounds` is 1 per Journey; Direct route checks `assurance_rounds`, never
+`max_assurance_rounds` is 1 per declared phase or wave-end, not per Journey;
+Direct route checks `assurance_rounds`, never
 dispatch Navigator, and one review may authorize one repair. Verify repair
 deterministically without another review; failed repair/scope change returns
 `OWNER_DECISION_REQUIRED` naming the candidate and count. Only a separately scoped,
-materially changed new Journey resets review allowance. `COMPLETE` ends Bearing assurance.
+materially changed new Journey resets it. `COMPLETE` ends Bearing assurance.
 Authorized deployment without reopening review.
 Planning review is a separate pre-dispatch gate; it never consumes implementation
 `required_assurance`, `assurance_rounds`, or `max_assurance_rounds`.
