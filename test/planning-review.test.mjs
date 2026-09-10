@@ -106,7 +106,7 @@ describe("model-neutral planning review", () => {
     assert.match(router, /`max_assurance_rounds` is 1/);
     assert.doesNotMatch(policy, /Claude|Codex|Grok|Cursor|Kimi|AGY|Pi|DeepCode|OpenAI|Anthropic/i);
     const parkRanger = transition.evaluate({ from_state: "EVIDENCE_READY", to_state: "REVIEWING", required_assurance: ["Park Ranger"] });
-    assert.equal(parkRanger.outcome, "ADVISE");
+    assert.equal(parkRanger.outcome, "REROUTE");
   });
 
   it("records honest positive and negative coverage for every supported harness", () => {

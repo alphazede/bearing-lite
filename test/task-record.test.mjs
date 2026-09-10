@@ -1530,13 +1530,12 @@ function playAssuranceRoute(route, coordinator, results, opts = {}) {
 }
 
 describe("CMD-TASK-01 assurance-round bound", () => {
-  it("template carries one Journey-wide assurance round", () => {
+  it("template carries one assurance round per declared phase or wave", () => {
     assert.match(TEMPLATE, /assurance_rounds:/);
     assert.match(TEMPLATE, /single submission/i);
     assert.match(TEMPLATE, /max_assurance_rounds/);
-    assert.match(TEMPLATE, /new Journey starts at 0/i);
-    assert.match(TEMPLATE, /materially changed new Journey/i);
-    assert.match(TEMPLATE, /new Journey is not a way around the bound/i);
+    assert.match(TEMPLATE, /declared phase or wave/i);
+    assert.match(TEMPLATE, /next distinct declared phase or\s+wave carries its own budget/i);
   });
 
   it("Direct route spends the final repair without another review", () => {
