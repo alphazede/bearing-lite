@@ -328,4 +328,34 @@ describe("CMD-LITE-CADENCE-NODE-TEST per-declared-unit assurance budget", () => 
     assert.equal(derived.outcome, "BLOCK");
     assert.match(String(derived.reason), /assurance_budget:HALT:assurance_round_limit/);
   });
+
+  it("W14-R5: task-record lookup uses the full journey, kind, and unit key", () => {
+    const fx = fixture(WAVE_DECLARATION, spentW3);
+    writeFileSync(
+      fx.task_record_path,
+      JSON.stringify({ journey: "OTHER", units: spentW3 }, null, 2)
+    );
+
+    assert.equal(
+      budgetHook().evaluateAssuranceBudget(request(fx)).outcome,
+      "NEEDS_MORE_EVIDENCE"
+    );
+  });
+
+  it("W14-R6: invalid assurance counters fail closed", () => {
+    for (const field of ["assurance_rounds", "assurance_repairs"]) {
+      for (const value of ["corrupt", 1.5, -1]) {
+        const unit = {
+          unit_kind: "wave",
+          assurance_unit: "W3",
+          assurance_rounds: 0,
+          assurance_repairs: 0,
+          [field]: value,
+        };
+        const fx = fixture(WAVE_DECLARATION, [unit]);
+        const verdict = budgetHook().evaluateAssuranceBudget(request(fx));
+        assert.equal(verdict.outcome, "NEEDS_MORE_EVIDENCE", `${field}=${value}`);
+      }
+    }
+  });
 });

@@ -401,7 +401,7 @@ describe("CMD-HOOK-01 hook-contract (SEIT-HOOK-CLASS-01, SEIT-HOOK-COVERAGE-01)"
     assert.deepEqual([...transition.OUTCOMES].sort(), [...ALLOWED_OUTCOMES].sort());
   });
 
-  it("T-LITE-10R: EVIDENCE_READY -> REVIEWING is bounded per declared unit", () => {
+  it("T-LITE-10R / W14-R4: EVIDENCE_READY -> REVIEWING without assurance fails closed", () => {
     const spent = assuranceFixture(SPENT_W3);
     const edge = (assurance) =>
       transition.evaluate({
@@ -422,7 +422,13 @@ describe("CMD-HOOK-01 hook-contract (SEIT-HOOK-CLASS-01, SEIT-HOOK-COVERAGE-01)"
     // The legal edge table itself is unchanged; only the per-unit budget bounds it.
     assert.ok(transition.LEGAL.EVIDENCE_READY.includes("REVIEWING"));
     assert.ok(transition.LEGAL.REVIEWING.includes("EVIDENCE_READY"));
-    assert.equal(edge(undefined).outcome, "ADVISE");
+    const missing = edge(undefined);
+    assert.notEqual(missing.outcome, "ADVISE");
+    assert.equal(missing.outcome, "REROUTE");
+    assert.equal(
+      missing.reason,
+      "assurance_budget:NEEDS_MORE_EVIDENCE:assurance_request_missing"
+    );
   });
 
   it("T-LITE-11: safe channels stay ADVISE while the unit budget is exhausted", () => {

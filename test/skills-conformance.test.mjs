@@ -460,7 +460,7 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     const router = readFileSync(path.join(SKILLS_DIR, "bearing-lite", "SKILL.md"), "utf8");
     const explorer = readFileSync(path.join(SKILLS_DIR, "explorer", "SKILL.md"), "utf8");
     assert.match(router, /`max_assurance_rounds` is\s+1/);
-    assert.match(router, /per Journey/);
+    assert.match(router, /not per Journey|per declared phase or wave/);
     assert.match(router, /assurance_rounds/);
     assert.match(router, /Direct route/);
     assert.match(router, /never\s+dispatch Navigator/);
@@ -468,7 +468,6 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
       router,
       /OWNER_DECISION_REQUIRED` naming the candidate\s+and count/
     );
-    assert.match(router, /new Journey resets/);
     for (const [name, text] of [["explorer", explorer]]) {
       assert.match(text, /max_assurance_rounds/, `${name} must honor the Lite bound`);
       assert.match(text, /of 1/, `${name} must fix the Lite bound at one review`);
@@ -833,6 +832,9 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     };
     for (const [label, file] of Object.entries(CADENCE_GOVERNED)) {
       const text = readFileSync(file, "utf8");
+      for (const pattern of [/new Journey resets/i, /Journey-level allowance/i]) {
+        assert.doesNotMatch(text, pattern, `${label} keeps Journey-scoped assurance text ${pattern}`);
+      }
       for (const pattern of prohibited[label]) {
         assert.doesNotMatch(text, pattern, `${label} keeps superseded assurance text ${pattern}`);
       }
