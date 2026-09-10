@@ -13,6 +13,7 @@ const SKILLS_DIR = path.join(ROOT, "skills");
 
 const ROUTER = "bearing-lite";
 const PLANNING = [
+  "requirements-engineer",
   "repository-fit",
   "set-bearings",
   "gather-supplies",
