@@ -40,7 +40,7 @@ The project's human-readable plan is the only task-state record. Diagrams explai
 - Workers and assurance roles return handoffs; they do not race plan edits.
 - Candidate authors never provide their own Assurance Test Engineer, Park Ranger, or Surveyor verdict.
 - Waiting on a prerequisite consumes no correction attempt. Each task has its own three-attempt correction counter; identical retries without new evidence are invalid.
-- One Journey receives at most one assurance round and one review-directed repair. Replacement candidates do not reset the count. The coordinator verifies that repair deterministically and does not dispatch assurance again.
+- Each declared phase or wave receives at most one assurance round and one review-directed repair. Replacement candidates do not reset the count within that declared unit; the next distinct declared phase or wave carries its own 1/1 budget. The coordinator verifies that repair deterministically and does not dispatch assurance again.
 - `COMPLETE` is terminal for Bearing assurance. An already authorized deployment keeps operational verification and rollback readiness but does not reopen review; candidate-changing deployment work requires separate scope.
 
 ## Checkout lease

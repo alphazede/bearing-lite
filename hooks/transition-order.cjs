@@ -92,11 +92,14 @@ function normalizeRoleKey(role) {
 
 /**
  * Map the next missing assurance role to the state that should receive it.
- * Validator -> VALIDATING, Park Ranger -> REVIEWING, Surveyor -> ACCEPTANCE.
+ * Assurance Test Engineer (or the retired Validator label) -> VALIDATING,
+ * Park Ranger -> REVIEWING, Surveyor -> ACCEPTANCE.
  */
 function assuranceTargetState(role) {
   const key = normalizeRoleKey(role);
-  if (key === "validator") return "VALIDATING";
+  if (key === "validator" || key === "assurance-test-engineer" || key === "test-engineer") {
+    return "VALIDATING";
+  }
   if (key === "park-ranger" || key === "parkranger") return "REVIEWING";
   if (key === "surveyor") return "ACCEPTANCE";
   return null;
