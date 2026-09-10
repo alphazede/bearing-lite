@@ -15,7 +15,7 @@ Fresh planning node. The Router writes Journey state and owns owner conversation
 
 - **Match:** material intent is settled and any technical-plan, design, SEIT,
   implementation graph, or review HTML is missing.
-- **Inputs:** confirmed decisions, repository map and evidence, artifact status,
+- **Inputs:** confirmed decisions, workspace.md and evidence, artifact status,
   requirements register, repository rules, proposed owner-supplied lineup and
   `review_cadence: at-end`, plus the return schema.
 - **Non-match:** unresolved material scope, behavior, authority, risk, or
