@@ -9,25 +9,7 @@
 
 const fs = require("node:fs");
 
-const POLICY = Object.freeze({
-  budget_scope: "per_declared_phase_or_wave",
-  review_rounds: 1,
-  aggregated_repairs_max: 1,
-  post_repair_gate: "deterministic_PASS",
-  automatic_phase_or_wave_end_review: "required",
-  automatic_per_slice_review: "prohibited",
-  post_repair_rereview: "prohibited",
-  automatic_rereview_of_same_unit: "prohibited",
-  budget_reset_on_candidate_change: false,
-  budget_reset_on_model_change: false,
-  budget_reset_on_harness_change: false,
-  budget_reset_on_role_change: false,
-  budget_reset_on_session_change: false,
-  budget_reset_on_resume: false,
-  budget_reset_on_alias_or_rename: false,
-  budget_reset_condition:
-    "next_distinct_declared_phase_or_wave_present_in_the_frozen_declaration",
-});
+const { ASSURANCE_BUDGET_POLICY: POLICY } = require("./policy.cjs");
 
 /** The sentinel unit when the frozen declaration names neither waves nor phases. */
 const DIRECT = "direct";
