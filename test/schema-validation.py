@@ -829,6 +829,18 @@ def cases() -> list[tuple[str, str, str, object, str]]:
             proof_cases=[{"id": "SEIT-SYN-002", "method": "inspection"}]
         ), "reject"),
         ("SEIT-EMV-022", "sparse_complete_implementation", "implementation", sparse_implementation(), "reject"),
+        ("SEIT-EMV-022", "implementation_light_slice_complete", "implementation", complete_implementation(
+            slices=[complete_slice(role="Light Implementer", work_class="light", work_class_reason="scaffold run", command_ids=["CMD-1"])]
+        ), "accept"),
+        ("SEIT-EMV-022", "implementation_light_slice_without_command", "implementation", complete_implementation(
+            slices=[complete_slice(role="Light Implementer", work_class="light", work_class_reason="scaffold run", command_ids=[])]
+        ), "reject"),
+        ("SEIT-EMV-022", "implementation_light_slice_wrong_role", "implementation", complete_implementation(
+            slices=[complete_slice(role="Crewmate", work_class="light", work_class_reason="scaffold run", command_ids=["CMD-1"])]
+        ), "reject"),
+        ("SEIT-EMV-022", "implementation_work_class_outside_enum", "implementation", complete_implementation(
+            slices=[complete_slice(work_class="easy")]
+        ), "reject"),
         ("SEIT-EMV-022", "implementation_sparse_reasoning_string", "implementation", complete_implementation(
             slices=[omit(complete_slice(), "reasoning_level") | {"reasoning": "synthetic owner-selected route"}]
         ), "reject"),

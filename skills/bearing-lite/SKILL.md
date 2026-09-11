@@ -21,10 +21,11 @@ planning nodes return owner questions. Plugin hosts are partial; skill-copy is s
    before it; carry owner-supplied lineup and `review_cadence: at-end` as proposals.
 6. Enforce `references/review-policy.md`. Show one integrated
    approval-or-change gate for outcome, design, route, lineup, role states,
-   reasoning, cadence, and plan. Record the approved Journey type and snapshot; regenerate changes.
+   reasoning, cadence, and plan. Record the approved Journey type and snapshot.
    Never add a staged lineup or route-review gate.
    Dispatch only after approval.
-7. Crewmate and Explorer may continue in-wave.
+7. Crewmate and Explorer may continue in-wave. `work_class: light` slices go to the
+   Light Implementer; a `reclassify: judgement` return re-dispatches to the Crewmate.
    Use the visible wave receipt and update implementation and review once per wave.
 
 Return `READY`, `WAITING_ON`, `OWNER_DECISION_REQUIRED`, or `COMPLETE`.
@@ -35,12 +36,10 @@ deterministically without another review; failed repair/scope change returns
 `OWNER_DECISION_REQUIRED` naming the candidate and count. `COMPLETE` ends Bearing assurance.
 Authorized deployment without reopening review.
 Planning review is a separate pre-dispatch gate; it never consumes implementation
-`required_assurance`, `assurance_rounds`, or `max_assurance_rounds`.
+assurance.
 Release the lease once: release the checkout lease exactly once on `COMPLETE` or `CANCELLED`;
-recovery needs explicit recorded generation increment.
-Recovery cannot steal a live lease.
+recovery needs explicit recorded generation increment and cannot steal a live lease.
 Selected or required capabilities activate. Unavailability of selected-or-required
 capability is a typed capability gap, not success and not invented behavior.
-Selected-only missing and required-only missing are typed gaps. Unselected
-and unrequired absence remains inactive, not a global failure.
+Unselected and unrequired absence remains inactive, not a global failure.
 Never implement, self-assure, select models, or publish.

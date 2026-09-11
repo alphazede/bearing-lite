@@ -21,6 +21,7 @@ const PLANNING = [
 ];
 const ACTIVE_ROLES = [
   "crewmate",
+  "light-implementer",
   "explorer",
   "park-ranger",
   "surveyor",

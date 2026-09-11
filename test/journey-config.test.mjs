@@ -13,6 +13,7 @@ const CONFIG = readFileSync(
 const ROLES = [
   "Explorer",
   "Crewmate",
+  "Light Implementer",
   "Test Engineer",
   "Scribe",
   "Plan Integrator",
