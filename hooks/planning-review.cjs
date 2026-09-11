@@ -11,8 +11,12 @@ function evaluatePlanningReview(input) {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     return { outcome: "NEEDS_MORE_EVIDENCE", reason: "planning_review_missing" };
   }
-  // #69: a specification Journey gates its requirement register at planning.
-  if (input.journey_type === "specification" && !input.requirement_register) {
+  // #69: a specification Journey gates its requirement register at planning;
+  // existence on disk is checked by hooks/plan-package.cjs at the freeze.
+  if (
+    input.journey_type === "specification" &&
+    !(typeof input.requirement_register === "string" && input.requirement_register.endsWith(".sdoc"))
+  ) {
     return { outcome: "NEEDS_MORE_EVIDENCE", reason: "missing_requirement_register" };
   }
   const slots = Array.isArray(input.reviewer_slots) ? input.reviewer_slots : [];

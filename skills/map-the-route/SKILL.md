@@ -38,15 +38,15 @@ Fresh planning node. The Router writes Journey state and owns owner conversation
    `review_cadence: at-end`. Bind the planning-review slots to owner-supplied
    primary and ordered fallback route references under one candidate ref,
    revision, and digest. Use supplied identities; never invent them.
-4. After those stable source inputs, generate `implementation.json` and the
+4. After those stable source inputs, freeze: `node <plugin root>/hooks/plan-package.cjs <plan dir>`
+   must PASS; any finding halts. Then generate `implementation.json` and the
    self-contained offline `review.html` together. Each includes the proposed
    route, lineup, role states, reasoning, cadence, traceability, waves,
    recovery, approval boundaries, and register references versus Journey-local
    requirements. Two `review.html` states: `planning-review` and `final-closeout`.
 5. Give every slice stable requirement/design/SEIT IDs, dependencies, exact
    write set, authority, role, session rule, evidence, recovery, and stop rule.
-6. Freeze: `node hooks/plan-package.cjs <plan dir>` must PASS (any finding
-   halts). Open and verify final HTML, then request exactly one integrated owner review
+6. Open and verify final HTML, then request exactly one integrated owner review
    of outcome, design, route, lineup, cadence, and plan. Dispatch remains
    prohibited until approval. An owner change regenerates affected artifacts,
    then returns to this same gate; never insert a lineup or route-review pause.

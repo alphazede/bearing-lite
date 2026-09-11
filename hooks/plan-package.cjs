@@ -5,8 +5,10 @@
  * checkRoles: every command a slice runs whose seit procedure names an actor
  * must name the slice's role. verifyDigests: every planning input digest
  * embedded in seit.json matches the file on disk; the manifest digest over
- * those inputs matches implementation.json's planning_review.candidate_digest.
- * CLI: node hooks/plan-package.cjs <plan dir>  -> JSON, exit 1 on any finding.
+ * those inputs plus seit.json matches implementation.json's
+ * planning_review.candidate_digest; missing artifacts, inputs, digests, or a
+ * specification Journey's SDoc register fail closed.
+ * CLI: node <plugin root>/hooks/plan-package.cjs <plan dir> -> JSON, exit 1 on any finding.
  */
 
 const fs = require("node:fs");
@@ -68,13 +70,24 @@ function readJson(file) {
 }
 
 function verifyDigests(dir) {
+  const findings = [];
+  for (const name of ["seit.json", "implementation.json"]) {
+    if (!fs.existsSync(path.join(dir, name))) findings.push({ code: "missing_artifact", path: name });
+  }
+  if (findings.length) return { manifest_digest: null, findings };
   const seit = readJson(path.join(dir, "seit.json"));
   const implementation = readJson(path.join(dir, "implementation.json"));
   const root = repoRoot(dir);
-  const findings = [];
+  const inputs = seit?.source_baseline?.planning_inputs;
+  if (!Array.isArray(inputs) || !inputs.length) {
+    findings.push({ code: "missing_planning_inputs", path: "seit.json" });
+  }
   const actual = [];
-  for (const input of seit?.source_baseline?.planning_inputs || []) {
-    if (typeof input?.path !== "string" || typeof input?.sha256 !== "string") continue;
+  for (const input of inputs || []) {
+    if (typeof input?.path !== "string" || !/^[0-9a-f]{64}$/.test(input?.sha256 || "")) {
+      findings.push({ code: "malformed_planning_input", input });
+      continue;
+    }
     const file = path.resolve(root, input.path);
     if (!fs.existsSync(file)) {
       findings.push({ code: "missing_input", path: input.path });
@@ -86,10 +99,22 @@ function verifyDigests(dir) {
       findings.push({ code: "digest_mismatch", path: input.path, recorded: input.sha256, actual: digest });
     }
   }
+  // The manifest binds the planning inputs and seit.json itself (#70).
+  actual.push(sha256(fs.readFileSync(path.join(dir, "seit.json"))));
   const manifest_digest = sha256(actual.join("\n"));
   const recorded = implementation?.journey_settings?.planning_review?.candidate_digest;
-  if (typeof recorded === "string" && recorded !== manifest_digest) {
+  if (typeof recorded !== "string" || !recorded) {
+    findings.push({ code: "missing_candidate_digest", actual: manifest_digest });
+  } else if (recorded !== manifest_digest) {
     findings.push({ code: "candidate_digest_mismatch", recorded, actual: manifest_digest });
+  }
+  // #69: a specification Journey records an existing SDoc register at planning.
+  const settings = implementation?.journey_settings || {};
+  if (settings.journey_type === "specification") {
+    const register = settings.requirement_register;
+    if (typeof register !== "string" || !register.endsWith(".sdoc") || !fs.existsSync(path.resolve(root, register))) {
+      findings.push({ code: "missing_requirement_register", recorded: register ?? null });
+    }
   }
   return { manifest_digest, findings };
 }
