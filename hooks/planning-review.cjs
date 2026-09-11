@@ -1,19 +1,6 @@
 "use strict";
 
-const POLICY = Object.freeze({
-  reviewer_slots_min: 2,
-  reviewer_slots_max: 2,
-  independence_required: true,
-  isolated_findings_until_aggregation: true,
-  candidate_fields: ["candidate_ref", "candidate_revision", "candidate_digest"],
-  shared_candidate_required: true,
-  review_rounds: 1,
-  aggregated_repairs_max: 1,
-  post_repair_gate: "deterministic_PASS",
-  automatic_rereview: "prohibited",
-  slot_exhaustion_outcome: "FAIL_ROUND",
-  terminal_outcomes: ["HALT", "OWNER_AMENDMENT_REQUIRED"],
-});
+const { PLANNING_REVIEW_POLICY: POLICY } = require("./policy.cjs");
 
 const sameCandidate = (a, b) =>
   POLICY.candidate_fields.every(
