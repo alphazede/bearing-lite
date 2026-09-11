@@ -954,6 +954,22 @@ def cases() -> list[tuple[str, str, str, object, str]]:
 
     out.extend([
         ("SEIT-EMV-024", "complete_journey_document", "journey", complete_journey(), "accept"),
+        ("SEIT-EMV-024", "journey_released_lease_without_release_fields", "journey", complete_journey(
+            checkout_lease=complete_lease(state="released")
+        ), "reject"),
+        ("SEIT-EMV-024", "journey_released_lease_with_release_fields", "journey", complete_journey(
+            checkout_lease=complete_lease(
+                state="released", released_at="2026-01-02T00:00:00Z", release_reason="COMPLETE"
+            )
+        ), "accept"),
+        ("SEIT-EMV-024", "journey_status_outside_enum", "journey", complete_journey(
+            journey={
+                "id": SYN_JOURNEY,
+                "title": "Synthetic portable schema fixture",
+                "status": "done",
+                "planning_repository": "example/bearing-lite",
+            }
+        ), "reject"),
         ("SEIT-EMV-024", "complete_authority_document", "authority", complete_authority(), "accept"),
         ("SEIT-EMV-022", "complete_implementation_document", "implementation", complete_implementation(), "accept"),
         ("SEIT-EMV-021", "complete_seit_document", "seit", complete_seit(), "accept"),

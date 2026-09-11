@@ -58,10 +58,11 @@ optional derived export and is never authority.
    requirements register covers.
 7. A specification-authoring Journey carries its requirement register (UID,
    statement, rationale, verification method, allocation) as a planning
-   artifact: a draft SDoc path or a register section of the technical plan,
-   recorded as `implementation.json` `journey_settings.requirement_register`.
-   The Requirements Engineer gates it before the integrated owner review; no
-   Expedition wave re-gates it.
+   artifact: a draft `.sdoc` path (Markdown sections are not lint-checkable),
+   recorded as `implementation.json` `journey_settings.journey_type:
+   specification` plus `journey_settings.requirement_register`. The freeze
+   fails without an existing register; the Requirements Engineer gates it
+   before the integrated owner review; no Expedition wave re-gates it.
 
 ## Published standards
 

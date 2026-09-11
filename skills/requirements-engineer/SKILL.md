@@ -20,7 +20,7 @@ SDoc, publishes, selects models or lineups, or writes tests.
 
 - **Inputs:** settled owner decisions, the requirement register as a planning
   artifact (UID, statement, rationale, verification method, allocation: a
-  draft SDoc or a register section of the technical plan), the plan's `AC-*`
+  draft `.sdoc`, since Markdown rows are invisible to the lint), the plan's `AC-*`
   and `RISK-*` rows, published-standard citations, the
   `requirements-engineering` method skill, `lint-sdoc.py --profile library`
   output, compact return schema.

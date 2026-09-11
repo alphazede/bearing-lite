@@ -1,7 +1,7 @@
 /** #70 / #73: Map the Route freeze checks. */
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { createHash } from "node:crypto";
 import os from "node:os";
@@ -65,24 +65,43 @@ describe("plan-package (#70 embedded digest freeze)", () => {
       procedures_and_commands: [],
     })
   );
-  const expectedManifest = sha([sha(plan), sha(design)].join("\n"));
-
-  it("passes with a stable manifest digest when every digest matches", () => {
-    const result = verifyDigests(dir);
-    assert.deepEqual(result, { manifest_digest: expectedManifest, findings: [] });
-    assert.equal(freeze(dir).outcome, "PASS");
-  });
-  it("fails on a wrong candidate_digest, then on an edited input", () => {
+  const seitBytes = readFileSync(path.join(dir, "seit.json"));
+  const expectedManifest = sha([sha(plan), sha(design), sha(seitBytes)].join("\n"));
+  const impl = (candidate_digest, extra = {}) =>
     writeFileSync(
       path.join(dir, "implementation.json"),
-      JSON.stringify({ journey_settings: { planning_review: { candidate_digest: "0".repeat(64) } } })
+      JSON.stringify({ journey_settings: { planning_review: { candidate_digest }, ...extra } })
     );
-    assert.deepEqual(verifyDigests(dir).findings, [
-      { code: "candidate_digest_mismatch", recorded: "0".repeat(64), actual: expectedManifest },
+
+  it("fails closed on a missing artifact or candidate digest", () => {
+    assert.deepEqual(freeze(path.join(repo, "nowhere")).findings.map((f) => f.code), [
+      "missing_artifact",
+      "missing_artifact",
     ]);
+    impl(undefined);
+    assert.deepEqual(verifyDigests(dir).findings, [
+      { code: "missing_candidate_digest", actual: expectedManifest },
+    ]);
+  });
+  it("passes with a manifest digest that binds plan, design, and seit.json", () => {
+    impl(expectedManifest);
+    assert.deepEqual(verifyDigests(dir), { manifest_digest: expectedManifest, findings: [] });
+    assert.equal(freeze(dir).outcome, "PASS");
+  });
+  it("a specification Journey needs an existing SDoc register", () => {
+    impl(expectedManifest, { journey_type: "specification", requirement_register: "docs/plans/x/register.md" });
+    assert.deepEqual(verifyDigests(dir).findings.map((f) => f.code), ["missing_requirement_register"]);
+    writeFileSync(path.join(dir, "register.sdoc"), "[DOCUMENT]\n");
+    impl(expectedManifest, { journey_type: "specification", requirement_register: "docs/plans/x/register.sdoc" });
+    assert.deepEqual(verifyDigests(dir).findings, []);
+  });
+  it("fails on an edited seit.json, then on an edited input", () => {
+    impl(expectedManifest);
+    writeFileSync(path.join(dir, "seit.json"), seitBytes.toString() + "\n");
+    assert.deepEqual(freeze(dir).findings.map((f) => f.code), ["candidate_digest_mismatch"]);
+    writeFileSync(path.join(dir, "seit.json"), seitBytes);
     writeFileSync(path.join(dir, "plan.md"), plan + "edited\n");
-    const codes = freeze(dir).findings.map((f) => f.code);
-    assert.deepEqual(codes, ["digest_mismatch", "candidate_digest_mismatch"]);
+    assert.deepEqual(freeze(dir).findings.map((f) => f.code), ["digest_mismatch", "candidate_digest_mismatch"]);
     assert.equal(freeze(dir).outcome, "FAIL");
   });
 });
