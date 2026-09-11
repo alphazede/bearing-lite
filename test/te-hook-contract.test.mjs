@@ -942,13 +942,39 @@ describe("Lite TE host adapter (hooks/te-host.cjs)", () => {
         timeout: 10_000,
       });
       assert.equal(result.status, 0, result.stderr);
-      const parsed = JSON.parse(result.stdout);
+      // #71: stdout carries only host wire fields; the internal verdict is on stderr.
+      const wire = JSON.parse(result.stdout);
+      assert.deepEqual(wire, {}, "a non-deny result is an empty host object");
+      const audit = JSON.parse(result.stderr);
       assert.ok(
-        TE_VERDICTS.includes(parsed.hookSpecificOutput.verdict),
-        `unexpected verdict ${parsed.hookSpecificOutput?.verdict}`
+        TE_VERDICTS.includes(audit.hookSpecificOutput.verdict),
+        `unexpected verdict ${audit.hookSpecificOutput?.verdict}`
       );
-      assert.equal(parsed.continue, undefined);
     }
+  });
+
+  it("#71: the host wire never carries internal evaluator fields", () => {
+    const teHost = loadTe("te-host.cjs");
+    const deny = teHost.toWire(
+      teHost.toHostResponse("te_test_write", teHost.VERDICTS.find((v) => v.startsWith("DENY")), "why", {
+        hookEventName: "PreToolUse",
+      })
+    );
+    assert.deepEqual(Object.keys(deny), ["hookSpecificOutput"]);
+    assert.deepEqual(Object.keys(deny.hookSpecificOutput).sort(), [
+      "hookEventName",
+      "permissionDecision",
+      "permissionDecisionReason",
+    ]);
+    assert.equal(deny.hookSpecificOutput.permissionDecision, "deny");
+    const block = teHost.toWire(
+      teHost.toHostResponse("te_completion", teHost.VERDICTS.find((v) => v.startsWith("DENY")), "why", {
+        hookEventName: "Stop",
+      })
+    );
+    assert.deepEqual(Object.keys(block).sort(), ["decision", "reason"]);
+    assert.equal(block.decision, "block");
+    assert.deepEqual(teHost.toWire(teHost.toHostResponse("te_test_write", "ALLOW", "ok", {})), {});
   });
 
   // -------------------------------------------------------------------------
@@ -1087,7 +1113,8 @@ describe("Lite TE host adapter (hooks/te-host.cjs)", () => {
       timeout: 10_000,
     });
     assert.equal(result.status, 0, result.stderr);
-    const response = JSON.parse(result.stdout);
+    const wire = JSON.parse(result.stdout);
+    const response = JSON.parse(result.stderr); // #71: internal verdict is on stderr
     const call = lastCall(dir);
 
     assert.equal(
@@ -1113,7 +1140,6 @@ describe("Lite TE host adapter (hooks/te-host.cjs)", () => {
       "an unreceipted scoped change must not ALLOW because a foreign cwd " +
         `carries a receipt; the evaluator answered ${JSON.stringify(call.result)}`
     );
-    assert.equal(response.decision, "block");
-    assert.equal(response.continue, undefined);
+    assert.deepEqual(wire, { decision: "block", reason: response.reason });
   });
 });

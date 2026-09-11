@@ -584,6 +584,28 @@ function readStdinSync() {
   }
 }
 
+/**
+ * Project the internal response onto the host wire (#71). Codex validates
+ * hookSpecificOutput with additionalProperties:false per event, so only host
+ * fields go to stdout: a PreToolUse deny, a Stop/SubagentStop block, or an
+ * empty object (allow / fail-open). The full internal verdict goes to stderr
+ * for audit; the exit stays 0 so no host reads stderr as a blocking reason.
+ */
+function toWire(response) {
+  const inner = isPlainObject(response.hookSpecificOutput) ? response.hookSpecificOutput : {};
+  if (inner.permissionDecision === "deny") {
+    return {
+      hookSpecificOutput: {
+        hookEventName: "PreToolUse",
+        permissionDecision: "deny",
+        permissionDecisionReason: inner.permissionDecisionReason,
+      },
+    };
+  }
+  if (response.decision === "block") return { decision: "block", reason: response.reason };
+  return {};
+}
+
 function main() {
   let raw = "";
   let response;
@@ -600,7 +622,8 @@ function main() {
       "adapter_failure: the test-engineering adapter could not run; unavailable"
     );
   }
-  process.stdout.write(JSON.stringify(response) + "\n");
+  process.stderr.write(JSON.stringify(response) + "\n");
+  process.stdout.write(JSON.stringify(toWire(response)) + "\n");
   process.exit(0);
 }
 
@@ -613,6 +636,7 @@ module.exports = {
   supportChannel,
   handle,
   toHostResponse,
+  toWire,
 };
 
 if (require.main === module) {
