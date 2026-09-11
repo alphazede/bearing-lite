@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/alphazede/bearing-lite/schemas/event.schema.json",
+  "title": "Bearing Lite evidence event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "event_id",
+    "source",
+    "journey",
+    "repository",
+    "unit",
+    "candidate_revision",
+    "generation",
+    "evidence",
+    "transition",
+    "occurred_at"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "event_id": { "type": "string", "minLength": 1 },
+    "source": { "type": "string", "minLength": 1 },
+    "journey": { "type": "string", "minLength": 1 },
+    "repository": { "type": "string", "minLength": 1 },
+    "unit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["slice"],
+      "properties": {
+        "wave": { "type": "string", "minLength": 1 },
+        "slice": { "type": "string", "minLength": 1 }
+      }
+    },
+    "candidate_revision": { "type": "string", "minLength": 1 },
+    "generation": { "type": "integer", "minimum": 0 },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref", "sha256"],
+      "properties": {
+        "ref": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    },
+    "transition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "verdict"],
+      "properties": {
+        "kind": {
+          "enum": ["implementation", "verification", "assurance", "acceptance", "merge", "issue_close"]
+        },
+        "verdict": { "type": "string", "minLength": 1 }
+      }
+    },
+    "occurred_at": { "type": "string", "format": "date-time" }
+  }
+}

@@ -157,6 +157,7 @@ explain orientation; they never authorize a transition.
 | **Navigator** | Compatibility diagnostic | no | Not a normal role; existing plans reroute to Router |
 | **Explorer** | One-wave controller | no | Dispatches Crewmates; owns proven-independent lanes |
 | **Crewmate** | Bounded implementer | yes | Split test-writing versus product; neither self-certifies |
+| **Light Implementer** | Mechanical implementer | yes | `work_class: light` slices only; verified by the packet's command; no repair loop |
 | **Scribe** | Event side lane | no | Transcribes; cannot activate authority |
 | **Plan Integrator** | Artifact reconciliation | no | Generates `implementation.json` and `review.html` |
 | **Systems Modeler** | Engineering views | no | After requirements; before design finalization |
@@ -200,6 +201,11 @@ conflict, or assurance dispatch.
 Ordinary execution corrections remain bounded. The assurance gate allows one
 review-directed repair, followed by deterministic coordinator verification and
 no second review. Diagrams never create state or authorize transitions.
+
+`hooks/reconcile.cjs` deterministically applies evidence events to Journey state.
+It is a short-lived Router-run invocation, not a daemon or host event adapter;
+hosts emit no events today, so invocation remains a procedural limitation.
+It observes merge and issue closure but never grants acceptance, merges, or closes issues.
 
 ## Implementation process (explanatory)
 

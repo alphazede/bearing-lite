@@ -54,6 +54,7 @@ const EVALUATOR_MODULES = new Set([
   "assurance-budget.cjs",
   "policy.cjs", // #63 shared policy source
   "plan-package.cjs", // #70/#73 Map the Route freeze checks
+  "reconcile.cjs", // #64 deterministic evidence reconciliation
 ]);
 /** Additional TE class modules, allowed but not yet required by this case. */
 const TE_CLASS_FILES = Object.freeze(["te-capability.cjs", "te-host.cjs"]);
