@@ -11,6 +11,10 @@ function evaluatePlanningReview(input) {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     return { outcome: "NEEDS_MORE_EVIDENCE", reason: "planning_review_missing" };
   }
+  // #69: a specification Journey gates its requirement register at planning.
+  if (input.journey_type === "specification" && !input.requirement_register) {
+    return { outcome: "NEEDS_MORE_EVIDENCE", reason: "missing_requirement_register" };
+  }
   const slots = Array.isArray(input.reviewer_slots) ? input.reviewer_slots : [];
   const ids = slots.map((slot) => slot?.slot_id);
   const primaryRoutes = slots.map((slot) => slot?.primary_route_ref);

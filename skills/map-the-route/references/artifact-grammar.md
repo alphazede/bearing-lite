@@ -56,6 +56,12 @@ optional derived export and is never authority.
    Journey-local, so a reviewer can tell which artifact owns each statement.
 6. `design.md` is unaffected: it records how the work is built, which no
    requirements register covers.
+7. A specification-authoring Journey carries its requirement register (UID,
+   statement, rationale, verification method, allocation) as a planning
+   artifact: a draft SDoc path or a register section of the technical plan,
+   recorded as `implementation.json` `journey_settings.requirement_register`.
+   The Requirements Engineer gates it before the integrated owner review; no
+   Expedition wave re-gates it.
 
 ## Published standards
 
