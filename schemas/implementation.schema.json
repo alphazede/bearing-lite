@@ -64,27 +64,50 @@
         "human_decision": { "type": ["string", "object", "null"] },
         "authority_id": { "type": ["string", "null"] },
         "dispatchable": { "type": "boolean" },
-        "slice_status": { "type": "string" }
+        "slice_status": { "type": "string" },
+        "work_class": {
+          "type": "string",
+          "enum": ["light", "judgement"],
+          "description": "light: inputs fully determine the output and the packet's command verifies it (skills/light-implementer). Default judgement."
+        },
+        "work_class_reason": { "type": "string", "minLength": 1 }
       },
-      "if": {
-        "not": {
-          "anyOf": [
-            {
-              "properties": { "dispatchable": { "const": false } },
-              "required": ["dispatchable"]
-            },
-            {
-              "properties": { "slice_status": { "const": "publication-blocked" } },
-              "required": ["slice_status"]
+      "allOf": [
+        {
+          "if": {
+            "not": {
+              "anyOf": [
+                {
+                  "properties": { "dispatchable": { "const": false } },
+                  "required": ["dispatchable"]
+                },
+                {
+                  "properties": { "slice_status": { "const": "publication-blocked" } },
+                  "required": ["slice_status"]
+                }
+              ]
             }
-          ]
+          },
+          "then": {
+            "properties": {
+              "authority_id": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "work_class": { "const": "light" } },
+            "required": ["work_class"]
+          },
+          "then": {
+            "required": ["work_class_reason"],
+            "properties": {
+              "role": { "const": "Light Implementer" },
+              "command_ids": { "minItems": 1 }
+            }
+          }
         }
-      },
-      "then": {
-        "properties": {
-          "authority_id": { "type": "string", "minLength": 1 }
-        }
-      }
+      ]
     }
   },
   "properties": {

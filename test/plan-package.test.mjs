@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(import.meta.url);
-const { checkRoles, verifyDigests, freeze } = require(path.join(ROOT, "hooks/plan-package.cjs"));
+const { checkRoles, checkWorkClass, checkPlanningRoles, verifyDigests, freeze } = require(path.join(ROOT, "hooks/plan-package.cjs"));
 const sha = (s) => createHash("sha256").update(s).digest("hex");
 
 const seit = (actor) => ({
@@ -41,6 +41,28 @@ describe("plan-package (#73 actor/role consistency)", () => {
     assert.deepEqual(checkRoles({ procedures_and_commands: [] }, impl("Router")), [
       { code: "unknown_command_id", step: "S1.10", command_id: "PROC-RERUN" },
     ]);
+  });
+});
+
+describe("plan-package (#77 light slices)", () => {
+  it("a light slice without a command or with another role is a finding", () => {
+    const light = (extra) => ({ waves: [{ slices: [{ id: "S1.1", role: "Light Implementer", work_class: "light", ...extra }] }] });
+    assert.deepEqual(checkWorkClass(light({ command_ids: ["CMD-1"] })), []);
+    assert.deepEqual(checkWorkClass(light({ command_ids: [] })), [{ code: "light_slice_without_command", step: "S1.1" }]);
+    assert.deepEqual(checkWorkClass(light({ command_ids: ["CMD-1"], role: "Crewmate" })), [
+      { code: "light_slice_role", step: "S1.1", role: "Crewmate" },
+    ]);
+    assert.deepEqual(checkWorkClass({ waves: [{ slices: [{ id: "S1.2", role: "Crewmate", command_ids: [] }] }] }), []);
+  });
+});
+
+describe("plan-package (#80 planning-only roles)", () => {
+  it("rejects Requirements Engineer slices and permits execution roles", () => {
+    const assigned = (role) => ({ waves: [{ slices: [{ id: "S1.2", role }] }] });
+    assert.deepEqual(checkPlanningRoles(assigned("Requirements Engineer / planning")), [
+      { code: "planning_role_in_expedition", step: "S1.2", role: "Requirements Engineer / planning" },
+    ]);
+    assert.deepEqual(checkPlanningRoles(assigned("Test Engineer")), []);
   });
 });
 

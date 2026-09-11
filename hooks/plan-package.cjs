@@ -1,9 +1,11 @@
 "use strict";
 
 /**
- * Map the Route freeze (#70, #73): pure checks over a planning package.
+ * Map the Route freeze (#70, #73, #77, #80): pure checks over a planning package.
  * checkRoles: every command a slice runs whose seit procedure names an actor
- * must name the slice's role. verifyDigests: every planning input digest
+ * must name the slice's role. checkWorkClass validates light slices;
+ * checkPlanningRoles excludes planning-only roles from Expedition slices.
+ * verifyDigests: every planning input digest
  * embedded in seit.json matches the file on disk; the manifest digest over
  * those inputs plus seit.json matches implementation.json's
  * planning_review.candidate_digest; missing artifacts, inputs, digests, or a
@@ -23,7 +25,7 @@ function* slices(node) {
     for (const item of node) yield* slices(item);
   } else if (node && typeof node === "object") {
     const ids = [...(node.command_ids || []), ...(node.post_step_command_ids || [])];
-    if (typeof node.id === "string" && typeof node.role === "string" && ids.length) {
+    if (typeof node.id === "string" && typeof node.role === "string") {
       yield { id: node.id, role: node.role, commandIds: ids };
     }
     for (const value of Object.values(node)) yield* slices(value);
@@ -50,6 +52,30 @@ function checkRoles(seit, implementation) {
           files: ["seit.json", "implementation.json"],
         });
       }
+    }
+  }
+  return findings;
+}
+
+/** #77: a light slice must run at least one command and be routed to the Light Implementer. */
+function checkWorkClass(node, findings = []) {
+  if (Array.isArray(node)) node.forEach((item) => checkWorkClass(item, findings));
+  else if (node && typeof node === "object") {
+    if (node.work_class === "light" && typeof node.id === "string") {
+      if (!(node.command_ids || []).length) findings.push({ code: "light_slice_without_command", step: node.id });
+      if (node.role !== "Light Implementer") findings.push({ code: "light_slice_role", step: node.id, role: node.role });
+    }
+    for (const value of Object.values(node)) checkWorkClass(value, findings);
+  }
+  return findings;
+}
+
+/** #80: Requirements Engineer is planning-only and never an Expedition slice. */
+function checkPlanningRoles(implementation) {
+  const findings = [];
+  for (const slice of slices(implementation)) {
+    if (slice.role.startsWith("Requirements Engineer")) {
+      findings.push({ code: "planning_role_in_expedition", step: slice.id, role: slice.role });
     }
   }
   return findings;
@@ -123,11 +149,16 @@ function freeze(dir) {
   const digests = verifyDigests(dir);
   const seit = readJson(path.join(dir, "seit.json"));
   const implementation = readJson(path.join(dir, "implementation.json"));
-  const findings = [...checkRoles(seit, implementation), ...digests.findings];
+  const findings = [
+    ...checkRoles(seit, implementation),
+    ...checkWorkClass(implementation),
+    ...checkPlanningRoles(implementation),
+    ...digests.findings,
+  ];
   return { outcome: findings.length ? "FAIL" : "PASS", manifest_digest: digests.manifest_digest, findings };
 }
 
-module.exports = { checkRoles, verifyDigests, freeze };
+module.exports = { checkRoles, checkWorkClass, checkPlanningRoles, verifyDigests, freeze };
 
 if (require.main === module) {
   const dir = process.argv[2];

@@ -24,9 +24,11 @@ malformed unused catalog cannot override explicit inline owner choices.
 
 ## Configurable roles
 
-Catalog entries assign Explorer, Crewmate, Test Engineer, Scribe, Plan
-Integrator, Systems Modeler, Integration Engineer, Requirements Engineer,
-Park Ranger, and Surveyor. Navigator and Validator are not lineup roles;
+Catalog entries assign Explorer, Crewmate, Light Implementer, Test Engineer,
+Scribe, Plan Integrator, Systems Modeler, Integration Engineer, Requirements
+Engineer, Park Ranger, and Surveyor. The Light Implementer takes only slices
+whose `work_class` is `light` (criteria in `skills/light-implementer`); it
+has its own primary and fallbacks, usually a lighter and cheaper route. Navigator and Validator are not lineup roles;
 existing plans that still assign them use the compatibility diagnostics and
 treat the assignment as unused. Never fill agent, model, or reasoning values
 on the user's behalf. `review_cadence` is `at-end`.
