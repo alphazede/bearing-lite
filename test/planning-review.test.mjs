@@ -57,6 +57,8 @@ describe("model-neutral planning review", () => {
       [review({ round_number: 2, completed_rounds: 2 }), "HALT", "review_round_limit"],
       [review({ aggregated_repairs: 2 }), "HALT", "aggregated_repair_limit"],
       [review({ automatic_rereview_requested: true }), "OWNER_AMENDMENT_REQUIRED", "automatic_rereview_prohibited"],
+      [review({ journey_type: "specification" }), "NEEDS_MORE_EVIDENCE", "missing_requirement_register"],
+      [review({ journey_type: "specification", requirement_register: "docs/plans/x/register.sdoc" }), "PASS", "repair_gate_passed"],
     ];
     for (const [value, outcome, reason] of cases) {
       assert.deepEqual(core.evaluatePlanningReview(value), { outcome, reason });
