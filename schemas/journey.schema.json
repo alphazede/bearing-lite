@@ -5,29 +5,18 @@
   "description": "Append-only decisions and authority-event history plus the generation-bound checkout lease. The full mutable file digest is not the stable SEIT execution baseline. Extra lifecycle metadata is allowed at the document root. Lease identity fields stay closed.",
   "type": "object",
   "additionalProperties": true,
-  "required": [
-    "schema_version",
-    "journey",
-    "checkout_lease",
-    "decisions",
-    "open_decisions",
-    "planning_receipts",
-    "lineup_selection"
-  ],
+  "required": ["schema_version", "journey", "checkout_lease", "decisions", "open_decisions", "planning_receipts", "lineup_selection"],
   "properties": {
-    "schema_version": { "type": "string", "minLength": 1 },
+    "schema_version": {"type": "string", "minLength": 1},
     "journey": {
       "type": "object",
       "additionalProperties": true,
       "required": ["id", "title", "status", "planning_repository"],
       "properties": {
-        "id": { "type": "string", "minLength": 1 },
-        "title": { "type": "string", "minLength": 1 },
-        "status": {
-          "type": "string",
-          "enum": ["planning", "implementation", "complete", "cancelled"]
-        },
-        "planning_repository": { "type": "string", "minLength": 1 }
+        "id": {"type": "string", "minLength": 1},
+        "title": {"type": "string", "minLength": 1},
+        "status": {"type": "string", "enum": ["planning", "implementation", "complete", "cancelled"]},
+        "planning_repository": {"type": "string", "minLength": 1}
       }
     },
     "checkout_lease": {
@@ -45,57 +34,162 @@
         "state"
       ],
       "properties": {
-        "journey": { "type": "string", "minLength": 1 },
-        "controller": { "type": "string", "minLength": 1 },
-        "repository": { "type": "string", "minLength": 1 },
-        "checkout": { "type": "string", "minLength": 1 },
-        "branch": { "type": "string", "minLength": 1 },
-        "candidate_revision": { "type": "string", "minLength": 1 },
-        "acquired_at": { "type": "string", "minLength": 1 },
-        "generation": { "type": "integer", "minimum": 1 },
-        "state": { "enum": ["active", "released"] },
-        "released_at": { "type": "string", "format": "date-time" },
-        "release_reason": { "type": "string", "minLength": 1 }
+        "journey": {"type": "string", "minLength": 1},
+        "controller": {"type": "string", "minLength": 1},
+        "repository": {"type": "string", "minLength": 1},
+        "checkout": {"type": "string", "minLength": 1},
+        "branch": {"type": "string", "minLength": 1},
+        "candidate_revision": {"type": "string", "minLength": 1},
+        "acquired_at": {"type": "string", "minLength": 1},
+        "generation": {"type": "integer", "minimum": 1},
+        "state": {"enum": ["active", "released"]},
+        "released_at": {"type": "string", "format": "date-time"},
+        "release_reason": {"type": "string", "minLength": 1}
       },
-      "if": {
-        "properties": {
-          "state": { "const": "released" }
-        }
-      },
-      "then": {
-        "required": ["released_at", "release_reason"]
-      }
+      "if": {"properties": {"state": {"const": "released"}}},
+      "then": {"required": ["released_at", "release_reason"]}
     },
     "history": {
       "type": "object",
       "additionalProperties": true,
       "description": "Optional append-only Journey history wrapper",
       "properties": {
-        "decisions": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
-        "authority_events": { "type": "array", "items": { "type": "object", "additionalProperties": true } }
+        "decisions": {"type": "array", "items": {"type": "object", "additionalProperties": true}},
+        "authority_events": {"type": "array", "items": {"type": "object", "additionalProperties": true}}
       }
     },
     "decisions": {
       "type": "array",
       "description": "Append-only confirmed owner decisions",
-      "items": { "type": "object", "additionalProperties": true }
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "allOf": [
+          {
+            "if": {"required": ["record_type"], "properties": {"record_type": {"const": "owner_stop"}}},
+            "then": {"$ref": "#/$defs/ownerStop"}
+          }
+        ]
+      }
     },
     "authority_events": {
       "type": "array",
       "description": "Append-only authority grant, amend, revoke, or supersede events",
-      "items": { "type": "object", "additionalProperties": true }
+      "items": {"type": "object", "additionalProperties": true}
     },
     "open_decisions": {
       "type": "array",
-      "items": { "type": "object", "additionalProperties": true }
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "allOf": [
+          {
+            "if": {"required": ["record_type"], "properties": {"record_type": {"const": "owner_stop"}}},
+            "then": {"$ref": "#/$defs/ownerStop"}
+          }
+        ]
+      }
     },
-    "planning_receipts": {
+    "planning_receipts": {"type": "array", "items": {"type": "object", "additionalProperties": true}},
+    "lineup_selection": {"type": "object", "additionalProperties": true},
+    "owner_wait_tracking": {"type": "boolean", "description": "Explicit coverage marker; absence is unavailable, never zero owner wait."},
+    "owner_blocked_intervals": {
       "type": "array",
-      "items": { "type": "object", "additionalProperties": true }
-    },
-    "lineup_selection": {
-      "type": "object",
-      "additionalProperties": true
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["decision_ids", "started_at", "ended_at"],
+        "properties": {
+          "decision_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+          "started_at": {"type": "string", "format": "date-time", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3})?Z$"},
+          "ended_at": {"type": ["string", "null"], "format": "date-time", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3})?Z$"}
+        }
+      }
     }
-  }
+  },
+  "$defs": {
+    "ownerStop": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "record_type",
+        "id",
+        "class",
+        "question",
+        "why_owner",
+        "evidence_ref",
+        "affected_slices",
+        "blocking",
+        "status",
+        "created_at",
+        "asked_at",
+        "answered_at",
+        "cancelled_at",
+        "round_trip_id"
+      ],
+      "properties": {
+        "record_type": {"const": "owner_stop"},
+        "id": {"type": "string", "minLength": 1},
+        "class": {"enum": ["A", "B", "C", "D", "E", "F"]},
+        "question": {"type": "string", "minLength": 1},
+        "why_owner": {"type": "string", "minLength": 1},
+        "evidence_ref": {"type": "string", "minLength": 1},
+        "affected_slices": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "blocking": {"type": "boolean"},
+        "status": {"enum": ["queued", "asked", "answered", "cancelled"]},
+        "created_at": {"type": "string", "format": "date-time", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3})?Z$"},
+        "asked_at": {"type": ["string", "null"], "format": "date-time", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3})?Z$"},
+        "answered_at": {"type": ["string", "null"], "format": "date-time", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3})?Z$"},
+        "cancelled_at": {"type": ["string", "null"], "format": "date-time", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3})?Z$"},
+        "round_trip_id": {"type": ["string", "null"], "minLength": 1},
+        "answer_ref": {"type": "string", "minLength": 1}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "queued"}}},
+          "then": {
+            "properties": {
+              "asked_at": {"type": "null"},
+              "answered_at": {"type": "null"},
+              "cancelled_at": {"type": "null"},
+              "round_trip_id": {"type": "null"}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"status": {"const": "asked"}}},
+          "then": {
+            "properties": {
+              "asked_at": {"type": "string"},
+              "round_trip_id": {"type": "string", "minLength": 1},
+              "answered_at": {"type": "null"},
+              "cancelled_at": {"type": "null"}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"status": {"const": "answered"}}},
+          "then": {
+            "properties": {
+              "asked_at": {"type": "string"},
+              "answered_at": {"type": "string"},
+              "cancelled_at": {"type": "null"},
+              "round_trip_id": {"type": "string", "minLength": 1}
+            },
+            "required": ["answer_ref"]
+          }
+        },
+        {
+          "if": {"properties": {"status": {"const": "cancelled"}}},
+          "then": {"properties": {"cancelled_at": {"type": "string"}, "answered_at": {"type": "null"}}}
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {"required": ["owner_wait_tracking"], "properties": {"owner_wait_tracking": {"const": true}}},
+      "then": {"required": ["owner_blocked_intervals"]}
+    }
+  ]
 }

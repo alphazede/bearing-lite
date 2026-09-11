@@ -13,7 +13,6 @@ description: >
 Wave authority. Coordinates more and implements less than Crewmate.
 
 ## Inputs and match
-
 - **Inputs:** approved baseline, wave objective, packet graph, dependencies,
   scope, authority, lineup from the recorded Journey snapshot, visible wave
   receipt, acceptance, and compact return schema.
@@ -21,7 +20,6 @@ Wave authority. Coordinates more and implements less than Crewmate.
 - **Non-match:** one bounded packet needs no orchestration, multiple waves conflict, or assurance alone is requested.
 
 ## Algorithm
-
 1. Continue this wave when identity, authority, route, and generation are
    unchanged; otherwise start fresh. Verify wave readiness, packet boundaries,
    dependencies, and approved identities from the recorded Journey snapshot,
@@ -42,6 +40,9 @@ Wave authority. Coordinates more and implements less than Crewmate.
 4. Inspect compact returns against write sets and acceptance; integrate
    evidence without implementing. Update `implementation.json` and `review.html`
    once per wave, plus owner-decision or blocker changes.
+   Apply `../bearing-lite/references/owner-stops.md` for queued questions,
+   blocking prerequisites, proven-independent progress and owner holds; never
+   add unapproved roles or gates.
 5. Dispatch declared assurance automatically at wave-end on this wave's
    integrated candidate. Deterministic checks always run. Honor
    `max_assurance_rounds` of 1 per declared phase or wave from visible
@@ -53,7 +54,6 @@ Wave authority. Coordinates more and implements less than Crewmate.
    `COMPLETE`, deployment checks do not reopen assurance.
 
 ## Return and recovery
-
 Return `READY`, `REROUTED`, `WAITING_ON`, or `OWNER_DECISION_REQUIRED` with
 verdict, candidate_ref, changed_paths, tests, findings, and blocker. Reroute only from new evidence; three attempts per packet.
 

@@ -1297,6 +1297,40 @@ def check_nkc(implementation_schema: dict) -> tuple[bool, str]:
     return True, "n/k/c present without assistant default integers"
 
 
+def owner_stop_cases() -> list:
+    grant = {"granted": True, "owner_decision_id": SYN_DEC, "expires_at": None,
+             "exclusions": ["scope_change", "budget_exhaustion", "owner_hold", "owner_only_actions"]}
+    question = {"record_type": "owner_stop", "id": "Q1", "class": "F",
+                "question": "Authorize action?", "why_owner": "Excluded action",
+                "evidence_ref": "AUTH-1", "affected_slices": ["S1"], "blocking": True,
+                "status": "queued", "created_at": "2026-09-11T10:00:00Z",
+                "asked_at": None, "answered_at": None, "cancelled_at": None, "round_trip_id": None}
+    out = [("OWNER-STOP", "explicit_continuation", "authority", complete_authority(continuation=grant), "accept"),
+           ("OWNER-STOP", "tracked_queue", "journey", complete_journey(
+               owner_wait_tracking=True, owner_blocked_intervals=[], open_decisions=[question]), "accept")]
+    for key in grant:
+        out.append(("OWNER-STOP", "grant_missing_" + key, "authority",
+                    complete_authority(continuation=omit(grant, key)), "reject"))
+    out.append(("OWNER-STOP", "grant_missing_exclusions", "authority",
+                complete_authority(continuation=grant | {"exclusions": []}), "reject"))
+    out.append(("OWNER-STOP", "grant_without_expiry_conditions", "authority",
+                complete_authority(continuation=grant, expiry_conditions=[]), "reject"))
+    out.append(("OWNER-STOP", "tracking_without_intervals", "journey",
+                complete_journey(owner_wait_tracking=True), "reject"))
+    for key in question.keys() - {"record_type"}:
+        out.append(("OWNER-STOP", "question_missing_" + key, "journey",
+                    complete_journey(open_decisions=[omit(question, key)]), "reject"))
+    for value in ["2026-09-11T10:00:00+00:00", "2026-09-11T10:00:00.123456Z"]:
+        out.append(("OWNER-STOP", "timestamp_precision_" + value, "journey",
+                    complete_journey(open_decisions=[question | {"created_at": value}]), "reject"))
+        out.append(("OWNER-STOP", "grant_timestamp_precision_" + value, "authority",
+                    complete_authority(continuation=grant | {"expires_at": value}), "reject"))
+    for status in ["asked", "answered", "cancelled"]:
+        out.append(("OWNER-STOP", "missing_" + status + "_timestamp", "journey",
+                    complete_journey(open_decisions=[question | {"status": status}]), "reject"))
+    return out
+
+
 def run_cases() -> int:
     schemas = load_schemas()
     print("CMD-LITE-SCHEMA-VALIDATE")
@@ -1321,7 +1355,7 @@ def run_cases() -> int:
         print(f"FAIL {label}: {detail}")
         failed += 1
 
-    for seit_id, name, schema_key, instance, expect in cases():
+    for seit_id, name, schema_key, instance, expect in cases() + owner_stop_cases():
         messages = errors_for(schemas[schema_key], instance)
         accepted = not messages
         want_accept = expect == "accept"

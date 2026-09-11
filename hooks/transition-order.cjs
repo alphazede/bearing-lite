@@ -12,6 +12,7 @@ const OUTCOMES = Object.freeze(["ADVISE", "REROUTE", "BLOCK", "UNAVAILABLE"]);
 const ENFORCEMENT = "procedural";
 const { evaluatePlanningReview } = require("./planning-review.cjs");
 const { evaluateAssuranceBudget } = require("./assurance-budget.cjs");
+const { evaluateOwnerStop } = require("./owner-stops.cjs");
 
 const RECOVERY_UNAVAILABLE =
   "Keep the current state, run the transition checklist procedurally, and record the result before retrying";
@@ -130,6 +131,17 @@ function evaluate(input) {
 
     if (SAFE_CHANNELS.has(input.channel) || SAFE_CHANNELS.has(input.action_kind)) {
       return result("ADVISE", "channel_open", RECOVERY_CHANNEL);
+    }
+
+    if (input.action_kind === "owner_stop_check") {
+      const stop = evaluateOwnerStop(input.owner_stop);
+      return {
+        ...result(stop.disposition === "NEEDS_MORE_EVIDENCE" ? "UNAVAILABLE" :
+          stop.disposition === "ASK" ? "REROUTE" : "ADVISE",
+        "owner_stop:" + stop.disposition + ":" + stop.reason,
+        "Apply references/owner-stops.md; this check grants no action or dispatch authority"),
+        owner_stop: stop,
+      };
     }
 
     if (input.action_kind === "planning_review_transition") {

@@ -55,6 +55,7 @@ const EVALUATOR_MODULES = new Set([
   "policy.cjs", // #63 shared policy source
   "plan-package.cjs", // #70/#73 Map the Route freeze checks
   "reconcile.cjs", // #64 deterministic evidence reconciliation
+  "owner-stops.cjs", // #79 procedural preflight and local wait metrics
 ]);
 /** Additional TE class modules, allowed but not yet required by this case. */
 const TE_CLASS_FILES = Object.freeze(["te-capability.cjs", "te-host.cjs"]);
