@@ -39,6 +39,19 @@ const VERDICT_VALUES = new Set([
   "WAITING_ON",
 ]);
 
+/** Closed verdicts that refuse protected completion (#55). */
+const NEGATIVE_VERDICTS = new Set([
+  "BLOCK",
+  "FAIL",
+  "GAPS",
+  "NEEDS_MORE_EVIDENCE",
+  "OWNER_DECISION_REQUIRED",
+  "PARTIAL",
+  "REPAIR_REQUIRED",
+  "REROUTED",
+  "WAITING_ON",
+]);
+
 const RECOVERY_UNAVAILABLE =
   "Report UNAVAILABLE, complete the handoff checklist manually, and do not request protected completion until required fields and assurance are present";
 const RECOVERY_HANDOFF =
@@ -169,6 +182,8 @@ function evaluate(input) {
       const blockers = [];
       const handoffProblems = [...missing, ...invalid];
       if (handoffProblems.length > 0) blockers.push("handoff:" + handoffProblems.join(","));
+      const verdict = String((isPlainObject(input.handoff) ? input.handoff : input).verdict ?? "").trim();
+      if (NEGATIVE_VERDICTS.has(verdict)) blockers.push("verdict:" + verdict);
       if (missingAssurance.length > 0) {
         blockers.push("assurance:" + missingAssurance.join(","));
       }
@@ -283,6 +298,7 @@ module.exports = {
   ENFORCEMENT,
   HANDOFF_FIELDS,
   VERDICT_VALUES,
+  NEGATIVE_VERDICTS,
   evaluate,
 };
 
