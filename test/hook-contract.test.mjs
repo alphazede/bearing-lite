@@ -49,7 +49,12 @@ const ORIGINAL_CLASS_FILES = Object.freeze([
  * `assurance-budget.cjs` is consumed by transition through the
  * `assurance_transition` action_kind (ROUTER-EMV-CADENCE-IMPLEMENTATION-001).
  */
-const EVALUATOR_MODULES = new Set(["planning-review.cjs", "assurance-budget.cjs"]);
+const EVALUATOR_MODULES = new Set([
+  "planning-review.cjs",
+  "assurance-budget.cjs",
+  "policy.cjs", // #63 shared policy source
+  "plan-package.cjs", // #70/#73 Map the Route freeze checks
+]);
 /** Additional TE class modules, allowed but not yet required by this case. */
 const TE_CLASS_FILES = Object.freeze(["te-capability.cjs", "te-host.cjs"]);
 const TE_CLASSES = Object.freeze(["te_test_write", "te_completion"]);
@@ -254,6 +259,28 @@ describe("CMD-HOOK-01 hook-contract (SEIT-HOOK-CLASS-01, SEIT-HOOK-COVERAGE-01)"
     });
     assert.equal(blocked.outcome, "BLOCK");
     assert.match(String(blocked.reason), /protected_completion_invalid/);
+
+    const failProtectedInput = {
+      mode: "protected_completion",
+      verdict: "FAIL",
+      candidate_ref: "cand-abc",
+      changed_paths: ["test/hook-contract.test.mjs"],
+      tests: "ok",
+      findings: "none",
+      blocker: "none",
+      required_assurance: ["Validator"],
+      assurance_accepted: ["Validator"],
+      candidate_matched: true,
+    };
+    const failProtected = closeout.evaluate(failProtectedInput);
+    assert.equal(failProtected.outcome, "BLOCK");
+    assert.match(String(failProtected.reason), /verdict:FAIL/);
+
+    const passProtected = closeout.evaluate({ ...failProtectedInput, verdict: "PASS" });
+    assert.equal(passProtected.reason, "protected_completion_ready");
+
+    const failAdvisory = closeout.evaluate({ ...failProtectedInput, mode: "advisory" });
+    assert.notEqual(failAdvisory.outcome, "BLOCK");
   });
 
   it("transition reroutes illegal edges; BLOCKs only narrow sequence violations", () => {
