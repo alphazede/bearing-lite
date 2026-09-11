@@ -23,7 +23,10 @@
       "properties": {
         "id": { "type": "string", "minLength": 1 },
         "title": { "type": "string", "minLength": 1 },
-        "status": { "type": "string", "minLength": 1 },
+        "status": {
+          "type": "string",
+          "enum": ["planning", "implementation", "complete", "cancelled"]
+        },
         "planning_repository": { "type": "string", "minLength": 1 }
       }
     },
@@ -50,7 +53,17 @@
         "candidate_revision": { "type": "string", "minLength": 1 },
         "acquired_at": { "type": "string", "minLength": 1 },
         "generation": { "type": "integer", "minimum": 1 },
-        "state": { "enum": ["active", "released"] }
+        "state": { "enum": ["active", "released"] },
+        "released_at": { "type": "string", "format": "date-time" },
+        "release_reason": { "type": "string", "minLength": 1 }
+      },
+      "if": {
+        "properties": {
+          "state": { "const": "released" }
+        }
+      },
+      "then": {
+        "required": ["released_at", "release_reason"]
       }
     },
     "history": {
