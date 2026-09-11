@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 "use strict";
 
+const { ownerWaitMetrics } = require("./owner-stops.cjs");
+
 /**
  * Bearing Lite return/closeout adapter (CONTRACT-HOOK-01).
  * Advisory for ordinary handoff reminders; may BLOCK only protected completion.
@@ -152,6 +154,21 @@ function evaluate(input) {
 
     if (SAFE_CHANNELS.has(input.channel) || SAFE_CHANNELS.has(input.action_kind)) {
       return result("ADVISE", "channel_open", RECOVERY_CHANNEL);
+    }
+
+    // Explicit invocation by Router; native Stop mappings do not supply Journey JSON.
+    if (input.action_kind === "owner_wait_summary") {
+      if (input.mode === "protected_completion" || input.protected_completion === true) {
+        return unavailable("owner_wait_summary_is_not_completion");
+      }
+      try {
+        const metrics = ownerWaitMetrics(input.journey, input.as_of);
+        return { ...result("ADVISE", "owner_wait:" + metrics.status,
+          "Render metrics and coverage in the wave or closeout receipt; no authority is granted"),
+        owner_wait: metrics };
+      } catch {
+        return unavailable("owner_wait_records_invalid");
+      }
     }
 
     const mode =

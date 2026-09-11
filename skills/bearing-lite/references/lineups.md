@@ -41,6 +41,11 @@ never a deviation.
 
 Only verified primary unavailability activates its approved fallback. If
 both are unavailable, return `OWNER_DECISION_REQUIRED`.
+Activation within the frozen ordered fallbacks is a dated execution receipt,
+not a lineup amendment or a new owner approval. Verify the approved activation
+condition and remaining eligible routes before escalating exhaustion. A new
+identity or changed fallback condition requires an owner amendment; follow
+`owner-stops.md` for classification and batching.
 
 This catalog is the single lineup source. A legacy
 `~/.agents/bearing-lite/default-role-lineup.md` is never read or created;

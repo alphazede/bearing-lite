@@ -35,3 +35,8 @@ confirmation or rereview returns `OWNER_AMENDMENT_REQUIRED`.
 This gate reviews planning artifacts before dispatch. It never invokes a
 reviewer. Implementation assurance remains governed separately by
 `max_assurance_rounds` and task `required_assurance` / `assurance_rounds`.
+
+Owner presentation and continuation follow `owner-stops.md`: one integrated
+gate includes the bounded grant, first-approval summary or revision diff, open
+decisions, and access to the full frozen package. This adds no reviewer,
+review round, or approval checkpoint and does not alter the bounds above.

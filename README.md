@@ -151,6 +151,16 @@ explain orientation; they never authorize a transition.
 
 ## Roles and authority
 
+Owner questions follow [the owner-stop policy](skills/bearing-lite/references/owner-stops.md).
+The integrated approval records bounded continuation with exclusions and expiry.
+The Router applies approved policy and fallbacks, batches nonblocking questions,
+and continues ready independent work while dependent work waits. Approval shows
+the first-package summary or subsequent changes with the complete package available.
+Local receipt metrics distinguish questions, round trips, response intervals and
+fully blocked time; no telemetry leaves the checkout. The transition preflight
+and scheduling remain procedural, including on skills-only hosts. A legacy
+Journey without explicit timing coverage reports unavailable, not zero wait.
+
 | Role | What it is | Executes | Notes |
 |---|---|---|---|
 | **Router** | Stateful planning controller | no | User-facing; planning-state writer; Expedition sequencing |

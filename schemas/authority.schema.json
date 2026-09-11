@@ -23,28 +23,22 @@
     "approval_receipt"
   ],
   "properties": {
-    "schema_version": { "type": "string", "minLength": 1 },
-    "schema": { "type": "string", "minLength": 1, "description": "Envelope schema identity" },
-    "id": { "type": "string", "minLength": 1, "description": "Authority envelope ID" },
-    "state": { "type": "string", "minLength": 1 },
-    "subject": { "type": "object", "minProperties": 1, "additionalProperties": true },
-    "repositories": {
-      "type": "array",
-      "items": { "type": "object", "additionalProperties": true }
-    },
-    "baseline": { "type": "object", "minProperties": 1, "additionalProperties": true },
-    "granting_owner_decisions": {
-      "type": "array",
-      "items": { "type": "string", "minLength": 1 }
-    },
+    "schema_version": {"type": "string", "minLength": 1},
+    "schema": {"type": "string", "minLength": 1, "description": "Envelope schema identity"},
+    "id": {"type": "string", "minLength": 1, "description": "Authority envelope ID"},
+    "state": {"type": "string", "minLength": 1},
+    "subject": {"type": "object", "minProperties": 1, "additionalProperties": true},
+    "repositories": {"type": "array", "items": {"type": "object", "additionalProperties": true}},
+    "baseline": {"type": "object", "minProperties": 1, "additionalProperties": true},
+    "granting_owner_decisions": {"type": "array", "items": {"type": "string", "minLength": 1}},
     "allowed": {
       "type": "object",
       "additionalProperties": true,
       "required": ["scope", "actions", "paths"],
       "properties": {
-        "scope": { "type": "array", "items": { "type": "string" } },
-        "actions": { "type": "array", "items": { "type": "string" } },
-        "paths": { "type": "array", "items": { "type": "string" } }
+        "scope": {"type": "array", "items": {"type": "string"}},
+        "actions": {"type": "array", "items": {"type": "string"}},
+        "paths": {"type": "array", "items": {"type": "string"}}
       }
     },
     "prohibited": {
@@ -52,24 +46,51 @@
       "additionalProperties": true,
       "required": ["scope", "actions", "paths"],
       "properties": {
-        "scope": { "type": "array", "items": { "type": "string" } },
-        "actions": { "type": "array", "items": { "type": "string" } },
-        "paths": { "type": "array", "items": { "type": "string" } }
+        "scope": {"type": "array", "items": {"type": "string"}},
+        "actions": {"type": "array", "items": {"type": "string"}},
+        "paths": {"type": "array", "items": {"type": "string"}}
       }
     },
-    "role_grants": {
-      "type": "array",
-      "items": { "type": "object", "additionalProperties": true }
+    "role_grants": {"type": "array", "items": {"type": "object", "additionalProperties": true}},
+    "effective": {
+      "type": "boolean",
+      "description": "Machine-enforced effectiveness. Boolean only: a string is not an effectiveness decision."
     },
-    "effective": { "type": "boolean", "description": "Machine-enforced effectiveness. Boolean only: a string is not an effectiveness decision." },
-    "expiry_conditions": {
-      "type": "array",
-      "items": { "type": "string", "minLength": 1 }
-    },
-    "supersedes": {
-      "type": "array",
-      "items": { "type": "string" }
-    },
-    "approval_receipt": { "type": "object", "additionalProperties": true }
-  }
+    "expiry_conditions": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "supersedes": {"type": "array", "items": {"type": "string"}},
+    "approval_receipt": {"type": "object", "additionalProperties": true},
+    "continuation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["granted", "owner_decision_id", "exclusions", "expires_at"],
+      "properties": {
+        "granted": {"type": "boolean"},
+        "owner_decision_id": {"type": "string", "minLength": 1},
+        "exclusions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1},
+          "allOf": [
+            {"contains": {"const": "scope_change"}},
+            {"contains": {"const": "budget_exhaustion"}},
+            {"contains": {"const": "owner_hold"}},
+            {"contains": {"const": "owner_only_actions"}}
+          ]
+        },
+        "expires_at": {"type": ["string", "null"], "format": "date-time", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3})?Z$"}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"required": ["continuation"]},
+      "then": {
+        "properties": {
+          "expiry_conditions": {"minItems": 1},
+          "granting_owner_decisions": {"minItems": 1},
+          "approval_receipt": {"minProperties": 1}
+        }
+      }
+    }
+  ]
 }

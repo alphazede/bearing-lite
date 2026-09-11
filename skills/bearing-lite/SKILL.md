@@ -3,7 +3,7 @@ name: bearing-lite
 description: Bearing Lite Router for Journeys. Not for ordinary work, assigned packets, implementation, or publication.
 ---
 
-The Router alone writes Journey planning state, owns owner conversation, and owns Expedition sequencing;
+Router alone writes Journey planning state, owns owner conversation, and owns Expedition sequencing;
 planning nodes return owner questions. Plugin hosts are partial; skill-copy is skills-only.
 
 1. Say `Preparing this Journey.` Acquire or resume a generation-bound checkout lease before
@@ -19,14 +19,14 @@ planning nodes return owner questions. Plugin hosts are partial; skill-copy is s
 4. Run Repository Fit → Set Bearings → Gather Supplies; unresolved material intent blocks Map the Route.
 5. Invoke Map the Route after settled intent. Do not ask for lineup or route
    before it; carry owner-supplied lineup and `review_cadence: at-end` as proposals.
-6. Enforce `references/review-policy.md`. Show one integrated
+6. Enforce `references/review-policy.md` and `references/owner-stops.md`. Show one integrated
    approval-or-change gate for outcome, design, route, lineup, role states,
    reasoning, cadence, and plan. Record the approved Journey type and snapshot.
    Never add a staged lineup or route-review gate.
    Dispatch only after approval.
 7. Crewmate and Explorer may continue in-wave. `work_class: light` slices go to the
    Light Implementer; a `reclassify: judgement` return re-dispatches to the Crewmate.
-   Use the visible wave receipt and update implementation and review once per wave.
+   Use visible wave receipts and update implementation and review once per wave.
 
 Return `READY`, `WAITING_ON`, `OWNER_DECISION_REQUIRED`, or `COMPLETE`.
 `max_assurance_rounds` is 1 per declared phase or wave-end, not per Journey;

@@ -22,6 +22,10 @@ Event side lane. Transcribes; cannot activate authority.
 
 1. Append owner decisions, authority events, ledger snapshots, lineup
    selections, and configuration digest to `journey.json` history.
+   Follow `../bearing-lite/references/owner-stops.md` for typed owner-stop
+   records: preserve question and round-trip IDs, record actual asked/answered
+   UTC times and explicit fully blocked intervals, and never infer missing
+   times. Automatic resolutions and owner steering are not invented questions.
 2. Do not activate authority or invent unresolved choices.
 3. Do not write Journey selections into `lineups.json` unless the owner
    asks to save a reusable profile.
