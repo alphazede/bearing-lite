@@ -40,7 +40,10 @@ the integrated owner approval; do not offer `per-slice` or `per-round`.
 `journey` stays a proposal until the mapped implementation graph exists and the
 integrated owner review approves it. `lineup_snapshot` is authoritative after
 that approval. Later
-edits to `~/.agents/bearing-lite/default-role-lineup.md` have no effect.
+edits to `~/.agents/bearing-lite/lineups.json` have no effect. The `Router`
+row of the snapshot is the observed identity of the session that ran planning
+(harness, model, reasoning at that time); it is never a catalog selection and
+never a deviation.
 Replace it only through an explicit owner-confirmed dated visible amendment.
 Record the amendment date beside the replacement values. Dispatch identities
 come from this snapshot, not from the current global defaults file.

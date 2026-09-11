@@ -22,6 +22,30 @@ Missing user file means no named profiles. Do not auto-create the live
 catalog. An empty `lineups` object is valid and is not an error. A
 malformed unused catalog cannot override explicit inline owner choices.
 
+## Configurable roles
+
+Catalog entries assign Explorer, Crewmate, Test Engineer, Scribe, Plan
+Integrator, Systems Modeler, Integration Engineer, Requirements Engineer,
+Park Ranger, and Surveyor. Navigator and Validator are not lineup roles;
+existing plans that still assign them use the compatibility diagnostics and
+treat the assignment as unused. Never fill agent, model, or reasoning values
+on the user's behalf. `review_cadence` is `at-end`.
+
+The Router is not a configurable role: it is whatever session is running
+planning. The Journey snapshot records the observed Router identity
+(harness, model, reasoning at that time). A catalog or snapshot entry with
+`role: Router` is ignored with the typed note `router_row_ignored`; it is
+never a deviation.
+
+Only verified primary unavailability activates its approved fallback. If
+both are unavailable, return `OWNER_DECISION_REQUIRED`.
+
+This catalog is the single lineup source. A legacy
+`~/.agents/bearing-lite/default-role-lineup.md` is never read or created;
+when one is present it is ignored with the typed note
+`legacy_lineup_md_ignored`. A missing catalog returns the typed outcome
+`no_named_profiles` and an inline-selection prompt.
+
 ## Validity
 
 Named selection and save require a valid catalog. Bind

@@ -396,7 +396,8 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     assert.match(router, /plugin\s+hosts are partial/i);
     assert.match(router, /skill-copy is skills-only/);
     assert.match(router, /may continue in-wave/);
-    assert.match(router, /If .*default-role-lineup\.md` is absent, create a\s+proposed copy/);
+    assert.match(router, /Lineup comes only from `~\/\.agents\/bearing-lite\/lineups\.json`/);
+    assert.doesNotMatch(router, /default-role-lineup\.md/);
     assert.match(router, /never infer identity values/i);
     assert.match(router, /planning\s+nodes return owner questions/);
     const planning = router.indexOf("Repository Fit");
@@ -435,7 +436,7 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     assert.match(router, /recorded\s+snapshot is authoritative for this Journey/);
     assert.match(
       router,
-      /Later edits to\s+`~\/\.agents\/bearing-lite\/default-role-lineup\.md` have no effect on it/
+      /Later edits to\s+`~\/\.agents\/bearing-lite\/lineups\.json` have no effect on it/
     );
     assert.match(router, /explicit owner-confirmed\s+dated visible amendment/);
     assert.match(router, /lineup identity from the recorded snapshot/);
@@ -495,10 +496,7 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
   });
 
   it("Validator is absent from active roles; remaining validator skill is compatibility-only", () => {
-    const lineup = readFileSync(
-      path.join(SKILLS_DIR, "bearing-lite", "templates", "default-role-lineup.md"),
-      "utf8"
-    );
+    const lineup = readFileSync(path.join(LITE_REF, "lineups.md"), "utf8");
     const readme = readFileSync(path.join(ROOT, "README.md"), "utf8");
     const taskState = readFileSync(
       path.join(SKILLS_DIR, "bearing-lite", "references", "task-state.md"),
@@ -804,7 +802,6 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
   /** PLANNING-cadence text; explicitly exempt from the assurance prohibition. */
   const CADENCE_EXEMPT = Object.freeze([
     path.join(SKILLS_DIR, "map-the-route", "SKILL.md"),
-    path.join(SKILLS_DIR, "bearing-lite", "templates", "default-role-lineup.md"),
     path.join(LITE_REF, "review-policy.md"),
   ]);
 

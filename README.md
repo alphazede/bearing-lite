@@ -118,7 +118,7 @@ register hooks. That path remains first-class. See
 
 Bearing Lite never selects models, providers, credentials, or launchers. The
 owner provides each role's primary/fallback agent or harness, model, and
-reasoning level in `~/.agents/bearing-lite/default-role-lineup.md`, then confirms
+reasoning level in `~/.agents/bearing-lite/lineups.json`, then confirms
 the applicable Journey snapshot before implementation.
 
 ## Routes and scaling
