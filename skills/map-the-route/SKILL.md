@@ -45,7 +45,8 @@ Fresh planning node. The Router writes Journey state and owns owner conversation
    requirements. Two `review.html` states: `planning-review` and `final-closeout`.
 5. Give every slice stable requirement/design/SEIT IDs, dependencies, exact
    write set, authority, role, session rule, evidence, recovery, and stop rule.
-6. Open and verify final HTML, then request exactly one integrated owner review
+6. Freeze: `node hooks/plan-package.cjs <plan dir>` must PASS (any finding
+   halts). Open and verify final HTML, then request exactly one integrated owner review
    of outcome, design, route, lineup, cadence, and plan. Dispatch remains
    prohibited until approval. An owner change regenerates affected artifacts,
    then returns to this same gate; never insert a lineup or route-review pause.
