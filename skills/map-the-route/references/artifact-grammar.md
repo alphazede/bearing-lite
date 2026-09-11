@@ -89,7 +89,9 @@ optional derived export and is never authority.
    case | Negative/failure case | Command/procedure ID | Evidence.
 5. Every row carries exactly one SEIT row ID, requirement ID, design ID, and
    command ID, and names an observable failure.
-6. Bind a stable decision-baseline projection of confirmed decision identities
+6. For a specification wave, each case-authoring proof row cites the planning
+   register gate receipt.
+7. Bind a stable decision-baseline projection of confirmed decision identities
    and open-item statuses rather than the whole-file `journey.json` digest.
 
 ## Implementation rules
@@ -101,18 +103,26 @@ optional derived export and is never authority.
    owner-selected model route, reasoning, review path, write set, command IDs,
    stop condition, human decision, and `authority_id`. Goals are at most 512
    characters. Slice actions and write sets are subsets of current authority.
-3. Optional fields are Shared interfaces (`path#Symbol`), Integration
+3. `work_class` is `light` or `judgement` (default). A `light` slice names
+   the Light Implementer role, at least one command id, and a
+   `work_class_reason`; see `skills/light-implementer` for the criteria.
+4. For `journey_type: specification`, a specification-authoring Expedition
+   wave defaults to scaffold → author from the gated register → Test Engineer
+   verification cases → bind to the host → readback of the bound revision and
+   digest from the host → Park Ranger with both named in the review
+   request → owner decision. A deviation is a planning-review finding.
+5. Optional fields are Shared interfaces (`path#Symbol`), Integration
    boundary, Published standard (`doc#clause`) when applicable, SysML and
    integration fields when selected, and Parallel safe (`yes` or `no` plus
    reason).
-4. Write sets use one line: `Write only `path``. Paths are bounded, normalized,
+6. Write sets use one line: `Write only `path``. Paths are bounded, normalized,
    repository-relative literals. Put prohibitions in prose, not the write set.
-5. Multi-slice plans declare consecutive `Wave <n>: <ids>` lines. Every slice
+7. Multi-slice plans declare consecutive `Wave <n>: <ids>` lines. Every slice
    belongs to one wave. Dependencies use acyclic `S1 --> S2` arrows.
-6. Ordered integration steps, resources, ownership, and rollback live here.
+8. Ordered integration steps, resources, ownership, and rollback live here.
    Owner-configured reviewer count `n`, repair bound `k`, and confirmation
    count `c` are explicit fields with no assistant default integers.
-7. Plans may contain at most 128 slices, manifests, write paths, and commands.
+9. Plans may contain at most 128 slices, manifests, write paths, and commands.
    Aim for at most 500 estimated tokens per slice plus manifest; split larger
    packets when practical.
 

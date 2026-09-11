@@ -64,6 +64,12 @@ describe("plan-package (#80 planning-only roles)", () => {
     ]);
     assert.deepEqual(checkPlanningRoles(assigned("Test Engineer")), []);
   });
+  it("flags a Requirements Engineer slice that has no id", () => {
+    assert.deepEqual(
+      checkPlanningRoles({ slices: [{ role: "Requirements Engineer", command_ids: [] }] }),
+      [{ code: "planning_role_in_expedition", step: null, role: "Requirements Engineer" }]
+    );
+  });
 });
 
 describe("plan-package (#70 embedded digest freeze)", () => {

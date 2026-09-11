@@ -46,8 +46,11 @@ SDoc, publishes, selects models or lineups, or writes tests.
 
 ## Return and recovery
 
-Return `PASS`, `REPAIRABLE_FAILURE`, or `NEEDS_MORE_EVIDENCE` with verdict,
-candidate_ref, changed_paths, per-row findings, and blocker. Missing
+Return `PASS`, `REPAIRABLE_FAILURE`, `NEEDS_MORE_EVIDENCE`, or
+`NEEDS_OWNER_DECISION` with verdict, candidate_ref, changed_paths, per-row
+findings, and blocker. Rerun the gate on each corrected register within Map the
+Route's correction rounds. Exhaustion with fixable rows returns
+`NEEDS_OWNER_DECISION` listing those rows, never silent acceptance. Missing
 `requirements-engineering` method skill is a typed capability gap.
 
 Never implement, model, self-certify, persist or publish SDoc, or grant
