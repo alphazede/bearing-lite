@@ -71,12 +71,17 @@ function checkWorkClass(node, findings = []) {
 }
 
 /** #80: Requirements Engineer is planning-only and never an Expedition slice. */
-function checkPlanningRoles(implementation) {
-  const findings = [];
-  for (const slice of slices(implementation)) {
-    if (slice.role.startsWith("Requirements Engineer")) {
-      findings.push({ code: "planning_role_in_expedition", step: slice.id, role: slice.role });
+function checkPlanningRoles(node, findings = []) {
+  if (Array.isArray(node)) node.forEach((item) => checkPlanningRoles(item, findings));
+  else if (node && typeof node === "object") {
+    if (typeof node.role === "string" && node.role.startsWith("Requirements Engineer")) {
+      findings.push({
+        code: "planning_role_in_expedition",
+        step: typeof node.id === "string" ? node.id : null,
+        role: node.role,
+      });
     }
+    for (const value of Object.values(node)) checkPlanningRoles(value, findings);
   }
   return findings;
 }

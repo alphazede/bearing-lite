@@ -27,6 +27,8 @@ separate catalog roles.
    reconciliation and performs delta reconciliation after relevant
    decision, requirement, or design changes. Do not invent missing
    method-skill behavior.
+   Expedition in-document verification cases are authored only against the
+   approved, planning-gated register.
 2. Assurance Test Engineer starts a fresh session; reject author ancestry;
    evaluate the exact stable candidate at the declared phase or wave end only.
    VALIDATING is owned here.
