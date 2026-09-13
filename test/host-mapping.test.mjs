@@ -763,8 +763,8 @@ describe("verified host mapping", () => {
       /followup_message/i,
       "followup_message is not a hard completion block"
     );
-    // Kimi / Pi / AGY / DeepCode remain UNAVAILABLE for native TE blocking.
-    for (const host of ["Kimi", "Pi", "AGY", "DeepCode"]) {
+    // Kimi / Pi / AGY / DeepCode / Qwen remain UNAVAILABLE for native TE blocking.
+    for (const host of ["Kimi", "Pi", "AGY", "DeepCode", "Qwen"]) {
       const row = mapping
         .split("\n")
         .find((line) => new RegExp(`^\\|\\s*${host}\\b`).test(line) && /te_|TE\b/.test(line));

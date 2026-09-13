@@ -135,7 +135,14 @@ clients, not a skills-only copy.
 
 **Cursor.** Open Customize in the sidebar, find the plugin, and select
 Install for a project or user scope. The shipped layout is
-`.cursor-plugin/`. Cursor has no verified local-path plugin-install CLI.
+`.cursor-plugin/`. For a local checkout, link the repository into Cursor's
+documented local-plugin directory, then restart Cursor or run **Developer:
+Reload Window**:
+
+```sh
+mkdir -p ~/.cursor/plugins/local
+ln -s /path/to/bearing-lite ~/.cursor/plugins/local/bearing-lite
+```
 
 **Kimi Code.** In the TUI, run `/plugins install /path/to/bearing-lite`.
 Kimi Code has no `kimi plugin` CLI.
@@ -145,11 +152,23 @@ the Command Palette and enter a Git repository URL such as
 `https://github.com/alphazede/bearing-lite`. See [Agent plugins in VS
 Code](https://code.visualstudio.com/docs/agent-customization/agent-plugins).
 The package is Agent Plugins 1.0 `plugin.json` plus
-`com.github.copilot/hooks/hooks.json`. There is no verified VS Code CLI
-plugin-install command for Bearing.
+`com.github.copilot/hooks/hooks.json`. VS Code also discovers plugins installed
+by GitHub Copilot CLI after a new window or reload.
 
-**GitHub Copilot CLI** was not available in the validation environment. This
-README does not advertise a Copilot CLI install command.
+### CLI plugin installation
+
+GitHub Copilot CLI requires Node.js 22 or later. Qwen Code accepts the
+published Agent Plugins package directly.
+
+```sh
+# GitHub Copilot CLI
+npm install -g @github/copilot
+copilot plugin marketplace add alphazede/bearing-lite
+copilot plugin install bearing-lite@bearing-lite
+
+# Qwen Code
+qwen extensions install @alphazede/bearing-lite
+```
 
 ### Skills-only installation
 
@@ -171,11 +190,13 @@ done
 **DeepCode** has no plugin-install or command-hook surface. Copy `skills/`
 into `~/.deepcode/skills` or `~/.agents/skills`.
 
-Claude Code, Codex, Grok Build, Cursor, Kimi Code, and GitHub Copilot in VS
-Code are **partial** hook clients: session start runs the activation
-advisory and stop runs the closeout advisory. GitHub Copilot in VS Code also
-has the implemented Test Engineering channels `PreToolUse`, `Stop`, and
-`SubagentStop`. AGY, Pi, DeepCode, and Muse Code are **skills-only**.
+Claude Code, Codex, Grok Build, Cursor, Kimi Code, and GitHub Copilot clients
+are **partial** hook clients: session start runs the activation advisory and
+stop runs the closeout advisory. GitHub Copilot also has the implemented Test
+Engineering channels `PreToolUse`, `Stop`, and `SubagentStop`. Qwen Code, AGY,
+Pi, DeepCode, and Muse Code are **skills-only**. Qwen installs the root Agent
+Plugins 1.0 package and loads its skills; Bearing ships no Qwen-specific hook
+namespace.
 Transition-order, protected-action, planning-review, and assurance-budget
 checks stay procedural on every host. Node.js must be on `PATH` for the hook
 adapters.
