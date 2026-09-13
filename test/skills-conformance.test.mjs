@@ -14,25 +14,38 @@ const SKILLS_DIR = path.join(ROOT, "skills");
 const ROUTER = "bearing-lite";
 const PLANNING = [
   "requirements-engineer",
-  "repository-fit",
-  "set-bearings",
-  "gather-supplies",
-  "map-the-route",
+  "scope-definition",
+  "architectural-alignment",
+  "intake",
+  "planning-and-design",
 ];
 const ACTIVE_ROLES = [
-  "crewmate",
+  "implementer",
   "light-implementer",
-  "explorer",
-  "park-ranger",
-  "surveyor",
+  "coordinator",
+  "reviewer",
   "test-engineer",
   "scribe",
   "plan-integrator",
   "systems-modeler",
   "integration-engineer",
+  "onboard-bearing",
 ];
-const COMPATIBILITY_ROLES = ["navigator", "validator"];
-const REQUIRED_CATALOG = [ROUTER, ...PLANNING, "navigator", ...ACTIVE_ROLES];
+const COMPATIBILITY_ROLES = [];
+const PACKAGED_UTILITIES = ["prompt"];
+const REQUIRED_CATALOG = [ROUTER, ...PLANNING, ...ACTIVE_ROLES];
+const RETIRED_SOURCE_SKILLS = [
+  "crewmate",
+  "explorer",
+  "park-ranger",
+  "surveyor",
+  "navigator",
+  "validator",
+  "gather-supplies",
+  "set-bearings",
+  "repository-fit",
+  "map-the-route",
+];
 const HQ_METHOD_SKILLS = [
   "requirements-engineering",
   "sysml-modeling",
@@ -193,7 +206,7 @@ export function validateCatalog(catalogNames) {
       });
     }
   }
-  const allowed = new Set([...REQUIRED_CATALOG, ...COMPATIBILITY_ROLES]);
+  const allowed = new Set([...REQUIRED_CATALOG, ...COMPATIBILITY_ROLES, ...PACKAGED_UTILITIES]);
   for (const name of catalogNames) {
     if (HQ_METHOD_SKILLS.includes(name)) {
       diagnostics.push({
@@ -291,19 +304,22 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     }
   });
 
-  it("Explorer owns proven-independent lanes; Router owns cross-wave conflicts", () => {
-    const explorer = readFileSync(path.join(SKILLS_DIR, "explorer", "SKILL.md"), "utf8");
-    const navigator = readFileSync(path.join(SKILLS_DIR, "navigator", "SKILL.md"), "utf8");
+  it("retired source skills are absent from the catalog", () => {
+    for (const name of RETIRED_SOURCE_SKILLS) {
+      assert.ok(!skillDirs.includes(name), `catalog must not include retired skill "${name}"`);
+      assert.ok(!existsSync(path.join(SKILLS_DIR, name, "SKILL.md")), name);
+    }
+  });
+
+  it("Coordinator owns proven-independent lanes; Orchestrator owns sequencing", () => {
+    const coordinator = readFileSync(path.join(SKILLS_DIR, "coordinator", "SKILL.md"), "utf8");
     const router = readFileSync(path.join(SKILLS_DIR, "bearing-lite", "SKILL.md"), "utf8");
-    assert.match(explorer, /proven-independent/);
-    assert.match(explorer, /never add a nested coordinator/);
-    assert.doesNotMatch(explorer, /Trail Boss|Sub-Explorer|trail-boss|sub-explorer/);
-    assert.match(router, /owns\s+Expedition\s+sequencing/);
-    assert.match(navigator, /cross-wave/);
-    assert.match(navigator, /conflict/);
-    assert.match(navigator, /Compatibility only/);
-    assert.doesNotMatch(navigator, /Trail Boss|Sub-Explorer|trail-boss|sub-explorer/);
+    assert.match(coordinator, /proven-independent/);
+    assert.match(coordinator, /never add a nested coordinator/);
+    assert.doesNotMatch(coordinator, /Trail Boss|Sub-Explorer|trail-boss|sub-explorer/);
+    assert.match(router, /owns\s+sequencing/);
     assert.doesNotMatch(router, /Trail Boss|Sub-Explorer|trail-boss|sub-explorer/);
+    assert.ok(!existsSync(path.join(SKILLS_DIR, "navigator", "SKILL.md")));
   });
 
   it("each skill frontmatter name equals directory and description is present", () => {
@@ -311,20 +327,21 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
       const text = readFileSync(path.join(SKILLS_DIR, name, "SKILL.md"), "utf8");
       const verdict = validateSkillDocument(name, text);
       assert.equal(verdict.ok, true, `${name}: ${JSON.stringify(verdict)}`);
+      if (PACKAGED_UTILITIES.includes(name)) continue;
       const lines = text.trimEnd().split(/\r?\n/).length;
       const words = text.trim().split(/\s+/).length;
       assert.ok(lines <= 60, `${name}: ${lines} lines must be at most 60`);
-      const maxWords = ["bearing-lite", "map-the-route"].includes(name) ? 400 : 600;
+      const maxWords = name === "bearing-lite" ? 400 : name === "planning-and-design" ? 500 : 600;
       assert.ok(words <= maxWords, `${name}: ${words} words must be at most ${maxWords}`);
     }
   });
 
   it("matching activation cases succeed for representative roles", () => {
     const cases = [
-      ["crewmate", "implement packet with write-set change as crewmate"],
-      ["explorer", "orchestrate wave of crewmate packets as explorer"],
-      ["navigator", "sequence expedition waves as navigator"],
-      ["repository-fit", "repository fit choose repo workspace"],
+      ["implementer", "implement packet with write-set change as implementer"],
+      ["coordinator", "orchestrate wave of implementer packets as coordinator"],
+      ["intake", "intake choose repo workspace"],
+      ["onboard-bearing", "configure profiles.json onboard-bearing setup"],
     ];
     for (const [name, query] of cases) {
       const text = readFileSync(path.join(SKILLS_DIR, name, "SKILL.md"), "utf8");
@@ -341,26 +358,24 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
   });
 
   it("non-matching broad / name-similarity wording keeps unneeded roles dormant", () => {
-    // Name-similarity: "validate the plan structure" should not activate park-ranger.
-    // Broad: "do some repository work" should not force navigator.
-    const park = readFileSync(path.join(SKILLS_DIR, "park-ranger", "SKILL.md"), "utf8");
-    const parkV = validateSkillDocument("park-ranger", park);
-    assert.equal(parkV.ok, true);
-    if (parkV.ok) {
+    const reviewer = readFileSync(path.join(SKILLS_DIR, "reviewer", "SKILL.md"), "utf8");
+    const reviewerV = validateSkillDocument("reviewer", reviewer);
+    assert.equal(reviewerV.ok, true);
+    if (reviewerV.ok) {
       assert.equal(
-        activationMatches("park-ranger", parkV.description, "validate the plan structure quickly"),
+        activationMatches("reviewer", reviewerV.description, "validate the plan structure quickly"),
         false,
-        "park-ranger must stay dormant for name-similar non-match"
+        "reviewer must stay dormant for name-similar non-match"
       );
     }
-    const nav = readFileSync(path.join(SKILLS_DIR, "navigator", "SKILL.md"), "utf8");
-    const navV = validateSkillDocument("navigator", nav);
-    assert.equal(navV.ok, true);
-    if (navV.ok) {
+    const coordinator = readFileSync(path.join(SKILLS_DIR, "coordinator", "SKILL.md"), "utf8");
+    const coordinatorV = validateSkillDocument("coordinator", coordinator);
+    assert.equal(coordinatorV.ok, true);
+    if (coordinatorV.ok) {
       assert.equal(
-        activationMatches("navigator", navV.description, "do some repository work"),
+        activationMatches("coordinator", coordinatorV.description, "do some repository work"),
         false,
-        "navigator must stay dormant for broad wording"
+        "coordinator must stay dormant for broad wording"
       );
     }
   });
@@ -375,7 +390,7 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
         activationMatches(
           "bearing-lite",
           verdict.description,
-          "Use Bearing Lite to start this repository journey"
+          "Use Bearing Lite to start this repository lifecycle"
         ),
         true,
         "explicit Bearing Lite request should match"
@@ -390,65 +405,65 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
         "ordinary repository routing must not invoke Bearing Lite"
       );
     }
-    assert.match(router, /Preparing this Journey\./);
-    assert.match(router, /review_cadence: at-end/);
+    assert.match(router, /Preparing this Lifecycle\./);
+    assert.doesNotMatch(router, /review_cadence: at-end/);
     assert.doesNotMatch(router, /after a\s+slice, after an integrated round, or at the end\?/);
-    assert.match(router, /Router alone writes Journey\s+planning state/);
+    assert.match(router, /Orchestrator alone writes Lifecycle\s+planning state/);
     assert.match(router, /plugin\s+hosts are partial/i);
     assert.match(router, /skill-copy is skills-only/);
     assert.match(router, /may continue in-wave/);
-    assert.match(router, /Lineup comes only from `~\/\.agents\/bearing-lite\/lineups\.json`/);
+    assert.match(router, /Profile comes only from `~\/\.agents\/bearing-lite\/profiles\.json`/);
     assert.doesNotMatch(router, /default-role-lineup\.md/);
     assert.match(router, /never infer identity values/i);
     assert.match(router, /planning\s+nodes return owner questions/);
-    const planning = router.indexOf("Repository Fit");
-    const map = router.indexOf("Invoke Map the Route");
-    assert.ok(map >= 0 && map > planning, "Map the Route must follow planning stages");
-    assert.match(router, /Do not ask for lineup or route\s+before it/);
+    const planning = router.indexOf("Intake");
+    const map = router.indexOf("Invoke Planning and Design");
+    assert.ok(map >= 0 && map > planning, "Planning and Design must follow planning stages");
+    assert.match(router, /Do not ask for profile or route\s+before it/);
     assert.match(router, /one integrated\s+approval-or-change gate/);
-    assert.match(router, /Never add a staged lineup or route-review gate/);
+    assert.match(router, /Never add a staged profile or route-review gate/);
   });
 
   it("execution roles revalidate the visible checkout lease at wave-scoped boundaries", () => {
-    const explorer = readFileSync(path.join(SKILLS_DIR, "explorer", "SKILL.md"), "utf8");
-    const crewmate = readFileSync(path.join(SKILLS_DIR, "crewmate", "SKILL.md"), "utf8");
+    const coordinator = readFileSync(path.join(SKILLS_DIR, "coordinator", "SKILL.md"), "utf8");
+    const implementer = readFileSync(path.join(SKILLS_DIR, "implementer", "SKILL.md"), "utf8");
     const identity =
-      /Revalidate the visible checkout\s+lease against the approved Journey,\s+repository, checkout\/worktree, branch,\s+candidate revision, generation,\s+and active state/;
+      /Revalidate the visible checkout\s+lease against the approved Lifecycle,\s+repository, checkout\/worktree, branch,\s+candidate revision, generation,\s+and active state/;
     const failClosed =
       /Released, stale-generation,\s+forged, or\s+branch\/HEAD-drifted leases fail closed/;
     const waveScoped = /at wave start, after\s+detected drift, and before commit/;
     for (const [name, text] of [
-      ["explorer", explorer],
-      ["crewmate", crewmate],
+      ["coordinator", coordinator],
+      ["implementer", implementer],
     ]) {
       assert.match(text, identity, `${name} must revalidate the full lease identity`);
       assert.match(text, waveScoped, `${name} must revalidate at wave-scoped boundaries`);
       assert.match(text, failClosed, `${name} must fail closed on drifted or forged leases`);
     }
-    assert.match(explorer, /same valid lease continues\s+without duplicate dispatch/);
-    assert.match(crewmate, /return WAITING_ON without writing/);
-    assert.doesNotMatch(crewmate, /every mutation/);
+    assert.match(coordinator, /same valid lease continues\s+without duplicate dispatch/);
+    assert.match(implementer, /return WAITING_ON without writing/);
+    assert.doesNotMatch(implementer, /every mutation/);
   });
 
   it("recorded Journey lineup snapshot outranks later global-default edits", () => {
     const router = readFileSync(path.join(SKILLS_DIR, "bearing-lite", "SKILL.md"), "utf8");
-    const explorer = readFileSync(path.join(SKILLS_DIR, "explorer", "SKILL.md"), "utf8");
-    const crewmate = readFileSync(path.join(SKILLS_DIR, "crewmate", "SKILL.md"), "utf8");
-    assert.match(router, /recorded\s+snapshot is authoritative for this Journey/);
+    const coordinator = readFileSync(path.join(SKILLS_DIR, "coordinator", "SKILL.md"), "utf8");
+    const implementer = readFileSync(path.join(SKILLS_DIR, "implementer", "SKILL.md"), "utf8");
+    assert.match(router, /recorded\s+snapshot is authoritative for this Lifecycle/);
     assert.match(
       router,
-      /Later edits to\s+`~\/\.agents\/bearing-lite\/lineups\.json` have no effect on it/
+      /Later edits to\s+`~\/\.agents\/bearing-lite\/profiles\.json` have no effect on it/
     );
     assert.match(router, /explicit owner-confirmed\s+dated visible amendment/);
-    assert.match(router, /lineup identity from the recorded snapshot/);
+    assert.match(router, /Dispatch uses that snapshot|profile identity from the recorded snapshot/);
     for (const [name, text] of [
-      ["explorer", explorer],
-      ["crewmate", crewmate],
+      ["coordinator", coordinator],
+      ["implementer", implementer],
     ]) {
       assert.match(
         text,
-        /recorded Journey snapshot/,
-        `${name} must read identities from the Journey snapshot`
+        /recorded Lifecycle snapshot/,
+        `${name} must read identities from the Lifecycle snapshot`
       );
       assert.match(
         text,
@@ -460,7 +475,7 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
 
   it("Bearing Lite permits one review and one repair without re-review", () => {
     const router = readFileSync(path.join(SKILLS_DIR, "bearing-lite", "SKILL.md"), "utf8");
-    const explorer = readFileSync(path.join(SKILLS_DIR, "explorer", "SKILL.md"), "utf8");
+    const coordinator = readFileSync(path.join(SKILLS_DIR, "coordinator", "SKILL.md"), "utf8");
     assert.match(router, /`max_assurance_rounds` is\s+1/);
     assert.match(router, /not per Journey|per declared phase or wave/);
     assert.match(router, /assurance_rounds/);
@@ -470,7 +485,7 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
       router,
       /OWNER_DECISION_REQUIRED` naming the candidate\s+and count/
     );
-    for (const [name, text] of [["explorer", explorer]]) {
+    for (const [name, text] of [["coordinator", coordinator]]) {
       assert.match(text, /max_assurance_rounds/, `${name} must honor the Lite bound`);
       assert.match(text, /of 1/, `${name} must fix the Lite bound at one review`);
       assert.match(text, /assurance_rounds/, `${name} must read the visible count`);
@@ -486,18 +501,18 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     assert.match(router, /deployment[\s\S]*without reopening review/i);
   });
 
-  it("Park Ranger declares terminal versus bounded-correction outcomes", () => {
-    const park = readFileSync(path.join(SKILLS_DIR, "park-ranger", "SKILL.md"), "utf8");
-    assert.match(park, /`ACCEPT`, `ACCEPT_WITH_FINDINGS`, and `BLOCK` are terminal/);
-    assert.match(park, /`REPAIR_REQUIRED`\s+permits bounded correction/);
-    assert.match(park, /ACCEPT_WITH_FINDINGS` accepts residual/);
-    assert.match(park, /do not follow it with another repair/);
-    assert.match(park, /max_assurance_rounds/);
-    assert.match(park, /of 1/);
+  it("Reviewer declares terminal versus bounded-correction outcomes", () => {
+    const reviewer = readFileSync(path.join(SKILLS_DIR, "reviewer", "SKILL.md"), "utf8");
+    assert.match(reviewer, /`ACCEPT`, `ACCEPT_WITH_FINDINGS`, and `BLOCK` are terminal/);
+    assert.match(reviewer, /`REPAIR_REQUIRED`\s+permits bounded correction/);
+    assert.match(reviewer, /ACCEPT_WITH_FINDINGS` accepts residual/);
+    assert.match(reviewer, /do not follow it with another repair/);
+    assert.match(reviewer, /max_assurance_rounds/);
+    assert.match(reviewer, /of 1/);
   });
 
   it("Validator is absent from active roles; remaining validator skill is compatibility-only", () => {
-    const lineup = readFileSync(path.join(LITE_REF, "lineups.md"), "utf8");
+    const lineup = readFileSync(path.join(LITE_REF, "profiles.md"), "utf8");
     const readme = readFileSync(path.join(ROOT, "README.md"), "utf8");
     const taskState = readFileSync(
       path.join(SKILLS_DIR, "bearing-lite", "references", "task-state.md"),
@@ -534,82 +549,82 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     assert.match(text, /published standard/);
   });
 
-  it("split Crewmate separates test-writing from product and neither self-certifies", () => {
-    const crewmate = readFileSync(path.join(SKILLS_DIR, "crewmate", "SKILL.md"), "utf8");
-    assert.match(crewmate, /test-writing/);
-    assert.match(crewmate, /product Crewmate|product implementation/i);
+  it("split Implementer separates test-writing from product and neither self-certifies", () => {
+    const implementer = readFileSync(path.join(SKILLS_DIR, "implementer", "SKILL.md"), "utf8");
+    assert.match(implementer, /test-writing/);
+    assert.match(implementer, /product Implementer|product implementation|Product Implementer/i);
     assert.match(
-      crewmate,
+      implementer,
       /excludes tests|must not weaken independently authored tests/i
     );
-    assert.match(crewmate, /Neither.*self-certif|must not self-certify/i);
+    assert.match(implementer, /Neither.*self-certif|must not self-certify/i);
   });
 
-  it("Set Bearings enforces bounded discovery, workspace.md template, and anti-hallucination guard", () => {
-    const setBearings = readFileSync(
-      path.join(SKILLS_DIR, "set-bearings", "SKILL.md"),
+  it("Architectural Alignment enforces bounded discovery, workspace.md template, and anti-hallucination guard", () => {
+    const alignment = readFileSync(
+      path.join(SKILLS_DIR, "architectural-alignment", "SKILL.md"),
       "utf8"
     );
-    const templatePath = path.join(SKILLS_DIR, "set-bearings", "templates", "workspace.md");
+    const templatePath = path.join(SKILLS_DIR, "architectural-alignment", "templates", "workspace.md");
     assert.ok(existsSync(templatePath), "templates/workspace.md must exist");
     const templateText = readFileSync(templatePath, "utf8");
 
     // Positive assertions
-    assert.match(setBearings, /depth 2,\s*max 40 paths,\s*max 64 KiB/i);
-    assert.match(setBearings, /templates\/workspace\.md/);
-    assert.match(setBearings, /NEEDS_EVIDENCE/);
-    assert.match(setBearings, /observed, not run/i);
-    assert.match(setBearings, /WORKSPACE_RESUMED/);
+    assert.match(alignment, /depth 2,\s*max 40 paths,\s*max 64 KiB/i);
+    assert.match(alignment, /templates\/workspace\.md/);
+    assert.match(alignment, /NEEDS_EVIDENCE/);
+    assert.match(alignment, /observed, not run/i);
+    assert.match(alignment, /WORKSPACE_RESUMED/);
 
     // Negative assertions (paired checks)
     assert.doesNotMatch(templateText, /(^|[\s"`'])\/home\/[A-Za-z0-9._-]+\//, "template must not contain absolute /home/ paths");
     assert.doesNotMatch(templateText, /\/Users\/[A-Za-z0-9._-]+\//, "template must not contain /Users/ paths");
-    assert.doesNotMatch(setBearings, /<journey-topic>/, "set-bearings must not pre-derive journey topic filename");
-    assert.doesNotMatch(setBearings, /-technical-plan\.md/, "set-bearings must not create technical-plan filename");
+    assert.doesNotMatch(alignment, /<journey-topic>/, "architectural-alignment must not pre-derive journey topic filename");
+    assert.doesNotMatch(alignment, /-technical-plan\.md/, "architectural-alignment must not create technical-plan filename");
   });
 
-  it("Gather Supplies converges one recommended question at a time", () => {
-    const gather = readFileSync(
-      path.join(SKILLS_DIR, "gather-supplies", "SKILL.md"),
+  it("Scope Definition converges one recommended question at a time", () => {
+    const scope = readFileSync(
+      path.join(SKILLS_DIR, "scope-definition", "SKILL.md"),
       "utf8"
     );
-    assert.match(gather, /Ask exactly one question/);
-    assert.match(gather, /recommended answer/);
-    assert.match(gather, /Never ask the\s+owner for a fact tools can establish/);
-    assert.match(gather, /explicit confirmation that shared understanding/);
-    assert.match(gather, /Buffer confirmed decisions in the active session/);
-    assert.match(gather, /Do not persist, patch, or\s+re-render Journey state after each answer/);
-    assert.match(gather, /Return one consolidated decision batch to the Router/);
-    assert.match(gather, /handoff\/context\s+loss is imminent/);
-    assert.doesNotMatch(gather, /Return each confirmed decision immediately/);
+    assert.match(scope, /Ask exactly one question/);
+    assert.match(scope, /recommended answer/);
+    assert.match(scope, /Never ask the\s+owner for a fact tools can establish/);
+    assert.match(scope, /explicit confirmation that shared understanding/);
+    assert.match(scope, /Buffer confirmed decisions in the active session/);
+    assert.match(scope, /Do not persist, patch, or\s+re-render Lifecycle state after each answer/);
+    assert.match(scope, /Return one consolidated decision batch to the Orchestrator/);
+    assert.match(scope, /handoff\/context\s+loss is imminent/);
+    assert.doesNotMatch(scope, /Return each confirmed decision immediately/);
   });
 
-  it("canonical planning artifacts are technical-plan, design.md, seit.json, implementation.json, and review.html", () => {
-    const mapRoute = readFileSync(path.join(SKILLS_DIR, "map-the-route", "SKILL.md"), "utf8");
+  it("canonical planning artifacts are technical-plan, design.md, seit.json, implementation.json, and DoD Manifest", () => {
+    const planning = readFileSync(path.join(SKILLS_DIR, "planning-and-design", "SKILL.md"), "utf8");
     const grammar = readFileSync(
-      path.join(SKILLS_DIR, "map-the-route", "references", "artifact-grammar.md"),
+      path.join(SKILLS_DIR, "planning-and-design", "references", "artifact-grammar.md"),
       "utf8"
     );
-    const explorer = readFileSync(path.join(SKILLS_DIR, "explorer", "SKILL.md"), "utf8");
+    const coordinator = readFileSync(path.join(SKILLS_DIR, "coordinator", "SKILL.md"), "utf8");
     const task = readFileSync(
       path.join(SKILLS_DIR, "bearing-lite", "templates", "task.md"),
       "utf8"
     );
     const readme = readFileSync(path.join(ROOT, "README.md"), "utf8");
-    assert.match(grammar, /five canonical|canonical Journey planning artifacts are exactly/i);
+    assert.match(grammar, /five canonical|canonical Lifecycle planning artifacts are exactly/i);
     assert.match(grammar, /technical-plan/);
     assert.match(grammar, /type:\s*technical-plan|type` as `technical-plan/);
     assert.match(grammar, /design\.md/);
     assert.match(grammar, /seit\.json/);
     assert.match(grammar, /implementation\.json/);
-    assert.match(grammar, /review\.html/);
+    assert.match(grammar, /dod-manifest|DoD Manifest/);
     assert.match(grammar, /xlsx/i);
     assert.match(grammar, /never authority|not authority|is not authority/i);
     assert.doesNotMatch(grammar, /plan-spec/);
     for (const [name, text] of [
       ["artifact-grammar", grammar],
-      ["map-the-route", mapRoute],
-      ["explorer", explorer],
+      ["planning-and-design", planning],
+      ["coordinator", coordinator],
       ["task-template", task],
       ["README", readme],
     ]) {
@@ -623,92 +638,87 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
   });
 
   it("matching settled intent produces five artifacts before one integrated owner review", () => {
-    const mapRoute = readFileSync(
-      path.join(SKILLS_DIR, "map-the-route", "SKILL.md"),
+    const planning = readFileSync(
+      path.join(SKILLS_DIR, "planning-and-design", "SKILL.md"),
       "utf8"
     );
     const grammar = readFileSync(
-      path.join(SKILLS_DIR, "map-the-route", "references", "artifact-grammar.md"),
+      path.join(SKILLS_DIR, "planning-and-design", "references", "artifact-grammar.md"),
       "utf8"
     );
-    const implementation = mapRoute.indexOf("generate `implementation.json`");
-    const html = mapRoute.indexOf("`review.html` together");
-    const review = mapRoute.indexOf("exactly one integrated owner review");
+    const implementation = planning.indexOf("generate `implementation.json`");
+    const html = planning.indexOf("DoD Manifest input together");
+    const review = planning.indexOf("exactly one integrated owner review");
     assert.ok(implementation >= 0 && html >= implementation && review > html);
-    assert.match(mapRoute, /propose the Explorer Journey or Expedition,\s+active\/standby\/unused role states, lineup, reasoning/);
-    assert.match(mapRoute, /never insert a lineup or route-review pause/);
+    assert.match(planning, /propose development strategy/);
+    assert.match(planning, /never insert a profile or route pause/);
     assert.match(grammar, /single owner review gate requires\s+the complete five-artifact package/);
     assert.match(grammar, /Do not insert a lineup, route, or\s+specification-only owner gate/);
   });
 
-  it("non-matching unresolved material intent returns to Gather Supplies without implementation or review", () => {
-    const mapRoute = readFileSync(path.join(SKILLS_DIR, "map-the-route", "SKILL.md"), "utf8");
+  it("non-matching unresolved material intent returns to Scope Definition without implementation or review", () => {
+    const planning = readFileSync(path.join(SKILLS_DIR, "planning-and-design", "SKILL.md"), "utf8");
     const router = readFileSync(path.join(SKILLS_DIR, "bearing-lite", "SKILL.md"), "utf8");
-    assert.match(mapRoute, /unresolved material scope, behavior, authority, risk, or\s+acceptance intent returns `REROUTE_GATHER_SUPPLIES`/);
-    assert.match(mapRoute, /generate no\s+`implementation\.json` or `review\.html`/);
-    assert.match(router, /Gather Supplies[\s\S]*unresolved\s+material intent blocks Map the Route/);
+    assert.match(planning, /unresolved material scope, behavior, authority, risk, or\s+acceptance intent returns `REROUTE_SCOPE_DEFINITION`/);
+    assert.match(planning, /generate no\s+`implementation\.json` or Manifest/);
+    assert.match(router, /Intake[\s\S]*unresolved\s+material intent blocks Planning and Design/);
   });
 
   it("integrated-review, requirements-register, and published-standard contracts are stated", () => {
     const router = readFileSync(path.join(SKILLS_DIR, "bearing-lite", "SKILL.md"), "utf8");
-    const mapRoute = readFileSync(path.join(SKILLS_DIR, "map-the-route", "SKILL.md"), "utf8");
-    const gather = readFileSync(path.join(SKILLS_DIR, "gather-supplies", "SKILL.md"), "utf8");
-    const crewmate = readFileSync(path.join(SKILLS_DIR, "crewmate", "SKILL.md"), "utf8");
-    const parkRanger = readFileSync(path.join(SKILLS_DIR, "park-ranger", "SKILL.md"), "utf8");
+    const planning = readFileSync(path.join(SKILLS_DIR, "planning-and-design", "SKILL.md"), "utf8");
+    const scope = readFileSync(path.join(SKILLS_DIR, "scope-definition", "SKILL.md"), "utf8");
+    const implementer = readFileSync(path.join(SKILLS_DIR, "implementer", "SKILL.md"), "utf8");
+    const reviewer = readFileSync(path.join(SKILLS_DIR, "reviewer", "SKILL.md"), "utf8");
     const grammar = readFileSync(
-      path.join(SKILLS_DIR, "map-the-route", "references", "artifact-grammar.md"),
+      path.join(SKILLS_DIR, "planning-and-design", "references", "artifact-grammar.md"),
       "utf8"
     );
-    assert.match(router, /Record the approved Journey type and snapshot/);
+    assert.match(router, /Record the approved Lifecycle type and snapshot/);
     assert.match(router, /Dispatch only after approval/);
-    assert.match(mapRoute, /requirements register/);
-    assert.match(mapRoute, /Never\s+infer one/);
-    assert.match(mapRoute, /author the needed Journey-level proof or return\s+`NEEDS_OWNER_DECISION`/);
-    assert.match(mapRoute, /register references versus Journey-local\s+requirements/);
-    assert.match(mapRoute, /Owner-decision pauses do\s+not consume correction rounds/);
-    assert.match(gather, /route review after Map the Route/);
+    assert.match(planning, /requirements register/);
+    assert.match(planning, /Never\s+infer one/);
+    assert.match(planning, /author the needed Lifecycle-level proof or return\s+`NEEDS_OWNER_DECISION`/);
+    assert.match(planning, /register references versus Lifecycle-local\s+requirements/);
+    assert.match(planning, /Owner-decision pauses do\s+not consume correction rounds/);
+    assert.match(scope, /Planning and Design is next/);
     assert.match(grammar, /## Requirements register/);
     assert.match(grammar, /Do not restate registered content/);
     assert.match(grammar, /Where the register provides none for a referenced requirement/);
-    assert.match(grammar, /`review\.html` marks every requirement as either a register reference or\s+Journey-local/);
+    assert.match(grammar, /DoD Manifest|dod-manifest/);
+    assert.match(grammar, /register reference or\s+Lifecycle-local/);
     assert.match(grammar, /## Published standards/);
     assert.match(grammar, /Published standard \(`doc#clause`\) when applicable/);
     assert.match(grammar, /cite the exact document and clause/);
     assert.match(grammar, /passing cross-boundary test does not substitute/);
-    assert.match(crewmate, /published standard/);
-    assert.match(parkRanger, /published standard/);
+    assert.match(implementer, /published standard/);
+    assert.match(reviewer, /published standard/);
   });
 
   it("same-wave continuation, compact receipts, and at-end-only assurance are stated", () => {
     const router = readFileSync(path.join(SKILLS_DIR, "bearing-lite", "SKILL.md"), "utf8");
-    const explorer = readFileSync(path.join(SKILLS_DIR, "explorer", "SKILL.md"), "utf8");
-    const crewmate = readFileSync(path.join(SKILLS_DIR, "crewmate", "SKILL.md"), "utf8");
-    const navigator = readFileSync(path.join(SKILLS_DIR, "navigator", "SKILL.md"), "utf8");
-    const park = readFileSync(path.join(SKILLS_DIR, "park-ranger", "SKILL.md"), "utf8");
-    const surveyor = readFileSync(path.join(SKILLS_DIR, "surveyor", "SKILL.md"), "utf8");
-    const validatorPath = path.join(SKILLS_DIR, "validator", "SKILL.md");
+    const coordinator = readFileSync(path.join(SKILLS_DIR, "coordinator", "SKILL.md"), "utf8");
+    const implementer = readFileSync(path.join(SKILLS_DIR, "implementer", "SKILL.md"), "utf8");
+    const reviewer = readFileSync(path.join(SKILLS_DIR, "reviewer", "SKILL.md"), "utf8");
+    const integration = readFileSync(path.join(SKILLS_DIR, "integration-engineer", "SKILL.md"), "utf8");
     const testEngineerPath = path.join(SKILLS_DIR, "test-engineer", "SKILL.md");
     const compact =
       /verdict,\s*candidate_ref,\s*changed_paths,\s*tests,\s*findings,\s*and blocker/;
     assert.match(router, /may continue in-wave/);
     assert.match(router, /visible wave receipt/);
     assert.match(router, /once per wave/);
-    assert.match(crewmate, /Continue the current session/);
-    assert.match(explorer, /Permit Crewmate continuation/);
-    assert.match(explorer, /do not\s+reread every accepted artifact/);
-    assert.match(navigator, /Compatibility only/);
-    assert.match(navigator, /REROUTED/);
+    assert.match(implementer, /Continue the current session/);
+    assert.match(coordinator, /Permit Implementer continuation/);
+    assert.match(coordinator, /do not\s+reread every accepted artifact/);
+    assert.ok(!existsSync(path.join(SKILLS_DIR, "navigator", "SKILL.md")));
+    assert.ok(!existsSync(path.join(SKILLS_DIR, "surveyor", "SKILL.md")));
     /** @type {Array<[string, string]>} */
     const compactRoles = [
-      ["crewmate", crewmate],
-      ["explorer", explorer],
-      ["navigator", navigator],
-      ["park-ranger", park],
-      ["surveyor", surveyor],
+      ["implementer", implementer],
+      ["coordinator", coordinator],
+      ["reviewer", reviewer],
+      ["integration-engineer", integration],
     ];
-    if (existsSync(validatorPath)) {
-      compactRoles.push(["validator", readFileSync(validatorPath, "utf8")]);
-    }
     if (existsSync(testEngineerPath)) {
       compactRoles.push(["test-engineer", readFileSync(testEngineerPath, "utf8")]);
     }
@@ -717,17 +727,22 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     }
     /** @type {Array<[string, string]>} */
     const assuranceRoles = [
-      ["park-ranger", park],
-      ["surveyor", surveyor],
+      ["reviewer", reviewer],
+      ["integration-engineer", integration],
     ];
     if (existsSync(testEngineerPath)) {
       assuranceRoles.push(["test-engineer", readFileSync(testEngineerPath, "utf8")]);
     }
     for (const [name, text] of assuranceRoles) {
       assert.match(text, /fresh session/, `${name} must start fresh`);
-      assert.match(text, /author ancestry/, `${name} must reject author ancestry`);
-      assert.match(text, /slice or round/, `${name} must refuse slice/round boundaries`);
+      assert.match(text, /author[\s\S]{0,20}ancestry/, `${name} must reject author ancestry`);
     }
+    assert.match(reviewer, /slice or round/, "reviewer must refuse unconfigured slice/round boundaries");
+    assert.match(
+      readFileSync(testEngineerPath, "utf8"),
+      /slice or round/,
+      "test-engineer must refuse unconfigured slice/round boundaries"
+    );
   });
 
   it("Codex metadata keeps the router explicitly invoked", () => {
@@ -739,28 +754,28 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
   });
 
   it("negative: missing role fails with typed diagnostic", () => {
-    const incomplete = REQUIRED_CATALOG.filter((n) => n !== "crewmate");
+    const incomplete = REQUIRED_CATALOG.filter((n) => n !== "implementer");
     const verdict = validateCatalog(incomplete);
     assert.equal(verdict.ok, false);
-    assert.ok(verdict.diagnostics.some((d) => d.code === "missing_role" && d.skill === "crewmate"));
+    assert.ok(verdict.diagnostics.some((d) => d.code === "missing_role" && d.skill === "implementer"));
   });
 
   it("negative: invalid frontmatter fails with typed diagnostic", () => {
-    const verdict = validateSkillDocument("crewmate", "# No frontmatter\n\nBody only.\n");
+    const verdict = validateSkillDocument("implementer", "# No frontmatter\n\nBody only.\n");
     assert.equal(verdict.ok, false);
     assert.ok(verdict.diagnostics.some((d) => d.code === "invalid_frontmatter"));
   });
 
   it("negative: oversized core skill fails with typed diagnostic", () => {
     const big =
-      "---\nname: crewmate\ndescription: implement packets\n---\n\n" + "x".repeat(20_000);
-    const verdict = validateSkillDocument("crewmate", big, { sizeLimit: CORE_SKILL_SIZE_LIMIT });
+      "---\nname: implementer\ndescription: implement packets\n---\n\n" + "x".repeat(20_000);
+    const verdict = validateSkillDocument("implementer", big, { sizeLimit: CORE_SKILL_SIZE_LIMIT });
     assert.equal(verdict.ok, false);
     assert.ok(verdict.diagnostics.some((d) => d.code === "oversized_core_skill"));
   });
 
   it("negative: duplicate contract fails with typed diagnostic", () => {
-    const verdict = validateCatalog([...REQUIRED_CATALOG, "crewmate"]);
+    const verdict = validateCatalog([...REQUIRED_CATALOG, "implementer"]);
     assert.equal(verdict.ok, false);
     assert.ok(verdict.diagnostics.some((d) => d.code === "duplicate_contract"));
   });
@@ -792,9 +807,8 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
   const LITE_REF = path.join(SKILLS_DIR, "bearing-lite", "references");
   const CADENCE_GOVERNED = Object.freeze({
     "bearing-lite/SKILL.md": path.join(SKILLS_DIR, "bearing-lite", "SKILL.md"),
-    "explorer/SKILL.md": path.join(SKILLS_DIR, "explorer", "SKILL.md"),
-    "park-ranger/SKILL.md": path.join(SKILLS_DIR, "park-ranger", "SKILL.md"),
-    "surveyor/SKILL.md": path.join(SKILLS_DIR, "surveyor", "SKILL.md"),
+    "coordinator/SKILL.md": path.join(SKILLS_DIR, "coordinator", "SKILL.md"),
+    "reviewer/SKILL.md": path.join(SKILLS_DIR, "reviewer", "SKILL.md"),
     "test-engineer/SKILL.md": path.join(SKILLS_DIR, "test-engineer", "SKILL.md"),
     "bearing-lite/templates/task.md": path.join(SKILLS_DIR, "bearing-lite", "templates", "task.md"),
     "bearing-lite/references/role-routing.mmd": path.join(LITE_REF, "role-routing.mmd"),
@@ -802,7 +816,7 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
   });
   /** PLANNING-cadence text; explicitly exempt from the assurance prohibition. */
   const CADENCE_EXEMPT = Object.freeze([
-    path.join(SKILLS_DIR, "map-the-route", "SKILL.md"),
+    path.join(SKILLS_DIR, "planning-and-design", "SKILL.md"),
     path.join(LITE_REF, "review-policy.md"),
   ]);
 
@@ -813,10 +827,10 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     const block = document.match(/```json\n([\s\S]*?)\n```/);
     assert.ok(block, "the policy must publish one machine-readable JSON block");
     const policy = JSON.parse(block[1]);
-    assert.equal(policy.budget_scope, "per_declared_phase_or_wave");
+    assert.equal(policy.budget_scope, "per_declared_cadence_unit");
     assert.equal(policy.review_rounds, 1);
     assert.equal(policy.aggregated_repairs_max, 1);
-    assert.equal(policy.automatic_per_slice_review, "prohibited");
+    assert.equal(policy.automatic_per_slice_review, "cadence_gated");
     assert.equal(policy.automatic_phase_or_wave_end_review, "required");
     assert.equal(policy.post_repair_rereview, "prohibited");
     assert.match(document, /records no route, provider, model, harness, account, or agent identity/);
@@ -835,15 +849,14 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
         /`max_assurance_rounds` is\s+1 per Journey/,
         /materially changed new Journey resets review allowance/,
       ],
-      "explorer/SKILL.md": [
+      "coordinator/SKILL.md": [
         /Dispatch declared assurance only at-end/,
         /defer assurance to the Router's final\s+Journey boundary/,
       ],
-      "park-ranger/SKILL.md": [
+      "reviewer/SKILL.md": [
         /any boundary other than at-end/,
         /Do not\s+review or repair that Journey again/,
       ],
-      "surveyor/SKILL.md": [/at-end boundary/, /comparison at-end/],
       "test-engineer/SKILL.md": [/at-end V&V/, /candidate at-end only/, /at-end boundary/],
       "bearing-lite/templates/task.md": [
         /`review_cadence` is `at-end` only/,
@@ -877,7 +890,7 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
         `${exempt} is planning cadence and is exempt`
       );
     }
-    assert.ok(existsSync(path.join(SKILLS_DIR, "map-the-route", "SKILL.md")));
+    assert.ok(existsSync(path.join(SKILLS_DIR, "planning-and-design", "SKILL.md")));
   });
 
   it("T-LITE-15 / W12-R5: role text agrees with the declared phase or wave unit", () => {
@@ -889,7 +902,7 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
         `${label} must name the declared phase-or-wave unit`
       );
     }
-    for (const role of ["park-ranger", "surveyor", "test-engineer", "explorer"]) {
+    for (const role of ["reviewer", "test-engineer", "coordinator"]) {
       const text = readFileSync(path.join(SKILLS_DIR, role, "SKILL.md"), "utf8");
       assert.match(text, /max_assurance_rounds/, `${role} must honor the bound`);
       assert.match(text, /\bof 1\b|\b1 per declared\b/, `${role} must fix the bound at one round`);
@@ -905,8 +918,8 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     }
     // Wave-end dispatch is the required trigger, and the router owns it.
     const router = readFileSync(path.join(SKILLS_DIR, "bearing-lite", "SKILL.md"), "utf8");
-    const explorer = readFileSync(path.join(SKILLS_DIR, "explorer", "SKILL.md"), "utf8");
-    for (const [name, text] of [["router", router], ["explorer", explorer]]) {
+    const coordinator = readFileSync(path.join(SKILLS_DIR, "coordinator", "SKILL.md"), "utf8");
+    for (const [name, text] of [["router", router], ["coordinator", coordinator]]) {
       assert.match(
         text,
         /(wave|phase)[- ]end|end of (each|the) declared (phase or wave|wave|phase)/i,

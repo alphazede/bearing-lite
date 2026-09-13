@@ -1,0 +1,52 @@
+# Deterministic verification adapter
+
+Decision source: `DEC-BDL-036`, `DEC-BDL-037`, `DEC-BDL-053`, `DES-BDL-008`,
+`AC-BDL-009`, `CONTRACT-BDL-005`.
+
+`hooks/verification.cjs` is the exact runtime evaluator of this contract. It
+declares no hook class and registers no host event. A backend is never a role.
+Reverify is optional profile configuration; this adapter never downloads or
+installs it.
+
+A **request** binds candidate, claim, backend, stage, authority, expected
+result, and command/configuration, plus whether the backend is `selected` or
+`required` for that claim. A **receipt** binds the same candidate, claim,
+backend, version, command/configuration, and evidence digest. Status values
+are `VERIFIED`, `REFUTED`, `INCONCLUSIVE`, and `ERROR`.
+
+## Authority
+
+- **diagnostic** — Implementer, Light Implementer, and Integration Engineer
+  execution may emit diagnostic receipts. They help implementation and
+  integration. They never satisfy an assurance gate.
+- **assurance** — Test Engineer assurance independently reruns required claims
+  against the exact stable candidate in a fresh session. Reviewer may request
+  deterministic verification to adjudicate a specific suspected defect. The
+  Orchestrator routes and records; it never treats a backend as a role.
+
+Candidate authors cannot turn their own runs into an assurance PASS. An
+independent assurance session must rerun required claims. Diagnostic and
+assurance receipts remain distinguishable.
+
+## Backend activation
+
+Activation is selected OR required. Unavailability of an activated backend is a
+typed gap (`ERROR` / `backend_unavailable`), not success and not invented
+behavior. Only unselected AND unrequired absence stays inactive and is not a
+global failure. Profile `reverify.enabled` records user configuration;
+availability does not select Reverify for every task. Planning Test Engineer
+selects it on an applicable binary-level SEIT claim; Plan Integrator copies
+that selection and must not invent V&V.
+
+## Gates
+
+- Assurance gate: only an independent `assurance` receipt whose candidate,
+  claim, backend, version, command/configuration, and evidence digest bind the
+  current candidate, and whose status matches the expected result, may be
+  `gate_eligible`. `INCONCLUSIVE` and `ERROR` cannot become PASS.
+- Post-repair deterministic closure reruns required checks on the repaired
+  candidate without a second review round. Author diagnostics and stale
+  pre-repair evidence cannot close it. Automatic rereview is prohibited.
+
+Stale evidence is a receipt bound to a prior candidate or to a pre-repair
+evidence digest. Candidate mismatch fails closed.

@@ -1,21 +1,21 @@
 flowchart TD
-    O[Owner Authority] <--> R[Stateful Bearing Lite Router]
+    O[Owner Authority] <--> R[Stateful Bearing Lite Orchestrator]
     R --> P{Next missing planning stage?}
-    P -->|Repository Fit| PF[Fresh Repository Fit]
-    P -->|Set Bearings| SB[Fresh Set Bearings]
-    P -->|Gather Supplies| GS[Fresh Gather Supplies]
-    P -->|Map the Route| MR[Fresh Map the Route]
-    PF & SB & GS -->|typed return| R
-    R --> MR
-    MR -->|five artifacts with proposed route, lineup, role states, reasoning, cadence| I{One integrated owner review}
-    I -->|change| MR
-    I -->|approve Explorer Journey: one packet| C[Crewmate may continue in-wave]
-    I -->|approve Explorer Journey: one wave| E[Explorer may continue in-wave]
-    I -->|approve Expedition: Router sequences waves| E
+    P -->|Intake| IN[Fresh Intake]
+    P -->|Architectural Alignment| AA[Fresh Architectural Alignment]
+    P -->|Scope Definition| SD[Fresh Scope Definition]
+    P -->|Planning and Design| PD[Fresh Planning and Design]
+    IN & AA & SD -->|typed return| R
+    R --> PD
+    PD -->|five artifacts with proposed route, profile, role states, reasoning, cadence| I{One integrated owner review}
+    I -->|change| PD
+    I -->|approve one packet| C[Implementer may continue in-wave]
+    I -->|approve one wave| E[Coordinator may continue in-wave]
+    I -->|approve Lifecycle: Orchestrator sequences waves| E
     E --> C
     C --> A{Declared phase or wave end candidate?}
     A -->|Assurance Test Engineer declared| V[Fresh Assurance Test Engineer]
-    A -->|Park Ranger declared| PK[Fresh Park Ranger]
-    A -->|Surveyor declared| S[Fresh Surveyor]
+    A -->|Reviewer declared| PK[Fresh Reviewer]
+    A -->|Integration Engineer execution declared| S[Fresh Integration Engineer execution]
     A -->|not yet| E
     V & PK & S -->|compact receipt| R

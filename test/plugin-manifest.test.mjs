@@ -12,7 +12,10 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SCHEMA_V1 =
   "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json";
 
-/** Closed top-level field set used by the product for Agent Plugins v1.0.0. */
+/**
+ * Closed top-level field set from Agent Plugins Specification 1.0.0 §5.2.
+ * https://github.com/agentplugins/agent-plugins-spec/blob/main/spec/1.0.0.md
+ */
 const CLOSED_TOP_LEVEL = new Set([
   "$schema",
   "name",
@@ -23,14 +26,7 @@ const CLOSED_TOP_LEVEL = new Set([
   "repository",
   "license",
   "keywords",
-  "skills",
-  "hooks",
-  "mcpServers",
-  "commands",
-  "agents",
-  "outputStyles",
-  "lspServers",
-  "userConfig",
+  "extensions",
 ]);
 
 /**
@@ -80,55 +76,53 @@ export function validatePluginManifest(manifest) {
     }
   }
 
-  // Extension / path containment for optional nested maps that may appear in fixtures.
-  for (const section of ["hooks", "mcpServers", "commands", "agents", "lspServers"]) {
-    const value = m[section];
-    if (value === undefined) continue;
-    if (typeof value !== "object" || value === null || Array.isArray(value)) {
+  // Extension / path containment for the Agent Plugins 1.0 `extensions` map.
+  const extensions = m.extensions;
+  if (extensions !== undefined) {
+    if (typeof extensions !== "object" || extensions === null || Array.isArray(extensions)) {
       diagnostics.push({
         code: "section_not_object",
-        message: `${section} must be an object map when present`,
-        field: section,
+        message: "extensions must be an object map when present",
+        field: "extensions",
       });
-      continue;
-    }
-    for (const [entryKey, entryVal] of Object.entries(
-      /** @type {Record<string, unknown>} */ (value)
-    )) {
-      const pathLike =
-        typeof entryVal === "string"
-          ? entryVal
-          : entryVal &&
-              typeof entryVal === "object" &&
-              !Array.isArray(entryVal) &&
-              typeof /** @type {Record<string, unknown>} */ (entryVal).path === "string"
-            ? String(/** @type {Record<string, unknown>} */ (entryVal).path)
-            : null;
-      if (pathLike !== null) {
-        if (path.isAbsolute(pathLike) || /^[A-Za-z]:[\\/]/.test(pathLike)) {
+    } else {
+      for (const [entryKey, entryVal] of Object.entries(
+        /** @type {Record<string, unknown>} */ (extensions)
+      )) {
+        const pathLike =
+          typeof entryVal === "string"
+            ? entryVal
+            : entryVal &&
+                typeof entryVal === "object" &&
+                !Array.isArray(entryVal) &&
+                typeof /** @type {Record<string, unknown>} */ (entryVal).path === "string"
+              ? String(/** @type {Record<string, unknown>} */ (entryVal).path)
+              : null;
+        if (pathLike !== null) {
+          if (path.isAbsolute(pathLike) || /^[A-Za-z]:[\\/]/.test(pathLike)) {
+            diagnostics.push({
+              code: "absolute_path_rejected",
+              message: `extensions.${entryKey} uses absolute path "${pathLike}"`,
+              field: `extensions.${entryKey}`,
+            });
+          }
+          if (pathLike.includes("..") || pathLike.includes("\\..")) {
+            diagnostics.push({
+              code: "path_traversal_rejected",
+              message: `extensions.${entryKey} uses path traversal "${pathLike}"`,
+              field: `extensions.${entryKey}`,
+            });
+          }
+        }
+        // Extension namespaces must be verified reverse-domain IDs (Agent Plugins §8).
+        const verified = /^(com|org|io|net|dev)\.[a-z0-9]+(\.[a-z0-9_-]+)+$/i.test(entryKey);
+        if (!verified) {
           diagnostics.push({
-            code: "absolute_path_rejected",
-            message: `${section}.${entryKey} uses absolute path "${pathLike}"`,
-            field: `${section}.${entryKey}`,
+            code: "unverified_extension_namespace",
+            message: `unverified extension namespace "${entryKey}" in extensions`,
+            field: `extensions.${entryKey}`,
           });
         }
-        if (pathLike.includes("..") || pathLike.includes("\\..")) {
-          diagnostics.push({
-            code: "path_traversal_rejected",
-            message: `${section}.${entryKey} uses path traversal "${pathLike}"`,
-            field: `${section}.${entryKey}`,
-          });
-        }
-      }
-      // Extension namespaces must be verified reverse-domain IDs (Agent Plugins containment).
-      // Bare short keys and non-reverse-domain dotted keys are rejected.
-      const verified = /^(com|org|io|net|dev)\.[a-z0-9]+(\.[a-z0-9_-]+)+$/i.test(entryKey);
-      if (!verified) {
-        diagnostics.push({
-          code: "unverified_extension_namespace",
-          message: `unverified extension namespace "${entryKey}" in ${section}`,
-          field: `${section}.${entryKey}`,
-        });
       }
     }
   }
@@ -151,6 +145,11 @@ describe("CMD-MANIFEST-01 plugin-manifest (SEIT-MANIFEST-01, SEIT-EXTENSION-01)"
       assert.equal(verdict.schema, SCHEMA_V1);
       assert.equal(verdict.name, "bearing-lite");
     }
+    assert.equal(manifest.hooks, undefined);
+    assert.equal(manifest.skills, undefined);
+    assert.equal(manifest.mcpServers, undefined);
+    assert.equal(manifest.commands, undefined);
+    assert.equal(manifest.agents, undefined);
   });
 
   it("accepts only closed top-level fields present on the product manifest", () => {
@@ -191,20 +190,29 @@ describe("CMD-MANIFEST-01 plugin-manifest (SEIT-MANIFEST-01, SEIT-EXTENSION-01)"
     assert.ok(pkg.keywords.includes("pi-package"));
 
     const portable = readJson("plugin.json");
-    assert.deepEqual(Object.keys(portable.hooks).sort(), [
-      "com.anthropic.claude-code.activation",
-      "com.anthropic.claude-code.closeout",
-      "com.cursor.ide.activation",
-      "com.cursor.ide.closeout",
-      "com.moonshotai.kimi-code.activation",
-      "com.moonshotai.kimi-code.closeout",
-      "com.openai.codex.activation",
-      "com.openai.codex.closeout",
-      "com.xai.grok-build.activation",
-      "com.xai.grok-build.closeout",
-    ]);
-    for (const entry of Object.values(portable.hooks)) {
-      assert.equal(entry.path, "./hooks/com.anthropic.claude-code/host.cjs");
+    assert.equal(portable.hooks, undefined);
+    assert.equal(portable.skills, undefined);
+    assert.equal(portable.mcpServers, undefined);
+    const copilotHooks = readJson("com.github.copilot/hooks/hooks.json");
+    for (const event of ["SessionStart", "PreToolUse", "Stop", "SubagentStop"]) {
+      assert.ok(
+        Array.isArray(copilotHooks.hooks[event]),
+        `Copilot ${event} must be registered`
+      );
+    }
+    assert.match(JSON.stringify(copilotHooks), /\$\{PLUGIN_ROOT\}/);
+    const teCommands = ["PreToolUse", "Stop", "SubagentStop"].flatMap((event) =>
+      copilotHooks.hooks[event]
+        .map((entry) => entry.command)
+        .filter(
+          (command) => typeof command === "string" && /te-host\.cjs/.test(command)
+        )
+    );
+    assert.equal(teCommands.length, 3);
+    for (const command of teCommands) {
+      assert.match(command, /\$\{PLUGIN_ROOT\}/);
+      assert.match(command, /te-host\.cjs/);
+      assert.match(command, /--host=copilot/);
     }
 
     assert.equal(readJson(".agents/plugins/marketplace.json").plugins[0].name, "bearing-lite");
@@ -254,13 +262,33 @@ describe("CMD-MANIFEST-01 plugin-manifest (SEIT-MANIFEST-01, SEIT-EXTENSION-01)"
     }
   });
 
-  it("negative: absolute path in extension map is rejected", () => {
+  it("negative: top-level hooks is rejected as a nonstandard Agent Plugins 1.0 field", () => {
     const fixture = {
       $schema: SCHEMA_V1,
       name: "bearing-lite",
       version: "0.1.0",
       hooks: {
-        "com.example.vendor.hook": { path: "/etc/passwd" },
+        "com.anthropic.claude-code.activation": {
+          path: "./hooks/com.anthropic.claude-code/host.cjs",
+        },
+      },
+    };
+    const verdict = validatePluginManifest(fixture);
+    assert.equal(verdict.ok, false);
+    if (!verdict.ok) {
+      const hit = verdict.diagnostics.find((d) => d.code === "unknown_top_level_field");
+      assert.ok(hit, "expected unknown_top_level_field for top-level hooks");
+      assert.equal(hit.field, "hooks");
+    }
+  });
+
+  it("negative: absolute path in extension map is rejected", () => {
+    const fixture = {
+      $schema: SCHEMA_V1,
+      name: "bearing-lite",
+      version: "0.1.0",
+      extensions: {
+        "com.example.vendor": { path: "/etc/passwd" },
       },
     };
     const verdict = validatePluginManifest(fixture);
@@ -278,8 +306,8 @@ describe("CMD-MANIFEST-01 plugin-manifest (SEIT-MANIFEST-01, SEIT-EXTENSION-01)"
       $schema: SCHEMA_V1,
       name: "bearing-lite",
       version: "0.1.0",
-      hooks: {
-        "com.example.vendor.hook": { path: "../../secrets/token" },
+      extensions: {
+        "com.example.vendor": { path: "../../secrets/token" },
       },
     };
     const verdict = validatePluginManifest(fixture);
@@ -297,7 +325,7 @@ describe("CMD-MANIFEST-01 plugin-manifest (SEIT-MANIFEST-01, SEIT-EXTENSION-01)"
       $schema: SCHEMA_V1,
       name: "bearing-lite",
       version: "0.1.0",
-      hooks: {
+      extensions: {
         "not-a-reverse-domain": { path: "./hooks/x.cjs" },
       },
     };

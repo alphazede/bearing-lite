@@ -8,8 +8,8 @@
  */
 
 const PLANNING_REVIEW_POLICY = Object.freeze({
-  reviewer_slots_min: 2,
-  reviewer_slots_max: 2,
+  reviewer_slots_min: 1,
+  reviewer_slots_max: 1,
   independence_required: true,
   isolated_findings_until_aggregation: true,
   candidate_fields: ["candidate_ref", "candidate_revision", "candidate_digest"],
@@ -23,12 +23,18 @@ const PLANNING_REVIEW_POLICY = Object.freeze({
 });
 
 const ASSURANCE_BUDGET_POLICY = Object.freeze({
-  budget_scope: "per_declared_phase_or_wave",
+  budget_scope: "per_declared_cadence_unit",
+  cadence_values: ["slice", "phase", "lifecycle"],
+  default_cadence: {
+    "test_engineer.assurance": "phase",
+    reviewer: "phase",
+    "integration_engineer.execution": "lifecycle",
+  },
   review_rounds: 1,
   aggregated_repairs_max: 1,
   post_repair_gate: "deterministic_PASS",
   automatic_phase_or_wave_end_review: "required",
-  automatic_per_slice_review: "prohibited",
+  automatic_per_slice_review: "cadence_gated",
   post_repair_rereview: "prohibited",
   automatic_rereview_of_same_unit: "prohibited",
   budget_reset_on_candidate_change: false,

@@ -1,0 +1,611 @@
+{
+  "schema_version": "1",
+  "kind": "review_receipt",
+  "slice": "S7",
+  "role": "Reviewer",
+  "stage": "review",
+  "recorded_at": "2026-09-13T17:16:24Z",
+  "verdict": "REPAIR_REQUIRED",
+  "candidate_ref": "b5cec79f04f6f6ea506a2ad89bf937aab143d876",
+  "candidate_identity": {
+    "repository": "alphazede/bearing-lite",
+    "branch": "main",
+    "baseline": "b5cec79f04f6f6ea506a2ad89bf937aab143d876",
+    "head": "b5cec79f04f6f6ea506a2ad89bf937aab143d876",
+    "lease_generation": 1,
+    "lease_state": "active",
+    "product_tree_sha256": "24b79eddc21a37460015bc63cbf046e40024bbc4f77d855142fa49282bfd0c9c",
+    "product_tree_algorithm": "Sorted existing tracked plus nonignored untracked paths, excluding docs/plans/; path NUL decimal permissions(mode&511) NUL file bytes or symlink target NUL.",
+    "planning_candidate_digest": "acaeda8cf479fa886b0f0fb4d3028ac781f538fe3a15100867c170a185c54ce6",
+    "manifest_sha256": "d27a1545c10924e474684b6cf94def05af1c13166348587d2199033cbebcb360",
+    "product_path_count": 141
+  },
+  "product_tree_sha256": "24b79eddc21a37460015bc63cbf046e40024bbc4f77d855142fa49282bfd0c9c",
+  "authority": [
+    "DEC-BDL-060",
+    "DEC-BDL-062",
+    "DEC-BDL-068",
+    "DEC-BDL-072",
+    "DEC-BDL-073",
+    "Current owner S7 review-only packet"
+  ],
+  "independence": {
+    "fresh_session": true,
+    "owner_selected_route": "Codex CLI / gpt-6-astra / medium",
+    "author_session_resumed": false,
+    "author_ancestry": false,
+    "agents_launched": 0,
+    "review_count": 1,
+    "historical_recovery_review": "Historical only. F4/F5 remain withdrawn and are not findings in this receipt."
+  },
+  "scope": "Introduced actionable defects and applicable plan drift on the exact assured candidate only. No implementation, repair, assurance rerun, user acceptance, Integration Engineer assessment, browser test, or S8 dispatch.",
+  "bran_status": "unavailable",
+  "bran_refs": {
+    "coverage": "No native .bran/policy.yaml in the target checkout.",
+    "verified_paths": [
+      "Target checkout .bran/policy.yaml absence",
+      "Trusted parent tools/bran/runtime/bran and bran-release-pin.json"
+    ],
+    "runtime_sha256": "be2c9716697e82cdd206d0e5803246884a4035a99b0c7dbdbfb55fd00a5f807c",
+    "extra_discovery_avoided": false,
+    "reason": "Read use-bran first and verified the pinned parent runtime. Target policy absence permits bounded raw discovery; no parent repository knowledge or derived-state mutation was needed."
+  },
+  "s6": {
+    "effective_verdict": "PASS",
+    "receipt": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/assurance/s6-assurance.json",
+    "receipt_sha256": "ec1d6df056dc0447cc9d62160f512e07b3f0540d64b4058677ad7d9fbb51032c",
+    "owner_evidence": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/assurance/seit-bdl-012-owner-observation.json",
+    "owner_evidence_sha256": "a186c42dfe1e63b9ce4b2fb275e3728c9e413b6a1c9f99acb2e89a772873dae1",
+    "hashes_verified": true,
+    "closure": "The immutable S6 receipt retains NEEDS_MORE_EVIDENCE for its visual row. DEC-BDL-073 and the separate owner observation close that row and S6 to PASS. Later append-only Manifest bookkeeping is reflected in the owner-pinned current Manifest hash; no visual retest was performed."
+  },
+  "candidate_inventory": {
+    "tracked_modified": [
+      ".codex-plugin/plugin.json",
+      ".cursor-plugin/plugin.json",
+      ".grok-plugin/plugin.json",
+      ".kimi-plugin/plugin.json",
+      "CONTRIBUTING.md",
+      "README.md",
+      "hooks/assurance-budget.cjs",
+      "hooks/com.anthropic.claude-code/mapping.md",
+      "hooks/plan-package.cjs",
+      "hooks/policy.cjs",
+      "hooks/transition-order.cjs",
+      "package.json",
+      "plugin.json",
+      "schemas/implementation.schema.json",
+      "schemas/journey.schema.json",
+      "skills/bearing-lite/SKILL.md",
+      "skills/bearing-lite/references/assurance-policy.md",
+      "skills/bearing-lite/references/lineups.md",
+      "skills/bearing-lite/references/owner-stops.md",
+      "skills/bearing-lite/references/peer-synthesis.md",
+      "skills/bearing-lite/references/review-policy.md",
+      "skills/bearing-lite/references/role-routing.mmd",
+      "skills/bearing-lite/references/task-state.md",
+      "skills/bearing-lite/references/task-state.mmd",
+      "skills/bearing-lite/templates/task.md",
+      "skills/integration-engineer/SKILL.md",
+      "skills/light-implementer/SKILL.md",
+      "skills/plan-integrator/SKILL.md",
+      "skills/requirements-engineer/SKILL.md",
+      "skills/scribe/SKILL.md",
+      "skills/systems-modeler/SKILL.md",
+      "skills/test-engineer/SKILL.md",
+      "test/assurance-budget.test.mjs",
+      "test/hook-contract.test.mjs",
+      "test/host-mapping.test.mjs",
+      "test/journey-config.test.mjs",
+      "test/lineups-empty.test.mjs",
+      "test/lineups-populated-schema.test.mjs",
+      "test/package-boundary.test.mjs",
+      "test/plan-package.test.mjs",
+      "test/planning-review.test.mjs",
+      "test/plugin-manifest.test.mjs",
+      "test/public-boundary.test.mjs",
+      "test/role-handoff.test.mjs",
+      "test/role-routing.test.mjs",
+      "test/schema-validation.py",
+      "test/skills-conformance.test.mjs",
+      "test/task-record.test.mjs",
+      "test/task-state.test.mjs",
+      "test/te-hook-contract.test.mjs"
+    ],
+    "tracked_deleted": [
+      "lineups.json",
+      "schemas/lineups.schema.json",
+      "skills/crewmate/SKILL.md",
+      "skills/explorer/SKILL.md",
+      "skills/gather-supplies/SKILL.md",
+      "skills/map-the-route/SKILL.md",
+      "skills/map-the-route/references/artifact-grammar.md",
+      "skills/navigator/SKILL.md",
+      "skills/park-ranger/SKILL.md",
+      "skills/repository-fit/SKILL.md",
+      "skills/set-bearings/SKILL.md",
+      "skills/set-bearings/templates/workspace.md",
+      "skills/surveyor/SKILL.md",
+      "skills/validator/SKILL.md",
+      "skills/validator/references/grading-rubric.md"
+    ],
+    "untracked_product": [
+      "com.github.copilot/hooks/hooks.json",
+      "docs/architecture/bearing-delivery-lifecycle.md",
+      "docs/architecture/bearing-process/lifecycle-context.svg",
+      "docs/architecture/bearing-process/lifecycle-process-views.svg",
+      "docs/guides/lifecycle.md",
+      "docs/guides/onboarding.md",
+      "docs/guides/roles.md",
+      "docs/guides/troubleshooting.md",
+      "docs/releases/acknowledgements.md",
+      "docs/releases/announcement.md",
+      "hooks/profiles.cjs",
+      "hooks/verification.cjs",
+      "profiles.json",
+      "schemas/profiles.schema.json",
+      "schemas/verification.schema.json",
+      "skills/architectural-alignment/SKILL.md",
+      "skills/architectural-alignment/templates/workspace.md",
+      "skills/bearing-lite/references/profiles.md",
+      "skills/bearing-lite/references/resume.md",
+      "skills/bearing-lite/references/verification.md",
+      "skills/coordinator/SKILL.md",
+      "skills/implementer/SKILL.md",
+      "skills/intake/SKILL.md",
+      "skills/onboard-bearing/SKILL.md",
+      "skills/planning-and-design/SKILL.md",
+      "skills/planning-and-design/references/artifact-grammar.md",
+      "skills/prompt/SKILL.md",
+      "skills/reviewer/SKILL.md",
+      "skills/scope-definition/SKILL.md",
+      "templates/dod-manifest-v1.html",
+      "test/dod-manifest.test.mjs",
+      "test/fixtures/profiles-populated.example.json",
+      "test/fixtures/s1l-migration-map.json",
+      "test/profiles-empty.test.mjs",
+      "test/s1-contracts.test.mjs",
+      "test/verification.test.mjs",
+      "tools/render-dod-manifest.mjs"
+    ],
+    "git_reported_renames": [],
+    "approved_migrations": [
+      {
+        "source": "skills/crewmate/",
+        "destination": "skills/implementer/",
+        "kind": "copy_into"
+      },
+      {
+        "source": "skills/park-ranger/",
+        "destination": "skills/reviewer/",
+        "kind": "copy_into"
+      },
+      {
+        "source": "skills/repository-fit/",
+        "destination": "skills/intake/",
+        "kind": "copy_into"
+      },
+      {
+        "source": "skills/set-bearings/",
+        "destination": "skills/architectural-alignment/",
+        "kind": "copy_into"
+      },
+      {
+        "source": "skills/gather-supplies/",
+        "destination": "skills/scope-definition/",
+        "kind": "copy_into"
+      },
+      {
+        "source": "skills/map-the-route/",
+        "destination": "skills/planning-and-design/",
+        "kind": "copy_into"
+      },
+      {
+        "source": "skills/explorer/SKILL.md",
+        "destination": "skills/coordinator/SKILL.md",
+        "kind": "copy"
+      }
+    ],
+    "staged_paths": []
+  },
+  "review_coverage": {
+    "planning": [
+      "journey.json decisions, lease, and execution/assurance closure records",
+      "implementation.json S7, settings, slices, routes, and dod_manifest projection",
+      "Technical plan AC-BDL-001..012",
+      "design.md DES-BDL-001..012 and interfaces",
+      "seit.json proof cases and procedures",
+      "Current rendered DoD Manifest identity, structure, and planning/closeout content",
+      "Immutable S6 receipt and owner observation"
+    ],
+    "product": [
+      "Tracked baseline diff, deletions, all 37 untracked product paths, and frozen migration map",
+      "Changed policy, transition, assurance-budget, and planning-package helpers and callers",
+      "New verification/profile helpers, schemas, and focused tests",
+      "Renderer/template, SVG/CSS input paths, model bindings, closeout projection, and existing renderer tests",
+      "Renamed/new role skills, onboarding/profile/resume references, lifecycle docs, task templates, and package metadata",
+      "Copilot hook discovery, shared host adapter, and host/manifest tests"
+    ],
+    "standards": [
+      {
+        "url": "https://agent-plugins.org/specification",
+        "clauses": [
+          "4",
+          "5",
+          "6",
+          "8",
+          "9"
+        ],
+        "result": "Root manifest fields, schema identity, shared skills location, and client namespace layout agree with the published 1.0.0 text."
+      },
+      {
+        "url": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+        "result": "Read official schema and compared the actual root manifest."
+      },
+      {
+        "url": "https://code.visualstudio.com/docs/agent-customization/agent-plugins",
+        "result": "Verified Agent Plugins format detection, Copilot hook path, flat hook syntax, events, and PLUGIN_ROOT expansion. S7-005 records the command-quoting defect."
+      },
+      {
+        "url": "https://www.w3.org/TR/SVG2/styling.html",
+        "clauses": [
+          "6.2",
+          "6.3",
+          "6.4"
+        ],
+        "result": "Used stylesheet scope and external stylesheet semantics to adjudicate S7-003 and S7-004."
+      },
+      {
+        "url": "https://www.w3.org/TR/css-syntax-3/#escaping",
+        "result": "Used CSS escape semantics for S7-004."
+      },
+      {
+        "url": "https://www.w3.org/TR/css-cascade-5/#at-import",
+        "result": "Used import-rule semantics for S7-004."
+      }
+    ]
+  },
+  "tests": [
+    {
+      "id": "S7-CANDIDATE",
+      "command": "Read-only Git identity/status inventory and journey path/mode/bytes SHA-256 recomputation",
+      "result": "PASS",
+      "detail": "HEAD, main, lease generation 1, 141-path product hash, planning digest, Manifest hash, and both evidence hashes match. Initial/pre-write product hashes are identical."
+    },
+    {
+      "id": "S7-DIFF",
+      "command": "git diff --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "id": "S7-FOCUSED",
+      "command": "node --test test/verification.test.mjs test/assurance-budget.test.mjs test/dod-manifest.test.mjs",
+      "exit_code": 0,
+      "passed": 43,
+      "failed": 0,
+      "result": "PASS",
+      "environment": "Approved execution outside the sandbox's reproduced child-process restriction; existing tests only."
+    },
+    {
+      "id": "S7-HOST",
+      "command": "node --test --test-reporter=dot test/host-mapping.test.mjs test/plugin-manifest.test.mjs",
+      "exit_code": 0,
+      "passed": 41,
+      "failed": 0,
+      "result": "PASS",
+      "environment": "Approved execution outside the same subprocess restriction; existing tests only."
+    },
+    {
+      "id": "S7-PLAN-DIGEST",
+      "command": "node hooks/plan-package.cjs docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment",
+      "exit_code": 0,
+      "result": "PASS",
+      "manifest_digest": "acaeda8cf479fa886b0f0fb4d3028ac781f538fe3a15100867c170a185c54ce6",
+      "findings": []
+    },
+    {
+      "id": "S7-RENDER-CHECK",
+      "command": "node tools/render-dod-manifest.mjs docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/implementation.json --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "sha256": "d27a1545c10924e474684b6cf94def05af1c13166348587d2199033cbebcb360"
+    },
+    {
+      "id": "S7-REPRODUCTIONS",
+      "command": "In-process Node evaluator/renderer probes, disposable cadence JSON and Copilot path fixtures, installed Draft202012Validator, tinycss2 1.5.1 and cssselect2",
+      "result": "CONFIRMED_DEFECTS",
+      "finding_ids": [
+        "S7-001",
+        "S7-002",
+        "S7-003",
+        "S7-004",
+        "S7-005"
+      ],
+      "detail": "Reproduction inputs and controls are recorded in each finding. No browser or remote resource load; fixtures removed."
+    }
+  ],
+  "environment_anomalies": [
+    {
+      "classification": "SANDBOX_RESTRICTION",
+      "detail": "The initial focused run lost child stdout/stderr. A trivial spawnSync(process.execPath, ['-e', 'process.stdout.write(...);process.stderr.write(...)']) independently returned error EPERM and empty captured output. The same existing focused suite passed 43/43 outside that restriction. Not attributed to the product or filed as a bug."
+    }
+  ],
+  "findings": [
+    {
+      "id": "S7-001",
+      "priority": "P1",
+      "status": "CONFIRMED",
+      "confirmed": true,
+      "category": "correctness",
+      "title": "Require a receipt to match a supplied candidate digest",
+      "expected": "When the current candidate and request include candidate_digest, an assurance or closure receipt must carry that same digest. A receipt lacking that binding must not satisfy the gate.",
+      "actual": "sameCandidate skips candidate_digest whenever either operand lacks it. A schema-valid receipt without candidate_digest returns PASS / independent_assurance_verified with gate_eligible true, even though the current candidate and request carry a digest. A wrong digest is rejected, but deleting it changes the verdict to PASS.",
+      "source": [
+        "AC-BDL-009",
+        "DES-BDL-008",
+        "DEC-BDL-037",
+        "skills/bearing-lite/references/verification.md, Gates and stale-evidence contract"
+      ],
+      "location": {
+        "path": "hooks/verification.cjs",
+        "start_line": 63,
+        "end_line": 65
+      },
+      "reachability": "The new exported evaluateVerification evaluator calls sameCandidate for receipt versus request and current candidate at lines 213-214 before its assurance PASS. The reference policy designates this module as its runtime evaluator; no native host wiring is claimed. This matters for changed binaries or uncommitted work at an unchanged revision, including the review's own candidate identity pattern: the digest distinguishes the actual tree from other work at the same HEAD.",
+      "reproduction": {
+        "method": "Direct in-process invocation on the pinned product, with no file mutations.",
+        "setup": "Use the valid independent assurance request/receipt shape from test/verification.test.mjs: matching candidate_ref, candidate_revision, claim_id, backend, command_configuration, status VERIFIED, authority assurance, independent produced_by identity/session, available enabled backend, and gate assurance. Supply the same 64-hex candidate_digest on candidate, request, and receipt.",
+        "steps": [
+          "Evaluate the matching input: PASS and gate_eligible true.",
+          "Change only receipt.candidate_digest to another valid 64-hex digest: REJECT / candidate_mismatch.",
+          "Delete only receipt.candidate_digest: PASS / independent_assurance_verified and gate_eligible true."
+        ],
+        "schema_check": "Installed jsonschema Draft202012Validator reports zero errors for both the request and the receipt with the digest omitted.",
+        "observed": {
+          "matching_digest": "PASS",
+          "wrong_digest": "REJECT",
+          "missing_receipt_digest": "PASS",
+          "missing_receipt_digest_gate_eligible": true
+        }
+      },
+      "bounded_repair_target": "Correct asymmetric optional-digest matching in hooks/verification.cjs and add a focused regression in test/verification.test.mjs. Preserve revision-only operation when neither side supplies a digest; reject an unbound receipt when a digest is supplied by the authoritative request/current candidate.",
+      "fixable": true
+    },
+    {
+      "id": "S7-002",
+      "priority": "P2",
+      "status": "CONFIRMED",
+      "confirmed": true,
+      "category": "correctness_and_plan_drift",
+      "title": "Resolve assurance units for the configured slice and lifecycle cadences",
+      "expected": "The approved slice, phase, and lifecycle cadences must each admit the corresponding declared unit once and retain its spent budget. An existing slice or Lifecycle must not need an owner amendment merely to use an already-approved cadence.",
+      "actual": "The new cadence branch permits a slice request past the initial guard, but declaredUnits still returns only waves[].id, phases[].phaseId, or direct. A declared S1 slice and a declared L1 Lifecycle are rejected as undeclared_review_unit. The same fixture's phase P1 passes. The documented runtime policy likewise still excludes slice identity from the budget key.",
+      "source": [
+        "AC-BDL-004",
+        "DES-BDL-007",
+        "DEC-BDL-030",
+        "DEC-BDL-047",
+        "skills/bearing-lite/references/assurance-policy.md"
+      ],
+      "location": {
+        "path": "hooks/assurance-budget.cjs",
+        "start_line": 57,
+        "end_line": 64
+      },
+      "related_locations": [
+        {
+          "path": "hooks/assurance-budget.cjs",
+          "start_line": 34,
+          "end_line": 43
+        },
+        {
+          "path": "hooks/assurance-budget.cjs",
+          "start_line": 94,
+          "end_line": 103
+        }
+      ],
+      "introduced_basis": "Slice/lifecycle configurability is introduced by this candidate's changed cadence guard, policy, schema, and public contract; the prior wave-only unit resolver was not adapted to that new behavior.",
+      "reachability": "hooks/transition-order.cjs evaluate({action_kind:'assurance_transition', assurance}) calls evaluateAssuranceBudget. The same evaluator is used for EVIDENCE_READY -> REVIEWING. Thus an Orchestrator performing the documented procedural check receives BLOCK on valid newly supported cadence choices.",
+      "reproduction": {
+        "method": "Temporary declaration and task-record JSON under a disposable system temp directory; invoke the real transition evaluator.",
+        "declaration": {
+          "journey_settings": {
+            "lifecycle_id": "L1",
+            "assurance_cadence": {
+              "reviewer": "slice"
+            }
+          },
+          "waves": [
+            {
+              "id": "P1"
+            }
+          ],
+          "slices": [
+            {
+              "id": "S1"
+            },
+            {
+              "id": "S2"
+            }
+          ]
+        },
+        "task_record": {
+          "journey": "L1",
+          "units": []
+        },
+        "request": "assurance = {journey:'L1', unit_kind:'slice', request_scope:'slice', cadence:'slice', assurance_unit:'S1', declaration_path, task_record_path}",
+        "observed": {
+          "slice_S1": "BLOCK / assurance_budget:OWNER_AMENDMENT_REQUIRED:undeclared_review_unit",
+          "phase_P1_control": "ADVISE / assurance_budget:PASS",
+          "lifecycle_L1": "BLOCK / assurance_budget:OWNER_AMENDMENT_REQUIRED:undeclared_review_unit"
+        },
+        "explanation": "For the phase control, use unit_kind/request_scope/cadence phase and assurance_unit P1. For the lifecycle case, use lifecycle and L1. The unit resolver never reads lifecycle_id or slices, regardless of their declared cadence.",
+        "cleanup": "Temporary fixture directory removed."
+      },
+      "bounded_repair_target": "Align hooks/assurance-budget.cjs unit resolution and the corresponding policy/reference with the frozen role/session cadence, with focused slice/lifecycle and spent-budget regressions in test/assurance-budget.test.mjs. Preserve existing phase/wave behavior and the one-round limit.",
+      "fixable": true
+    },
+    {
+      "id": "S7-003",
+      "priority": "P2",
+      "status": "CONFIRMED",
+      "confirmed": true,
+      "category": "security_and_correctness",
+      "title": "Prevent embedded SVG styles from changing the surrounding Manifest",
+      "expected": "A sanitized prepared model view must not alter or hide the Manifest's risk, authority, evidence, or navigation content outside that view.",
+      "actual": "sanitizeSvg preserves unrestricted stylesheet selectors and declarations, then renderModelFigure inserts that SVG directly into the HTML document. A valid digest-bound model containing '#s8, #s9 { display: none !important; }' renders successfully and retains a rule targeting the Manifest's risk and authority sections.",
+      "source": [
+        "AC-BDL-008",
+        "DES-BDL-009",
+        "DEC-BDL-045",
+        "DEC-BDL-048",
+        "https://www.w3.org/TR/SVG2/styling.html#StyleSheetsInHTMLDocuments"
+      ],
+      "location": {
+        "path": "tools/render-dod-manifest.mjs",
+        "start_line": 543,
+        "end_line": 550
+      },
+      "related_locations": [
+        {
+          "path": "tools/render-dod-manifest.mjs",
+          "start_line": 873,
+          "end_line": 881
+        }
+      ],
+      "reachability": "Both file-backed and inline selected/required SVG views pass through loadView -> sanitizeSvg -> renderModelFigure -> renderDodManifest. The generated document contains section IDs s8 and s9. SVG 2 section 6.4 specifies that SVG style sheets in an HTML document apply to all HTML and inline SVG content, so placement inside the figure does not scope the stylesheet.",
+      "reproduction": {
+        "method": "In-process renderDodManifest with a synthetic selected/required model; no browser, network request, or product write.",
+        "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\"><style>#s8, #s9 { display: none !important; }</style><text x=\"0\" y=\"20\">Model</text></svg>",
+        "setup": "Supply a dod_manifest with title Fixture, template_version 1.0.0, output_name fixture-dod-manifest.html, and models [{id:'M1',required:true,selected:true,render_status:'READY',digest:sha256Hex(svg),view:{format:'svg',inline:svg}}]. Include an OPEN risk row.",
+        "observed": {
+          "render_succeeded": true,
+          "global_hide_rule_preserved": true,
+          "risk_section_s8_present": true,
+          "authority_section_s9_present": true
+        },
+        "selector_check": "Installed cssselect2 matches the preserved selectors to HTML sections s8 and s9. The visibility consequence follows SVG 2 section 6.4 and the retained display:none!important declaration; this is standards-based static proof, not a claimed browser observation."
+      },
+      "bounded_repair_target": "Constrain or isolate SVG stylesheet effects in tools/render-dod-manifest.mjs so they cannot select the containing Manifest or other model views. Add a focused renderer regression for cross-document selectors while preserving safe prepared-view appearance.",
+      "fixable": true
+    },
+    {
+      "id": "S7-004",
+      "priority": "P2",
+      "status": "CONFIRMED",
+      "confirmed": true,
+      "category": "security",
+      "title": "Reject CSS-escaped external imports in sanitized SVG",
+      "expected": "External resource references must remain rejected after CSS parsing, including escaped forms, so a rendered Manifest is self-contained and cannot load a remote stylesheet from an embedded model.",
+      "actual": "The stylesheet filter searches raw CSS for literal @import and url(. It does not decode CSS escapes. '@im\\70ort \"https://example.invalid/model.css\";' survives sanitizeSvg and full renderDodManifest with a matching digest; a CSS parser recognizes it as an import rule.",
+      "source": [
+        "AC-BDL-008",
+        "DES-BDL-009",
+        "DEC-BDL-048",
+        "https://www.w3.org/TR/css-syntax-3/#escaping",
+        "https://www.w3.org/TR/css-cascade-5/#at-import",
+        "https://www.w3.org/TR/SVG2/styling.html#LinkElement"
+      ],
+      "location": {
+        "path": "tools/render-dod-manifest.mjs",
+        "start_line": 546,
+        "end_line": 550
+      },
+      "related_locations": [
+        {
+          "path": "tools/render-dod-manifest.mjs",
+          "start_line": 273,
+          "end_line": 284
+        }
+      ],
+      "reachability": "A prepared inline or file-backed SVG is accepted through the normal digest-checked renderer path. Its emitted style element is active CSS in the containing HTML. CSS Syntax defines hexadecimal escapes in identifiers; CSS Cascade defines import rules as stylesheet inclusion. No attacker-supplied digest mismatch is needed because the renderer is expected to sanitize the bytes it binds.",
+      "reproduction": {
+        "method": "In-process SVG sanitization and complete Manifest rendering, followed by an installed CSS parser; no URL was contacted.",
+        "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\"><style>@im\\70ort \"https://example.invalid/model.css\";</style></svg>",
+        "setup": "Use the same minimal selected/required model fixture as S7-003, with the SHA-256 of these exact SVG bytes.",
+        "observed": {
+          "render_succeeded": true,
+          "escaped_import_preserved": true
+        },
+        "parser": "tinycss2 1.5.1 parse_stylesheet(css, skip_whitespace=True, skip_comments=True)[0] returns type at-rule, lower_at_keyword import, and string URL https://example.invalid/model.css.",
+        "scope_note": "Distinct from S7-003: restricting selector scope alone does not prevent loading a remote stylesheet."
+      },
+      "bounded_repair_target": "Make the CSS safety checks in tools/render-dod-manifest.mjs fail closed for escaped/import/resource-bearing CSS across stylesheet and style-attribute entry points. Add a focused escaped-import regression; retain the approved standard-library implementation constraint.",
+      "fixable": true
+    },
+    {
+      "id": "S7-005",
+      "priority": "P2",
+      "status": "CONFIRMED",
+      "confirmed": true,
+      "category": "correctness_and_portability",
+      "title": "Quote the Copilot hook script path after plugin-root expansion",
+      "expected": "The newly shipped SessionStart and Stop hooks must run when the plugin's absolute installation path contains spaces.",
+      "actual": "Both commands concatenate an unquoted ${PLUGIN_ROOT} into a shell command. With a plugin root named 'plugin with spaces', Node receives only the path prefix as its script and exits 1 with MODULE_NOT_FOUND; neither hook emits its advisory JSON.",
+      "source": [
+        "AC-BDL-010",
+        "DES-BDL-011",
+        "https://code.visualstudio.com/docs/agent-customization/agent-plugins#plugin-environment-variables",
+        "https://code.visualstudio.com/docs/agent-customization/agent-plugins#hooks-in-plugins"
+      ],
+      "location": {
+        "path": "com.github.copilot/hooks/hooks.json",
+        "start_line": 7,
+        "end_line": 7
+      },
+      "related_locations": [
+        {
+          "path": "com.github.copilot/hooks/hooks.json",
+          "start_line": 13,
+          "end_line": 13
+        }
+      ],
+      "reachability": "VS Code discovers this exact com.github.copilot hook file for the root Agent Plugins manifest, expands PLUGIN_ROOT to the absolute plugin path, and executes hook commands through a shell. Spaces in a user or installation directory therefore affect the shipped command directly. This is a package command defect, not an upstream host defect.",
+      "reproduction": {
+        "method": "Read the shipped hook commands, create a disposable symlink to the unchanged plugin under a temporary 'plugin with spaces' directory, expand PLUGIN_ROOT, and run each command through the shell with its event JSON and an empty temporary cwd.",
+        "observed": {
+          "SessionStart": {
+            "exit_code": 1,
+            "module_not_found": true,
+            "stdout": ""
+          },
+          "Stop": {
+            "exit_code": 1,
+            "module_not_found": true,
+            "stdout": ""
+          }
+        },
+        "control": "Invoke node with the complete same script path as a single argv element: both events exit 0 and emit valid JSON.",
+        "cleanup": "Temporary symlink and fixture directory removed.",
+        "limitation": "Reproduced the documented shell invocation rather than launching a native VS Code session."
+      },
+      "bounded_repair_target": "Quote the complete script argument in both com.github.copilot/hooks/hooks.json commands and add a focused path-with-spaces execution case in test/host-mapping.test.mjs. Preserve the existing partial activation/closeout-only mapping.",
+      "fixable": true
+    }
+  ],
+  "reviewer_product_changed_paths": [],
+  "changed_paths": [
+    "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/review/s7-review.json"
+  ],
+  "evidence_written": [
+    "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/review/s7-review.json"
+  ],
+  "write_set_respected": true,
+  "mutation_verification": {
+    "before_receipt": "166 tracked/nonignored paths, including deleted-path markers and planning artifacts, compared by mode and content digest: no changes during review.",
+    "expected_after_receipt_changed_paths": [
+      "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/review/s7-review.json"
+    ],
+    "product_hash_before": "24b79eddc21a37460015bc63cbf046e40024bbc4f77d855142fa49282bfd0c9c",
+    "product_hash_after_expected": "24b79eddc21a37460015bc63cbf046e40024bbc4f77d855142fa49282bfd0c9c"
+  },
+  "remaining_risks": [
+    "The five confirmed defects remain unrepaired; this receipt grants no acceptance or publication.",
+    "Native VS Code/Copilot execution was not launched. The command failure is reproduced through the officially documented shell boundary.",
+    "SVG effects were adjudicated by emitted HTML, installed CSS parsers, and official standards. No browser testing or new visual-acceptance claim was made.",
+    "S6 evidence was consumed as the assured baseline. This review reran only focused checks and did not repeat full assurance or perform S8."
+  ],
+  "blocker": "Five introduced fixable defects require the authorized bounded repair and deterministic closure before progression. No repair or rereview performed.",
+  "stop": "Single S7 complete. Do not implement, repair, rereview, or dispatch S8 from this reviewer session."
+}

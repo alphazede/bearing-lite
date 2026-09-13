@@ -2,10 +2,10 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/alphazede/bearing-lite/schemas/journey.schema.json",
   "title": "Bearing Lite journey.json",
-  "description": "Append-only decisions and authority-event history plus the generation-bound checkout lease. The full mutable file digest is not the stable SEIT execution baseline. Extra lifecycle metadata is allowed at the document root. Lease identity fields stay closed.",
+  "description": "Append-only decisions and authority-event history plus the generation-bound checkout lease for a Bearing Lifecycle. The full mutable file digest is not the stable SEIT execution baseline. Extra lifecycle metadata is allowed at the document root. Lease identity fields stay closed. lineup_selection is not a live field; profile_selection is required.",
   "type": "object",
   "additionalProperties": true,
-  "required": ["schema_version", "journey", "checkout_lease", "decisions", "open_decisions", "planning_receipts", "lineup_selection"],
+  "required": ["schema_version", "journey", "checkout_lease", "decisions", "open_decisions", "planning_receipts", "profile_selection"],
   "properties": {
     "schema_version": {"type": "string", "minLength": 1},
     "journey": {
@@ -91,7 +91,7 @@
       }
     },
     "planning_receipts": {"type": "array", "items": {"type": "object", "additionalProperties": true}},
-    "lineup_selection": {"type": "object", "additionalProperties": true},
+    "profile_selection": {"type": "object", "additionalProperties": true},
     "owner_wait_tracking": {"type": "boolean", "description": "Explicit coverage marker; absence is unavailable, never zero owner wait."},
     "owner_blocked_intervals": {
       "type": "array",

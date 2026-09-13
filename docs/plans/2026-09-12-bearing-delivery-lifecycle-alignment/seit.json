@@ -1,0 +1,768 @@
+{
+  "schema_version": "1",
+  "artifact": {
+    "id": "SEIT-BDL-001",
+    "title": "Bearing Delivery Lifecycle Alignment V&V Plan",
+    "status": "planned",
+    "revision_note": "Planning-session repair under journey.json planning_repair_authority. Corrects verification methods that depended on three deleted standalone process HTML pages, types the unavailable visual demonstration, and binds the mechanical and non-behavioral slices to explicit V&V. No product file was changed by this repair."
+  },
+  "source_baseline": {
+    "repository": "alphazede/bearing-lite",
+    "revision": "b5cec79f04f6f6ea506a2ad89bf937aab143d876",
+    "planning_inputs": [
+      {
+        "path": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/bearing-delivery-lifecycle-alignment-technical-plan.md",
+        "sha256": "f5c315e663c97aeacbdc325575cecffe1f17ac2f1ead0ad1a58c06a8eb2a23c7",
+        "binding_status": "bound"
+      },
+      {
+        "path": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/design.md",
+        "sha256": "6649efaaf0e5d7f27892c55e1a66fab4139d36abd878bbbda87ca8e0db5fa2d4",
+        "binding_status": "bound"
+      }
+    ],
+    "planning_input_note": "Finalized by the Plan Integrator session on 2026-09-13 under DEC-BDL-066, after the technical plan and design narratives were repaired. Both digests were recomputed against the repaired files and bound. The superseded_narrative entries below are retained as history of what was corrected; they no longer describe live wording. Prior recorded digests were 05289bbd477f0edf1b8b855105395a2a6425be717261b1d0b77c66d385c8b512 (technical plan) and 080f74f3affb84042dee4da3281ac21d8267e48a6ac197bf2e20aaa36b424a4e (design)."
+  },
+  "decision_baseline": {
+    "kind": "confirmed-owner-decisions",
+    "confirmed_decisions": {
+      "range": "DEC-BDL-001..DEC-BDL-066",
+      "source": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/journey.json",
+      "current_amendments_governing_this_revision": [
+        "DEC-BDL-031",
+        "DEC-BDL-035",
+        "DEC-BDL-046",
+        "DEC-BDL-048",
+        "DEC-BDL-049",
+        "DEC-BDL-060",
+        "DEC-BDL-061",
+        "DEC-BDL-062",
+        "DEC-BDL-063",
+        "DEC-BDL-064",
+        "DEC-BDL-065",
+        "DEC-BDL-066"
+      ]
+    },
+    "open_items": []
+  },
+  "responsibility_and_change_authority": {
+    "owner": "Human owner approves scope, planning meaning, publication, and acceptance.",
+    "orchestrator": "Coordinates structure, dependencies, dispatch, durable state, and evidence presence.",
+    "specialists": "Own requirements, model, integration, V&V, implementation, and review judgments within assigned sessions.",
+    "change_rule": "A scope, interface, security, acceptance, or authority change stops dependent work and returns to the owner.",
+    "this_revision": "Authored by the Planning Test Engineer session under journey.json planning_repair_authority. Authorized write set: this file only. Narrative and record reconciliation belongs to the subsequent Plan Integrator session."
+  },
+  "applicable_documents_and_precedence": {
+    "order": [
+      "Current owner decisions in journey.json",
+      "This technical plan and design, except where a later confirmed decision supersedes them",
+      "Live GitHub issues #87-#91 where not superseded",
+      "Current repository contracts",
+      "Public external host documentation"
+    ],
+    "superseded_narrative_status": "Repaired on 2026-09-13 by the Plan Integrator session under DEC-BDL-066. The technical plan, design.md, workspace.md, journey.json scope record, and implementation-handoff.md no longer carry the wording listed below and no longer require any standalone process HTML page or mandate a modeling format. The entries are retained as the history of what was corrected.",
+  "superseded_narrative": [
+      {
+        "source": "bearing-delivery-lifecycle-alignment-technical-plan.md scope item 2, 'Publish the lifecycle specification and three accessible diagrams.'",
+        "superseded_by": "DEC-BDL-064",
+        "effect": "No standalone process HTML page is a required deliverable. The three deleted pages must not be recreated or backed up."
+      },
+      {
+        "source": "design.md DES-BDL-001, 'The three HTML diagrams are accessible visual projections of the same ordered contract.'",
+        "superseded_by": "DEC-BDL-064",
+        "effect": "HTML presentation applies to the DoD Manifest only."
+      },
+      {
+        "source": "design.md 'Model views' paragraph, including 'A missing public diagram is a visible verification failure.'",
+        "superseded_by": "DEC-BDL-046, DEC-BDL-048, DEC-BDL-064",
+        "effect": "Visible-failure semantics apply to a selected or required model view inside the DoD Manifest, not to a standalone public page. Modeling mode stays configurable and optional; no Mermaid or JSON diagram dialect is mandated and native SysML is retained when selected."
+      }
+    ],
+    "no_requirements_register": "DEC-BDL-004 and DEC-BDL-035. Owner explicitly selected a specification without a requirements register. Proof cases trace to acceptance contracts and owner decisions. Do not create or require a register."
+  },
+  "system_description_and_requirements_flowdown": {
+    "system": "Bearing Lite skills-first Agent Plugin and its public delivery lifecycle",
+    "acceptance_contracts": "AC-BDL-001 through AC-BDL-012 in the technical plan",
+    "owner_decision_sources": "DEC-BDL-001 through DEC-BDL-065 in journey.json; a proof case may trace to an owner decision where no acceptance contract states the obligation.",
+    "architecture": "DES-BDL-001 through DES-BDL-012 and CONTRACT-BDL-001 through CONTRACT-BDL-008 in design.md",
+    "requirements_register": "not_applicable; owner explicitly selected a specification without a requirements register"
+  },
+  "vv_methods": {
+    "analysis": "Cross-file terminology, authority, cadence, and traceability checks",
+    "inspection": "Public document, schema, template, package, host-layout, and frozen-migration-map inspection",
+    "test": "Node test suite, Python schema validation, renderer reproducibility, and negative cases",
+    "demonstration": "Human-observed presentation of the rendered DoD Manifest artifact, opened at wide and narrow widths. This is the only presentation surface in scope; per DEC-BDL-064 no standalone process HTML page is demonstrated, produced, or restored. Agent-run local-file browser navigation is unavailable in the current working session (see environments_fixtures_data_simulations_support.browser), so this method is currently typed INCONCLUSIVE and is the owner's to perform or waive.",
+    "evaluation": "Independent Test Engineer assurance, Reviewer defect review, and Integration Engineer execution assessment"
+  },
+  "levels": [
+    {
+      "id": "LEVEL-UNIT",
+      "scope": "Individual schemas, hooks, renderer, and skills"
+    },
+    {
+      "id": "LEVEL-PACKAGE",
+      "scope": "Packaged plugin contents and host discovery"
+    },
+    {
+      "id": "LEVEL-SYSTEM",
+      "scope": "End-to-end lifecycle, documentation, and final candidate"
+    }
+  ],
+  "environments_fixtures_data_simulations_support": {
+    "runtime": "Node.js 22 and Python 3 in the repository checkout",
+    "fixtures": "test/fixtures, including test/fixtures/s1l-migration-map.json, plus the synthetic DoD Manifest fixtures inside test/dod-manifest.test.mjs",
+    "hosts": "Agent Plugins 1.0 static validation, GitHub Copilot standard paths, and installed Muse Code 1.1.1 skill validator",
+    "browser": "unavailable. Local-file browser navigation is policy-blocked for agent sessions in this working session, and no workaround via localhost, raw CDP, alternate browser surfaces, or indirect execution is authorized or attempted. Every check that needs a live browser is typed INCONCLUSIVE with reason visual_demonstration_unavailable and cannot become PASS by agent action.",
+    "network": "Not required for deterministic repository checks"
+  },
+  "procedures_and_commands": [
+    {
+      "id": "CMD-BDL-NO-EXPLORER",
+      "command": "test ! -e skills/explorer",
+      "purpose": "DEC-BDL-061: S1E verifies removal of the legacy Explorer directory. S4/S5 documentation and package checks also reject active or shipped Explorer references."
+    },
+    {
+      "id": "CMD-BDL-SCHEMA",
+      "command": "python3 test/schema-validation.py",
+      "purpose": "Validate all shipped JSON schemas and fixtures, including the nested role/session profile cases."
+    },
+    {
+      "id": "CMD-BDL-TEST",
+      "command": "node --test test/*.test.mjs",
+      "purpose": "Run the complete deterministic Node test suite."
+    },
+    {
+      "id": "CMD-BDL-S1",
+      "command": "node --test test/s1-contracts.test.mjs",
+      "purpose": "Inspect the frozen S1L migration map, the exact packaged empty-catalog bytes, the byte-for-byte prompt copy operation, and the post-rename skill names."
+    },
+    {
+      "id": "CMD-BDL-MANIFEST",
+      "command": "node --test test/dod-manifest.test.mjs",
+      "purpose": "Exercise the DoD Manifest template, escaping, model activation states, view binding, and append-only closeout cases."
+    },
+    {
+      "id": "CMD-BDL-RENDER",
+      "command": "node tools/render-dod-manifest.mjs docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/implementation.json --check",
+      "purpose": "Prove byte-deterministic DoD Manifest rendering."
+    },
+    {
+      "id": "CMD-BDL-MUSE",
+      "command": "for skill in skills/*/SKILL.md; do muse skills validate \"$(dirname \"$skill\")\" --json; done",
+      "purpose": "Validate every shipped skill with Muse Code."
+    },
+    {
+      "id": "CMD-BDL-PLUGIN",
+      "command": "node --test test/plugin-manifest.test.mjs test/package-boundary.test.mjs",
+      "purpose": "Validate Agent Plugins, Copilot, and package layout."
+    },
+    {
+      "id": "CMD-BDL-DOCS",
+      "command": "node --test test/public-boundary.test.mjs test/skills-conformance.test.mjs",
+      "purpose": "Check public terminology, links, lifecycle order, and role/cadence agreement across the current approved public surfaces: README.md, docs/architecture/bearing-delivery-lifecycle.md, docs/guides/, and docs/releases/. This SEIT does not require any standalone process HTML page to exist; see known_contract_gaps GAP-BDL-001."
+    },
+    {
+      "id": "CMD-BDL-PACK",
+      "command": "npm pack --dry-run --json",
+      "purpose": "Inspect the release package without publishing."
+    },
+    {
+      "id": "CMD-BDL-DIFF",
+      "command": "git diff --check",
+      "purpose": "Reject malformed patches and whitespace errors."
+    },
+    {
+      "id": "CMD-BDL-VISUAL",
+      "command": "human procedure: open docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/bearing-delivery-lifecycle-alignment-dod-manifest.html in a browser at a wide and a narrow viewport width and observe the nine ordered sections, status chips, model figures, and focus/contrast behavior",
+      "purpose": "Owner-performed presentation demonstration of the DoD Manifest. Not agent-executable in this working session; see environments_fixtures_data_simulations_support.browser."
+    }
+  ],
+  "evidence_and_pass_fail": {
+    "evidence_root": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence",
+    "pass": "Every applicable proof case returns its expected observable evidence on the exact stable candidate, produced by a session with the authority the case names.",
+    "fail": "Any command failure, stale candidate identity, missing required rendering, unresolved active terminology, self-certification, or material open gap is FAIL.",
+    "inconclusive": "Tool unavailability or ambiguous evidence is typed INCONCLUSIVE and cannot become PASS.",
+    "inconclusive_reason_codes": [
+      "visual_demonstration_unavailable: a live browser is required and local-file browser navigation is policy-blocked for agent sessions.",
+      "blocked_by_contract_gap: the case is sound but its command currently asserts a superseded contract; see known_contract_gaps.",
+      "author_evidence_only: the only evidence is author-produced and no independent assurance session has rerun the claim."
+    ],
+    "independence_rule": "Author-produced results, including every entry in author_reported_results, are diagnostic. They never satisfy an assurance gate and are never recorded as independent PASS."
+  },
+  "anomaly_corrective_closure": {
+    "classification": "Record the affected contract, candidate, command, evidence, and owning role.",
+    "repair": "At most one bounded aggregated repair per declared phase.",
+    "closure": "Rerun deterministic affected checks without automatic rereview; unresolved material findings return to the owner.",
+    "rollback": "Restore tracked files from the baseline and remove new files in the affected write set.",
+    "prohibited_repairs": [
+      "Do not recreate, restore, or back up docs/architecture/bearing-process/index.html, planning.html, or implementation.html. DEC-BDL-064 deleted them deliberately. A check that fails because one of those files is absent is repaired by removing the superseded assertion or link, never by restoring the file.",
+      "Do not introduce a mandatory modeling or diagram format. Modeling mode stays configurable and optional, and native SysML is retained when selected (DEC-BDL-046, DEC-BDL-048, DEC-BDL-064)."
+    ]
+  },
+  "integration_vv_sequence": [
+    {
+      "order": 1,
+      "session": "Implementer",
+      "activity": "Complete bounded slices and diagnostic checks."
+    },
+    {
+      "order": 2,
+      "session": "Test Engineer assurance",
+      "activity": "Rerun planned V&V on the exact stable candidate."
+    },
+    {
+      "order": 3,
+      "session": "Reviewer",
+      "activity": "Review introduced actionable defects once at the configured phase boundary."
+    },
+    {
+      "order": 4,
+      "session": "Deterministic closure",
+      "activity": "Verify any authorized repair without automatic rereview."
+    },
+    {
+      "order": 5,
+      "session": "Integration Engineer execution",
+      "activity": "At Lifecycle completion, validate the system and assess the integrated result against the approved outcome."
+    }
+  ],
+  "proof_cases": [
+    {
+      "id": "SEIT-BDL-001",
+      "kind": "analysis",
+      "requirement_id": "AC-BDL-001",
+      "design_id": "DES-BDL-001",
+      "command_id": "CMD-BDL-DOCS",
+      "method": "analysis and inspection",
+      "preconditions": [
+        "README.md, docs/architecture/bearing-delivery-lifecycle.md, docs/guides/, docs/releases/, and the role contracts are complete.",
+        "Per DEC-BDL-064 the three standalone process HTML pages are absent and are not part of the required public surface set."
+      ],
+      "stimulus_or_procedure": "Run the documentation and conformance tests, then inspect the current approved public surfaces for one ordered lifecycle, consistent active role and session names, and resolvable internal links.",
+      "expected_result": "All public surfaces use the same active terms and ordered lifecycle, and every public link resolves to a file that exists.",
+      "observable_evidence": "Passing CMD-BDL-DOCS output plus an inspection record listing each checked public surface and its resolved links.",
+      "pass_fail_rule": "PASS only when no stale active role or lifecycle term remains outside explicitly historical material and no public link points at a deleted process HTML page. A failure caused by a missing docs/architecture/bearing-process/*.html file is FAIL against the assertion, not against the deletion, and is repaired by removing the superseded assertion or link.",
+      "method_fields": {
+        "coverage": [
+          "AC-BDL-001",
+          "AC-BDL-002",
+          "AC-BDL-003",
+          "AC-BDL-004",
+          "AC-BDL-005",
+          "AC-BDL-011"
+        ],
+        "public_surface_set": [
+          "README.md",
+          "docs/architecture/bearing-delivery-lifecycle.md",
+          "docs/guides/onboarding.md",
+          "docs/guides/lifecycle.md",
+          "docs/guides/roles.md",
+          "docs/guides/troubleshooting.md",
+          "docs/releases/announcement.md",
+          "docs/releases/acknowledgements.md"
+        ],
+        "status": "blocked_by_contract_gap",
+        "blocking_gaps": [
+          "GAP-BDL-001",
+          "GAP-BDL-002",
+          "GAP-BDL-003",
+          "GAP-BDL-004"
+        ],
+        "blocking_gap_note": "CMD-BDL-DOCS runs test/public-boundary.test.mjs, which currently carries two deleted-HTML failures (GAP-BDL-001) and one package-inventory failure (GAP-BDL-004). All three must clear before this case can PASS."
+      },
+      "negative_or_failure_case": "Injecting Surveyor, lineups.json, or lifecycle-end wording where phase cadence applies causes a focused test failure; adding a public link to a nonexistent page also fails."
+    },
+    {
+      "id": "SEIT-BDL-002",
+      "kind": "test",
+      "requirement_id": "AC-BDL-006",
+      "design_id": "DES-BDL-004",
+      "command_id": "CMD-BDL-SCHEMA",
+      "method": "schema validation",
+      "preconditions": [
+        "profiles schema and migration fixtures exist."
+      ],
+      "stimulus_or_procedure": "Validate valid nested profiles and invalid legacy, cadence, role, and route cases, including the nested role/session activation cases of DEC-BDL-049: sessions illegal for a role are rejected; an explicitly disabled session is accepted; an omitted role or omitted session is accepted as an optional configuration without the schema asserting any runtime enablement.",
+      "expected_result": "Only the new profile contract is accepted during normal operation, and role/session legality is enforced per DEC-BDL-047 and DEC-BDL-049.",
+      "observable_evidence": "Schema validation PASS with typed negative-case failures.",
+      "pass_fail_rule": "PASS only when legacy lineup fallback is absent, all invalid fixtures are rejected, and explicitly disabled and omitted sessions are handled as distinct accepted cases.",
+      "method_fields": {
+        "coverage": [
+          "AC-BDL-006",
+          "AC-BDL-007"
+        ],
+        "owner_decisions": [
+          "DEC-BDL-032",
+          "DEC-BDL-033",
+          "DEC-BDL-040",
+          "DEC-BDL-047",
+          "DEC-BDL-049",
+          "DEC-BDL-053"
+        ],
+        "non_inference": "This case asserts schema acceptance and rejection only. It does not assert that an omitted session flag means enabled or disabled, and it does not author a product default."
+      },
+      "negative_or_failure_case": "A profile containing an active Surveyor session, a session illegal for its role, or an invalid cadence is rejected."
+    },
+    {
+      "id": "SEIT-BDL-003",
+      "kind": "test",
+      "requirement_id": "AC-BDL-008",
+      "design_id": "DES-BDL-009",
+      "command_id": "CMD-BDL-RENDER",
+      "method": "deterministic render comparison",
+      "preconditions": [
+        "The template, renderer, manifest input, and any bound views are stable."
+      ],
+      "stimulus_or_procedure": "Render twice and compare exact bytes; run the long-input, escaping, missing-view, stale-digest, explicit N/A, inactive-model, and closeout fixtures.",
+      "expected_result": "The expected HTML is byte-identical and exposes every required section and state.",
+      "observable_evidence": "Renderer PASS receipt with output digest.",
+      "pass_fail_rule": "PASS only for byte equality, safe escaping, visible missing and stale states, visible explicit N/A reasons, and accessible fixed structure.",
+      "method_fields": {
+        "coverage": [
+          "AC-BDL-008",
+          "AC-BDL-012"
+        ],
+        "presentation_scope": "HTML presentation applies to the DoD Manifest only (DEC-BDL-008, DEC-BDL-064). No standalone process page is rendered or required.",
+        "presentation_demonstration": "Structural and byte checks are deterministic and agent-executable. Human visual confirmation is carried separately by SEIT-BDL-012 and is currently INCONCLUSIVE."
+      },
+      "negative_or_failure_case": "A selected or required model view that is missing or stale produces a visible failure and nonzero exit."
+    },
+    {
+      "id": "SEIT-BDL-004",
+      "kind": "test",
+      "requirement_id": "AC-BDL-009",
+      "design_id": "DES-BDL-008",
+      "command_id": "CMD-BDL-TEST",
+      "method": "contract tests",
+      "preconditions": [
+        "Verification request and receipt schemas and policy checks are implemented."
+      ],
+      "stimulus_or_procedure": "Run candidate mismatch, self-certification, unavailable backend, INCONCLUSIVE, stale evidence, and post-repair closure cases.",
+      "expected_result": "Typed results preserve candidate and authority boundaries.",
+      "observable_evidence": "Passing focused and full test suite output.",
+      "pass_fail_rule": "PASS only when diagnostic evidence cannot satisfy an assurance gate.",
+      "method_fields": {
+        "coverage": [
+          "AC-BDL-009"
+        ]
+      },
+      "negative_or_failure_case": "An author-produced diagnostic receipt submitted as assurance is rejected."
+    },
+    {
+      "id": "SEIT-BDL-005",
+      "kind": "inspection",
+      "requirement_id": "AC-BDL-010",
+      "design_id": "DES-BDL-011",
+      "command_id": "CMD-BDL-PLUGIN",
+      "method": "standard and package inspection",
+      "preconditions": [
+        "Root plugin manifest and Copilot extension directory are complete."
+      ],
+      "stimulus_or_procedure": "Validate the closed Agent Plugins manifest and inspect packaged Copilot and shared skill paths.",
+      "expected_result": "The portable manifest contains only standard fields and Copilot components use the standard namespace.",
+      "observable_evidence": "Passing plugin and package tests.",
+      "pass_fail_rule": "PASS only when root plugin.json has no top-level hooks and the Copilot hook file is packaged.",
+      "method_fields": {
+        "source": "GitHub Copilot and Agent Plugins 1.0 documentation",
+        "status": "blocked_by_contract_gap",
+        "blocking_gaps": [
+          "GAP-BDL-004"
+        ]
+      },
+      "negative_or_failure_case": "A nonstandard top-level hooks field fails manifest validation."
+    },
+    {
+      "id": "SEIT-BDL-006",
+      "kind": "test",
+      "requirement_id": "AC-BDL-010",
+      "design_id": "DES-BDL-011",
+      "command_id": "CMD-BDL-MUSE",
+      "method": "host-native automated validation",
+      "preconditions": [
+        "Muse Code 1.1.1 is available on PATH and shipped skills are complete."
+      ],
+      "stimulus_or_procedure": "Run Muse Code skill validation for each shipped skill directory.",
+      "expected_result": "Every skill is compatible with the supported common subset.",
+      "observable_evidence": "Per-skill Muse JSON validation results.",
+      "pass_fail_rule": "PASS only when every shipped skill returns valid true. If the validator is absent, type INCONCLUSIVE rather than PASS.",
+      "method_fields": {
+        "host": "Muse Code 1.1.1 (1.1.1-R2514.1)",
+        "kind_correction": "Reclassified from demonstration to test in this revision: the procedure is a non-interactive CLI validation, not a human-observed demonstration. The only demonstration case in this SEIT is SEIT-BDL-012."
+      },
+      "negative_or_failure_case": "An unsupported or malformed SKILL.md field returns a validation diagnostic."
+    },
+    {
+      "id": "SEIT-BDL-007",
+      "kind": "inspection",
+      "requirement_id": "AC-BDL-012",
+      "design_id": "DES-BDL-010",
+      "command_id": "CMD-BDL-PACK",
+      "method": "package dry run",
+      "preconditions": [
+        "All package files and removals are final."
+      ],
+      "stimulus_or_procedure": "Inspect npm dry-run contents for profiles, skills, schemas, templates, renderer, Copilot extension, and absence of legacy lineup files.",
+      "expected_result": "The release package contains only intended public and executable surfaces.",
+      "observable_evidence": "npm pack JSON file inventory.",
+      "pass_fail_rule": "PASS when required new files are present and lineups.json, Surveyor, Explorer, credentials, and planning evidence are absent.",
+      "method_fields": {
+        "publication": "dry-run only",
+        "status": "blocked_by_contract_gap",
+        "blocking_gaps": [
+          "GAP-BDL-004"
+        ]
+      },
+      "negative_or_failure_case": "Legacy lineup, Surveyor, or Explorer files in the tarball fail package-boundary tests."
+    },
+    {
+      "id": "SEIT-BDL-008",
+      "kind": "evaluation",
+      "requirement_id": "AC-BDL-012",
+      "design_id": "CONTRACT-BDL-008",
+      "command_id": "CMD-BDL-DIFF",
+      "method": "system-level validation and integrated technical assessment",
+      "preconditions": [
+        "All implementation, assurance, review, and deterministic closure evidence is stable."
+      ],
+      "stimulus_or_procedure": "Integration Engineer execution compares the final candidate and evidence with the approved outcome and acceptance contracts.",
+      "expected_result": "The complete package is coherent, reviewable, portable, and free of unresolved material gaps.",
+      "observable_evidence": "Integration assessment receipt with candidate SHA, changed paths, command results, and gap status.",
+      "pass_fail_rule": "PASS only when all contracts are met and no unresolved system-level gap remains. An open entry in known_contract_gaps is an unresolved system-level gap.",
+      "method_fields": {
+        "cadence": "lifecycle",
+        "independence": "fresh execution session preferred"
+      },
+      "negative_or_failure_case": "Any mismatch among README, schema, skill, hook, test, model view, or package output returns GAPS."
+    },
+    {
+      "id": "SEIT-BDL-009",
+      "kind": "inspection",
+      "requirement_id": "AC-BDL-005",
+      "design_id": "DES-BDL-003",
+      "command_id": "CMD-BDL-NO-EXPLORER",
+      "method": "deterministic absence inspection",
+      "preconditions": [
+        "S1L has already preserved every approved migrated skill under its new name.",
+        "DEC-BDL-061 authorizes removing the legacy Explorer skill from the repository and the shipped package."
+      ],
+      "stimulus_or_procedure": "Run the absence check for skills/explorer, then confirm no Explorer alias or compatibility stub remains in the shipped package inventory and no active public surface names Explorer as a current role.",
+      "expected_result": "skills/explorer is absent, the package inventory contains no Explorer path, and Explorer survives only as explicitly historical material.",
+      "observable_evidence": "Zero exit from CMD-BDL-NO-EXPLORER plus the CMD-BDL-PACK inventory and CMD-BDL-DOCS output showing no active Explorer surface.",
+      "pass_fail_rule": "PASS only when absence is deterministic and no shipped alias or active public reference remains. Historical evidence and user configuration are out of scope and must not be altered to satisfy this case.",
+      "method_fields": {
+        "slice": "S1E",
+        "owner_decisions": [
+          "DEC-BDL-061"
+        ],
+        "work_class": "non_behavioral_removal",
+        "supporting_commands": [
+          "CMD-BDL-PACK",
+          "CMD-BDL-DOCS"
+        ],
+        "rationale": "Added in this revision because S1E's command CMD-BDL-NO-EXPLORER previously had no proof case binding it."
+      },
+      "negative_or_failure_case": "Restoring skills/explorer, shipping an Explorer alias stub, or naming Explorer as a current role in an active public surface fails the absence check or the documentation and package checks."
+    },
+    {
+      "id": "SEIT-BDL-010",
+      "kind": "inspection",
+      "requirement_id": "AC-BDL-005",
+      "design_id": "DES-BDL-005",
+      "command_id": "CMD-BDL-S1",
+      "method": "preservation inspection against the frozen migration map",
+      "preconditions": [
+        "test/fixtures/s1l-migration-map.json is the frozen source/destination map for S1L.",
+        "DEC-BDL-063 requires renaming existing skills and preserving file content and behavior rather than deleting and recreating them.",
+        "DEC-BDL-042 requires the prompt skill to ship unchanged."
+      ],
+      "stimulus_or_procedure": "Inspect the frozen migration map operations, the exact packaged empty-catalog bytes, the byte-for-byte copy_unchanged operation for the prompt skill, and the post-rename skill names for Implementer, Reviewer, and Coordinator.",
+      "expected_result": "Every migration operation is an exact rename, copy, or removal from the frozen map; the shipped catalog is empty and carries no default; the prompt skill is copied unchanged; renamed skills carry the approved names.",
+      "observable_evidence": "Passing CMD-BDL-S1 output enumerating the frozen operations, catalog bytes, and post-rename names.",
+      "pass_fail_rule": "PASS only when no migration operation requires a semantic edit, the prompt skill content is identical to its source, and the disappearance of an old source path is explained by an approved rename in the frozen map.",
+      "method_fields": {
+        "slices": [
+          "S1L",
+          "S1E"
+        ],
+        "owner_decisions": [
+          "DEC-BDL-042",
+          "DEC-BDL-058",
+          "DEC-BDL-063"
+        ],
+        "work_class": "non_behavioral_preservation",
+        "rationale": "Added in this revision so the mechanical migration slices carry an explicit preservation and output check rather than relying only on downstream schema and package cases.",
+        "non_inference": "This case checks preservation and exactness only. It does not restate or redefine any migrated skill's behavior."
+      },
+      "negative_or_failure_case": "An operation outside the frozen map, a prompt skill that differs from its source, a non-empty shipped catalog, or a skill left under a retired name fails the inspection."
+    },
+    {
+      "id": "SEIT-BDL-011",
+      "kind": "test",
+      "requirement_id": "AC-BDL-008",
+      "design_id": "DES-BDL-009",
+      "command_id": "CMD-BDL-MANIFEST",
+      "method": "applicability-typed model-view inspection",
+      "preconditions": [
+        "The DoD Manifest renderer and its model-activation contract are implemented.",
+        "The configured modeling mode for a given model row is stated by the Systems Modeler in implementation.json.dod_manifest.models and is not chosen by this plan."
+      ],
+      "stimulus_or_procedure": "Exercise the three explicitly stated model-row states against the renderer: an activated row (selected or required) must bind a digest-checked view and renders it; a row marked not_applicable with a reason stays visible as N/A and requires no view; an explicitly inactive row (selected false and required false) requires no view and does not fail. Then exercise the failure states: an activated row whose view is missing, and an activated row whose bound digest is stale.",
+      "expected_result": "Each state renders or fails exactly as its declared applicability requires, and the modeling mode recorded on the row is carried through to the rendered inventory without the renderer selecting or rewriting it.",
+      "observable_evidence": "Passing CMD-BDL-MANIFEST output covering the activated, N/A, inactive, missing-view, and stale-digest cases, plus the rendered model inventory showing each row's mode, source, viewpoint, trace, limitations, and status.",
+      "pass_fail_rule": "PASS only when a selected or required missing or stale view fails visibly, an explicit N/A row stays visible with its reason, an explicitly inactive row passes without a view, and no modeling format is required beyond what the row itself declares.",
+      "method_fields": {
+        "slices": [
+          "S3",
+          "S3L"
+        ],
+        "owner_decisions": [
+          "DEC-BDL-046",
+          "DEC-BDL-048",
+          "DEC-BDL-064"
+        ],
+        "modeling_mode_is_configurable": "Modeling is configurable and optional. Where native SysML is the selected mode, the SysML model remains the semantic authority and the embedded SVG or PNG is a digest-bound human projection (DEC-BDL-048). This SEIT mandates no Mermaid, no JSON diagram dialect, and no particular tool.",
+        "derived_view_statement": "docs/architecture/bearing-process/lifecycle-context.svg and lifecycle-process-views.svg are derived views retained in the repository. They are not, and must not be presented as, a SysML model.",
+        "non_inference": "This case asserts only the explicitly stated states. It does not assert a meaning for a model row that omits both selected and required, and it does not author a product default for that case.",
+        "rationale": "Added in this revision to carry the DEC-BDL-046 model-view semantics on a case of its own, now that no standalone process HTML page exists to carry them.",
+        "current_binding_state": "Both planning model rows are currently bound through implementation.json.dod_manifest.closeout.model_views, which the implemented supplemental binding contract resolves; CMD-BDL-RENDER passes with digest sha256:c323df661ae2449e8f3f61a5548955100bcb4451b5f90724999599d7f7b6daf4. A row bound supplementally satisfies the activated-row state of this case exactly as a directly bound row does. The open item on these rows is stale descriptive metadata only (GAP-BDL-005)."
+      },
+      "negative_or_failure_case": "An activated row with no bound view, a stale digest, or an N/A row rendered invisibly fails the manifest tests."
+    },
+    {
+      "id": "SEIT-BDL-012",
+      "kind": "demonstration",
+      "requirement_id": "AC-BDL-008",
+      "design_id": "CONTRACT-BDL-004",
+      "command_id": "CMD-BDL-VISUAL",
+      "method": "human-observed presentation demonstration",
+      "preconditions": [
+        "The DoD Manifest has been rendered and CMD-BDL-RENDER reports byte determinism.",
+        "A human observer with browser access performs the procedure. Agent local-file browser navigation is policy-blocked in this working session."
+      ],
+      "stimulus_or_procedure": "Open the rendered DoD Manifest at a wide and a narrow viewport width and observe the nine ordered sections, fixed tables, status chips, model figures, visible N/A reasons, keyboard focus, and print layout. Only the DoD Manifest is demonstrated; per DEC-BDL-064 no standalone process HTML page exists or is demonstrated.",
+      "expected_result": "The manifest is legible and navigable at both widths with visible status, visible N/A reasons, and no clipped or unreachable content.",
+      "observable_evidence": "An owner or human observer's recorded observation. No agent-produced substitute is accepted.",
+      "pass_fail_rule": "Currently INCONCLUSIVE with reason visual_demonstration_unavailable. This case cannot become PASS by agent action and must not be substituted by the deterministic structural checks of SEIT-BDL-003 or SEIT-BDL-011. The owner may perform it, waive it, or accept the deterministic checks as sufficient; that is an owner decision this plan does not make.",
+      "method_fields": {
+        "status": "INCONCLUSIVE",
+        "reason_code": "visual_demonstration_unavailable",
+        "blocked_workarounds": "No localhost server, raw CDP or browser command, alternate browser surface, or indirect execution is authorized or attempted.",
+        "deterministic_substitutes_available": [
+          "SEIT-BDL-003",
+          "SEIT-BDL-011"
+        ],
+        "substitution_rule": "The deterministic cases cover structure, escaping, determinism, and model-view state. They do not cover human visual legibility, and this SEIT does not claim they do.",
+        "rationale": "Replaces the former vv_methods.demonstration wording that required opening three deleted process HTML pages."
+      },
+      "negative_or_failure_case": "Not exercised. An agent-produced claim of visual PASS, or a rendered artifact that clips content or hides status at a narrow width, is a FAIL of this case's intent."
+    }
+  ],
+  "slice_coverage": {
+    "note": "Advisory mapping for the subsequent Plan Integrator session. implementation.json.slices[].seit_proof_rows is the authoritative binding and is not edited by this SEIT repair. Rows marked add are new in this revision and are not yet referenced by any slice.",
+    "map": [
+      {
+        "slice": "S1",
+        "current": [
+          "SEIT-BDL-001",
+          "SEIT-BDL-002",
+          "SEIT-BDL-004"
+        ],
+        "add": []
+      },
+      {
+        "slice": "S1L",
+        "current": [
+          "SEIT-BDL-002",
+          "SEIT-BDL-007"
+        ],
+        "add": [
+          "SEIT-BDL-010"
+        ]
+      },
+      {
+        "slice": "S1E",
+        "current": [
+          "SEIT-BDL-001",
+          "SEIT-BDL-007"
+        ],
+        "add": [
+          "SEIT-BDL-009"
+        ]
+      },
+      {
+        "slice": "S2",
+        "current": [
+          "SEIT-BDL-004"
+        ],
+        "add": []
+      },
+      {
+        "slice": "S3",
+        "current": [
+          "SEIT-BDL-003"
+        ],
+        "add": [
+          "SEIT-BDL-011"
+        ]
+      },
+      {
+        "slice": "S3L",
+        "current": [
+          "SEIT-BDL-003"
+        ],
+        "add": [
+          "SEIT-BDL-011"
+        ]
+      },
+      {
+        "slice": "S4",
+        "current": [
+          "SEIT-BDL-001"
+        ],
+        "add": []
+      },
+      {
+        "slice": "S5",
+        "current": [
+          "SEIT-BDL-005",
+          "SEIT-BDL-006",
+          "SEIT-BDL-007"
+        ],
+        "add": []
+      },
+      {
+        "slice": "S5L",
+        "current": [
+          "SEIT-BDL-005",
+          "SEIT-BDL-006",
+          "SEIT-BDL-007"
+        ],
+        "add": []
+      },
+      {
+        "slice": "S6",
+        "current": [
+          "SEIT-BDL-001",
+          "SEIT-BDL-002",
+          "SEIT-BDL-003",
+          "SEIT-BDL-004",
+          "SEIT-BDL-005",
+          "SEIT-BDL-006",
+          "SEIT-BDL-007"
+        ],
+        "add": [
+          "SEIT-BDL-009",
+          "SEIT-BDL-010",
+          "SEIT-BDL-011",
+          "SEIT-BDL-012"
+        ]
+      },
+      {
+        "slice": "S7",
+        "current": [
+          "SEIT-BDL-008"
+        ],
+        "add": []
+      },
+      {
+        "slice": "S8",
+        "current": [
+          "SEIT-BDL-008"
+        ],
+        "add": [
+          "SEIT-BDL-012"
+        ]
+      }
+    ]
+  },
+  "known_contract_gaps": [
+    {
+      "id": "GAP-BDL-001",
+      "status": "open",
+      "owning_role": "Implementer, S4",
+      "affected_contract": "AC-BDL-001 via SEIT-BDL-001 and CMD-BDL-DOCS",
+      "evidence": "Two failing expectations in test/public-boundary.test.mjs still require docs/architecture/bearing-process/index.html, planning.html, and implementation.html (assertions at lines 415-417, 457-458, and 503): 'public lifecycle docs describe Intake then Architectural Alignment then Scope Definition then Planning and Design' (ENOENT on index.html) and 'public lifecycle surfaces exist, stay public, and omit active retired terms' (existsSync on index.html). These are the only two deleted-HTML failures in the suite; the third public-boundary failure is package inventory and belongs to GAP-BDL-004.",
+      "required_repair": "Retarget or remove only the format-specific expectations that name a standalone process HTML file, and keep both behaviors under test against the public surfaces that exist. The ordered-lifecycle check must still assert Intake then Architectural Alignment then Scope Definition then Planning and Design across README.md and docs/architecture/bearing-delivery-lifecycle.md; the public-surface check must still assert existence, absence of private paths and docs/plans references, absence of retired active terms, and link integrity across the current public surface set. Do not delete either whole test, do not weaken any retained assertion, and do not recreate or restore the deleted pages (DEC-BDL-064).",
+      "authority": "Outside this SEIT repair's write set. Requires an authorized product slice.",
+      "failure_count": 2
+    },
+    {
+      "id": "GAP-BDL-002",
+      "status": "open",
+      "owning_role": "Implementer, S4",
+      "affected_contract": "AC-BDL-001 via SEIT-BDL-001",
+      "evidence": "README.md lines 53-56 link a 'Process diagrams' list pointing at the three deleted pages.",
+      "required_repair": "Remove or retarget the 'Process diagrams' link list to surfaces that exist. Link-integrity coverage for README.md is retained. Do not recreate the pages.",
+      "authority": "Outside this SEIT repair's write set."
+    },
+    {
+      "id": "GAP-BDL-003",
+      "status": "open",
+      "owning_role": "Implementer, S4",
+      "affected_contract": "AC-BDL-001 via SEIT-BDL-001",
+      "evidence": "docs/guides/lifecycle.md line 31 links ../architecture/bearing-process/index.html.",
+      "required_repair": "Remove or retarget the link. Link-integrity coverage for docs/guides/lifecycle.md is retained. Do not recreate the page.",
+      "authority": "Outside this SEIT repair's write set."
+    },
+    {
+      "id": "GAP-BDL-004",
+      "status": "open",
+      "owning_role": "Implementer, S5 and Light Implementer, S5L",
+      "affected_contract": "AC-BDL-010 and AC-BDL-012 via SEIT-BDL-005 and SEIT-BDL-007. Also blocks CMD-BDL-DOCS and therefore SEIT-BDL-001, because one of the three failures lives in test/public-boundary.test.mjs.",
+      "evidence": "Three failing package-inventory expectations, all traced to the same unfinished S5 work (package.json 'files' does not include profiles.json). One in test/public-boundary.test.mjs: 'files allowlist includes shipped profiles.json and schemas/ and excludes legacy lineups.json' (PACKAGE.files must include profiles.json). Two in test/package-boundary.test.mjs: 'package.json name is @alphazede/bearing-lite with public-only files allowlist' and 'npm pack includes profiles.json and schema files and no private paths'. S5 is unfinished.",
+      "required_repair": "Complete S5 and S5L so the package allowlist and dry-run inventory match the approved package surface. No SEIT change and no test change are needed.",
+      "authority": "Outside this SEIT repair's write set.",
+      "failure_count": 3
+    },
+    {
+      "id": "GAP-BDL-005",
+      "status": "open",
+      "owning_role": "Systems Modeler and Plan Integrator",
+      "affected_contract": "AC-BDL-008 via SEIT-BDL-011. Metadata accuracy only; not a rendering or binding gap.",
+      "evidence": "Both model rows are bound and render. implementation.json.dod_manifest.closeout.model_views supplies digest-bound inline SVG for MODEL-BDL-001 (sha256:b536039658cb5baa9460902857a437295b6b8cb8c9b9d636f0c96f65af1dde31) and MODEL-BDL-002 (74816 bytes, digest verified), which the implemented supplemental binding contract resolves, and CMD-BDL-RENDER reports RENDER_CHECK_PASS digest=sha256:c323df661ae2449e8f3f61a5548955100bcb4451b5f90724999599d7f7b6daf4 template=1.0.0. The absence of direct view and digest fields on models[] is therefore not a gap. What remains stale is the descriptive source and applicability metadata on the planning rows: MODEL-BDL-002 declares source 'docs/architecture/bearing-process/*.html' and limitations 'Human-readable HTML projections' although those pages were deleted under DEC-BDL-064, and MODEL-BDL-001 declares source 'design.md Mermaid context view' while DEC-BDL-064 forbids presenting Mermaid as a mandated format.",
+      "required_repair": "Refresh the descriptive source, limitations, and applicability text on each planning model row so it names a source that exists and matches the current owner intent, per DEC-BDL-046. Do not add, replace, or re-derive any view binding, and do not select a modeling mode on the owner's behalf. The retained docs/architecture/bearing-process/lifecycle-context.svg and lifecycle-process-views.svg are derived views, not a SysML model.",
+      "authority": "Outside this SEIT repair's write set. implementation.json belongs to the Plan Integrator session.",
+   "status_current": "resolved",
+   "resolved_at": "2026-09-13",
+   "resolved_by": "Plan Integrator session cc168fca-b4ba-43c5-a01d-41c1a9672fb6 under DEC-BDL-066",
+   "resolution": "The descriptive source and limitations text was refreshed on both planning model rows: MODEL-BDL-001 now names the non-normative design.md context sketch and states that no diagram dialect is mandated; MODEL-BDL-002 now names the two retained derived SVG views and states they are not a native SysML model. No view binding was added, replaced, or re-derived, no modeling mode was selected, and both supplemental closeout.model_views bindings are unchanged."
+    },
+    {
+      "id": "GAP-BDL-006",
+      "status": "open",
+      "owning_role": "Plan Integrator",
+      "affected_contract": "Planning-input binding",
+      "evidence": "The technical plan and design still carry the wording listed in applicable_documents_and_precedence.superseded_narrative, and journey.json lines 787-789 record the deleted page paths as mapped inputs, as does workspace.md lines 10-12 and 25.",
+      "required_repair": "Reconcile the narratives and records, then finalize the source_baseline.planning_inputs digests and clear binding_status.",
+      "authority": "Outside this SEIT repair's write set; explicitly assigned to the subsequent session.",
+   "status_current": "resolved",
+   "resolved_at": "2026-09-13",
+   "resolved_by": "Plan Integrator session cc168fca-b4ba-43c5-a01d-41c1a9672fb6 under DEC-BDL-066",
+   "resolution": "The technical plan, design.md, workspace.md, the journey.json scope record, and implementation-handoff.md were reconciled; the deleted page paths are retained only as explicitly labelled history. source_baseline.planning_inputs digests were recomputed against the repaired files and binding_status is now bound."
+    }
+  ],
+  "author_reported_results": {
+    "status": "author_reported, not assurance",
+    "rule": "These results are diagnostic. They are recorded so prospective acceptance stays separate from evidence that already exists. No entry here is an independent PASS, and none satisfies SEIT-BDL-001 through SEIT-BDL-012.",
+    "entries": [
+      {
+        "source": "journey.json recovery_packets REC-SVG-001, slice S3, route Grok Build / xhigh",
+        "claim": "SVG predefined and numeric entity double-escaping repaired; node --test test/dod-manifest.test.mjs exit 0 with 14 passing.",
+        "recorded_status": "PASS_AUTHOR_VERIFIED",
+        "assurance_status": "not_rerun_by_an_independent_session"
+      },
+      {
+        "source": "journey.json recovery_packets REC-PROFILE-001, slice S1, route Grok Build / xhigh",
+        "claim": "Role/session schema restrictions repaired; python3 test/schema-validation.py reports 256 cases.",
+        "recorded_status": "PASS_AUTHOR_VERIFIED",
+        "assurance_status": "not_rerun_by_an_independent_session"
+      },
+      {
+        "source": "Planning Test Engineer observation during this SEIT repair",
+        "claim": "node --test test/public-boundary.test.mjs test/package-boundary.test.mjs reported 20 pass and 5 fail, matching the reported full-suite figure of 392 of 397 with five known package and stale-HTML failures.",
+        "recorded_status": "planning_observation",
+        "assurance_status": "not_an_assurance_result; recorded only to classify GAP-BDL-001 through GAP-BDL-004"
+      }
+    ]
+  }
+}

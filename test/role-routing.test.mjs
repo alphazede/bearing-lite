@@ -1,6 +1,6 @@
 /**
  * CMD-ROUTING-01 / SEIT-ROUTING-01
- * Direct, Explorer-owned wave, and Expedition routes; dormancy negatives.
+ * Direct, Coordinator-owned wave, and Orchestrator-sequenced routes; dormancy negatives.
  */
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
@@ -10,16 +10,16 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-/** @typedef {'crewmate'|'explorer'|'navigator'|'validator'|'park-ranger'|'surveyor'|'test-engineer'} Role */
+/** @typedef {'implementer'|'coordinator'|'navigator'|'validator'|'reviewer'|'integration-engineer'|'test-engineer'} Role */
 
 /**
  * @typedef {{
- *   kind: 'direct' | 'explorer_wave' | 'expedition',
+ *   kind: 'direct' | 'coordinator_wave' | 'expedition',
  *   packetCount?: number,
  *   multiWaveConflict?: boolean,
  *   nestedLanes?: number,
  *   requiredAssurance?: string[],
- *   explorerImplements?: boolean,
+ *   coordinatorImplements?: boolean,
  *   forceControllersOnSinglePacket?: boolean,
  *   omitWaveCoordination?: boolean,
  *   assignNavigator?: boolean,
@@ -42,12 +42,10 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
  */
 
 const ALL_ROLES = /** @type {const} */ ([
-  "crewmate",
-  "explorer",
-  "navigator",
-  "validator",
-  "park-ranger",
-  "surveyor",
+  "implementer",
+  "coordinator",
+  "reviewer",
+  "integration-engineer",
   "test-engineer",
 ]);
 
@@ -58,11 +56,11 @@ const ALL_ROLES = /** @type {const} */ ([
  */
 export function selectRoute(input) {
   // Negative policy violations first.
-  if (input.explorerImplements === true) {
+  if (input.coordinatorImplements === true) {
     return {
       ok: false,
-      code: "explorer_performs_packet_work",
-      message: "Explorer must not implement packet work; assign Crewmate",
+      code: "coordinator_performs_packet_work",
+      message: "Coordinator must not implement packet work; assign Implementer",
     };
   }
   if (input.forceControllersOnSinglePacket === true && (input.packetCount ?? 1) <= 1) {
@@ -108,11 +106,11 @@ export function selectRoute(input) {
   const active = [];
 
   if (input.kind === "direct") {
-    active.push("crewmate");
-  } else if (input.kind === "explorer_wave") {
-    active.push("explorer", "crewmate");
+    active.push("implementer");
+  } else if (input.kind === "coordinator_wave") {
+    active.push("coordinator", "implementer");
   } else if (input.kind === "expedition") {
-    active.push("explorer", "crewmate");
+    active.push("coordinator", "implementer");
   } else {
     return {
       ok: false,
@@ -130,21 +128,28 @@ export function selectRoute(input) {
     ) {
       active.push("test-engineer");
     }
-    if ((key === "park-ranger" || key === "parkranger") && !active.includes("park-ranger")) {
-      active.push("park-ranger");
+    if ((key === "reviewer" || key === "park-ranger") && !active.includes("reviewer")) {
+      active.push("reviewer");
     }
-    if (key === "surveyor" && !active.includes("surveyor")) active.push("surveyor");
+    if (
+      (key === "integration-engineer" ||
+        key === "integration_engineer.execution" ||
+        key === "surveyor") &&
+      !active.includes("integration-engineer")
+    ) {
+      active.push("integration-engineer");
+    }
   }
 
   const activeSet = new Set(active);
   const dormant = ALL_ROLES.filter((r) => !activeSet.has(r));
-  const coordinators = active.filter((r) => r === "explorer");
-  const workers = active.filter((r) => r === "crewmate");
+  const coordinators = active.filter((r) => r === "coordinator");
+  const workers = active.filter((r) => r === "implementer");
 
   // Direct never activates controllers.
   if (input.kind === "direct") {
     assert.ok(!active.includes("navigator"));
-    assert.ok(!active.includes("explorer"));
+    assert.ok(!active.includes("coordinator"));
   }
 
   return {
@@ -157,42 +162,40 @@ export function selectRoute(input) {
 }
 
 describe("CMD-ROUTING-01 role-routing (SEIT-ROUTING-01)", () => {
-  it("Direct: Crewmate only (+ optional assurance) with self-check path", () => {
+  it("Direct: Implementer only (+ optional assurance) with self-check path", () => {
     const verdict = selectRoute({ kind: "direct", packetCount: 1, requiredAssurance: [] });
     assert.equal(verdict.ok, true);
     if (verdict.ok) {
-      assert.deepEqual(verdict.active, ["crewmate"]);
-      assert.deepEqual(verdict.workers, ["crewmate"]);
+      assert.deepEqual(verdict.active, ["implementer"]);
+      assert.deepEqual(verdict.workers, ["implementer"]);
       assert.deepEqual(verdict.coordinators, []);
-      assert.ok(verdict.dormant.includes("explorer"));
-      assert.ok(verdict.dormant.includes("navigator"));
+      assert.ok(verdict.dormant.includes("coordinator"));
+      assert.ok(!verdict.active.includes("navigator"));
     }
   });
 
-  it("Explorer-owned wave: Explorer + Crewmates; Explorer does not implement", () => {
+  it("Coordinator-owned wave: Coordinator + Implementers; Coordinator does not implement", () => {
     const verdict = selectRoute({
-      kind: "explorer_wave",
+      kind: "coordinator_wave",
       packetCount: 3,
       requiredAssurance: [],
     });
     assert.equal(verdict.ok, true);
     if (verdict.ok) {
-      assert.ok(verdict.active.includes("explorer"));
-      assert.ok(verdict.active.includes("crewmate"));
+      assert.ok(verdict.active.includes("coordinator"));
+      assert.ok(verdict.active.includes("implementer"));
       assert.ok(!verdict.active.includes("navigator"));
-      assert.ok(verdict.dormant.includes("navigator"));
     }
   });
 
-  it("Expedition: Router sequences waves; Explorer owns lanes; Navigator stays dormant", () => {
+  it("Orchestrator sequences waves; Coordinator owns lanes; Navigator is not a route role", () => {
     const simple = selectRoute({ kind: "expedition", packetCount: 4 });
     assert.equal(simple.ok, true);
     if (simple.ok) {
       assert.ok(!simple.active.includes("navigator"));
-      assert.ok(simple.active.includes("explorer"));
-      assert.ok(simple.active.includes("crewmate"));
-      assert.deepEqual(simple.coordinators, ["explorer"]);
-      assert.ok(simple.dormant.includes("navigator"));
+      assert.ok(simple.active.includes("coordinator"));
+      assert.ok(simple.active.includes("implementer"));
+      assert.deepEqual(simple.coordinators, ["coordinator"]);
     }
     const conflicted = selectRoute({
       kind: "expedition",
@@ -201,8 +204,8 @@ describe("CMD-ROUTING-01 role-routing (SEIT-ROUTING-01)", () => {
     });
     assert.equal(conflicted.ok, true);
     if (conflicted.ok) {
-      assert.deepEqual(conflicted.active, ["explorer", "crewmate"]);
-      assert.deepEqual(conflicted.coordinators, ["explorer"]);
+      assert.deepEqual(conflicted.active, ["coordinator", "implementer"]);
+      assert.deepEqual(conflicted.coordinators, ["coordinator"]);
     }
   });
 
@@ -212,7 +215,7 @@ describe("CMD-ROUTING-01 role-routing (SEIT-ROUTING-01)", () => {
     if (!verdict.ok) assert.equal(verdict.code, "navigator_not_normal_role");
   });
 
-  it("Validator is not an active route role; assurance is Test Engineer then Park Ranger then Surveyor", () => {
+  it("Validator is not an active route role; assurance is Test Engineer then Reviewer then Integration Engineer execution", () => {
     const routing = readFileSync(
       path.join(ROOT, "skills/bearing-lite/references/role-routing.mmd"),
       "utf8"
@@ -220,22 +223,26 @@ describe("CMD-ROUTING-01 role-routing (SEIT-ROUTING-01)", () => {
     const readme = readFileSync(path.join(ROOT, "README.md"), "utf8");
     assert.doesNotMatch(routing, /Validator declared/);
     assert.match(routing, /Assurance Test Engineer|Test Engineer/);
-    assert.match(routing, /Park Ranger/);
-    assert.match(routing, /Surveyor/);
+    assert.match(routing, /Reviewer/);
+    assert.match(routing, /Integration Engineer execution/);
     assert.doesNotMatch(readme, /Validator, Park Ranger, and Surveyor appear only when declared/);
-    assert.match(readme, /Assurance Test Engineer, Park Ranger, and Surveyor/);
+    assert.doesNotMatch(readme, /\|\s*\*\*Park Ranger\*\*/);
+    assert.doesNotMatch(readme, /\|\s*\*\*Surveyor\*\*/);
+    assert.match(readme, /Assurance Test Engineer/);
+    assert.match(readme, /Reviewer/);
+    assert.match(readme, /Integration Engineer/);
     const rejected = selectRoute({ kind: "direct", requiredAssurance: ["validator"] });
     assert.equal(rejected.ok, false);
     if (!rejected.ok) assert.equal(rejected.code, "validator_not_active_role");
     const ok = selectRoute({
       kind: "direct",
-      requiredAssurance: ["test-engineer", "park-ranger", "surveyor"],
+      requiredAssurance: ["test-engineer", "reviewer", "integration-engineer"],
     });
     assert.equal(ok.ok, true);
     if (ok.ok) {
       assert.ok(ok.active.includes("test-engineer"));
-      assert.ok(ok.active.includes("park-ranger"));
-      assert.ok(ok.active.includes("surveyor"));
+      assert.ok(ok.active.includes("reviewer"));
+      assert.ok(ok.active.includes("integration-engineer"));
       assert.ok(!ok.active.includes("validator"));
     }
   });
@@ -267,14 +274,14 @@ describe("CMD-ROUTING-01 role-routing (SEIT-ROUTING-01)", () => {
     }
   });
 
-  it("negative: Explorer performs packet work is rejected", () => {
+  it("negative: Coordinator performs packet work is rejected", () => {
     const verdict = selectRoute({
-      kind: "explorer_wave",
-      explorerImplements: true,
+      kind: "coordinator_wave",
+      coordinatorImplements: true,
     });
     assert.equal(verdict.ok, false);
     if (!verdict.ok) {
-      assert.equal(verdict.code, "explorer_performs_packet_work");
+      assert.equal(verdict.code, "coordinator_performs_packet_work");
     }
   });
 
@@ -323,12 +330,12 @@ const LEASE_IDENTITY_FIELDS = Object.freeze([
   "generation",
 ]);
 
-/** @typedef {'explorer'|'crewmate'} ExecutionRole */
+/** @typedef {'coordinator'|'implementer'} ExecutionRole */
 /** @typedef {'wave_start'|'external_change'|'commit'|'mutation'|'first_write'|'dispatch'|'integration'|'cross_wave_transition'} LeaseBoundary */
 
 export const REQUIRED_LEASE_BOUNDARIES = Object.freeze({
-  explorer: Object.freeze(["wave_start", "external_change", "commit"]),
-  crewmate: Object.freeze(["wave_start", "external_change", "commit"]),
+  coordinator: Object.freeze(["wave_start", "external_change", "commit"]),
+  implementer: Object.freeze(["wave_start", "external_change", "commit"]),
 });
 
 /**
@@ -382,7 +389,7 @@ function leaseMismatch(role, code, message) {
     code,
     status: "WAITING_ON",
     message:
-      role === "crewmate" ? `${message}; return WAITING_ON without writing` : message,
+      role === "implementer" ? `${message}; return WAITING_ON without writing` : message,
     write: false,
     dispatch: false,
   };
@@ -415,7 +422,7 @@ export function revalidateExecutionLease(input) {
     return leaseMismatch(
       input.role,
       "unknown_execution_role",
-      "only Explorer and Crewmate revalidate at execution boundaries"
+      "only Coordinator and Implementer revalidate at execution boundaries"
     );
   }
   if (!required.includes(input.boundary)) {
@@ -523,7 +530,7 @@ export function revalidateExecutionLease(input) {
 
   return {
     ok: true,
-    write: input.role === "crewmate",
+    write: input.role === "implementer",
     dispatch: input.boundary === "wave_start" && input.alreadyDispatched !== true,
     lease: nextLease,
   };
@@ -558,7 +565,7 @@ function fixtureApproved(overrides = {}) {
 
 describe("CMD-ROUTING-01 checkout-lease revalidation", () => {
   it("every execution role revalidates identity at wave start", () => {
-    for (const role of /** @type {const} */ (["explorer", "crewmate"])) {
+    for (const role of /** @type {const} */ (["coordinator", "implementer"])) {
       assert.ok(REQUIRED_LEASE_BOUNDARIES[role].includes("wave_start"), role);
       const ok = revalidateExecutionLease({
         role,
@@ -598,15 +605,15 @@ describe("CMD-ROUTING-01 checkout-lease revalidation", () => {
     }
   });
 
-  it("Explorer revalidates at wave start, external change, and commit", () => {
-    assert.deepEqual(REQUIRED_LEASE_BOUNDARIES.explorer, [
+  it("Coordinator revalidates at wave start, external change, and commit", () => {
+    assert.deepEqual(REQUIRED_LEASE_BOUNDARIES.coordinator, [
       "wave_start",
       "external_change",
       "commit",
     ]);
     for (const boundary of ["external_change", "commit"]) {
       const verdict = revalidateExecutionLease({
-        role: "explorer",
+        role: "coordinator",
         boundary: /** @type {LeaseBoundary} */ (boundary),
         lease: fixtureLease({ checkout: "wt-other" }),
         approved: fixtureApproved(),
@@ -619,14 +626,14 @@ describe("CMD-ROUTING-01 checkout-lease revalidation", () => {
     }
   });
 
-  it("Crewmate does not revalidate before every mutation", () => {
-    assert.deepEqual(REQUIRED_LEASE_BOUNDARIES.crewmate, [
+  it("Implementer does not revalidate before every mutation", () => {
+    assert.deepEqual(REQUIRED_LEASE_BOUNDARIES.implementer, [
       "wave_start",
       "external_change",
       "commit",
     ]);
     const mutation = revalidateExecutionLease({
-      role: "crewmate",
+      role: "implementer",
       boundary: "mutation",
       lease: fixtureLease(),
       approved: fixtureApproved(),
@@ -637,7 +644,7 @@ describe("CMD-ROUTING-01 checkout-lease revalidation", () => {
       assert.equal(mutation.write, false);
     }
     const mismatch = revalidateExecutionLease({
-      role: "crewmate",
+      role: "implementer",
       boundary: "wave_start",
       lease: fixtureLease({ journey: "J-B" }),
       approved: fixtureApproved(),
@@ -650,7 +657,7 @@ describe("CMD-ROUTING-01 checkout-lease revalidation", () => {
       assert.match(mismatch.message, /WAITING_ON without writing/);
     }
     const allowed = revalidateExecutionLease({
-      role: "crewmate",
+      role: "implementer",
       boundary: "commit",
       lease: fixtureLease(),
       approved: fixtureApproved(),
@@ -680,7 +687,7 @@ describe("CMD-ROUTING-01 checkout-lease revalidation", () => {
     ];
     for (const fixture of cases) {
       const verdict = revalidateExecutionLease({
-        role: "explorer",
+        role: "coordinator",
         boundary: "external_change",
         lease: fixtureLease(),
         approved: fixture.approved ?? fixtureApproved(),
@@ -697,7 +704,7 @@ describe("CMD-ROUTING-01 checkout-lease revalidation", () => {
 
   it("released, stale, and forged leases fail closed", () => {
     const released = revalidateExecutionLease({
-      role: "explorer",
+      role: "coordinator",
       boundary: "commit",
       lease: fixtureLease({ state: "released" }),
       approved: fixtureApproved(),
@@ -706,7 +713,7 @@ describe("CMD-ROUTING-01 checkout-lease revalidation", () => {
     if (!released.ok) assert.equal(released.code, "lease_not_active");
 
     const stale = revalidateExecutionLease({
-      role: "explorer",
+      role: "coordinator",
       boundary: "wave_start",
       lease: fixtureLease({ generation: 3 }),
       approved: fixtureApproved({ generation: 3 }),
@@ -716,7 +723,7 @@ describe("CMD-ROUTING-01 checkout-lease revalidation", () => {
     if (!stale.ok) assert.equal(stale.code, "stale_generation");
 
     const forged = revalidateExecutionLease({
-      role: "crewmate",
+      role: "implementer",
       boundary: "wave_start",
       lease: fixtureLease({
         // @ts-expect-error intentional fixture
@@ -734,7 +741,7 @@ describe("CMD-ROUTING-01 checkout-lease revalidation", () => {
 
   it("same valid lease continues without duplicate dispatch", () => {
     const first = revalidateExecutionLease({
-      role: "explorer",
+      role: "coordinator",
       boundary: "wave_start",
       lease: fixtureLease(),
       approved: fixtureApproved(),
@@ -743,7 +750,7 @@ describe("CMD-ROUTING-01 checkout-lease revalidation", () => {
     if (first.ok) assert.equal(first.dispatch, true);
 
     const resume = revalidateExecutionLease({
-      role: "explorer",
+      role: "coordinator",
       boundary: "wave_start",
       lease: fixtureLease(),
       approved: fixtureApproved(),
@@ -756,7 +763,7 @@ describe("CMD-ROUTING-01 checkout-lease revalidation", () => {
     }
 
     const wave = revalidateExecutionLease({
-      role: "explorer",
+      role: "coordinator",
       boundary: "commit",
       lease: fixtureLease(),
       approved: fixtureApproved(),
@@ -766,10 +773,10 @@ describe("CMD-ROUTING-01 checkout-lease revalidation", () => {
     if (wave.ok) assert.equal(wave.dispatch, false);
   });
 
-  it("authorized same-Journey candidate progress refreshes revision on the same generation", () => {
+  it("authorized same-Lifecycle candidate progress refreshes revision on the same generation", () => {
     const lease = fixtureLease({ candidate_revision: "4040dfe", generation: 1 });
     const integrate = revalidateExecutionLease({
-      role: "explorer",
+      role: "coordinator",
       boundary: "commit",
       lease,
       approved: fixtureApproved({ candidate_revision: "cafebabe" }),
@@ -786,7 +793,7 @@ describe("CMD-ROUTING-01 checkout-lease revalidation", () => {
     assert.equal(integrate.write, false);
 
     const nextDispatch = revalidateExecutionLease({
-      role: "explorer",
+      role: "coordinator",
       boundary: "wave_start",
       lease: integrate.lease,
       approved: fixtureApproved({ candidate_revision: "cafebabe" }),
@@ -798,7 +805,7 @@ describe("CMD-ROUTING-01 checkout-lease revalidation", () => {
     assert.equal(nextDispatch.lease.generation, 1);
 
     const nextWrite = revalidateExecutionLease({
-      role: "crewmate",
+      role: "implementer",
       boundary: "commit",
       lease: integrate.lease,
       approved: fixtureApproved({ candidate_revision: "cafebabe" }),
@@ -810,7 +817,7 @@ describe("CMD-ROUTING-01 checkout-lease revalidation", () => {
 
   it("foreign controller, unrelated HEAD, and released lease stay WAITING_ON without mutation", () => {
     const foreignController = revalidateExecutionLease({
-      role: "explorer",
+      role: "coordinator",
       boundary: "commit",
       lease: fixtureLease(),
       approved: fixtureApproved({ controller: "Other" }),
@@ -823,7 +830,7 @@ describe("CMD-ROUTING-01 checkout-lease revalidation", () => {
     }
 
     const unrelatedHead = revalidateExecutionLease({
-      role: "explorer",
+      role: "coordinator",
       boundary: "external_change",
       lease: fixtureLease({ candidate_revision: "4040dfe" }),
       approved: fixtureApproved({ candidate_revision: "deadbeef" }),
@@ -840,7 +847,7 @@ describe("CMD-ROUTING-01 checkout-lease revalidation", () => {
     }
 
     const released = revalidateExecutionLease({
-      role: "explorer",
+      role: "coordinator",
       boundary: "commit",
       lease: fixtureLease({ state: "released" }),
       approved: fixtureApproved(),
@@ -864,7 +871,7 @@ describe("CMD-ROUTING-01 checkout-lease revalidation", () => {
  *   envelopeUnchanged?: boolean,
  *   independentWork?: boolean,
  *   ownerChoiceFresh?: boolean,
- *   boundary?: 'slice' | 'round' | 'at-end',
+ *   boundary?: 'slice' | 'round' | 'phase' | 'lifecycle',
  *   reuseAuthor?: boolean,
  * }} ContinuationInput
  */
@@ -875,7 +882,7 @@ describe("CMD-ROUTING-01 checkout-lease revalidation", () => {
  * @param {ContinuationInput} input
  */
 export function selectContinuation(input) {
-  const assurance = new Set(["test-engineer", "park-ranger", "surveyor"]);
+  const assurance = new Set(["test-engineer", "reviewer", "integration-engineer"]);
   if (input.role === "validator") {
     return { ok: false, code: "validator_not_active_role", fresh: false, continue: false };
   }
@@ -883,15 +890,15 @@ export function selectContinuation(input) {
     return { ok: false, code: "navigator_not_normal_role", fresh: false, continue: false };
   }
   if (assurance.has(input.role)) {
-    if (input.boundary && input.boundary !== "at-end") {
-      return { ok: false, code: "assurance_not_at_end", fresh: true, continue: false };
+    if (input.boundary === "slice" || input.boundary === "round") {
+      return { ok: false, code: "assurance_unconfigured_boundary", fresh: true, continue: false };
     }
     if (input.reuseAuthor) {
       return { ok: false, code: "assurance_reuses_author", fresh: true, continue: false };
     }
     return { ok: true, fresh: true, continue: false };
   }
-  if (input.role === "crewmate" || input.role === "explorer") {
+  if (input.role === "implementer" || input.role === "coordinator") {
     if (input.independentWork || input.ownerChoiceFresh || input.envelopeUnchanged === false) {
       return { ok: true, fresh: true, continue: false };
     }
@@ -911,9 +918,9 @@ export function resumeFromWaveReceipt(input) {
 }
 
 describe("CMD-ROUTING-01 same-wave continuation and at-end assurance", () => {
-  it("matching: three dependent slices plus one correction reuse one Crewmate", () => {
+  it("matching: three dependent slices plus one correction reuse one Implementer", () => {
     const slices = ["T1", "T2", "T3", "T3-repair"].map(() =>
-      selectContinuation({ role: "crewmate", envelopeUnchanged: true })
+      selectContinuation({ role: "implementer", envelopeUnchanged: true })
     );
     for (const step of slices) {
       assert.equal(step.ok, true);
@@ -924,18 +931,18 @@ describe("CMD-ROUTING-01 same-wave continuation and at-end assurance", () => {
     assert.equal(receipt.ok, true);
   });
 
-  it("non-matching: assurance cannot reuse author context or run before the end", () => {
-    const retired = selectContinuation({ role: "validator", boundary: "at-end" });
+  it("non-matching: assurance cannot reuse author context or run at an unconfigured slice or round", () => {
+    const retired = selectContinuation({ role: "validator", boundary: "phase" });
     assert.equal(retired.ok, false);
     if (!retired.ok) assert.equal(retired.code, "validator_not_active_role");
-    for (const role of /** @type {const} */ (["test-engineer", "park-ranger", "surveyor"])) {
+    for (const role of /** @type {const} */ (["test-engineer", "reviewer", "integration-engineer"])) {
       const slice = selectContinuation({ role, boundary: "slice" });
       assert.equal(slice.ok, false);
-      if (!slice.ok) assert.equal(slice.code, "assurance_not_at_end");
-      const reuse = selectContinuation({ role, boundary: "at-end", reuseAuthor: true });
+      if (!slice.ok) assert.equal(slice.code, "assurance_unconfigured_boundary");
+      const reuse = selectContinuation({ role, boundary: "phase", reuseAuthor: true });
       assert.equal(reuse.ok, false);
       if (!reuse.ok) assert.equal(reuse.code, "assurance_reuses_author");
-      const ok = selectContinuation({ role, boundary: "at-end" });
+      const ok = selectContinuation({ role, boundary: "phase" });
       assert.equal(ok.ok, true);
       assert.equal(ok.fresh, true);
     }
@@ -953,13 +960,13 @@ describe("CMD-ROUTING-01 same-wave continuation and at-end assurance", () => {
 
   it("external change or envelope change forces revalidation or a fresh session", () => {
     const fresh = selectContinuation({
-      role: "crewmate",
+      role: "implementer",
       envelopeUnchanged: false,
     });
     assert.equal(fresh.ok, true);
     assert.equal(fresh.fresh, true);
     const drift = revalidateExecutionLease({
-      role: "crewmate",
+      role: "implementer",
       boundary: "external_change",
       lease: fixtureLease(),
       approved: fixtureApproved(),

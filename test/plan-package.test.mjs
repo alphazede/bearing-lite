@@ -60,14 +60,43 @@ describe("plan-package (#80 planning-only roles)", () => {
   it("rejects Requirements Engineer slices and permits execution roles", () => {
     const assigned = (role) => ({ waves: [{ slices: [{ id: "S1.2", role }] }] });
     assert.deepEqual(checkPlanningRoles(assigned("Requirements Engineer / planning")), [
-      { code: "planning_role_in_expedition", step: "S1.2", role: "Requirements Engineer / planning" },
+      { code: "planning_role_in_lifecycle", step: "S1.2", role: "Requirements Engineer / planning" },
     ]);
     assert.deepEqual(checkPlanningRoles(assigned("Test Engineer")), []);
   });
   it("flags a Requirements Engineer slice that has no id", () => {
     assert.deepEqual(
       checkPlanningRoles({ slices: [{ role: "Requirements Engineer", command_ids: [] }] }),
-      [{ code: "planning_role_in_expedition", step: null, role: "Requirements Engineer" }]
+      [{ code: "planning_role_in_lifecycle", step: null, role: "Requirements Engineer" }]
+    );
+  });
+  it("accepts Requirements Engineer planning-route records and still rejects slices", () => {
+    const routes = {
+      planning_assignments: [
+        {
+          role: "Requirements Engineer / planning",
+          primary: "Codex CLI / gpt-5.6-sol / medium",
+          fallbacks: ["Claude Code / Sonnet / high", "Grok Build / harness default"],
+          effective_route: "Codex CLI / gpt-5.6-sol / medium",
+        },
+      ],
+      lineup: [
+        {
+          role: "Requirements Engineer",
+          session: "planning",
+          configured_primary: "Codex CLI / gpt-5.6-sol / medium",
+          effective_route: "Codex CLI / gpt-5.6-sol / medium",
+          status: "READY",
+        },
+      ],
+    };
+    assert.deepEqual(checkPlanningRoles(routes), []);
+    assert.deepEqual(
+      checkPlanningRoles({
+        ...routes,
+        waves: [{ slices: [{ id: "S1.2", role: "Requirements Engineer / planning" }] }],
+      }),
+      [{ code: "planning_role_in_lifecycle", step: "S1.2", role: "Requirements Engineer / planning" }]
     );
   });
 });

@@ -16,13 +16,19 @@ most.
 ## How this repository works
 
 Bearing Lite is developed directly as a public skills-first Agent Plugin. The
-portable product surface is `plugin.json`, `skills/`, optional `hooks/`, and
-the public governance documents. There is no CLI binary, MCP server, browser
-control room, or hidden runtime state to maintain for ordinary contributions.
+portable product surface is `plugin.json`, `skills/`, optional `hooks/`,
+`profiles.json`, and the public governance documents. There is no CLI binary,
+MCP server, browser control room, or hidden runtime state to maintain for
+ordinary contributions.
 
 Pull requests that stay inside that product boundary are welcome. Changes that
 reintroduce deep-harness coupling, model or provider pins, secret material, or
 private path spill will be declined.
+
+The public lifecycle is Intake → Architectural Alignment → Scope Definition →
+Planning and Design, then bounded implementation and independent assessment.
+Use those names. Do not reactivate retired camp terminology in active public
+flow.
 
 ## Reporting a bug
 
@@ -51,9 +57,8 @@ Useful local checks for documentation and contract tests (when present in the
 checkout):
 
 ```sh
-node --test test/diagram-sync.test.mjs
-node --test test/public-boundary.test.mjs
-node --test test/skills-conformance.test.mjs
+node --test test/public-boundary.test.mjs test/skills-conformance.test.mjs
+node --test test/*.test.mjs
 python3 test/schema-validation.py
 ```
 

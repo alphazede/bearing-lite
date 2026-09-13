@@ -1,0 +1,3543 @@
+{
+  "schema_version": "1",
+  "journey": {
+    "id": "BDL-2026-09-12",
+    "title": "Bearing Delivery Lifecycle Alignment",
+    "status": "complete",
+    "planning_repository": "alphazede/bearing-lite"
+  },
+  "checkout_lease": {
+    "journey": "BDL-2026-09-12",
+    "controller": "Codex Router",
+    "repository": "alphazede/bearing-lite",
+    "checkout": "/home/spectre/alphazede/Alphazedehq/bearing-lite",
+    "branch": "main",
+    "candidate_revision": "b5cec79f04f6f6ea506a2ad89bf937aab143d876",
+    "acquired_at": "2026-09-12T18:56:43Z",
+    "generation": 1,
+    "state": "released",
+    "released_at": "2026-09-13T21:06:21Z",
+    "release_reason": "Lifecycle completed and accepted by the Human owner under DEC-BDL-077."
+  },
+  "decisions": [
+    {
+      "id": "DEC-BDL-001",
+      "status": "confirmed",
+      "decided_at": "2026-09-12T18:56:43Z",
+      "decision": "Use alphazede/bearing-lite and docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment as the planning repository and directory.",
+      "source": "Owner confirmation"
+    },
+    {
+      "id": "DEC-BDL-002",
+      "status": "confirmed",
+      "decided_at": "2026-09-12T18:56:43Z",
+      "decision": "The Lifecycle covers open issues 87 through 91 so deterministic verification, the DoD Manifest, roles, sequence, diagrams, and README remain one coherent public process.",
+      "source": "Owner confirmation"
+    },
+    {
+      "id": "DEC-BDL-003",
+      "status": "confirmed",
+      "decided_at": "2026-09-12T18:56:43Z",
+      "decision": "Start with README as the source-of-truth public document; the process specification and diagrams feed and verify its lifecycle description.",
+      "source": "Owner direction"
+    },
+    {
+      "id": "DEC-BDL-004",
+      "status": "confirmed",
+      "decided_at": "2026-09-12T18:56:43Z",
+      "decision": "Create a specification and process diagrams for this work without creating a requirements register.",
+      "source": "Owner direction"
+    },
+    {
+      "id": "DEC-BDL-005",
+      "status": "confirmed",
+      "decided_at": "2026-09-12T18:56:43Z",
+      "decision": "Use Bearing Delivery Lifecycle, Intake, Architectural Alignment, Scope Definition, Planning and Design, Orchestrator, Coordinator, Implementer, Test Implementer, Product Implementer, Reviewer, Light Implementer, and Scribe as the active public terminology; remove Expedition, Explorer Journey, Navigator, and the replaced camp terminology from active public flow.",
+      "source": "Owner discussion"
+    },
+    {
+      "id": "DEC-BDL-006",
+      "status": "confirmed",
+      "decided_at": "2026-09-12T18:56:43Z",
+      "decision": "Planning Integration Engineer retains planning responsibility. Implementation Integration Engineer replaces Surveyor for independent system-level validation and integrated technical assessment, running once at Lifecycle completion by default with an explicit approved override available.",
+      "source": "Owner direction"
+    },
+    {
+      "id": "DEC-BDL-007",
+      "status": "confirmed",
+      "decided_at": "2026-09-12T18:56:43Z",
+      "decision": "Assurance Test Engineer owns planned assembly and configuration of approved elements in the verification environment, interface exercise, and evaluation of V&V evidence; Test Implementer and Product Implementer remain distinct authors.",
+      "source": "Owner direction"
+    },
+    {
+      "id": "DEC-BDL-008",
+      "status": "confirmed",
+      "decided_at": "2026-09-12T18:56:43Z",
+      "decision": "Rename review.html to <plan-name>-dod-manifest.html with display title <Plan Name> \u2014 Definition of Done Manifest; retain planning and closeout states and keep it a non-authoritative human-readable projection.",
+      "source": "Owner direction recorded on issue 88"
+    },
+    {
+      "id": "DEC-BDL-009",
+      "status": "confirmed",
+      "decided_at": "2026-09-12T18:56:43Z",
+      "decision": "The public README opens with a BLUF and concise Situation, Complication, Question, Answer flow, then routes readers to focused explanation, reference, and troubleshooting documentation.",
+      "source": "Owner direction recorded on issue 91"
+    },
+    {
+      "id": "DEC-BDL-010",
+      "status": "confirmed",
+      "decided_at": "2026-09-12T18:56:43Z",
+      "decision": "The existing two-independent-slot planning-review rule is not accepted as the intended Bearing process and must be reconciled rather than presented as settled owner intent.",
+      "source": "Owner correction"
+    },
+    {
+      "record_type": "owner_stop",
+      "id": "OPEN-BDL-001",
+      "class": "C",
+      "question": "Approve or revise the README BLUF for the Bearing Delivery Lifecycle.",
+      "why_owner": "The README is the owner-designated public source document, so its top-level product promise cannot be inferred from stale repository wording.",
+      "evidence_ref": "DEC-BDL-003; README.md; issue 91",
+      "affected_slices": [
+        "README-FIRST"
+      ],
+      "blocking": true,
+      "status": "answered",
+      "created_at": "2026-09-12T18:59:15Z",
+      "asked_at": "2026-09-12T18:59:15Z",
+      "answered_at": "2026-09-12T19:34:49Z",
+      "cancelled_at": null,
+      "round_trip_id": "ROUND-BDL-SCOPE-001",
+      "answer_ref": "DEC-BDL-011"
+    },
+    {
+      "id": "DEC-BDL-011",
+      "status": "confirmed",
+      "decided_at": "2026-09-12T19:34:49Z",
+      "decision": "README BLUF: Bearing Lite gives AI-assisted repository work a structured delivery lifecycle from an owner-approved plan to an independently assessed result. It improves repeatability and reduces hallucination risk through bounded implementation, deterministic checks, verification, validation, independent assurance, and traceable evidence. The following reviewability statement explains that planning artifacts and the Definition of Done Manifest compare what AI was authorized to touch with actual changes, supporting evidence, and unresolved gaps.",
+      "source": "Owner approval and extension"
+    },
+    {
+      "id": "DEC-BDL-012",
+      "status": "confirmed",
+      "decided_at": "2026-09-12T19:34:49Z",
+      "decision": "Planning uses one initial specialist pass plus at most one targeted reconciliation pass. The targeted pass includes every affected specialist concurrently; deterministic mismatches do not consume it, and remaining material conflict returns to the owner.",
+      "source": "Owner approval after Grok Build efficiency review"
+    },
+    {
+      "id": "DEC-BDL-013",
+      "status": "confirmed",
+      "decided_at": "2026-09-12T19:34:49Z",
+      "decision": "Architectural Alignment uses a deterministic existing-architecture extract by default. If no architecture exists or evidence does not cover the affected scope, record that gap, establish minimum system context from repository facts and owner intent, and activate Systems Modeler rather than inventing architecture.",
+      "source": "Owner approval after Grok Build efficiency review"
+    },
+    {
+      "id": "DEC-BDL-014",
+      "status": "confirmed",
+      "decided_at": "2026-09-12T19:34:49Z",
+      "decision": "Use one frozen shared planning frame, compact frame-plus-delta handoffs, deterministic coverage and trace checks before model redispatch, and a mechanical Plan Integrator that assembles agreed outputs without reopening specialist analysis.",
+      "source": "Owner approval after Grok Build efficiency review"
+    },
+    {
+      "id": "DEC-BDL-015",
+      "status": "confirmed",
+      "decided_at": "2026-09-12T19:34:49Z",
+      "decision": "Every planned change carries documentation impact, affected paths or discoverability status, responsible task, update timing, and verification. Unresolved documentation impact blocks planning approval unless marked not_applicable with evidence; documentation is updated and checked before final system assessment and projected in the DoD Manifest.",
+      "source": "Owner approval"
+    },
+    {
+      "record_type": "owner_stop",
+      "id": "OPEN-BDL-002",
+      "class": "C",
+      "question": "Approve the responsibility split for the initial planning frame: Orchestrator extracts facts and runs deterministic completeness checks; Requirements Engineer gates new or changed acceptance statements when applicable; Planning Integration Engineer owns compatibility, assembly-order, interface-risk, and integration judgments.",
+      "why_owner": "This split controls planning speed and prevents the Orchestrator from silently assuming specialist engineering authority.",
+      "evidence_ref": "DEC-BDL-012 through DEC-BDL-014; Grok Build efficiency review",
+      "affected_slices": [
+        "PLANNING-FRAME"
+      ],
+      "blocking": true,
+      "status": "answered",
+      "created_at": "2026-09-12T19:34:49Z",
+      "asked_at": "2026-09-12T19:34:49Z",
+      "answered_at": "2026-09-12T19:54:58Z",
+      "cancelled_at": null,
+      "round_trip_id": "ROUND-BDL-SCOPE-002",
+      "answer_ref": "DEC-BDL-016"
+    },
+    {
+      "id": "DEC-BDL-016",
+      "status": "confirmed",
+      "decided_at": "2026-09-12T19:54:58Z",
+      "decision": "For the initial planning frame, Orchestrator extracts repository facts and runs deterministic structural checks; Requirements Engineer conditionally gates new or changed acceptance statements; Planning Integration Engineer owns compatibility, assembly-order, interface-risk, and integration judgments.",
+      "source": "Owner approval"
+    },
+    {
+      "id": "DEC-BDL-017",
+      "status": "confirmed",
+      "decided_at": "2026-09-12T19:54:58Z",
+      "decision": "Planning review uses one independent review, at most one aggregated repair, deterministic closure, and no automatic rereview. The Orchestrator coordinates the transition and never becomes the reviewer.",
+      "source": "Owner approval"
+    },
+    {
+      "id": "DEC-BDL-018",
+      "status": "confirmed",
+      "decided_at": "2026-09-12T19:54:58Z",
+      "decision": "Orchestrator checks planning readiness and receipt structure, not technical quality or implementation-evidence sufficiency. NEEDS_MORE_EVIDENCE is classified once and never automatically triggers another model or reviewer call; discoverable facts receive at most one bounded lookup.",
+      "source": "Owner direction"
+    },
+    {
+      "id": "DEC-BDL-019",
+      "status": "confirmed",
+      "decided_at": "2026-09-12T19:54:58Z",
+      "decision": "Bounded uncertainty about whether a specified approach will work may enter implementation as a typed discovery task. Unresolved scope, interface contract, security boundary, acceptance intent, or owner authority remains a planning blocker even when downstream assurance might detect the problem.",
+      "source": "Owner approval"
+    },
+    {
+      "record_type": "owner_stop",
+      "id": "OPEN-BDL-003",
+      "class": "C",
+      "question": "When an implementation discovery result invalidates an approved plan claim, must it always stop dependent work and return to the human owner rather than automatically restarting a planning specialist?",
+      "why_owner": "This determines whether discovery can reopen planning automatically and therefore whether the Orchestrator can enter a hidden replan loop.",
+      "evidence_ref": "DEC-BDL-018; DEC-BDL-019; Grok Build lifecycle-control review",
+      "affected_slices": [
+        "IMPLEMENTATION-DISCOVERY"
+      ],
+      "blocking": true,
+      "status": "answered",
+      "created_at": "2026-09-12T19:54:58Z",
+      "asked_at": "2026-09-12T19:54:58Z",
+      "answered_at": "2026-09-12T20:17:48Z",
+      "cancelled_at": null,
+      "round_trip_id": "ROUND-BDL-SCOPE-003",
+      "answer_ref": "DEC-BDL-020"
+    },
+    {
+      "id": "DEC-BDL-020",
+      "status": "confirmed",
+      "decided_at": "2026-09-12T20:17:48Z",
+      "decision": "An implementation discovery result that invalidates an approved plan claim stops dependent work and returns to the human owner. Specialists may be informed, but no specialist or Orchestrator may automatically restart planning or authorize a replacement plan.",
+      "source": "Owner approval after Grok Build lifecycle-control review"
+    },
+    {
+      "record_type": "owner_stop",
+      "id": "OPEN-BDL-004",
+      "class": "C",
+      "question": "When a required planning role and its approved fallbacks are unavailable, must planning stop for owner resolution rather than proceeding with a typed product capability gap?",
+      "why_owner": "A required planning-role gap means the plan lacks an authorized technical judgment; treating it as a downstream product gap could bypass the planning contract.",
+      "evidence_ref": "DEC-BDL-018; Grok Build lifecycle-control review",
+      "affected_slices": [
+        "PLANNING-CAPABILITY"
+      ],
+      "blocking": true,
+      "status": "answered",
+      "created_at": "2026-09-12T20:17:48Z",
+      "asked_at": "2026-09-12T20:17:48Z",
+      "answered_at": "2026-09-12T20:21:52Z",
+      "cancelled_at": null,
+      "round_trip_id": "ROUND-BDL-SCOPE-004",
+      "answer_ref": "DEC-BDL-021"
+    },
+    {
+      "id": "DEC-BDL-021",
+      "status": "confirmed",
+      "decided_at": "2026-09-12T20:21:52Z",
+      "decision": "Add no separate unavailable-planning-role rule. A required role exhausted without a valid bounded receipt already fails the planning-readiness precondition and cannot transition; use the existing typed wait or owner-resolution path rather than duplicate policy.",
+      "source": "Owner decision"
+    },
+    {
+      "record_type": "owner_stop",
+      "id": "OPEN-BDL-005",
+      "class": "C",
+      "question": "After Systems Modeler and Planning Test Engineer return, should Planning Integration Engineer finalize anomaly, rollback, recovery, and V&V handoff strategy; Planning Test Engineer bind its proof cases; and Plan Integrator copy the agreed outputs mechanically?",
+      "why_owner": "The slim initial integration frame deliberately defers these details, so their final authorship must be explicit to prevent omission or duplicate judgment.",
+      "evidence_ref": "DEC-BDL-012 through DEC-BDL-016; Grok Build efficiency review",
+      "affected_slices": [
+        "PLANNING-RECONCILIATION"
+      ],
+      "blocking": true,
+      "status": "answered",
+      "created_at": "2026-09-12T20:21:52Z",
+      "asked_at": "2026-09-12T20:21:52Z",
+      "answered_at": "2026-09-12T20:24:14Z",
+      "cancelled_at": null,
+      "round_trip_id": "ROUND-BDL-SCOPE-005",
+      "answer_ref": "DEC-BDL-022"
+    },
+    {
+      "id": "DEC-BDL-022",
+      "status": "confirmed",
+      "decided_at": "2026-09-12T20:24:14Z",
+      "decision": "After Systems Modeler and Planning Test Engineer return, Planning Integration Engineer finalizes anomaly handling, rollback, recovery, and integration V&V handoffs; Planning Test Engineer binds the corresponding proof cases; Plan Integrator copies the agreed outputs mechanically without adding judgment.",
+      "source": "Owner approval"
+    },
+    {
+      "record_type": "owner_stop",
+      "id": "OPEN-BDL-006",
+      "class": "C",
+      "question": "Approve the fallback continuity receipt: lifecycle/stage and frozen-frame identity; role objective and authority; settled decisions and completed work; artifact refs and changed paths; open blocker and remaining action; attempts and hypotheses already spent; verification commands/results; route/fallback reason and stop conditions. The fallback continues the same pass and budget without raw conversation history.",
+      "why_owner": "A stable compact receipt lets an approved fallback resume safely without duplicate work, hidden authority expansion, or resetting the one-plus-one planning budget.",
+      "evidence_ref": "DEC-BDL-012; DEC-BDL-018; DEC-BDL-021; owner fallback-continuity direction",
+      "affected_slices": [
+        "ROLE-CONTINUITY"
+      ],
+      "blocking": true,
+      "status": "answered",
+      "created_at": "2026-09-12T20:24:14Z",
+      "asked_at": "2026-09-12T20:24:14Z",
+      "answered_at": "2026-09-12T20:33:28Z",
+      "cancelled_at": null,
+      "round_trip_id": "ROUND-BDL-SCOPE-006",
+      "answer_ref": "DEC-BDL-023"
+    },
+    {
+      "id": "DEC-BDL-023",
+      "status": "confirmed",
+      "decided_at": "2026-09-12T20:33:28Z",
+      "decision": "Create no continuation receipt. A resumed or fallback agent reads the existing journey.json and workspace.md contracts, then its active role contract and current task, and trusts accepted stages and confirmed decisions unless a bounded identity or drift check fails.",
+      "source": "Owner correction"
+    },
+    {
+      "id": "DEC-BDL-024",
+      "status": "confirmed",
+      "decided_at": "2026-09-12T20:33:28Z",
+      "decision": "Before resuming or dispatching a fallback, Orchestrator performs one quick procedural preflight: check whether the prior agent/session is still active, read the current task state, compare current candidate/HEAD and scoped working changes with the last durable state, and classify RUNNING, COMPLETED, INACTIVE, or UNKNOWN. RUNNING is never duplicated; COMPLETED advances only from durable evidence; INACTIVE resumes from the last durable state without replay; UNKNOWN follows the configured liveness policy.",
+      "source": "Owner direction"
+    },
+    {
+      "record_type": "owner_stop",
+      "id": "OPEN-BDL-007",
+      "class": "C",
+      "question": "When the quick resume preflight returns UNKNOWN because the host exposes no reliable session status, should Orchestrator wait only for the role's configured liveness timeout and then permit fallback from durable state, without a global fixed timeout or model polling?",
+      "why_owner": "UNKNOWN must avoid both duplicate concurrent work and indefinite waiting while remaining portable across hosts with different liveness surfaces.",
+      "evidence_ref": "DEC-BDL-023; DEC-BDL-024; run-watchdog guidance",
+      "affected_slices": [
+        "RESUME-PREFLIGHT"
+      ],
+      "blocking": true,
+      "status": "answered",
+      "created_at": "2026-09-12T20:33:28Z",
+      "asked_at": "2026-09-12T20:33:28Z",
+      "answered_at": "2026-09-12T20:46:59Z",
+      "cancelled_at": null,
+      "round_trip_id": "ROUND-BDL-SCOPE-007",
+      "answer_ref": "DEC-BDL-025"
+    },
+    {
+      "id": "DEC-BDL-025",
+      "status": "confirmed",
+      "decided_at": "2026-09-12T20:46:59Z",
+      "decision": "Bearing Lite does not depend on run-watchdog, a daemon, heartbeat service, global timeout, or model polling. Resume preflight queries the dispatched session or process once through the host-native surface. RUNNING is not duplicated; EXITED resumes with an approved fallback; COMPLETED advances only from durable evidence; UNKNOWN plus explicit owner-requested resume permits replacement, while automatic orchestration returns WAITING_ON.",
+      "source": "Owner approval and correction"
+    },
+    {
+      "record_type": "owner_stop",
+      "id": "OPEN-BDL-008",
+      "class": "C",
+      "question": "Should reliable host-native session waiting and status inspection be a required capability for Orchestrator and Coordinator routes, with a route ineligible for those roles unless its wrapper supplies that capability?",
+      "why_owner": "The owner observes that Claude and Astra wait reliably while Sol often struggles; encoding the need as a capability keeps core policy provider-neutral and prevents model behavior from controlling dispatch safety.",
+      "evidence_ref": "DEC-BDL-024; DEC-BDL-025; owner route observation",
+      "affected_slices": [
+        "ROLE-CAPABILITY",
+        "RESUME-PREFLIGHT"
+      ],
+      "blocking": true,
+      "status": "answered",
+      "created_at": "2026-09-12T20:46:59Z",
+      "asked_at": "2026-09-12T20:46:59Z",
+      "answered_at": "2026-09-12T21:01:23Z",
+      "cancelled_at": null,
+      "round_trip_id": "ROUND-BDL-SCOPE-008",
+      "answer_ref": "DEC-BDL-026"
+    },
+    {
+      "id": "DEC-BDL-026",
+      "status": "confirmed",
+      "decided_at": "2026-09-12T21:01:23Z",
+      "decision": "Reliable session waiting and status inspection is advisory, not a required route capability. Public guidance states that wait/status reliability varies by host and route, recommends host-native status checks when available, and preserves safe RUNNING/EXITED/COMPLETED/UNKNOWN handling without excluding users who lack expensive models or advanced wrappers. Provider-specific observations remain private lineup evidence.",
+      "source": "Owner decision"
+    },
+    {
+      "id": "DEC-BDL-027",
+      "status": "confirmed",
+      "decided_at": "2026-09-12T21:15:26Z",
+      "decision": "Orchestrator actively identifies and concurrently dispatches all ready, dependency-satisfied, proven-independent tasks within host concurrency and shared-resource limits. Dependencies, unresolved interfaces, overlapping writes, or shared mutable resources preserve ordering.",
+      "source": "Owner direction refined through scheduling discussion"
+    },
+    {
+      "id": "DEC-BDL-028",
+      "status": "confirmed",
+      "decided_at": "2026-09-12T21:15:26Z",
+      "decision": "Implementation has exactly two development strategies recorded in implementation.json: single_implementer is the speed-focused default and one Implementer writes product changes plus tests; tdd is explicitly selected by the owner or approved plan and orders Test Implementer before Product Implementer. There is no parallel Test Implementer/Product Implementer mode for one feature. Independent tasks may still run concurrently.",
+      "source": "Owner approval"
+    },
+    {
+      "id": "DEC-BDL-029",
+      "status": "confirmed",
+      "decided_at": "2026-09-12T21:15:26Z",
+      "decision": "README includes an onboarding section and the advisory: Some agent harnesses may stall after delegated work completes. Before restarting the task, check whether the assigned agent is still active and avoid duplicate dispatch. Per-Lifecycle development strategy belongs in implementation.json rather than the global lineup catalog.",
+      "source": "Owner direction"
+    },
+    {
+      "id": "DEC-BDL-030",
+      "status": "confirmed",
+      "decided_at": "2026-09-12T21:23:13Z",
+      "decision": "implementation.json carries role-specific assurance_cadence values from the closed enum slice, phase, or lifecycle. Defaults are phase for Assurance Test Engineer, phase for Reviewer, and lifecycle for Implementation Integration Engineer. Planning review remains separate.",
+      "source": "Owner approval"
+    },
+    {
+      "id": "DEC-BDL-031",
+      "status": "confirmed",
+      "decided_at": "2026-09-12T21:23:13Z",
+      "decision": "Planning and Design defines a verification-ready contract for every slice. Observable behavior is defined whenever applicable, regardless of TDD mode; non-behavioral work uses the applicable analysis, inspection, demonstration, test, or evaluation contract; behavior that is genuinely unknown becomes a bounded discovery task rather than an invented contract.",
+      "source": "Owner direction aligned with Test Engineering method"
+    },
+    {
+      "id": "DEC-BDL-032",
+      "status": "confirmed",
+      "decided_at": "2026-09-13T00:43:00Z",
+      "decision": "The sole persistent Bearing user configuration is ~/.agents/bearing-lite/profiles.json. Remove repository and user lineups.json plus default-role-lineup.md from active distribution and discovery. Runtime and skills never search, merge, prefer, or fall back to lineups.json; profiles.json owns named role assignments, ordered fallbacks, development strategy, planning review, assurance cadence, concurrency preferences, defaults, and owner holds.",
+      "source": "Owner approval"
+    },
+    {
+      "id": "DEC-BDL-033",
+      "status": "confirmed",
+      "decided_at": "2026-09-13T00:48:09Z",
+      "decision": "Existing installations return MIGRATION_REQUIRED until an explicit deterministic migration validates lineups.json, writes and validates semantically equivalent profiles.json, and removes lineups.json. New installations expose only profiles.json; normal runtime never reads the old path.",
+      "source": "Owner approval"
+    },
+    {
+      "id": "DEC-BDL-034",
+      "status": "confirmed",
+      "decided_at": "2026-09-13T00:48:09Z",
+      "decision": "Migration is a direct replacement across existing product surfaces: preserve skill, hook, template, test, README, and example behavior while replacing lineups/default-role-lineup terminology, paths, schema names, and fields with profiles equivalents. Remove the obsolete configuration files, not the product content that referred to them.",
+      "source": "Owner correction"
+    },
+    {
+      "id": "DEC-BDL-035",
+      "status": "confirmed",
+      "decided_at": "2026-09-13T00:52:18Z",
+      "decision": "Do not add a separate slice-contract kind enum. Every implementation slice carries resolvable requirement or owner-decision, design, model when applicable, interface when applicable, and SEIT references. Observable behavior fields are required only when behavior changes; non-behavioral work uses its SEIT-selected V&V method; unknown behavior is bounded discovery. Plan Integrator projects accepted sources and cannot invent slice behavior.",
+      "source": "Owner approval"
+    },
+    {
+      "record_type": "owner_stop",
+      "id": "OPEN-BDL-009",
+      "class": "C",
+      "question": "Should the README explicitly target developers and technical leads directing AI-assisted repository work for this release, while treating advertising, marketing, sales, and other domain profiles as future capability rather than current product behavior?",
+      "why_owner": "The owner determined that a separate audience decision is unnecessary before completing issue-level decisions.",
+      "evidence_ref": "DEC-BDL-003; DEC-BDL-009; issue 91",
+      "affected_slices": [
+        "README-FIRST"
+      ],
+      "blocking": false,
+      "status": "cancelled",
+      "created_at": "2026-09-13T00:52:18Z",
+      "asked_at": "2026-09-13T00:52:18Z",
+      "answered_at": null,
+      "cancelled_at": "2026-09-13T00:57:34Z",
+      "round_trip_id": "ROUND-BDL-SCOPE-009"
+    },
+    {
+      "id": "DEC-BDL-036",
+      "status": "confirmed",
+      "decided_at": "2026-09-13T01:01:19Z",
+      "decision": "profiles.json configures deterministic-verification backend availability and user-specific settings, including optional Reverify. Backend availability does not select it for every task; Planning Test Engineer selects Reverify on an applicable binary-level SEIT claim, and implementation.json freezes that effective selection for the Lifecycle.",
+      "source": "Owner correction grounded in issue 87"
+    },
+    {
+      "id": "DEC-BDL-037",
+      "status": "confirmed",
+      "decided_at": "2026-09-13T01:01:19Z",
+      "decision": "Retain issue 87 role use under the new names: Planning Test Engineer defines applicable deterministic claims and evidence; Planning Integration Engineer defines binary/configuration identity and checkpoints; Plan Integrator reconciles without inventing V&V; Implementer and Light Implementer may emit diagnostic evidence; Assurance Test Engineer runs planned assurance checks on the stable candidate; Reviewer may use Reverify to adjudicate a specific suspected defect; Orchestrator routes and records but never treats a backend as a role; post-repair deterministic closure adds no review round.",
+      "source": "Owner direction and issue 87"
+    },
+    {
+      "id": "DEC-BDL-038",
+      "status": "confirmed",
+      "decided_at": "2026-09-13T01:04:27Z",
+      "decision": "Execution Integration Engineer is not removed. It is the implementation-stage Integration Engineer that replaces Surveyor under issue 89. ATE assembles/configures approved elements and performs planned verification; Execution Integration Engineer then independently performs final system-level validation and integrated technical assessment against the approved user-facing outcome, at Lifecycle completion by default or an explicitly configured boundary.",
+      "source": "Owner correction and issue 89"
+    },
+    {
+      "id": "DEC-BDL-039",
+      "status": "confirmed",
+      "decided_at": "2026-09-13T01:04:27Z",
+      "decision": "Add a reusable onboard-bearing skill for first-run setup and explicit configuration reset. It creates or updates profiles.json, configures named role routes and fallbacks, development strategy, planning review, assurance cadence, concurrency preferences, holds, and optional deterministic-verification backends including Reverify; validates backend availability; migrates obsolete lineup configuration; previews destructive reset or replacement; writes atomically; validates readback; and stores no credentials.",
+      "source": "Owner direction"
+    },
+    {
+      "id": "DEC-BDL-040",
+      "status": "confirmed",
+      "decided_at": "2026-09-13T01:08:01Z",
+      "decision": "Supersede DEC-BDL-039 reset wording. onboard-bearing is a reusable guided configuration skill. It inspects profiles.json when present, asks about profile settings one at a time, may recommend but never selects or writes a setting without the user's explicit instruction, preserves every unaddressed existing value, configures optional Reverify only when selected, validates the resulting profile, writes explicitly chosen changes atomically, and stores no credentials. Do not add a separate reset mode or explain reset semantics.",
+      "source": "Owner correction",
+      "supersedes": [
+        "DEC-BDL-039 reset behavior"
+      ]
+    },
+    {
+      "id": "DEC-BDL-041",
+      "status": "confirmed",
+      "decided_at": "2026-09-13T01:15:05Z",
+      "decision": "The versioned Definition of Done Manifest template uses the approved nine-section order: BLUF/state; identity; outcome/scope/DoD; requirements/architecture/design/interfaces/views; development strategy/task graph/roles/dependencies/write sets; V&V/cadence/evidence/status; documentation impact; risks/gaps/exceptions/anomaly/rollback/recovery; and authority/decisions/approvals/closeout. Non-applicable sections remain visible with a reason, and deterministic rendering preserves the same structure and visual system across agents.",
+      "source": "Owner approval for issue 88"
+    },
+    {
+      "id": "DEC-BDL-042",
+      "status": "confirmed",
+      "decided_at": "2026-09-13T01:15:05Z",
+      "decision": "Package the existing prompt skill with Bearing Lite unchanged. It remains an agnostic bounded-agent-handoff utility and is not adapted, renamed, or coupled to Bearing Lifecycle terminology, role names, providers, or harnesses.",
+      "source": "Owner correction"
+    },
+    {
+      "id": "DEC-BDL-043",
+      "status": "confirmed",
+      "decided_at": "2026-09-13T01:21:31Z",
+      "decision": "The Definition of Done Manifest replaces review.html entirely. Its structured rendering input lives in implementation.json.dod_manifest so the canonical five-artifact package remains technical plan, design, seit.json, implementation.json, and <plan-name>-dod-manifest.html; no additional manifest instance artifact is created.",
+      "source": "Owner approval for issue 88"
+    },
+    {
+      "id": "DEC-BDL-044",
+      "status": "confirmed",
+      "decided_at": "2026-09-13T01:21:31Z",
+      "decision": "The DoD Manifest presents requirements and acceptance, design and interfaces, SEIT cases/evidence, and implementation.json tasks as fixed human-readable tables rather than raw JSON or prose dumps. Source artifacts remain agent-usable authorities; table rows retain stable IDs, source references, status, and trace links for human review.",
+      "source": "Owner direction"
+    },
+    {
+      "id": "DEC-BDL-045",
+      "status": "confirmed",
+      "decided_at": "2026-09-13T01:24:35Z",
+      "decision": "Issue 88 uses a versioned fixed HTML template plus a small Node.js standard-library renderer. The renderer consumes implementation.json.dod_manifest, controls structure, escaping, tables, navigation, computed status, asset embedding, accessibility, responsive/print CSS, version identity, deterministic formatting, and output naming; it never authors semantics. A check mode rerenders and compares the expected output.",
+      "source": "Owner approval"
+    },
+    {
+      "id": "DEC-BDL-046",
+      "status": "confirmed",
+      "decided_at": "2026-09-13T01:24:35Z",
+      "decision": "The DoD Manifest includes system and architecture models as a human-readable model inventory table and embedded rendered views. Each model/view retains stable ID, modeling mode, source artifact, revision/digest, stakeholder question or viewpoint, requirement/interface trace links, limitations, and render status. Systems Modeler owns semantics and prepared views; the renderer only validates and embeds them. A non-applicable model section remains visible with a reason, while a selected/required missing or stale view fails rendering visibly.",
+      "source": "Owner direction"
+    },
+    {
+      "id": "DEC-BDL-047",
+      "status": "confirmed",
+      "decided_at": "2026-09-13T01:32:01Z",
+      "decision": "Integration Engineer is one role with separate planning and execution sessions, not separate Planning/Implementation/Execution Integration Engineer roles. Its planning session owns integration planning; its execution session replaces Surveyor and owns final system-level validation and integrated technical assessment. Test Engineer is likewise one role with planning and assurance sessions; Assurance Test Engineer names the assurance session, not a separate role. Profiles, diagrams, skills, schemas, task assignments, cadence keys, and public documentation must preserve these role/session relationships.",
+      "source": "Owner correction",
+      "supersedes": [
+        "DEC-BDL-006 role wording",
+        "DEC-BDL-030 cadence key wording",
+        "DEC-BDL-038 role wording"
+      ]
+    },
+    {
+      "id": "DEC-BDL-048",
+      "status": "confirmed",
+      "decided_at": "2026-09-13T01:32:01Z",
+      "decision": "For DoD Manifest model views, prefer sanitized inline SVG when the modeling tool provides it and use embedded PNG as fallback. The canonical SysML model remains the semantic authority; the rendered image is a digest-bound human projection.",
+      "source": "Owner approval"
+    },
+    {
+      "id": "DEC-BDL-049",
+      "status": "confirmed",
+      "decided_at": "2026-09-13T01:33:58Z",
+      "decision": "profiles.json uses nested role/session activation and routing. Systems Modeler has a planning session; Test Engineer has planning and assurance sessions; Integration Engineer has planning and execution sessions. Each session can be explicitly enabled or disabled during onboard-bearing, and cadence keys attach to test_engineer.assurance, reviewer, and integration_engineer.execution while preserving one role identity.",
+      "source": "Owner approval"
+    },
+    {
+      "id": "DEC-BDL-050",
+      "status": "confirmed",
+      "decided_at": "2026-09-13T01:35:36Z",
+      "decision": "DoD Manifest closeout is append-only over the owner-approved planning projection. It preserves planned outcome, scope, exclusions, behavior, requirements, design, model references, tasks, DoD criteria, V&V plan, documentation impact, risks, recovery, and authority; it adds actual candidate, changed paths, completion status, evidence/results, documentation completion, anomalies/repairs/recovery used, residual gaps/risks, and closeout/owner-acceptance status. Changing planning content requires an explicit owner-approved plan amendment.",
+      "source": "Owner approval for issue 88"
+    },
+    {
+      "id": "DEC-BDL-051",
+      "status": "confirmed",
+      "decided_at": "2026-09-13T01:40:12Z",
+      "decision": "DoD Manifest adoption is forward-only. Do not migrate or otherwise spend scope on completed historical review.html artifacts. New Lifecycle outputs use the DoD Manifest; historical evidence remains historical without additional compatibility work in this Lifecycle.",
+      "source": "Owner direction"
+    },
+    {
+      "id": "DEC-BDL-052",
+      "status": "confirmed",
+      "decided_at": "2026-09-13T01:45:23Z",
+      "decision": "Final issue 89 decision: remove the Surveyor skill and Surveyor from profiles, templates, schemas, hooks, tests, diagrams, and README; retain one Integration Engineer role with planning and execution sessions; move Surveyor outcome-assessment responsibility into integration_engineer.execution; and during configuration migration onboard-bearing asks the user which route to assign to the Integration Engineer execution session rather than choosing automatically. Do not reopen issue 89 owner decisions.",
+      "source": "Owner final decision for issue 89"
+    },
+    {
+      "id": "DEC-BDL-053",
+      "status": "confirmed",
+      "decided_at": "2026-09-13T01:49:58Z",
+      "decision": "During onboard-bearing, ask whether the user wants Reverify. If selected but unavailable, ask whether to download and install it; download only after explicit approval, verify the installed source/version, then record enabled true. If the user declines Reverify or declines its download, persist reverify enabled false in that named profile and do not ask again during ordinary Lifecycles. A later explicit onboard-bearing configuration change may revisit the setting. No value is preselected.",
+      "source": "Owner direction for issue 87"
+    },
+    {
+      "id": "DEC-BDL-054",
+      "status": "confirmed",
+      "decided_at": "2026-09-13T02:00:20Z",
+      "decision": "Use the AGY DoD Manifest prototype as a strong visual baseline subject to final comparison. Improve accessibility coloring and replace pure-white screen backgrounds with a softer warm off-white or muted blue-gray surface to reduce eye strain while maintaining verified text, UI, and focus contrast. Status meaning remains redundant in text, symbols, shapes, and borders; print may use white for clarity and ink efficiency.",
+      "source": "Owner visual review of AGY prototype"
+    },
+    {
+      "id": "DEC-BDL-055",
+      "status": "confirmed",
+      "decided_at": "2026-09-13T02:23:41Z",
+      "decision": "Select the Grok DoD Manifest prototype as the issue 88 visual baseline. Accessibility-color and softer low-eyestrain screen-background cleanup occurs during implementation. Retain AGY only as comparison evidence; do not combine designs unless a later owner instruction names an element to retain.",
+      "source": "Owner prototype review"
+    },
+    {
+      "id": "DEC-BDL-056",
+      "status": "confirmed",
+      "decided_at": "2026-09-13T02:23:41Z",
+      "decision": "profiles.json includes an explicitly user-configured planning-to-implementation clean-session boolean, asked one setting at a time by onboard-bearing with no preselected value. An approved Lifecycle may carry an explicit override frozen in implementation.json.",
+      "source": "Owner direction"
+    },
+    {
+      "id": "DEC-BDL-057",
+      "status": "confirmed",
+      "decided_at": "2026-09-13T02:23:41Z",
+      "decision": "After owner acceptance of the planning package, when clean-session is enabled the planning Orchestrator uses the packaged agnostic prompt skill to render a fresh Orchestrator implementation-start handoff from the approved technical plan, design, SEIT, implementation.json, DoD Manifest state, frozen profile, lease, and authority. The handoff uses ROLE/STATE/OBJECTIVE/AUTHORITY/LOOP/VERIFY/RETURN/STOP, contains no raw conversation history, grants no new authority, and starts only after exact package approval. When disabled, the existing Orchestrator continues from the same durable artifacts without a new prompt artifact.",
+      "source": "Owner direction"
+    },
+    {
+      "id": "DEC-BDL-058",
+      "status": "confirmed",
+      "decided_at": "2026-09-13T03:03:43Z",
+      "decision": "Use Light Implementer for mechanically determined implementation work. The approved task graph separates exact file migration and unchanged prompt copying, deterministic DoD Manifest generation, and frozen version/package synchronization into Light Implementer slices. Schema and role semantics, verification policy, renderer authorship, public documentation, and host compatibility decisions remain Implementer work.",
+      "source": "Owner planning-review direction"
+    },
+    {
+      "id": "DEC-BDL-059",
+      "status": "confirmed",
+      "decided_at": "2026-09-13T03:16:46Z",
+      "decision": "Claude Code agents are unavailable for this Lifecycle run. Do not dispatch any Claude Code primary or fallback; use the next configured non-Claude route. This is a run-specific hold and does not modify the global lineups.json catalog.",
+      "source": "Owner run-specific routing direction"
+    },
+    {
+      "id": "DEC-BDL-060",
+      "status": "confirmed",
+      "decided_at": "2026-09-13T03:32:52Z",
+      "decision": "The owner confirms the existing integrated DoD Manifest was already approved and directs the Router to continue through implementation without repeating planning review.",
+      "source": "Owner implementation authorization"
+    },
+    {
+      "id": "DEC-BDL-061",
+      "status": "confirmed",
+      "decided_at": "2026-09-13T03:42:18Z",
+      "decision": "Do not use Explorer or its renamed Coordinator layer for this Lifecycle run. Orchestrator dispatches implementation roles directly. Add an explicit mechanical slice removing the legacy Explorer skill from the repository and shipped package. Preserve historical evidence and user configuration; other approved product role semantics remain unchanged. This amendment updates the plan while the owner-requested execution stop remains in effect.",
+      "source": "Owner: no explorer for this work. add a slice to remove explorer also.",
+      "supersedes": [
+        "implementation-handoff.md Coordinator dispatch requirement for this run"
+      ]
+    },
+    {
+      "id": "DEC-BDL-062",
+      "status": "confirmed",
+      "decided_at": "2026-09-13T03:49:14Z",
+      "decision": "Resume implementation and continue through completion with direct Orchestrator dispatch under DEC-BDL-061. The execution stop is lifted; all remaining scope, routing, verification and publication boundaries remain effective.",
+      "source": "Owner: ok keep going orchaestrator until this is done"
+    },
+    {
+      "id": "DEC-BDL-063",
+      "status": "confirmed",
+      "decided_at": "2026-09-13T04:56:16Z",
+      "decision": "Keep the current S1L write set. Perform the agreed renames of existing skills and replacement of names in configuration references; preserve skill file content and behavior rather than deleting and recreating skills. The disappearance of the old source path is intrinsic to the approved rename, not a separate source-deletion scope amendment. This resolves the Orchestrator source-path blocker without adding directories to the write set. Preserve user configuration and historical evidence.",
+      "source": "Owner: Keep the current write set just change the file names thats what was agreed we change replace the names not the files of the skills and config references",
+      "supersedes": [
+        "S1 receipt demand for six added S1L source directories",
+        "S1L migration fixture source_delete not_authorized interpretation for approved renames"
+      ]
+    },
+    {
+      "id": "DEC-BDL-064",
+      "status": "confirmed",
+      "recorded_at": "2026-09-13T06:36:02Z",
+      "decision": "HTML is for the DoD Manifest, not standalone process pages. The owner requested deletion of the three extra process HTML pages without backups; they are deleted. Do not substitute a mandatory Mermaid format: modeling must remain configurable/optional and preserve native SysML when selected. Existing verification-ready slice requirements DEC-BDL-031/035 remain effective. These current owner instructions override contrary generated design, references and tests; reconciliation is pending.",
+      "source": "Current owner conversation corrections after DEC-BDL-063"
+    },
+    {
+      "id": "DEC-BDL-065",
+      "status": "confirmed",
+      "recorded_at": "2026-09-13T06:36:02Z",
+      "decision": "Owner directs Grok to make some fixes following two xhigh investigations. First bounded recovery packets address reproduced SVG entity double-escaping (S3) and role/session schema combinations (S1). Each packet requires a failing regression, smallest repair, and focused verification; no publication or unrelated changes. Other findings remain pending.",
+      "source": "Owner: OK GET GROK TO MAKE SOME OF THE FIXES."
+    },
+    {
+      "id": "DEC-BDL-066",
+      "status": "confirmed",
+      "recorded_at": "2026-09-13T07:39:55Z",
+      "recorded_at_meaning": "Recording time of this decision entry in UTC, not the time the owner gave the instruction. The owner's utterance time is not known to this session and is not asserted.",
+      "recorded_at_correction": {
+        "corrected_at": "2026-09-13T07:39:55Z",
+        "erroneous_prior_value": "2026-09-13T02:27:00Z",
+        "note": "Timestamp correction recorded at 2026-09-13T07:39:55Z UTC by the same Plan Integrator session under DEC-BDL-066. The previously written value 2026-09-13T02:27:00Z was erroneous: it predates DEC-BDL-064 and DEC-BDL-065 (2026-09-13T06:36:02Z), which this repair reconciles, so it cannot be a valid recording time. The prior value is kept here as an error record only and is not authoritative history. No cause is claimed and no earlier timestamp or decision was altered."
+      },
+      "decision": "Bounded planning-repair amendment. The owner directed Opus high agents to make the planning-document repairs, including deleting the two superseded DoD Manifest preview HTMLs and regenerating the real manifest. This authorizes a Test Engineer planning delta followed by one Plan Integrator reconciliation of the existing planning package against the settled owner corrections and the actual incomplete execution state. It does not reopen planning review, change product behavior, or authorize publication.",
+      "source": "Owner: get opus high agents to make the repairs",
+      "routing_exception": {
+        "scope": "These bounded planning repairs only.",
+        "route": "Claude Code / Opus 5 / high",
+        "supersedes_for_this_scope": [
+          "DEC-BDL-059",
+          "HOLD-OPUS-2026-09-10",
+          "HOLD-CLAUDE-BDL-2026-09-12"
+        ],
+        "does_not_change": "The run-wide Claude hold remains in force for every implementation, assurance, review, and integration dispatch. No global lineup or user configuration is modified by this exception.",
+        "sessions": [
+          {
+            "role": "Test Engineer / planning",
+            "native_session_id": "d0842f65-91e4-4833-864f-e968aec1d89d",
+            "model": "claude-opus-5",
+            "effort": "high"
+          },
+          {
+            "role": "Plan Integrator",
+            "native_session_id": "cc168fca-b4ba-43c5-a01d-41c1a9672fb6",
+            "model": "claude-opus-5",
+            "effort": "high"
+          }
+        ]
+      },
+      "superseded_artifacts": {
+        "deleted": [
+          "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/prototypes/agy/agy-dod-manifest.html",
+          "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/prototypes/grok/grok-dod-manifest.html"
+        ],
+        "recorded_sha256": {
+          "prototypes/agy/agy-dod-manifest.html": "9812437a420b22a1dfee552df76bbea31a0beeff11e9c2206adadd6539c3e0a8",
+          "prototypes/grok/grok-dod-manifest.html": "17b3628f5edda1b2faef81b869b33f25dd5e760ce78e37abb3ea21a0f5ec3130"
+        },
+        "reason": "Both were pre-implementation comparison previews for DEC-BDL-054 and DEC-BDL-055. The implemented versioned template templates/dod-manifest-v1.html and the real rendered DoD Manifest supersede them. No backup or archive copy was made, as the owner instructed. DEC-BDL-054 and DEC-BDL-055 remain in this record unchanged as the history of that visual selection."
+      }
+    },
+    {
+      "id": "DEC-BDL-067",
+      "status": "confirmed",
+      "recorded_at": "2026-09-13T08:00:07Z",
+      "decision": "Prepare a handoff only; do not start implementation in the current assistant session. Before further implementation, obtain a comprehensive fresh read-only review of all implemented work against the owner decisions and planning contract. The receiving packet is review-only and returns findings, not repairs. Prior implementation authorization remains recorded, but cannot be used to skip this review or expand the review-only task. This owner-requested recovery checkpoint does not claim S6/S7/S8 completion or reset their budgets.",
+      "source": "Owner requested a resumable handoff and then directed: we need to go back and look at all that was implemented and see if its been done correctly before we start more implementation"
+    },
+    {
+      "id": "DEC-BDL-068",
+      "status": "confirmed",
+      "recorded_at": "2026-09-13T15:07:55Z",
+      "decision": "Route the three independent Wave 1 repair and completion lanes to three separate Grok Build harness-default Implementer sessions. Route S7 Reviewer to Codex CLI gpt-6-astra at medium reasoning instead of Grok Build. Route S8 Integration Engineer execution to Codex CLI gpt-6-astra at high reasoning. The Orchestrator remains the observed current Codex session and is not a configured profile role. Preserve these Reviewer and Integration Engineer choices when the alphazede profile is migrated to profiles.json; do not update the legacy lineups.json catalog.",
+      "source": "Owner route selection in the active session",
+      "supersedes_for_this_scope": [
+        "S7 effective route Grok Build / harness default",
+        "S8 effective route Codex CLI / gpt-6-astra / medium"
+      ]
+    },
+    {
+      "id": "DEC-BDL-069",
+      "status": "confirmed",
+      "recorded_at": "2026-09-13T15:19:53Z",
+      "decision": "Align S7's slice reasoning_level with its selected Codex gpt-6-astra medium route. Replace the completed review-only implementation handoff with a current Wave 1 execution handoff. Before dispatch, bind three pairwise-disjoint Grok Build Implementer packets: public lifecycle alignment, planning-package helper repair, and host/package completion. The original broad S4/S5 write sets remain planning history; they do not authorize concurrent overlap. The exact Wave 1 packet write sets govern this dispatch.",
+      "source": "Owner correction in the active session"
+    },
+    {
+      "id": "DEC-BDL-070",
+      "status": "confirmed",
+      "recorded_at": "2026-09-13T15:53:35Z",
+      "decision": "Continue as Router through completion after Wave 1. This current owner instruction supersedes the consumed Wave 1 handoff stop and authorizes the already-planned S5L, S6, S7, and S8 sequence under their recorded scopes, routes, assurance/review bounds, and owner-only closeout boundaries. It grants no commit, publication, deployment, issue closure, or visual-acceptance decision.",
+      "source": "Owner: you are the router. lets get this completed."
+    },
+    {
+      "id": "DEC-BDL-071",
+      "status": "confirmed",
+      "recorded_at": "2026-09-13T15:56:25Z",
+      "decision": "Finish the current PHASE-1 through S5L and stop. PHASE-2 (S6 assurance, S7 review, and S8 Integration Engineer execution) will be worked next. W1-A, W1-B, and W1-C are one parallel recovery/completion batch inside PHASE-1, not a separate declared Lifecycle phase or assurance cadence boundary.",
+      "source": "Owner: just finish what you are doing we will work phase 2 next",
+      "supersedes_for_this_turn": "DEC-BDL-070 continuation beyond PHASE-1"
+    },
+    {
+      "id": "DEC-BDL-072",
+      "status": "confirmed",
+      "recorded_at": "2026-09-13T16:14:40Z",
+      "decision": "Start PHASE-2 from the completed PHASE-1 candidate. Dispatch S6 Test Engineer assurance first on one fresh Grok Build harness-default session. S7 waits for the S6 disposition; S8 waits for S7 and any authorized deterministic repair closure. Existing route selections, assurance bounds, browser prohibition, and owner-only acceptance remain effective.",
+      "source": "Owner: ok lets start phase 2"
+    },
+    {
+      "id": "DEC-BDL-073",
+      "status": "confirmed",
+      "recorded_at": "2026-09-13T17:06:40Z",
+      "decision": "The owner performed CMD-BDL-VISUAL on the rendered DoD Manifest and reports that SEIT-BDL-012 passes. Close S6 to PASS using the immutable Test Engineer receipt plus the separate owner observation; do not rerun assurance. Proceed to S7 on the recorded Codex gpt-6-astra medium route.",
+      "source": "Owner opened the Manifest with xdg-open (exit 0) and stated: yes this passes."
+    },
+    {
+      "id": "DEC-BDL-074",
+      "status": "confirmed",
+      "recorded_at": "2026-09-13T18:38:45Z",
+      "decision": "Before owner acceptance, reopen the completed candidate for one bounded PHASE-3 hardening amendment. Dispatch four concurrent Grok Build harness-default sessions: README framing/role-table correction, Copilot native Test Engineering hooks, Manifest CSP hardening, and read-only host installation/capability validation. Preserve disjoint initial write sets. The README session incorporates the host-validation receipt only after that receipt returns. Regenerate the Manifest and rerun independent gates on the new candidate.",
+      "source": "Owner: ok lets get it done",
+      "route": {
+        "sessions": 4,
+        "harness": "Grok Build",
+        "model": "harness default"
+      },
+      "prior_candidate_product_tree_sha256": "54aff5fddfc1b53fe52ef138f585a26b9ac361e6184e032f61894cbdc00fad05"
+    },
+    {
+      "id": "DEC-BDL-075",
+      "status": "confirmed",
+      "decided_at": "2026-09-13T19:20:00Z",
+      "decision": "Close RISK-BDL-001, RISK-BDL-002, and RISK-BDL-003 as mitigated for this Lifecycle candidate. Preserve their original planning rows as historical projections; record the closeout disposition as CLOSED_MITIGATED with the implemented controls and evidence. A future terminology regression, host-version capability change, or renderer/template regression is a new or reopened risk based on new evidence.",
+      "source": "Owner direction: close those out; these are quick Light Implementer edits."
+    },
+    {
+      "id": "DEC-BDL-076",
+      "status": "confirmed",
+      "decided_at": "2026-09-13T20:41:20Z",
+      "decision": "The owner inspected the corrected PHASE-3 DoD Manifest sha256:8c3f1acf5163044510ac9fc06cf96ea94e08107b1e84fca6ebaa8a7d653fdcc0, reports the visual demonstration passes, and directs the Lifecycle to continue. Close SEIT-BDL-012 for this renderer/template presentation using the separate owner observation; continue to final S6 receipt, S7, and S8.",
+      "source": "Owner: ok its passed lets continue"
+    },
+    {
+      "id": "DEC-BDL-077",
+      "status": "confirmed",
+      "decided_at": "2026-09-13T21:06:21Z",
+      "decision": "The Human owner accepts the final Bearing Delivery Lifecycle Alignment candidate and its assembled DoD Manifest. This acceptance completes the Lifecycle and releases its checkout lease. It does not authorize commit, push, merge, publication, package release, deployment, or issue closure.",
+      "source": "Owner: ok approved"
+    }
+  ],
+  "review_first_instruction": {
+    "id": "OWNER-REVIEW-FIRST-2026-09-13",
+    "owner_decision_id": "DEC-BDL-067",
+    "recorded_at": "2026-09-13T08:00:07Z",
+    "source": [
+      "no you are not implementing I need a handoff and make sure the handoff prompt is able to resume and follow the rules of the contract of the planning",
+      "we need to go back and look at all that was implemented and see if its been done correctly before we start more implementation"
+    ],
+    "instruction": "Prepare the handoff only in this turn. The receiving Orchestrator must obtain a comprehensive fresh read-only review of the entire implemented draft against current owner decisions and planning contracts before any further implementation. The handoff authorizes review and append-only review bookkeeping only, not repairs or implementation. Return findings for owner disposition; do not automatically resume S5 or any repair from an old continuation grant.",
+    "timing_override": "This owner-requested recovery review is allowed before S5/S6 completion. It does not claim S6/S7/S8 acceptance or reset their budgets.",
+    "current_state": "HANDOFF_PREPARED; no reviewer dispatched by the current assistant"
+  },
+  "planning_repair_authority": {
+    "owner_instruction": "get opus high agents to make the repairs",
+    "route": "Claude Code / Opus / high",
+    "scope": "The planning-document repair checklist from the preceding response, including removal of the two superseded preview HTML files and regeneration of the real manifest.",
+    "routing_exception": "Current explicit owner instruction supersedes the earlier no-Claude/Opus hold only for these bounded planning repairs. Do not change global lineups or claim this exception applies to other roles/actions.",
+    "sequence": "Test Engineer planning delta first; Plan Integrator reconciliation second after the SEIT result is stable. No product code changes or new planning review loop.",
+    "publication": "not_authorized",
+    "verification_plan_receipt": {
+      "status": "PASS_PLANNING_DELTA",
+      "native_session_id": "d0842f65-91e4-4833-864f-e968aec1d89d",
+      "model": "claude-opus-5",
+      "effort": "high",
+      "changed_paths": [
+        "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/seit.json"
+      ],
+      "proof_cases": 12,
+      "known_gaps": 6,
+      "checks": "JSON/schema validation and reference resolution passed; gap counts corrected to two stale-HTML plus three package failures; existing supplemental view bindings recognized; test protections retained.",
+      "next": "Plan Integrator reconciles narratives, active metadata and source digests without authoring V&V."
+    },
+    "plan_integrator_receipt": {
+      "status": "PASS_PLANNING_RECONCILIATION",
+      "recorded_at": "2026-09-13T07:39:55Z",
+      "recorded_at_correction": {
+        "corrected_at": "2026-09-13T07:39:55Z",
+        "erroneous_prior_value": "2026-09-13T02:27:00Z",
+        "note": "Timestamp correction recorded at 2026-09-13T07:39:55Z UTC by the same Plan Integrator session under DEC-BDL-066. The previously written value 2026-09-13T02:27:00Z was erroneous: it predates DEC-BDL-064 and DEC-BDL-065 (2026-09-13T06:36:02Z), which this repair reconciles, so it cannot be a valid recording time. The prior value is kept here as an error record only and is not authoritative history. No cause is claimed and no earlier timestamp or decision was altered."
+      },
+      "native_session_id": "cc168fca-b4ba-43c5-a01d-41c1a9672fb6",
+      "model": "claude-opus-5",
+      "effort": "high",
+      "authority": "DEC-BDL-066",
+      "changed_paths": [
+        "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/workspace.md",
+        "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/design.md",
+        "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/bearing-delivery-lifecycle-alignment-technical-plan.md",
+        "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/implementation.json",
+        "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/journey.json",
+        "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/seit.json",
+        "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/implementation-handoff.md",
+        "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/bearing-delivery-lifecycle-alignment-dod-manifest.html"
+      ],
+      "deleted_paths": [
+        "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/prototypes/agy/agy-dod-manifest.html",
+        "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/prototypes/grok/grok-dod-manifest.html"
+      ],
+      "scope": "Planning-package reconciliation only. No product file, schema, hook, tool, template, test, skill, README, public doc, SVG asset, user configuration, or external repository was changed. No commit, stage, push, merge, release, deploy, or publication occurred.",
+      "resolved": [
+        "GAP-BDL-005",
+        "GAP-BDL-006"
+      ],
+      "still_open": [
+        "GAP-BDL-001",
+        "GAP-BDL-002",
+        "GAP-BDL-003",
+        "GAP-BDL-004"
+      ],
+      "digests": {
+        "technical_plan_sha256": "f5c315e663c97aeacbdc325575cecffe1f17ac2f1ead0ad1a58c06a8eb2a23c7",
+        "design_sha256": "6649efaaf0e5d7f27892c55e1a66fab4139d36abd878bbbda87ca8e0db5fa2d4",
+        "planning_candidate_digest": "acaeda8cf479fa886b0f0fb4d3028ac781f538fe3a15100867c170a185c54ce6",
+        "manifest_sha256": "b46bf725d9bf4f2b9e31aff654f69750d47f89515873b17ba538dbbae0cba1ce",
+        "manifest_sha256_superseded": "727e0af91ac7b77ac9b416f057472dc3e87c0de550688f6dcfb989a1223c1fc8 was the hash before the 2026-09-13T07:39:55Z timestamp correction and handoff route-verification fix; the manifest was regenerated from the corrected implementation.json and --check reproduces the new hash.",
+        "algorithm": "hooks/plan-package.cjs verifyDigests: sha256 over the newline-joined planning-input digests plus sha256(seit.json)"
+      },
+      "commands": [
+        {
+          "command": "node hooks/plan-package.cjs docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment",
+          "exit_code": 1,
+          "findings": "Only two planning_role_in_lifecycle findings on Requirements Engineer routing records. checkPlanningRoles recurses the whole document and cannot distinguish a frozen route record from a Lifecycle slice; no slice carries that role. Product helper finding, outside this write set. Digest and command-id checks pass."
+        },
+        {
+          "command": "node tools/render-dod-manifest.mjs docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/implementation.json",
+          "exit_code": 0
+        },
+        {
+          "command": "node tools/render-dod-manifest.mjs docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/implementation.json --check",
+          "exit_code": 0,
+          "result": "RENDER_CHECK_PASS"
+        },
+        {
+          "command": "python3 test/schema-validation.py",
+          "exit_code": 0,
+          "passed": 256
+        },
+        {
+          "command": "node --test test/*.test.mjs",
+          "exit_code": 1,
+          "passed": 392,
+          "failed": 5,
+          "disposition": "GAP-BDL-001 two stale deleted-HTML expectations and GAP-BDL-004 three package-inventory expectations. Both are open product gaps in authorized product slices, unchanged by this reconciliation."
+        },
+        {
+          "command": "git diff --check",
+          "exit_code": 0
+        },
+        {
+          "command": "live-artifact validation with installed jsonschema 4.25.1 against schemas/journey.schema.json, schemas/implementation.schema.json, schemas/seit.schema.json",
+          "exit_code": 0,
+          "result": "0 errors on all three"
+        }
+      ],
+      "browser_demonstration": "Still unavailable. No browser action was attempted and no workaround was used. SEIT-BDL-012 remains INCONCLUSIVE pending owner performance, waiver, or acceptance of the deterministic substitutes.",
+      "independence": "Author-side planning reconciliation. This is not independent assurance and grants no PASS to any product contract.",
+      "next": "Authorized product slices repair GAP-BDL-001 through GAP-BDL-004; S5 completes; then S6 assurance, S7 review, and S8 integration assessment run once each at their configured boundaries."
+    }
+  },
+  "recovery_packets": [
+    {
+      "id": "REC-SVG-001",
+      "slice": "S3",
+      "owner_decisions": [
+        "DEC-BDL-045",
+        "DEC-BDL-048",
+        "DEC-BDL-065"
+      ],
+      "write_set": [
+        "tools/render-dod-manifest.mjs",
+        "test/dod-manifest.test.mjs"
+      ],
+      "observable_contract": "Valid predefined/numeric XML entities in SVG text and attributes preserve their decoded meaning through sanitization and repeated sanitization; decoded attribute values still pass existing URL/style/allowlist safety checks. No new external entity or script support.",
+      "verification": "Failing entity regression before fix; node --test test/dod-manifest.test.mjs passes afterward; unsafe-asset checks remain passing.",
+      "status": "PASS_AUTHOR_VERIFIED",
+      "route": "Grok Build / xhigh",
+      "native_session_id": "01a0997d-123e-7752-8299-7941bdf8026c",
+      "host_exec_session": 86012,
+      "receipt": {
+        "fail_before": "Entity regression reproduced double-escaping on original code",
+        "commands": [
+          {
+            "command": "node --test test/dod-manifest.test.mjs",
+            "exit_code": 0,
+            "passed": 14,
+            "controller_rerun": true
+          }
+        ],
+        "evidence": "100 source ampersands preserved, zero double-escapes, repeated sanitization identical; encoded unsafe href/style cases remain rejected",
+        "file_sha256": {
+          "tools/render-dod-manifest.mjs": "ba41e28deac854e0cb65a0d8d36bb00488d8e9dba7945a9c455d780b4486b4a8",
+          "test/dod-manifest.test.mjs": "10fef62f29000fadbc7520f573811dcbc95d8b8cf033c06a2cea471ac8dbea09"
+        }
+      }
+    },
+    {
+      "id": "REC-PROFILE-001",
+      "slice": "S1",
+      "owner_decisions": [
+        "DEC-BDL-047",
+        "DEC-BDL-049",
+        "DEC-BDL-065"
+      ],
+      "write_set": [
+        "schemas/profiles.schema.json",
+        "test/schema-validation.py"
+      ],
+      "observable_contract": "Systems Modeler and Requirements Engineer accept planning sessions only; Test Engineer accepts planning/assurance only; Integration Engineer accepts planning/execution only. Omitted roles and explicit disabled sessions retain existing optional behavior and route validation.",
+      "verification": "Negative role/session fixtures fail before repair and pass after; existing valid nested profiles remain accepted.",
+      "status": "PASS_AUTHOR_VERIFIED",
+      "route": "Grok Build / xhigh",
+      "native_session_id": "01a0997d-1237-7632-9940-8a630e17c125",
+      "host_exec_session": 64995,
+      "receipt": {
+        "fail_before": "Nine new illegal-session cases failed their rejection expectations before schema repair; existing 37 profile cases stayed passing",
+        "commands": [
+          {
+            "command": "python3 -B: import test/schema-validation.py without bootstrap and call run_cases() using installed jsonschema",
+            "exit_code": 0,
+            "passed": 256,
+            "controller_rerun": true
+          }
+        ],
+        "evidence": "54 profile cases pass including nine formerly accepted illegal combinations, valid/omitted/disabled sessions and malformed-route rejection",
+        "file_sha256": {
+          "schemas/profiles.schema.json": "7cd9248389ff156a58f912ba399d4d8ab5be34a22dcc6ede1f637b8ed759a74c",
+          "test/schema-validation.py": "6e010bedadbd575df9ccd84d9ed7f9989e3c5c35f253212d82922324bd1704b9"
+        }
+      }
+    }
+  ],
+  "execution_receipts": [
+    {
+      "slice": "S3L",
+      "status": "PASS",
+      "route": "AGY / AGY default",
+      "native_session_id": "82c35320-e2b1-4f45-9009-db98a601f736",
+      "changed_paths": [
+        "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/bearing-delivery-lifecycle-alignment-dod-manifest.html"
+      ],
+      "output_sha256": "a7540ddb7a5c00084c447a179f13bc69bf0e67b68af60b0e00a298703df3e108",
+      "commands": [
+        {
+          "command": "node tools/render-dod-manifest.mjs docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/implementation.json",
+          "exit_code": 0
+        },
+        {
+          "command": "node tools/render-dod-manifest.mjs docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/implementation.json --check",
+          "exit_code": 0,
+          "controller_rerun": true
+        }
+      ],
+      "blocker": null,
+      "note": "Receipt stored in journey state to avoid changing the renderer input immediately after its byte check; project into final closeout before final regeneration."
+    },
+    {
+      "activity": "local_manifest_browser_demonstration",
+      "status": "ENVIRONMENT_FAILURE",
+      "artifact_sha256": "a7540ddb7a5c00084c447a179f13bc69bf0e67b68af60b0e00a298703df3e108",
+      "evidence": "Browser Use rejected navigation to the generated local file under its URL security policy. No page was opened or visually inspected.",
+      "restriction": "Do not circumvent using localhost serving, raw CDP/browser commands, alternate browser surfaces, or indirect execution for the blocked action.",
+      "affected_verification": [
+        "SEIT-BDL-001 rendered HTML demonstration",
+        "SEIT-BDL-003 wide/narrow visual inspection"
+      ],
+      "next_action": "Finish independent authorized package and deterministic work; obtain permitted visual evidence or an explicit owner disposition before claiming full completion."
+    },
+    {
+      "activity": "post_recovery_manifest_regeneration",
+      "status": "PASS_MECHANICAL",
+      "route": "AGY / AGY default",
+      "native_session_id": "82c35320-e2b1-4f45-9009-db98a601f736",
+      "product_tree_sha256": "63e1147b2783c61134e91124f0fd893a73a371c0b6be027277a4b0cac9cefdbf",
+      "manifest_sha256": "c323df661ae2449e8f3f61a5548955100bcb4451b5f90724999599d7f7b6daf4",
+      "changed_paths": [
+        "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/bearing-delivery-lifecycle-alignment-dod-manifest.html"
+      ],
+      "render_exit": 0,
+      "render_check_exit": 0,
+      "controller_rerun": true,
+      "full_node_suite": {
+        "passed": 392,
+        "failed": 5,
+        "total": 397,
+        "exit_code": 1
+      },
+      "scope_check": "Exactly four authorized product files changed by the two Grok fixes; remaining changes were controller receipts/handoff and mechanical manifest regeneration. User configuration unchanged. No standalone process HTML recreated.",
+      "active_agents": [],
+      "overall_completion": "INCOMPLETE; other recovery findings and S5-S8 remain pending."
+    },
+    {
+      "activity": "comprehensive_review_dispatch",
+      "authority": "DEC-BDL-067",
+      "recorded_at": "2026-09-13T08:10:44Z",
+      "status": "DISPATCH_PREPARED",
+      "orchestrator_route": "Codex / observed current session",
+      "orchestrator_native_session_id": "01a099ce-04eb-7cc0-9c2b-1726118126b8",
+      "reviewer_route": "Grok Build / harness default",
+      "reviewer_native_session_id": "867e6fc4-3ceb-471a-b642-33904d31e6a2",
+      "reviewer_changed_paths": [],
+      "reviewer_write_set": [],
+      "baseline": "b5cec79f04f6f6ea506a2ad89bf937aab143d876",
+      "product_tree_sha256": "63e1147b2783c61134e91124f0fd893a73a371c0b6be027277a4b0cac9cefdbf",
+      "pre_bookkeeping_all_tree_sha256": "6e65ff60caac4c4eabc98a65b9d1273c32853d1fa18fb109550775eb47177b33",
+      "journey_meaning_sha256_excluding_execution_receipts": "85cf8ccdf031df090ef7263095d372fed507ca8919b8d4ec6a4cc9e9a4fba29a",
+      "planning_candidate_digest": "acaeda8cf479fa886b0f0fb4d3028ac781f538fe3a15100867c170a185c54ce6",
+      "planning_file_sha256": {
+        "implementation-handoff.md": "122a163330f338486da73a49915d0f627fea088da4b37f2680aef59c082cb68b",
+        "bearing-delivery-lifecycle-alignment-dod-manifest.html": "b46bf725d9bf4f2b9e31aff654f69750d47f89515873b17ba538dbbae0cba1ce",
+        "bearing-delivery-lifecycle-alignment-technical-plan.md": "f5c315e663c97aeacbdc325575cecffe1f17ac2f1ead0ad1a58c06a8eb2a23c7",
+        "design.md": "6649efaaf0e5d7f27892c55e1a66fab4139d36abd878bbbda87ca8e0db5fa2d4",
+        "seit.json": "e05270a4082771d599f2003d30ea60b3582739cdafb8f72b232792ad9263ccf1",
+        "journey.json": "f9661d0747458b809beeedfa4d723f16f8af59ddfd1af6ed18df200d7fbe3593",
+        "workspace.md": "b551a767933d4b0a6d79a0cbdb915803b9792e487c5706483035c096d4751993",
+        "implementation.json": "69853cfea1886feb365487fd6aeac65b44200d98237f6dbabb64a38842c97dc7"
+      },
+      "inventory": {
+        "tracked_changed_paths": 55,
+        "untracked_paths": 44,
+        "includes_planning_amendments": true
+      },
+      "liveness": {
+        "previous_orchestrator_native_session_id": "01a098d6-2f61-7fe0-bdf8-4fc66cedb80d",
+        "last_durable_event": "task_complete",
+        "last_durable_event_at": "2026-09-13T08:04:49.750Z",
+        "grok_leaders": 0,
+        "current_host_agents": [
+          "/root"
+        ],
+        "checkout_competitor": "none active observed"
+      },
+      "lease": {
+        "generation": 1,
+        "state": "active",
+        "controller": "Codex Router",
+        "resumed_by_owner_request": true,
+        "not_reacquired_or_changed": true
+      },
+      "bran_status": "unavailable",
+      "bran_reason": "Nested repository has no native .bran/policy.yaml",
+      "boundary": "Owner-requested recovery review only; no S6/S7/S8 acceptance or budget reset; no automatic repair."
+    },
+    {
+      "activity": "comprehensive_review_controller_verification",
+      "authority": "DEC-BDL-067",
+      "recorded_at": "2026-09-13T08:15:28Z",
+      "orchestrator_route": "Codex / gpt-6-astra / xhigh",
+      "orchestrator_native_session_id": "01a099ce-04eb-7cc0-9c2b-1726118126b8",
+      "reviewer_native_session_id": "867e6fc4-3ceb-471a-b642-33904d31e6a2",
+      "evidence_class": "Controller checks only; not independent assurance or acceptance.",
+      "full_node_suite": {
+        "command": "node --test test/*.test.mjs",
+        "exit_code": 1,
+        "passed": 392,
+        "failed": 5,
+        "total": 397
+      },
+      "checks": [
+        {
+          "commands": [
+            {
+              "command": "node --test test/public-boundary.test.mjs test/skills-conformance.test.mjs",
+              "exit_code": 1,
+              "output": "    # Subtest: files allowlist includes shipped profiles.json and schemas/ and excludes legacy lineups.json\n    not ok 2 - files allowlist includes shipped profiles.json and schemas/ and excludes legacy lineups.json\n      ---\n      duration_ms: 0.345975\n      type: 'test'\n      location: '/home/spectre/alphazede/Alphazedehq/bearing-lite/test/public-boundary.test.mjs:242:3'\n      failureType: 'testCodeFailure'\n      error: 'PACKAGE.files must include profiles.json'\n      code: 'ERR_ASSERTION'\n      name: 'AssertionError'\n      expected: true\n      actual: false\n      operator: '=='\n      stack: |-\n        TestContext.<anonymous> (file:///home/spectre/alphazede/Alphazedehq/bearing-lite/test/public-boundary.test.mjs:243:12)\n        Test.runInAsyncScope (node:async_hooks:214:14)\n        Test.run (node:internal/test_runner/test:1047:25)\n        Suite.processPendingSubtests (node:internal/test_runner/test:744:18)\n        Test.postRun (node:internal/test_runner/test:1173:19)\n        Test.run (node:internal/test_runner/test:1101:12)\n        async Promise.all (index 0)\n        async Suite.run (node:internal/test_runner/test:1442:7)\n        async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)\n      ...\n    # Subtest: public lifecycle docs describe Intake then Architectural Alignment then Scope Definition then Planning and Design\n    not ok 15 - public lifecycle docs describe Intake then Architectural Alignment then Scope Definition then Planning and Design\n      ---\n      duration_ms: 0.173727\n      type: 'test'\n      location: '/home/spectre/alphazede/Alphazedehq/bearing-lite/test/public-boundary.test.mjs:453:3'\n      failureType: 'testCodeFailure'\n      error: \"ENOENT: no such file or directory, open '/home/spectre/alphazede/Alphazedehq/bearing-lite/docs/architecture/bearing-process/index.html'\"\n      code: 'ENOENT'\n      stack: |-\n        readFileSync (node:fs:440:20)\n        TestContext.<anonymous> (file:///home/spectre/alphazede/Alphazedehq/bearing-lite/test/public-boundary.test.mjs:460:20)\n        Test.runInAsyncScope (node:async_hooks:214:14)\n        Test.run (node:internal/test_runner/test:1047:25)\n        Suite.processPendingSubtests (node:internal/test_runner/test:744:18)\n        Test.postRun (node:internal/test_runner/test:1173:19)\n        Test.run (node:internal/test_runner/test:1101:12)\n        async Suite.processPendingSubtests (node:internal/test_runner/test:744:7)\n      ...\n    # Subtest: public docs keep one Integration Engineer and one Test Engineer with named sessions\n    ok 16 - public docs keep one Integration Engineer and one Test Engineer with named sessions\n      ---\n      duration_ms: 0.466864\n      type: 'test'\n    # Subtest: public lifecycle surfaces exist, stay public, and omit active retired terms\n    not ok 17 - public lifecycle surfaces exist, stay public, and omit active retired terms\n      ---\n      duration_ms: 0.318018\n      type: 'test'\n      location: '/home/spectre/alphazede/Alphazedehq/bearing-lite/test/public-boundary.test.mjs:491:3'\n      failureType: 'testCodeFailure'\n      error: 'docs/architecture/bearing-process/index.html'\n      code: 'ERR_ASSERTION'\n      name: 'AssertionError'\n      expected: true\n      actual: false\n      operator: '=='\n      stack: |-\n        TestContext.<anonymous> (file:///home/spectre/alphazede/Alphazedehq/bearing-lite/test/public-boundary.test.mjs:496:14)\n        Test.runInAsyncScope (node:async_hooks:214:14)\n        Test.run (node:internal/test_runner/test:1047:25)\n        Suite.processPendingSubtests (node:internal/test_runner/test:744:18)\n        Test.postRun (node:internal/test_runner/test:1173:19)\n        Test.run (node:internal/test_runner/test:1101:12)\n        async Suite.processPendingSubtests (node:internal/test_runner/test:744:7)\n      ...\n    1..17\nnot ok 1 - CMD-PUBLIC-01 public-boundary (SEIT-PUBLIC-01, SEIT-MODEL-01, SEIT-INDEPENDENCE-01)\n    1..17\nnot ok 1 - CMD-PUBLIC-01 public-boundary (SEIT-PUBLIC-01, SEIT-MODEL-01, SEIT-INDEPENDENCE-01)\n  ---\n  duration_ms: 42.748359\n  type: 'suite'\n  location: '/home/spectre/alphazede/Alphazedehq/bearing-lite/test/public-boundary.test.mjs:228:1'\n  failureType: 'subtestsFailed'\n  error: '3 subtests failed'\n  code: 'ERR_TEST_FAILURE'\n  ...\n# Subtest: CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)\n    # Subtest: catalog requires the Lite engineering roles and does not require HQ method skills\n    ok 1 - catalog requires the Lite engineering roles and does not require HQ method skills\n      ---\n      duration_ms: 0.896242\n      type: 'test'\n      ...\n    # Subtest: no standalone grader skill remains\n    ok 2 - no standalone grader skill remains\n      ---\n      duration_ms: 0.131382\n      type: 'test'\n      ...\n    # Subtest: no Delegate Authority skill remains\n1..2\n# tests 50\n# suites 2\n# pass 47\n# fail 3\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 87.057564",
+              "stderr": ""
+            },
+            {
+              "command": "node --test test/plugin-manifest.test.mjs test/package-boundary.test.mjs",
+              "exit_code": 1,
+              "output": "    # Subtest: package.json name is @alphazede/bearing-lite with public-only files allowlist\n    not ok 1 - package.json name is @alphazede/bearing-lite with public-only files allowlist\n      ---\n      duration_ms: 1.682302\n      type: 'test'\n      location: '/home/spectre/alphazede/Alphazedehq/bearing-lite/test/package-boundary.test.mjs:245:3'\n      failureType: 'testCodeFailure'\n      error: |-\n        {\"ok\":false,\"diagnostics\":[{\"code\":\"allowlist_entry_not_public\",\"message\":\"files entry \\\"lineups.json\\\" is outside the public plugin surface allowlist\",\"path\":\"lineups.json\"},{\"code\":\"allowlist_missing_required\",\"message\":\"files allowlist missing required public surface \\\"profiles.json\\\"\",\"path\":\"profiles.json\"}]}\n        \n        false !== true\n        \n      code: 'ERR_ASSERTION'\n      name: 'AssertionError'\n      expected: true\n      actual: false\n      operator: 'strictEqual'\n      stack: |-\n        TestContext.<anonymous> (file:///home/spectre/alphazede/Alphazedehq/bearing-lite/test/package-boundary.test.mjs:249:12)\n        Test.runInAsyncScope (node:async_hooks:214:14)\n        Test.run (node:internal/test_runner/test:1047:25)\n        Test.start (node:internal/test_runner/test:944:17)\n        node:internal/test_runner/test:1440:71\n        node:internal/per_context/primordials:466:82\n    # Subtest: npm pack includes profiles.json and schema files and no private paths\n    not ok 3 - npm pack includes profiles.json and schema files and no private paths\n      ---\n      duration_ms: 216.197959\n      type: 'test'\n      location: '/home/spectre/alphazede/Alphazedehq/bearing-lite/test/package-boundary.test.mjs:278:3'\n      failureType: 'testCodeFailure'\n      error: |-\n        The expression evaluated to a falsy value:\n        \n          assert.ok(paths.includes(\"profiles.json\"))\n        \n      code: 'ERR_ASSERTION'\n      name: 'AssertionError'\n      expected: true\n      actual: false\n      operator: '=='\n      stack: |-\n        TestContext.<anonymous> (file:///home/spectre/alphazede/Alphazedehq/bearing-lite/test/package-boundary.test.mjs:286:12)\n        Test.runInAsyncScope (node:async_hooks:214:14)\n        Test.run (node:internal/test_runner/test:1047:25)\n        Suite.processPendingSubtests (node:internal/test_runner/test:744:18)\n        Test.postRun (node:internal/test_runner/test:1173:19)\n        Test.run (node:internal/test_runner/test:1101:12)\n    1..8\nnot ok 1 - CMD-PACKAGE-01 package-boundary (SEIT-PACKAGE-01)\n  ---\n  duration_ms: 424.241947\n  type: 'suite'\n  location: '/home/spectre/alphazede/Alphazedehq/bearing-lite/test/package-boundary.test.mjs:244:1'\n  failureType: 'subtestsFailed'\n  error: '2 subtests failed'\n  code: 'ERR_TEST_FAILURE'\n  ...\n# Subtest: CMD-MANIFEST-01 plugin-manifest (SEIT-MANIFEST-01, SEIT-EXTENSION-01)\n    # Subtest: loads product plugin.json with exact v1.0.0 schema and bearing-lite name\n    ok 1 - loads product plugin.json with exact v1.0.0 schema and bearing-lite name\n      ---\n      duration_ms: 1.449196\n      type: 'test'\n      ...\n    # Subtest: accepts only closed top-level fields present on the product manifest\n    ok 2 - accepts only closed top-level fields present on the product manifest\n      ---\n      duration_ms: 0.167723\n      type: 'test'\n      ...\n    # Subtest: keeps host install metadata aligned with Bearing Lite\n1..2\n# tests 17\n# suites 2\n# pass 15\n# fail 2\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 472.224747",
+              "stderr": ""
+            },
+            {
+              "command": "node hooks/plan-package.cjs docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment",
+              "exit_code": 1,
+              "output": "{\n  \"outcome\": \"FAIL\",\n  \"manifest_digest\": \"acaeda8cf479fa886b0f0fb4d3028ac781f538fe3a15100867c170a185c54ce6\",\n  \"findings\": [\n    {\n      \"code\": \"planning_role_in_lifecycle\",\n      \"step\": null,\n      \"role\": \"Requirements Engineer / planning\"\n    },\n    {\n      \"code\": \"planning_role_in_lifecycle\",\n      \"step\": null,\n      \"role\": \"Requirements Engineer\"\n    }\n  ]\n}\n",
+              "stderr": ""
+            },
+            {
+              "command": "node tools/render-dod-manifest.mjs docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/implementation.json --check",
+              "exit_code": 0,
+              "output": "RENDER_CHECK_PASS digest=sha256:b46bf725d9bf4f2b9e31aff654f69750d47f89515873b17ba538dbbae0cba1ce output=/home/spectre/alphazede/Alphazedehq/bearing-lite/docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/bearing-delivery-lifecycle-alignment-dod-manifest.html template=1.0.0\n",
+              "stderr": ""
+            },
+            {
+              "command": "npm pack --dry-run --json",
+              "exit_code": 0,
+              "output": "[{\"name\": \"@alphazede/bearing-lite\", \"version\": \"0.2.2\", \"entryCount\": 64, \"files\": [\"CODE_OF_CONDUCT.md\", \"CONTRIBUTING.md\", \"LICENSE-APACHE\", \"README.md\", \"SECURITY.md\", \"hooks/activation.cjs\", \"hooks/assurance-budget.cjs\", \"hooks/closeout.cjs\", \"hooks/com.anthropic.claude-code/host.cjs\", \"hooks/com.anthropic.claude-code/mapping.md\", \"hooks/com.cursor/hooks.json\", \"hooks/hooks.json\", \"hooks/owner-stops.cjs\", \"hooks/plan-package.cjs\", \"hooks/planning-review.cjs\", \"hooks/policy.cjs\", \"hooks/profiles.cjs\", \"hooks/protected-action.cjs\", \"hooks/reconcile.cjs\", \"hooks/te-capability.cjs\", \"hooks/te-host.cjs\", \"hooks/transition-order.cjs\", \"hooks/verification.cjs\", \"package.json\", \"plugin.json\", \"schemas/authority.schema.json\", \"schemas/event.schema.json\", \"schemas/implementation.schema.json\", \"schemas/journey.schema.json\", \"schemas/profiles.schema.json\", \"schemas/seit.schema.json\", \"schemas/verification.schema.json\", \"skills/architectural-alignment/SKILL.md\", \"skills/architectural-alignment/templates/workspace.md\", \"skills/bearing-lite/agents/openai.yaml\", \"skills/bearing-lite/references/assurance-policy.md\", \"skills/bearing-lite/references/lineups.md\", \"skills/bearing-lite/references/owner-stops.md\", \"skills/bearing-lite/references/peer-synthesis.md\", \"skills/bearing-lite/references/profiles.md\", \"skills/bearing-lite/references/resume.md\", \"skills/bearing-lite/references/review-policy.md\", \"skills/bearing-lite/references/role-routing.mmd\", \"skills/bearing-lite/references/task-state.md\", \"skills/bearing-lite/references/task-state.mmd\", \"skills/bearing-lite/references/verification.md\", \"skills/bearing-lite/SKILL.md\", \"skills/bearing-lite/templates/task.md\", \"skills/coordinator/SKILL.md\", \"skills/implementer/SKILL.md\", \"skills/intake/SKILL.md\", \"skills/integration-engineer/SKILL.md\", \"skills/light-implementer/SKILL.md\", \"skills/onboard-bearing/SKILL.md\", \"skills/plan-integrator/SKILL.md\", \"skills/planning-and-design/references/artifact-grammar.md\", \"skills/planning-and-design/SKILL.md\", \"skills/prompt/SKILL.md\", \"skills/requirements-engineer/SKILL.md\", \"skills/reviewer/SKILL.md\", \"skills/scope-definition/SKILL.md\", \"skills/scribe/SKILL.md\", \"skills/systems-modeler/SKILL.md\", \"skills/test-engineer/SKILL.md\"]}]",
+              "stderr": ""
+            },
+            {
+              "command": "git diff --check",
+              "exit_code": 0,
+              "output": "",
+              "stderr": ""
+            }
+          ]
+        },
+        {
+          "command": "python3 -B: import test/schema-validation.py without bootstrap and call run_cases()",
+          "exit_code": 0,
+          "output": "# passed=256 failed=0"
+        },
+        {
+          "command": "installed jsonschema validates actual journey.json against shipped schema",
+          "exit_code": 0,
+          "errors": []
+        },
+        {
+          "command": "installed jsonschema validates actual implementation.json against shipped schema",
+          "exit_code": 0,
+          "errors": []
+        },
+        {
+          "command": "installed jsonschema validates actual seit.json against shipped schema",
+          "exit_code": 0,
+          "errors": []
+        },
+        {
+          "command": "muse skills validate <each skills/* directory> --json",
+          "results": [
+            {
+              "path": "skills/architectural-alignment/SKILL.md",
+              "exit_code": 0,
+              "output": {
+                "compatibility": {
+                  "allowed_tools": [],
+                  "known_fields": [
+                    "description",
+                    "name"
+                  ],
+                  "profile": "agent-skills-common-subset",
+                  "result": "compatible",
+                  "unknown_fields": [],
+                  "unsupported_fields": []
+                },
+                "diagnostics": [],
+                "files": [
+                  {
+                    "bytes": 2653,
+                    "relative_path": "SKILL.md",
+                    "sha256": "sha256:70d3a2630e4b1ea21453e7dbe2333a7cdeec570097e300b7922c374e8b3c48c9"
+                  },
+                  {
+                    "bytes": 895,
+                    "relative_path": "templates/workspace.md",
+                    "sha256": "sha256:508195b52e5ff419848a2c96e9ce07230b06f95f65c3fb30cf33547290a66c6b"
+                  }
+                ],
+                "id": "architectural-alignment",
+                "source_path": "skills/architectural-alignment",
+                "valid": true
+              },
+              "stderr": ""
+            },
+            {
+              "path": "skills/bearing-lite/SKILL.md",
+              "exit_code": 0,
+              "output": {
+                "compatibility": {
+                  "allowed_tools": [],
+                  "known_fields": [
+                    "description",
+                    "name"
+                  ],
+                  "profile": "agent-skills-common-subset",
+                  "result": "compatible",
+                  "unknown_fields": [],
+                  "unsupported_fields": []
+                },
+                "diagnostics": [],
+                "files": [
+                  {
+                    "bytes": 3222,
+                    "relative_path": "SKILL.md",
+                    "sha256": "sha256:1854078eaccf740f2ac15f839c2687080e9154ddd02e0212e64d7326c244545b"
+                  },
+                  {
+                    "bytes": 328,
+                    "relative_path": "agents/openai.yaml",
+                    "sha256": "sha256:42bc64966de7382277f8e203effb84b4c5437e3fd8edcebdbecb45383d23ecea"
+                  },
+                  {
+                    "bytes": 3354,
+                    "relative_path": "references/assurance-policy.md",
+                    "sha256": "sha256:d527bc2a5fcb3dccde904186a405c99017e2688646f90c0b50c8f4a76bc02f55"
+                  },
+                  {
+                    "bytes": 447,
+                    "relative_path": "references/lineups.md",
+                    "sha256": "sha256:4ca3138725dc7073280114f80c4108d8f62ea657f63649a7fb707418a4733a4b"
+                  },
+                  {
+                    "bytes": 7970,
+                    "relative_path": "references/owner-stops.md",
+                    "sha256": "sha256:714953ffafeaff74acde426641d7d5afcf1ee79de8e39d2dfa182ec1710b3c45"
+                  },
+                  {
+                    "bytes": 2259,
+                    "relative_path": "references/peer-synthesis.md",
+                    "sha256": "sha256:48318d1f2eee34fc35dc7ae2c6820be3e024aca1e1af3fc4da3bd699976217c7"
+                  },
+                  {
+                    "bytes": 7240,
+                    "relative_path": "references/profiles.md",
+                    "sha256": "sha256:00b64520771a1696e7f84ae7c32169fcf06d254a6529a535599aba7e9e86cb1f"
+                  },
+                  {
+                    "bytes": 1430,
+                    "relative_path": "references/resume.md",
+                    "sha256": "sha256:4ece2602f0d6ba27f116450b5a9da564678d19ff44902b39286a0336d016260e"
+                  },
+                  {
+                    "bytes": 1979,
+                    "relative_path": "references/review-policy.md",
+                    "sha256": "sha256:587dd9b243f868fcc32068ebc28a4821ce410906c5696d39464d47d3db1edff5"
+                  },
+                  {
+                    "bytes": 1061,
+                    "relative_path": "references/role-routing.mmd",
+                    "sha256": "sha256:a4c171a13d2b4282a3d42cc9d6167a25802439dc1e8efe35e6a213dd19904b6e"
+                  },
+                  {
+                    "bytes": 5294,
+                    "relative_path": "references/task-state.md",
+                    "sha256": "sha256:96a467fc6629966d7e5be27f5452a9927edbefa2f345c3aba2579e8375f948ad"
+                  },
+                  {
+                    "bytes": 1313,
+                    "relative_path": "references/task-state.mmd",
+                    "sha256": "sha256:18357c981a688f5c765a25c885dbb9d11eb63d60dc3db86fe321c12495467b70"
+                  },
+                  {
+                    "bytes": 2635,
+                    "relative_path": "references/verification.md",
+                    "sha256": "sha256:1d9e2249ee122189028fd128088adfdaa71fae507f9243cd7b2158125df2f263"
+                  },
+                  {
+                    "bytes": 8743,
+                    "relative_path": "templates/task.md",
+                    "sha256": "sha256:49c1ca5edc1c11688784699c669f423e36cd853b9135f5710d410fd204f2f7f6"
+                  }
+                ],
+                "id": "bearing-lite",
+                "source_path": "skills/bearing-lite",
+                "valid": true
+              },
+              "stderr": ""
+            },
+            {
+              "path": "skills/coordinator/SKILL.md",
+              "exit_code": 0,
+              "output": {
+                "compatibility": {
+                  "allowed_tools": [],
+                  "known_fields": [
+                    "description",
+                    "name"
+                  ],
+                  "profile": "agent-skills-common-subset",
+                  "result": "compatible",
+                  "unknown_fields": [],
+                  "unsupported_fields": []
+                },
+                "diagnostics": [],
+                "files": [
+                  {
+                    "bytes": 3577,
+                    "relative_path": "SKILL.md",
+                    "sha256": "sha256:dcef62cf1362fb44924aa9c5ff99b2e63ba60a281b4f7328c586e7143cce7a6e"
+                  }
+                ],
+                "id": "coordinator",
+                "source_path": "skills/coordinator",
+                "valid": true
+              },
+              "stderr": ""
+            },
+            {
+              "path": "skills/implementer/SKILL.md",
+              "exit_code": 0,
+              "output": {
+                "compatibility": {
+                  "allowed_tools": [],
+                  "known_fields": [
+                    "description",
+                    "name"
+                  ],
+                  "profile": "agent-skills-common-subset",
+                  "result": "compatible",
+                  "unknown_fields": [],
+                  "unsupported_fields": []
+                },
+                "diagnostics": [],
+                "files": [
+                  {
+                    "bytes": 3229,
+                    "relative_path": "SKILL.md",
+                    "sha256": "sha256:1665283154ab5bcc00dd5cd495ecac62e10cc5a125aff610ca00ba7da556e18e"
+                  }
+                ],
+                "id": "implementer",
+                "source_path": "skills/implementer",
+                "valid": true
+              },
+              "stderr": ""
+            },
+            {
+              "path": "skills/intake/SKILL.md",
+              "exit_code": 0,
+              "output": {
+                "compatibility": {
+                  "allowed_tools": [],
+                  "known_fields": [
+                    "description",
+                    "name"
+                  ],
+                  "profile": "agent-skills-common-subset",
+                  "result": "compatible",
+                  "unknown_fields": [],
+                  "unsupported_fields": []
+                },
+                "diagnostics": [],
+                "files": [
+                  {
+                    "bytes": 1685,
+                    "relative_path": "SKILL.md",
+                    "sha256": "sha256:b9e30538e6f35d513fc0131439d8eb0bcf8ec263e82cf5cc183d5f764037eadf"
+                  }
+                ],
+                "id": "intake",
+                "source_path": "skills/intake",
+                "valid": true
+              },
+              "stderr": ""
+            },
+            {
+              "path": "skills/integration-engineer/SKILL.md",
+              "exit_code": 0,
+              "output": {
+                "compatibility": {
+                  "allowed_tools": [],
+                  "known_fields": [
+                    "description",
+                    "name"
+                  ],
+                  "profile": "agent-skills-common-subset",
+                  "result": "compatible",
+                  "unknown_fields": [],
+                  "unsupported_fields": []
+                },
+                "diagnostics": [],
+                "files": [
+                  {
+                    "bytes": 2016,
+                    "relative_path": "SKILL.md",
+                    "sha256": "sha256:66398b54232123e3ce5be5e9649c1dd480549355f3617f8f35b9d09e7d20ec4f"
+                  }
+                ],
+                "id": "integration-engineer",
+                "source_path": "skills/integration-engineer",
+                "valid": true
+              },
+              "stderr": ""
+            },
+            {
+              "path": "skills/light-implementer/SKILL.md",
+              "exit_code": 0,
+              "output": {
+                "compatibility": {
+                  "allowed_tools": [],
+                  "known_fields": [
+                    "description",
+                    "name"
+                  ],
+                  "profile": "agent-skills-common-subset",
+                  "result": "compatible",
+                  "unknown_fields": [],
+                  "unsupported_fields": []
+                },
+                "diagnostics": [],
+                "files": [
+                  {
+                    "bytes": 2625,
+                    "relative_path": "SKILL.md",
+                    "sha256": "sha256:f0f764b19cad4777e4a863a3296ebc5a1818917f938f95e482935d4d18db9025"
+                  }
+                ],
+                "id": "light-implementer",
+                "source_path": "skills/light-implementer",
+                "valid": true
+              },
+              "stderr": ""
+            },
+            {
+              "path": "skills/onboard-bearing/SKILL.md",
+              "exit_code": 0,
+              "output": {
+                "compatibility": {
+                  "allowed_tools": [],
+                  "known_fields": [
+                    "description",
+                    "name"
+                  ],
+                  "profile": "agent-skills-common-subset",
+                  "result": "compatible",
+                  "unknown_fields": [],
+                  "unsupported_fields": []
+                },
+                "diagnostics": [],
+                "files": [
+                  {
+                    "bytes": 2067,
+                    "relative_path": "SKILL.md",
+                    "sha256": "sha256:1b7adaaa5c0ddef59e58c906ec1a10b08d0959660ee68c407a2249a1517a42ea"
+                  }
+                ],
+                "id": "onboard-bearing",
+                "source_path": "skills/onboard-bearing",
+                "valid": true
+              },
+              "stderr": ""
+            },
+            {
+              "path": "skills/plan-integrator/SKILL.md",
+              "exit_code": 0,
+              "output": {
+                "compatibility": {
+                  "allowed_tools": [],
+                  "known_fields": [
+                    "description",
+                    "name"
+                  ],
+                  "profile": "agent-skills-common-subset",
+                  "result": "compatible",
+                  "unknown_fields": [],
+                  "unsupported_fields": []
+                },
+                "diagnostics": [],
+                "files": [
+                  {
+                    "bytes": 1937,
+                    "relative_path": "SKILL.md",
+                    "sha256": "sha256:ba07314f542f1b461cc0c1c4e693e9010b86b40a95a648894dabf457f7caf98f"
+                  }
+                ],
+                "id": "plan-integrator",
+                "source_path": "skills/plan-integrator",
+                "valid": true
+              },
+              "stderr": ""
+            },
+            {
+              "path": "skills/planning-and-design/SKILL.md",
+              "exit_code": 0,
+              "output": {
+                "compatibility": {
+                  "allowed_tools": [],
+                  "known_fields": [
+                    "description",
+                    "name"
+                  ],
+                  "profile": "agent-skills-common-subset",
+                  "result": "compatible",
+                  "unknown_fields": [],
+                  "unsupported_fields": []
+                },
+                "diagnostics": [],
+                "files": [
+                  {
+                    "bytes": 3360,
+                    "relative_path": "SKILL.md",
+                    "sha256": "sha256:0b7f71ab715dead27bd9650b54bf5f2970e279a27845038e2f6606369806c794"
+                  },
+                  {
+                    "bytes": 10085,
+                    "relative_path": "references/artifact-grammar.md",
+                    "sha256": "sha256:3fbfcee6a26bb56080214102cc42f84d46c9cbc75dc9e6cb5649f4c2b039a1d1"
+                  }
+                ],
+                "id": "planning-and-design",
+                "source_path": "skills/planning-and-design",
+                "valid": true
+              },
+              "stderr": ""
+            },
+            {
+              "path": "skills/prompt/SKILL.md",
+              "exit_code": 0,
+              "output": {
+                "compatibility": {
+                  "allowed_tools": [],
+                  "known_fields": [
+                    "description",
+                    "name"
+                  ],
+                  "profile": "agent-skills-common-subset",
+                  "result": "compatible",
+                  "unknown_fields": [
+                    "okf_status",
+                    "tags",
+                    "title",
+                    "type"
+                  ],
+                  "unsupported_fields": []
+                },
+                "diagnostics": [],
+                "files": [
+                  {
+                    "bytes": 4253,
+                    "relative_path": "SKILL.md",
+                    "sha256": "sha256:ca4f3908df9257f8fc1bdb2562c49cae70757db11eb201d59aba091b1da380ff"
+                  }
+                ],
+                "id": "prompt",
+                "source_path": "skills/prompt",
+                "valid": true
+              },
+              "stderr": ""
+            },
+            {
+              "path": "skills/requirements-engineer/SKILL.md",
+              "exit_code": 0,
+              "output": {
+                "compatibility": {
+                  "allowed_tools": [],
+                  "known_fields": [
+                    "description",
+                    "name"
+                  ],
+                  "profile": "agent-skills-common-subset",
+                  "result": "compatible",
+                  "unknown_fields": [],
+                  "unsupported_fields": []
+                },
+                "diagnostics": [],
+                "files": [
+                  {
+                    "bytes": 2885,
+                    "relative_path": "SKILL.md",
+                    "sha256": "sha256:fd6f042a0d45bfd3ac8006d2272884a31894e09eecce16378a40c768d8ec38f1"
+                  }
+                ],
+                "id": "requirements-engineer",
+                "source_path": "skills/requirements-engineer",
+                "valid": true
+              },
+              "stderr": ""
+            },
+            {
+              "path": "skills/reviewer/SKILL.md",
+              "exit_code": 0,
+              "output": {
+                "compatibility": {
+                  "allowed_tools": [],
+                  "known_fields": [
+                    "description",
+                    "name"
+                  ],
+                  "profile": "agent-skills-common-subset",
+                  "result": "compatible",
+                  "unknown_fields": [],
+                  "unsupported_fields": []
+                },
+                "diagnostics": [],
+                "files": [
+                  {
+                    "bytes": 2744,
+                    "relative_path": "SKILL.md",
+                    "sha256": "sha256:3da6a5fa175921fd0e432cb65798e62c1cf07818de54f3d0be480612ed73f3fc"
+                  }
+                ],
+                "id": "reviewer",
+                "source_path": "skills/reviewer",
+                "valid": true
+              },
+              "stderr": ""
+            },
+            {
+              "path": "skills/scope-definition/SKILL.md",
+              "exit_code": 0,
+              "output": {
+                "compatibility": {
+                  "allowed_tools": [],
+                  "known_fields": [
+                    "description",
+                    "name"
+                  ],
+                  "profile": "agent-skills-common-subset",
+                  "result": "compatible",
+                  "unknown_fields": [],
+                  "unsupported_fields": []
+                },
+                "diagnostics": [],
+                "files": [
+                  {
+                    "bytes": 3042,
+                    "relative_path": "SKILL.md",
+                    "sha256": "sha256:f401e9e441a6046941a234b5d18047927ad26f530ebfb3ab240c2321c427bdd9"
+                  }
+                ],
+                "id": "scope-definition",
+                "source_path": "skills/scope-definition",
+                "valid": true
+              },
+              "stderr": ""
+            },
+            {
+              "path": "skills/scribe/SKILL.md",
+              "exit_code": 0,
+              "output": {
+                "compatibility": {
+                  "allowed_tools": [],
+                  "known_fields": [
+                    "description",
+                    "name"
+                  ],
+                  "profile": "agent-skills-common-subset",
+                  "result": "compatible",
+                  "unknown_fields": [],
+                  "unsupported_fields": []
+                },
+                "diagnostics": [],
+                "files": [
+                  {
+                    "bytes": 1460,
+                    "relative_path": "SKILL.md",
+                    "sha256": "sha256:f88550d77bb72c703b0c19414e33516f3c3cf3e5f2eebc07278144b9466a0417"
+                  }
+                ],
+                "id": "scribe",
+                "source_path": "skills/scribe",
+                "valid": true
+              },
+              "stderr": ""
+            },
+            {
+              "path": "skills/systems-modeler/SKILL.md",
+              "exit_code": 0,
+              "output": {
+                "compatibility": {
+                  "allowed_tools": [],
+                  "known_fields": [
+                    "description",
+                    "name"
+                  ],
+                  "profile": "agent-skills-common-subset",
+                  "result": "compatible",
+                  "unknown_fields": [],
+                  "unsupported_fields": []
+                },
+                "diagnostics": [],
+                "files": [
+                  {
+                    "bytes": 1306,
+                    "relative_path": "SKILL.md",
+                    "sha256": "sha256:9abe16c0b1db1a5d9310bc273359fbf560db9809e15a908e0fccd99c9c2e0265"
+                  }
+                ],
+                "id": "systems-modeler",
+                "source_path": "skills/systems-modeler",
+                "valid": true
+              },
+              "stderr": ""
+            },
+            {
+              "path": "skills/test-engineer/SKILL.md",
+              "exit_code": 0,
+              "output": {
+                "compatibility": {
+                  "allowed_tools": [],
+                  "known_fields": [
+                    "description",
+                    "name"
+                  ],
+                  "profile": "agent-skills-common-subset",
+                  "result": "compatible",
+                  "unknown_fields": [],
+                  "unsupported_fields": []
+                },
+                "diagnostics": [],
+                "files": [
+                  {
+                    "bytes": 2287,
+                    "relative_path": "SKILL.md",
+                    "sha256": "sha256:2497007a7c126f03c86bb985c0893a4d1cb2406f34bb208439259ee5cc2b6538"
+                  }
+                ],
+                "id": "test-engineer",
+                "source_path": "skills/test-engineer",
+                "valid": true
+              },
+              "stderr": ""
+            }
+          ]
+        }
+      ],
+      "environment_events": [
+        {
+          "action": "Initial fresh Reviewer",
+          "exit_code:": 0,
+          "stop_reason": "cancelled",
+          "failed_tool_result": "User cancelled the execution for tool run_terminal_command",
+          "command": "git status --porcelain=v1 --untracked-files=all && echo '==== RENAMES ====' && git status --porcelain=v1 -M && echo '==== DIFFSTAT ====' && git diff --stat HEAD && echo '==== NAME-STATUS ====' && git diff --name-status -M HEAD && echo '==== DELETED TRACKED ====' && git ls-files --deleted && echo '==== UNTRACKED ALL ====' && git ls-files -o --exclude-standard"
+        },
+        {
+          "action": "Resume same Reviewer with unchanged read-only sandbox flag",
+          "exit_code": 1,
+          "error": "cannot resume this session under sandbox profile 'read-only' \u2014 it was created with 'off'."
+        }
+      ],
+      "continuation": "Same Reviewer session restricted to built-in read_file, grep and list_dir only. No shell, write, or model/route substitution. Existing persisted sandbox off is not changed. Independent runtime checking remains unavailable."
+    },
+    {
+      "activity": "comprehensive_review_result",
+      "authority": "DEC-BDL-067",
+      "typed_outcome": "REPAIRABLE_FAILURE",
+      "reviewer_verdict": "REPAIR_REQUIRED",
+      "orchestrator_route": "Codex / gpt-6-astra / xhigh",
+      "orchestrator_native_session_id": "01a099ce-04eb-7cc0-9c2b-1726118126b8",
+      "reviewer_route": "Grok Build / harness default",
+      "reviewer_observed_model": "grok-4.6-build",
+      "reviewer_observed_reasoning": "high",
+      "reviewer_native_session_id": "867e6fc4-3ceb-471a-b642-33904d31e6a2",
+      "reviewer_changed_paths": [],
+      "orchestrator_changed_paths": [
+        "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/journey.json"
+      ],
+      "write_scope": "Append-only execution_receipts; product and planning meaning unchanged.",
+      "baseline": "b5cec79f04f6f6ea506a2ad89bf937aab143d876",
+      "product_tree_sha256": "63e1147b2783c61134e91124f0fd893a73a371c0b6be027277a4b0cac9cefdbf",
+      "planning_candidate_digest": "acaeda8cf479fa886b0f0fb4d3028ac781f538fe3a15100867c170a185c54ce6",
+      "manifest_sha256": "b46bf725d9bf4f2b9e31aff654f69750d47f89515873b17ba538dbbae0cba1ce",
+      "journey_meaning_sha256_excluding_execution_receipts": "85cf8ccdf031df090ef7263095d372fed507ca8919b8d4ec6a4cc9e9a4fba29a",
+      "reviewer_report_native_log": "/home/spectre/.grok/sessions/%2Fhome%2Fspectre%2Falphazede%2FAlphazedehq%2Fbearing-lite/867e6fc4-3ceb-471a-b642-33904d31e6a2/chat_history.jsonl",
+      "reviewer_report_storage": "Last assistant message at this receipt time. Report text hash below binds that response; no separate report file created.",
+      "receipt_inspection": {
+        "candidate_match": true,
+        "write_set_match": true,
+        "all_requested_slice_rows_present": true,
+        "exhaustive_file_by_file_review_demonstrated": false,
+        "independent_runtime_reruns": false,
+        "static_locations_checked": true,
+        "controller_checks_recorded": true,
+        "technical_findings_are_reviewer_judgment": true
+      },
+      "findings": [
+        {
+          "id": "F1",
+          "priority": "P1",
+          "reviewer_status": "confirmed",
+          "scope": "S4",
+          "description": "Public links, specification and tests still require owner-deleted process HTML.",
+          "paths": [
+            "README.md:54",
+            "docs/guides/lifecycle.md:31",
+            "docs/architecture/bearing-delivery-lifecycle.md:4",
+            "test/public-boundary.test.mjs:453"
+          ],
+          "source": "DEC-BDL-064; AC-BDL-001; SEIT-BDL-001"
+        },
+        {
+          "id": "F2",
+          "priority": "P2",
+          "reviewer_status": "confirmed",
+          "scope": "pre-existing helper / S1 omission",
+          "description": "checkPlanningRoles recursively flags valid Requirements Engineer planning route records as implementation slices.",
+          "paths": [
+            "hooks/plan-package.cjs:74"
+          ],
+          "source": "DEC-BDL-012/047; current plan-package failure"
+        },
+        {
+          "id": "F3",
+          "priority": "P2",
+          "reviewer_status": "confirmed",
+          "scope": "alignment omission",
+          "description": "Active host mapping retains Explorer/Expedition route-review language and happy-path fixtures retain old names.",
+          "paths": [
+            "hooks/com.anthropic.claude-code/mapping.md:139",
+            "test/host-mapping.test.mjs",
+            "test/te-hook-contract.test.mjs"
+          ],
+          "baseline_check": "All three paths are byte-identical to HEAD. This is an unaddressed alignment obligation, not newly introduced text."
+        },
+        {
+          "id": "F4",
+          "priority": "P2",
+          "reviewer_status": "suspected",
+          "scope": "S1",
+          "description": "Onboarding asks for persistent planning-review configuration, but the closed profile schema has no planning_review property.",
+          "paths": [
+            "schemas/profiles.schema.json:243",
+            "docs/guides/onboarding.md:14"
+          ],
+          "source": "DEC-BDL-032",
+          "limitation": "No independent validation of a concrete configured profile. DEC-BDL-032 is settled owner intent; the review creates no alternative snapshot-only authority."
+        },
+        {
+          "id": "F5",
+          "priority": "P3",
+          "reviewer_status": "confirmed",
+          "scope": "S1",
+          "description": "Legacy Markdown ignore branch emits no promised legacy_lineup_md_ignored note.",
+          "paths": [
+            "hooks/profiles.cjs:71"
+          ],
+          "source": "skills/bearing-lite/references/profiles.md"
+        },
+        {
+          "id": "F6",
+          "priority": "P3",
+          "reviewer_status": "confirmed terminology observation",
+          "scope": "wording",
+          "description": "Integration Engineer frontmatter and SVG description use prefixed session names.",
+          "paths": [
+            "skills/integration-engineer/SKILL.md:6",
+            "docs/architecture/bearing-process/lifecycle-process-views.svg:3"
+          ],
+          "limitation": "Report does not demonstrate a behavioral role-identity defect; do not promote wording alone to a product defect."
+        }
+      ],
+      "coverage": {
+        "S1": "Static contract review; F2-F5 residuals; no independent runtime rerun.",
+        "S1L": "Static migration-map/path review; original-source byte preservation not independently rerun.",
+        "S1E": "Explorer directory absence observed; no alias introduced.",
+        "S2": "Static verification adapter/schema/tests inspection; controller full suite only.",
+        "S3": "Static renderer/template/model state inspection; visual demonstration unavailable.",
+        "S3L": "Controller byte check pass; not independently rerendered.",
+        "S4": "F1 public-surface inconsistency; F3 baseline alignment omission.",
+        "REC-SVG-001": "Static entity repair/test inspection; controller full suite includes renderer tests.",
+        "REC-PROFILE-001": "Static legality/optional session inspection; controller 256 schema cases pass.",
+        "DEC-BDL-066": "Static planning reconciliation review; product gap and pending-work records preserved."
+      },
+      "not_completed": [
+        "S5",
+        "S5L",
+        "S6",
+        "S7",
+        "S8",
+        "SEIT-BDL-012 visual demonstration"
+      ],
+      "limitations": [
+        "Reviewer shell command cancellation and persisted sandbox off/read-only resume mismatch; continued same session with only read_file, grep, list_dir.",
+        "No independent Reviewer test reruns; controller tests do not grant assurance or acceptance.",
+        "No browser workaround, software installation, new tests or report files.",
+        "No explicit per-file coverage ledger; exhaustive review of every changed/new file not demonstrated.",
+        "No second review, automatic repair, S5 resumption, publication or acceptance."
+      ],
+      "proposed_corrections_for_owner_disposition": [
+        "Retarget S4 public links/spec/tests using existing allowed sources; keep deleted HTML absent.",
+        "Scope planning-role check to actual implementation slices.",
+        "Align active host-mapping documentation and fixtures with approved names.",
+        "Resolve suspected planning-review persistence mismatch against DEC-BDL-032; do not invent a different owner requirement.",
+        "Emit the promised legacy Markdown ignore note if that contract is retained.",
+        "Keep package/host assembly completion in pending S5/S5L."
+      ],
+      "candidate_file_hashes": {
+        ".agents/plugins/marketplace.json": {
+          "sha256": "2bd52ffc2c382aceecd6f4c046c4602873e3d486275e2230e0d281f40e445c6b",
+          "mode": 436
+        },
+        ".agy/README.md": {
+          "sha256": "e15c961d8cb4adbe849b774e767e1f14a5701695bd800f5906a5ee0cff5e63c5",
+          "mode": 436
+        },
+        ".agy/plugin.json": {
+          "sha256": "2ca2bd0a3df50292630cb1fc69ac475f36e1c51538ab2bee3660a6b799cc6d0a",
+          "mode": 436
+        },
+        ".agy/skills": {
+          "sha256": "c1aefaccb300698f4b7ae764e1fa857f93c0609ba47b078e4806d926f289c23b",
+          "mode": 511
+        },
+        ".claude-plugin/marketplace.json": {
+          "sha256": "b5a38112934df8997236464b7e48198092603cc6cf4656dcd39607ccc29a69ac",
+          "mode": 436
+        },
+        ".claude-plugin/plugin.json": {
+          "sha256": "0e49d91d7bf202c92de58e1401e1e4cb6076231c256b622f12249ebd70101fe2",
+          "mode": 436
+        },
+        ".codex-plugin/plugin.json": {
+          "sha256": "d067b5ccafa00bf7cd25628759edb2084e3df7d1b127b08ffbb671186c3f0472",
+          "mode": 436
+        },
+        ".cursor-plugin/marketplace.json": {
+          "sha256": "21b5c0b374364fe2ca166ec33319c9893dde54b271d1f1c4ee23f90fbcef63cb",
+          "mode": 436
+        },
+        ".cursor-plugin/plugin.json": {
+          "sha256": "74e3f0c69446951bcd5ba93128b8625b5f5f5347ba412f6bc7c202af59d4aa8a",
+          "mode": 436
+        },
+        ".github/ISSUE_TEMPLATE/bug_report.yml": {
+          "sha256": "0af95bf4f755f1e7ccde657f358b493d785d05169bfdcf48e03d438fe18093a7",
+          "mode": 436
+        },
+        ".github/ISSUE_TEMPLATE/config.yml": {
+          "sha256": "c9064ddfdace9341b18b86d23f206e59236ddf1aa9f42314164495289ec833a1",
+          "mode": 436
+        },
+        ".github/ISSUE_TEMPLATE/feature_request.yml": {
+          "sha256": "87fff414719594bfde8de52b92b2cc0ba700da65170e9bc40cca7f0df9dc70b6",
+          "mode": 436
+        },
+        ".github/PULL_REQUEST_TEMPLATE.md": {
+          "sha256": "b885700d33f3d4148c4a4f0dda6766d596c185723807d3030943f47e7070b85b",
+          "mode": 436
+        },
+        ".github/codeql/codeql-config.yml": {
+          "sha256": "e16a88dea76ee404123fc31876a63f74de2f91f4e7e03a4a7ac507e11beb8f07",
+          "mode": 436
+        },
+        ".github/dependabot.yml": {
+          "sha256": "82a15dde65b0e4b59a2af56c063ca4ed9410babb80eacfa17d759cf4b3ec04b8",
+          "mode": 436
+        },
+        ".github/workflows/bearing-publish.yml": {
+          "sha256": "67c48ce68131c10cf34bb1e7b18ce0349f10faded02277504c4f14a8766ceab0",
+          "mode": 436
+        },
+        ".github/workflows/bearing-quality.yml": {
+          "sha256": "a163fb8e5d2d8e7a3ce89d909b122ae713ffe8d1832e4df1ea5d13ad16398840",
+          "mode": 436
+        },
+        ".github/workflows/codeql.yml": {
+          "sha256": "a1b6d1f7896a6a15262b6adacd8deebc8b0f04374b1468e3a0b9d7c816fadab3",
+          "mode": 436
+        },
+        ".github/workflows/semgrep.yml": {
+          "sha256": "e6accc2fd3f3752ed08508eb109726dbf386f8a5bf967136e90d61f9ed934842",
+          "mode": 436
+        },
+        ".gitignore": {
+          "sha256": "38f5a288fdc00d7d58ae702024bc586b4be14d32238f2b364c5e4dfa4c05260e",
+          "mode": 436
+        },
+        ".grok-plugin/marketplace.json": {
+          "sha256": "96d4c00d62eec1abcfadbf272e00f479ec3fd4d0402ee6c4d0827e46d60bff80",
+          "mode": 436
+        },
+        ".grok-plugin/plugin.json": {
+          "sha256": "cda451390b15621a84dcfa83c2b725c46058929712b6b5cb7d1dbf14f7f83ff9",
+          "mode": 436
+        },
+        ".kimi-plugin/plugin.json": {
+          "sha256": "bd34fd6eb568b4cd076ad7fc62da956079c4ad6c1148af659299157ea275dbd2",
+          "mode": 436
+        },
+        "CODE_OF_CONDUCT.md": {
+          "sha256": "039f38c012f943c0da7dbb62eda7ec2cbd4ff944df0e12e1bb0ddd94712ea479",
+          "mode": 436
+        },
+        "CONTRIBUTING.md": {
+          "sha256": "0e88f4336d5b908de72fc1c07e8ccbb000e1bcf99764e1c77d115eee522cde72",
+          "mode": 436
+        },
+        "LICENSE-APACHE": {
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "mode": 436
+        },
+        "README.md": {
+          "sha256": "d1eb8fec144ab70eb4a59486c96326cb382edd71d763fb1d20d418b42803f898",
+          "mode": 436
+        },
+        "SECURITY.md": {
+          "sha256": "0f4022f66d94386372f1ef376a2117eed0a31bf4667d65c700ba5441c194c2e7",
+          "mode": 436
+        },
+        "docs/architecture/bearing-delivery-lifecycle.md": {
+          "sha256": "5cc80acf312896cc2c25031bedb2f128635018169ebc913985493d0df7c5035f",
+          "mode": 436
+        },
+        "docs/architecture/bearing-process/lifecycle-context.svg": {
+          "sha256": "b536039658cb5baa9460902857a437295b6b8cb8c9b9d636f0c96f65af1dde31",
+          "mode": 436
+        },
+        "docs/architecture/bearing-process/lifecycle-process-views.svg": {
+          "sha256": "b6c8154a66101dbb36a6102ee1ef0b607c52bd6699475ed2d2f32b978c226608",
+          "mode": 436
+        },
+        "docs/guides/lifecycle.md": {
+          "sha256": "d85dd92d827b285abf664e8aba67d48144ef5ef32171b876e0592852599c4114",
+          "mode": 436
+        },
+        "docs/guides/onboarding.md": {
+          "sha256": "e504834646babf47d3b39aabb1adddaf78a1b6f53dbce234c0fee3568c73644b",
+          "mode": 436
+        },
+        "docs/guides/roles.md": {
+          "sha256": "64691f1a337c13725e7f9e243358fd0b3643725729fe8f7be58a69a7b4b6ea3d",
+          "mode": 436
+        },
+        "docs/guides/troubleshooting.md": {
+          "sha256": "40b38e15aa88c0d434f7868bced064083e57a17fa2992114024f3843ef929b50",
+          "mode": 436
+        },
+        "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/bearing-delivery-lifecycle-alignment-dod-manifest.html": {
+          "sha256": "b46bf725d9bf4f2b9e31aff654f69750d47f89515873b17ba538dbbae0cba1ce",
+          "mode": 436
+        },
+        "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/bearing-delivery-lifecycle-alignment-technical-plan.md": {
+          "sha256": "f5c315e663c97aeacbdc325575cecffe1f17ac2f1ead0ad1a58c06a8eb2a23c7",
+          "mode": 436
+        },
+        "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/design.md": {
+          "sha256": "6649efaaf0e5d7f27892c55e1a66fab4139d36abd878bbbda87ca8e0db5fa2d4",
+          "mode": 436
+        },
+        "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/implementation-handoff.md": {
+          "sha256": "122a163330f338486da73a49915d0f627fea088da4b37f2680aef59c082cb68b",
+          "mode": 436
+        },
+        "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/implementation.json": {
+          "sha256": "69853cfea1886feb365487fd6aeac65b44200d98237f6dbabb64a38842c97dc7",
+          "mode": 436
+        },
+        "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/seit.json": {
+          "sha256": "e05270a4082771d599f2003d30ea60b3582739cdafb8f72b232792ad9263ccf1",
+          "mode": 436
+        },
+        "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/workspace.md": {
+          "sha256": "b551a767933d4b0a6d79a0cbdb915803b9792e487c5706483035c096d4751993",
+          "mode": 436
+        },
+        "docs/releases/acknowledgements.md": {
+          "sha256": "1dd0f25a465e674357836984dfbc41a5bbb19754cb931ac11ce601ce40c6af7a",
+          "mode": 436
+        },
+        "docs/releases/announcement.md": {
+          "sha256": "37dbf159ed5a9262e220606aaa467fdd540c23534b73b0108aa0ffda7a1639e6",
+          "mode": 436
+        },
+        "hooks/activation.cjs": {
+          "sha256": "9db7283b109299ae6daf5843c85efc6dd9360c2ea9c229644e26b0ea4ce47125",
+          "mode": 436
+        },
+        "hooks/assurance-budget.cjs": {
+          "sha256": "f0d841a81c4c293b6f2541f6ebe9fbf34a9386320af7ef21c95e9eaf3abb8153",
+          "mode": 436
+        },
+        "hooks/closeout.cjs": {
+          "sha256": "6d65c7ae3d5922af5465d60e30a863b064a67dddaa91fba6a6a480640597dd1e",
+          "mode": 436
+        },
+        "hooks/com.anthropic.claude-code/host.cjs": {
+          "sha256": "b44c8cec73db7a7620357cff898d61edfa1c2d0ba2b178980c8fab230a0a2ba9",
+          "mode": 436
+        },
+        "hooks/com.anthropic.claude-code/mapping.md": {
+          "sha256": "9441d9abe002c2ce4f811627194ea9f5e9444ec0c60a6e2dedeede8098aa8cac",
+          "mode": 436
+        },
+        "hooks/com.cursor/hooks.json": {
+          "sha256": "16cc740166a0ef28d74388ecf005e08e75182e3ec2c7c2b6246a1995d0806303",
+          "mode": 436
+        },
+        "hooks/hooks.json": {
+          "sha256": "5f0b36f10f8fbbce624a7be951687f5817b7228dffdd81675866600a387644ec",
+          "mode": 436
+        },
+        "hooks/owner-stops.cjs": {
+          "sha256": "41694f7e929448c3741909ec8ad80437fc161952a649214f650921d02585c623",
+          "mode": 436
+        },
+        "hooks/plan-package.cjs": {
+          "sha256": "4fed58580e53fdf53086ef64f3674e1cb5ccaa35f3ecde5cdb1b0467f1fea12b",
+          "mode": 436
+        },
+        "hooks/planning-review.cjs": {
+          "sha256": "21e169118bdac8591e06335f9c78bbf4f0daa7c2b0218793e9bf7b20b3ef64b1",
+          "mode": 436
+        },
+        "hooks/policy.cjs": {
+          "sha256": "992d4fb551cc4b53e5b9bca7a8076448d468f9db91c4bc7bd10452b4d58ce037",
+          "mode": 436
+        },
+        "hooks/profiles.cjs": {
+          "sha256": "124cf2130228e2f272aac7e6fb3a2ff5c81524168032cbaaddc0be391892b177",
+          "mode": 436
+        },
+        "hooks/protected-action.cjs": {
+          "sha256": "6997044008379f9bed9b7cc45e90e46dfb80626e0cb50edc0a89aa04cbe25996",
+          "mode": 436
+        },
+        "hooks/reconcile.cjs": {
+          "sha256": "49bb9f16ea28595b395139411c43d188f5188056f69e6ce64dd9a0278bca452f",
+          "mode": 436
+        },
+        "hooks/te-capability.cjs": {
+          "sha256": "f72a364bb0c41aa7f886cf87da052408f9ce5008b7f49a8663b8f0a32ae13074",
+          "mode": 436
+        },
+        "hooks/te-host.cjs": {
+          "sha256": "573046a8e1488a6fc4b8a17b83621b109f4bcf3930c8c7772339fe32dbe19bf1",
+          "mode": 436
+        },
+        "hooks/transition-order.cjs": {
+          "sha256": "8a4b2adebaeb3cd8ca88b4787edc501171e73622a949cbadf7fe76db9dbf6209",
+          "mode": 436
+        },
+        "hooks/verification.cjs": {
+          "sha256": "cdbe3e8e9c8be1fd157e573c310d03de9f80d78bed8b0d2468e64533c721fb67",
+          "mode": 436
+        },
+        "package.json": {
+          "sha256": "119c001edec45ab32a64d2f8669d8f4b7a668bedbbb716fb00cb88e3497487e1",
+          "mode": 436
+        },
+        "plugin.json": {
+          "sha256": "cdb367632a664dcf26cee3fc88b09a272e2f21baa846ba621bf18aa5e19adcf2",
+          "mode": 436
+        },
+        "pnpm-lock.yaml": {
+          "sha256": "17c814b167307942d3609c7b9d916ceddb85839573ab39baa114e30edb132a1a",
+          "mode": 436
+        },
+        "profiles.json": {
+          "sha256": "769be62bd55b05d82db3ad6046fb81c05c994069a607cd6b82ca69970c932fef",
+          "mode": 436
+        },
+        "schemas/authority.schema.json": {
+          "sha256": "1ba234a829bd43330615809618b8c9515b0ab535e562fda8cf246d11bb88283d",
+          "mode": 436
+        },
+        "schemas/event.schema.json": {
+          "sha256": "c40bda0b7b6f85f5058065d1cee5dd67b04efd08d79a1cfa4ff536856ed8528a",
+          "mode": 436
+        },
+        "schemas/implementation.schema.json": {
+          "sha256": "34b4e581ba58ec9620dda764fa62365dc2c34f0c6f43fa26cd4e60add0ff33a6",
+          "mode": 436
+        },
+        "schemas/journey.schema.json": {
+          "sha256": "89d82efba99ada89a25fd3dd6d1e72a45067b04270dd7041f434dc726ede6e72",
+          "mode": 436
+        },
+        "schemas/profiles.schema.json": {
+          "sha256": "7cd9248389ff156a58f912ba399d4d8ab5be34a22dcc6ede1f637b8ed759a74c",
+          "mode": 436
+        },
+        "schemas/seit.schema.json": {
+          "sha256": "07615b5b09b427c365ee4ba7f95e1da4af01c33c6fde5c667e7bd0280198dcfa",
+          "mode": 436
+        },
+        "schemas/verification.schema.json": {
+          "sha256": "87b49cacf41f7b5151f5bf158aa347059901c944887f2af8c1997a2a6a19724a",
+          "mode": 436
+        },
+        "skills/architectural-alignment/SKILL.md": {
+          "sha256": "70d3a2630e4b1ea21453e7dbe2333a7cdeec570097e300b7922c374e8b3c48c9",
+          "mode": 436
+        },
+        "skills/architectural-alignment/templates/workspace.md": {
+          "sha256": "508195b52e5ff419848a2c96e9ce07230b06f95f65c3fb30cf33547290a66c6b",
+          "mode": 436
+        },
+        "skills/bearing-lite/SKILL.md": {
+          "sha256": "1854078eaccf740f2ac15f839c2687080e9154ddd02e0212e64d7326c244545b",
+          "mode": 436
+        },
+        "skills/bearing-lite/agents/openai.yaml": {
+          "sha256": "42bc64966de7382277f8e203effb84b4c5437e3fd8edcebdbecb45383d23ecea",
+          "mode": 436
+        },
+        "skills/bearing-lite/references/assurance-policy.md": {
+          "sha256": "d527bc2a5fcb3dccde904186a405c99017e2688646f90c0b50c8f4a76bc02f55",
+          "mode": 436
+        },
+        "skills/bearing-lite/references/lineups.md": {
+          "sha256": "4ca3138725dc7073280114f80c4108d8f62ea657f63649a7fb707418a4733a4b",
+          "mode": 436
+        },
+        "skills/bearing-lite/references/owner-stops.md": {
+          "sha256": "714953ffafeaff74acde426641d7d5afcf1ee79de8e39d2dfa182ec1710b3c45",
+          "mode": 436
+        },
+        "skills/bearing-lite/references/peer-synthesis.md": {
+          "sha256": "48318d1f2eee34fc35dc7ae2c6820be3e024aca1e1af3fc4da3bd699976217c7",
+          "mode": 436
+        },
+        "skills/bearing-lite/references/profiles.md": {
+          "sha256": "00b64520771a1696e7f84ae7c32169fcf06d254a6529a535599aba7e9e86cb1f",
+          "mode": 436
+        },
+        "skills/bearing-lite/references/resume.md": {
+          "sha256": "4ece2602f0d6ba27f116450b5a9da564678d19ff44902b39286a0336d016260e",
+          "mode": 436
+        },
+        "skills/bearing-lite/references/review-policy.md": {
+          "sha256": "587dd9b243f868fcc32068ebc28a4821ce410906c5696d39464d47d3db1edff5",
+          "mode": 436
+        },
+        "skills/bearing-lite/references/role-routing.mmd": {
+          "sha256": "a4c171a13d2b4282a3d42cc9d6167a25802439dc1e8efe35e6a213dd19904b6e",
+          "mode": 436
+        },
+        "skills/bearing-lite/references/task-state.md": {
+          "sha256": "96a467fc6629966d7e5be27f5452a9927edbefa2f345c3aba2579e8375f948ad",
+          "mode": 436
+        },
+        "skills/bearing-lite/references/task-state.mmd": {
+          "sha256": "18357c981a688f5c765a25c885dbb9d11eb63d60dc3db86fe321c12495467b70",
+          "mode": 436
+        },
+        "skills/bearing-lite/references/verification.md": {
+          "sha256": "1d9e2249ee122189028fd128088adfdaa71fae507f9243cd7b2158125df2f263",
+          "mode": 436
+        },
+        "skills/bearing-lite/templates/task.md": {
+          "sha256": "49c1ca5edc1c11688784699c669f423e36cd853b9135f5710d410fd204f2f7f6",
+          "mode": 436
+        },
+        "skills/coordinator/SKILL.md": {
+          "sha256": "dcef62cf1362fb44924aa9c5ff99b2e63ba60a281b4f7328c586e7143cce7a6e",
+          "mode": 436
+        },
+        "skills/implementer/SKILL.md": {
+          "sha256": "1665283154ab5bcc00dd5cd495ecac62e10cc5a125aff610ca00ba7da556e18e",
+          "mode": 436
+        },
+        "skills/intake/SKILL.md": {
+          "sha256": "b9e30538e6f35d513fc0131439d8eb0bcf8ec263e82cf5cc183d5f764037eadf",
+          "mode": 436
+        },
+        "skills/integration-engineer/SKILL.md": {
+          "sha256": "66398b54232123e3ce5be5e9649c1dd480549355f3617f8f35b9d09e7d20ec4f",
+          "mode": 436
+        },
+        "skills/light-implementer/SKILL.md": {
+          "sha256": "f0f764b19cad4777e4a863a3296ebc5a1818917f938f95e482935d4d18db9025",
+          "mode": 436
+        },
+        "skills/onboard-bearing/SKILL.md": {
+          "sha256": "1b7adaaa5c0ddef59e58c906ec1a10b08d0959660ee68c407a2249a1517a42ea",
+          "mode": 436
+        },
+        "skills/plan-integrator/SKILL.md": {
+          "sha256": "ba07314f542f1b461cc0c1c4e693e9010b86b40a95a648894dabf457f7caf98f",
+          "mode": 436
+        },
+        "skills/planning-and-design/SKILL.md": {
+          "sha256": "0b7f71ab715dead27bd9650b54bf5f2970e279a27845038e2f6606369806c794",
+          "mode": 436
+        },
+        "skills/planning-and-design/references/artifact-grammar.md": {
+          "sha256": "3fbfcee6a26bb56080214102cc42f84d46c9cbc75dc9e6cb5649f4c2b039a1d1",
+          "mode": 436
+        },
+        "skills/prompt/SKILL.md": {
+          "sha256": "ca4f3908df9257f8fc1bdb2562c49cae70757db11eb201d59aba091b1da380ff",
+          "mode": 436
+        },
+        "skills/requirements-engineer/SKILL.md": {
+          "sha256": "fd6f042a0d45bfd3ac8006d2272884a31894e09eecce16378a40c768d8ec38f1",
+          "mode": 436
+        },
+        "skills/reviewer/SKILL.md": {
+          "sha256": "3da6a5fa175921fd0e432cb65798e62c1cf07818de54f3d0be480612ed73f3fc",
+          "mode": 436
+        },
+        "skills/scope-definition/SKILL.md": {
+          "sha256": "f401e9e441a6046941a234b5d18047927ad26f530ebfb3ab240c2321c427bdd9",
+          "mode": 436
+        },
+        "skills/scribe/SKILL.md": {
+          "sha256": "f88550d77bb72c703b0c19414e33516f3c3cf3e5f2eebc07278144b9466a0417",
+          "mode": 436
+        },
+        "skills/systems-modeler/SKILL.md": {
+          "sha256": "9abe16c0b1db1a5d9310bc273359fbf560db9809e15a908e0fccd99c9c2e0265",
+          "mode": 436
+        },
+        "skills/test-engineer/SKILL.md": {
+          "sha256": "2497007a7c126f03c86bb985c0893a4d1cb2406f34bb208439259ee5cc2b6538",
+          "mode": 436
+        },
+        "templates/dod-manifest-v1.html": {
+          "sha256": "0ac899ba0a2f8137e754791e28b06891f15e73acf28b4533a21e2e94adfb5893",
+          "mode": 436
+        },
+        "test/assurance-budget.test.mjs": {
+          "sha256": "ee5d154e4a35460c5a43f8a411357136d24bf9bbb2a409a30cf7772315410bdb",
+          "mode": 436
+        },
+        "test/capability-gap.test.mjs": {
+          "sha256": "6684b00b527baaf75116b5d42de5b2a7b67599412dcb21f8edc9e8e3c563104a",
+          "mode": 436
+        },
+        "test/dod-manifest.test.mjs": {
+          "sha256": "10fef62f29000fadbc7520f573811dcbc95d8b8cf033c06a2cea471ac8dbea09",
+          "mode": 436
+        },
+        "test/fixtures/lineups-populated.example.json": {
+          "sha256": "903d6ad93a07af2bac0d66d5ce7c64809321098180706c71d94d56381ce543ff",
+          "mode": 436
+        },
+        "test/fixtures/profiles-populated.example.json": {
+          "sha256": "5e35519ee8abeb38455d42a64a877f127cb720f7535167694cd53861ade07e16",
+          "mode": 436
+        },
+        "test/fixtures/s1l-migration-map.json": {
+          "sha256": "4fd28853075279ccd35ecff163910963398d55c1c59a5c83058704e5d44907af",
+          "mode": 436
+        },
+        "test/fixtures/te-hook/README.md": {
+          "sha256": "3ad398216db24450ce284ff216a11fcc6e94a280466ced62fbf00fcc32e33046",
+          "mode": 436
+        },
+        "test/fixtures/te-hook/claude-pretooluse-product-write.json": {
+          "sha256": "40072268d6c44a66a94754b48ab5f392545a9885a0861306cc6d6d90342a44e8",
+          "mode": 436
+        },
+        "test/fixtures/te-hook/claude-pretooluse-test-write.json": {
+          "sha256": "1018311b3a0c5f98aa5b22130b60e5ac5a83e38dab780be0ed2520da5c6ac7ee",
+          "mode": 436
+        },
+        "test/fixtures/te-hook/claude-stop.json": {
+          "sha256": "2b1c685c80a4bff0fb83de86eb2d976951de95cc1f11de2314a37fb49e57c140",
+          "mode": 436
+        },
+        "test/fixtures/te-hook/codex-subagentstop.json": {
+          "sha256": "04ac16b6fd2e680b8a5cc3c7cdbebfb2cfa340b97480bae98dababfe3382ba09",
+          "mode": 436
+        },
+        "test/fixtures/te-hook/cursor-beforeshellexecution.json": {
+          "sha256": "4379c09faba5481167991e910d3878bbc64c1c4da59dfc94db29a1e45e956397",
+          "mode": 436
+        },
+        "test/fixtures/te-hook/unmapped-event.json": {
+          "sha256": "cf0b475f80dc9497e7134fa0aa75b394a7d19bc7b0953f17c2cd659e0f2c4d46",
+          "mode": 436
+        },
+        "test/hook-contract.test.mjs": {
+          "sha256": "7824d905930b31c94909521f633a7e5c507f5c2a4148047a1abe963f921c2297",
+          "mode": 436
+        },
+        "test/hook-resilience.test.mjs": {
+          "sha256": "10e7c0400ce7abb6be9b77c18bfcc44a53df7acc91508da6b07b0a60089a92eb",
+          "mode": 436
+        },
+        "test/host-mapping.test.mjs": {
+          "sha256": "f6500d064618e24ff45fe51937244cbc009786a0241d93ff4e4626dde6f2e5d8",
+          "mode": 436
+        },
+        "test/journey-config.test.mjs": {
+          "sha256": "be18a0a3b7f9b894456c381a7f00907ad6e684fb60700827b2e4e4b17d9b0c28",
+          "mode": 436
+        },
+        "test/journey-schema.test.mjs": {
+          "sha256": "67fc56991fbd33168a14c8aa96416578748eb7034ee13e656d665b912b75fc2e",
+          "mode": 436
+        },
+        "test/lineups-empty.test.mjs": {
+          "sha256": "74a1ef5fec1fcf405cb368a479139f5b2177b8f6c0c38d56f524fb2baa7011ff",
+          "mode": 436
+        },
+        "test/lineups-populated-schema.test.mjs": {
+          "sha256": "1e084d5c1c032fe1bc37238240d9b196d54aa27e09e17d3a215029df9fc62395",
+          "mode": 436
+        },
+        "test/owner-stops.test.mjs": {
+          "sha256": "fd73387fe1a0176857066b990e6aaf50e47c711641287e944742ac13740b7eb0",
+          "mode": 436
+        },
+        "test/package-boundary.test.mjs": {
+          "sha256": "62c24e2cb6615938102c7fdc10f6cd6f514a07bdbdf53a46327984cb26b86f0a",
+          "mode": 436
+        },
+        "test/plan-package.test.mjs": {
+          "sha256": "e10bac50caf4f4d59c73d5815f461c720685bf467dc996da812ef0e509078f9a",
+          "mode": 436
+        },
+        "test/planning-review.test.mjs": {
+          "sha256": "caa3581b440e199a2364fcb477e35f6f05d020b623c0ee857b5f70d93e8ce041",
+          "mode": 436
+        },
+        "test/plugin-manifest.test.mjs": {
+          "sha256": "44e1976f0d72633c92ad663536410812579c0659d9e6ea8567ebc98c2f95b1b9",
+          "mode": 436
+        },
+        "test/policy-drift.test.mjs": {
+          "sha256": "d19aeb19a1a38af4a13c28525594a378b1b2bd71a0ee831106533d7469ce5dcc",
+          "mode": 436
+        },
+        "test/profiles-empty.test.mjs": {
+          "sha256": "b6df146b8f3cf8f9a38a55538725a6478b627965840fdbcd8692d146b4ee0538",
+          "mode": 436
+        },
+        "test/public-boundary.test.mjs": {
+          "sha256": "60f5df87c42b76e61027059e382ffe045a7deb8061563c285b753c72138140b7",
+          "mode": 436
+        },
+        "test/reconcile.test.mjs": {
+          "sha256": "5ce9c941f694dc16f13dee93f3b809e2cb68393b9a55dd79e4dda954fb91e846",
+          "mode": 436
+        },
+        "test/recovery.test.mjs": {
+          "sha256": "afc33317842e3af56fbeff3f7571a3a6d35f25d10d005798f3aff6bf36f88f7f",
+          "mode": 436
+        },
+        "test/role-handoff.test.mjs": {
+          "sha256": "c85a44c00a1e97b9f6706c2210612eace008c8b5c79e67e4a490822f302c7443",
+          "mode": 436
+        },
+        "test/role-routing.test.mjs": {
+          "sha256": "2dcb8d03307eb6176cbe89e567b46f407b2b5e336f555293d61f1dcba4ec1a98",
+          "mode": 436
+        },
+        "test/s1-contracts.test.mjs": {
+          "sha256": "8a58b68b52ccbc02ca7c53088dc8f6fea7bd5f3def4e160a2698ecab11ae26d9",
+          "mode": 436
+        },
+        "test/schema-validation.py": {
+          "sha256": "6e010bedadbd575df9ccd84d9ed7f9989e3c5c35f253212d82922324bd1704b9",
+          "mode": 436
+        },
+        "test/schema-validator-requirements.txt": {
+          "sha256": "e62839c89cdf515b25b435939734cd9950a68c7737facec48a59281fe2fe112e",
+          "mode": 436
+        },
+        "test/skills-conformance.test.mjs": {
+          "sha256": "2fc124e1a326824f6f16d2c544241500cb3764552f85164086c2ff8ec1271b87",
+          "mode": 436
+        },
+        "test/task-record.test.mjs": {
+          "sha256": "8d547c885db28c77bb87deaebb6c4403bd5bb5f00bc4f5ec177170bdef31aec3",
+          "mode": 436
+        },
+        "test/task-state.test.mjs": {
+          "sha256": "440bf9fee93fd6e3120f81bdb0bebce4b8fd90428b901b92fbae5bee9bae1248",
+          "mode": 436
+        },
+        "test/te-hook-contract.test.mjs": {
+          "sha256": "9eaa9d6eccfe91554ee45a614ed4056f1710d49e611cd326e9b4366fba0f95f0",
+          "mode": 436
+        },
+        "test/verification.test.mjs": {
+          "sha256": "13deb5080e9751240ac32ac4926d974ba3c262873ad182c43e8b7c7e5ca82d71",
+          "mode": 436
+        },
+        "tools/render-dod-manifest.mjs": {
+          "sha256": "ba41e28deac854e0cb65a0d8d36bb00488d8e9dba7945a9c455d780b4486b4a8",
+          "mode": 436
+        }
+      },
+      "tracked_inventory": [
+        "M\tCONTRIBUTING.md",
+        "M\tREADME.md",
+        "M\thooks/assurance-budget.cjs",
+        "M\thooks/plan-package.cjs",
+        "M\thooks/policy.cjs",
+        "M\thooks/transition-order.cjs",
+        "D\tlineups.json",
+        "M\tschemas/implementation.schema.json",
+        "M\tschemas/journey.schema.json",
+        "D\tschemas/lineups.schema.json",
+        "M\tskills/bearing-lite/SKILL.md",
+        "M\tskills/bearing-lite/references/assurance-policy.md",
+        "M\tskills/bearing-lite/references/lineups.md",
+        "M\tskills/bearing-lite/references/owner-stops.md",
+        "M\tskills/bearing-lite/references/peer-synthesis.md",
+        "M\tskills/bearing-lite/references/review-policy.md",
+        "M\tskills/bearing-lite/references/role-routing.mmd",
+        "M\tskills/bearing-lite/references/task-state.md",
+        "M\tskills/bearing-lite/references/task-state.mmd",
+        "M\tskills/bearing-lite/templates/task.md",
+        "D\tskills/crewmate/SKILL.md",
+        "D\tskills/explorer/SKILL.md",
+        "D\tskills/gather-supplies/SKILL.md",
+        "M\tskills/integration-engineer/SKILL.md",
+        "M\tskills/light-implementer/SKILL.md",
+        "D\tskills/map-the-route/SKILL.md",
+        "D\tskills/map-the-route/references/artifact-grammar.md",
+        "D\tskills/navigator/SKILL.md",
+        "D\tskills/park-ranger/SKILL.md",
+        "M\tskills/plan-integrator/SKILL.md",
+        "D\tskills/repository-fit/SKILL.md",
+        "M\tskills/requirements-engineer/SKILL.md",
+        "M\tskills/scribe/SKILL.md",
+        "D\tskills/set-bearings/SKILL.md",
+        "D\tskills/set-bearings/templates/workspace.md",
+        "D\tskills/surveyor/SKILL.md",
+        "M\tskills/systems-modeler/SKILL.md",
+        "M\tskills/test-engineer/SKILL.md",
+        "D\tskills/validator/SKILL.md",
+        "D\tskills/validator/references/grading-rubric.md",
+        "M\ttest/assurance-budget.test.mjs",
+        "M\ttest/hook-contract.test.mjs",
+        "M\ttest/journey-config.test.mjs",
+        "M\ttest/lineups-empty.test.mjs",
+        "M\ttest/lineups-populated-schema.test.mjs",
+        "M\ttest/package-boundary.test.mjs",
+        "M\ttest/plan-package.test.mjs",
+        "M\ttest/planning-review.test.mjs",
+        "M\ttest/public-boundary.test.mjs",
+        "M\ttest/role-handoff.test.mjs",
+        "M\ttest/role-routing.test.mjs",
+        "M\ttest/schema-validation.py",
+        "M\ttest/skills-conformance.test.mjs",
+        "M\ttest/task-record.test.mjs",
+        "M\ttest/task-state.test.mjs"
+      ],
+      "nonignored_untracked_inventory": [
+        "docs/architecture/bearing-delivery-lifecycle.md",
+        "docs/architecture/bearing-process/lifecycle-context.svg",
+        "docs/architecture/bearing-process/lifecycle-process-views.svg",
+        "docs/guides/lifecycle.md",
+        "docs/guides/onboarding.md",
+        "docs/guides/roles.md",
+        "docs/guides/troubleshooting.md",
+        "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/bearing-delivery-lifecycle-alignment-dod-manifest.html",
+        "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/bearing-delivery-lifecycle-alignment-technical-plan.md",
+        "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/design.md",
+        "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/implementation-handoff.md",
+        "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/implementation.json",
+        "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/journey.json",
+        "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/seit.json",
+        "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/workspace.md",
+        "docs/releases/acknowledgements.md",
+        "docs/releases/announcement.md",
+        "hooks/profiles.cjs",
+        "hooks/verification.cjs",
+        "profiles.json",
+        "schemas/profiles.schema.json",
+        "schemas/verification.schema.json",
+        "skills/architectural-alignment/SKILL.md",
+        "skills/architectural-alignment/templates/workspace.md",
+        "skills/bearing-lite/references/profiles.md",
+        "skills/bearing-lite/references/resume.md",
+        "skills/bearing-lite/references/verification.md",
+        "skills/coordinator/SKILL.md",
+        "skills/implementer/SKILL.md",
+        "skills/intake/SKILL.md",
+        "skills/onboard-bearing/SKILL.md",
+        "skills/planning-and-design/SKILL.md",
+        "skills/planning-and-design/references/artifact-grammar.md",
+        "skills/prompt/SKILL.md",
+        "skills/reviewer/SKILL.md",
+        "skills/scope-definition/SKILL.md",
+        "templates/dod-manifest-v1.html",
+        "test/dod-manifest.test.mjs",
+        "test/fixtures/profiles-populated.example.json",
+        "test/fixtures/s1l-migration-map.json",
+        "test/profiles-empty.test.mjs",
+        "test/s1-contracts.test.mjs",
+        "test/verification.test.mjs",
+        "tools/render-dod-manifest.mjs"
+      ],
+      "assurance_budgets_changed": false,
+      "acceptance_granted": false,
+      "implementation_resumed": false,
+      "recorded_at": "2026-09-13T08:29:10Z",
+      "reviewer_report_sha256": "110d88d04c4837cf003bb0516f475dbed97e34c5b3d1a34bcfeb38590d5be14c"
+    },
+    {
+      "activity": "owner_review_disposition",
+      "authority": "Owner correction in the active session",
+      "recorded_at": "2026-09-13T14:32:57Z",
+      "reviewer_native_session_id": "867e6fc4-3ceb-471a-b642-33904d31e6a2",
+      "supersedes_result_fields": [
+        "findings.F4",
+        "findings.F5",
+        "coverage.S1 residuals F4-F5",
+        "proposed_corrections_for_owner_disposition entries 4-5"
+      ],
+      "withdrawn_findings": [
+        {
+          "id": "F4",
+          "disposition": "WITHDRAWN",
+          "reason": "The review incorrectly inferred that persistent profile configuration requires a dedicated planning_review property. profiles.json stores user configuration such as the Reviewer route, ordered fallbacks, enabled state, and cadence. The candidate-specific planning-review binding, digest, slots, receipts, and result are Lifecycle-owned in implementation.json. No schema requirement is created."
+        },
+        {
+          "id": "F5",
+          "disposition": "WITHDRAWN_AND_REMOVED",
+          "reason": "No owner decision requires legacy_lineup_md_ignored. The legacy Markdown file is never read or created, so emitting a typed note adds no safety or functional behavior. The self-authored promise, dead existence check, and mirrored test assertion were removed."
+        }
+      ],
+      "review_scope_clarification": "The recovery review compares implemented slices with approved and proposed behavior and reports grounded discrepancies. It does not author schema requirements, diagnostic behavior, or owner intent.",
+      "remaining_review_items": [
+        "F1",
+        "F2",
+        "F3",
+        "F6 remains a non-blocking wording observation"
+      ],
+      "changed_product_paths": [
+        "skills/bearing-lite/references/profiles.md",
+        "hooks/profiles.cjs",
+        "test/journey-config.test.mjs"
+      ],
+      "acceptance_granted": false,
+      "implementation_resumed": false
+    },
+    {
+      "activity": "wave_1_dispatch",
+      "authority": "DEC-BDL-060; DEC-BDL-062; DEC-BDL-068; DEC-BDL-069",
+      "recorded_at": "2026-09-13T15:33:41Z",
+      "status": "RUNNING",
+      "orchestrator": "Current Codex session",
+      "baseline": "b5cec79f04f6f6ea506a2ad89bf937aab143d876",
+      "starting_product_tree_sha256": "6bdb0730d2549e16cc9425b903f8d4498ecf742c91b675693325f37cb79d1822",
+      "lease_generation": 1,
+      "liveness": "No competing host agent or durable Grok session observed. The transient Grok status process exited before dispatch.",
+      "write_sets_pairwise_disjoint": true,
+      "dispatches": [
+        {
+          "packet": "W1-A-PUBLIC",
+          "role": "Implementer",
+          "route": "Grok Build / harness default",
+          "native_session_id": "760aec6b-a331-43cf-acf2-3df8ac4fc1d4"
+        },
+        {
+          "packet": "W1-B-PLAN-PACKAGE",
+          "role": "Implementer",
+          "route": "Grok Build / harness default",
+          "native_session_id": "cc52b0c9-c094-432b-ae5c-c82c802a882e"
+        },
+        {
+          "packet": "W1-C-HOST-PACKAGE",
+          "role": "Implementer",
+          "route": "Grok Build / harness default",
+          "native_session_id": "7d0c8c43-2978-41ec-bb4e-86d54cf2269a"
+        }
+      ],
+      "coordinator_dispatched": false,
+      "implementation_resumed": true
+    },
+    {
+      "activity": "wave_1_result",
+      "authority": "DEC-BDL-060; DEC-BDL-062; DEC-BDL-068; DEC-BDL-069",
+      "recorded_at": "2026-09-13T15:51:47Z",
+      "status": "PASS",
+      "baseline": "b5cec79f04f6f6ea506a2ad89bf937aab143d876",
+      "starting_product_tree_sha256": "6bdb0730d2549e16cc9425b903f8d4498ecf742c91b675693325f37cb79d1822",
+      "ending_product_tree_sha256": "148a6fd3f00879456b657ecf2162c401b2dd7653daaf49bc3473b87ad72810a7",
+      "packets": [
+        {
+          "id": "W1-A-PUBLIC",
+          "outcome": "CANDIDATE_READY",
+          "native_session_id": "760aec6b-a331-43cf-acf2-3df8ac4fc1d4",
+          "changed_paths": [
+            "README.md",
+            "docs/guides/lifecycle.md",
+            "docs/architecture/bearing-delivery-lifecycle.md",
+            "docs/architecture/bearing-process/lifecycle-process-views.svg",
+            "skills/integration-engineer/SKILL.md",
+            "test/public-boundary.test.mjs"
+          ],
+          "focused_tests": "3/3 public lifecycle and 33/33 skills conformance",
+          "blocker": null
+        },
+        {
+          "id": "W1-B-PLAN-PACKAGE",
+          "outcome": "CANDIDATE_READY",
+          "native_session_id": "cc52b0c9-c094-432b-ae5c-c82c802a882e",
+          "changed_paths": [
+            "hooks/plan-package.cjs",
+            "test/plan-package.test.mjs"
+          ],
+          "focused_tests": "11/11 plan-package; live freeze PASS",
+          "blocker": null
+        },
+        {
+          "id": "W1-C-HOST-PACKAGE",
+          "outcome": "CANDIDATE_READY",
+          "native_session_id": "7d0c8c43-2978-41ec-bb4e-86d54cf2269a",
+          "changed_paths": [
+            "hooks/com.anthropic.claude-code/mapping.md",
+            "test/host-mapping.test.mjs",
+            "test/te-hook-contract.test.mjs",
+            "com.github.copilot/hooks/hooks.json",
+            "plugin.json",
+            "package.json",
+            "test/plugin-manifest.test.mjs",
+            "test/package-boundary.test.mjs"
+          ],
+          "focused_tests": "66/66 host and package; npm dry-run 68 entries",
+          "blocker": null
+        }
+      ],
+      "mutation_audit": "All recorded search_replace/write calls targeted only the 16 pairwise-disjoint packet paths. No session wrote planning state, user configuration, local harness configuration, or another packet's paths.",
+      "integrated_checks": [
+        {
+          "command": "node --test test/*.test.mjs",
+          "exit_code": 0,
+          "passed": 400,
+          "failed": 0
+        },
+        {
+          "command": "schema harness and actual journey/implementation/SEIT validation",
+          "exit_code": 0,
+          "schema_cases": 256,
+          "actual_errors": 0
+        },
+        {
+          "command": "node hooks/plan-package.cjs docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment",
+          "exit_code": 0,
+          "outcome": "PASS"
+        },
+        {
+          "command": "npm pack --dry-run --json",
+          "exit_code": 0,
+          "entry_count": 68
+        },
+        {
+          "command": "git diff --check",
+          "exit_code": 0
+        },
+        {
+          "command": "deleted process HTML absence",
+          "exit_code": 0
+        },
+        {
+          "command": "Wave 1 write-set uniqueness",
+          "exit_code": 0,
+          "unique_paths": 16
+        }
+      ],
+      "active_agents": [],
+      "coordinator_dispatched": false,
+      "assurance_rounds_used": 0,
+      "review_rounds_used": 0,
+      "next": "S5L package assembly. This handoff stops before S5L by contract.",
+      "blocker": null
+    },
+    {
+      "activity": "phase_1_s5l_result",
+      "slice": "S5L",
+      "authority": "DEC-BDL-060; DEC-BDL-062; DEC-BDL-070; DEC-BDL-071",
+      "recorded_at": "2026-09-13T16:00:49Z",
+      "status": "PASS_AUTHOR_VERIFIED",
+      "baseline": "b5cec79f04f6f6ea506a2ad89bf937aab143d876",
+      "candidate_product_tree_sha256": "24b79eddc21a37460015bc63cbf046e40024bbc4f77d855142fa49282bfd0c9c",
+      "configured_route": "AGY / AGY default",
+      "primary_attempt": {
+        "outcome": "ENVIRONMENT_FAILURE",
+        "conversation_id": "9ef16697-923c-4ba4-a633-e09809a1bc11",
+        "evidence": "Headless mode auto-denied the first command permission and returned no receipt.",
+        "changed_paths": []
+      },
+      "fallback_activation": {
+        "route": "Deep Code CLI / deepseek-v4-flash / max",
+        "deep_code_version": "0.4.0",
+        "native_session_id": "75406cae-5a35-461f-94f0-efc52493f75c",
+        "activation_condition": "Verified primary route environment failure before any write."
+      },
+      "changed_paths": [
+        ".codex-plugin/plugin.json",
+        ".cursor-plugin/plugin.json",
+        ".grok-plugin/plugin.json",
+        ".kimi-plugin/plugin.json"
+      ],
+      "commands": [
+        {
+          "command": "node --test test/plugin-manifest.test.mjs test/package-boundary.test.mjs",
+          "exit_code": 0,
+          "passed": 18,
+          "controller_rerun": true
+        },
+        {
+          "command": "Muse validation for all 17 shipped skill directories",
+          "exit_code": 0,
+          "passed": 17,
+          "controller_rerun": true
+        },
+        {
+          "command": "npm pack --dry-run --json",
+          "exit_code": 0,
+          "entry_count": 68,
+          "controller_inventory_sha256": "4588329d397c097cf13901433118bdc525e9d6fa7d547043e6925c2f08ebf596"
+        },
+        {
+          "command": "git diff --check -- S5L paths",
+          "exit_code": 0,
+          "controller_rerun": true
+        }
+      ],
+      "phase": "PHASE-1",
+      "phase_status": "COMPLETE_AUTHOR_VERIFIED",
+      "phase_2_status": "DEFERRED_BY_DEC-BDL-071",
+      "active_agents": [],
+      "assurance_rounds_used": 0,
+      "review_rounds_used": 0,
+      "blocker": null
+    },
+    {
+      "activity": "phase_2_s6_dispatch",
+      "slice": "S6",
+      "authority": "DEC-BDL-060; DEC-BDL-062; DEC-BDL-068; DEC-BDL-072",
+      "recorded_at": "2026-09-13T16:14:40Z",
+      "status": "RUNNING",
+      "route": "Grok Build / harness default",
+      "native_session_id": "7b9f9d0d-3cc2-4a1c-8de9-9b28284aba70",
+      "baseline": "b5cec79f04f6f6ea506a2ad89bf937aab143d876",
+      "candidate_product_tree_sha256": "24b79eddc21a37460015bc63cbf046e40024bbc4f77d855142fa49282bfd0c9c",
+      "planning_candidate_digest": "acaeda8cf479fa886b0f0fb4d3028ac781f538fe3a15100867c170a185c54ce6",
+      "manifest_sha256": "9663797dc070c7ee0db9ff0e5f796d3a751baf4cd9cb06edf3b92b3fab1e17c4",
+      "declared_boundary": "PHASE-1 end / PHASE-2 S6 assurance",
+      "write_set": [
+        "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/assurance/s6-assurance.json"
+      ],
+      "independence": "Fresh session, no memory, not resumed from any Implementer author session.",
+      "active_agents": [
+        "S6 Test Engineer assurance"
+      ]
+    },
+    {
+      "activity": "phase_2_s6_result",
+      "slice": "S6",
+      "authority": "DEC-BDL-060; DEC-BDL-062; DEC-BDL-068; DEC-BDL-072",
+      "recorded_at": "2026-09-13T16:26:39Z",
+      "status": "NEEDS_MORE_EVIDENCE",
+      "route": "Grok Build / harness default",
+      "native_session_id": "7b9f9d0d-3cc2-4a1c-8de9-9b28284aba70",
+      "candidate_product_tree_sha256": "24b79eddc21a37460015bc63cbf046e40024bbc4f77d855142fa49282bfd0c9c",
+      "evidence_path": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/assurance/s6-assurance.json",
+      "evidence_sha256": "ec1d6df056dc0447cc9d62160f512e07b3f0540d64b4058677ad7d9fbb51032c",
+      "executable_proof_rows": "SEIT-BDL-001 through 007 and 009 through 011 PASS",
+      "inconclusive": {
+        "id": "SEIT-BDL-012",
+        "status": "INCONCLUSIVE",
+        "reason_code": "visual_demonstration_unavailable",
+        "owner_action": "perform CMD-BDL-VISUAL, waive it, or accept SEIT-BDL-003 and SEIT-BDL-011 as sufficient substitutes"
+      },
+      "changed_paths": [
+        "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/assurance/s6-assurance.json"
+      ],
+      "active_agents": [],
+      "assurance_rounds_used": 1,
+      "s7_dispatched": false,
+      "blocker": "WAITING_ON owner disposition of SEIT-BDL-012"
+    },
+    {
+      "activity": "phase_2_s6_owner_closure",
+      "slice": "S6",
+      "authority": "DEC-BDL-073",
+      "recorded_at": "2026-09-13T17:06:40Z",
+      "status": "PASS",
+      "candidate_product_tree_sha256": "24b79eddc21a37460015bc63cbf046e40024bbc4f77d855142fa49282bfd0c9c",
+      "test_engineer_receipt": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/assurance/s6-assurance.json",
+      "test_engineer_receipt_sha256": "ec1d6df056dc0447cc9d62160f512e07b3f0540d64b4058677ad7d9fbb51032c",
+      "owner_visual_evidence": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/assurance/seit-bdl-012-owner-observation.json",
+      "owner_visual_evidence_sha256": "a186c42dfe1e63b9ce4b2fb275e3728c9e413b6a1c9f99acb2e89a772873dae1",
+      "closure": "SEIT-BDL-001 through 012 PASS. The Test Engineer receipt remains immutable; owner evidence resolves its sole INCONCLUSIVE row.",
+      "assurance_rounds_used": 1,
+      "automatic_rerun": false,
+      "s7_ready": true
+    },
+    {
+      "activity": "phase_2_s7_result_and_repair_dispatch",
+      "slice": "S7",
+      "authority": "DEC-BDL-060; DEC-BDL-062; DEC-BDL-068; DEC-BDL-072; S7 REPAIR_REQUIRED",
+      "recorded_at": "2026-09-13T17:19:51Z",
+      "status": "REPAIR_RUNNING",
+      "review": {
+        "verdict": "REPAIR_REQUIRED",
+        "route": "Codex CLI / gpt-6-astra / medium",
+        "native_session_id": "01a09bbe-e74c-7942-9cf7-f1dd908b55ae",
+        "evidence_path": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/review/s7-review.json",
+        "evidence_sha256": "c699d0db02d03ffefbe1c50e8c44a367093711ada324e6e1a2c896e547edb328",
+        "finding_ids": [
+          "S7-001",
+          "S7-002",
+          "S7-003",
+          "S7-004",
+          "S7-005"
+        ],
+        "reviewer_product_changed_paths": []
+      },
+      "repair": {
+        "role": "Implementer",
+        "route": "Grok Build / harness default",
+        "native_session_id": "c434ef02-6353-476c-8ec1-473ac0d33391",
+        "round": 1,
+        "maximum_rounds": 1,
+        "write_set": [
+          "hooks/verification.cjs",
+          "test/verification.test.mjs",
+          "hooks/assurance-budget.cjs",
+          "skills/bearing-lite/references/assurance-policy.md",
+          "test/assurance-budget.test.mjs",
+          "tools/render-dod-manifest.mjs",
+          "test/dod-manifest.test.mjs",
+          "com.github.copilot/hooks/hooks.json",
+          "test/host-mapping.test.mjs"
+        ]
+      },
+      "candidate_product_tree_sha256": "24b79eddc21a37460015bc63cbf046e40024bbc4f77d855142fa49282bfd0c9c",
+      "review_rounds_used": 1,
+      "repair_rounds_used": 1,
+      "automatic_rereview": false,
+      "s8_dispatched": false
+    },
+    {
+      "activity": "phase_2_s7_repair_closure",
+      "slice": "S7-REPAIR",
+      "authority": "DEC-BDL-060; DEC-BDL-062; DEC-BDL-068; DEC-BDL-072; S7 REPAIR_REQUIRED",
+      "recorded_at": "2026-09-13T17:37:26Z",
+      "status": "PASS_DETERMINISTIC_CLOSURE",
+      "route": "Grok Build / harness default",
+      "native_session_id": "c434ef02-6353-476c-8ec1-473ac0d33391",
+      "starting_product_tree_sha256": "24b79eddc21a37460015bc63cbf046e40024bbc4f77d855142fa49282bfd0c9c",
+      "candidate_product_tree_sha256": "54aff5fddfc1b53fe52ef138f585a26b9ac361e6184e032f61894cbdc00fad05",
+      "changed_paths": [
+        "hooks/verification.cjs",
+        "test/verification.test.mjs",
+        "hooks/assurance-budget.cjs",
+        "skills/bearing-lite/references/assurance-policy.md",
+        "test/assurance-budget.test.mjs",
+        "tools/render-dod-manifest.mjs",
+        "test/dod-manifest.test.mjs",
+        "com.github.copilot/hooks/hooks.json",
+        "test/host-mapping.test.mjs"
+      ],
+      "resolved_findings": [
+        "S7-001",
+        "S7-002",
+        "S7-003",
+        "S7-004",
+        "S7-005"
+      ],
+      "commands": [
+        {
+          "command": "node --test test/*.test.mjs",
+          "exit_code": 0,
+          "passed": 407,
+          "failed": 0
+        },
+        {
+          "command": "schema harness and actual journey/implementation/SEIT validation",
+          "exit_code": 0,
+          "schema_cases": 256,
+          "actual_errors": 0
+        },
+        {
+          "command": "node hooks/plan-package.cjs docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment",
+          "exit_code": 0,
+          "outcome": "PASS"
+        },
+        {
+          "command": "Muse validation for all shipped skill directories",
+          "exit_code": 0,
+          "passed": 17
+        },
+        {
+          "command": "npm pack --dry-run --json",
+          "exit_code": 0,
+          "entry_count": 68
+        },
+        {
+          "command": "plugin/package/public/skill focused tests",
+          "exit_code": 0,
+          "passed": 68,
+          "failed": 0
+        },
+        {
+          "command": "git diff --check",
+          "exit_code": 0
+        },
+        {
+          "command": "node tools/render-dod-manifest.mjs <implementation.json> --check",
+          "exit_code": 0,
+          "outcome": "PASS after regeneration"
+        }
+      ],
+      "evidence_path": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/repair/s7-repair-closure.json",
+      "review_rounds_used": 1,
+      "repair_rounds_used": 1,
+      "automatic_rereview": false,
+      "s8_ready": true,
+      "blocker": null,
+      "evidence_sha256": "2576120b22efe4afc6066af03ba66aacbae1eb9758f5c165dd1e4d55383ff240"
+    },
+    {
+      "activity": "phase_2_s8_result",
+      "slice": "S8",
+      "authority": "DEC-BDL-060; DEC-BDL-062; DEC-BDL-068; DEC-BDL-072",
+      "recorded_at": "2026-09-13T17:50:22Z",
+      "status": "CANDIDATE_READY",
+      "typed_outcome": "PASS",
+      "route": "Codex CLI / gpt-6-astra / high",
+      "native_session_id": "01a09bdc-2d5e-7eb0-a94f-0ae06f1980d1",
+      "candidate_product_tree_sha256": "54aff5fddfc1b53fe52ef138f585a26b9ac361e6184e032f61894cbdc00fad05",
+      "evidence_path": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/integration/s8-integration.json",
+      "evidence_sha256": "d7def571da0374dda78b152148ba7d50fe8ed3714aa40cbfd4ab6d1bd8017df4",
+      "findings": [],
+      "remaining_limitations": [
+        "Native host installation was not repeated in S8.",
+        "Owner visual evidence binds an earlier Manifest digest; final-current evidence is deterministic."
+      ],
+      "phase": "PHASE-2",
+      "phase_status": "COMPLETE_CANDIDATE_READY",
+      "owner_acceptance": "pending",
+      "blocker": null,
+      "final_manifest_sha256": "42c7e463f7c73691527c78f5f11b9442038c02d801591b06e61ee14894ae0848",
+      "final_manifest_path": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/bearing-delivery-lifecycle-alignment-dod-manifest.html"
+    },
+    {
+      "activity": "phase_3_parallel_dispatch",
+      "phase": "PHASE-3",
+      "authority": "DEC-BDL-074",
+      "recorded_at": "2026-09-13T18:38:45Z",
+      "status": "RUNNING",
+      "starting_product_tree_sha256": "54aff5fddfc1b53fe52ef138f585a26b9ac361e6184e032f61894cbdc00fad05",
+      "route": "Grok Build / harness default",
+      "packets": [
+        {
+          "id": "S9A",
+          "name": "README framing and role table",
+          "objective": "Merge the opening without a literal BLUF label and replace the misleading Executes role column with Primary work, while leaving installation text for the verified follow-up.",
+          "write_set": [
+            "README.md",
+            "test/public-boundary.test.mjs"
+          ],
+          "depends_on": [],
+          "native_session_id": "8e7d77e2-7f74-4b75-b83b-5c8e4adf0101"
+        },
+        {
+          "id": "S9B",
+          "name": "Copilot native Test Engineering hooks",
+          "objective": "Implement documented VS Code PreToolUse, Stop, and SubagentStop Test Engineering channels with correct host-specific wire shapes and stop re-entry protection.",
+          "write_set": [
+            "hooks/te-host.cjs",
+            "com.github.copilot/hooks/hooks.json",
+            "hooks/com.anthropic.claude-code/mapping.md",
+            "test/te-hook-contract.test.mjs",
+            "test/host-mapping.test.mjs"
+          ],
+          "depends_on": [],
+          "native_session_id": "8e7d77e2-7f74-4b75-b83b-5c8e4adf0102"
+        },
+        {
+          "id": "S9C",
+          "name": "Manifest CSP hardening",
+          "objective": "Add a restrictive self-contained Manifest CSP, bump the template contract version, and preserve deterministic accessible rendering.",
+          "write_set": [
+            "templates/dod-manifest-v1.html",
+            "tools/render-dod-manifest.mjs",
+            "test/dod-manifest.test.mjs"
+          ],
+          "depends_on": [],
+          "native_session_id": "8e7d77e2-7f74-4b75-b83b-5c8e4adf0103"
+        },
+        {
+          "id": "S9D",
+          "name": "Host installation validation",
+          "objective": "Produce README-ready, evidence-backed installation and capability guidance for every advertised client without changing product or user configuration.",
+          "write_set": [
+            "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/host-compatibility/phase3-host-validation.json"
+          ],
+          "depends_on": [],
+          "native_session_id": "8e7d77e2-7f74-4b75-b83b-5c8e4adf0104"
+        }
+      ],
+      "write_sets_pairwise_disjoint": true,
+      "dependency_note": "S9A initially excludes install-section edits. After S9D returns, the same S9A session resumes to incorporate its verified guidance.",
+      "active_agents": [
+        "S9A",
+        "S9B",
+        "S9C",
+        "S9D"
+      ],
+      "blocker": null
+    },
+    {
+      "activity": "phase_3_implementation_result",
+      "phase": "PHASE-3",
+      "authority": "DEC-BDL-074",
+      "recorded_at": "2026-09-13T19:04:24Z",
+      "status": "PASS_AUTHOR_VERIFIED",
+      "typed_outcome": "PASS",
+      "starting_product_tree_sha256": "54aff5fddfc1b53fe52ef138f585a26b9ac361e6184e032f61894cbdc00fad05",
+      "candidate_product_tree_sha256": "c613f327977758fabe1fb05e572715b83a64c6ba35cef2e6d1a30952d444268f",
+      "packets": [
+        {
+          "id": "S9A",
+          "route": "Grok Build / harness default",
+          "native_session_id": "8e7d77e2-7f74-4b75-b83b-5c8e4adf0101",
+          "status": "PASS_AUTHOR_VERIFIED",
+          "changed_paths": [
+            "README.md",
+            "test/public-boundary.test.mjs"
+          ]
+        },
+        {
+          "id": "S9B",
+          "route": "Grok Build / harness default",
+          "native_session_id": "8e7d77e2-7f74-4b75-b83b-5c8e4adf0102",
+          "status": "PASS_AUTHOR_VERIFIED",
+          "changed_paths": [
+            "hooks/te-host.cjs",
+            "com.github.copilot/hooks/hooks.json",
+            "hooks/com.anthropic.claude-code/mapping.md",
+            "test/te-hook-contract.test.mjs",
+            "test/host-mapping.test.mjs",
+            "test/plugin-manifest.test.mjs"
+          ]
+        },
+        {
+          "id": "S9C",
+          "route": "Grok Build / harness default",
+          "native_session_id": "8e7d77e2-7f74-4b75-b83b-5c8e4adf0103",
+          "status": "PASS_AUTHOR_VERIFIED",
+          "changed_paths": [
+            "templates/dod-manifest-v1.html",
+            "tools/render-dod-manifest.mjs",
+            "test/dod-manifest.test.mjs",
+            "schemas/implementation.schema.json"
+          ]
+        },
+        {
+          "id": "S9D",
+          "route": "Grok Build / harness default",
+          "native_session_id": "8e7d77e2-7f74-4b75-b83b-5c8e4adf0104",
+          "status": "PASS_READ_ONLY_VALIDATION",
+          "changed_paths": [
+            "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/host-compatibility/phase3-host-validation.json"
+          ],
+          "validated_clients": 11
+        }
+      ],
+      "implementation_evidence_path": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/implementation/phase3-implementation.json",
+      "implementation_evidence_sha256": "9efd0c80a1af91edb53855974c318ca1ee2a49cf42e6a59f0b3096201483545b",
+      "integrated_checks": [
+        {
+          "command": "node --test test/*.test.mjs",
+          "exit_code": 0,
+          "passed": 416,
+          "failed": 0
+        },
+        {
+          "command": "python3 test/schema-validation.py",
+          "exit_code": 0,
+          "passed": 256,
+          "failed": 0
+        },
+        {
+          "command": "actual journey.json, implementation.json, and seit.json against shipped schemas",
+          "exit_code": 0,
+          "errors": 0
+        },
+        {
+          "command": "node hooks/plan-package.cjs docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment",
+          "exit_code": 0,
+          "outcome": "PASS"
+        },
+        {
+          "command": "npm pack --dry-run --json",
+          "exit_code": 0,
+          "entry_count": 68,
+          "version": "0.2.2"
+        },
+        {
+          "command": "Muse validation for all shipped skill directories",
+          "exit_code": 0,
+          "passed": 17,
+          "failed": 0
+        },
+        {
+          "command": "claude plugin validate .claude-plugin/marketplace.json --strict --json",
+          "exit_code": 0,
+          "outcome": "PASS"
+        },
+        {
+          "command": "grok-build plugin validate .",
+          "exit_code": 0,
+          "outcome": "PASS"
+        },
+        {
+          "command": "focused plugin/package/public/skill/host/TE/renderer tests",
+          "exit_code": 0,
+          "passed": 142,
+          "failed": 0
+        },
+        {
+          "command": "node tools/render-dod-manifest.mjs <implementation.json> --check",
+          "exit_code": 0,
+          "outcome": "PASS",
+          "template_version": "1.0.1"
+        },
+        {
+          "command": "git diff --check",
+          "exit_code": 0
+        }
+      ],
+      "active_agents": [],
+      "blocker": null,
+      "next": "fresh independent Test Engineer assurance"
+    },
+    {
+      "activity": "phase_3_manifest_status_repair",
+      "phase": "PHASE-3",
+      "authority": "DEC-BDL-074; DEC-BDL-075",
+      "recorded_at": "2026-09-13T20:00:03Z",
+      "status": "PASS_AUTHOR_VERIFIED",
+      "typed_outcome": "PASS",
+      "candidate_product_tree_sha256": "8bde490392e7bba4b2151bcd96efcfd017c44b7431eff9d790170c358750dfaf",
+      "evidence_path": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/repair/phase3-manifest-status-repair.json",
+      "evidence_sha256": "172d44175a6c73f7988b07375101ab59d5e23c4ab825197f8c37958643610f30",
+      "renderer_tests": "18/18",
+      "full_suite": "417/417",
+      "risk_disposition": {
+        "RISK-BDL-001": "CLOSED_MITIGATED",
+        "RISK-BDL-002": "CLOSED_MITIGATED",
+        "RISK-BDL-003": "CLOSED_MITIGATED"
+      },
+      "prior_phase3_assurance": "STALE_SUPERSEDED",
+      "active_agents": [],
+      "blocker": null,
+      "next": "fresh independent Test Engineer assurance"
+    },
+    {
+      "activity": "phase_3_completion_view_repair",
+      "phase": "PHASE-3",
+      "authority": "DEC-BDL-074; DEC-BDL-075",
+      "recorded_at": "2026-09-13T20:28:42Z",
+      "status": "PASS_AUTHOR_VERIFIED",
+      "typed_outcome": "PASS",
+      "candidate_product_tree_sha256": "884508aa264255746674a2865e6abc264dc68f07010e239b4bc4e5c22267535d",
+      "evidence_path": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/repair/phase3-manifest-completion-view.json",
+      "evidence_sha256": "b48259dda5abc011c83af15d0039ced0549991a1a75e2ec17a59cab61ff78fff",
+      "full_suite": "417/417",
+      "renderer_tests": "18/18",
+      "prior_assurance": "STALE_SUPERSEDED",
+      "active_agents": [],
+      "blocker": null,
+      "next": "fresh exact-candidate assurance"
+    },
+    {
+      "activity": "phase_3_owner_visual_pass",
+      "phase": "PHASE-3",
+      "authority": "DEC-BDL-076",
+      "recorded_at": "2026-09-13T20:41:20Z",
+      "status": "PASS",
+      "manifest_sha256": "8c3f1acf5163044510ac9fc06cf96ea94e08107b1e84fca6ebaa8a7d653fdcc0",
+      "evidence_path": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/assurance/phase3-seit-bdl-012-owner-observation.json",
+      "evidence_sha256": "b5e23d9dd6e8f27129589eb26bb2dccd87b36e7c213de6b1452833e918ea1145",
+      "next": "complete S6 receipt, then S7"
+    },
+    {
+      "activity": "phase_3_s6_result",
+      "slice": "S6",
+      "phase": "PHASE-3",
+      "authority": "DEC-BDL-074; DEC-BDL-076",
+      "recorded_at": "2026-09-13T20:45:41Z",
+      "status": "PASS",
+      "typed_outcome": "PASS",
+      "gate_eligible": true,
+      "route": "Grok Build / harness default",
+      "native_session_id": "01a09c75-8679-7ab2-8014-24a3c9f09d15",
+      "candidate_product_tree_sha256": "884508aa264255746674a2865e6abc264dc68f07010e239b4bc4e5c22267535d",
+      "evidence_path": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/assurance/phase3-s6-assurance-final.json",
+      "evidence_sha256": "57b5a2c684c5fd100d04b818ef0dcb2d0d19280ed792465ccbdbf948c1dcaf02",
+      "owner_visual_evidence": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/assurance/phase3-seit-bdl-012-owner-observation.json",
+      "active_agents": [],
+      "blocker": null,
+      "next": "S7 Reviewer"
+    },
+    {
+      "activity": "phase_3_s7_result",
+      "slice": "S7",
+      "phase": "PHASE-3",
+      "authority": "DEC-BDL-074; DEC-BDL-076",
+      "recorded_at": "2026-09-13T20:50:52Z",
+      "status": "ACCEPT",
+      "typed_outcome": "PASS",
+      "route": "Codex CLI / gpt-6-astra / medium",
+      "candidate_product_tree_sha256": "884508aa264255746674a2865e6abc264dc68f07010e239b4bc4e5c22267535d",
+      "evidence_path": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/review/phase3-s7-review.json",
+      "evidence_sha256": "013070571376574c1f088c0ea0e17762999f4109666468f14838e93fe959d394",
+      "findings": [],
+      "active_agents": [],
+      "blocker": null,
+      "next": "S8 Integration Engineer execution"
+    },
+    {
+      "activity": "phase_3_s8_result",
+      "slice": "S8",
+      "phase": "PHASE-3",
+      "authority": "DEC-BDL-074; DEC-BDL-076",
+      "recorded_at": "2026-09-13T20:57:17Z",
+      "status": "CANDIDATE_READY",
+      "typed_outcome": "PASS",
+      "route": "Codex CLI / gpt-6-astra / high",
+      "candidate_product_tree_sha256": "884508aa264255746674a2865e6abc264dc68f07010e239b4bc4e5c22267535d",
+      "s6_evidence_sha256": "57b5a2c684c5fd100d04b818ef0dcb2d0d19280ed792465ccbdbf948c1dcaf02",
+      "s7_evidence_sha256": "013070571376574c1f088c0ea0e17762999f4109666468f14838e93fe959d394",
+      "evidence_path": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/integration/phase3-s8-integration.json",
+      "evidence_sha256": "3c99af7805473459102493e3464f293afee24545e69fe386eeadfd68d23ced7b",
+      "findings": [],
+      "active_agents": [],
+      "blocker": null,
+      "next": "final Manifest assembly then owner acceptance"
+    },
+    {
+      "activity": "phase_3_final_manifest_assembly",
+      "phase": "PHASE-3",
+      "authority": "DEC-BDL-074; DEC-BDL-075; DEC-BDL-076",
+      "recorded_at": "2026-09-13T20:57:37Z",
+      "status": "CANDIDATE_READY",
+      "candidate_product_tree_sha256": "884508aa264255746674a2865e6abc264dc68f07010e239b4bc4e5c22267535d",
+      "manifest_path": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/bearing-delivery-lifecycle-alignment-dod-manifest.html",
+      "manifest_sha256": "71f8b9bbe951025f3a3f1894a10658172b3c0a09f16d96ac6cc2f1b4e959db07",
+      "template_version": "1.0.1",
+      "renderer_check": "PASS",
+      "plan_package": "PASS",
+      "s6": "PASS",
+      "s7": "ACCEPT",
+      "s8": "CANDIDATE_READY / PASS",
+      "owner_acceptance": "PENDING",
+      "publication_release_deployment": "NOT_AUTHORIZED",
+      "active_agents": [],
+      "blocker": null
+    },
+    {
+      "activity": "owner_acceptance",
+      "phase": "PHASE-3",
+      "authority": "DEC-BDL-077",
+      "recorded_at": "2026-09-13T21:06:21Z",
+      "status": "ACCEPTED",
+      "candidate_product_tree_sha256": "884508aa264255746674a2865e6abc264dc68f07010e239b4bc4e5c22267535d",
+      "s6": "PASS",
+      "s7": "ACCEPT",
+      "s8": "CANDIDATE_READY / PASS",
+      "risks": "RISK-BDL-001..003 CLOSED_MITIGATED",
+      "lease_state": "released",
+      "publication_release_deployment": "NOT_AUTHORIZED",
+      "active_agents": [],
+      "blocker": null
+    },
+    {
+      "activity": "accepted_manifest_final",
+      "authority": "DEC-BDL-077",
+      "recorded_at": "2026-09-13T21:06:38Z",
+      "status": "COMPLETE",
+      "candidate_product_tree_sha256": "884508aa264255746674a2865e6abc264dc68f07010e239b4bc4e5c22267535d",
+      "manifest_path": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/bearing-delivery-lifecycle-alignment-dod-manifest.html",
+      "manifest_sha256": "09bb88e4afc50ae677d3156c492848b3a462eefa640c6dbc41773f51d8a962dc",
+      "template_version": "1.0.1",
+      "renderer_check": "PASS",
+      "owner_acceptance": "ACCEPTED",
+      "lease_state": "released",
+      "active_agents": [],
+      "blocker": null
+    }
+  ],
+  "open_decisions": [],
+  "planning_receipts": [
+    {
+      "stage": "repository-fit",
+      "outcome": "FIT_CONFIRMED",
+      "recorded_at": "2026-09-12T18:56:43Z",
+      "evidence": [
+        "Current Git root is alphazede/bearing-lite",
+        "Origin is https://github.com/alphazede/bearing-lite.git",
+        "Owner supplied https://github.com/alphazede/bearing-lite/issues",
+        "Owner confirmed the proposed plan directory"
+      ]
+    },
+    {
+      "stage": "set-bearings",
+      "public_name": "architectural-alignment",
+      "outcome": "WORKSPACE_READY",
+      "recorded_at": "2026-09-12T18:56:43Z",
+      "paths": [
+        "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/workspace.md"
+      ],
+      "map_freshness": "Tier 1; Tier 2 records the intentional untracked diagram and planning files."
+    }
+  ],
+  "profile_selection": {
+    "status": "frozen_snapshot",
+    "frozen_in": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/implementation.json profile_freeze",
+    "profile_id": "alphazede",
+    "source": "~/.agents/bearing-lite/lineups.json",
+    "source_kind": "legacy_lineup_catalog",
+    "source_sha256": "d3599f08868828aef57eadfb360df37051fe1bd4a6bafa8fe19a01a3119c3815",
+    "legacy_source_exception": "DEC-BDL-032 and DEC-BDL-033 make profiles.json the sole persistent Bearing configuration going forward, and DEC-BDL-033 requires an explicit deterministic migration. That migration has not been performed on the owner's user configuration, so the frozen routing snapshot for this run was read from the legacy catalog before the product change lands. This is a recorded historical exception, not a live runtime fallback path: no session reads, merges, or writes user configuration under this Journey.",
+    "history": {
+      "prior_status": "not_selected",
+      "prior_reason": "Planning roles and implementation graph are not yet stable enough for Map the Route to propose a lineup.",
+      "superseded_at": "2026-09-13T07:39:55Z",
+      "superseded_at_correction": {
+        "corrected_at": "2026-09-13T07:39:55Z",
+        "erroneous_prior_value": "2026-09-13T02:27:00Z",
+        "note": "Timestamp correction recorded at 2026-09-13T07:39:55Z UTC by the same Plan Integrator session under DEC-BDL-066. The previously written value 2026-09-13T02:27:00Z was erroneous: it predates DEC-BDL-064 and DEC-BDL-065 (2026-09-13T06:36:02Z), which this repair reconciles, so it cannot be a valid recording time. The prior value is kept here as an error record only and is not authoritative history. No cause is claimed and no earlier timestamp or decision was altered."
+      },
+      "note": "Retained as history. The route snapshot was in fact frozen at implementation authorization (DEC-BDL-060); the prior wording also used the retired Map the Route name, now planning-and-design (DEC-BDL-005)."
+    }
+  },
+  "owner_wait_tracking": true,
+  "owner_blocked_intervals": [
+    {
+      "decision_ids": [
+        "OPEN-BDL-001"
+      ],
+      "started_at": "2026-09-12T18:59:15Z",
+      "ended_at": "2026-09-12T19:34:49Z"
+    },
+    {
+      "decision_ids": [
+        "OPEN-BDL-002"
+      ],
+      "started_at": "2026-09-12T19:34:49Z",
+      "ended_at": "2026-09-12T19:54:58Z"
+    },
+    {
+      "decision_ids": [
+        "OPEN-BDL-003"
+      ],
+      "started_at": "2026-09-12T19:54:58Z",
+      "ended_at": "2026-09-12T20:17:48Z"
+    },
+    {
+      "decision_ids": [
+        "OPEN-BDL-004"
+      ],
+      "started_at": "2026-09-12T20:17:48Z",
+      "ended_at": "2026-09-12T20:21:52Z"
+    },
+    {
+      "decision_ids": [
+        "OPEN-BDL-005"
+      ],
+      "started_at": "2026-09-12T20:21:52Z",
+      "ended_at": "2026-09-12T20:24:14Z"
+    },
+    {
+      "decision_ids": [
+        "OPEN-BDL-006"
+      ],
+      "started_at": "2026-09-12T20:24:14Z",
+      "ended_at": "2026-09-12T20:33:28Z"
+    },
+    {
+      "decision_ids": [
+        "OPEN-BDL-007"
+      ],
+      "started_at": "2026-09-12T20:33:28Z",
+      "ended_at": "2026-09-12T20:46:59Z"
+    },
+    {
+      "decision_ids": [
+        "OPEN-BDL-008"
+      ],
+      "started_at": "2026-09-12T20:46:59Z",
+      "ended_at": "2026-09-12T21:01:23Z"
+    },
+    {
+      "decision_ids": [
+        "OPEN-BDL-009"
+      ],
+      "started_at": "2026-09-13T00:52:18Z",
+      "ended_at": "2026-09-13T00:57:34Z"
+    }
+  ],
+  "scope": {
+    "issues": [
+      87,
+      88,
+      89,
+      90,
+      91
+    ],
+    "primary_public_source": "README.md",
+    "visual_inputs": [
+      "docs/architecture/bearing-process/lifecycle-context.svg",
+      "docs/architecture/bearing-process/lifecycle-process-views.svg"
+    ],
+    "visual_inputs_note": "The two retained SVGs are derived, non-normative human views. They are not a native SysML model and mandate no modeling format (DEC-BDL-046, DEC-BDL-048, DEC-BDL-064).",
+    "visual_inputs_history": {
+      "original_inputs": [
+        "docs/architecture/bearing-process/index.html",
+        "docs/architecture/bearing-process/planning.html",
+        "docs/architecture/bearing-process/implementation.html"
+      ],
+      "status": "deleted",
+      "authority": "DEC-BDL-064",
+      "effect": "The owner deleted the three standalone process HTML pages without backups. HTML is the DoD Manifest output only. They are not recreated, not restored, and no .mmd replacement is created. Two product test expectations and two public links still reference them; those are tracked as GAP-BDL-001 through GAP-BDL-003 and belong to an authorized product slice."
+    }
+  }
+}

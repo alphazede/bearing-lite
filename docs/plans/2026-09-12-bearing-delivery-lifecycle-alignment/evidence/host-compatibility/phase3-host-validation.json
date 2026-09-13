@@ -1,0 +1,670 @@
+{
+  "schema_version": "1",
+  "kind": "host_compatibility_receipt",
+  "lifecycle_id": "BDL-2026-09-12",
+  "phase": "PHASE-3",
+  "slice": "S9D",
+  "packet_name": "Host installation validation",
+  "authority": "DEC-BDL-074",
+  "recorded_at": "2026-09-13T18:50:44Z",
+  "role": "Implementer",
+  "session": "implementation",
+  "work_class": "judgement",
+  "typed_outcome": "PASS",
+  "verdict": "CANDIDATE_READY",
+  "route": {
+    "approved_harness": "Grok Build",
+    "approved_model": "harness default",
+    "authority": "DEC-BDL-074",
+    "observed_binary": "/home/spectre/.local/bin/grok-build",
+    "observed_version": "grok 0.2.118 (1e1687c1cf) [stable]"
+  },
+  "candidate_ref": "b5cec79f04f6f6ea506a2ad89bf937aab143d876",
+  "candidate_identity": {
+    "repository": "/home/spectre/alphazede/Alphazedehq/bearing-lite",
+    "branch": "main",
+    "head": "b5cec79f04f6f6ea506a2ad89bf937aab143d876",
+    "starting_product_tree_sha256": "54aff5fddfc1b53fe52ef138f585a26b9ac361e6184e032f61894cbdc00fad05",
+    "lease_generation": 1,
+    "note": "Other PHASE-3 packets are editing disjoint paths. This receipt does not treat in-progress README, mapping, Copilot hook, or Manifest files as a stable product candidate."
+  },
+  "bran_status": "unavailable",
+  "bran_refs": {
+    "coverage": "Target checkout lacks native .bran/policy.yaml.",
+    "verified_paths": [
+      ".bran/policy.yaml (absent)"
+    ],
+    "extra_discovery_avoided": false,
+    "reason": "Bounded direct reads of README, host manifests, installed --help/validate output, and primary official documentation."
+  },
+  "authority_respected": {
+    "allowed_write_set": [
+      "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/host-compatibility/phase3-host-validation.json"
+    ],
+    "allowed_temporary_paths": [
+      "/tmp/bdl-s9d-*"
+    ],
+    "product_edits": false,
+    "readme_edits": false,
+    "user_configuration_changed": false,
+    "plugins_installed_enabled_disabled_updated_or_removed": false,
+    "credentials_accessed_or_printed": false,
+    "remote_state_mutated": false,
+    "commit_authorized": false,
+    "subagents_dispatched": false
+  },
+  "classification_enum": [
+    "verified_cli",
+    "verified_ui",
+    "skills_only",
+    "unavailable_locally",
+    "unsupported_unverified"
+  ],
+  "capability_enum": [
+    "partial_hooks",
+    "skills_only",
+    "unavailable"
+  ],
+  "verification_status_enum": [
+    "copied_from_installed_help",
+    "copied_from_primary_official_docs",
+    "read_only_validator_pass",
+    "read_only_validator_fail_explained",
+    "unavailable_locally_no_command",
+    "ui_only_no_command"
+  ],
+  "readme_advertised_install_clients_observed": [
+    "Claude Code",
+    "Codex",
+    "Grok Build",
+    "Cursor",
+    "Kimi Code",
+    "AGY",
+    "Pi",
+    "DeepCode"
+  ],
+  "packet_required_clients": [
+    "claude_code",
+    "codex",
+    "github_copilot_vscode",
+    "github_copilot_cli",
+    "cursor",
+    "grok_build",
+    "kimi_code",
+    "agy",
+    "pi",
+    "muse_code",
+    "deepcode"
+  ],
+  "installed_surfaces_reverified": {
+    "claude": "2.1.268 (Claude Code) at /home/spectre/.local/bin/claude",
+    "codex": "codex-cli 0.154.0 at /home/spectre/.npm-global/bin/codex",
+    "grok_build": "grok 0.2.118 (1e1687c1cf) [stable] at /home/spectre/.local/bin/grok-build; command name grok is NOT_FOUND on PATH",
+    "cursor": "3.19.13 at /home/spectre/.local/bin/cursor",
+    "cursor_agent": "2026.08.11-e8db854 at /home/spectre/.local/bin/cursor-agent (also linked as agent)",
+    "kimi": "0.39.1 at /home/spectre/.kimi-code/bin/kimi",
+    "agy": "1.2.2 at /home/spectre/.local/bin/agy",
+    "pi": "0.82.1 at /home/spectre/.local/bin/pi",
+    "muse": "Muse Code 1.2.1 (1.2.1-R2847.1) at /home/spectre/.local/bin/muse",
+    "deepcode": "0.4.0 at /home/spectre/.npm-global/bin/deepcode",
+    "vscode": "1.136.2 at /usr/bin/code",
+    "github_copilot_cli": "NOT_FOUND (copilot binary absent; gh copilot unknown command)",
+    "github_copilot_vscode_extension": "not in code --list-extensions (13 extensions present; GitHub Copilot Chat/agent extension not observed)"
+  },
+  "package_layout_observed": {
+    "root_plugin_json": "Agent Plugins 1.0 closed field set at plugin.json",
+    "host_manifests": {
+      "claude": ".claude-plugin/marketplace.json and .claude-plugin/plugin.json",
+      "codex": ".codex-plugin/plugin.json and .agents/plugins/marketplace.json",
+      "grok": ".grok-plugin/marketplace.json and .grok-plugin/plugin.json",
+      "cursor": ".cursor-plugin/marketplace.json and .cursor-plugin/plugin.json; hooks at hooks/com.cursor/hooks.json",
+      "kimi": ".kimi-plugin/plugin.json with SessionStart/Stop hooks array",
+      "agy": ".agy/plugin.json (name+description only) with skills -> ../skills",
+      "pi": "package.json pi.skills = [\"./skills\"] and keyword pi-package",
+      "copilot": "com.github.copilot/hooks/hooks.json SessionStart/Stop",
+      "deepcode": "no host plugin directory; skills discovery only",
+      "muse": "no host plugin directory; skills catalog under skills/"
+    }
+  },
+  "clients": [
+    {
+      "id": "claude_code",
+      "display_name": "Claude Code",
+      "installed_version": "2.1.268",
+      "classification": "verified_cli",
+      "capability_level": "partial_hooks",
+      "readme_claim": "claude plugin marketplace add /path/to/bearing-lite; claude plugin install bearing-lite@bearing-lite",
+      "recommended_method": "CLI marketplace add of the checkout, then plugin install by plugin@marketplace id.",
+      "recommended_commands": [
+        {
+          "command": "claude plugin marketplace add /path/to/bearing-lite",
+          "verification_status": "copied_from_installed_help",
+          "also_in_primary_docs": true,
+          "doc_url": "https://code.claude.com/docs/en/plugin-marketplaces"
+        },
+        {
+          "command": "claude plugin install bearing-lite@bearing-lite",
+          "verification_status": "copied_from_installed_help",
+          "also_in_primary_docs": true,
+          "doc_url": "https://code.claude.com/docs/en/discover-plugins",
+          "note": "Help requires plugin@marketplace. Marketplace name and plugin name are both bearing-lite in .claude-plugin/marketplace.json."
+        }
+      ],
+      "read_only_validation": [
+        {
+          "command": "claude plugin validate . --json",
+          "exit_code": 0,
+          "result": "success true; target resolved to .claude-plugin/marketplace.json; type marketplace; errors []"
+        },
+        {
+          "command": "claude plugin validate .claude-plugin/marketplace.json --json",
+          "exit_code": 0,
+          "result": "success true; type marketplace"
+        },
+        {
+          "command": "claude plugin validate .claude-plugin/marketplace.json --strict --json",
+          "exit_code": 0,
+          "result": "success true; strict true"
+        },
+        {
+          "command": "claude plugin validate .claude-plugin/plugin.json --json",
+          "exit_code": 0,
+          "result": "success true; type plugin"
+        },
+        {
+          "command": "claude plugin validate .claude-plugin/plugin.json --strict --json",
+          "exit_code": 0,
+          "result": "success true; strict true; errors []"
+        },
+        {
+          "command": "claude plugin validate .claude-plugin --json",
+          "exit_code": 1,
+          "verification_status": "read_only_validator_fail_explained",
+          "result": "Host treats that directory as a plugin root and looks for a nested .claude-plugin/marketplace.json or plugin.json. Do not advertise this path as the validate target."
+        }
+      ],
+      "limitations": [
+        "Official interactive docs also show /plugin marketplace add and /plugin install; those are TUI equivalents of the verified CLI, not a different install method.",
+        "marketplace add and install mutate user/project plugin state; syntax verified only. This session did not run them.",
+        "Hook coverage remains partial: activation and closeout. Transition-order, protected-action, planning-review, and assurance-budget stay procedural."
+      ]
+    },
+    {
+      "id": "codex",
+      "display_name": "Codex",
+      "installed_version": "0.154.0",
+      "classification": "verified_cli",
+      "capability_level": "partial_hooks",
+      "readme_claim": "codex plugin marketplace add /path/to/bearing-lite; codex plugin add bearing-lite@bearing-lite",
+      "recommended_method": "CLI marketplace add of the checkout, then plugin add by PLUGIN@MARKETPLACE.",
+      "recommended_commands": [
+        {
+          "command": "codex plugin marketplace add /path/to/bearing-lite",
+          "verification_status": "copied_from_installed_help",
+          "also_in_primary_docs": true,
+          "doc_url": "https://developers.openai.com/codex/plugins/build",
+          "help_example": "codex plugin marketplace add ./path/to/marketplace"
+        },
+        {
+          "command": "codex plugin add bearing-lite@bearing-lite",
+          "verification_status": "copied_from_installed_help",
+          "also_in_primary_docs": true,
+          "doc_url": "https://developers.openai.com/codex/plugins/build",
+          "help_example": "codex plugin add sample@debug",
+          "note": ".agents/plugins/marketplace.json name is bearing-lite; plugin name is bearing-lite."
+        }
+      ],
+      "read_only_validation": [],
+      "limitations": [
+        "Official end-user docs also describe the in-CLI /plugins browser. The advertised shell commands match installed help and the build-plugins CLI section.",
+        "plugin marketplace add and plugin add mutate Codex marketplace/plugin state; syntax verified only.",
+        "Hook coverage remains partial."
+      ]
+    },
+    {
+      "id": "grok_build",
+      "display_name": "Grok Build",
+      "installed_version": "0.2.118",
+      "classification": "verified_cli",
+      "capability_level": "partial_hooks",
+      "readme_claim": "grok plugin marketplace add /path/to/bearing-lite; grok plugin install bearing-lite --trust",
+      "recommended_method": "CLI marketplace add of the checkout, then named plugin install with --trust. Invoke as grok when that binary is on PATH; this host exposes grok-build instead.",
+      "recommended_commands": [
+        {
+          "command": "grok plugin marketplace add /path/to/bearing-lite",
+          "verification_status": "copied_from_installed_help",
+          "also_in_primary_docs": true,
+          "doc_url": "https://x.ai/news/grok-plugin-marketplace",
+          "help_usage": "grok plugin marketplace add [OPTIONS] <URL>",
+          "help_argument": "Git URL, GitHub shorthand (e.g. user/repo), or local directory path"
+        },
+        {
+          "command": "grok plugin install bearing-lite --trust",
+          "verification_status": "copied_from_installed_help",
+          "also_in_primary_docs": true,
+          "doc_url": "https://x.ai/news/grok-plugin-marketplace",
+          "help_usage": "grok plugin install [OPTIONS] <SOURCE>",
+          "help_flag": "--trust  Trust the plugin immediately (skip confirmation prompt)"
+        }
+      ],
+      "read_only_validation": [
+        {
+          "command": "grok-build plugin validate .",
+          "exit_code": 0,
+          "result": "Plugin manifest is valid. name bearing-lite version 0.2.2; components include skill dir(s) and hooks."
+        }
+      ],
+      "limitations": [
+        "Installed help Usage strings and official docs use grok, not grok-build. This machine has grok-build on PATH and no grok alias. That is a local PATH limitation, not a README/docs syntax conflict.",
+        "plugin marketplace add and plugin install mutate plugin state; syntax verified only.",
+        "Hook coverage remains partial."
+      ]
+    },
+    {
+      "id": "cursor",
+      "display_name": "Cursor",
+      "installed_version": "cursor 3.19.13; cursor-agent 2026.08.11-e8db854",
+      "classification": "verified_ui",
+      "capability_level": "partial_hooks",
+      "readme_claim": "Comment only: Add the checkout as a Cursor marketplace/plugin (.cursor-plugin/). No shell command is advertised.",
+      "recommended_method": "UI install from Customize. Do not invent a local-path plugin-install CLI. Shipped layout is .cursor-plugin/.",
+      "recommended_commands": [],
+      "ui_procedure": {
+        "verification_status": "copied_from_primary_official_docs",
+        "doc_url": "https://cursor.com/docs/plugins",
+        "steps": [
+          "Open Customize in the sidebar.",
+          "Find the plugin you want to use.",
+          "Select Install and choose a project or user scope."
+        ],
+        "manifest_note": "An Agent Plugin has plugin.json at its root. A Cursor Plugin has .cursor-plugin/plugin.json. This package ships the Cursor Plugin layout."
+      },
+      "verified_cli_not_a_local_install": {
+        "command": "agent plugin marketplace add <gitUrl>",
+        "verification_status": "copied_from_installed_help",
+        "help_usage": "agent plugin marketplace add [options] <gitUrl>",
+        "limitation": "Installed help requires a git repository URL. It is not a local checkout install command. Do not rewrite it as a local path."
+      },
+      "session_flag_not_install": {
+        "flag": "--plugin-dir <path>",
+        "source": "cursor-agent --help",
+        "limitation": "Loads a local plugin directory for the session. Not an install command."
+      },
+      "read_only_validation": [],
+      "limitations": [
+        "Primary official install is UI-only. README correctly advertises no invented shell command.",
+        "Hook coverage remains partial via hooks/com.cursor/hooks.json when the Cursor plugin is loaded."
+      ]
+    },
+    {
+      "id": "kimi_code",
+      "display_name": "Kimi Code",
+      "installed_version": "0.39.1",
+      "classification": "verified_ui",
+      "capability_level": "partial_hooks",
+      "readme_claim": "Comment only: /plugins install /path/to/bearing-lite",
+      "recommended_method": "TUI slash command from official Kimi Code docs. Installed kimi 0.39.1 has no plugin CLI subcommand.",
+      "recommended_commands": [],
+      "ui_procedure": {
+        "verification_status": "copied_from_primary_official_docs",
+        "doc_url": "https://github.com/MoonshotAI/kimi-code/blob/main/docs/en/customization/plugins.md",
+        "slash_command": "/plugins install /path/to/bearing-lite",
+        "copied_from_docs": "/plugins install <path-or-url>  Install from a local directory, zip URL, or GitHub repository URL"
+      },
+      "cli_probe": {
+        "kimi_plugin_help": "No plugin subcommand; kimi --help lists export, provider, acp, web, server, login, doctor, vis, migrate, upgrade.",
+        "kimi_plugins_help": "Same top-level help; plugins is not a CLI command in 0.39.1.",
+        "installed_docs_pointer": "https://moonshotai.github.io/kimi-code/"
+      },
+      "read_only_validation": [],
+      "limitations": [
+        "Do not advertise kimi plugin install. That wording appears in older kimi-cli docs (https://moonshotai.github.io/kimi-cli/en/customization/plugins.html) and is not a command of this installed kimi-code 0.39.1 binary.",
+        "Slash-command install mutates user plugin state; syntax copied from official kimi-code docs only.",
+        "Hook coverage remains partial via .kimi-plugin/plugin.json after TUI install."
+      ]
+    },
+    {
+      "id": "agy",
+      "display_name": "AGY (Antigravity)",
+      "installed_version": "1.2.2",
+      "classification": "verified_cli",
+      "capability_level": "skills_only",
+      "readme_claim": "agy plugin install /path/to/bearing-lite/.agy",
+      "recommended_method": "CLI install of the .agy root, not the repository root.",
+      "recommended_commands": [
+        {
+          "command": "agy plugin install /path/to/bearing-lite/.agy",
+          "verification_status": "copied_from_installed_help",
+          "also_in_primary_docs": true,
+          "doc_url": "https://antigravity.google/docs/cli-plugins",
+          "help_usage": "agy.bin plugin ... install <target>  Install a plugin (supports plugin@marketplace)",
+          "official_example": "agy plugin install /path/to/local/plugin"
+        }
+      ],
+      "read_only_validation": [
+        {
+          "command": "agy plugin validate .agy",
+          "exit_code": 0,
+          "result": "[ok] .agy; skills 17 processed; agents/commands/mcpServers/hooks skipped (not found)"
+        },
+        {
+          "command": "agy plugin validate",
+          "exit_code": 0,
+          "result": "[ok] . with 17 skills and no hooks. This is a validator of the current directory, not an install recommendation. Install still targets .agy because root plugin.json is the Agent Plugins closed set and cannot satisfy AGY's name/description-only schema."
+        }
+      ],
+      "limitations": [
+        "agy plugin install --help treats --help as a target directory and errors: install target must be a directory: --help. Syntax is taken from agy plugin --help and official docs.",
+        "agy --help / plugin commands emit SessionStart hook additionalContext on this host. No plugin install, enable, or configuration write was performed.",
+        "Do not advertise agy plugin enable in the public README install block. enable mutates plugin state and is outside this packet.",
+        "AGY remains skills-only: no verified SessionStart/Stop mapping."
+      ]
+    },
+    {
+      "id": "pi",
+      "display_name": "Pi",
+      "installed_version": "0.82.1",
+      "classification": "verified_cli",
+      "capability_level": "skills_only",
+      "readme_claim": "pi install npm:@alphazede/bearing-lite",
+      "recommended_method": "Pi package install of the published npm skills package.",
+      "recommended_commands": [
+        {
+          "command": "pi install npm:@alphazede/bearing-lite",
+          "verification_status": "copied_from_installed_help",
+          "also_in_primary_docs": true,
+          "doc_url": "https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/packages.md",
+          "help_example": "pi install npm:@foo/bar",
+          "official_example": "pi install npm:@foo/bar@1.0.0"
+        }
+      ],
+      "package_contract": {
+        "package.json_pi.skills": ["./skills"],
+        "keyword": "pi-package"
+      },
+      "read_only_validation": [],
+      "limitations": [
+        "Installed help states: Install a package and add it to settings. Running the command would mutate Pi settings. Syntax verified only.",
+        "Pi is skills-only: no command-hook surface.",
+        "Local path form pi install ./local/path is in help but is not the advertised README command."
+      ]
+    },
+    {
+      "id": "deepcode",
+      "display_name": "DeepCode",
+      "installed_version": "0.4.0",
+      "classification": "skills_only",
+      "capability_level": "skills_only",
+      "readme_claim": "Discover packaged skills through ~/.deepcode/skills or ~/.agents/skills; DeepCode has no plugin-install or command-hook surface.",
+      "recommended_method": "Skills-only copy into a documented discovery directory. No plugin-install command exists.",
+      "recommended_commands": [],
+      "discovery_paths_from_installed_help": [
+        "./.deepcode/skills/*/SKILL.md",
+        "./.agents/skills/*/SKILL.md",
+        "~/.deepcode/skills/*/SKILL.md",
+        "~/.agents/skills/*/SKILL.md"
+      ],
+      "cli_probe": {
+        "deepcode_plugin_help": "No plugin subcommand; deepcode --help is the top-level TUI/exec help."
+      },
+      "read_only_validation": [],
+      "limitations": [
+        "Do not invent a deepcode plugin install command.",
+        "Copying skills into ~/.deepcode/skills or ~/.agents/skills is user-configuration mutation and was not performed.",
+        "No command hooks."
+      ]
+    },
+    {
+      "id": "muse_code",
+      "display_name": "Muse Code",
+      "installed_version": "1.2.1 (1.2.1-R2847.1)",
+      "classification": "verified_cli",
+      "capability_level": "skills_only",
+      "readme_claim": "Not present in the current README Install command block. AC-BDL-010 / DES-BDL-011 require Muse skill validation and native install/import.",
+      "recommended_method": "Per-skill Muse skills validate, then skills install. This installed build has no plugin subsystem.",
+      "recommended_commands": [
+        {
+          "command": "muse skills validate <path> --json",
+          "verification_status": "copied_from_installed_help",
+          "also_in_primary_docs": true,
+          "doc_url": "https://ai.developer.meta.com/docs/muse-code/extending",
+          "official_example": "muse skills validate ./my-skill"
+        },
+        {
+          "command": "muse skills install <path> --scope user",
+          "verification_status": "copied_from_installed_help",
+          "also_in_primary_docs": true,
+          "doc_url": "https://ai.developer.meta.com/docs/muse-code/extending",
+          "official_example": "muse skills install ./my-skill --scope user",
+          "ran": false,
+          "reason": "install mutates user skills; syntax verified only"
+        },
+        {
+          "command": "muse skills import --from claude",
+          "verification_status": "copied_from_installed_help",
+          "also_in_primary_docs": true,
+          "doc_url": "https://ai.developer.meta.com/docs/muse-code/extending",
+          "help_usage": "muse skills import --from claude|codex [--scope user] [--dry-run] [--force] [--json]",
+          "limitation": "Imports from Claude or Codex skill roots, not from this package path. Do not advertise it as the Bearing package install."
+        }
+      ],
+      "read_only_validation": [
+        {
+          "command": "for skill in skills/*/SKILL.md; do muse skills validate \"$(dirname \"$skill\")\" --json; done",
+          "exit_code": 0,
+          "skills_attempted": 17,
+          "ok": 17,
+          "fail": 0,
+          "all_valid_true": true,
+          "compatibility_profile": "agent-skills-common-subset",
+          "note": "skills/prompt reports unknown_fields okf_status, tags, title, type and remains valid true / compatible."
+        }
+      ],
+      "plugin_subsystem": {
+        "muse_plugin_help": "No plugin command; muse plugin --help reprints top-level muse help.",
+        "assumption_confirmed": "Muse has skills install/import/validate commands and no plugin subsystem in this installed 1.2.1 build.",
+        "official_docs_note": "Extending docs list Plugin as one skill discovery source for enabled plugin bundles. This installed binary exposes no muse plugin command family. Do not invent one."
+      },
+      "limitations": [
+        "Current README Install section omits Muse. S9A should add the validated skills commands after this receipt, without claiming a plugin install.",
+        "skills install mutates user skills; not run.",
+        "No command-hook mapping."
+      ]
+    },
+    {
+      "id": "github_copilot_vscode",
+      "display_name": "GitHub Copilot in VS Code",
+      "installed_version": "VS Code 1.136.2; GitHub Copilot extension not observed",
+      "classification": "verified_ui",
+      "capability_level": "partial_hooks",
+      "readme_claim": "Not present in the current README Install command block. AC-BDL-010 / DES-BDL-011 require Copilot discovery of shared skills and com.github.copilot hooks.",
+      "recommended_method": "UI/workspace discovery of the Agent Plugins 1.0 package. No VS Code CLI plugin-install command is verified for Bearing. Do not invent one.",
+      "recommended_commands": [],
+      "ui_procedure": {
+        "verification_status": "copied_from_primary_official_docs",
+        "doc_urls": [
+          "https://docs.github.com/copilot/concepts/agents/about-plugins",
+          "https://code.visualstudio.com/docs/agent-customization/agent-skills"
+        ],
+        "layout": "Root plugin.json with Agent Plugins 1.0 $schema; skills/ for portable skills; Copilot-specific hooks at com.github.copilot/hooks/hooks.json.",
+        "skill_copy_paths_from_vscode_docs": [
+          ".github/skills/",
+          ".claude/skills/",
+          ".agents/skills/",
+          "~/.copilot/skills/",
+          "~/.agents/skills/"
+        ],
+        "note": "Skill-copy into a host skills directory does not register hooks. Plugin/hook discovery uses the Agent Plugins layout plus com.github.copilot/."
+      },
+      "cli_probe": {
+        "code_help": "No plugin-install subcommand for Agent Plugins. --install-extension installs VS Code extensions and was not run.",
+        "copilot_extension_listed": false
+      },
+      "read_only_validation": [],
+      "limitations": [
+        "GitHub Copilot Chat/agent extension is not installed in this VS Code. Native VS Code/Copilot installation was not performed and is not authorized.",
+        "Current README Install section omits Copilot. S9A should describe the Agent Plugins + com.github.copilot layout as UI/workspace discovery, with no invented command.",
+        "Shipped Copilot mapping is SessionStart/Stop activation and closeout. This receipt does not certify in-progress S9B Test Engineering hook changes.",
+        "code --install-extension is a host-extension installer, not a Bearing plugin command, and must not be advertised as one."
+      ]
+    },
+    {
+      "id": "github_copilot_cli",
+      "display_name": "GitHub Copilot CLI",
+      "installed_version": null,
+      "classification": "unavailable_locally",
+      "capability_level": "unavailable",
+      "readme_claim": "Not present in the current README Install command block.",
+      "recommended_method": "None on this host. Copilot CLI is not installed. Do not invent or recommend a Bearing install command from unverified local help.",
+      "recommended_commands": [],
+      "official_commands_not_locally_verified": {
+        "verification_status": "copied_from_primary_official_docs",
+        "doc_url": "https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/plugins-finding-installing",
+        "creating_doc_url": "https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/plugins-creating",
+        "commands": [
+          "copilot plugin install ./my-plugin",
+          "copilot plugin marketplace add /PATH/TO/MARKETPLACE-DIRECTORY",
+          "copilot plugin install PLUGIN-NAME@MARKETPLACE-NAME"
+        ],
+        "note": "Official docs also say copilot plugin [SUBCOMMAND] --help. Those commands were not run because copilot is not on PATH. Do not put them in README as verified local CLI."
+      },
+      "cli_probe": {
+        "copilot": "NOT_FOUND",
+        "gh_copilot": "unknown command copilot for gh (gh 2.45.0)"
+      },
+      "read_only_validation": [],
+      "limitations": [
+        "Host install commands such as npm install -g @github/copilot are Copilot CLI installers, not Bearing plugin installers, and were not run.",
+        "Unavailable-local disposition: no recommended command."
+      ]
+    }
+  ],
+  "readme_ready": {
+    "purpose": "S9A may copy these verified lines into the Install section after this receipt returns. Do not invent additional commands.",
+    "partial_hook_clients": [
+      "Claude Code",
+      "Codex",
+      "Grok Build",
+      "Cursor",
+      "Kimi Code",
+      "GitHub Copilot in VS Code (when Copilot Chat/agent is present)"
+    ],
+    "skills_only_clients": [
+      "AGY",
+      "Pi",
+      "DeepCode",
+      "Muse Code"
+    ],
+    "unavailable_locally": [
+      "GitHub Copilot CLI"
+    ],
+    "suggested_install_block": [
+      "# Claude Code",
+      "claude plugin marketplace add /path/to/bearing-lite",
+      "claude plugin install bearing-lite@bearing-lite",
+      "",
+      "# Codex",
+      "codex plugin marketplace add /path/to/bearing-lite",
+      "codex plugin add bearing-lite@bearing-lite",
+      "",
+      "# Grok Build (binary name is grok in official/help usage)",
+      "grok plugin marketplace add /path/to/bearing-lite",
+      "grok plugin install bearing-lite --trust",
+      "",
+      "# Cursor — UI: Customize → Install. Layout: .cursor-plugin/",
+      "# agent plugin marketplace add requires a git URL, not a local path",
+      "",
+      "# Kimi Code — TUI slash command; no kimi plugin CLI in 0.39.1",
+      "# /plugins install /path/to/bearing-lite",
+      "",
+      "# AGY (Antigravity) — install the .agy root, not the repo root",
+      "agy plugin install /path/to/bearing-lite/.agy",
+      "",
+      "# Pi — skills package, no command hooks",
+      "pi install npm:@alphazede/bearing-lite",
+      "",
+      "# DeepCode — skills-only copy into ~/.deepcode/skills or ~/.agents/skills;",
+      "# DeepCode has no plugin-install or command-hook surface",
+      "",
+      "# Muse Code — skills validate/install; no plugin subsystem in 1.2.1",
+      "muse skills validate /path/to/bearing-lite/skills/<skill> --json",
+      "muse skills install /path/to/bearing-lite/skills/<skill> --scope user",
+      "",
+      "# GitHub Copilot in VS Code — Agent Plugins 1.0 plugin.json plus",
+      "# com.github.copilot/hooks/hooks.json; UI/workspace discovery; no CLI command",
+      "",
+      "# GitHub Copilot CLI — not verified on this host; do not advertise a command"
+    ],
+    "capability_sentence": "Claude Code, Codex, Grok Build, Cursor, Kimi Code, and GitHub Copilot in VS Code are partial hook clients: session start runs the activation advisory and stop runs the closeout advisory. AGY, Pi, DeepCode, and Muse Code are skills-only. GitHub Copilot CLI is unavailable in this validation environment. Transition-order and protected-action checks stay in the skills on every host. Node.js must be on PATH for the hook adapters."
+  },
+  "commands_run": [
+    "command -v / --version for claude, codex, grok-build, cursor, cursor-agent, kimi, agy, pi, muse, deepcode, gh, code",
+    "claude --help; claude plugin --help; claude plugin marketplace --help; claude plugin install --help; claude plugin validate --help; claude plugin marketplace add --help",
+    "claude plugin validate . --json",
+    "claude plugin validate .claude-plugin --json",
+    "claude plugin validate .claude-plugin/marketplace.json --json",
+    "claude plugin validate .claude-plugin/marketplace.json --strict --json",
+    "claude plugin validate .claude-plugin/plugin.json --json",
+    "claude plugin validate .claude-plugin/plugin.json --strict --json",
+    "codex --help; codex plugin --help; codex plugin add --help; codex plugin marketplace --help; codex plugin marketplace add --help",
+    "grok-build --help; grok-build plugin --help; grok-build plugin install --help; grok-build plugin marketplace --help; grok-build plugin marketplace add --help; grok-build plugin validate --help",
+    "grok-build plugin validate .",
+    "cursor --help; cursor-agent --help; cursor-agent plugin --help; cursor-agent plugin marketplace --help; cursor-agent plugin marketplace add --help",
+    "kimi --help; kimi plugin --help; kimi plugins --help",
+    "agy --help; agy plugin --help; agy plugin install --help; agy plugin validate .agy; agy plugin validate",
+    "pi --help; pi install --help",
+    "muse --help; muse skills --help; muse skills validate --help; muse skills install --help; muse skills import --help; muse plugin --help",
+    "for skill in skills/*/SKILL.md; do muse skills validate \"$(dirname \"$skill\")\" --json; done",
+    "deepcode --help; deepcode plugin --help",
+    "code --help; code --list-extensions --show-versions (filtered)",
+    "gh --help; gh copilot --help",
+    "git rev-parse HEAD; git status --short; git branch --show-current"
+  ],
+  "commands_not_run_and_why": [
+    "Any plugin marketplace add / install / enable / disable / uninstall / update: would mutate user plugin state.",
+    "pi install: help says it adds the package to settings.",
+    "muse skills install / import: would mutate user skills.",
+    "code --install-extension: would mutate VS Code extensions.",
+    "npm install -g @github/copilot or other Copilot CLI installers: host installation is prohibited.",
+    "kimi doctor: would read user configuration files.",
+    "login, auth, credential, or config dump commands."
+  ],
+  "tests": [
+    {
+      "id": "CMD-BDL-DIFF",
+      "command": "git diff --check",
+      "purpose": "Reject malformed patches and whitespace errors.",
+      "write_set_command": "git diff --check -- docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/host-compatibility/phase3-host-validation.json",
+      "write_set_exit_code": 0,
+      "full_repo_exit_code": 0,
+      "json_parse": "PASS",
+      "result": "PASS"
+    }
+  ],
+  "remaining_risks": [
+    "Native VS Code/Copilot Chat and Copilot CLI sessions were not launched; Copilot VS Code is layout-and-docs evidence only.",
+    "Cursor local checkout install is UI/layout evidence; CLI marketplace add cannot take a local path.",
+    "Kimi slash-command install was not executed in a TUI.",
+    "Grok advertised command uses grok; this host's PATH name is grok-build.",
+    "agy plugin validate of the repo root reports OK skills but is not an install recommendation; install the .agy root.",
+    "S9A/S9B in-progress product files were not treated as the stable candidate.",
+    "Official Muse docs mention plugin-bundled skills; installed 1.2.1 has no plugin command."
+  ],
+  "blocker": null,
+  "stop_condition_check": {
+    "all_advertised_and_required_clients_have_dispositions": true,
+    "authority_insufficient": false,
+    "command_required_installation_login_credentials_or_user_configuration": false,
+    "official_and_installed_behavior_conflict_materially": false,
+    "conflicts_recorded_as_limitations_not_blockers": [
+      "grok usage string vs local grok-build PATH name",
+      "kimi-cli docs kimi plugin install vs installed kimi-code slash command",
+      "Muse official plugin skill source vs installed build with no muse plugin command"
+    ],
+    "required_evidence_cannot_be_produced": false,
+    "owner_decision_required": false
+  },
+  "changed_paths": [
+    "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/host-compatibility/phase3-host-validation.json"
+  ]
+}

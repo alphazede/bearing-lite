@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/alphazede/bearing-lite/schemas/verification.schema.json",
+  "title": "Bearing Lite deterministic verification request and receipt",
+  "description": "DES-BDL-008 / AC-BDL-009. A request binds candidate, claim, backend, stage, authority, expected result, and command/configuration. A receipt binds the same candidate, claim, backend, version, command/configuration, and evidence digest. Schema validates structure only; hooks/verification.cjs enforces diagnostic-versus-assurance, independence, and gate eligibility. Extra lifecycle metadata is not allowed.",
+  "oneOf": [
+    { "$ref": "#/$defs/request" },
+    { "$ref": "#/$defs/receipt" }
+  ],
+  "$defs": {
+    "nonempty": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "authority": {
+      "type": "string",
+      "enum": ["diagnostic", "assurance"]
+    },
+    "stage": {
+      "type": "string",
+      "enum": [
+        "implementation",
+        "integration",
+        "assurance",
+        "review",
+        "post_repair_closure"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["VERIFIED", "REFUTED", "INCONCLUSIVE", "ERROR"]
+    },
+    "expected_result": {
+      "type": "string",
+      "enum": ["VERIFIED", "REFUTED"]
+    },
+    "command_configuration": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": true
+    },
+    "produced_by": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "identity", "session"],
+      "properties": {
+        "role": { "$ref": "#/$defs/nonempty" },
+        "identity": { "$ref": "#/$defs/nonempty" },
+        "session": { "$ref": "#/$defs/nonempty" }
+      }
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "kind",
+        "candidate_ref",
+        "candidate_revision",
+        "claim_id",
+        "claim_type",
+        "backend",
+        "stage",
+        "authority",
+        "expected_result",
+        "command_configuration",
+        "selected",
+        "required"
+      ],
+      "properties": {
+        "schema_version": { "type": "string", "const": "1" },
+        "kind": { "type": "string", "const": "request" },
+        "candidate_ref": { "$ref": "#/$defs/nonempty" },
+        "candidate_revision": { "$ref": "#/$defs/nonempty" },
+        "candidate_digest": { "$ref": "#/$defs/sha256" },
+        "claim_id": { "$ref": "#/$defs/nonempty" },
+        "claim_type": { "$ref": "#/$defs/nonempty" },
+        "backend": { "$ref": "#/$defs/nonempty" },
+        "stage": { "$ref": "#/$defs/stage" },
+        "authority": { "$ref": "#/$defs/authority" },
+        "expected_result": { "$ref": "#/$defs/expected_result" },
+        "command_configuration": { "$ref": "#/$defs/command_configuration" },
+        "selected": { "type": "boolean" },
+        "required": { "type": "boolean" }
+      }
+    },
+    "receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "kind",
+        "status",
+        "candidate_ref",
+        "candidate_revision",
+        "claim_id",
+        "backend",
+        "backend_version",
+        "command_configuration",
+        "evidence_digest",
+        "authority",
+        "produced_by"
+      ],
+      "properties": {
+        "schema_version": { "type": "string", "const": "1" },
+        "kind": { "type": "string", "const": "receipt" },
+        "status": { "$ref": "#/$defs/status" },
+        "candidate_ref": { "$ref": "#/$defs/nonempty" },
+        "candidate_revision": { "$ref": "#/$defs/nonempty" },
+        "candidate_digest": { "$ref": "#/$defs/sha256" },
+        "claim_id": { "$ref": "#/$defs/nonempty" },
+        "backend": { "$ref": "#/$defs/nonempty" },
+        "backend_version": { "$ref": "#/$defs/nonempty" },
+        "command_configuration": { "$ref": "#/$defs/command_configuration" },
+        "evidence_digest": { "$ref": "#/$defs/sha256" },
+        "authority": { "$ref": "#/$defs/authority" },
+        "produced_by": { "$ref": "#/$defs/produced_by" },
+        "stage": { "$ref": "#/$defs/stage" }
+      }
+    }
+  }
+}

@@ -3,20 +3,85 @@
 [![npm](https://img.shields.io/npm/v/@alphazede/bearing-lite)](https://www.npmjs.com/package/@alphazede/bearing-lite)
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE-APACHE)
 
-**Bearing Lite** (`@alphazede/bearing-lite`) is a skills-first Agent Plugin for
-planning, routing, bounded execution, and independent review of repository work.
-It ships portable skills, references, templates, and optional client hooks.
+**Bearing Lite** (`@alphazede/bearing-lite`) is a skills-first [Agent
+Plugins](https://agent-plugins.org/schemas/1.0.0/plugin.schema.json) package
+that gives AI-assisted repository work a structured delivery lifecycle from
+an owner-approved plan to an independently assessed result. It improves
+repeatability and reduces hallucination risk through bounded
+implementation, deterministic checks, verification, validation, independent
+assurance, and traceable evidence. Planning artifacts and the Definition of
+Done Manifest compare what AI was authorized to touch with actual changes,
+supporting evidence, and unresolved gaps. It ships portable skills,
+references, templates, and optional client adapters. An agent cannot certify
+its own work. Owner Authority remains human-only. Bearing Lite was created
+by William Rumph.
 
-An agent cannot certify its own work. The stateful Router owns the planning
-conversation, visible Journey state, and Expedition sequencing. Crewmate and
-Explorer may continue in-wave when the envelope is unchanged. Independent
-assurance runs once at the end on the final integrated candidate. One repair
-may follow; it is verified deterministically without another review. Owner
-Authority remains human-only.
+## Situation
 
-Bearing Lite was created by William Rumph.
+Teams now ask coding agents to change real repositories. The work needs a
+visible plan, exact write sets, deterministic checks, and independent
+assessment before anyone treats the result as done.
 
-## Quick start with Pi
+## Complication
+
+Unbounded agent sessions invent architecture, skip owner decisions, mix
+implementation with self-review, and leave no comparable record of what was
+authorized versus what changed.
+
+## Question
+
+How can AI-assisted repository work follow one input-to-evidence path that
+stays reviewable, portable, and bounded without pinning a provider?
+
+## Answer
+
+Use the Bearing Delivery Lifecycle: Intake → Architectural Alignment → Scope Definition → Planning and Design, then owner authorization, bounded
+implementation, Test Engineer assurance, Reviewer defect review, and
+Integration Engineer execution assessment. Persistent configuration is
+`~/.agents/bearing-lite/profiles.json` only. The Definition of Done Manifest
+is the human-readable projection of planned versus actual work; it never
+grants execution, acceptance, release, or deployment authority.
+
+Focused pages:
+
+- Explanation: [lifecycle guide](docs/guides/lifecycle.md)
+- Reference: [roles and sessions](docs/guides/roles.md),
+  [lifecycle specification](docs/architecture/bearing-delivery-lifecycle.md)
+- Troubleshooting: [wait, resume, and configuration](docs/guides/troubleshooting.md)
+- Process diagrams:
+  [lifecycle context](docs/architecture/bearing-process/lifecycle-context.svg),
+  [planning and implementation](docs/architecture/bearing-process/lifecycle-process-views.svg)
+
+If Bearing Lite helps keep a long agent task scoped and reviewable,
+[star the repository](https://github.com/alphazede/bearing-lite).
+
+## Onboarding
+
+1. Install the plugin or copy `skills/` into a host skills directory.
+2. Run **onboard-bearing**. It asks one setting at a time, never selects or
+   writes a value without an explicit instruction, and preserves every
+   unaddressed existing value.
+3. Configure named role and session routes, fallbacks, development strategy
+   (`single_implementer` or `tdd`), planning review, assurance cadence,
+   concurrency, the planning-to-implementation clean-session boolean, holds,
+   and optional Reverify. No value is preselected.
+4. If you decline Reverify or decline its download, onboard-bearing persists
+   `reverify.enabled: false` for that named profile and does not ask again
+   during ordinary Lifecycles.
+5. A leftover `~/.agents/bearing-lite/lineups.json` is not live configuration.
+   Runtime returns `MIGRATION_REQUIRED` until onboard-bearing migrates it.
+
+The only persistent Bearing user configuration is
+`~/.agents/bearing-lite/profiles.json`. Runtime never searches, merges,
+prefers, or falls back to `lineups.json`.
+
+Some agent harnesses may stall after delegated work completes. Before
+restarting the task, check whether the assigned agent is still active and
+avoid duplicate dispatch. Wait/status reliability varies by host and route;
+use a host-native status check when one exists. Missing expensive models or
+wrappers do not make a route ineligible.
+
+## Quick start
 
 Install the published skills package:
 
@@ -27,25 +92,27 @@ pi install npm:@alphazede/bearing-lite
 Then give your agent a real task:
 
 > Use Bearing Lite to add rate limiting to this API without changing its public
-> responses. Require one independent review at the end.
+> responses. Require independent assurance at the configured cadence.
 
-Bearing Lite fills missing planning stages, then Map the Route creates the
-complete five-artifact package (`<journey-topic>-technical-plan.md`,
-`design.md`, `seit.json`, `implementation.json`, and two-state `review.html`)
-with proposed route, lineup, role states, reasoning, and at-end cadence. One
-integrated owner review approves or changes that package before bounded
-sessions dispatch, with visible Markdown task state over those JSON
-authorities.
-
-If Bearing Lite helps keep a long agent task scoped and reviewable,
-[star the repository](https://github.com/alphazede/bearing-lite). It helps other
-coding-agent users find it.
+Bearing Lite fills missing planning stages, then Planning and Design creates
+the complete five-artifact package (`<lifecycle-topic>-technical-plan.md`,
+`design.md`, `seit.json`, `implementation.json`, and
+`<plan-name>-dod-manifest.html`) with proposed route, profile, role states,
+reasoning, and cadence. One integrated owner review approves or changes that
+package before bounded sessions dispatch, with visible Markdown task state
+over those JSON authorities.
 
 ## Install
 
 Install as a host plugin. The portable identity is always `bearing-lite` /
 `@alphazede/bearing-lite`. No postinstall script, global hook copy, or
-host-config mutation is required.
+host-config mutation is required. Host-specific plugin manifests and
+discovery remain host contracts; this README does not replace them.
+
+### Plugin with hooks
+
+Claude Code, Codex, and Grok Build install from a local checkout and load
+session-start activation and stop closeout hooks.
 
 ```sh
 # Claude Code
@@ -59,37 +126,69 @@ codex plugin add bearing-lite@bearing-lite
 # Grok Build
 grok plugin marketplace add /path/to/bearing-lite
 grok plugin install bearing-lite --trust
+```
 
-# Cursor
-# Add the checkout as a Cursor marketplace/plugin (.cursor-plugin/)
+### UI or TUI plugin installation
 
-# Kimi Code
-# /plugins install /path/to/bearing-lite
+These hosts install through their own UI or TUI. They are still plugin
+clients, not a skills-only copy.
 
+**Cursor.** Open Customize in the sidebar, find the plugin, and select
+Install for a project or user scope. The shipped layout is
+`.cursor-plugin/`. Cursor has no verified local-path plugin-install CLI.
+
+**Kimi Code.** In the TUI, run `/plugins install /path/to/bearing-lite`.
+Kimi Code has no `kimi plugin` CLI.
+
+**GitHub Copilot in VS Code.** Run **Chat: Install Plugin From Source** from
+the Command Palette and enter a Git repository URL such as
+`https://github.com/alphazede/bearing-lite`. See [Agent plugins in VS
+Code](https://code.visualstudio.com/docs/agent-customization/agent-plugins).
+The package is Agent Plugins 1.0 `plugin.json` plus
+`com.github.copilot/hooks/hooks.json`. There is no verified VS Code CLI
+plugin-install command for Bearing.
+
+**GitHub Copilot CLI** was not available in the validation environment. This
+README does not advertise a Copilot CLI install command.
+
+### Skills-only installation
+
+AGY, Pi, DeepCode, and Muse Code load skills without command hooks.
+
+```sh
 # AGY (Antigravity) — install the .agy root, not the repo root
 agy plugin install /path/to/bearing-lite/.agy
 
-# Pi — skills package, no command hooks
+# Pi — published skills package
 pi install npm:@alphazede/bearing-lite
 
-# DeepCode — discover the packaged skills through ~/.deepcode/skills or ~/.agents/skills;
-# DeepCode has no plugin-install or command-hook surface
+# Muse Code — no plugin subsystem; install each skill
+for skill in /path/to/bearing-lite/skills/*/SKILL.md; do
+  muse skills install "$(dirname "$skill")" --scope user
+done
 ```
 
-Claude Code, Codex, Grok Build, Cursor, and Kimi Code are **partial** hook
-clients: session start runs the activation advisory and stop runs the closeout
-advisory. AGY, Pi, and DeepCode are **skills-only**. Transition-order and
-protected-action checks stay in the skills on every host. Node.js must be on
-`PATH` for the hook adapters.
+**DeepCode** has no plugin-install or command-hook surface. Copy `skills/`
+into `~/.deepcode/skills` or `~/.agents/skills`.
+
+Claude Code, Codex, Grok Build, Cursor, Kimi Code, and GitHub Copilot in VS
+Code are **partial** hook clients: session start runs the activation
+advisory and stop runs the closeout advisory. GitHub Copilot in VS Code also
+has the implemented Test Engineering channels `PreToolUse`, `Stop`, and
+`SubagentStop`. AGY, Pi, DeepCode, and Muse Code are **skills-only**.
+Transition-order, protected-action, planning-review, and assurance-budget
+checks stay procedural on every host. Node.js must be on `PATH` for the hook
+adapters.
 
 Planning-review constraints live only in
 [`skills/bearing-lite/references/review-policy.md`](skills/bearing-lite/references/review-policy.md);
-the shared evaluator is `hooks/planning-review.cjs`. Journey-specific abstract
-slot IDs and owner-selected primary/ordered fallback route references belong
-only in the approved `lineup_snapshot`. Existing host mappings cannot safely
-derive the nested record from session events, so they preserve partial or
-skills-only coverage and apply this gate procedurally. Planning review is a
-pre-dispatch plan gate; implementation `max_assurance_rounds` remains separate.
+the shared evaluator is `hooks/planning-review.cjs`. Lifecycle-specific
+abstract slot IDs and owner-selected primary/ordered fallback route
+references belong only in the approved profile snapshot. Existing host
+mappings cannot safely derive the nested record from session events, so they
+preserve partial or skills-only coverage and apply this gate procedurally.
+Planning review is a pre-dispatch plan gate; implementation
+`max_assurance_rounds` remains separate.
 
 **Skills-only copy** of `skills/` into a host skills directory does not
 register hooks. That path remains first-class. See
@@ -97,104 +196,95 @@ register hooks. That path remains first-class. See
 
 ## What it does
 
-1. **Fill only missing planning stages:** Repository Fit → Set Bearings → Gather
-   Supplies.
-2. **Invoke Map the Route** after material intent is settled. It creates
-   technical-plan, `design.md`, `seit.json`, `implementation.json`, and
-   two-state `review.html` together.
+1. **Fill only missing planning stages:** Intake → Architectural Alignment →
+   Scope Definition.
+2. **Invoke Planning and Design** after material intent is settled. It creates
+   technical-plan, `design.md`, `seit.json`, `implementation.json`, and the
+   Definition of Done Manifest together.
 3. **Review once:** approve or change the proposed route, user-owned
-   primary/fallback lineup, role states, reasoning, at-end cadence, and plan.
-4. **Dispatch bounded sessions** with compact receipts. Crewmate and Explorer may
-   continue in-wave; assurance always starts fresh at the end.
+   primary/fallback profile, role states, reasoning, cadence, and plan.
+4. **Dispatch bounded sessions** with compact receipts. Implementer and
+   Coordinator may continue in-wave; declared assurance starts fresh at the
+   configured cadence boundary.
 5. **Record state visibly.** The project's human-readable Markdown plan is the
    only task-state record: task blocks, task states, and their transitions. The
-   Journey, execution, V&V, and authority records are machine-readable JSON
-   validated against `schemas/`: `journey.json` (Journey identity, checkout
-   lease, decisions, planning receipts, lineup selection), `seit.json` (V&V
+   Lifecycle, execution, V&V, and authority records are machine-readable JSON
+   validated against `schemas/`: `journey.json` (Lifecycle identity, checkout
+   lease, decisions, planning receipts, profile selection), `seit.json` (V&V
    proof rows), `implementation.json` (nested execution authority, waves,
-   slices, dispatch), and `authority.json` (authority envelope). `review.html`
-   and diagrams present state; like diagrams, they never authorize a
-   transition, create state, or grant authority.
+   slices, dispatch), and `authority.json` (authority envelope). The Definition
+   of Done Manifest and diagrams present state; like diagrams, they never
+   authorize a transition, create state, or grant authority.
 
 Bearing Lite never selects models, providers, credentials, or launchers. The
 owner provides each role's primary/fallback agent or harness, model, and
-reasoning level in `~/.agents/bearing-lite/lineups.json`, then confirms
-the applicable Journey snapshot before implementation.
+reasoning level in `~/.agents/bearing-lite/profiles.json`, then confirms
+the applicable Lifecycle snapshot before implementation.
 
-## Routes and scaling
+## Roles and cadence
 
-| Route | When | Cost |
-|---|---|---|
-| **Explorer Journey** | One bounded packet or one wave | Direct Crewmate or one Explorer |
-| **Expedition** | Multi-phase or concurrent independent lanes | Router sequences; Explorer owns waves |
-
-An **Explorer Journey** uses a direct Crewmate for one ready packet or one
-Explorer over a compact/sequential wave.
-**Expedition** lets the Router sequence waves so independent lanes
-stay small and sharp instead of degrading in one long context. Either shape can
-use substantial tokens; the product does not impose a default budget ceiling.
-
-### Role routing (explanatory)
+Owner questions follow [the owner-stop policy](skills/bearing-lite/references/owner-stops.md).
+The integrated approval records bounded continuation with exclusions and expiry.
 
 Current routing diagram source: [`skills/bearing-lite/references/role-routing.mmd`](skills/bearing-lite/references/role-routing.mmd).
 The text below remains authoritative for clients that do not render Mermaid.
 
-**Authoritative text (vision optional):** Owner Authority remains human-only. The
-Bearing Lite Router is the stateful planning controller, not a work role. It
-invokes only missing planning stages, has Map the Route generate all five
-artifacts with proposed lineup and `review_cadence: at-end`, then presents one
-integrated owner review before dispatching an Explorer Journey or Expedition. Explorer
-coordinates proven-independent in-wave lanes without a nested coordinator.
-Assurance Test Engineer, Park Ranger, and Surveyor appear only when declared
-and only at the end on the final integrated candidate. Diagrams
+**Authoritative text (vision optional):** Owner Authority remains human-only.
+The Bearing Lite Orchestrator is the stateful planning controller, not a work
+role. It invokes only missing planning stages, has Planning and Design
+generate all five artifacts with proposed profile and cadence, then presents
+one integrated owner review before dispatching bounded implementation.
+Coordinator owns proven-independent in-wave lanes without a nested
+coordinator. Assurance Test Engineer, Reviewer, and Integration Engineer
+execution appear when declared at the configured cadence boundary. Diagrams
 explain orientation; they never authorize a transition.
 
-## Roles and authority
+| Role | Sessions | Primary work |
+|---|---|---|
+| **Orchestrator** | planning control | User-facing; planning-state writer; wave sequencing. Observed, not selected. |
+| **Intake** | planning | Confirms repository and plan directory |
+| **Architectural Alignment** | planning | Workspace map and architecture extract |
+| **Scope Definition** | planning | One owner question at a time |
+| **Planning and Design** | planning | Five-artifact package |
+| **Requirements Engineer** | planning | Quality gate when a register applies |
+| **Systems Modeler** | planning | After requirements; before design finalization |
+| **Plan Integrator** | planning | Mechanical assembly; no new judgment |
+| **Coordinator** | implementation | One-wave controller; proven-independent lanes |
+| **Implementer** | implementation | Split Test Implementer / Product Implementer; neither self-certifies |
+| **Light Implementer** | implementation | `work_class: light` slices only |
+| **Scribe** | planning and implementation | Transcribes; cannot activate authority |
+| **Test Engineer** | planning and assurance sessions | Planning Test Engineer authors V&V; Assurance Test Engineer assesses the candidate. Default assurance cadence: `phase` |
+| **Reviewer** | implementation review | Independent defect review. Default cadence: `phase` |
+| **Integration Engineer** | planning and execution sessions | Planning owns assembly strategy; execution owns final system-level validation. Default execution cadence: `lifecycle` |
+| **Owner Authority** | human decision | Never an agent role |
+| **onboard-bearing** | configuration | One-setting-at-a-time profile writes; no credentials |
 
-Owner questions follow [the owner-stop policy](skills/bearing-lite/references/owner-stops.md).
-The integrated approval records bounded continuation with exclusions and expiry.
-The Router applies approved policy and fallbacks, batches nonblocking questions,
-and continues ready independent work while dependent work waits. Approval shows
-the first-package summary or subsequent changes with the complete package available.
-Local receipt metrics distinguish questions, round trips, response intervals and
-fully blocked time; no telemetry leaves the checkout. The transition preflight
-and scheduling remain procedural, including on skills-only hosts. A legacy
-Journey without explicit timing coverage reports unavailable, not zero wait.
+Cadence values are `slice`, `phase`, or `lifecycle`. Defaults are `phase` for
+Test Engineer assurance, `phase` for Reviewer, and `lifecycle` for Integration
+Engineer execution. A declared boundary runs each enabled session once, allows
+one aggregated repair, then uses deterministic closure without automatic
+rereview.
 
-| Role | What it is | Executes | Notes |
-|---|---|---|---|
-| **Router** | Stateful planning controller | no | User-facing; planning-state writer; Expedition sequencing |
-| **Navigator** | Compatibility diagnostic | no | Not a normal role; existing plans reroute to Router |
-| **Explorer** | One-wave controller | no | Dispatches Crewmates; owns proven-independent lanes |
-| **Crewmate** | Bounded implementer | yes | Split test-writing versus product; neither self-certifies |
-| **Light Implementer** | Mechanical implementer | yes | `work_class: light` slices only; verified by the packet's command; no repair loop |
-| **Scribe** | Event side lane | no | Transcribes; cannot activate authority |
-| **Plan Integrator** | Artifact reconciliation | no | Generates `implementation.json` and `review.html` |
-| **Systems Modeler** | Engineering views | no | After requirements; before design finalization |
-| **Integration Engineer** | Progressive assembly | no | Dual planning and execution sessions |
-| **Test Engineer** | Planning and Assurance V&V | no | Retires Validator; Validator is not an active role |
-| **Park Ranger** | Defect review | no | Consumes Assurance Test Engineer; no routine TE |
-| **Surveyor** | User-facing acceptance | no | Read-only RE, SysML Modeling, and TE |
-| **Owner Authority** | Human decision | n/a | Never an agent role |
+`single_implementer` is the speed default: one Implementer writes product
+changes plus tests. `tdd` orders Test Implementer before Product Implementer
+for a behavior-changing slice. Independent dependency-ready slices may run
+concurrently when write sets and mutable resources do not overlap.
 
 **Independent review:** a candidate author never provides their own Assurance
-Test Engineer, Park Ranger, or Surveyor verdict.
+Test Engineer, Reviewer, or Integration Engineer execution verdict.
 
 Public Bearing Lite remains usable without AlphaZede-specific skills
 (`requirements-engineering`, `sysml-modeling`, `test-engineering`,
 `integration-engineering`). Specialized capabilities activate when selected
-or required. Unavailability of a selected-or-required capability is a typed capability gap,
-not success and not invented behavior. Selected-only missing and required-only
-missing are each typed gaps. Only unselected and unrequired absence remains
-inactive / not a global failure.
+or required. Unavailability of a selected-or-required capability is a typed capability gap, not success and not invented behavior. Selected-only missing and required-only missing are each typed gaps. Only unselected and unrequired absence remains inactive / not a global failure.
 
 Failure escalates to the nearest role whose scope can see it:
 
 | Failure scope | Escalates to |
 |---|---|
-| Within one slice or packet | Explorer or nearest parent |
-| Across slices in a wave | Explorer |
-| Across waves or phases | Router |
+| Within one slice or packet | Coordinator or nearest parent |
+| Across slices in a wave | Coordinator |
+| Across waves or phases | Orchestrator |
 | Contract, security, or authority change | Owner Authority |
 
 ## Task state (explanatory)
@@ -212,19 +302,21 @@ Ordinary execution corrections remain bounded. The assurance gate allows one
 review-directed repair, followed by deterministic coordinator verification and
 no second review. Diagrams never create state or authorize transitions.
 
-`hooks/reconcile.cjs` deterministically applies evidence events to Journey state.
-It is a short-lived Router-run invocation, not a daemon or host event adapter;
-hosts emit no events today, so invocation remains a procedural limitation.
-It observes merge and issue closure but never grants acceptance, merges, or closes issues.
+`hooks/reconcile.cjs` deterministically applies evidence events to Lifecycle
+state. It is a short-lived Orchestrator-run invocation, not a daemon or host
+event adapter; hosts emit no events today, so invocation remains a procedural
+limitation. It observes merge and issue closure but never grants acceptance,
+merges, or closes issues.
 
 ## Implementation process (explanatory)
 
 Default packet completion is author self-check plus coordinator confirmation.
-Declared independent assurance runs once at the end. A repairable
-verdict permits one repair; deterministic coordinator verification then closes
-the gate without another review. Once the Journey is `COMPLETE`, an already
-authorized deployment proceeds with operational checks and rollback readiness,
-not a new assurance round. Source-changing deployment work is separate work.
+Declared independent assurance runs at the configured cadence boundary. A
+repairable verdict permits one repair; deterministic coordinator verification
+then closes the gate without another review. Once the Lifecycle is `COMPLETE`,
+an already authorized deployment proceeds with operational checks and rollback
+readiness, not a new assurance round. Source-changing deployment work is
+separate work.
 
 ```mermaid
 flowchart LR
@@ -241,11 +333,11 @@ flowchart LR
 
 | Path | Purpose |
 |---|---|
-| `plugin.json` | Agent Plugins v1.0.0 manifest |
-| `skills/` | Router, planning stages, and role skills |
-| `hooks/` | Four portable class adapters plus the verified Claude Code / Codex mapping |
-| `lineups.json` | Empty shipped catalog; no packaged providers, models, or defaults |
-| `schemas/` | JSON Schema for `seit.json`, `implementation.json`, `authority.json`, and `journey.json` |
+| `plugin.json` | Agent Plugins 1.0 manifest ([schema](https://agent-plugins.org/schemas/1.0.0/plugin.schema.json)) |
+| `skills/` | Orchestrator, planning stages, and role skills |
+| `hooks/` | Portable class adapters plus verified host mappings |
+| `profiles.json` | Empty shipped catalog; no packaged providers, models, or defaults |
+| `schemas/` | JSON Schema for `seit.json`, `implementation.json`, `authority.json`, `journey.json`, and `profiles.json` |
 | `README.md` and governance docs | Public product and conduct surfaces |
 
 There is no `mcp.json`, `bin` entrypoint, postinstall, or runtime dependency on
@@ -261,7 +353,8 @@ default route, or launcher. Owners and clients choose how to satisfy each role.
 
 Issues and carefully scoped pull requests help. See
 [CONTRIBUTING.md](CONTRIBUTING.md). Everyone is covered by the
-[Code of Conduct](CODE_OF_CONDUCT.md).
+[Code of Conduct](CODE_OF_CONDUCT.md). Release notes and acknowledgements are
+in [docs/releases/](docs/releases/announcement.md).
 
 ## Security
 

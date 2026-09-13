@@ -5,9 +5,11 @@
  * The per-declared-phase-or-wave assurance budget (S70 test-first for S71).
  *
  * Budget identity is `journey + unit_kind + unit_id`, where the unit id is
- * resolved from the FROZEN DECLARATION (waves[].id, else phases[].phaseId,
- * else the `direct` sentinel). Candidate revision, lease generation, assigned
- * role, session, model, harness, and slice id are never key components.
+ * resolved from the FROZEN DECLARATION by cadence unit kind: slices[].id for
+ * slice, waves[].id else phases[].phaseId for phase or wave,
+ * journey_settings.lifecycle_id for lifecycle, else the `direct` sentinel.
+ * Candidate revision, lease generation, assigned role, session, model,
+ * harness, and a non-unit slice_id field are never key components.
  *
  * PROC-CADENCE-UNIT-BUDGET: every case except the T-LITE-01R document mirror
  * drives the real shared path — `hooks/transition-order.cjs` `evaluate()` with
@@ -157,7 +159,9 @@ describe("CMD-LITE-CADENCE-NODE-TEST per-declared-unit assurance budget", () => 
     const documented = JSON.parse(document.match(/```json\n([\s\S]*?)\n```/)[1]);
     const { POLICY } = budgetHook();
     assert.deepEqual(POLICY, documented);
-    assert.equal(POLICY.budget_scope, "per_declared_phase_or_wave");
+    assert.equal(POLICY.budget_scope, "per_declared_cadence_unit");
+    assert.equal(POLICY.automatic_per_slice_review, "cadence_gated");
+    assert.equal(POLICY.default_cadence.reviewer, "phase");
     assert.equal(POLICY.review_rounds, 1);
     assert.equal(POLICY.aggregated_repairs_max, 1);
   });
@@ -340,6 +344,87 @@ describe("CMD-LITE-CADENCE-NODE-TEST per-declared-unit assurance budget", () => 
       budgetHook().evaluateAssuranceBudget(request(fx)).outcome,
       "NEEDS_MORE_EVIDENCE"
     );
+  });
+
+  it("S7-002: declared slice and lifecycle cadence units resolve and retain spent budgets", () => {
+    const declaration = {
+      journey_settings: {
+        lifecycle_id: "L1",
+        assurance_cadence: { reviewer: "slice" },
+      },
+      waves: [{ id: "P1" }],
+      slices: [{ id: "S1" }, { id: "S2" }],
+    };
+    const open = fixture(declaration, []);
+    const sliceReq = {
+      journey: "L1",
+      unit_kind: "slice",
+      request_scope: "slice",
+      cadence: "slice",
+      assurance_unit: "S1",
+      declaration_path: open.declaration_path,
+      task_record_path: open.task_record_path,
+    };
+    writeFileSync(open.task_record_path, JSON.stringify({ journey: "L1", units: [] }, null, 2));
+    const sliceOpen = viaTransition(sliceReq);
+    assert.equal(sliceOpen.outcome, "ADVISE");
+    assert.match(String(sliceOpen.reason), /assurance_budget:PASS/);
+
+    const phaseOpen = viaTransition({
+      ...sliceReq,
+      unit_kind: "phase",
+      request_scope: "phase",
+      cadence: "phase",
+      assurance_unit: "P1",
+    });
+    assert.equal(phaseOpen.outcome, "ADVISE");
+    assert.match(String(phaseOpen.reason), /assurance_budget:PASS/);
+
+    const lifeOpen = viaTransition({
+      ...sliceReq,
+      unit_kind: "lifecycle",
+      request_scope: "lifecycle",
+      cadence: "lifecycle",
+      assurance_unit: "L1",
+    });
+    assert.equal(lifeOpen.outcome, "ADVISE");
+    assert.match(String(lifeOpen.reason), /assurance_budget:PASS/);
+
+    const spentSlice = fixture(declaration, [
+      { unit_kind: "slice", assurance_unit: "S1", assurance_rounds: 1, assurance_repairs: 0 },
+    ]);
+    writeFileSync(spentSlice.task_record_path, JSON.stringify({
+      journey: "L1",
+      units: [{ unit_kind: "slice", assurance_unit: "S1", assurance_rounds: 1, assurance_repairs: 0 }],
+    }, null, 2));
+    const sliceSpent = viaTransition({
+      journey: "L1",
+      unit_kind: "slice",
+      request_scope: "slice",
+      cadence: "slice",
+      assurance_unit: "S1",
+      declaration_path: spentSlice.declaration_path,
+      task_record_path: spentSlice.task_record_path,
+    });
+    assert.equal(sliceSpent.outcome, "BLOCK");
+    assert.match(String(sliceSpent.reason), /assurance_budget:HALT:assurance_round_limit/);
+
+    const spentLife = fixture(declaration, []);
+    writeFileSync(spentLife.task_record_path, JSON.stringify({
+      journey: "L1",
+      units: [{ unit_kind: "lifecycle", assurance_unit: "L1", assurance_rounds: 1, assurance_repairs: 0 }],
+    }, null, 2));
+    const lifeSpent = viaTransition({
+      journey: "L1",
+      unit_kind: "lifecycle",
+      request_scope: "lifecycle",
+      cadence: "lifecycle",
+      assurance_unit: "L1",
+      declaration_path: spentLife.declaration_path,
+      task_record_path: spentLife.task_record_path,
+    });
+    assert.equal(lifeSpent.outcome, "BLOCK");
+    assert.match(String(lifeSpent.reason), /assurance_budget:HALT:assurance_round_limit/);
   });
 
   it("W14-R6: invalid assurance counters fail closed", () => {

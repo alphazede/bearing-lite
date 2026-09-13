@@ -1,0 +1,361 @@
+{
+  "schema_version": "1",
+  "kind": "assurance_receipt",
+  "slice": "S6",
+  "role": "Test Engineer",
+  "session": "assurance",
+  "authority": "assurance",
+  "stage": "assurance",
+  "cadence_unit": "PHASE-3",
+  "declared_boundary": "PHASE-3 end",
+  "lifecycle_id": "BDL-2026-09-12",
+  "recorded_at": "2026-09-13T19:11:19Z",
+  "verdict": "NEEDS_MORE_EVIDENCE",
+  "independence": {
+    "fresh_session": true,
+    "native_session_id": "01a09c29-002d-7011-aaaf-e647e3f2c70e",
+    "route": "Grok Build / harness default",
+    "author_session_resumed": false,
+    "author_diagnostics_used_as_pass": false,
+    "prior_s6_s7_s8_used_as_independent_pass": false,
+    "memory_used_as_proof": false
+  },
+  "produced_by": {
+    "role": "Test Engineer / assurance",
+    "identity": "Grok Build / harness default",
+    "session": "01a09c29-002d-7011-aaaf-e647e3f2c70e"
+  },
+  "owner_authority": ["DEC-BDL-060", "DEC-BDL-074"],
+  "candidate_ref": "c613f327977758fabe1fb05e572715b83a64c6ba35cef2e6d1a30952d444268f",
+  "candidate_revision": "b5cec79f04f6f6ea506a2ad89bf937aab143d876",
+  "candidate_identity": {
+    "repository": "alphazede/bearing-lite",
+    "checkout": "/home/spectre/alphazede/Alphazedehq/bearing-lite",
+    "branch": "main",
+    "head": "b5cec79f04f6f6ea506a2ad89bf937aab143d876",
+    "baseline": "b5cec79f04f6f6ea506a2ad89bf937aab143d876",
+    "lease_generation": 1,
+    "lease_state": "active",
+    "uncommitted_product_candidate": true,
+    "product_tree_sha256_before": "c613f327977758fabe1fb05e572715b83a64c6ba35cef2e6d1a30952d444268f",
+    "product_tree_sha256": "c613f327977758fabe1fb05e572715b83a64c6ba35cef2e6d1a30952d444268f",
+    "product_tree_sha256_after": "c613f327977758fabe1fb05e572715b83a64c6ba35cef2e6d1a30952d444268f",
+    "product_path_count": 141,
+    "product_tree_algorithm": "sorted existing tracked plus nonignored untracked paths, excluding docs/plans/; path NUL decimal permissions(mode&511) NUL file bytes or symlink target NUL",
+    "phase3_implementation_receipt": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/implementation/phase3-implementation.json",
+    "phase3_implementation_receipt_sha256": "9efd0c80a1af91edb53855974c318ca1ee2a49cf42e6a59f0b3096201483545b",
+    "planning_candidate_digest_declared": "acaeda8cf479fa886b0f0fb4d3028ac781f538fe3a15100867c170a185c54ce6",
+    "observed_planning_file_sha256": {
+      "bearing-delivery-lifecycle-alignment-technical-plan.md": "f5c315e663c97aeacbdc325575cecffe1f17ac2f1ead0ad1a58c06a8eb2a23c7",
+      "design.md": "6649efaaf0e5d7f27892c55e1a66fab4139d36abd878bbbda87ca8e0db5fa2d4",
+      "seit.json": "e05270a4082771d599f2003d30ea60b3582739cdafb8f72b232792ad9263ccf1",
+      "implementation.json": "b6d8bf395cb4ff02c9255291f98b6ee18f46b82b8c5efd23459960b770aa8c13"
+    },
+    "manifest_sha256": "1c7b13933d1a15ce22a00a2e0036c3bc2515a811b8dd2c2cb85d4bbfae8372c1",
+    "manifest_template": "1.0.1",
+    "bran_status": "unavailable",
+    "bran_reason": "checkout has no native .bran/policy.yaml"
+  },
+  "evidence_hypothesis": {
+    "statement": "PHASE-3 product changes are covered by existing executable SEIT rows. Independently rerunning the S6 command set on candidate c613f327977758fabe1fb05e572715b83a64c6ba35cef2e6d1a30952d444268f will PASS every agent-executable applicable row and will not invalidate prior executable contracts. SEIT-BDL-012 remains a current-digest human demonstration and cannot PASS from the earlier owner observation.",
+    "phase3_mapping": [
+      {
+        "packet": "S9A",
+        "changed_behavior": "README opening without a literal BLUF label, Role table Primary work column, and evidence-backed install guidance",
+        "proof_rows": ["SEIT-BDL-001"],
+        "commands": ["CMD-BDL-DOCS", "CMD-BDL-TEST"]
+      },
+      {
+        "packet": "S9B",
+        "changed_behavior": "Copilot native PreToolUse, Stop, and SubagentStop Test Engineering channels and host-specific wire shapes",
+        "proof_rows": ["SEIT-BDL-005", "SEIT-BDL-004"],
+        "commands": ["CMD-BDL-PLUGIN", "CMD-BDL-TEST"]
+      },
+      {
+        "packet": "S9C",
+        "changed_behavior": "Restrictive self-contained Manifest CSP and template contract 1.0.1; regenerated Manifest bytes",
+        "proof_rows": ["SEIT-BDL-003", "SEIT-BDL-011", "SEIT-BDL-012"],
+        "commands": ["CMD-BDL-MANIFEST", "CMD-BDL-RENDER", "CMD-BDL-TEST", "CMD-BDL-VISUAL"]
+      },
+      {
+        "packet": "S9D",
+        "changed_behavior": "Planning-only host-compatibility receipt; no product-tree mutation. README install claims are covered by S9A tests rather than by repeating host installation.",
+        "proof_rows": ["SEIT-BDL-001"],
+        "commands": ["CMD-BDL-DOCS", "CMD-BDL-DIFF"],
+        "not_rerun": "Host installation and user-configuration commands were not repeated; they would mutate user configuration."
+      }
+    ],
+    "preservation": "Rows SEIT-BDL-002, SEIT-BDL-006, SEIT-BDL-007, SEIT-BDL-009, and SEIT-BDL-010 are preservation/package rows rerun because PHASE-3 is a declared assurance boundary and prior receipts bind a different product-tree digest.",
+    "out_of_session": "SEIT-BDL-008 remains Integration Engineer execution at lifecycle cadence and is not classified by this assurance session."
+  },
+  "changed_paths": [
+    "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/assurance/phase3-s6-assurance.json"
+  ],
+  "write_set_respected": true,
+  "product_paths_mutated_during_session": false,
+  "tests": [
+    {
+      "id": "CMD-BDL-TEST",
+      "command": "node --test test/*.test.mjs",
+      "exit_code": 0,
+      "passed": 416,
+      "failed": 0,
+      "total": 416,
+      "result": "PASS"
+    },
+    {
+      "id": "CMD-BDL-SCHEMA",
+      "command": "python3 -B import test/schema-validation.py without __main__/bootstrap; run_cases(); validate live journey.json, implementation.json, and seit.json with installed jsonschema Draft202012Validator",
+      "exit_code": 0,
+      "harness_passed": 256,
+      "harness_failed": 0,
+      "jsonschema_version": "4.25.1",
+      "live_artifacts": {
+        "journey.json": { "error_count": 0, "errors": [] },
+        "implementation.json": { "error_count": 0, "errors": [] },
+        "seit.json": { "error_count": 0, "errors": [] }
+      },
+      "result": "PASS",
+      "note": "Official SEIT command python3 test/schema-validation.py bootstraps an isolated pip install. This session reproduced run_cases() and live-artifact validation against the installed jsonschema 4.25.1 without bootstrap, matching the prior independent S6 method and avoiding temp-tree mutation."
+    },
+    {
+      "id": "CMD-BDL-S1",
+      "command": "node --test test/s1-contracts.test.mjs",
+      "exit_code": 0,
+      "passed": 10,
+      "failed": 0,
+      "result": "PASS"
+    },
+    {
+      "id": "CMD-BDL-MANIFEST",
+      "command": "node --test test/dod-manifest.test.mjs",
+      "exit_code": 0,
+      "passed": 17,
+      "failed": 0,
+      "result": "PASS"
+    },
+    {
+      "id": "CMD-BDL-RENDER",
+      "command": "node tools/render-dod-manifest.mjs docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/implementation.json --check",
+      "exit_code": 0,
+      "output": "RENDER_CHECK_PASS digest=sha256:1c7b13933d1a15ce22a00a2e0036c3bc2515a811b8dd2c2cb85d4bbfae8372c1 template=1.0.1",
+      "result": "PASS"
+    },
+    {
+      "id": "CMD-BDL-NO-EXPLORER",
+      "command": "test ! -e skills/explorer",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "id": "CMD-BDL-MUSE",
+      "command": "for skill in skills/*/SKILL.md; do muse skills validate \"$(dirname \"$skill\")\" --json; done",
+      "exit_code": 0,
+      "skills_validated": 17,
+      "all_valid_true": true,
+      "muse_version_observed": "Muse Code 1.2.1 (1.2.1-R2847.1)",
+      "seit_named_host": "Muse Code 1.1.1 (1.1.1-R2514.1)",
+      "prompt_skill_unknown_fields": ["okf_status", "tags", "title", "type"],
+      "prompt_skill_valid_true": true,
+      "result": "PASS"
+    },
+    {
+      "id": "CMD-BDL-PLUGIN",
+      "command": "node --test test/plugin-manifest.test.mjs test/package-boundary.test.mjs",
+      "exit_code": 0,
+      "passed": 18,
+      "failed": 0,
+      "result": "PASS"
+    },
+    {
+      "id": "CMD-BDL-DOCS",
+      "command": "node --test test/public-boundary.test.mjs test/skills-conformance.test.mjs",
+      "exit_code": 0,
+      "passed": 51,
+      "failed": 0,
+      "public_boundary_passed": 18,
+      "skills_conformance_passed": 33,
+      "result": "PASS"
+    },
+    {
+      "id": "CMD-BDL-PACK",
+      "command": "npm pack --dry-run --json",
+      "exit_code": 0,
+      "name": "@alphazede/bearing-lite",
+      "version": "0.2.2",
+      "entry_count": 68,
+      "includes": [
+        "profiles.json",
+        "schemas/profiles.schema.json",
+        "schemas/verification.schema.json",
+        "templates/dod-manifest-v1.html",
+        "tools/render-dod-manifest.mjs",
+        "com.github.copilot/hooks/hooks.json"
+      ],
+      "absent": [
+        "lineups.json",
+        "skills/explorer",
+        "skills/surveyor",
+        "docs/plans"
+      ],
+      "result": "PASS"
+    },
+    {
+      "id": "CMD-BDL-DIFF",
+      "command": "git diff --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "id": "CMD-BDL-VISUAL",
+      "command": "human procedure: open the rendered DoD Manifest at wide and narrow viewport widths",
+      "executable_by_agent": false,
+      "ran": false,
+      "result": "INCONCLUSIVE",
+      "reason_code": "visual_demonstration_unavailable",
+      "current_manifest_sha256": "1c7b13933d1a15ce22a00a2e0036c3bc2515a811b8dd2c2cb85d4bbfae8372c1",
+      "current_manifest_template": "1.0.1",
+      "prior_owner_observation": {
+        "path": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/assurance/seit-bdl-012-owner-observation.json",
+        "sha256": "a186c42dfe1e63b9ce4b2fb275e3728c9e413b6a1c9f99acb2e89a772873dae1",
+        "artifact_sha256": "6dc9242539f25ff1cf660b71680f21c976f865f0d48b98786497a5df44b2284b",
+        "authority": "DEC-BDL-073",
+        "binds_current_manifest": false
+      }
+    }
+  ],
+  "proof_rows": [
+    {
+      "id": "SEIT-BDL-001",
+      "command_id": "CMD-BDL-DOCS",
+      "method": "analysis and inspection",
+      "phase3_applicable": true,
+      "tests_enforce_approved_behavior": true,
+      "status": "PASS",
+      "evidence": "CMD-BDL-DOCS exit 0, 51/51 (public-boundary 18/18, skills-conformance 33/33). Public-boundary tests assert ordered Intake → Architectural Alignment → Scope Definition → Planning and Design, one Integration Engineer and one Test Engineer with named sessions, absence of deleted process HTML, resolved public links, no active retired terms, README opening without a literal BLUF label, Role | Sessions | Primary work table, and install guidance covering advertised clients without invented Copilot/Kimi plugin-install commands. Skills-conformance tests assert Lite roles, no Explorer/Surveyor/Validator as active roles, and phase/lifecycle cadence wording."
+    },
+    {
+      "id": "SEIT-BDL-002",
+      "command_id": "CMD-BDL-SCHEMA",
+      "method": "schema validation",
+      "phase3_applicable": true,
+      "tests_enforce_approved_behavior": true,
+      "status": "PASS",
+      "evidence": "run_cases() 256/256 using installed jsonschema 4.25.1 without bootstrap. Negative role/session fixtures reject illegal combinations; omitted and explicitly disabled sessions accept. Live journey.json, implementation.json, and seit.json produced 0 schema errors."
+    },
+    {
+      "id": "SEIT-BDL-003",
+      "command_id": "CMD-BDL-RENDER",
+      "method": "deterministic render comparison",
+      "phase3_applicable": true,
+      "tests_enforce_approved_behavior": true,
+      "status": "PASS",
+      "evidence": "RENDER_CHECK_PASS digest=sha256:1c7b13933d1a15ce22a00a2e0036c3bc2515a811b8dd2c2cb85d4bbfae8372c1 template=1.0.1. Current Manifest includes the approved CSP meta element. This is structural/byte evidence only and is not a visual demonstration."
+    },
+    {
+      "id": "SEIT-BDL-004",
+      "command_id": "CMD-BDL-TEST",
+      "method": "contract tests",
+      "phase3_applicable": true,
+      "tests_enforce_approved_behavior": true,
+      "status": "PASS",
+      "evidence": "Full Node suite 416/416. verification.test.mjs rejects candidate mismatch, author diagnostics submitted as assurance, self-certification, selected/required unavailable backends, INCONCLUSIVE as a gate, stale evidence, and automatic rereview. te-hook-contract tests in the same suite cover Copilot PreToolUse permissionDecision, Stop hookSpecificOutput, SubagentStop decision, and stop_hook_active re-entry."
+    },
+    {
+      "id": "SEIT-BDL-005",
+      "command_id": "CMD-BDL-PLUGIN",
+      "method": "standard and package inspection",
+      "phase3_applicable": true,
+      "tests_enforce_approved_behavior": true,
+      "status": "PASS",
+      "evidence": "plugin-manifest and package-boundary 18/18. Closed Agent Plugins manifest with no top-level hooks field; Copilot hook path packaged; Copilot PreToolUse, Stop, and SubagentStop route through te-host.cjs with --host=copilot; public-only files allowlist."
+    },
+    {
+      "id": "SEIT-BDL-006",
+      "command_id": "CMD-BDL-MUSE",
+      "method": "host-native automated validation",
+      "phase3_applicable": true,
+      "tests_enforce_approved_behavior": true,
+      "status": "PASS",
+      "evidence": "Muse Code 1.2.1 validated all 17 shipped skill directories with valid true and compatibility result compatible. skills/prompt reports unknown_fields okf_status, tags, title, type and remains valid true. SEIT names Muse 1.1.1; the installed validator is newer and still returned valid true for every shipped skill."
+    },
+    {
+      "id": "SEIT-BDL-007",
+      "command_id": "CMD-BDL-PACK",
+      "method": "package dry run",
+      "phase3_applicable": true,
+      "tests_enforce_approved_behavior": true,
+      "status": "PASS",
+      "evidence": "npm pack --dry-run --json exit 0, 68 entries, version 0.2.2. Required public files present; lineups.json, Explorer, Surveyor, credentials, and planning evidence absent from the tarball."
+    },
+    {
+      "id": "SEIT-BDL-009",
+      "command_id": "CMD-BDL-NO-EXPLORER",
+      "method": "deterministic absence inspection",
+      "phase3_applicable": true,
+      "tests_enforce_approved_behavior": true,
+      "status": "PASS",
+      "evidence": "test ! -e skills/explorer exit 0. Package inventory contains no Explorer path. Public-boundary and skills-conformance tests reject Explorer as an active public role."
+    },
+    {
+      "id": "SEIT-BDL-010",
+      "command_id": "CMD-BDL-S1",
+      "method": "preservation inspection against the frozen migration map",
+      "phase3_applicable": true,
+      "tests_enforce_approved_behavior": true,
+      "status": "PASS",
+      "evidence": "s1-contracts 10/10. Frozen map operations, empty catalog bytes, copy_unchanged prompt skill, and post-rename Implementer/Reviewer/Coordinator names are asserted."
+    },
+    {
+      "id": "SEIT-BDL-011",
+      "command_id": "CMD-BDL-MANIFEST",
+      "method": "applicability-typed model-view inspection",
+      "phase3_applicable": true,
+      "tests_enforce_approved_behavior": true,
+      "status": "PASS",
+      "evidence": "dod-manifest 17/17 covering CSP/template 1.0.1, activated missing/stale failure, explicit N/A visibility, inactive unselected/unrequired pass-without-view, sanitization, entity preservation, SVG style isolation, and supplemental closeout.model_views binding."
+    },
+    {
+      "id": "SEIT-BDL-012",
+      "command_id": "CMD-BDL-VISUAL",
+      "method": "human-observed presentation demonstration",
+      "phase3_applicable": true,
+      "executable_by_agent": false,
+      "status": "INCONCLUSIVE",
+      "reason_code": "visual_demonstration_unavailable",
+      "owner_evidence_in_approved_artifacts": false,
+      "owner_evidence_binds_current_digest": false,
+      "substitutes_used_as_pass": false,
+      "evidence": "No owner observation, waiver, or substitute-acceptance exists for Manifest digest sha256:1c7b13933d1a15ce22a00a2e0036c3bc2515a811b8dd2c2cb85d4bbfae8372c1 template 1.0.1. The recorded owner observation (DEC-BDL-073) binds artifact sha256:6dc9242539f25ff1cf660b71680f21c976f865f0d48b98786497a5df44b2284b from the earlier candidate and cannot independently assure this regenerated Manifest. This session did not open local files in a browser, start localhost, use CDP, or substitute another browser surface. Deterministic SEIT-BDL-003 and SEIT-BDL-011 were not treated as visual substitutes."
+    }
+  ],
+  "findings": [
+    {
+      "id": "SEIT-BDL-012",
+      "classification": "missing_evidence",
+      "status": "INCONCLUSIVE",
+      "reason_code": "visual_demonstration_unavailable",
+      "detail": "Applicable PHASE-3 proof row SEIT-BDL-012 remains INCONCLUSIVE. S9C regenerated the Manifest under template 1.0.1 with a new CSP, so current-digest owner evidence is required. PASS is prohibited while this applicable case is INCONCLUSIVE. Deterministic SEIT-BDL-003 and SEIT-BDL-011 passed and were not treated as visual substitutes. Only the owner may perform CMD-BDL-VISUAL on digest 1c7b13933d1a15ce22a00a2e0036c3bc2515a811b8dd2c2cb85d4bbfae8372c1, waive it, or accept those deterministic cases as sufficient."
+    }
+  ],
+  "blocker": "WAITING_ON: owner performance, waiver, or acceptance of substitutes for SEIT-BDL-012 / CMD-BDL-VISUAL on Manifest sha256:1c7b13933d1a15ce22a00a2e0036c3bc2515a811b8dd2c2cb85d4bbfae8372c1 template=1.0.1",
+  "seit_bdl_012": {
+    "status": "INCONCLUSIVE",
+    "reason_code": "visual_demonstration_unavailable",
+    "owner_evidence": false,
+    "owner_evidence_binds_current_digest": false,
+    "prior_observation_digest": "6dc9242539f25ff1cf660b71680f21c976f865f0d48b98786497a5df44b2284b",
+    "current_manifest_digest": "1c7b13933d1a15ce22a00a2e0036c3bc2515a811b8dd2c2cb85d4bbfae8372c1",
+    "agent_workaround_attempted": false
+  },
+  "gate_eligible": false,
+  "pass_includes_applicable_inconclusive": false,
+  "remaining_risks": [
+    "SEIT-BDL-012 current-digest owner visual demonstration is absent; prior DEC-BDL-073 observation is stale for this Manifest.",
+    "Muse validator observed is 1.2.1; SEIT names 1.1.1. All 17 skills still returned valid true.",
+    "SEIT-BDL-008 is not classified here; Integration Engineer execution remains a later lifecycle session.",
+    "Author-reported host plugin validators and S9D live-install dispositions were not independently re-executed because they are not S6 command_ids and host installation would mutate user configuration.",
+    "This verdict grants no Reviewer, Integration Engineer, owner acceptance, publication, or release decision."
+  ],
+  "next": "Do not dispatch PHASE-3 S7. Owner disposition of SEIT-BDL-012 on the current Manifest digest is required before this assurance round can become PASS."
+}

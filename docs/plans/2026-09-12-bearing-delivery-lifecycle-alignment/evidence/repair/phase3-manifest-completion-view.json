@@ -1,0 +1,48 @@
+{
+  "schema_version": "1",
+  "kind": "repair_closure",
+  "phase": "PHASE-3",
+  "authority": "DEC-BDL-074; DEC-BDL-075",
+  "recorded_at": "2026-09-13T20:28:42Z",
+  "status": "PASS_AUTHOR_VERIFIED",
+  "typed_outcome": "PASS",
+  "finding": "Completion task/risk tables still exposed initial BLOCKED/OPEN planning states after current state was added.",
+  "resolution": "When a matching closeout state exists, task and risk tables now render current status as Status. Planning status remains source history and is the fallback only for planning-only manifests.",
+  "candidate_product_tree_sha256": "884508aa264255746674a2865e6abc264dc68f07010e239b4bc4e5c22267535d",
+  "changed_paths": [
+    "tools/render-dod-manifest.mjs",
+    "test/dod-manifest.test.mjs"
+  ],
+  "checks": [
+    {
+      "command": "node --test test/dod-manifest.test.mjs",
+      "exit_code": 0,
+      "passed": 18,
+      "failed": 0
+    },
+    {
+      "command": "node --test test/*.test.mjs",
+      "exit_code": 0,
+      "passed": 417,
+      "failed": 0
+    },
+    {
+      "command": "renderer --check before integration-record regeneration",
+      "exit_code": 0,
+      "digest": "9534f4568303e8354010e0a902002d2789e8d31cb3006fce7da9056e8269a2c9"
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0
+    }
+  ],
+  "live_projection": {
+    "S1L_through_S8_visible_BLOCKED": false,
+    "risk_visible_OPEN": false,
+    "risks_current": "CLOSED_MITIGATED"
+  },
+  "prior_post_repair_assurance": "STALE because this final renderer correction changed the product candidate before visual closure",
+  "active_agents": [],
+  "blocker": null,
+  "next": "fresh exact-candidate assurance"
+}

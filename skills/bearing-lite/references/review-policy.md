@@ -8,8 +8,8 @@ harness, account, or agent identity.
 
 ```json
 {
-  "reviewer_slots_min": 2,
-  "reviewer_slots_max": 2,
+  "reviewer_slots_min": 1,
+  "reviewer_slots_max": 1,
   "independence_required": true,
   "isolated_findings_until_aggregation": true,
   "candidate_fields": ["candidate_ref", "candidate_revision", "candidate_digest"],
@@ -23,7 +23,7 @@ harness, account, or agent identity.
 }
 ```
 
-Map the Route writes the separate Journey binding in the approved lineup
+Planning and Design writes the separate Lifecycle binding in the approved profile
 snapshot. It lists unique abstract `slot_id` values, each slot's owner-selected
 `primary_route_ref`, and ordered `fallback_route_refs`. Each receipt records a
 distinct selected route from its slot. All receipts bind to the same non-empty

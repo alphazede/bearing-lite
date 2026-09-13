@@ -1,0 +1,39 @@
+<svg viewBox="0 0 1100 210" role="img" aria-labelledby="model-title model-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="model-title">Bearing Delivery Lifecycle</title>
+  <desc id="model-desc">A Feature Story, Defect, Technical Task, or Change Request flows through Planning, owner authorization, Implementation, and produces a completed result with evidence. Owner changes return to Planning.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#0e5c66" />
+    </marker>
+  </defs>
+  <g font-family="Segoe UI, sans-serif" font-size="18" fill="#1a2836">
+    <rect x="20" y="55" width="210" height="88" rx="4" fill="#fbfcfd" stroke="#5d6d7c" stroke-width="2" />
+    <text x="125" y="84" text-anchor="middle">
+      <tspan x="125">Feature Story / Defect /</tspan>
+      <tspan x="125" dy="25">Technical Task / Change</tspan>
+      <tspan x="125" dy="25">Request</tspan>
+    </text>
+    <rect x="300" y="55" width="150" height="88" rx="4" fill="#d4e4e6" stroke="#0e5c66" stroke-width="3" />
+    <text x="375" y="105" text-anchor="middle" font-weight="700">Planning</text>
+    <rect x="520" y="55" width="180" height="88" rx="4" fill="#f0e8d4" stroke="#8a6d28" stroke-width="3" />
+    <text x="610" y="91" text-anchor="middle" font-weight="700">
+      <tspan x="610">Owner-approved</tspan>
+      <tspan x="610" dy="25">package</tspan>
+    </text>
+    <rect x="770" y="55" width="150" height="88" rx="4" fill="#d4e4e6" stroke="#0e5c66" stroke-width="3" />
+    <text x="845" y="105" text-anchor="middle" font-weight="700">Implementation</text>
+    <rect x="990" y="55" width="95" height="88" rx="4" fill="#d7ebe2" stroke="#1b5e45" stroke-width="3" />
+    <text x="1037" y="91" text-anchor="middle" font-weight="700">
+      <tspan x="1037">Result</tspan>
+      <tspan x="1037" dy="25">+ evidence</tspan>
+    </text>
+  </g>
+  <g stroke="#0e5c66" stroke-width="3" fill="none" marker-end="url(#arrow)">
+    <path d="M230 99 H292" />
+    <path d="M450 99 H512" />
+    <path d="M700 99 H762" />
+    <path d="M920 99 H982" />
+    <path d="M1037 151 C1037 195 375 195 375 151" stroke-dasharray="8 7" />
+  </g>
+  <text x="700" y="190" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" fill="#3d4c5b">Owner change or invalidating discovery returns to Planning</text>
+</svg>

@@ -2,13 +2,15 @@
 name: systems-modeler
 description: >
   Select modeling mode and attach view metadata after Requirements
-  Engineer work and before design finalization. Use for Systems Modeler.
-  Do not finalize requirement mappings against unstable requirements.
+  Engineer work and before design finalization. Use for Systems Modeler
+  planning session. Do not finalize requirement mappings against unstable
+  requirements.
 ---
 
 # Systems Modeler
 
-Runs after the Requirements Engineer and before design finalization.
+One role with a planning session. Runs after the Requirements Engineer and
+before design finalization.
 
 ## Inputs and match
 

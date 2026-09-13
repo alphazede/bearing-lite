@@ -36,7 +36,10 @@
     "CONTRIBUTING.md",
     "SECURITY.md",
     "LICENSE-APACHE",
-    "lineups.json",
-    "schemas/"
+    "profiles.json",
+    "schemas/",
+    "templates/",
+    "tools/",
+    "com.github.copilot/"
   ]
 }

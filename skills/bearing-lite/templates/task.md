@@ -2,18 +2,18 @@
 
 Use one compact Markdown block per task in the project's existing plan or progress document. Omit unused conditional fields. Prefer the project's format; add only missing fields. Do not create a Bearing-owned state file or hidden ledger.
 
-## Journey settings
+## Lifecycle settings
 
-Map the Route records these plan-level proposals above the task blocks in the
+Planning and Design records these plan-level proposals above the task blocks in the
 complete five-artifact package. The integrated owner review approves or changes
-the journey, lineup, role states, reasoning, cadence, and plan together; no
-pre-Map lineup or route-review gate is allowed.
+the lifecycle, profile, role states, reasoning, cadence, and plan together; no
+pre-planning profile or route-review gate is allowed.
 
 ```markdown
-- journey: <Explorer Journey | Expedition>
-- review_cadence: at-end
+- lifecycle: <direct packet | coordinator wave | orchestrated waves>
+- review_cadence: phase
 - choice_basis: <proposed recommendation and reason; owner-approved at integrated review>
-- lineup_snapshot: <named implementation/assurance instances plus the planning_review binding below>
+- profile_snapshot: <named implementation/assurance instances plus the planning_review binding below>
 - planning_review:
   - policy_ref: skills/bearing-lite/references/review-policy.md
   - candidate_ref: <shared planning-package reference>
@@ -21,7 +21,7 @@ pre-Map lineup or route-review gate is allowed.
   - candidate_digest: <shared planning-package digest>
   - reviewer_slots:
     - slot_id: <abstract unique slot>
-      primary_route_ref: <owner-selected lineup route reference>
+      primary_route_ref: <owner-selected profile route reference>
       fallback_route_refs: [<ordered owner-selected route references>]
   - round_number: 1
   - completed_rounds: <0-1>
@@ -30,17 +30,18 @@ pre-Map lineup or route-review gate is allowed.
   - deterministic_gate: <PASS after repair; otherwise omitted>
 ```
 
-`review_cadence` is `at-end` for each declared phase or wave. The single
-independent review runs on that unit's integrated candidate at its end, not at
-a slice or round boundary, and not as
-task-level tests or author self-checks. Never infer it from
+Cadence values are `slice`, `phase`, or `lifecycle` for each declared phase or
+wave. Defaults are `phase` for Test Engineer assurance, `phase` for Reviewer,
+and `lifecycle` for Integration Engineer execution. The single independent
+review runs on that unit's integrated candidate at its declared cadence
+boundary, not as task-level tests or author self-checks. Never infer it from
 `required_assurance` on an individual task. The proposal is visible in
-`implementation.json` and `review.html`, then becomes authoritative only after
-the integrated owner approval; do not offer `per-slice` or `per-round`.
-`journey` stays a proposal until the mapped implementation graph exists and the
-integrated owner review approves it. `lineup_snapshot` is authoritative after
-that approval. Later
-edits to `~/.agents/bearing-lite/lineups.json` have no effect. The `Router`
+`implementation.json` and the DoD Manifest, then becomes authoritative only
+after the integrated owner approval.
+`lifecycle` stays a proposal until the mapped implementation graph exists and
+the integrated owner review approves it. `profile_snapshot` is authoritative
+after that approval. Later
+edits to `~/.agents/bearing-lite/profiles.json` have no effect. The `Orchestrator`
 row of the snapshot is the observed identity of the session that ran planning
 (harness, model, reasoning at that time); it is never a catalog selection and
 never a deviation.
@@ -55,14 +56,14 @@ does not populate `required_assurance` and does not dispatch reviewers.
 
 ## Checkout lease (record before any planning write)
 
-The Router's first write is this visible lease. Inventory nonterminal Journeys
+The Orchestrator's first write is this visible lease. Inventory nonterminal Lifecycles
 first. Do not dispatch or write other planning state until the lease is
-`active` for this Journey.
+`active` for this Lifecycle.
 
 ```markdown
 - checkout_lease:
-  - journey: <Journey id>
-  - controller: <Router>
+  - journey: <Lifecycle id>
+  - controller: <Orchestrator>
   - repository: <canonical repository>
   - checkout: <worktree or checkout identity>
   - branch: <branch>
@@ -72,10 +73,10 @@ first. Do not dispatch or write other planning state until the lease is
   - state: <active | released>
 ```
 
-Same checkout plus a live other Journey returns `WAITING_ON` with sanitized
-competing Journey and controller identities. Distinct explicitly approved
+Same checkout plus a live other Lifecycle returns `WAITING_ON` with sanitized
+competing Lifecycle and controller identities. Distinct explicitly approved
 compatible worktrees may proceed. Resume keeps the same generation and does
-not duplicate dispatch. Authorized same-Journey candidate progress whose
+not duplicate dispatch. Authorized same-Lifecycle candidate progress whose
 parent is the current leased revision refreshes `candidate_revision` on the
 same generation. `COMPLETE` or `CANCELLED` releases the lease exactly
 once. Stale recovery is explicit, recorded, increments generation, and cannot
@@ -129,9 +130,9 @@ Field rules:
 - required_assurance: [Assurance Test Engineer]
 ```
 
-`required_assurance` lists only roles that must accept the same candidate (for example `Assurance Test Engineer`, and `Park Ranger` or `Surveyor` when their triggers apply).
+`required_assurance` lists only roles that must accept the same candidate (for example `Assurance Test Engineer`, and `Reviewer` or `Integration Engineer execution` when their triggers apply).
 
-test-writing Crewmate write set is tests and approved fixtures only. Product
+test-writing Implementer write set is tests and approved fixtures only. Product
 write set excludes tests and must not weaken independently authored tests.
 Neither self-certifies.
 
@@ -172,4 +173,4 @@ review. Any source or candidate change during deployment is separately scoped.
 
 ## Single-writer reminder
 
-Only the parent coordinator updates this block after rereading it. Crewmate, Test Engineer, Park Ranger, and Surveyor return compact receipts (`verdict`, `candidate_ref`, `changed_paths`, `tests`, `findings`, `blocker`); the coordinator records transitions. Router alone changes cross-wave dependencies or global sequencing. Update `implementation.json` and `review.html` once per wave, plus owner-decision or blocker changes.
+Only the parent coordinator updates this block after rereading it. Implementer, Test Engineer, Reviewer, and Integration Engineer execution return compact receipts (`verdict`, `candidate_ref`, `changed_paths`, `tests`, `findings`, `blocker`); the coordinator records transitions. Orchestrator alone changes cross-wave dependencies or global sequencing. Update `implementation.json` and the DoD Manifest once per wave, plus owner-decision or blocker changes.

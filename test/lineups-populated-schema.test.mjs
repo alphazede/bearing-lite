@@ -15,14 +15,14 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const LINEUPS_PATH = path.join(ROOT, "lineups.json");
-const FIXTURE_PATH = path.join(ROOT, "test/fixtures/lineups-populated.example.json");
-const LINEUPS_SCHEMA_PATH = path.join(ROOT, "schemas/lineups.schema.json");
+const LINEUPS_PATH = path.join(ROOT, "profiles.json");
+const FIXTURE_PATH = path.join(ROOT, "test/fixtures/profiles-populated.example.json");
+const LINEUPS_SCHEMA_PATH = path.join(ROOT, "schemas/profiles.schema.json");
 const ROUTER_SKILL_PATH = path.join(ROOT, "skills/bearing-lite/SKILL.md");
-const LINEUPS_REF_PATH = path.join(ROOT, "skills/bearing-lite/references/lineups.md");
-const EMPTY_CATALOG_BYTES = '{"schema_version":1,"lineups":{}}';
+const LINEUPS_REF_PATH = path.join(ROOT, "skills/bearing-lite/references/profiles.md");
+const EMPTY_CATALOG_BYTES = '{"schema_version":1,"profiles":{}}';
 const NAME_PATTERN = /^[A-Za-z][A-Za-z0-9_-]*$/;
-const PHASES = ["planned_planning_assignments", "implementation_assignments"];
+const PHASES = ["roles"];
 const FORBIDDEN_FIXTURE_IDENTITIES =
   /\b(Sol|Astra|Grok|Codex|Opus|gpt-5|engineering-methods-and-vnv-integration)\b/i;
 
@@ -101,13 +101,13 @@ const LINEUPS_MD_PROCEDURE_BINDINGS = [
   {
     id: "schema_draft_before_named_or_save",
     patterns: [
-      /schemas\/lineups\.schema\.json/,
+      /schemas\/profiles\.schema\.json/,
       /Draft 2020-12/,
       /before\s+named\s+(?:selection|choice)\s+or\s+save/i,
       /not\s+a\s+second\s+search\s+root(?:\s+for\s+user\s+data)?/i,
     ],
     meaning:
-      "bind schemas/lineups.schema.json Draft 2020-12 validation before named selection or save (not a second search root for user data)",
+      "bind schemas/profiles.schema.json Draft 2020-12 validation before named selection or save (not a second search root for user data)",
   },
   {
     id: "duplicate_raw_keys_no_collapse",
@@ -193,11 +193,16 @@ function orderedFallbacks(assignment) {
  * @returns {object[] | null}
  */
 function firstTwoFallbacks(catalog) {
-  for (const profile of Object.values(catalog.lineups ?? {})) {
-    for (const phase of PHASES) {
-      const assignments = profile?.[phase];
-      if (!Array.isArray(assignments)) continue;
-      for (const assignment of assignments) {
+  for (const profile of Object.values(catalog.profiles ?? {})) {
+    const roles = profile?.roles;
+    if (!roles || typeof roles !== "object") continue;
+    for (const assignment of Object.values(roles)) {
+      if (assignment && typeof assignment === "object" && assignment.sessions) {
+        for (const session of Object.values(assignment.sessions)) {
+          const fallbacks = orderedFallbacks(session);
+          if (fallbacks && fallbacks.length >= 2) return fallbacks;
+        }
+      } else {
         const fallbacks = orderedFallbacks(assignment);
         if (fallbacks && fallbacks.length >= 2) return fallbacks;
       }
@@ -207,8 +212,8 @@ function firstTwoFallbacks(catalog) {
 }
 
 describe("AC-EMV-026 populated lineups catalog (SEIT-EMV-026 / ROUTER-EMV-002-001)", () => {
-  it("ships package-root lineups.json as exact empty bytes with no defaults field", () => {
-    assert.equal(existsSync(LINEUPS_PATH), true, "lineups.json must exist at the package root");
+  it("ships package-root profiles.json as exact empty bytes with no defaults field", () => {
+    assert.equal(existsSync(LINEUPS_PATH), true, "profiles.json must exist at the package root");
     const raw = readFileSync(LINEUPS_PATH);
     assert.equal(raw.toString("utf8"), EMPTY_CATALOG_BYTES);
     const parsed = JSON.parse(raw.toString("utf8"));
@@ -222,37 +227,20 @@ describe("AC-EMV-026 populated lineups catalog (SEIT-EMV-026 / ROUTER-EMV-002-00
     assert.equal(
       existsSync(FIXTURE_PATH),
       true,
-      "test/fixtures/lineups-populated.example.json must exist",
+      "test/fixtures/profiles-populated.example.json must exist",
     );
     const raw = readFileSync(FIXTURE_PATH, "utf8");
     assert.equal(FORBIDDEN_FIXTURE_IDENTITIES.test(raw), false, raw);
     const catalog = JSON.parse(raw);
     assert.equal(catalog.schema_version, 1);
     assert.equal(typeof catalog.schema_version, "number");
-    assert.equal(catalog.lineups && typeof catalog.lineups === "object" && !Array.isArray(catalog.lineups), true);
-    assert.deepEqual(Object.keys(catalog.lineups).sort(), ["fixture-alpha", "fixture-beta"]);
-    for (const name of Object.keys(catalog.lineups)) {
+    assert.equal(catalog.profiles && typeof catalog.profiles === "object" && !Array.isArray(catalog.profiles), true);
+    assert.deepEqual(Object.keys(catalog.profiles).sort(), ["fixture-alpha", "fixture-beta"]);
+    for (const name of Object.keys(catalog.profiles)) {
       assert.equal(NAME_PATTERN.test(name), true, name);
-      const profile = catalog.lineups[name];
-      for (const phase of PHASES) {
-        assert.equal(Array.isArray(profile[phase]), true, `${name}.${phase}`);
-        assert.ok(profile[phase].length >= 1, `${name}.${phase} minItems 1`);
-        for (const assignment of profile[phase]) {
-          assert.equal(typeof assignment.role, "string");
-          assert.ok(assignment.role.length > 0);
-          assert.equal(assignment.primary && typeof assignment.primary === "object", true);
-          assert.equal(typeof assignment.primary.harness, "string");
-          assert.equal(typeof assignment.primary.model, "string");
-          assert.equal(typeof assignment.primary.reasoning, "string");
-          assert.equal(Array.isArray(assignment.ordered_fallbacks), true);
-          for (const fallback of assignment.ordered_fallbacks) {
-            assert.equal(typeof fallback.condition, "string");
-            assert.equal(typeof fallback.harness, "string");
-            assert.equal(typeof fallback.model, "string");
-            assert.equal(typeof fallback.reasoning, "string");
-          }
-        }
-      }
+      const profile = catalog.profiles[name];
+      assert.equal(profile.roles && typeof profile.roles === "object", true, `${name}.roles`);
+      assert.ok(Object.keys(profile.roles).length >= 1, `${name}.roles min keys`);
     }
     const fallbacks = firstTwoFallbacks(catalog);
     assert.ok(fallbacks, "fixture must include at least two ordered fallbacks");
@@ -260,35 +248,35 @@ describe("AC-EMV-026 populated lineups catalog (SEIT-EMV-026 / ROUTER-EMV-002-00
     assert.equal(typeof catalog.defaults, "object");
     assert.equal(catalog.defaults.planning, "fixture-alpha");
     assert.equal(catalog.defaults.implementation, "fixture-beta");
-    assert.equal(catalog.defaults.planning in catalog.lineups, true);
-    assert.equal(catalog.defaults.implementation in catalog.lineups, true);
+    assert.equal(catalog.defaults.planning in catalog.profiles, true);
+    assert.equal(catalog.defaults.implementation in catalog.profiles, true);
   });
 
-  it("schemas/lineups.schema.json exists for CMD-LITE-SCHEMA-VALIDATE", () => {
+  it("schemas/profiles.schema.json exists for CMD-LITE-SCHEMA-VALIDATE", () => {
     assert.equal(
       existsSync(LINEUPS_SCHEMA_PATH),
       true,
-      "expected red on 1058f5b: missing schemas/lineups.schema.json",
+      "expected schemas/profiles.schema.json",
     );
   });
 
-  it("SKILL.md routes to references/lineups.md without a new planning gate", () => {
+  it("SKILL.md routes to references/profiles.md without a new planning gate", () => {
     assert.equal(existsSync(ROUTER_SKILL_PATH), true, "skills/bearing-lite/SKILL.md must exist");
     const skill = readFileSync(ROUTER_SKILL_PATH, "utf8");
     assert.equal(
-      /references\/lineups\.md/.test(skill),
+      /references\/profiles\.md/.test(skill),
       true,
-      "expected red on 1058f5b: no SKILL routing to references/lineups.md",
+      "expected SKILL routing to references/profiles.md",
     );
     assert.equal(
-      /Run Repository Fit → Set Bearings → Gather Supplies/.test(skill),
+      /Run Intake → Architectural Alignment → Scope Definition/.test(skill),
       true,
       "catalog routing must not replace the planning sequence with a new gate",
     );
     assert.equal(
-      /Never add a staged lineup or route-review gate/.test(skill),
+      /Never add a staged profile or route-review gate/.test(skill),
       true,
-      "catalog routing must not add a staged lineup or route-review gate",
+      "catalog routing must not add a staged profile or route-review gate",
     );
   });
 
