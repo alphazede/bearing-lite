@@ -501,6 +501,7 @@ describe("CMD-PUBLIC-01 public-boundary (SEIT-PUBLIC-01, SEIT-MODEL-01, SEIT-IND
       "Muse Code",
       "GitHub Copilot in VS Code",
       "GitHub Copilot CLI",
+      "Qwen Code",
     ]) {
       assert.match(install, new RegExp(client.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")), client);
     }
@@ -517,6 +518,9 @@ describe("CMD-PUBLIC-01 public-boundary (SEIT-PUBLIC-01, SEIT-MODEL-01, SEIT-IND
     assert.match(install, /~\/\.deepcode\/skills/);
     assert.match(install, /Chat:\s*Install Plugin From Source/);
     assert.match(install, /Git repository URL/i);
+    assert.match(install, /copilot plugin marketplace add alphazede\/bearing-lite/);
+    assert.match(install, /copilot plugin install bearing-lite@bearing-lite/);
+    assert.match(install, /qwen extensions install @alphazede\/bearing-lite/);
     assert.match(install, /muse skills install/);
     assert.match(install, /skills\/\*\/SKILL\.md/);
     assert.match(install, /skills-only/i);
@@ -526,7 +530,6 @@ describe("CMD-PUBLIC-01 public-boundary (SEIT-PUBLIC-01, SEIT-MODEL-01, SEIT-IND
     assert.match(install, /protected-action/i);
     assert.match(install, /planning-review|planning review/i);
     assert.match(install, /assurance-budget|assurance budget/i);
-    assert.doesNotMatch(install, /copilot plugin (install|marketplace|add)/i);
     assert.doesNotMatch(install, /code --install-extension/);
     assert.doesNotMatch(install, /kimi plugin install/);
     assert.doesNotMatch(install, /Writes product/);

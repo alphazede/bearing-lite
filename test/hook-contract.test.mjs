@@ -509,7 +509,7 @@ describe("CMD-HOOK-01 hook-contract (SEIT-HOOK-CLASS-01, SEIT-HOOK-COVERAGE-01)"
         `${host} must stay partial`
       );
     }
-    for (const host of ["AGY", "Pi", "DeepCode"]) {
+    for (const host of ["AGY", "Pi", "DeepCode", "Qwen Code"]) {
       assert.match(
         mapping,
         new RegExp(`\\| ${host} \\|[^\n]*\\| skills-only \\|`),

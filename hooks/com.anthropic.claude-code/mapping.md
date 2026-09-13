@@ -17,6 +17,7 @@ procedural.
 | AGY | `.agy/` (strict `plugin.json`) | none | skills-only |
 | Pi | `package.json` `"pi"` + `pi-package` | none (TypeScript extensions, not command hooks) | skills-only |
 | DeepCode | `.deepcode/skills` or interoperable `.agents/skills` discovery | none | skills-only |
+| Qwen Code | Agent Plugins 1.0 `plugin.json` | none (no Qwen-specific hook namespace) | skills-only |
 | GitHub Copilot | Agent Plugins 1.0 `plugin.json` + `com.github.copilot/` | `com.github.copilot/hooks/hooks.json` (`SessionStart`, `PreToolUse`, `Stop`, `SubagentStop`) | partial |
 
 Do **not** set `hooks` on the root Agent Plugins 1.0 `plugin.json`, or on Claude,
@@ -48,9 +49,9 @@ The shared planning-review evaluator is used by transition and closeout when a
 client supplies a structured `planning_review` record. Current session-start /
 stop mappings cannot derive that nested record safely, so Claude Code, Codex,
 Grok Build, Cursor, Kimi, and GitHub Copilot remain partial and the check is
-procedural there. AGY, Pi, and DeepCode remain skills-only. Do not claim full
-planning-review enforcement for any of these hosts until a native event supplies
-the complete record.
+procedural there. AGY, Pi, DeepCode, and Qwen Code remain skills-only. Do not
+claim full planning-review enforcement for any of these hosts until a native
+event supplies the complete record.
 
 The per-declared-phase-or-wave assurance record
 (`skills/bearing-lite/references/assurance-policy.md`) is evaluated by the same
@@ -58,8 +59,8 @@ The per-declared-phase-or-wave assurance record
 host exposes a hook event that carries the frozen declaration and the visible
 task record, so the assurance budget is procedural on every mapped host:
 Claude Code, Codex, Grok Build, Cursor, Kimi Code, and GitHub Copilot stay
-partial, and AGY, Pi, and DeepCode stay skills-only. No host may advertise an
-enforcement of the assurance budget it cannot perform.
+partial, and AGY, Pi, DeepCode, and Qwen Code stay skills-only. No host may
+advertise an enforcement of the assurance budget it cannot perform.
 
 The adapter accepts snake_case and camelCase (`hook_event_name` /
 `hookEventName`, `cwd` / `workspaceRoot`).
@@ -112,14 +113,15 @@ this adapter must not advertise enforcement it cannot perform.
 | Pi | te_test_write UNAVAILABLE | te_completion UNAVAILABLE | child te_completion UNAVAILABLE |
 | AGY | te_test_write UNAVAILABLE | te_completion UNAVAILABLE | child te_completion UNAVAILABLE |
 | DeepCode | te_test_write UNAVAILABLE | te_completion UNAVAILABLE | child te_completion UNAVAILABLE |
+| Qwen Code | te_test_write UNAVAILABLE | te_completion UNAVAILABLE | child te_completion UNAVAILABLE |
 | GitHub Copilot | native `PreToolUse` deny | native `Stop` deny | native `SubagentStop` deny |
 
 Cursor's `stop` guidance message is advisory text, not a hard completion
 block, and Cursor exposes no distinct hard child-stop deny; neither is
-registered as one. Kimi Code, Pi, AGY, and DeepCode carry no verified native
-Test Engineering blocking in this adapter, so `hooks/te-host.cjs` returns
-`UNAVAILABLE` for every class on those hosts rather than claiming an
-enforcement it cannot deliver.
+registered as one. Kimi Code, Pi, AGY, DeepCode, and Qwen Code carry no
+verified native Test Engineering blocking in this adapter, so
+`hooks/te-host.cjs` returns `UNAVAILABLE` for every class on those hosts rather
+than claiming an enforcement it cannot deliver.
 
 GitHub Copilot in VS Code is a native TE host. Agent Plugins 1.0 discovers
 `com.github.copilot/hooks/hooks.json` and expands `${PLUGIN_ROOT}`; the TE
