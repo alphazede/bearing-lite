@@ -153,7 +153,7 @@ function writePlan(dir, task) {
     "PLAN.md",
     `# Journey
 
-- journey: Explorer Journey
+- journey: Bearing Delivery Lifecycle
 - review_cadence: at-end
 
 - checkout_lease:
@@ -483,7 +483,7 @@ describe("Lite TE host adapter (hooks/te-host.cjs)", () => {
     base = commitAll(ws, "baseline");
     writePlan(ws, {
       task_id: "T-TE-1",
-      assigned_role: "Test-writing Crewmate",
+      assigned_role: "Test-writing Implementer",
       role_instance: "TW-LITE-TE-HOOKS",
       write_set: ["test/te-example.test.mjs"],
       authority: "AUTH-EMV-001",
@@ -568,7 +568,7 @@ describe("Lite TE host adapter (hooks/te-host.cjs)", () => {
     const bareBase = commitAll(bare, "baseline");
     writePlan(bare, {
       task_id: "T-TE-GAP",
-      assigned_role: "Product Crewmate",
+      assigned_role: "Product Implementer",
       role_instance: "PC-GAP",
       write_set: ["src/engine.mjs"],
       authority: "AUTH-EMV-001",
@@ -612,7 +612,7 @@ describe("Lite TE host adapter (hooks/te-host.cjs)", () => {
       task_id: "T-TE-1",
       role: "Test Engineering",
       role_instance: "TW-LITE-TE-HOOKS",
-      assigned_writer_role: "Test-writing Crewmate",
+      assigned_writer_role: "Test-writing Implementer",
       method: "test",
       authorizes_write_tests: true,
       write_scope: ["test/te-example.test.mjs"],
@@ -654,7 +654,7 @@ describe("Lite TE host adapter (hooks/te-host.cjs)", () => {
     const productBase = commitAll(product, "baseline");
     writePlan(product, {
       task_id: "T-TE-2",
-      assigned_role: "Product Crewmate",
+      assigned_role: "Product Implementer",
       role_instance: "PC-TE",
       write_set: ["src/"],
       authority: "AUTH-EMV-001",
@@ -697,7 +697,7 @@ describe("Lite TE host adapter (hooks/te-host.cjs)", () => {
     setVerdict(ws, { verdict: "ALLOW", reason: "double" });
     teHost.handle(
       envelope("claude-pretooluse-test-write.json", ws, {
-        assigned_role: "Product Crewmate",
+        assigned_role: "Product Implementer",
         tool_input: {
           file_path: "test/te-example.test.mjs",
           assigned_role: "Router",
@@ -708,7 +708,7 @@ describe("Lite TE host adapter (hooks/te-host.cjs)", () => {
       { selected: true }
     );
     const request = lastRequest(ws);
-    assert.equal(request.assignment.assigned_role, "Test-writing Crewmate");
+    assert.equal(request.assignment.assigned_role, "Test-writing Implementer");
     assert.equal(request.assignment.role_instance, "TW-LITE-TE-HOOKS");
     assert.equal(request.assignment.task_id, "T-TE-1");
     assert.equal(request.assignment.authority, "AUTH-EMV-001");
@@ -724,7 +724,7 @@ describe("Lite TE host adapter (hooks/te-host.cjs)", () => {
     const reviewBase = commitAll(review, "baseline");
     writePlan(review, {
       task_id: "T-TE-3",
-      assigned_role: "Park Ranger",
+      assigned_role: "Reviewer",
       role_instance: "PR-TE",
       write_set: [],
       authority: "AUTH-EMV-001",
@@ -758,7 +758,7 @@ describe("Lite TE host adapter (hooks/te-host.cjs)", () => {
     const completionBase = commitAll(completion, "baseline");
     writePlan(completion, {
       task_id: "T-TE-4",
-      assigned_role: "Product Crewmate",
+      assigned_role: "Product Implementer",
       role_instance: "PC-COMPLETION",
       write_set: ["src/"],
       authority: "AUTH-EMV-001",
@@ -846,7 +846,7 @@ describe("Lite TE host adapter (hooks/te-host.cjs)", () => {
     const childBase = commitAll(child, "baseline");
     writePlan(child, {
       task_id: "T-TE-5",
-      assigned_role: "Product Crewmate",
+      assigned_role: "Product Implementer",
       role_instance: "PC-CHILD",
       write_set: ["src/"],
       authority: "AUTH-EMV-001",
@@ -859,7 +859,7 @@ describe("Lite TE host adapter (hooks/te-host.cjs)", () => {
       reason: "completion_receipt_required",
     });
 
-    for (const host of ["grok", "codex", "claude-code"]) {
+    for (const host of ["grok", "codex", "claude-code", "copilot"]) {
       const response = teHost.handle(envelope("codex-subagentstop.json", child), {
         selected: true,
         host,
@@ -907,7 +907,7 @@ describe("Lite TE host adapter (hooks/te-host.cjs)", () => {
   it("reports host support honestly and claims no unsupported native blocking", () => {
     const teHost = loadTe("te-host.cjs");
     const support = teHost.HOST_SUPPORT;
-    for (const host of ["grok", "codex", "claude-code"]) {
+    for (const host of ["grok", "codex", "claude-code", "copilot"]) {
       assert.equal(support[host].write_time_deny, "native", host);
       assert.equal(support[host].completion_deny, "native", host);
       assert.equal(support[host].child_stop_deny, "native", host);
@@ -977,6 +977,211 @@ describe("Lite TE host adapter (hooks/te-host.cjs)", () => {
     assert.deepEqual(teHost.toWire(teHost.toHostResponse("te_test_write", "ALLOW", "ok", {})), {});
   });
 
+  it("Copilot PreToolUse deny uses documented permissionDecision wire", () => {
+    const teHost = loadTe("te-host.cjs");
+    setVerdict(ws, { verdict: "DENY_ROUTE_TO_TE", reason: "copilot_write_deny" });
+    const response = teHost.handle(envelope("claude-pretooluse-test-write.json", ws), {
+      selected: true,
+      host: "copilot",
+    });
+    assert.equal(response.hookSpecificOutput.hookClass, TE_TEST_WRITE);
+    assert.equal(response.hookSpecificOutput.verdict, "DENY_ROUTE_TO_TE");
+    assert.equal(response.hookSpecificOutput.permissionDecision, "deny");
+    const wire = teHost.toWire(response);
+    assert.deepEqual(Object.keys(wire), ["hookSpecificOutput"]);
+    assert.equal(wire.hookSpecificOutput.hookEventName, "PreToolUse");
+    assert.equal(wire.hookSpecificOutput.permissionDecision, "deny");
+    assert.match(
+      String(wire.hookSpecificOutput.permissionDecisionReason),
+      /DENY_ROUTE_TO_TE/
+    );
+    assert.equal(wire.decision, undefined);
+  });
+
+  it("Copilot Stop deny uses hookSpecificOutput Stop decision, not the Claude top-level block", () => {
+    const teHost = loadTe("te-host.cjs");
+    setVerdict(ws, {
+      verdict: "DENY_RECEIPT_REQUIRED",
+      reason: "copilot_stop_deny",
+    });
+    const response = teHost.handle(envelope("claude-stop.json", ws), {
+      selected: true,
+      host: "copilot",
+    });
+    assert.equal(response.hookSpecificOutput.verdict, "DENY_RECEIPT_REQUIRED");
+    const wire = teHost.toWire(response);
+    assert.deepEqual(Object.keys(wire), ["hookSpecificOutput"]);
+    assert.equal(wire.hookSpecificOutput.hookEventName, "Stop");
+    assert.equal(wire.hookSpecificOutput.decision, "block");
+    assert.match(String(wire.hookSpecificOutput.reason), /DENY_RECEIPT_REQUIRED/);
+    assert.equal(wire.decision, undefined);
+
+    const claude = teHost.handle(envelope("claude-stop.json", ws), {
+      selected: true,
+      host: "claude-code",
+    });
+    assert.deepEqual(teHost.toWire(claude), {
+      decision: "block",
+      reason: claude.reason,
+    });
+  });
+
+  it("Copilot SubagentStop deny uses the documented top-level decision block", () => {
+    const teHost = loadTe("te-host.cjs");
+    setVerdict(ws, {
+      verdict: "DENY_RECEIPT_REQUIRED",
+      reason: "copilot_child_stop_deny",
+    });
+    const response = teHost.handle(envelope("codex-subagentstop.json", ws), {
+      selected: true,
+      host: "copilot",
+    });
+    assert.equal(response.hookSpecificOutput.verdict, "DENY_RECEIPT_REQUIRED");
+    const wire = teHost.toWire(response);
+    assert.deepEqual(Object.keys(wire).sort(), ["decision", "reason"]);
+    assert.equal(wire.decision, "block");
+    assert.match(String(wire.reason), /DENY_RECEIPT_REQUIRED/);
+    assert.equal(wire.hookSpecificOutput, undefined);
+  });
+
+  it("Copilot Stop and SubagentStop re-entry with stop_hook_active is quiet success and does not loop", () => {
+    const teHost = loadTe("te-host.cjs");
+    const dir = workspace("copilot-reentry");
+    installEvaluator(dir);
+    writeFile(dir, "src/engine.mjs", "export const engine = 1;\n");
+    const dirBase = commitAll(dir, "baseline");
+    writePlan(dir, {
+      task_id: "T-TE-COPILOT-REENTRY",
+      assigned_role: "Product Implementer",
+      role_instance: "PC-COPILOT-REENTRY",
+      write_set: ["src/"],
+      authority: "AUTH-EMV-001",
+      type: "product",
+      diff_base: dirBase,
+    });
+    writeFile(dir, "src/engine.mjs", "export const engine = 2;\n");
+    setVerdict(dir, {
+      verdict: "DENY_RECEIPT_REQUIRED",
+      reason: "would_loop_if_evaluated",
+    });
+
+    for (const name of ["claude-stop.json", "codex-subagentstop.json"]) {
+      const payload = envelope(name, dir, { stop_hook_active: true });
+      const before = calls(dir).length;
+      const response = teHost.handle(payload, { selected: true, host: "copilot" });
+      assert.equal(
+        calls(dir).length,
+        before,
+        `${name} must not re-enter the evaluator`
+      );
+      assert.notEqual(response.decision, "block", name);
+      assert.notEqual(
+        response.hookSpecificOutput.permissionDecision,
+        "deny",
+        name
+      );
+      assert.deepEqual(
+        teHost.toWire(response),
+        {},
+        `${name} re-entry wire must be empty quiet success`
+      );
+    }
+
+    const first = teHost.handle(envelope("claude-stop.json", dir), {
+      selected: true,
+      host: "copilot",
+    });
+    assert.equal(first.hookSpecificOutput.verdict, "DENY_RECEIPT_REQUIRED");
+    assert.equal(teHost.toWire(first).hookSpecificOutput.decision, "block");
+  });
+
+  it("Copilot inactive and typed-gap Test Engineering stay fail-open", () => {
+    const teHost = loadTe("te-host.cjs");
+    const inactive = teHost.handle(
+      envelope("claude-pretooluse-test-write.json", ws),
+      { selected: false, required: false, host: "copilot" }
+    );
+    assert.equal(inactive.hookSpecificOutput.verdict, "UNAVAILABLE");
+    assert.match(String(inactive.hookSpecificOutput.reason), /inactive|unselected/i);
+    assert.deepEqual(teHost.toWire(inactive), {});
+
+    const bare = workspace("copilot-gap");
+    writeFile(bare, "src/engine.mjs", "export const engine = 1;\n");
+    const bareBase = commitAll(bare, "baseline");
+    writePlan(bare, {
+      task_id: "T-TE-COPILOT-GAP",
+      assigned_role: "Product Implementer",
+      role_instance: "PC-COPILOT-GAP",
+      write_set: ["src/engine.mjs"],
+      authority: "AUTH-EMV-001",
+      type: "product",
+      diff_base: bareBase,
+    });
+    const gap = teHost.handle(envelope("claude-stop.json", bare), {
+      selected: true,
+      host: "copilot",
+    });
+    assert.equal(gap.hookSpecificOutput.verdict, "UNAVAILABLE");
+    assert.match(
+      String(gap.hookSpecificOutput.code ?? gap.hookSpecificOutput.reason),
+      /typed_capability_gap/
+    );
+    assert.notEqual(gap.decision, "block");
+    assert.deepEqual(teHost.toWire(gap), {});
+  });
+
+  it("CLI --host=copilot emits the documented PreToolUse, Stop, and SubagentStop wires", () => {
+    const teHostPath = path.join(HOOKS_DIR, "te-host.cjs");
+    const env = { ...process.env, BEARING_TEST_ENGINEERING_SELECTED: "1" };
+
+    setVerdict(ws, { verdict: "DENY_ROUTE_TO_TE", reason: "cli_write" });
+    const write = spawnSync(process.execPath, [teHostPath, "--host=copilot"], {
+      input: JSON.stringify(envelope("claude-pretooluse-test-write.json", ws)),
+      encoding: "utf8",
+      timeout: 10_000,
+      env,
+    });
+    assert.equal(write.status, 0, write.stderr);
+    const writeWire = JSON.parse(write.stdout);
+    assert.equal(writeWire.hookSpecificOutput.hookEventName, "PreToolUse");
+    assert.equal(writeWire.hookSpecificOutput.permissionDecision, "deny");
+
+    setVerdict(ws, { verdict: "DENY_RECEIPT_REQUIRED", reason: "cli_stop" });
+    const stop = spawnSync(process.execPath, [teHostPath, "--host=copilot"], {
+      input: JSON.stringify(envelope("claude-stop.json", ws)),
+      encoding: "utf8",
+      timeout: 10_000,
+      env,
+    });
+    assert.equal(stop.status, 0, stop.stderr);
+    const stopWire = JSON.parse(stop.stdout);
+    assert.equal(stopWire.hookSpecificOutput.hookEventName, "Stop");
+    assert.equal(stopWire.hookSpecificOutput.decision, "block");
+    assert.equal(stopWire.decision, undefined);
+
+    const child = spawnSync(process.execPath, [teHostPath, "--host=copilot"], {
+      input: JSON.stringify(envelope("codex-subagentstop.json", ws)),
+      encoding: "utf8",
+      timeout: 10_000,
+      env,
+    });
+    assert.equal(child.status, 0, child.stderr);
+    const childWire = JSON.parse(child.stdout);
+    assert.equal(childWire.decision, "block");
+    assert.equal(childWire.hookSpecificOutput, undefined);
+
+    const reentry = spawnSync(process.execPath, [teHostPath, "--host=copilot"], {
+      input: JSON.stringify(
+        envelope("claude-stop.json", ws, { stop_hook_active: true })
+      ),
+      encoding: "utf8",
+      timeout: 10_000,
+      env,
+    });
+    assert.equal(reentry.status, 0, reentry.stderr);
+    assert.deepEqual(JSON.parse(reentry.stdout), {});
+  });
+
   // -------------------------------------------------------------------------
   // S25-INT-001. The adapter is the producer of the evaluator request, so the
   // request it emits must be spelled in the field names the pinned HQ
@@ -994,7 +1199,7 @@ describe("Lite TE host adapter (hooks/te-host.cjs)", () => {
     const dirBase = commitAll(dir, "baseline");
     writePlan(dir, {
       task_id: "T-TE-6",
-      assigned_role: "Test-writing Crewmate",
+      assigned_role: "Test-writing Implementer",
       role_instance: "TW-SUPPORTED-WRITE",
       write_set: ["test/te-example.test.mjs"],
       authority: "AUTH-EMV-001",
@@ -1076,7 +1281,7 @@ describe("Lite TE host adapter (hooks/te-host.cjs)", () => {
     const dirBase = commitAll(dir, "baseline");
     writePlan(dir, {
       task_id: "T-TE-7",
-      assigned_role: "Product Crewmate",
+      assigned_role: "Product Implementer",
       role_instance: "PC-SUPPORTED-COMPLETION",
       write_set: ["src/"],
       authority: "AUTH-EMV-001",

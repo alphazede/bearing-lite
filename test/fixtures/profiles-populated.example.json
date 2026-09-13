@@ -1,0 +1,227 @@
+{
+  "schema_version": 1,
+  "profiles": {
+    "fixture-alpha": {
+      "roles": {
+        "implementer": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": [
+            {
+              "condition": "condition-first",
+              "harness": "harness-b",
+              "model": "model-b",
+              "reasoning": "reasoning-b"
+            },
+            {
+              "condition": "condition-second",
+              "harness": "harness-c",
+              "model": "model-c",
+              "reasoning": "reasoning-c"
+            }
+          ]
+        },
+        "light_implementer": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": []
+        },
+        "coordinator": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": []
+        },
+        "reviewer": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": [],
+          "cadence": "phase"
+        },
+        "scribe": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": []
+        },
+        "plan_integrator": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": []
+        },
+        "systems_modeler": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            }
+          }
+        },
+        "test_engineer": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            },
+            "assurance": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": [],
+              "cadence": "phase"
+            }
+          }
+        },
+        "integration_engineer": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            },
+            "execution": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-b",
+                "model": "model-b",
+                "reasoning": "reasoning-b"
+              },
+              "ordered_fallbacks": [],
+              "cadence": "lifecycle"
+            }
+          }
+        },
+        "requirements_engineer": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            }
+          }
+        }
+      },
+      "development_strategy": {
+        "mode": "single_implementer"
+      },
+      "planning_to_implementation_clean_session": false,
+      "concurrency": {
+        "dispatch_ready_independent_work": true,
+        "preserve_order_for_dependencies_interfaces_write_overlap_and_shared_mutable_resources": true
+      },
+      "deterministic_verification": {
+        "reverify": {
+          "enabled": false
+        }
+      }
+    },
+    "fixture-beta": {
+      "roles": {
+        "implementer": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-b",
+            "model": "model-b",
+            "reasoning": "reasoning-b"
+          },
+          "ordered_fallbacks": []
+        },
+        "reviewer": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-b",
+            "model": "model-b",
+            "reasoning": "reasoning-b"
+          },
+          "ordered_fallbacks": [
+            {
+              "condition": "condition-first",
+              "harness": "harness-a",
+              "model": "model-a",
+              "reasoning": "reasoning-a"
+            }
+          ],
+          "cadence": "phase"
+        },
+        "test_engineer": {
+          "sessions": {
+            "assurance": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-b",
+                "model": "model-b",
+                "reasoning": "reasoning-b"
+              },
+              "ordered_fallbacks": [],
+              "cadence": "phase"
+            }
+          }
+        },
+        "integration_engineer": {
+          "sessions": {
+            "execution": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-b",
+                "model": "model-b",
+                "reasoning": "reasoning-b"
+              },
+              "ordered_fallbacks": [],
+              "cadence": "lifecycle"
+            }
+          }
+        }
+      },
+      "development_strategy": {
+        "mode": "tdd"
+      }
+    }
+  },
+  "defaults": {
+    "planning": "fixture-alpha",
+    "implementation": "fixture-beta"
+  }
+}

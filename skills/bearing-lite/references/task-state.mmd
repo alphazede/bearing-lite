@@ -13,8 +13,8 @@ stateDiagram-v2
     CORRECTION_REQUIRED --> READY
     CORRECTION_REQUIRED --> OWNER_DECISION_REQUIRED: third failed correction
     EVIDENCE_READY --> VALIDATING: Assurance Test Engineer required
-    EVIDENCE_READY --> REVIEWING: Park Ranger required
-    EVIDENCE_READY --> ACCEPTANCE: Surveyor, owner, or coordinator when required_assurance is none
+    EVIDENCE_READY --> REVIEWING: Reviewer required
+    EVIDENCE_READY --> ACCEPTANCE: Integration Engineer execution, owner, or coordinator when required_assurance is none
     EVIDENCE_READY --> WAITING_ON: assurance dispatch unavailable
     VALIDATING --> CORRECTION_REQUIRED
     VALIDATING --> EVIDENCE_READY: pass, select next assurance

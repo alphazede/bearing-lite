@@ -41,10 +41,10 @@ export const STATE_OWNERS = Object.freeze({
   IN_PROGRESS: "Assigned worker or coordinator",
   EVIDENCE_READY: "Parent coordinator",
   VALIDATING: "Assurance Test Engineer",
-  REVIEWING: "Park Ranger when required",
+  REVIEWING: "Reviewer when required",
   ACCEPTANCE:
-    "Surveyor, Owner Authority, or parent coordinator when required_assurance is none",
-  CORRECTION_REQUIRED: "Router or nearest parent coordinator",
+    "Integration Engineer execution, Owner Authority, or parent coordinator when required_assurance is none",
+  CORRECTION_REQUIRED: "Orchestrator or nearest parent coordinator",
   OWNER_DECISION_REQUIRED: "Owner Authority",
   COMPLETE: "Parent coordinator after assurance",
   CANCELLED: "Owner Authority or authorized parent",
@@ -149,10 +149,9 @@ describe("CMD-STATE-01 task-state (SEIT-STATE-01)", () => {
   });
 
   /**
-   * Regression: product ACCEPTANCE active owner must preserve Surveyor and Owner
-   * Authority and conditionally name parent coordinator only for
-   * required_assurance: none (design.md / plan-spec written tables).
-   * Fails until task-state.md ACCEPTANCE row is aligned.
+   * Regression: product ACCEPTANCE active owner must preserve Integration
+   * Engineer execution and Owner Authority and conditionally name parent
+   * coordinator only for required_assurance: none.
    */
   it("VALIDATING is owned by Assurance Test Engineer, not Validator", () => {
     const row = TASK_STATE.match(/\|\s*`VALIDATING`\s*\|\s*([^|\n]+)\|/);
@@ -168,8 +167,8 @@ describe("CMD-STATE-01 task-state (SEIT-STATE-01)", () => {
     assert.doesNotMatch(mermaid, /VALIDATING: Validator required/);
     assert.match(mermaid, /Assurance Test Engineer|Test Engineer required/);
     assert.match(TASK_STATE, /Assurance Test Engineer/);
-    assert.match(TASK_STATE, /Park Ranger/);
-    assert.match(TASK_STATE, /Surveyor/);
+    assert.match(TASK_STATE, /Reviewer/);
+    assert.match(TASK_STATE, /Integration Engineer execution/);
     assert.doesNotMatch(
       TASK_STATE,
       /accepted Validator or Park Ranger handoff/
@@ -182,7 +181,7 @@ describe("CMD-STATE-01 task-state (SEIT-STATE-01)", () => {
     const ownerCell = row[1].trim();
 
     // Preserve independent-acceptance owners.
-    assert.match(ownerCell, /Surveyor/);
+    assert.match(ownerCell, /Integration Engineer execution/);
     assert.match(ownerCell, /Owner Authority/);
 
     // Conditionally add parent coordinator for the none-assurance path only.

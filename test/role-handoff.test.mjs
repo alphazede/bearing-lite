@@ -200,14 +200,14 @@ describe("CMD-HANDOFF-01 role-handoff (SEIT-HANDOFF-01)", () => {
   it("negative: narrative-only handoff rejects/reroutes", () => {
     const verdict = validateHandoff({
       plan_ref: "plan",
-      role: "crewmate",
+      role: "implementer",
       subject: "S8-packet-A",
       depends_on: [],
       scope: "test/",
       authority: "S8",
       evidence: "long narrative",
       next_action: "continue",
-      receiving_role: "explorer",
+      receiving_role: "coordinator",
     });
     assert.equal(verdict.ok, false);
     if (!verdict.ok) {
@@ -227,7 +227,7 @@ describe("CMD-HANDOFF-01 role-handoff (SEIT-HANDOFF-01)", () => {
     }
   });
 
-  it("assurance sequence is Assurance Test Engineer, Park Ranger, then Surveyor", () => {
+  it("assurance sequence is Assurance Test Engineer, Reviewer, then Integration Engineer execution", () => {
     const taskState = readFileSync(
       path.join(ROOT, "skills/bearing-lite/references/task-state.md"),
       "utf8"
@@ -241,23 +241,29 @@ describe("CMD-HANDOFF-01 role-handoff (SEIT-HANDOFF-01)", () => {
       "utf8"
     );
     assert.match(taskState, /Assurance Test Engineer/);
+    assert.match(taskState, /Reviewer/);
+    assert.match(taskState, /Integration Engineer execution/);
     assert.match(routing, /Assurance Test Engineer|Test Engineer/);
+    assert.match(routing, /Reviewer/);
+    assert.match(routing, /Integration Engineer execution/);
     assert.match(template, /Assurance Test Engineer|Test Engineer/);
+    assert.match(template, /Reviewer/);
+    assert.match(template, /Integration Engineer execution/);
     assert.doesNotMatch(template, /required_assurance:\s*\[Validator\]/);
   });
 
-  it("Direct and Expedition bound exhaustion name candidate and count", () => {
+  it("Direct and Coordinator-wave bound exhaustion name candidate and count", () => {
     const router = readFileSync(
       path.join(ROOT, "skills/bearing-lite/SKILL.md"),
       "utf8"
     );
-    const explorer = readFileSync(
-      path.join(ROOT, "skills/explorer/SKILL.md"),
+    const coordinator = readFileSync(
+      path.join(ROOT, "skills/coordinator/SKILL.md"),
       "utf8"
     );
     assert.match(router, /Direct route/);
     assert.match(router, /OWNER_DECISION_REQUIRED` naming the candidate and count/);
-    assert.match(explorer, /OWNER_DECISION_REQUIRED` with\s+candidate and count/);
+    assert.match(coordinator, /OWNER_DECISION_REQUIRED` with\s+candidate and count/);
     assert.doesNotMatch(
       router,
       /only when Navigator|requires Navigator to bound|inherited from Bearing's Navigator/i

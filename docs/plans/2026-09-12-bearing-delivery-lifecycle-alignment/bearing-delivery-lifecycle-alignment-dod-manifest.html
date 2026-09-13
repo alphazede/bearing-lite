@@ -1,0 +1,2524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <!-- dod-manifest-template 1.0.1 -->
+  <title>Bearing Delivery Lifecycle Alignment — Definition of Done Manifest</title>
+  <style>
+    :root {
+      --paper: #e7edf1;
+      --panel: #f4f7f9;
+      --panel-strong: #fbfcfd;
+      --ink: #1a2836;
+      --ink-muted: #3d4c5b;
+      --rule: #8a99a8;
+      --rule-strong: #5d6d7c;
+      --accent: #0e5c66;
+      --accent-wash: #d4e4e6;
+      --spine: #0e5c66;
+      --focus: #0e5c66;
+      --pass-ink: #154b36;
+      --pass-fill: #d7ebe2;
+      --pass-rule: #1b5e45;
+      --gap-ink: #6b2a22;
+      --gap-fill: #f3e2dc;
+      --gap-rule: #8b3a30;
+      --hold-ink: #5a4718;
+      --hold-fill: #f0e8d4;
+      --hold-rule: #8a6d28;
+      --na-ink: #3a4550;
+      --na-fill: #e2e6ea;
+      --na-rule: #6a7580;
+      --plan-ink: #1a2836;
+      --plan-fill: #e8eef2;
+      --plan-rule: #5d6d7c;
+      --font-display: Palatino, "Palatino Linotype", "Book Antiqua", "URW Palladio L", "TeX Gyre Pagella", Georgia, serif;
+      --font-body: "Segoe UI", "Liberation Sans", "Nimbus Sans L", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      --space-1: 0.25rem;
+      --space-2: 0.5rem;
+      --space-3: 0.75rem;
+      --space-4: 1rem;
+      --space-5: 1.5rem;
+      --space-6: 2rem;
+      --space-7: 3rem;
+      --measure: 68ch;
+      --content: 74rem;
+      --radius: 2px;
+      --table-min: 46rem;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: var(--font-body);
+      font-size: 1rem;
+      line-height: 1.55;
+      min-height: 100%;
+    }
+
+    :focus { outline: none; }
+    :focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 3px;
+    }
+
+    .skip {
+      position: absolute;
+      left: var(--space-4);
+      top: -3rem;
+      z-index: 20;
+      padding: var(--space-2) var(--space-4);
+      background: var(--panel-strong);
+      color: var(--ink);
+      border: 2px solid var(--accent);
+      text-decoration: underline;
+    }
+    .skip:focus, .skip:focus-visible {
+      top: var(--space-4);
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: underline;
+      text-underline-offset: 0.15em;
+    }
+    a:hover { text-decoration-thickness: 2px; }
+
+    code {
+      font-family: ui-monospace, "Cascadia Mono", "Liberation Mono", Menlo, Consolas, monospace;
+      font-size: 0.92em;
+      white-space: nowrap;
+    }
+
+    .page {
+      max-width: var(--content);
+      margin: 0 auto;
+      padding: var(--space-5) var(--space-5) var(--space-7);
+      border-left: 8px solid var(--spine);
+      min-height: 100vh;
+      background:
+        linear-gradient(180deg, rgba(14, 92, 102, 0.06), rgba(14, 92, 102, 0) 11rem),
+        var(--paper);
+    }
+
+    header.mast {
+      position: relative;
+      padding-bottom: var(--space-5);
+      margin-bottom: var(--space-5);
+      border-bottom: 2px solid var(--ink);
+    }
+
+    .mast-wave {
+      display: block;
+      width: 100%;
+      height: 3.25rem;
+      margin: 0 0 var(--space-4);
+      overflow: visible;
+    }
+
+    .kicker {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+      margin: 0 0 var(--space-4);
+    }
+
+    .stamp {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: 0.2rem 0.55rem;
+      border: 2px solid var(--accent);
+      color: var(--accent);
+      background: var(--panel);
+      font-size: 0.8125rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      line-height: 1.3;
+    }
+    .stamp-warn {
+      border-color: var(--gap-rule);
+      color: var(--gap-ink);
+      background: var(--gap-fill);
+    }
+    .stamp-state {
+      border-style: solid;
+      border-width: 2px 2px 2px 8px;
+    }
+
+    h1 {
+      margin: 0 0 var(--space-3);
+      font-family: var(--font-display);
+      font-size: clamp(1.75rem, 3vw, 2.5rem);
+      font-weight: 700;
+      line-height: 1.15;
+      color: var(--ink);
+      max-width: 28ch;
+    }
+
+    .lede {
+      margin: 0;
+      max-width: var(--measure);
+      color: var(--ink-muted);
+      font-size: 1.0625rem;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 15.5rem minmax(0, 1fr);
+      gap: var(--space-6);
+      align-items: start;
+    }
+
+    nav.toc {
+      position: sticky;
+      top: var(--space-4);
+      padding: var(--space-4);
+      background: var(--panel);
+      border: 1px solid var(--rule);
+      border-left: 4px solid var(--accent);
+    }
+    nav.toc .toc-title {
+      margin: 0 0 var(--space-3);
+      font-family: var(--font-body);
+      font-size: 0.9375rem;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+    nav.toc ol {
+      margin: 0;
+      padding: 0 0 0 1.25rem;
+    }
+    nav.toc li {
+      margin: 0 0 var(--space-2);
+      font-size: 0.875rem;
+      line-height: 1.35;
+    }
+    nav.toc a { color: var(--ink); }
+
+    main { min-width: 0; }
+
+    section.block {
+      margin: 0 0 var(--space-7);
+      scroll-margin-top: var(--space-5);
+    }
+
+    h2 {
+      margin: 0 0 var(--space-4);
+      padding-bottom: var(--space-2);
+      border-bottom: 1px solid var(--rule-strong);
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+    h2 .secno {
+      display: inline-block;
+      min-width: 2.1rem;
+      margin-right: var(--space-2);
+      color: var(--accent);
+      font-family: var(--font-body);
+      font-size: 1rem;
+      font-weight: 700;
+      vertical-align: middle;
+    }
+
+    h3 {
+      margin: var(--space-5) 0 var(--space-3);
+      font-family: var(--font-body);
+      font-size: 1.0625rem;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+
+    p { margin: 0 0 var(--space-4); max-width: var(--measure); }
+    p.wide, .note { max-width: none; }
+
+    .bluf {
+      padding: var(--space-5);
+      background: var(--panel);
+      border: 1px solid var(--rule);
+      border-top: 6px solid var(--accent);
+    }
+    .bluf p:last-child { margin-bottom: 0; }
+    .bluf strong { font-weight: 700; }
+
+    .banner {
+      margin: 0 0 var(--space-4);
+      padding: var(--space-3) var(--space-4);
+      background: var(--gap-fill);
+      border: 2px solid var(--gap-rule);
+      color: var(--gap-ink);
+      max-width: none;
+    }
+
+    dl.meta {
+      display: grid;
+      grid-template-columns: minmax(9rem, 14rem) minmax(0, 1fr);
+      gap: var(--space-2) var(--space-4);
+      margin: 0 0 var(--space-4);
+      padding: var(--space-4);
+      background: var(--panel);
+      border: 1px solid var(--rule);
+    }
+    dl.meta dt {
+      margin: 0;
+      font-weight: 700;
+      color: var(--ink);
+    }
+    dl.meta dd {
+      margin: 0;
+      color: var(--ink);
+      overflow-wrap: break-word;
+    }
+
+    .table-hint {
+      display: none;
+      margin: 0 0 var(--space-2);
+      color: var(--ink-muted);
+      font-size: 0.8125rem;
+    }
+
+    .table-scroll {
+      margin: 0 0 var(--space-4);
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border: 1px solid var(--rule-strong);
+      background: var(--panel-strong);
+    }
+    .table-scroll:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    table {
+      width: 100%;
+      min-width: var(--table-min);
+      border-collapse: collapse;
+      font-size: 0.875rem;
+      line-height: 1.4;
+    }
+    caption {
+      caption-side: top;
+      text-align: left;
+      padding: var(--space-3) var(--space-3) var(--space-2);
+      font-weight: 700;
+      color: var(--ink);
+      background: var(--panel);
+      border-bottom: 1px solid var(--rule);
+    }
+    th, td {
+      padding: 0.55rem 0.7rem;
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid var(--rule);
+      overflow-wrap: break-word;
+      hyphens: manual;
+    }
+    thead th {
+      background: var(--accent-wash);
+      color: var(--ink);
+      font-weight: 700;
+      border-bottom: 2px solid var(--ink);
+    }
+    tbody th {
+      background: transparent;
+      font-weight: 700;
+    }
+    tbody tr:last-child th,
+    tbody tr:last-child td { border-bottom: 0; }
+    th.id, td.id {
+      font-weight: 700;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+    .cell-digest {
+      font-family: ui-monospace, "Liberation Mono", Menlo, Consolas, monospace;
+      font-size: 0.8125rem;
+      overflow-wrap: anywhere;
+    }
+
+    .row-pass { border-left: 6px solid var(--pass-rule); background: var(--pass-fill); }
+    .row-gap { border-left: 6px double var(--gap-rule); background: var(--gap-fill); }
+    .row-hold { border-left: 6px dashed var(--hold-rule); background: var(--hold-fill); }
+    .row-na {
+      border-left: 6px dashed var(--na-rule);
+      background: repeating-linear-gradient(
+        -45deg,
+        var(--na-fill),
+        var(--na-fill) 6px,
+        #eef1f4 6px,
+        #eef1f4 12px
+      );
+    }
+    .row-plan { border-left: 6px solid var(--plan-rule); background: var(--panel-strong); }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.1rem 0.45rem 0.1rem 0.3rem;
+      border: 1.5px solid currentColor;
+      border-radius: var(--radius);
+      font-weight: 700;
+      line-height: 1.25;
+      white-space: nowrap;
+    }
+    .status .mark {
+      display: inline-block;
+      width: 0.7rem;
+      height: 0.7rem;
+      flex: 0 0 0.7rem;
+      background: currentColor;
+    }
+    .status-pass { color: var(--pass-ink); background: var(--panel-strong); }
+    .status-pass .mark { clip-path: none; }
+    .status-gap { color: var(--gap-ink); background: var(--panel-strong); }
+    .status-gap .mark {
+      width: 0.72rem;
+      height: 0.72rem;
+      background: transparent;
+      border: 2px solid currentColor;
+      transform: rotate(45deg);
+    }
+    .status-hold { color: var(--hold-ink); background: var(--panel-strong); }
+    .status-hold .mark {
+      border-radius: 50%;
+      background: transparent;
+      border: 2px solid currentColor;
+    }
+    .status-na { color: var(--na-ink); background: var(--panel-strong); }
+    .status-na .mark {
+      height: 0.18rem;
+      width: 0.75rem;
+      align-self: center;
+    }
+    .status-plan { color: var(--plan-ink); background: var(--panel-strong); }
+    .status-plan .mark {
+      background: transparent;
+      border: 2px solid currentColor;
+    }
+
+    .reason {
+      display: block;
+      margin-top: var(--space-1);
+      color: var(--ink-muted);
+      font-weight: 400;
+      white-space: normal;
+    }
+
+    figure.model {
+      margin: 0 0 var(--space-5);
+      padding: var(--space-4);
+      background: var(--panel-strong);
+      border: 1px solid var(--rule-strong);
+    }
+    .model-scroll {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border: 1px solid var(--rule);
+      background: var(--panel);
+    }
+    .model-scroll:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+    figure.model img {
+      display: block;
+      width: 100%;
+      min-width: 48rem;
+      max-width: none;
+      height: auto;
+      background: var(--panel);
+    }
+    figure.model svg {
+      display: block;
+      width: 100%;
+      min-width: 48rem;
+      max-width: none;
+      height: auto;
+      background: var(--panel);
+    }
+    figcaption {
+      margin-top: var(--space-3);
+      font-size: 0.875rem;
+      line-height: 1.45;
+    }
+    figcaption dl {
+      display: grid;
+      grid-template-columns: minmax(8rem, 11rem) minmax(0, 1fr);
+      gap: var(--space-1) var(--space-3);
+      margin: var(--space-2) 0 0;
+    }
+    figcaption dt { font-weight: 700; }
+    figcaption dd { margin: 0; overflow-wrap: break-word; }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-3) var(--space-5);
+      margin: 0 0 var(--space-4);
+      padding: 0;
+      list-style: none;
+      font-size: 0.875rem;
+    }
+    .legend li { display: flex; align-items: center; gap: var(--space-2); }
+    .swatch {
+      display: inline-block;
+      width: 1.1rem;
+      height: 0.7rem;
+      border: 2px solid var(--ink);
+      background: var(--panel);
+      flex: 0 0 1.1rem;
+    }
+    .swatch-ext { border-style: dashed; }
+    .swatch-flow {
+      height: 0;
+      border-width: 0 0 2px 0;
+      background: transparent;
+      width: 1.4rem;
+    }
+
+    .status-key {
+      margin: var(--space-4) 0 0;
+      padding: var(--space-3) 0 0;
+      border-top: 1px solid var(--rule);
+    }
+    .status-key .legend { margin: 0; }
+
+    ul.plain, ol.plain { margin: 0 0 var(--space-4); max-width: var(--measure); }
+    li { margin-bottom: var(--space-1); }
+
+    footer.colophon {
+      margin-top: var(--space-6);
+      padding-top: var(--space-4);
+      border-top: 2px solid var(--ink);
+      font-size: 0.875rem;
+      color: var(--ink-muted);
+    }
+    footer.colophon p { max-width: none; }
+
+    @media screen and (max-width: 64rem) {
+      .layout {
+        grid-template-columns: 1fr;
+        gap: var(--space-5);
+      }
+      nav.toc { position: static; }
+      nav.toc ol {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+        gap: var(--space-1) var(--space-4);
+        padding-left: 1.25rem;
+      }
+      h1 { max-width: none; }
+    }
+
+    @media screen and (max-width: 52rem) {
+      .table-hint { display: block; }
+    }
+
+    @media screen and (max-width: 40rem) {
+      .page {
+        padding: var(--space-4) var(--space-3) var(--space-6);
+        border-left-width: 6px;
+      }
+      dl.meta,
+      figcaption dl {
+        grid-template-columns: 1fr;
+        gap: 0.15rem 0;
+      }
+      dl.meta dt { margin-top: var(--space-2); }
+      dl.meta dt:first-child { margin-top: 0; }
+    }
+
+    @media print {
+      :root {
+        --paper: #ffffff;
+        --panel: #ffffff;
+        --panel-strong: #ffffff;
+        --accent-wash: #e6ecee;
+      }
+      body { background: #ffffff; color: #000; }
+      .page {
+        max-width: none;
+        padding: 0;
+        border-left: 0;
+        background: #ffffff;
+        min-height: 0;
+      }
+      .skip { display: none; }
+      .mast-wave { height: 1.6rem; margin-bottom: var(--space-3); }
+      header.mast {
+        break-after: avoid;
+        border-bottom-color: #000;
+      }
+      nav.toc {
+        position: static;
+        background: #fff;
+        border: 1px solid #000;
+        break-inside: avoid;
+        padding: 0.6rem 0.8rem;
+        margin: 0 0 1rem;
+      }
+      nav.toc ol {
+        display: block;
+        columns: 2;
+        column-gap: 1.5rem;
+        padding-left: 1.2rem;
+      }
+      nav.toc li { break-inside: avoid; margin-bottom: 0.35rem; }
+      .layout { display: block; }
+      section.block { break-inside: auto; margin-bottom: 1.4rem; }
+      h2 { break-after: avoid; border-bottom-color: #000; }
+      h3 { break-after: avoid; }
+      .banner, dl.meta {
+        background: #fff;
+        break-inside: avoid;
+      }
+      .bluf { background: #fff; }
+      .table-hint { display: none; }
+      .table-scroll {
+        overflow: visible;
+        border-color: #000;
+        break-inside: auto;
+      }
+      table {
+        min-width: 0;
+        font-size: 8.5pt;
+      }
+      thead { display: table-header-group; }
+      tr { break-inside: avoid; }
+      thead th { background: #eee; color: #000; border-bottom-color: #000; }
+      tbody th { background: transparent; }
+      a { color: #000; }
+      .stamp { background: #fff; }
+      .row-pass, .row-gap, .row-hold, .row-na, .row-plan {
+        background: #fff;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+      .row-na {
+        background: repeating-linear-gradient(
+          -45deg,
+          #fff,
+          #fff 5px,
+          #ececec 5px,
+          #ececec 10px
+        );
+      }
+      .model-scroll {
+        overflow: visible;
+        border: 0;
+        background: #fff;
+      }
+      figure.model {
+        background: #fff;
+        break-inside: avoid;
+      }
+      figure.model svg,
+      figure.model img {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        background: #fff;
+      }
+      footer.colophon { break-before: avoid; color: #000; border-top-color: #000; }
+      @page {
+        size: A4;
+        margin: 12mm 10mm 14mm;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="page">
+    <header class="mast">
+      <div class="kicker">
+        <span class="stamp stamp-state">State: closeout</span>
+        <span class="stamp">Template 1.0.1</span>
+        <span class="stamp stamp-warn">Not authority</span>
+      </div>
+      <h1>Bearing Delivery Lifecycle Alignment — Definition of Done Manifest</h1>
+      <p class="lede">Human-readable projection of the source artifacts. The source artifacts remain authoritative.</p>
+    </header>
+    <div class="layout">
+      <nav class="toc" aria-label="Manifest sections">
+        <p class="toc-title" id="toc-title">On this page</p>
+        <ol>
+          <li><a href="#s1">BLUF and Lifecycle state</a></li>
+          <li><a href="#s2">Source, baseline, candidate, and template identity</a></li>
+          <li><a href="#s3">Outcome, scope, exclusions, and Definition of Done</a></li>
+          <li><a href="#s4">Requirements, architecture, design, interfaces, model inventory, and embedded model views</a></li>
+          <li><a href="#s5">Development strategy, task graph, roles, dependencies, and write sets</a></li>
+          <li><a href="#s6">V&amp;V cases, assurance cadence, evidence, and status</a></li>
+          <li><a href="#s7">Documentation impact and completion</a></li>
+          <li><a href="#s8">Risks, gaps, exceptions, anomaly handling, rollback, and recovery</a></li>
+          <li><a href="#s9">Authority, owner decisions, approvals, and closeout status</a></li>
+        </ol>
+      </nav>
+      <main id="main">
+        <section class="block" id="s1" aria-labelledby="h-s1">
+          <h2 id="h-s1"><span class="secno">1</span>BLUF and Lifecycle state</h2>
+          <div class="bluf">
+            <p><strong>Align Bearing Lite around one reviewable delivery lifecycle, deterministic evidence, clear role sessions, portable profiles, and standards-based host support.</strong></p>
+            <p><strong>Lifecycle state.</strong> <span class="status status-plan"><span class="mark" aria-hidden="true"></span>closeout</span></p>
+            <p>This manifest compares authorized intent with planned work, evidence, and gaps. It does not grant execution, acceptance, release, or deployment.</p>
+          <ul class="legend status-key" aria-label="Status key">
+            <li><span class="status status-plan"><span class="mark" aria-hidden="true"></span>Planned</span> not yet evidenced</li>
+            <li><span class="status status-pass"><span class="mark" aria-hidden="true"></span>Confirmed</span> or embedded</li>
+            <li><span class="status status-hold"><span class="mark" aria-hidden="true"></span>Hold</span> waiting on owner or candidate</li>
+            <li><span class="status status-gap"><span class="mark" aria-hidden="true"></span>Gap</span> selected content missing</li>
+            <li><span class="status status-na"><span class="mark" aria-hidden="true"></span>Not applicable</span> with a visible reason</li>
+          </ul>
+          </div>
+        </section>
+
+        <section class="block" id="s2" aria-labelledby="h-s2">
+          <h2 id="h-s2"><span class="secno">2</span>Source, baseline, candidate, and template identity</h2>
+          <dl class="meta">
+            <dt>Lifecycle</dt>
+            <dd><code>BDL-2026-09-12</code></dd>
+            <dt>Repository</dt>
+            <dd><code>alphazede/bearing-lite</code></dd>
+            <dt>Baseline</dt>
+            <dd><code>b5cec79f04f6f6ea506a2ad89bf937aab143d876</code></dd>
+            <dt>Planning candidate</dt>
+            <dd><code>acaeda8cf479fa886b0f0fb4d3028ac781f538fe3a15100867c170a185c54ce6</code></dd>
+            <dt>Manifest file</dt>
+            <dd><code>bearing-delivery-lifecycle-alignment-dod-manifest.html</code></dd>
+            <dt>Template</dt>
+            <dd><code>dod-manifest-v1 1.0.1</code></dd>
+            <dt>Source artifact</dt>
+            <dd><code>implementation.json.dod_manifest</code></dd>
+          </dl>
+        </section>
+
+        <section class="block" id="s3" aria-labelledby="h-s3">
+          <h2 id="h-s3"><span class="secno">3</span>Outcome, scope, exclusions, and Definition of Done</h2>
+          <h3>Planned outcome</h3>
+          <p>A clear input-to-evidence Bearing Delivery Lifecycle with configurable implementation and assurance, deterministic human review, and current portable host contracts.</p>
+          <h3>Scope</h3>
+          <ul class="plain">
+            <li>GitHub issues #87-#91</li>
+            <li>profiles and onboarding</li>
+            <li>roles and sequence</li>
+            <li>DoD Manifest</li>
+            <li>README, specification, and derived views</li>
+            <li>Copilot and Muse support</li>
+          </ul>
+          <h3>Exclusions</h3>
+          <ul class="plain">
+            <li>No historical review.html migration</li>
+            <li>No Reverify download</li>
+            <li>No publication, release, merge, push, or issue closure</li>
+          </ul>
+          <p class="table-hint">Tables scroll horizontally on a narrow screen.</p>
+          <div class="table-scroll" role="region" tabindex="0" aria-labelledby="cap-dod">
+            <table>
+              <caption id="cap-dod">Definition of Done criteria</caption>
+              <thead>
+                <tr>
+                  <th scope="col">ID</th>
+                  <th scope="col">Criterion</th>
+                  <th scope="col">Evidence</th>
+                  <th scope="col">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="row-plan">
+                  <th scope="row" class="id">AC-BDL-001..012</th>
+                  <td>All acceptance contracts pass</td>
+                  <td>SEIT-BDL-001..012</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>PROPOSED</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="block" id="s4" aria-labelledby="h-s4">
+          <h2 id="h-s4"><span class="secno">4</span>Requirements, architecture, design, interfaces, model inventory, and embedded model views</h2>
+          <h3>Requirements and acceptance</h3>
+          <p class="table-hint">Tables scroll horizontally on a narrow screen.</p>
+          <div class="table-scroll" role="region" tabindex="0" aria-labelledby="cap-req">
+            <table>
+              <caption id="cap-req">Requirements and acceptance</caption>
+              <thead>
+                <tr>
+                  <th scope="col">ID</th>
+                  <th scope="col">Statement</th>
+                  <th scope="col">Source</th>
+                  <th scope="col">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="row-plan">
+                  <th scope="row" class="id">AC-BDL-001</th>
+                  <td>One public lifecycle and terminology</td>
+                  <td>technical plan</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>PROPOSED</span></td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">AC-BDL-006</th>
+                  <td>profiles.json is the sole persistent configuration</td>
+                  <td>technical plan</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>PROPOSED</span></td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">AC-BDL-008</th>
+                  <td>Deterministic accessible DoD Manifest</td>
+                  <td>technical plan</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>PROPOSED</span></td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">AC-BDL-010</th>
+                  <td>Agent Plugins, Copilot, and Muse compatibility</td>
+                  <td>technical plan</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>PROPOSED</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>Architecture, design, and interfaces</h3>
+          <p class="table-hint">Tables scroll horizontally on a narrow screen.</p>
+          <div class="table-scroll" role="region" tabindex="0" aria-labelledby="cap-des">
+            <table>
+              <caption id="cap-des">Architecture, design, and interfaces</caption>
+              <thead>
+                <tr>
+                  <th scope="col">ID</th>
+                  <th scope="col">Decision</th>
+                  <th scope="col">Interfaces</th>
+                  <th scope="col">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="row-plan">
+                  <th scope="row" class="id">DES-BDL-001</th>
+                  <td>README projects the lifecycle specification</td>
+                  <td>README ↔ specification ↔ derived views (HTML is the DoD Manifest output only, DEC-BDL-064)</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>PLANNED</span></td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">DES-BDL-004</th>
+                  <td>profiles.json replaces lineup configuration</td>
+                  <td>onboard-bearing → Orchestrator</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>PLANNED</span></td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">DES-BDL-009</th>
+                  <td>Fixed template and stdlib renderer</td>
+                  <td>implementation.json.dod_manifest → HTML</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>PLANNED</span></td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">DES-BDL-011</th>
+                  <td>Portable core plus client namespaces</td>
+                  <td>Agent Plugins / Copilot / Muse</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>PLANNED</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>Model inventory</h3>
+          <p class="table-hint">Tables scroll horizontally on a narrow screen.</p>
+          <div class="table-scroll" role="region" tabindex="0" aria-labelledby="cap-model">
+            <table>
+              <caption id="cap-model">System-model inventory. Systems Modeler owns semantics; this page only projects prepared views.</caption>
+              <thead>
+                <tr>
+                  <th scope="col">ID</th>
+                  <th scope="col">Mode</th>
+                  <th scope="col">Source</th>
+                  <th scope="col">Digest</th>
+                  <th scope="col">Viewpoint</th>
+                  <th scope="col">Trace</th>
+                  <th scope="col">Limitation</th>
+                  <th scope="col">Render</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="row-pass">
+                  <th scope="row" class="id">MODEL-BDL-001</th>
+                  <td>diagram-assisted</td>
+                  <td>design.md § Context, non-normative context sketch</td>
+                  <td class="cell-digest">None</td>
+                  <td>Lifecycle context</td>
+                  <td>AC-BDL-001</td>
+                  <td>Derived human view of the text contracts in design.md. Not a SysML model and not a mandated format: the sketch is illustrative only and no diagram dialect, tool, or modeling format is required (DEC-BDL-064). The rendered view is bound supplementally through closeout.model_views and is digest-checked (DEC-BDL-048).</td>
+                  <td><span class="status status-pass"><span class="mark" aria-hidden="true"></span>READY</span></td>
+                </tr>
+                <tr class="row-pass">
+                  <th scope="row" class="id">MODEL-BDL-002</th>
+                  <td>diagram-assisted</td>
+                  <td>docs/architecture/bearing-process/lifecycle-context.svg and docs/architecture/bearing-process/lifecycle-process-views.svg</td>
+                  <td class="cell-digest">None</td>
+                  <td>Overview, planning, implementation</td>
+                  <td>AC-BDL-001..005</td>
+                  <td>Retained derived SVG views. They are not a native SysML model and must not be presented as one; modeling mode stays configurable and optional and native SysML is preserved where selected. The former docs/architecture/bearing-process/*.html source pages were deleted under DEC-BDL-064 and are not recreated. The rendered view is bound supplementally through closeout.model_views and is digest-checked.</td>
+                  <td><span class="status status-pass"><span class="mark" aria-hidden="true"></span>READY</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>Embedded model views</h3>
+          <figure class="model" id="view-model-bdl-001">
+            <div class="model-scroll" role="region" tabindex="0" aria-label="Lifecycle context">
+            <svg viewBox="0 0 1100 210" role="img" aria-labelledby="model-title model-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="model-title">Bearing Delivery Lifecycle</title>
+  <desc id="model-desc">A Feature Story, Defect, Technical Task, or Change Request flows through Planning, owner authorization, Implementation, and produces a completed result with evidence. Owner changes return to Planning.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#0e5c66" />
+    </marker>
+  </defs>
+  <g font-family="Segoe UI, sans-serif" font-size="18" fill="#1a2836">
+    <rect x="20" y="55" width="210" height="88" rx="4" fill="#fbfcfd" stroke="#5d6d7c" stroke-width="2" />
+    <text x="125" y="84" text-anchor="middle">
+      <tspan x="125">Feature Story / Defect /</tspan>
+      <tspan x="125" dy="25">Technical Task / Change</tspan>
+      <tspan x="125" dy="25">Request</tspan>
+    </text>
+    <rect x="300" y="55" width="150" height="88" rx="4" fill="#d4e4e6" stroke="#0e5c66" stroke-width="3" />
+    <text x="375" y="105" text-anchor="middle" font-weight="700">Planning</text>
+    <rect x="520" y="55" width="180" height="88" rx="4" fill="#f0e8d4" stroke="#8a6d28" stroke-width="3" />
+    <text x="610" y="91" text-anchor="middle" font-weight="700">
+      <tspan x="610">Owner-approved</tspan>
+      <tspan x="610" dy="25">package</tspan>
+    </text>
+    <rect x="770" y="55" width="150" height="88" rx="4" fill="#d4e4e6" stroke="#0e5c66" stroke-width="3" />
+    <text x="845" y="105" text-anchor="middle" font-weight="700">Implementation</text>
+    <rect x="990" y="55" width="95" height="88" rx="4" fill="#d7ebe2" stroke="#1b5e45" stroke-width="3" />
+    <text x="1037" y="91" text-anchor="middle" font-weight="700">
+      <tspan x="1037">Result</tspan>
+      <tspan x="1037" dy="25">+ evidence</tspan>
+    </text>
+  </g>
+  <g stroke="#0e5c66" stroke-width="3" fill="none" marker-end="url(#arrow)">
+    <path d="M230 99 H292" />
+    <path d="M450 99 H512" />
+    <path d="M700 99 H762" />
+    <path d="M920 99 H982" />
+    <path d="M1037 151 C1037 195 375 195 375 151" stroke-dasharray="8 7" />
+  </g>
+  <text x="700" y="190" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" fill="#3d4c5b">Owner change or invalidating discovery returns to Planning</text>
+</svg>
+            </div>
+            <figcaption>
+              <strong>MODEL-BDL-001.</strong> Derived human view of the text contracts in design.md. Not a SysML model and not a mandated format: the sketch is illustrative only and no diagram dialect, tool, or modeling format is required (DEC-BDL-064). The rendered view is bound supplementally through closeout.model_views and is digest-checked (DEC-BDL-048).
+              <dl>
+                <dt>Mode</dt>
+                <dd>diagram-assisted</dd>
+                <dt>Source</dt>
+                <dd>design.md § Context, non-normative context sketch</dd>
+                <dt>Digest</dt>
+                <dd class="cell-digest">sha256:b536039658cb5baa9460902857a437295b6b8cb8c9b9d636f0c96f65af1dde31</dd>
+                <dt>Viewpoint</dt>
+                <dd>Lifecycle context</dd>
+                <dt>Trace links</dt>
+                <dd>AC-BDL-001</dd>
+                <dt>Limitation</dt>
+                <dd>Derived human view of the text contracts in design.md. Not a SysML model and not a mandated format: the sketch is illustrative only and no diagram dialect, tool, or modeling format is required (DEC-BDL-064). The rendered view is bound supplementally through closeout.model_views and is digest-checked (DEC-BDL-048).</dd>
+              </dl>
+            </figcaption>
+          </figure>
+          <figure class="model" id="view-model-bdl-002">
+            <div class="model-scroll" role="region" tabindex="0" aria-label="Overview, planning, implementation">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1312 2114" role="img" aria-labelledby="process-views-title process-views-desc">
+  <title id="process-views-title">Bearing Delivery Lifecycle process views</title>
+  <desc id="process-views-desc">Prepared projection of the approved overview, planning, and implementation process diagrams. Not a SysML semantic model. Overview: Five sequential stages across the software development lifecycle: 01 Work Intake, 02 Lifecycle Planning, 03 Owner Authorization Gate, 04 Lifecycle Implementation, and 05 Completed Result and Evidence. A feedback loop returns requested changes from Owner Authorization back to Planning, an aggregate repair loop operates within in-wave implementation, and a correction path returns findings from Lifecycle-completion system validation to the responsible Implementer. Deployment and release remain under separate authority. Planning: Four sequential planning stages mapping plain SDLC activities to Bearing Delivery Lifecycle roles: 01 Intake and Context (Intake, Architectural Alignment, Scope Definition), 02 Architecture and Integration (Planning and Design, Requirements Engineer when applicable, Systems Modeler, Integration Engineer planning), 03 V&amp;V and Synthesis (Planning Test Engineer, Plan Integrator), and 04 Owner Authorization Gate. An iterative triad between Systems Modeler, Integration Engineer planning, and Planning Test Engineer indicates that linear ordering is unsettled. A feedback loop returns requested changes back to the responsible planning role. Implementation: Implementation lifecycle showing two distinct operational zones: Zone A comprises the repeating declared work-unit loop (01 Baseline Input, 02 Work-Unit Realization with distinct Test Implementer, Product Implementer, and Light Implementer roles, 03 In-Wave V&amp;V and Defect Review with ATE and Reviewer, plus an in-wave repair loop). Zone B comprises the distinct Lifecycle-completion gate (04 Lifecycle-Completion System Validation by Integration Engineer execution running once at Lifecycle completion by default, with a correction path back to Implementers) and 05 Closeout and Evidence Handover. Production release remains under separate authority.</desc>
+  <rect x="0" y="0" width="1312" height="2114" fill="#090d16" />
+  <g font-family="Segoe UI, Helvetica Neue, Arial, sans-serif">
+    <g id="panel-overview">
+      <rect x="8" y="12" width="1296" height="674" rx="10" fill="#090d16" stroke="#233554" stroke-width="1.2" />
+      <rect x="20" y="20" width="132" height="22" rx="4" fill="#0c4a6e" stroke="#0284c7" stroke-width="1" />
+      <text x="86" y="35" fill="#38bdf8" font-size="11" font-weight="700" text-anchor="middle">Overview</text>
+      <g transform="translate(16,48)">
+            <title id="overview-diagram-title">Bearing Delivery Lifecycle Process Overview Diagram</title>
+            <desc id="overview-diagram-desc">
+              Five sequential stages across the software development lifecycle: 01 Work Intake, 02 Lifecycle Planning, 03 Owner Authorization Gate, 04 Lifecycle Implementation, and 05 Completed Result and Evidence. A feedback loop returns requested changes from Owner Authorization back to Planning, an aggregate repair loop operates within in-wave implementation, and a correction path returns findings from Lifecycle-completion system validation to the responsible Implementer. Deployment and release remain under separate authority.
+            </desc>
+
+            <defs>
+              <marker id="overview-arrow-cyan" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#38bdf8" />
+              </marker>
+              <marker id="overview-arrow-emerald" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#10b981" />
+              </marker>
+              <marker id="overview-arrow-rose-up" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#f43f5e" />
+              </marker>
+
+              <lineargradient id="overview-grad-col1" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#14233c" />
+                <stop offset="100%" stop-color="#0c1626" />
+              </lineargradient>
+              <lineargradient id="overview-grad-col2" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#182046" />
+                <stop offset="100%" stop-color="#0f142d" />
+              </lineargradient>
+              <lineargradient id="overview-grad-col3" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#0d2e2b" />
+                <stop offset="100%" stop-color="#071b19" />
+              </lineargradient>
+              <lineargradient id="overview-grad-col4" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#1a1e42" />
+                <stop offset="100%" stop-color="#10132b" />
+              </lineargradient>
+              <lineargradient id="overview-grad-col5" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#152636" />
+                <stop offset="100%" stop-color="#0b1722" />
+              </lineargradient>
+            </defs>
+
+            
+            <rect x="20" y="18" width="175" height="22" rx="4" fill="#0c4a6e" stroke="#0284c7" stroke-width="1" />
+            <text x="107" y="33" fill="#38bdf8" font-size="10" font-weight="700" text-anchor="middle">01 · WORK INTAKE</text>
+
+            <rect x="220" y="18" width="290" height="22" rx="4" fill="#312e81" stroke="#6366f1" stroke-width="1" />
+            <text x="365" y="33" fill="#a5b4fc" font-size="10" font-weight="700" text-anchor="middle">02 · LIFECYCLE PLANNING</text>
+
+            <rect x="535" y="18" width="175" height="22" rx="4" fill="#064e3b" stroke="#10b981" stroke-width="1" />
+            <text x="622" y="33" fill="#6ee7b7" font-size="10" font-weight="700" text-anchor="middle">03 · AUTHORIZATION GATE</text>
+
+            <rect x="735" y="18" width="305" height="22" rx="4" fill="#312e81" stroke="#6366f1" stroke-width="1" />
+            <text x="887" y="33" fill="#a5b4fc" font-size="10" font-weight="700" text-anchor="middle">04 · LIFECYCLE IMPLEMENTATION</text>
+
+            <rect x="1065" y="18" width="195" height="22" rx="4" fill="#0c4a6e" stroke="#0284c7" stroke-width="1" />
+            <text x="1162" y="33" fill="#38bdf8" font-size="10" font-weight="700" text-anchor="middle">05 · RESULT &amp; EVIDENCE</text>
+
+            
+            <g id="overview-box-overview-inputs">
+              <rect x="20" y="48" width="175" height="415" rx="10" fill="url(#overview-grad-col1)" stroke="#0284c7" stroke-width="1.5" />
+              <text x="35" y="74" fill="#f8fafc" font-size="14" font-weight="800">Work Intake</text>
+              <text x="35" y="91" fill="#cbd5e1" font-size="10.5">SDLC Intake &amp; Context</text>
+              <line x1="35" y1="100" x2="180" y2="100" stroke="#1e3a5f" stroke-width="1" />
+
+              <rect x="30" y="108" width="155" height="54" rx="6" fill="#101e33" stroke="#1a3150" stroke-width="1" />
+              <circle cx="42" cy="123" r="3.5" fill="#38bdf8" />
+              <text x="52" y="122" fill="#f8fafc" font-size="10.5" font-weight="700">Incoming Requests</text>
+              <text x="52" y="136" fill="#cbd5e1" font-size="9">Feature Story · Defect</text>
+              <text x="52" y="149" fill="#94a3b8" font-size="8.5">Technical Task · Change Req.</text>
+
+              <rect x="30" y="168" width="155" height="54" rx="6" fill="#101e33" stroke="#1a3150" stroke-width="1" />
+              <circle cx="42" cy="183" r="3.5" fill="#38bdf8" />
+              <text x="52" y="182" fill="#f8fafc" font-size="10.5" font-weight="700">Baseline Context</text>
+              <text x="52" y="196" fill="#cbd5e1" font-size="9">Target repo &amp; branch lease</text>
+              <text x="52" y="209" fill="#94a3b8" font-size="8.5">Checkout baseline location</text>
+
+              <rect x="30" y="228" width="155" height="52" rx="6" fill="#101e33" stroke="#1a3150" stroke-width="1" />
+              <circle cx="42" cy="243" r="3.5" fill="#38bdf8" />
+              <text x="52" y="242" fill="#f8fafc" font-size="10.5" font-weight="700">Scope Definition</text>
+              <text x="52" y="256" fill="#cbd5e1" font-size="9">Included &amp; excluded work</text>
+              <text x="52" y="269" fill="#94a3b8" font-size="8.5">Desired outcome &amp; rules</text>
+
+              <rect x="30" y="286" width="155" height="58" rx="6" fill="#251b0a" stroke="#d97706" stroke-width="1" />
+              <polygon points="40,296 46,306 34,306" fill="#fde68a" />
+              <text x="52" y="302" fill="#fde68a" font-size="8.5" font-weight="700">DISCUSSION POINT</text>
+              <text x="38" y="316" fill="#fde68a" font-size="8.5">Supporting inputs to settle:</text>
+              <text x="38" y="330" fill="#cbd5e1" font-size="8">context, limits &amp; constraints</text>
+
+              <rect x="30" y="352" width="155" height="24" rx="4" fill="#082f49" />
+              <text x="107" y="368" fill="#38bdf8" font-size="9" font-weight="700" text-anchor="middle">Orchestrator Handoff →</text>
+            </g>
+
+            
+            <path d="M 195 240 L 218 240" stroke="#38bdf8" stroke-width="2.5" fill="none" marker-end="url(#overview-arrow-cyan)" />
+
+            
+            <g id="overview-box-overview-planning">
+              <rect x="220" y="48" width="290" height="415" rx="10" fill="url(#overview-grad-col2)" stroke="#6366f1" stroke-width="1.5" />
+              <text x="235" y="74" fill="#f8fafc" font-size="14" font-weight="800">Lifecycle Planning</text>
+              <text x="235" y="91" fill="#a5b4fc" font-size="10.5">Architecture, Design &amp; V&amp;V Planning</text>
+              <line x1="235" y1="100" x2="495" y2="100" stroke="#3730a3" stroke-width="1" />
+
+              <rect x="230" y="108" width="270" height="38" rx="6" fill="#151b3c" stroke="#2e336b" stroke-width="1" />
+              <rect x="238" y="115" width="16" height="16" rx="3" fill="#312e81" />
+              <text x="246" y="127" fill="#a5b4fc" font-size="9" font-weight="800" text-anchor="middle">1</text>
+              <text x="260" y="123" fill="#f8fafc" font-size="10" font-weight="700">Intake, Alignment &amp; Scope</text>
+              <text x="260" y="136" fill="#cbd5e1" font-size="8.5">Intake · Architectural Alignment · Scope Definition</text>
+
+              <rect x="230" y="150" width="270" height="42" rx="6" fill="#151b3c" stroke="#2e336b" stroke-width="1" />
+              <rect x="238" y="158" width="16" height="16" rx="3" fill="#312e81" />
+              <text x="246" y="170" fill="#a5b4fc" font-size="9" font-weight="800" text-anchor="middle">2</text>
+              <text x="260" y="165" fill="#f8fafc" font-size="10" font-weight="700">Planning &amp; Design (Orchestration)</text>
+              <text x="260" y="178" fill="#cbd5e1" font-size="8.5">Planning and Design · Requirements Analysis (when applicable)</text>
+
+              
+              <rect x="230" y="196" width="270" height="142" rx="6" fill="#121735" stroke="#6366f1" stroke-width="1.2" stroke-dasharray="4 3" />
+              <rect x="238" y="202" width="160" height="15" rx="3" fill="#312e81" />
+              <text x="244" y="213" fill="#a5b4fc" font-size="8" font-weight="700">APPROVED ORDER · CONCURRENT SPECIALISTS</text>
+
+              <rect x="236" y="222" width="258" height="30" rx="4" fill="#182046" stroke="#2e336b" stroke-width="1" />
+              <text x="244" y="235" fill="#f8fafc" font-size="9.5" font-weight="700">Systems Modeler</text>
+              <text x="244" y="247" fill="#cbd5e1" font-size="8">Structural views, behavioral models &amp; interfaces</text>
+
+              <rect x="236" y="256" width="258" height="36" rx="4" fill="#182046" stroke="#2e336b" stroke-width="1" />
+              <text x="244" y="269" fill="#f8fafc" font-size="9.5" font-weight="700">Integration Engineer planning</text>
+              <text x="244" y="280" fill="#cbd5e1" font-size="8">Compatibility, interfaces, assembly order, stubs, rollback &amp; recovery</text>
+
+              <rect x="236" y="296" width="258" height="32" rx="4" fill="#182046" stroke="#2e336b" stroke-width="1" />
+              <text x="244" y="309" fill="#f8fafc" font-size="9.5" font-weight="700">Planning Test Engineer</text>
+              <text x="244" y="321" fill="#cbd5e1" font-size="8">SEIT verification &amp; validation plan baseline &amp; harness design</text>
+
+              <rect x="230" y="342" width="270" height="34" rx="6" fill="#151b3c" stroke="#2e336b" stroke-width="1" />
+              <rect x="238" y="349" width="16" height="16" rx="3" fill="#312e81" />
+              <text x="246" y="361" fill="#a5b4fc" font-size="9" font-weight="800" text-anchor="middle">3</text>
+              <text x="260" y="356" fill="#f8fafc" font-size="10" font-weight="700">Work Breakdown &amp; Reconciliation</text>
+              <text x="260" y="368" fill="#cbd5e1" font-size="8.5">Plan Integrator (packets, write sets &amp; execution sequence)</text>
+
+              <rect x="230" y="380" width="270" height="42" rx="6" fill="#1c2552" stroke="#4f46e5" stroke-width="1" />
+              <text x="365" y="394" fill="#c7d2fe" font-size="9" font-weight="700" text-anchor="middle">DELIVERABLE: DEFINITION OF DONE MANIFEST</text>
+              <text x="365" y="406" fill="#94a3b8" font-size="8" text-anchor="middle">&lt;plan-name&gt;-dod-manifest.html (Planning State · Non-authoritative)</text>
+              <text x="365" y="417" fill="#cbd5e1" font-size="7.5" text-anchor="middle">Proposed criteria, integrated plan, traceability, sequence &amp; review status</text>
+            </g>
+
+            
+            <path d="M 510 240 L 533 240" stroke="#38bdf8" stroke-width="2.5" fill="none" marker-end="url(#overview-arrow-cyan)" />
+
+            
+            <g id="overview-box-overview-auth">
+              <rect x="535" y="48" width="175" height="415" rx="10" fill="url(#overview-grad-col3)" stroke="#10b981" stroke-width="1.5" />
+              <text x="548" y="74" fill="#f8fafc" font-size="14" font-weight="800">Owner Gate</text>
+              <text x="548" y="91" fill="#6ee7b7" font-size="10.5">Plan Baseline Review</text>
+              <line x1="548" y1="100" x2="695" y2="100" stroke="#134e4a" stroke-width="1" />
+
+              <rect x="543" y="108" width="159" height="54" rx="6" fill="#0a2521" stroke="#115e59" stroke-width="1" />
+              <text x="622" y="124" fill="#a7f3d0" font-size="10" font-weight="700" text-anchor="middle">Single Decision Gate</text>
+              <text x="622" y="138" fill="#cbd5e1" font-size="8.5" text-anchor="middle">Owner reviews complete plan:</text>
+              <text x="622" y="151" fill="#94a3b8" font-size="8" text-anchor="middle">outcome, design, V&amp;V &amp; DoD Manifest</text>
+
+              <rect x="543" y="168" width="159" height="48" rx="6" fill="#064e3b" stroke="#10b981" stroke-width="1" />
+              <polygon points="555,185 558,193 568,181" fill="none" stroke="#6ee7b7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              <text x="574" y="186" fill="#6ee7b7" font-size="10" font-weight="800">AUTHORIZED</text>
+              <text x="574" y="198" fill="#d1fae5" font-size="8">Dispatches execution</text>
+              <text x="574" y="209" fill="#a7f3d0" font-size="8">Baseline locked</text>
+
+              <rect x="543" y="222" width="159" height="50" rx="6" fill="#380916" stroke="#f43f5e" stroke-width="1" />
+              <circle cx="557" cy="240" r="6" fill="#881337" />
+              <path d="M 557 236 L 557 242 M 557 244 L 557 246" stroke="#fda4af" stroke-width="1.5" stroke-linecap="round" />
+              <text x="568" y="239" fill="#fda4af" font-size="9.5" font-weight="800">CHANGES REQUESTED</text>
+              <text x="568" y="252" fill="#fecdd3" font-size="8">Returns to responsible role</text>
+              <text x="568" y="263" fill="#fda4af" font-size="7.8">Planning feedback loop</text>
+
+              <rect x="543" y="278" width="159" height="52" rx="6" fill="#251b0a" stroke="#d97706" stroke-width="1" />
+              <polygon points="553,288 559,298 547,298" fill="#fde68a" />
+              <text x="564" y="294" fill="#fde68a" font-size="8.5" font-weight="700">DISCUSSION POINT</text>
+              <text x="550" y="309" fill="#cbd5e1" font-size="8">Reviewer configuration</text>
+              <text x="550" y="321" fill="#94a3b8" font-size="7.8">remains under owner review</text>
+
+              <rect x="543" y="336" width="159" height="44" rx="6" fill="#0c231f" stroke="#115e59" stroke-width="1" />
+              <text x="622" y="352" fill="#a7f3d0" font-size="8.5" font-weight="700" text-anchor="middle">NON-AUTHORITY NOTICE</text>
+              <text x="622" y="365" fill="#94a3b8" font-size="7.5" text-anchor="middle">DoD Manifest never grants execution,</text>
+              <text x="622" y="375" fill="#94a3b8" font-size="7.5" text-anchor="middle">acceptance, release or deploy authority</text>
+
+              <rect x="543" y="386" width="159" height="24" rx="4" fill="#047857" />
+              <text x="622" y="402" fill="#ffffff" font-size="9" font-weight="700" text-anchor="middle">Authorized Baseline →</text>
+            </g>
+
+            
+            <path d="M 710 240 L 733 240" stroke="#10b981" stroke-width="2.5" fill="none" marker-end="url(#overview-arrow-emerald)" />
+
+            
+            <g id="overview-box-overview-impl">
+              <rect x="735" y="48" width="305" height="415" rx="10" fill="url(#overview-grad-col4)" stroke="#6366f1" stroke-width="1.5" />
+              <text x="750" y="74" fill="#f8fafc" font-size="14" font-weight="800">Lifecycle Implementation</text>
+              <text x="750" y="91" fill="#a5b4fc" font-size="10.5">Build, Progressive V&amp;V &amp; Validation</text>
+              <line x1="750" y1="100" x2="1025" y2="100" stroke="#3730a3" stroke-width="1" />
+
+              <rect x="745" y="108" width="285" height="66" rx="6" fill="#151b3c" stroke="#2e336b" stroke-width="1" />
+              <rect x="753" y="114" width="16" height="16" rx="3" fill="#312e81" />
+              <text x="761" y="126" fill="#a5b4fc" font-size="9" font-weight="800" text-anchor="middle">1</text>
+              <text x="775" y="122" fill="#f8fafc" font-size="10" font-weight="700">Coordinator &amp; Realization</text>
+              <text x="775" y="135" fill="#cbd5e1" font-size="8.5">Test Implementer (tests &amp; fixtures) · Product Implementer (build)</text>
+              <text x="775" y="147" fill="#94a3b8" font-size="8">Distinct responsibilities · Light Implementer (mechanical work)</text>
+              <text x="775" y="159" fill="#94a3b8" font-size="8">Continuous deterministic checks (lint, format &amp; unit tests)</text>
+
+              <rect x="745" y="180" width="285" height="64" rx="6" fill="#151b3c" stroke="#2e336b" stroke-width="1" />
+              <rect x="753" y="186" width="16" height="16" rx="3" fill="#312e81" />
+              <text x="761" y="198" fill="#a5b4fc" font-size="9" font-weight="800" text-anchor="middle">2</text>
+              <text x="775" y="194" fill="#f8fafc" font-size="10" font-weight="700">In-Wave Assembly &amp; Defect Review</text>
+              <text x="775" y="207" fill="#cbd5e1" font-size="8.5">Assurance Test Engineer (ATE): progressive assembly &amp; V&amp;V</text>
+              <text x="775" y="219" fill="#94a3b8" font-size="8">Reviewer: independent defect evaluation at review boundary</text>
+              <text x="775" y="231" fill="#fda4af" font-size="8">In-wave repair: findings → Implementer (1 round; recheck, no auto rereview)</text>
+
+              <rect x="745" y="250" width="285" height="98" rx="6" fill="#0d2624" stroke="#10b981" stroke-width="1.3" />
+              <rect x="753" y="257" width="16" height="16" rx="3" fill="#047857" />
+              <text x="761" y="269" fill="#6ee7b7" font-size="9" font-weight="800" text-anchor="middle">3</text>
+              <text x="775" y="265" fill="#f8fafc" font-size="10" font-weight="700">System Validation (Lifecycle Completion)</text>
+              <text x="775" y="278" fill="#6ee7b7" font-size="8.8" font-weight="700">Integration Engineer execution session</text>
+              <text x="775" y="291" fill="#cbd5e1" font-size="8.2">Validates whole system against owner-approved outcome</text>
+              <text x="775" y="304" fill="#a7f3d0" font-size="8.2" font-weight="700">RUNS ONCE AT LIFECYCLE COMPLETION BY DEFAULT</text>
+              <text x="775" y="317" fill="#fde68a" font-size="8">Assessment-boundary override requires explicit owner approval</text>
+              <text x="775" y="329" fill="#94a3b8" font-size="7.5">Phase/increment count, resume, or rename is NOT an override</text>
+              <text x="775" y="340" fill="#fda4af" font-size="7.5" font-weight="600">Findings return to Implementer via correction path below</text>
+
+              <rect x="745" y="354" width="285" height="30" rx="4" fill="#29121f" stroke="#f43f5e" stroke-width="1" />
+              <text x="887" y="366" fill="#fda4af" font-size="8.5" font-weight="700" text-anchor="middle">BOUNDED CORRECTION &amp; DETERMINISTIC RECHECK</text>
+              <text x="887" y="377" fill="#cbd5e1" font-size="7.5" text-anchor="middle">Findings return to responsible Implementer without automatic rereview</text>
+
+              <rect x="745" y="390" width="285" height="20" rx="4" fill="#312e81" />
+              <text x="887" y="404" fill="#a5b4fc" font-size="8.5" font-weight="700" text-anchor="middle">Inspect Implementation Detail (Page 03) →</text>
+            </g>
+
+            
+            <path d="M 1040 240 L 1063 240" stroke="#38bdf8" stroke-width="2.5" fill="none" marker-end="url(#overview-arrow-cyan)" />
+
+            
+            <g id="overview-box-overview-output">
+              <rect x="1065" y="48" width="195" height="415" rx="10" fill="url(#overview-grad-col5)" stroke="#0284c7" stroke-width="1.5" />
+              <text x="1080" y="74" fill="#f8fafc" font-size="14" font-weight="800">Result &amp; Evidence</text>
+              <text x="1080" y="91" fill="#38bdf8" font-size="10.5">Completed Change Artifacts</text>
+              <line x1="1080" y1="100" x2="1245" y2="100" stroke="#1e3a5f" stroke-width="1" />
+
+              <rect x="1075" y="108" width="175" height="50" rx="6" fill="#0d2133" stroke="#1e3a5f" stroke-width="1" />
+              <circle cx="1087" cy="123" r="3.5" fill="#38bdf8" />
+              <text x="1097" y="122" fill="#f8fafc" font-size="10" font-weight="700">Target Code Changes</text>
+              <text x="1097" y="136" fill="#cbd5e1" font-size="8.5">Implemented feature or fix</text>
+              <text x="1097" y="148" fill="#94a3b8" font-size="8">Confined to exact write set</text>
+
+              <rect x="1075" y="164" width="175" height="50" rx="6" fill="#0d2133" stroke="#1e3a5f" stroke-width="1" />
+              <circle cx="1087" cy="179" r="3.5" fill="#38bdf8" />
+              <text x="1097" y="178" fill="#f8fafc" font-size="10" font-weight="700">Traceable Evidence</text>
+              <text x="1097" y="192" fill="#cbd5e1" font-size="8.5">V&amp;V test logs &amp; check runs</text>
+              <text x="1097" y="204" fill="#94a3b8" font-size="8">ATE &amp; IE assessment trace</text>
+
+              <rect x="1075" y="220" width="175" height="66" rx="6" fill="#1c2552" stroke="#4f46e5" stroke-width="1" />
+              <text x="1162" y="235" fill="#c7d2fe" font-size="8.5" font-weight="700" text-anchor="middle">DOD MANIFEST: CLOSEOUT</text>
+              <text x="1162" y="248" fill="#94a3b8" font-size="7.5" text-anchor="middle">&lt;plan-name&gt;-dod-manifest.html</text>
+              <text x="1162" y="261" fill="#cbd5e1" font-size="8" text-anchor="middle">Evidence of passed vs open criteria</text>
+              <text x="1162" y="274" fill="#94a3b8" font-size="7.5" text-anchor="middle">Non-authoritative projection</text>
+
+              <rect x="1075" y="292" width="175" height="66" rx="6" fill="#2a1e12" stroke="#d97706" stroke-width="1" />
+              <rect x="1083" y="298" width="98" height="15" rx="3" fill="#b45309" />
+              <text x="1132" y="309" fill="#ffffff" font-size="7.2" font-weight="800" text-anchor="middle">SEPARATE AUTHORITY</text>
+              <text x="1083" y="325" fill="#fde68a" font-size="9.5" font-weight="700">Release &amp; Deploy Gate</text>
+              <text x="1083" y="338" fill="#cbd5e1" font-size="8">Deployment authority is separate</text>
+              <text x="1083" y="350" fill="#94a3b8" font-size="8">from Lifecycle completion.</text>
+
+              <rect x="1075" y="364" width="175" height="34" rx="6" fill="#064e3b" stroke="#10b981" stroke-width="1" />
+              <polygon points="1087,378 1090,384 1097,374" fill="none" stroke="#6ee7b7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              <text x="1105" y="378" fill="#6ee7b7" font-size="9.5" font-weight="800">COMPLETE LIFECYCLE</text>
+              <text x="1105" y="390" fill="#a7f3d0" font-size="8">Verified change + evidence</text>
+            </g>
+
+            
+            <g id="overview-loop-planning-feedback">
+              <path d="M 622 463
+                       L 622 498
+                       Q 622 514 602 514
+                       L 385 514
+                       Q 365 514 365 498
+                       L 365 468" fill="none" stroke="#f43f5e" stroke-width="2.2" stroke-dasharray="7 4" marker-end="url(#overview-arrow-rose-up)" />
+
+              <rect x="390" y="497" width="240" height="32" rx="16" fill="#1f0913" stroke="#f43f5e" stroke-width="1.5" />
+              <circle cx="408" cy="513" r="7" fill="#881337" />
+              <path d="M 411 510 A 3.5 3.5 0 1 0 411 516" fill="none" stroke="#fda4af" stroke-width="1.4" stroke-linecap="round" />
+              <path d="M 411 508 L 411 511 L 408 511" fill="none" stroke="#fda4af" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+              <text x="422" y="509" fill="#fda4af" font-size="8.5" font-weight="800">PLANNING FEEDBACK LOOP</text>
+              <text x="422" y="521" fill="#cbd5e1" font-size="7.5">Requested changes return to responsible planning role</text>
+            </g>
+
+            
+            <g id="overview-path-system-validation-correction">
+              <path d="M 887 463
+                       L 887 550
+                       Q 887 568 867 568
+                       L 795 568
+                       Q 775 568 775 550
+                       L 775 468" fill="none" stroke="#f43f5e" stroke-width="2.2" stroke-dasharray="7 4" marker-end="url(#overview-arrow-rose-up)" />
+
+              <rect x="740" y="552" width="280" height="32" rx="16" fill="#1f0913" stroke="#f43f5e" stroke-width="1.5" />
+              <circle cx="758" cy="568" r="7" fill="#881337" />
+              <path d="M 761 565 A 3.5 3.5 0 1 0 761 571" fill="none" stroke="#fda4af" stroke-width="1.4" stroke-linecap="round" />
+              <path d="M 761 563 L 761 566 L 758 566" fill="none" stroke="#fda4af" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+              <text x="772" y="564" fill="#fda4af" font-size="8.5" font-weight="800">SYSTEM VALIDATION CORRECTION PATH</text>
+              <text x="772" y="576" fill="#cbd5e1" font-size="7.5">Findings return to Implementer for bounded correction &amp; recheck</text>
+            </g>
+
+            <text x="20" y="612" fill="#cbd5e1" font-size="10" font-weight="600">
+              FORWARD FLOW: Work Request Intake → Lifecycle Planning → Owner Authorization Gate → Lifecycle Implementation → Completed Result &amp; Evidence (Release/Deployment Separate)
+            </text>
+          
+      </g>
+    </g>
+    <g id="panel-planning">
+      <rect x="8" y="694" width="1296" height="694" rx="10" fill="#090d16" stroke="#233554" stroke-width="1.2" />
+      <rect x="20" y="702" width="132" height="22" rx="4" fill="#312e81" stroke="#6366f1" stroke-width="1" />
+      <text x="86" y="717" fill="#a5b4fc" font-size="11" font-weight="700" text-anchor="middle">Planning</text>
+      <g transform="translate(16,730)">
+            <title id="planning-diagram-title">Bearing Delivery Lifecycle Planning Process Detail Diagram</title>
+            <desc id="planning-diagram-desc">
+              Four sequential planning stages mapping plain SDLC activities to Bearing Delivery Lifecycle roles: 01 Intake and Context (Intake, Architectural Alignment, Scope Definition), 02 Architecture and Integration (Planning and Design, Requirements Engineer when applicable, Systems Modeler, Integration Engineer planning), 03 V&amp;V and Synthesis (Planning Test Engineer, Plan Integrator), and 04 Owner Authorization Gate. An iterative triad between Systems Modeler, Integration Engineer planning, and Planning Test Engineer indicates that linear ordering is unsettled. A feedback loop returns requested changes back to the responsible planning role.
+            </desc>
+
+            <defs>
+              <marker id="planning-arrow-cyan" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#38bdf8" />
+              </marker>
+              <marker id="planning-arrow-emerald" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#10b981" />
+              </marker>
+              <marker id="planning-arrow-rose-up" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#f43f5e" />
+              </marker>
+
+              <lineargradient id="planning-grad-p1" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#14233c" />
+                <stop offset="100%" stop-color="#0c1626" />
+              </lineargradient>
+              <lineargradient id="planning-grad-p2" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#182046" />
+                <stop offset="100%" stop-color="#0f142d" />
+              </lineargradient>
+              <lineargradient id="planning-grad-p3" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#152636" />
+                <stop offset="100%" stop-color="#0b1722" />
+              </lineargradient>
+              <lineargradient id="planning-grad-p4" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#0d2e2b" />
+                <stop offset="100%" stop-color="#071b19" />
+              </lineargradient>
+            </defs>
+
+            
+            <rect x="20" y="18" width="235" height="22" rx="4" fill="#0c4a6e" stroke="#0284c7" stroke-width="1" />
+            <text x="137" y="33" fill="#38bdf8" font-size="10" font-weight="700" text-anchor="middle">01 · INTAKE &amp; CONTEXT</text>
+
+            <rect x="275" y="18" width="325" height="22" rx="4" fill="#312e81" stroke="#6366f1" stroke-width="1" />
+            <text x="437" y="33" fill="#a5b4fc" font-size="10" font-weight="700" text-anchor="middle">02 · PLANNING, ARCHITECTURE &amp; INTEGRATION</text>
+
+            <rect x="620" y="18" width="275" height="22" rx="4" fill="#0f3b46" stroke="#0d9488" stroke-width="1" />
+            <text x="757" y="33" fill="#5eead4" font-size="10" font-weight="700" text-anchor="middle">03 · V&amp;V &amp; SYNTHESIS</text>
+
+            <rect x="915" y="18" width="240" height="22" rx="4" fill="#064e3b" stroke="#10b981" stroke-width="1" />
+            <text x="1035" y="33" fill="#6ee7b7" font-size="10" font-weight="700" text-anchor="middle">04 · OWNER AUTHORIZATION GATE</text>
+
+            
+            <g id="planning-box-plan-col1">
+              <rect x="20" y="48" width="235" height="435" rx="10" fill="url(#planning-grad-p1)" stroke="#0284c7" stroke-width="1.5" />
+              <text x="35" y="74" fill="#f8fafc" font-size="14" font-weight="800">Intake &amp; Context</text>
+              <text x="35" y="91" fill="#cbd5e1" font-size="10.5">SDLC Scoping &amp; Discovery</text>
+              <line x1="35" y1="100" x2="240" y2="100" stroke="#1e3a5f" stroke-width="1" />
+
+              <rect x="30" y="108" width="215" height="52" rx="6" fill="#101e33" stroke="#1a3150" stroke-width="1" />
+              <rect x="38" y="115" width="18" height="18" rx="3" fill="#0c4a6e" />
+              <text x="47" y="128" fill="#38bdf8" font-size="9.5" font-weight="800" text-anchor="middle">1</text>
+              <text x="64" y="123" fill="#f8fafc" font-size="10.5" font-weight="700">Work Intake</text>
+              <text x="64" y="136" fill="#38bdf8" font-size="9">Orchestrator &amp; Intake</text>
+              <text x="64" y="148" fill="#cbd5e1" font-size="8.2">Confirms target repo, checkout lease,</text>
+              <text x="64" y="157" fill="#94a3b8" font-size="7.8">baseline &amp; planning location</text>
+
+              <rect x="30" y="166" width="215" height="48" rx="6" fill="#101e33" stroke="#1a3150" stroke-width="1" />
+              <rect x="38" y="173" width="18" height="18" rx="3" fill="#0c4a6e" />
+              <text x="47" y="186" fill="#38bdf8" font-size="9.5" font-weight="800" text-anchor="middle">2</text>
+              <text x="64" y="181" fill="#f8fafc" font-size="10.5" font-weight="700">Current-State Alignment</text>
+              <text x="64" y="194" fill="#38bdf8" font-size="9">Architectural Alignment</text>
+              <text x="64" y="206" fill="#cbd5e1" font-size="8.2">Codebase baseline, directory map &amp; context</text>
+
+              <rect x="30" y="220" width="215" height="56" rx="6" fill="#101e33" stroke="#1a3150" stroke-width="1" />
+              <rect x="38" y="227" width="18" height="18" rx="3" fill="#0c4a6e" />
+              <text x="47" y="240" fill="#38bdf8" font-size="9.5" font-weight="800" text-anchor="middle">3</text>
+              <text x="64" y="235" fill="#f8fafc" font-size="10.5" font-weight="700">Stakeholder Scope &amp; Intent</text>
+              <text x="64" y="248" fill="#38bdf8" font-size="9">Scope Definition</text>
+              <text x="64" y="260" fill="#cbd5e1" font-size="8.2">Included &amp; excluded work inside Lifecycle</text>
+              <text x="64" y="271" fill="#94a3b8" font-size="7.8">Constraints &amp; intent; unresolved blocks routing</text>
+
+              <rect x="30" y="282" width="215" height="56" rx="6" fill="#251b0a" stroke="#d97706" stroke-width="1" />
+              <polygon points="40,292 46,302 34,302" fill="#6ee7b7" />
+              <text x="52" y="298" fill="#6ee7b7" font-size="8.5" font-weight="700">SETTLED INPUTS</text>
+              <text x="38" y="312" fill="#cbd5e1" font-size="8.2">Feature Story, Defect, Technical Task,</text>
+              <text x="38" y="324" fill="#cbd5e1" font-size="8">or Change Request</text>
+
+              <rect x="30" y="346" width="215" height="24" rx="4" fill="#082f49" />
+              <text x="137" y="362" fill="#38bdf8" font-size="9" font-weight="700" text-anchor="middle">Intent Settled → Orchestration →</text>
+            </g>
+
+            
+            <path d="M 255 240 L 275 240" stroke="#38bdf8" stroke-width="2.5" fill="none" marker-end="url(#planning-arrow-cyan)" />
+
+            
+            <g id="planning-box-plan-col2">
+              <rect x="275" y="48" width="325" height="435" rx="10" fill="url(#planning-grad-p2)" stroke="#6366f1" stroke-width="1.5" />
+              <text x="290" y="74" fill="#f8fafc" font-size="14" font-weight="800">Architecture &amp; Integration</text>
+              <text x="290" y="91" fill="#a5b4fc" font-size="10.5">SDLC Modeling &amp; Interface Strategy</text>
+              <line x1="290" y1="100" x2="585" y2="100" stroke="#3730a3" stroke-width="1" />
+
+              <rect x="285" y="108" width="305" height="42" rx="6" fill="#151b3c" stroke="#2e336b" stroke-width="1" />
+              <rect x="293" y="115" width="18" height="18" rx="3" fill="#312e81" />
+              <text x="302" y="128" fill="#a5b4fc" font-size="9.5" font-weight="800" text-anchor="middle">4</text>
+              <text x="319" y="123" fill="#f8fafc" font-size="10.5" font-weight="700">Planning Orchestration</text>
+              <text x="319" y="136" fill="#a5b4fc" font-size="9">Planning and Design</text>
+              <text x="319" y="146" fill="#cbd5e1" font-size="8">Coordinates specialist contributions &amp; dependencies</text>
+
+              <rect x="285" y="154" width="305" height="52" rx="6" fill="#151b3c" stroke="#2e336b" stroke-width="1" />
+              <rect x="293" y="161" width="18" height="18" rx="3" fill="#312e81" />
+              <text x="302" y="174" fill="#a5b4fc" font-size="9.5" font-weight="800" text-anchor="middle">5</text>
+              <text x="319" y="169" fill="#f8fafc" font-size="10.5" font-weight="700">Requirements &amp; Acceptance Analysis</text>
+              <text x="319" y="182" fill="#a5b4fc" font-size="9">Requirements Engineer · when applicable</text>
+              <text x="319" y="193" fill="#cbd5e1" font-size="8">Criteria analysis when applicable to scope</text>
+              <text x="319" y="202" fill="#94a3b8" font-size="7.5">Standard SDLC activity; creates no requirements register</text>
+
+              
+              <rect x="285" y="212" width="305" height="160" rx="6" fill="#121735" stroke="#6366f1" stroke-width="1.3" stroke-dasharray="4 3" />
+              <rect x="293" y="218" width="220" height="16" rx="3" fill="#312e81" />
+              <text x="300" y="230" fill="#a5b4fc" font-size="8.5" font-weight="700">APPROVED ORDER · CONCURRENT SPECIALISTS</text>
+
+              <rect x="293" y="238" width="289" height="34" rx="4" fill="#182046" stroke="#2e336b" stroke-width="1" />
+              <text x="301" y="251" fill="#f8fafc" font-size="9.5" font-weight="700">6 · Systems Modeler</text>
+              <text x="301" y="264" fill="#cbd5e1" font-size="8">Structural decomposition, behavioral models &amp; interface boundaries</text>
+
+              <rect x="293" y="276" width="289" height="46" rx="4" fill="#182046" stroke="#2e336b" stroke-width="1" />
+              <text x="301" y="289" fill="#f8fafc" font-size="9.5" font-weight="700">7 · Integration Engineer planning</text>
+              <text x="301" y="301" fill="#a5b4fc" font-size="8.5">Compatibility, interfaces, assembly strategy &amp; order</text>
+              <text x="301" y="313" fill="#cbd5e1" font-size="7.8">Readiness, V&amp;V handoffs, anomaly handling, rollback &amp; recovery planning</text>
+
+              <rect x="293" y="326" width="289" height="38" rx="4" fill="#251b0a" stroke="#d97706" stroke-width="1" />
+              <polygon points="301,334 307,344 295,344" fill="#fde68a" />
+              <text x="313" y="339" fill="#fde68a" font-size="8" font-weight="700">DISCUSSION POINT: SPECIALIST SEQUENCING</text>
+              <text x="301" y="352" fill="#cbd5e1" font-size="7.5">Linear order of Systems Modeler, Planning IE &amp; Planning TE is unsettled</text>
+              <text x="301" y="361" fill="#94a3b8" font-size="7.2">Collaborative feedback relationship shown rather than rigid sequence</text>
+
+              <rect x="285" y="378" width="305" height="24" rx="4" fill="#312e81" />
+              <text x="437" y="394" fill="#a5b4fc" font-size="9" font-weight="700" text-anchor="middle">Design &amp; Strategy to V&amp;V Synthesis →</text>
+            </g>
+
+            
+            <path d="M 582 295 C 610 295, 610 140, 630 140" fill="none" stroke="#a5b4fc" stroke-width="1.8" stroke-dasharray="4 3" marker-end="url(#planning-arrow-cyan)" />
+            <path d="M 630 152 C 605 152, 605 255, 582 255" fill="none" stroke="#5eead4" stroke-width="1.8" stroke-dasharray="4 3" marker-end="url(#planning-arrow-cyan)" />
+
+            
+            <path d="M 600 240 L 620 240" stroke="#38bdf8" stroke-width="2.5" fill="none" marker-end="url(#planning-arrow-cyan)" />
+
+            
+            <g id="planning-box-plan-col3">
+              <rect x="620" y="48" width="275" height="435" rx="10" fill="url(#planning-grad-p3)" stroke="#0d9488" stroke-width="1.5" />
+              <text x="635" y="74" fill="#f8fafc" font-size="14" font-weight="800">V&amp;V &amp; Synthesis</text>
+              <text x="635" y="91" fill="#5eead4" font-size="10.5">SDLC Test Strategy &amp; Work Breakdown</text>
+              <line x1="635" y1="100" x2="880" y2="100" stroke="#134e4a" stroke-width="1" />
+
+              <rect x="630" y="108" width="255" height="56" rx="6" fill="#0d2328" stroke="#155e5b" stroke-width="1" />
+              <rect x="638" y="115" width="18" height="18" rx="3" fill="#0f3b46" />
+              <text x="647" y="128" fill="#5eead4" font-size="9.5" font-weight="800" text-anchor="middle">8</text>
+              <text x="664" y="123" fill="#f8fafc" font-size="10.5" font-weight="700">V&amp;V Planning (SEIT)</text>
+              <text x="664" y="136" fill="#5eead4" font-size="9">Planning Test Engineer (Iterative)</text>
+              <text x="664" y="148" fill="#cbd5e1" font-size="8.2">Test strategies, test harness design &amp; criteria</text>
+              <text x="664" y="159" fill="#94a3b8" font-size="7.8">Verification &amp; validation plan baseline</text>
+
+              <rect x="630" y="170" width="255" height="56" rx="6" fill="#0d2328" stroke="#155e5b" stroke-width="1" />
+              <rect x="638" y="177" width="18" height="18" rx="3" fill="#0f3b46" />
+              <text x="647" y="190" fill="#5eead4" font-size="9.5" font-weight="800" text-anchor="middle">9</text>
+              <text x="664" y="185" fill="#f8fafc" font-size="10.5" font-weight="700">Work Breakdown &amp; Reconciliation</text>
+              <text x="664" y="198" fill="#5eead4" font-size="9">Plan Integrator</text>
+              <text x="664" y="210" fill="#cbd5e1" font-size="8.2">Reconciles model, integration strategy &amp; tests</text>
+              <text x="664" y="221" fill="#94a3b8" font-size="7.8">Constructs bounded execution packets &amp; sequence</text>
+
+              <rect x="630" y="234" width="255" height="120" rx="6" fill="#08282b" stroke="#0d9488" stroke-width="1" />
+              <text x="757" y="252" fill="#5eead4" font-size="9.5" font-weight="700" text-anchor="middle">PLANNING PACKAGE DELIVERABLES</text>
+              <circle cx="646" cy="268" r="2.5" fill="#5eead4" />
+              <text x="656" y="271" fill="#cbd5e1" font-size="8.2">Technical plan &amp; architectural design</text>
+              <circle cx="646" cy="284" r="2.5" fill="#5eead4" />
+              <text x="656" y="287" fill="#cbd5e1" font-size="8.2">SEIT: verification &amp; validation plan</text>
+              <circle cx="646" cy="300" r="2.5" fill="#5eead4" />
+              <text x="656" y="303" fill="#cbd5e1" font-size="8.2">Execution sequence &amp; bounded task packets</text>
+              <circle cx="646" cy="316" r="2.5" fill="#5eead4" />
+              <text x="656" y="319" fill="#fde68a" font-size="8.2" font-weight="600">&lt;plan-name&gt;-dod-manifest.html</text>
+              <text x="656" y="331" fill="#cbd5e1" font-size="7.5">Planning State: proposed criteria &amp; review view</text>
+              <text x="656" y="342" fill="#94a3b8" font-size="7.2">Non-authoritative human-readable projection</text>
+
+              <rect x="630" y="362" width="255" height="24" rx="4" fill="#0f3b46" />
+              <text x="757" y="378" fill="#5eead4" font-size="9" font-weight="700" text-anchor="middle">Package Ready for Review →</text>
+            </g>
+
+            
+            <path d="M 895 240 L 915 240" stroke="#38bdf8" stroke-width="2.5" fill="none" marker-end="url(#planning-arrow-cyan)" />
+
+            
+            <g id="planning-box-plan-col4">
+              <rect x="915" y="48" width="240" height="435" rx="10" fill="url(#planning-grad-p4)" stroke="#10b981" stroke-width="1.5" />
+              <text x="930" y="74" fill="#f8fafc" font-size="14" font-weight="800">Owner Authorization</text>
+              <text x="930" y="91" fill="#6ee7b7" font-size="10.5">SDLC Plan Baseline Review</text>
+              <line x1="930" y1="100" x2="1140" y2="100" stroke="#134e4a" stroke-width="1" />
+
+              <rect x="925" y="108" width="220" height="54" rx="6" fill="#0a2521" stroke="#115e59" stroke-width="1" />
+              <rect x="933" y="115" width="18" height="18" rx="3" fill="#064e3b" />
+              <text x="942" y="128" fill="#6ee7b7" font-size="9.5" font-weight="800" text-anchor="middle">10</text>
+              <text x="958" y="123" fill="#f8fafc" font-size="10.5" font-weight="700">Planning Package Review</text>
+              <text x="958" y="136" fill="#6ee7b7" font-size="9">Owner Review &amp; Sign-Off</text>
+              <text x="958" y="148" fill="#cbd5e1" font-size="8.2">Evaluate completeness, interfaces &amp; criteria</text>
+
+              <rect x="925" y="168" width="220" height="48" rx="6" fill="#064e3b" stroke="#10b981" stroke-width="1" />
+              <polygon points="937,185 940,193 950,181" fill="none" stroke="#6ee7b7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              <text x="956" y="186" fill="#6ee7b7" font-size="10" font-weight="800">AUTHORIZED</text>
+              <text x="956" y="198" fill="#d1fae5" font-size="8.2">Dispatches Lifecycle Implementation</text>
+              <text x="956" y="209" fill="#a7f3d0" font-size="7.8">Plan baseline officially locked</text>
+
+              <rect x="925" y="222" width="220" height="52" rx="6" fill="#380916" stroke="#f43f5e" stroke-width="1" />
+              <circle cx="940" cy="240" r="6" fill="#881337" />
+              <path d="M 940 236 L 940 242 M 940 244 L 940 246" stroke="#fda4af" stroke-width="1.5" stroke-linecap="round" />
+              <text x="954" y="238" fill="#fda4af" font-size="10" font-weight="800">CHANGES REQUESTED</text>
+              <text x="954" y="251" fill="#fecdd3" font-size="8.2">Returns to responsible planning role</text>
+              <text x="954" y="262" fill="#fda4af" font-size="7.8">Via closed feedback loop below</text>
+
+              <rect x="925" y="280" width="220" height="50" rx="6" fill="#251b0a" stroke="#d97706" stroke-width="1" />
+              <polygon points="935,290 941,300 929,300" fill="#fde68a" />
+              <text x="946" y="295" fill="#fde68a" font-size="8.5" font-weight="700">DISCUSSION POINT: REVIEW CONFIG</text>
+              <text x="935" y="309" fill="#cbd5e1" font-size="8">Reviewer configuration remains under review;</text>
+              <text x="935" y="321" fill="#94a3b8" font-size="7.5">no 2-reviewer rule assumed</text>
+
+              <rect x="925" y="336" width="220" height="46" rx="6" fill="#0c231f" stroke="#115e59" stroke-width="1" />
+              <text x="1035" y="352" fill="#a7f3d0" font-size="8.5" font-weight="700" text-anchor="middle">NON-AUTHORITY NOTICE</text>
+              <text x="1035" y="365" fill="#94a3b8" font-size="7.5" text-anchor="middle">DoD Manifest never grants execution, acceptance,</text>
+              <text x="1035" y="375" fill="#94a3b8" font-size="7.5" text-anchor="middle">release, or deployment authority</text>
+
+              <rect x="925" y="390" width="220" height="24" rx="4" fill="#047857" />
+              <text x="1035" y="406" fill="#ffffff" font-size="9" font-weight="700" text-anchor="middle">Dispatch Implementation →</text>
+            </g>
+
+            
+            <path d="M 1155 240 L 1175 240" stroke="#10b981" stroke-width="2.5" fill="none" marker-end="url(#planning-arrow-emerald)" />
+
+            
+            <g id="planning-pass-implementation">
+              <rect x="1178" y="195" width="88" height="90" rx="8" fill="#064e3b" stroke="#10b981" stroke-width="1.5" />
+              <circle cx="1222" cy="222" r="12" fill="#047857" />
+              <polygon points="1215,222 1219,228 1229,218" fill="none" stroke="#6ee7b7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              <text x="1222" y="248" fill="#6ee7b7" font-size="9.5" font-weight="800" text-anchor="middle">AUTHORIZED</text>
+              <text x="1222" y="260" fill="#d1fae5" font-size="7.5" text-anchor="middle">To Implementation</text>
+              <text x="1222" y="271" fill="#a7f3d0" font-size="7.2" text-anchor="middle">(Page 03)</text>
+            </g>
+
+            
+            <g id="planning-loop-planning-feedback-detail">
+              <path d="M 1035 483
+                       L 1035 528
+                       Q 1035 546 1015 546
+                       L 457 546
+                       Q 437 546 437 528
+                       L 437 488" fill="none" stroke="#f43f5e" stroke-width="2.2" stroke-dasharray="7 4" marker-end="url(#planning-arrow-rose-up)" />
+
+              <rect x="460" y="528" width="530" height="34" rx="17" fill="#1f0913" stroke="#f43f5e" stroke-width="1.5" />
+              <circle cx="478" cy="545" r="8" fill="#881337" />
+              <path d="M 481 541 A 4 4 0 1 0 481 549" fill="none" stroke="#fda4af" stroke-width="1.5" stroke-linecap="round" />
+              <path d="M 481 539 L 481 543 L 477 543" fill="none" stroke="#fda4af" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+              <text x="495" y="541" fill="#fda4af" font-size="8.5" font-weight="800">FEEDBACK LOOP: Requested changes / missing decisions → responsible planning role</text>
+              <text x="495" y="554" fill="#cbd5e1" font-size="7.5">Returns to Scope Definition (intent/scope), Systems Modeler (architecture), IE planning (interfaces), or TE planning (V&amp;V)</text>
+            </g>
+
+            <text x="20" y="615" fill="#cbd5e1" font-size="10" font-weight="600">
+              PLANNING PIPELINE: Intake → Architectural Alignment → Scope Definition → Planning and Design → specialist planning → Plan Integrator → owner authorization
+            </text>
+          
+      </g>
+    </g>
+    <g id="panel-implementation">
+      <rect x="8" y="1396" width="1296" height="714" rx="10" fill="#090d16" stroke="#233554" stroke-width="1.2" />
+      <rect x="20" y="1404" width="168" height="22" rx="4" fill="#064e3b" stroke="#10b981" stroke-width="1" />
+      <text x="104" y="1419" fill="#6ee7b7" font-size="11" font-weight="700" text-anchor="middle">Implementation</text>
+      <g transform="translate(16,1432)">
+            <title id="implementation-diagram-title">Bearing Delivery Lifecycle Implementation Process Detail Diagram</title>
+            <desc id="implementation-diagram-desc">
+              Implementation lifecycle showing two distinct operational zones: Zone A comprises the repeating declared work-unit loop (01 Baseline Input, 02 Work-Unit Realization with distinct Test Implementer, Product Implementer, and Light Implementer roles, 03 In-Wave V&amp;V and Defect Review with ATE and Reviewer, plus an in-wave repair loop). Zone B comprises the distinct Lifecycle-completion gate (04 Lifecycle-Completion System Validation by Integration Engineer execution running once at Lifecycle completion by default, with a correction path back to Implementers) and 05 Closeout and Evidence Handover. Production release remains under separate authority.
+            </desc>
+
+            <defs>
+              <marker id="implementation-arrow-cyan" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#38bdf8" />
+              </marker>
+              <marker id="implementation-arrow-emerald" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#10b981" />
+              </marker>
+              <marker id="implementation-arrow-rose-up" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#f43f5e" />
+              </marker>
+
+              <lineargradient id="implementation-grad-i1" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#14233c" />
+                <stop offset="100%" stop-color="#0c1626" />
+              </lineargradient>
+              <lineargradient id="implementation-grad-i2" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#182046" />
+                <stop offset="100%" stop-color="#0f142d" />
+              </lineargradient>
+              <lineargradient id="implementation-grad-i3" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#152636" />
+                <stop offset="100%" stop-color="#0b1722" />
+              </lineargradient>
+              <lineargradient id="implementation-grad-i4" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#0d2e2b" />
+                <stop offset="100%" stop-color="#071b19" />
+              </lineargradient>
+              <lineargradient id="implementation-grad-i5" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#152636" />
+                <stop offset="100%" stop-color="#0b1722" />
+              </lineargradient>
+            </defs>
+
+            
+            <rect x="20" y="10" width="775" height="495" rx="12" fill="none" stroke="#233554" stroke-width="1.2" stroke-dasharray="5 5" />
+            <text x="35" y="24" fill="#38bdf8" font-size="9" font-weight="800">ZONE A: REPEATING DECLARED WORK-UNIT CYCLE (PHASES / WAVES)</text>
+
+            <rect x="810" y="10" width="450" height="495" rx="12" fill="none" stroke="#10b981" stroke-width="1.2" stroke-dasharray="5 5" />
+            <text x="825" y="24" fill="#6ee7b7" font-size="9" font-weight="800">ZONE B: DISTINCT LIFECYCLE-COMPLETION GATE &amp; CLOSEOUT</text>
+
+            
+            <rect x="25" y="32" width="145" height="20" rx="4" fill="#0c4a6e" stroke="#0284c7" stroke-width="1" />
+            <text x="97" y="46" fill="#38bdf8" font-size="9.5" font-weight="700" text-anchor="middle">01 · BASELINE INPUT</text>
+
+            <rect x="195" y="32" width="280" height="20" rx="4" fill="#312e81" stroke="#6366f1" stroke-width="1" />
+            <text x="335" y="46" fill="#a5b4fc" font-size="9.5" font-weight="700" text-anchor="middle">02 · WORK-UNIT REALIZATION</text>
+
+            <rect x="495" y="32" width="285" height="20" rx="4" fill="#0f3b46" stroke="#0d9488" stroke-width="1" />
+            <text x="637" y="46" fill="#5eead4" font-size="9.5" font-weight="700" text-anchor="middle">03 · IN-WAVE V&amp;V &amp; REVIEW</text>
+
+            <rect x="825" y="32" width="265" height="20" rx="4" fill="#064e3b" stroke="#10b981" stroke-width="1" />
+            <text x="957" y="46" fill="#6ee7b7" font-size="9.5" font-weight="700" text-anchor="middle">04 · SYSTEM VALIDATION</text>
+
+            <rect x="1105" y="32" width="145" height="20" rx="4" fill="#0c4a6e" stroke="#0284c7" stroke-width="1" />
+            <text x="1177" y="46" fill="#38bdf8" font-size="9.5" font-weight="700" text-anchor="middle">05 · CLOSEOUT &amp; EVIDENCE</text>
+
+            
+            <g id="implementation-box-impl-col1">
+              <rect x="25" y="58" width="155" height="415" rx="10" fill="url(#implementation-grad-i1)" stroke="#0284c7" stroke-width="1.5" />
+              <text x="38" y="82" fill="#f8fafc" font-size="13.5" font-weight="800">Authorized Plan</text>
+              <text x="38" y="98" fill="#cbd5e1" font-size="10.5">Execution Baseline</text>
+              <line x1="38" y1="106" x2="168" y2="106" stroke="#1e3a5f" stroke-width="1" />
+
+              <rect x="33" y="114" width="139" height="48" rx="6" fill="#101e33" stroke="#1a3150" stroke-width="1" />
+              <circle cx="43" cy="128" r="3" fill="#38bdf8" />
+              <text x="52" y="127" fill="#f8fafc" font-size="10" font-weight="700">Approved Baseline</text>
+              <text x="52" y="140" fill="#cbd5e1" font-size="8.5">Agreed design &amp; sequence</text>
+              <text x="52" y="151" fill="#94a3b8" font-size="8">Owner-authorized plan</text>
+
+              <rect x="33" y="168" width="139" height="48" rx="6" fill="#101e33" stroke="#1a3150" stroke-width="1" />
+              <circle cx="43" cy="182" r="3" fill="#38bdf8" />
+              <text x="52" y="181" fill="#f8fafc" font-size="10" font-weight="700">Packet Boundaries</text>
+              <text x="52" y="194" fill="#cbd5e1" font-size="8.5">Assigned write sets</text>
+              <text x="52" y="205" fill="#94a3b8" font-size="8">Explicit repository limits</text>
+
+              <rect x="33" y="222" width="139" height="48" rx="6" fill="#101e33" stroke="#1a3150" stroke-width="1" />
+              <circle cx="43" cy="236" r="3" fill="#38bdf8" />
+              <text x="52" y="235" fill="#f8fafc" font-size="10" font-weight="700">V&amp;V Requirements</text>
+              <text x="52" y="248" fill="#cbd5e1" font-size="8.5">SEIT acceptance tests</text>
+              <text x="52" y="259" fill="#94a3b8" font-size="8">Verification criteria</text>
+
+              <rect x="33" y="276" width="139" height="48" rx="6" fill="#101e33" stroke="#1a3150" stroke-width="1" />
+              <circle cx="43" cy="290" r="3" fill="#38bdf8" />
+              <text x="52" y="289" fill="#f8fafc" font-size="10" font-weight="700">Checkout Lease</text>
+              <text x="52" y="302" fill="#cbd5e1" font-size="8.5">Active lease confirmed</text>
+              <text x="52" y="313" fill="#94a3b8" font-size="8">Exclusive target branch</text>
+
+              <rect x="33" y="336" width="139" height="24" rx="4" fill="#082f49" />
+              <text x="102" y="352" fill="#38bdf8" font-size="9" font-weight="700" text-anchor="middle">Dispatch Work Unit →</text>
+            </g>
+
+            
+            <path d="M 180 240 L 195 240" stroke="#38bdf8" stroke-width="2.5" fill="none" marker-end="url(#implementation-arrow-cyan)" />
+
+            
+            <g id="implementation-box-impl-col2">
+              <rect x="195" y="58" width="280" height="415" rx="10" fill="url(#implementation-grad-i2)" stroke="#6366f1" stroke-width="1.5" />
+              <text x="208" y="82" fill="#f8fafc" font-size="13.5" font-weight="800">Work-Unit Realization</text>
+              <text x="208" y="98" fill="#a5b4fc" font-size="10.5">Coordinator, Test Authorship &amp; Build</text>
+              <line x1="208" y1="106" x2="465" y2="106" stroke="#3730a3" stroke-width="1" />
+
+              <rect x="205" y="112" width="260" height="30" rx="4" fill="#1b234b" stroke="#3730a3" stroke-width="1" />
+              <text x="214" y="125" fill="#a5b4fc" font-size="9" font-weight="800">Coordinator</text>
+              <text x="275" y="125" fill="#cbd5e1" font-size="8.2">Coordinates approved in-wave packet execution</text>
+
+              <rect x="205" y="148" width="260" height="52" rx="6" fill="#151b3c" stroke="#2e336b" stroke-width="1" />
+              <rect x="213" y="155" width="18" height="18" rx="3" fill="#312e81" />
+              <text x="222" y="168" fill="#a5b4fc" font-size="9.5" font-weight="800" text-anchor="middle">1</text>
+              <text x="237" y="163" fill="#f8fafc" font-size="10.5" font-weight="700">Test Development</text>
+              <text x="237" y="176" fill="#a5b4fc" font-size="9">Test Implementer</text>
+              <text x="237" y="188" fill="#cbd5e1" font-size="8.2">Authors executable tests &amp; fixtures; distinct from product</text>
+
+              <rect x="205" y="206" width="260" height="50" rx="6" fill="#151b3c" stroke="#2e336b" stroke-width="1" />
+              <rect x="213" y="213" width="18" height="18" rx="3" fill="#312e81" />
+              <text x="222" y="226" fill="#a5b4fc" font-size="9.5" font-weight="800" text-anchor="middle">2</text>
+              <text x="237" y="221" fill="#f8fafc" font-size="10.5" font-weight="700">Feature Build</text>
+              <text x="237" y="234" fill="#a5b4fc" font-size="9">Product Implementer</text>
+              <text x="237" y="246" fill="#cbd5e1" font-size="8.2">Implements product within assigned write set</text>
+
+              <rect x="205" y="262" width="260" height="44" rx="6" fill="#151b3c" stroke="#2e336b" stroke-width="1" />
+              <rect x="213" y="269" width="18" height="18" rx="3" fill="#312e81" />
+              <text x="222" y="282" fill="#a5b4fc" font-size="9.5" font-weight="800" text-anchor="middle">3</text>
+              <text x="237" y="277" fill="#f8fafc" font-size="10.5" font-weight="700">Mechanical Work Slices</text>
+              <text x="237" y="290" fill="#a5b4fc" font-size="9">Light Implementer</text>
+              <text x="237" y="300" fill="#cbd5e1" font-size="8">Approved deterministic, scaffold or bind packets</text>
+
+              <rect x="205" y="312" width="260" height="44" rx="6" fill="#151b3c" stroke="#2e336b" stroke-width="1" />
+              <rect x="213" y="319" width="18" height="18" rx="3" fill="#312e81" />
+              <text x="222" y="332" fill="#a5b4fc" font-size="9.5" font-weight="800" text-anchor="middle">4</text>
+              <text x="237" y="327" fill="#f8fafc" font-size="10.5" font-weight="700">Continuous / Focused Verification</text>
+              <text x="237" y="340" fill="#a5b4fc" font-size="9">Assigned Deterministic Checks</text>
+              <text x="237" y="350" fill="#cbd5e1" font-size="8">Local test suites, linting &amp; format validation</text>
+
+              <rect x="205" y="364" width="260" height="24" rx="4" fill="#312e81" />
+              <text x="335" y="380" fill="#a5b4fc" font-size="9.5" font-weight="700" text-anchor="middle">Candidate Ready for Verification →</text>
+            </g>
+
+            
+            <path d="M 475 240 L 495 240" stroke="#38bdf8" stroke-width="2.5" fill="none" marker-end="url(#implementation-arrow-cyan)" />
+
+            
+            <g id="implementation-box-impl-col3">
+              <rect x="495" y="58" width="285" height="415" rx="10" fill="url(#implementation-grad-i3)" stroke="#0d9488" stroke-width="1.5" />
+              <text x="508" y="82" fill="#f8fafc" font-size="13.5" font-weight="800">Verification &amp; Review</text>
+              <text x="508" y="98" fill="#5eead4" font-size="10.5">SDLC Integration &amp; Defect Discovery</text>
+              <line x1="508" y1="106" x2="768" y2="106" stroke="#134e4a" stroke-width="1" />
+
+              <rect x="505" y="112" width="265" height="64" rx="6" fill="#0d2328" stroke="#155e5b" stroke-width="1" />
+              <rect x="513" y="119" width="18" height="18" rx="3" fill="#0f3b46" />
+              <text x="522" y="132" fill="#5eead4" font-size="9.5" font-weight="800" text-anchor="middle">5</text>
+              <text x="537" y="127" fill="#f8fafc" font-size="10.5" font-weight="700">Component Assembly &amp; V&amp;V</text>
+              <text x="537" y="140" fill="#5eead4" font-size="9">Assurance Test Engineer (ATE)</text>
+              <text x="537" y="152" fill="#cbd5e1" font-size="8.2">Assembles/configures approved elements in verification env</text>
+              <text x="537" y="163" fill="#94a3b8" font-size="7.8">Exercises interfaces &amp; evaluates V&amp;V evidence</text>
+              <text x="537" y="173" fill="#fda4af" font-size="7.5">Product/test repairs return to appropriate Implementer</text>
+
+              <rect x="505" y="182" width="265" height="54" rx="6" fill="#0d2328" stroke="#155e5b" stroke-width="1" />
+              <rect x="513" y="189" width="18" height="18" rx="3" fill="#0f3b46" />
+              <text x="522" y="202" fill="#5eead4" font-size="9.5" font-weight="800" text-anchor="middle">6</text>
+              <text x="537" y="197" fill="#f8fafc" font-size="10.5" font-weight="700">Independent Defect Review</text>
+              <text x="537" y="210" fill="#5eead4" font-size="9">Reviewer · when declared</text>
+              <text x="537" y="222" fill="#cbd5e1" font-size="8.2">Reviews introduced defects at review boundary in fresh session</text>
+              <text x="537" y="232" fill="#94a3b8" font-size="7.8">Objective code review; no author self-review</text>
+
+              <rect x="505" y="242" width="265" height="70" rx="6" fill="#29121f" stroke="#f43f5e" stroke-width="1" />
+              <text x="637" y="258" fill="#fda4af" font-size="9" font-weight="700" text-anchor="middle">BOUNDED REPAIR POLICY (1 ROUND)</text>
+              <text x="637" y="272" fill="#cbd5e1" font-size="8.2" text-anchor="middle">Findings aggregate → responsible Implementer role</text>
+              <text x="637" y="285" fill="#cbd5e1" font-size="8" text-anchor="middle">Product or Test Implementer repairs code or tests</text>
+              <text x="637" y="298" fill="#fda4af" font-size="8" text-anchor="middle">Deterministic recheck without automatic rereview</text>
+
+              <rect x="505" y="322" width="265" height="34" rx="4" fill="#0f3b46" />
+              <text x="637" y="337" fill="#5eead4" font-size="9" font-weight="700" text-anchor="middle">Next Declared Work Unit (Wave) OR</text>
+              <text x="637" y="349" fill="#a7f3d0" font-size="8.2" text-anchor="middle">Advance to Lifecycle-End Gate →</text>
+            </g>
+
+            
+            <path d="M 637 458
+                     L 637 492
+                     Q 637 508 617 508
+                     L 355 508
+                     Q 335 508 335 492
+                     L 335 463" fill="none" stroke="#f43f5e" stroke-width="2.2" stroke-dasharray="7 4" marker-end="url(#implementation-arrow-rose-up)" />
+
+            <rect x="355" y="492" width="265" height="32" rx="16" fill="#1f0913" stroke="#f43f5e" stroke-width="1.5" />
+            <circle cx="372" cy="508" r="7" fill="#881337" />
+            <text x="385" y="504" fill="#fda4af" font-size="8.5" font-weight="800">IN-WAVE REPAIR LOOP</text>
+            <text x="385" y="516" fill="#cbd5e1" font-size="7.5">Aggregate findings → repair role → deterministic recheck</text>
+
+            
+            <path d="M 780 240 L 825 240" stroke="#10b981" stroke-width="2.8" fill="none" marker-end="url(#implementation-arrow-emerald)" />
+
+            
+            <g id="implementation-box-impl-col4">
+              <rect x="825" y="58" width="265" height="415" rx="10" fill="url(#implementation-grad-i4)" stroke="#10b981" stroke-width="1.8" />
+              <text x="838" y="82" fill="#f8fafc" font-size="13.5" font-weight="800">System Validation</text>
+              <text x="838" y="98" fill="#6ee7b7" font-size="10.5">SDLC Final Integrated Assessment</text>
+              <line x1="838" y1="106" x2="1075" y2="106" stroke="#134e4a" stroke-width="1" />
+
+              <rect x="835" y="112" width="245" height="82" rx="6" fill="#0a2521" stroke="#115e59" stroke-width="1.2" />
+              <rect x="843" y="119" width="18" height="18" rx="3" fill="#064e3b" />
+              <text x="852" y="132" fill="#6ee7b7" font-size="9.5" font-weight="800" text-anchor="middle">7</text>
+              <text x="867" y="127" fill="#f8fafc" font-size="10.5" font-weight="700">Lifecycle-End System Validation</text>
+              <text x="867" y="140" fill="#6ee7b7" font-size="9">Integration Engineer execution</text>
+              <text x="867" y="152" fill="#d1fae5" font-size="8.2">Final system-level validation of the whole result</text>
+              <text x="867" y="164" fill="#a7f3d0" font-size="8.2">Validates against owner-approved outcome</text>
+              <text x="867" y="176" fill="#6ee7b7" font-size="8.2" font-weight="700">RUNS ONCE AT LIFECYCLE COMPLETION BY DEFAULT</text>
+              <text x="867" y="188" fill="#fda4af" font-size="7.5" font-weight="600">Findings return to Implementer via correction path</text>
+
+              <rect x="835" y="200" width="245" height="84" rx="6" fill="#251b0a" stroke="#d97706" stroke-width="1" />
+              <polygon points="845,210 851,220 839,220" fill="#fde68a" />
+              <text x="857" y="215" fill="#fde68a" font-size="8.2" font-weight="700">CONFIGURABLE CADENCE OVERRIDE</text>
+              <text x="845" y="229" fill="#cbd5e1" font-size="7.8">An explicit owner-approved override in the</text>
+              <text x="845" y="240" fill="#cbd5e1" font-size="7.8">approved lifecycle plan can modify this default.</text>
+              <text x="845" y="252" fill="#cbd5e1" font-size="7.8">Override values are slice, phase, or lifecycle.</text>
+              <text x="845" y="264" fill="#fde68a" font-size="7.6" font-weight="600">NOT AN OVERRIDE: Phase count, increment count,</text>
+              <text x="845" y="275" fill="#fde68a" font-size="7.6" font-weight="600">resume, rename, model or route change.</text>
+
+              <rect x="835" y="290" width="245" height="44" rx="6" fill="#0d2e2b" stroke="#134e4a" stroke-width="1" />
+              <text x="845" y="305" fill="#a7f3d0" font-size="8.8" font-weight="700">Integrated Technical Assessment</text>
+              <text x="845" y="318" fill="#cbd5e1" font-size="7.8">Evaluates complete candidate integrity,</text>
+              <text x="845" y="328" fill="#94a3b8" font-size="7.8">cross-component interfaces &amp; receipts</text>
+
+              <rect x="835" y="342" width="245" height="24" rx="4" fill="#047857" />
+              <text x="957" y="358" fill="#ffffff" font-size="9" font-weight="700" text-anchor="middle">Validation Complete → Closeout →</text>
+            </g>
+
+            
+            <path d="M 1090 240 L 1105 240" stroke="#10b981" stroke-width="2.5" fill="none" marker-end="url(#implementation-arrow-emerald)" />
+
+            
+            <g id="implementation-box-impl-col5">
+              <rect x="1105" y="58" width="145" height="415" rx="10" fill="url(#implementation-grad-i5)" stroke="#0284c7" stroke-width="1.5" />
+              <text x="1118" y="82" fill="#f8fafc" font-size="13.5" font-weight="800">Closeout</text>
+              <text x="1118" y="98" fill="#38bdf8" font-size="10.5">SDLC Handover</text>
+              <line x1="1118" y1="106" x2="1240" y2="106" stroke="#1e3a5f" stroke-width="1" />
+
+              <rect x="1112" y="112" width="131" height="46" rx="6" fill="#0d2133" stroke="#1e3a5f" stroke-width="1" />
+              <circle cx="1122" cy="126" r="3" fill="#38bdf8" />
+              <text x="1130" y="125" fill="#f8fafc" font-size="9.5" font-weight="700">Target Changes</text>
+              <text x="1130" y="138" fill="#cbd5e1" font-size="8">Verified code changes</text>
+              <text x="1130" y="148" fill="#94a3b8" font-size="7.5">Confined to exact write set</text>
+
+              <rect x="1112" y="164" width="131" height="46" rx="6" fill="#0d2133" stroke="#1e3a5f" stroke-width="1" />
+              <circle cx="1122" cy="178" r="3" fill="#38bdf8" />
+              <text x="1130" y="177" fill="#f8fafc" font-size="9.5" font-weight="700">Traceable Evidence</text>
+              <text x="1130" y="190" fill="#cbd5e1" font-size="8">V&amp;V receipts &amp; test logs</text>
+              <text x="1130" y="200" fill="#94a3b8" font-size="7.5">IE assessment record</text>
+
+              <rect x="1112" y="216" width="131" height="66" rx="6" fill="#1c2552" stroke="#4f46e5" stroke-width="1" />
+              <text x="1177" y="230" fill="#c7d2fe" font-size="8" font-weight="700" text-anchor="middle">DOD MANIFEST</text>
+              <text x="1177" y="242" fill="#94a3b8" font-size="7.2" text-anchor="middle">&lt;plan-name&gt;-dod-manifest.html</text>
+              <text x="1177" y="254" fill="#cbd5e1" font-size="7.5" text-anchor="middle">Closeout: passed vs open</text>
+              <text x="1177" y="266" fill="#94a3b8" font-size="7.2" text-anchor="middle">Non-authoritative</text>
+
+              <rect x="1112" y="288" width="131" height="74" rx="6" fill="#2a1e12" stroke="#d97706" stroke-width="1" />
+              <rect x="1118" y="294" width="95" height="15" rx="3" fill="#b45309" />
+              <text x="1165" y="305" fill="#ffffff" font-size="7" font-weight="800" text-anchor="middle">SEPARATE AUTHORITY</text>
+              <text x="1118" y="321" fill="#fde68a" font-size="9" font-weight="700">Deploy Gate</text>
+              <text x="1118" y="333" fill="#cbd5e1" font-size="7.5">Release/deployment</text>
+              <text x="1118" y="343" fill="#94a3b8" font-size="7.2">requires explicit separate</text>
+              <text x="1118" y="353" fill="#94a3b8" font-size="7.2">owner authority.</text>
+
+              <rect x="1112" y="368" width="131" height="42" rx="6" fill="#064e3b" stroke="#10b981" stroke-width="1" />
+              <polygon points="1122,388 1125,394 1132,384" fill="none" stroke="#6ee7b7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+              <text x="1138" y="386" fill="#6ee7b7" font-size="8.5" font-weight="800">COMPLETE</text>
+              <text x="1138" y="398" fill="#a7f3d0" font-size="7.2">Verified candidate</text>
+            </g>
+
+            
+            <g id="implementation-path-system-validation-correction-impl">
+              <path d="M 957 473
+                       L 957 565
+                       Q 957 585 937 585
+                       L 270 585
+                       Q 250 585 250 565
+                       L 250 473" fill="none" stroke="#f43f5e" stroke-width="2.2" stroke-dasharray="7 4" marker-end="url(#implementation-arrow-rose-up)" />
+
+              <rect x="420" y="568" width="510" height="34" rx="17" fill="#1f0913" stroke="#f43f5e" stroke-width="1.5" />
+              <circle cx="438" cy="585" r="8" fill="#881337" />
+              <path d="M 441 581 A 4 4 0 1 0 441 589" fill="none" stroke="#fda4af" stroke-width="1.5" stroke-linecap="round" />
+              <path d="M 441 579 L 441 583 L 437 583" fill="none" stroke="#fda4af" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+              <text x="455" y="581" fill="#fda4af" font-size="8.5" font-weight="800">LIFECYCLE-COMPLETION SYSTEM VALIDATION CORRECTION PATH</text>
+              <text x="455" y="594" fill="#cbd5e1" font-size="7.5">System-level findings return to responsible Implementer for bounded correction &amp; deterministic recheck</text>
+            </g>
+
+            <text x="25" y="635" fill="#cbd5e1" font-size="10" font-weight="600">
+              IMPLEMENTATION FLOW: Baseline Input → Work-Unit Realization (Test &amp; Build) → In-Wave V&amp;V &amp; Review → System Validation → Closeout
+            </text>
+          
+      </g>
+    </g>
+  </g>
+</svg>
+            </div>
+            <figcaption>
+              <strong>MODEL-BDL-002.</strong> Retained derived SVG views. They are not a native SysML model and must not be presented as one; modeling mode stays configurable and optional and native SysML is preserved where selected. The former docs/architecture/bearing-process/*.html source pages were deleted under DEC-BDL-064 and are not recreated. The rendered view is bound supplementally through closeout.model_views and is digest-checked.
+              <dl>
+                <dt>Mode</dt>
+                <dd>diagram-assisted</dd>
+                <dt>Source</dt>
+                <dd>docs/architecture/bearing-process/lifecycle-context.svg and docs/architecture/bearing-process/lifecycle-process-views.svg</dd>
+                <dt>Digest</dt>
+                <dd class="cell-digest">sha256:89a483da076bdaa98eba2a1c190876810963aa7bbca2aa6c7955153dd95b4f7d</dd>
+                <dt>Viewpoint</dt>
+                <dd>Overview, planning, implementation</dd>
+                <dt>Trace links</dt>
+                <dd>AC-BDL-001..005</dd>
+                <dt>Limitation</dt>
+                <dd>Retained derived SVG views. They are not a native SysML model and must not be presented as one; modeling mode stays configurable and optional and native SysML is preserved where selected. The former docs/architecture/bearing-process/*.html source pages were deleted under DEC-BDL-064 and are not recreated. The rendered view is bound supplementally through closeout.model_views and is digest-checked.</dd>
+              </dl>
+            </figcaption>
+          </figure>
+        </section>
+
+        <section class="block" id="s5" aria-labelledby="h-s5">
+          <h2 id="h-s5"><span class="secno">5</span>Development strategy, task graph, roles, dependencies, and write sets</h2>
+          <dl class="meta">
+            <dt>Development strategy</dt>
+            <dd><code>single_implementer</code></dd>
+            <dt>Concurrency</dt>
+            <dd>Dispatch every dependency-ready, proven-independent task within host and resource limits.</dd>
+          </dl>
+          <h3>Task graph</h3>
+          <p class="table-hint">Tables scroll horizontally on a narrow screen.</p>
+          <div class="table-scroll" role="region" tabindex="0" aria-labelledby="cap-task">
+            <table>
+              <caption id="cap-task">Implementation tasks, roles, dependencies, and exact write sets</caption>
+              <thead>
+                <tr>
+                  <th scope="col">ID</th>
+                  <th scope="col">Role</th>
+                  <th scope="col">Depends on</th>
+                  <th scope="col">Write set</th>
+                  <th scope="col">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="row-plan">
+                  <th scope="row" class="id">S1</th>
+                  <td>Implementer</td>
+                  <td>none</td>
+                  <td>profile, role/session, migration, and resume semantics</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>author-verified PASS after owner disposition and W1-B helper repair</span></td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">S1L</th>
+                  <td>Light Implementer</td>
+                  <td>S1</td>
+                  <td>approved moves, removals, empty catalog, unchanged prompt copy</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>author receipt PASS_MECHANICAL</span></td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">S2</th>
+                  <td>Implementer</td>
+                  <td>S1L</td>
+                  <td>verification schema, adapter, roles, tests</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>author receipt PASS_FOCUSED</span></td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">S3</th>
+                  <td>Implementer</td>
+                  <td>S1L</td>
+                  <td>template, renderer, manifest tests</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>author receipt PASS_FOCUSED</span></td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">S3L</th>
+                  <td>Light Implementer</td>
+                  <td>S3</td>
+                  <td>generated DoD Manifest only</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>mechanical render PASS; RENDER_CHECK_PASS</span></td>
+                </tr>
+                <tr class="row-gap">
+                  <th scope="row" class="id">S4</th>
+                  <td>Implementer</td>
+                  <td>S1L</td>
+                  <td>README and public docs</td>
+                  <td><span class="status status-gap"><span class="mark" aria-hidden="true"></span>author-verified PASS after W1-A; GAP-BDL-001..003 resolved</span></td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">S5</th>
+                  <td>Implementer</td>
+                  <td>S2,S3L,S4</td>
+                  <td>plugin and host compatibility contracts</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>author-verified PASS after W1-C</span></td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">S5L</th>
+                  <td>Light Implementer</td>
+                  <td>S5</td>
+                  <td>version sync, package inventory, and runbook evidence</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>author-verified CANDIDATE_READY on approved Deep Code fallback; PHASE-1 complete</span></td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">S6</th>
+                  <td>Test Engineer / assurance</td>
+                  <td>S5L</td>
+                  <td>assurance evidence</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>PASS; exact-candidate independent assurance, 417/417 tests, and owner visual evidence close SEIT-BDL-012</span></td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">S7</th>
+                  <td>Reviewer</td>
+                  <td>S6</td>
+                  <td>review evidence</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>ACCEPT; no grounded actionable introduced defects; focused review 102/102</span></td>
+                </tr>
+                <tr class="row-gap">
+                  <th scope="row" class="id">S8</th>
+                  <td>Integration Engineer / execution</td>
+                  <td>S7</td>
+                  <td>integration evidence and closeout projection</td>
+                  <td><span class="status status-gap"><span class="mark" aria-hidden="true"></span>CANDIDATE_READY / PASS; no material system-level gaps</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>Roles and routes</h3>
+          <p class="table-hint">Tables scroll horizontally on a narrow screen.</p>
+          <div class="table-scroll" role="region" tabindex="0" aria-labelledby="cap-lineup">
+            <table>
+              <caption id="cap-lineup">Role and session routing</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Role</th>
+                  <th scope="col">Session</th>
+                  <th scope="col">Configured primary</th>
+                  <th scope="col">Effective route</th>
+                  <th scope="col">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="row-plan">
+                  <th scope="row" class="id">Router</th>
+                  <td>planning control</td>
+                  <td>not catalogued</td>
+                  <td>current Codex session</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>OBSERVED</span></td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">Plan Integrator</th>
+                  <td>planning</td>
+                  <td>Claude Code / Opus 5 / high</td>
+                  <td>Claude Code / Opus 5 / high</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>OWNER ROUTING EXCEPTION</span></td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">Test Engineer</th>
+                  <td>planning</td>
+                  <td>Claude Code / Opus / high</td>
+                  <td>Claude Code / Opus 5 / high</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>OWNER ROUTING EXCEPTION</span></td>
+                </tr>
+                <tr class="row-pass">
+                  <th scope="row" class="id">Scribe</th>
+                  <td>planning and implementation</td>
+                  <td>AGY / AGY default</td>
+                  <td>AGY / AGY default</td>
+                  <td><span class="status status-pass"><span class="mark" aria-hidden="true"></span>READY</span></td>
+                </tr>
+                <tr class="row-hold">
+                  <th scope="row" class="id">Systems Modeler</th>
+                  <td>planning</td>
+                  <td>Claude Code / Fable / medium</td>
+                  <td>Codex CLI / gpt-6-astra / medium</td>
+                  <td><span class="status status-hold"><span class="mark" aria-hidden="true"></span>CLAUDE RUN HOLD</span></td>
+                </tr>
+                <tr class="row-pass">
+                  <th scope="row" class="id">Integration Engineer</th>
+                  <td>planning</td>
+                  <td>Codex CLI / gpt-6-astra / medium</td>
+                  <td>Codex CLI / gpt-6-astra / medium</td>
+                  <td><span class="status status-pass"><span class="mark" aria-hidden="true"></span>READY</span></td>
+                </tr>
+                <tr class="row-pass">
+                  <th scope="row" class="id">Requirements Engineer</th>
+                  <td>planning</td>
+                  <td>Codex CLI / gpt-5.6-sol / medium</td>
+                  <td>Codex CLI / gpt-5.6-sol / medium</td>
+                  <td><span class="status status-pass"><span class="mark" aria-hidden="true"></span>READY</span></td>
+                </tr>
+                <tr class="row-hold">
+                  <th scope="row" class="id">Implementer</th>
+                  <td>implementation</td>
+                  <td>Claude Code / Opus / high</td>
+                  <td>Grok Build / harness default</td>
+                  <td><span class="status status-hold"><span class="mark" aria-hidden="true"></span>CLAUDE RUN HOLD</span></td>
+                </tr>
+                <tr class="row-pass">
+                  <th scope="row" class="id">Light Implementer</th>
+                  <td>implementation</td>
+                  <td>AGY / AGY default</td>
+                  <td>AGY / AGY default</td>
+                  <td><span class="status status-pass"><span class="mark" aria-hidden="true"></span>READY</span></td>
+                </tr>
+                <tr class="row-pass">
+                  <th scope="row" class="id">Coordinator</th>
+                  <td>implementation</td>
+                  <td>AGY / AGY default</td>
+                  <td>AGY / AGY default</td>
+                  <td><span class="status status-pass"><span class="mark" aria-hidden="true"></span>READY</span></td>
+                </tr>
+                <tr class="row-hold">
+                  <th scope="row" class="id">Test Engineer</th>
+                  <td>assurance</td>
+                  <td>Claude Code / Opus / high</td>
+                  <td>Grok Build / harness default</td>
+                  <td><span class="status status-hold"><span class="mark" aria-hidden="true"></span>CLAUDE RUN HOLD</span></td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">Reviewer</th>
+                  <td>implementation review</td>
+                  <td>Claude Code / Opus / high</td>
+                  <td>Codex CLI / gpt-6-astra / medium</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>OWNER ROUTE AMENDMENT</span></td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">Integration Engineer</th>
+                  <td>execution</td>
+                  <td>Codex CLI / gpt-6-astra / high</td>
+                  <td>Codex CLI / gpt-6-astra / high</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>OWNER ROUTE AMENDMENT</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="block" id="s6" aria-labelledby="h-s6">
+          <h2 id="h-s6"><span class="secno">6</span>V&amp;V cases, assurance cadence, evidence, and pass/fail status</h2>
+          <dl class="meta">
+            <dt>Test Engineer assurance</dt>
+            <dd><code>phase</code></dd>
+            <dt>Reviewer</dt>
+            <dd><code>phase</code></dd>
+            <dt>Integration Engineer execution</dt>
+            <dd><code>lifecycle</code></dd>
+          </dl>
+          <p class="table-hint">Tables scroll horizontally on a narrow screen.</p>
+          <div class="table-scroll" role="region" tabindex="0" aria-labelledby="cap-seit">
+            <table>
+              <caption id="cap-seit">SEIT cases and projected evidence</caption>
+              <thead>
+                <tr>
+                  <th scope="col">ID</th>
+                  <th scope="col">Method</th>
+                  <th scope="col">Cadence</th>
+                  <th scope="col">Evidence</th>
+                  <th scope="col">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="row-plan">
+                  <th scope="row" class="id">SEIT-BDL-001</th>
+                  <td>analysis and inspection</td>
+                  <td>phase</td>
+                  <td>pending</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>PLANNED</span></td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">SEIT-BDL-002</th>
+                  <td>schema validation</td>
+                  <td>phase</td>
+                  <td>pending</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>PLANNED</span></td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">SEIT-BDL-003</th>
+                  <td>deterministic render comparison</td>
+                  <td>phase</td>
+                  <td>pending</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>PLANNED</span></td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">SEIT-BDL-004..008</th>
+                  <td>tests, inspection, demonstration, evaluation</td>
+                  <td>phase/lifecycle</td>
+                  <td>pending</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>PLANNED</span></td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">SEIT-BDL-009..011</th>
+                  <td>deterministic absence, preservation, and model-view state checks</td>
+                  <td>phase</td>
+                  <td>pending</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>PLANNED</span></td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">SEIT-BDL-012</th>
+                  <td>human-observed presentation demonstration (CMD-BDL-VISUAL, owner-performed only)</td>
+                  <td>lifecycle</td>
+                  <td>none; agent local-file browser navigation is policy-blocked</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>INCONCLUSIVE</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="block" id="s7" aria-labelledby="h-s7">
+          <h2 id="h-s7"><span class="secno">7</span>Documentation impact and completion</h2>
+          <p class="table-hint">Tables scroll horizontally on a narrow screen.</p>
+          <div class="table-scroll" role="region" tabindex="0" aria-labelledby="cap-doc">
+            <table>
+              <caption id="cap-doc">Documentation impact, timing, and verification</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Surface</th>
+                  <th scope="col">Impact</th>
+                  <th scope="col">Owner</th>
+                  <th scope="col">Timing</th>
+                  <th scope="col">Verification</th>
+                  <th scope="col">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="row-plan">
+                  <th scope="row" class="id">README</th>
+                  <td>rewrite onboarding and orientation</td>
+                  <td>S4</td>
+                  <td>before assurance</td>
+                  <td>CMD-BDL-DOCS</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>PLANNED</span></td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">Specification and derived views</th>
+                  <td>publish one consistent lifecycle; retarget links and expectations that still name the deleted process HTML pages without recreating them</td>
+                  <td>S4</td>
+                  <td>before assurance</td>
+                  <td>CMD-BDL-DOCS</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>PLANNED</span></td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">Role and configuration reference</th>
+                  <td>replace stale contracts</td>
+                  <td>S1</td>
+                  <td>before public rewrite</td>
+                  <td>CMD-BDL-TEST</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>PLANNED</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="block" id="s8" aria-labelledby="h-s8">
+          <h2 id="h-s8"><span class="secno">8</span>Risks, gaps, exceptions, anomaly handling, rollback, and recovery</h2>
+          <p class="table-hint">Tables scroll horizontally on a narrow screen.</p>
+          <div class="table-scroll" role="region" tabindex="0" aria-labelledby="cap-risk">
+            <table>
+              <caption id="cap-risk">Risks, gaps, exceptions, anomaly handling, rollback, and recovery</caption>
+              <thead>
+                <tr>
+                  <th scope="col">ID</th>
+                  <th scope="col">Risk</th>
+                  <th scope="col">Control</th>
+                  <th scope="col">Recovery</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Current mitigation</th>
+                  <th scope="col">Current evidence</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="row-plan">
+                  <th scope="row" class="id">RISK-BDL-001</th>
+                  <td>Distributed terminology drifts</td>
+                  <td>focused conformance tests</td>
+                  <td>repair shared vocabulary once</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>CLOSED_MITIGATED</span></td>
+                  <td>Public lifecycle and role vocabulary are covered by focused conformance tests; repair remains bounded to shared vocabulary if drift recurs.</td>
+                  <td>test/public-boundary.test.mjs and test/skills-conformance.test.mjs</td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">RISK-BDL-002</th>
+                  <td>Host capability is overstated</td>
+                  <td>official docs and host-native validation</td>
+                  <td>mark unsupported enforcement procedural</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>CLOSED_MITIGATED</span></td>
+                  <td>README and host mapping distinguish partial-hook, skills-only, UI/TUI, and unavailable-local support. Copilot VS Code now has native Test Engineering channels; unsupported controls remain procedural.</td>
+                  <td>docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/host-compatibility/phase3-host-validation.json sha256:cb9c633469460dbcf51c4c449df05d18a3f6a842e8802e9ba5c6286bf2525ded</td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">RISK-BDL-003</th>
+                  <td>Renderer output varies or embeds unsafe content</td>
+                  <td>escaping, sanitization, deterministic check</td>
+                  <td>reject and rerender</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>CLOSED_MITIGATED</span></td>
+                  <td>Renderer 1.0.1 adds a restrictive self-contained CSP while preserving escaping, SVG/CSS sanitization, external-resource rejection, and byte-identical regeneration.</td>
+                  <td>templates/dod-manifest-v1.html; tools/render-dod-manifest.mjs; test/dod-manifest.test.mjs</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="block" id="s9" aria-labelledby="h-s9">
+          <h2 id="h-s9"><span class="secno">9</span>Authority, owner decisions, approvals, and closeout status</h2>
+          <p>Closeout is append-only over the owner-approved planning projection. Changing planning content requires an explicit owner-approved plan amendment. This page does not grant execution, acceptance, release, or deployment.</p>
+          <p class="table-hint">Tables scroll horizontally on a narrow screen.</p>
+          <div class="table-scroll" role="region" tabindex="0" aria-labelledby="cap-auth">
+            <table>
+              <caption id="cap-auth">Authority, decisions, and approvals</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Event</th>
+                  <th scope="col">Owner</th>
+                  <th scope="col">Evidence</th>
+                  <th scope="col">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="row-pass">
+                  <th scope="row" class="id">Scope decisions</th>
+                  <td>Human owner</td>
+                  <td>DEC-BDL-001..071</td>
+                  <td><span class="status status-pass"><span class="mark" aria-hidden="true"></span>CONFIRMED</span></td>
+                </tr>
+                <tr class="row-pass">
+                  <th scope="row" class="id">Implementation start</th>
+                  <td>Human owner</td>
+                  <td>DEC-BDL-060: the owner confirmed the integrated DoD Manifest was already approved and directed implementation to continue without repeating planning review. DEC-BDL-062 lifted the later execution stop. Recorded as PENDING until this reconciliation.</td>
+                  <td><span class="status status-pass"><span class="mark" aria-hidden="true"></span>CONFIRMED</span></td>
+                </tr>
+                <tr class="row-pass">
+                  <th scope="row" class="id">Planning-repair amendment</th>
+                  <td>Human owner</td>
+                  <td>DEC-BDL-066: bounded planning-document reconciliation on Claude Code / Opus 5 / high, including deletion of the two superseded manifest previews. No planning review reopened.</td>
+                  <td><span class="status status-pass"><span class="mark" aria-hidden="true"></span>CONFIRMED</span></td>
+                </tr>
+                <tr class="row-pass">
+                  <th scope="row" class="id">Execution route amendment</th>
+                  <td>Human owner</td>
+                  <td>DEC-BDL-068: three Grok Build Wave 1 Implementers; S7 Codex gpt-6-astra medium; S8 Codex gpt-6-astra high.</td>
+                  <td><span class="status status-pass"><span class="mark" aria-hidden="true"></span>CONFIRMED</span></td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">Wave 1 implementation</th>
+                  <td>Orchestrator</td>
+                  <td>W1-A, W1-B, and W1-C CANDIDATE_READY receipts; integrated Node 400/400; plan-package PASS; package dry-run PASS.</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>AUTHOR VERIFIED</span></td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">PHASE-1 assembly</th>
+                  <td>Orchestrator</td>
+                  <td>S5L CANDIDATE_READY on approved Deep Code fallback after AGY environment failure; package version 0.2.2; 17/17 Muse skills; package inventory 68 entries.</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>AUTHOR VERIFIED</span></td>
+                </tr>
+                <tr class="row-pass">
+                  <th scope="row" class="id">S6 assurance</th>
+                  <td>Test Engineer assurance + Human owner</td>
+                  <td>All executable cases independently PASS in s6-assurance.json; DEC-BDL-073 and the separate owner observation close SEIT-BDL-012 PASS without another assurance run. S7 ready.</td>
+                  <td><span class="status status-pass"><span class="mark" aria-hidden="true"></span>PASS</span></td>
+                </tr>
+                <tr class="row-hold">
+                  <th scope="row" class="id">Owner acceptance of the result</th>
+                  <td>Human owner</td>
+                  <td>No candidate has been accepted. S5L, S6 assurance, S7 review, and S8 integration assessment have not run.</td>
+                  <td><span class="status status-hold"><span class="mark" aria-hidden="true"></span>PENDING</span></td>
+                </tr>
+                <tr class="row-pass">
+                  <th scope="row" class="id">Publication and release</th>
+                  <td>Human owner</td>
+                  <td>Technical-plan exclusions; journey.json planning_repair_authority.publication = not_authorized</td>
+                  <td><span class="status status-pass"><span class="mark" aria-hidden="true"></span>NOT AUTHORIZED</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>Closeout actuals</h3>
+          <p class="table-hint">Tables scroll horizontally on a narrow screen.</p>
+          <div class="table-scroll" role="region" tabindex="0" aria-labelledby="cap-close">
+            <table>
+              <caption id="cap-close">Append-only closeout</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Candidate</th>
+                  <th scope="col">Changed paths</th>
+                  <th scope="col">Evidence</th>
+                  <th scope="col">Open gaps</th>
+                  <th scope="col">Owner acceptance</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="row-plan">
+                  <th scope="row" class="id"><span class="status status-plan"><span class="mark" aria-hidden="true"></span>product-tree-sha256:884508aa264255746674a2865e6abc264dc68f07010e239b4bc4e5c22267535d</span></th>
+                  <td>.codex-plugin/plugin.json, .cursor-plugin/plugin.json, .grok-plugin/plugin.json, .kimi-plugin/plugin.json, CONTRIBUTING.md, README.md, com.github.copilot/hooks/hooks.json, docs/architecture/bearing-delivery-lifecycle.md, docs/architecture/bearing-process/lifecycle-context.svg, docs/architecture/bearing-process/lifecycle-process-views.svg, docs/guides/lifecycle.md, docs/guides/onboarding.md, docs/guides/roles.md, docs/guides/troubleshooting.md, docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/bearing-delivery-lifecycle-alignment-dod-manifest.html, docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/bearing-delivery-lifecycle-alignment-technical-plan.md, docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/design.md, docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/assurance/phase3-s6-assurance-final.json, docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/assurance/phase3-s6-assurance-post-repair.json, docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/assurance/phase3-s6-assurance.json, docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/assurance/phase3-seit-bdl-012-owner-observation.json, docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/assurance/s6-assurance.json, docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/assurance/seit-bdl-012-owner-observation.json, docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/host-compatibility/phase3-host-validation.json, docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/implementation/phase3-implementation.json, docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/integration/phase3-s8-integration.json, docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/integration/s8-integration.json, docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/repair/phase3-manifest-completion-view.json, docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/repair/phase3-manifest-status-repair.json, docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/repair/s7-repair-closure.json, docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/review/phase3-s7-review.json, docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/review/s7-review.json, docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/implementation-handoff.md, docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/implementation.json, docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/journey.json, docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/seit.json, docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/workspace.md, docs/releases/acknowledgements.md, docs/releases/announcement.md, hooks/assurance-budget.cjs, hooks/com.anthropic.claude-code/mapping.md, hooks/plan-package.cjs, hooks/policy.cjs, hooks/profiles.cjs, hooks/te-host.cjs, hooks/transition-order.cjs, hooks/verification.cjs, lineups.json, package.json, plugin.json, profiles.json, schemas/implementation.schema.json, schemas/journey.schema.json, schemas/lineups.schema.json, schemas/profiles.schema.json, schemas/verification.schema.json, skills/architectural-alignment/SKILL.md, skills/architectural-alignment/templates/workspace.md, skills/bearing-lite/SKILL.md, skills/bearing-lite/references/assurance-policy.md, skills/bearing-lite/references/lineups.md, skills/bearing-lite/references/owner-stops.md, skills/bearing-lite/references/peer-synthesis.md, skills/bearing-lite/references/profiles.md, skills/bearing-lite/references/resume.md, skills/bearing-lite/references/review-policy.md, skills/bearing-lite/references/role-routing.mmd, skills/bearing-lite/references/task-state.md, skills/bearing-lite/references/task-state.mmd, skills/bearing-lite/references/verification.md, skills/bearing-lite/templates/task.md, skills/coordinator/SKILL.md, skills/crewmate/SKILL.md, skills/explorer/SKILL.md, skills/gather-supplies/SKILL.md, skills/implementer/SKILL.md, skills/intake/SKILL.md, skills/integration-engineer/SKILL.md, skills/light-implementer/SKILL.md, skills/map-the-route/SKILL.md, skills/map-the-route/references/artifact-grammar.md, skills/navigator/SKILL.md, skills/onboard-bearing/SKILL.md, skills/park-ranger/SKILL.md, skills/plan-integrator/SKILL.md, skills/planning-and-design/SKILL.md, skills/planning-and-design/references/artifact-grammar.md, skills/prompt/SKILL.md, skills/repository-fit/SKILL.md, skills/requirements-engineer/SKILL.md, skills/reviewer/SKILL.md, skills/scope-definition/SKILL.md, skills/scribe/SKILL.md, skills/set-bearings/SKILL.md, skills/set-bearings/templates/workspace.md, skills/surveyor/SKILL.md, skills/systems-modeler/SKILL.md, skills/test-engineer/SKILL.md, skills/validator/SKILL.md, skills/validator/references/grading-rubric.md, templates/dod-manifest-v1.html, test/assurance-budget.test.mjs, test/dod-manifest.test.mjs, test/fixtures/profiles-populated.example.json, test/fixtures/s1l-migration-map.json, test/hook-contract.test.mjs, test/host-mapping.test.mjs, test/journey-config.test.mjs, test/lineups-empty.test.mjs, test/lineups-populated-schema.test.mjs, test/package-boundary.test.mjs, test/plan-package.test.mjs, test/planning-review.test.mjs, test/plugin-manifest.test.mjs, test/profiles-empty.test.mjs, test/public-boundary.test.mjs, test/role-handoff.test.mjs, test/role-routing.test.mjs, test/s1-contracts.test.mjs, test/schema-validation.py, test/skills-conformance.test.mjs, test/task-record.test.mjs, test/task-state.test.mjs, test/te-hook-contract.test.mjs, test/verification.test.mjs, tools/render-dod-manifest.mjs</td>
+                  <td>S6 assurance: docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/assurance/s6-assurance.json sha256:ec1d6df056dc0447cc9d62160f512e07b3f0540d64b4058677ad7d9fbb51032c, Owner visual observation: docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/assurance/seit-bdl-012-owner-observation.json sha256:a186c42dfe1e63b9ce4b2fb275e3728c9e413b6a1c9f99acb2e89a772873dae1, S7 review: docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/review/s7-review.json sha256:c699d0db02d03ffefbe1c50e8c44a367093711ada324e6e1a2c896e547edb328, S7 repair closure: docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/repair/s7-repair-closure.json sha256:2576120b22efe4afc6066af03ba66aacbae1eb9758f5c165dd1e4d55383ff240, S8 integration assessment: docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/integration/s8-integration.json sha256:d7def571da0374dda78b152148ba7d50fe8ed3714aa40cbfd4ab6d1bd8017df4, PHASE-3 host compatibility validation: docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/host-compatibility/phase3-host-validation.json sha256:cb9c633469460dbcf51c4c449df05d18a3f6a842e8802e9ba5c6286bf2525ded, PHASE-3 implementation: docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/implementation/phase3-implementation.json sha256:9efd0c80a1af91edb53855974c318ca1ee2a49cf42e6a59f0b3096201483545b, PHASE-3 Manifest status repair: docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/repair/phase3-manifest-status-repair.json sha256:172d44175a6c73f7988b07375101ab59d5e23c4ab825197f8c37958643610f30, PHASE-3 completion-view repair: docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/repair/phase3-manifest-completion-view.json sha256:b48259dda5abc011c83af15d0039ced0549991a1a75e2ec17a59cab61ff78fff, PHASE-3 S6 assurance: docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/assurance/phase3-s6-assurance-final.json sha256:57b5a2c684c5fd100d04b818ef0dcb2d0d19280ed792465ccbdbf948c1dcaf02, PHASE-3 owner visual observation: docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/assurance/phase3-seit-bdl-012-owner-observation.json sha256:b5e23d9dd6e8f27129589eb26bb2dccd87b36e7c213de6b1452833e918ea1145, PHASE-3 S7 review: docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/review/phase3-s7-review.json sha256:013070571376574c1f088c0ea0e17762999f4109666468f14838e93fe959d394, PHASE-3 S8 integration assessment: docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/integration/phase3-s8-integration.json sha256:3c99af7805473459102493e3464f293afee24545e69fe386eeadfd68d23ced7b</td>
+                  <td>none recorded</td>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>ACCEPTED by Human owner under DEC-BDL-077</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <dl class="meta">
+            <dt>Documentation completion</dt>
+            <dd>Complete: public lifecycle and installation guidance, host mapping, package inventory, current task/risk projection, CSP, and final evidence references are aligned.</dd>
+            <dt>Completion status</dt>
+            <dd>Lifecycle complete and owner accepted. S6 PASS, S7 ACCEPT with no findings, S8 CANDIDATE_READY/PASS, and all three recorded risks CLOSED_MITIGATED. Commit, publication, release, deployment, and issue closure remain separately unauthorized.</dd>
+            <dt>current_execution_state</dt>
+            <dd>{&quot;recorded_at&quot;:&quot;2026-09-13T20:57:17Z&quot;,&quot;recorded_at_correction&quot;:{&quot;corrected_at&quot;:&quot;2026-09-13T07:39:55Z&quot;,&quot;erroneous_prior_value&quot;:&quot;2026-09-13T02:27:00Z&quot;,&quot;note&quot;:&quot;Timestamp correction recorded at 2026-09-13T07:39:55Z UTC by the same Plan Integrator session under DEC-BDL-066. The previously written value 2026-09-13T02:27:00Z was erroneous: it predates DEC-BDL-064 and DEC-BDL-065 (2026-09-13T06:36:02Z), which this repair reconciles, so it cannot be a valid recording time. The prior value is kept here as an error record only and is not authoritative history. No cause is claimed and no earlier timestamp or decision was altered.&quot;},&quot;head&quot;:&quot;b5cec79f04f6f6ea506a2ad89bf937aab143d876&quot;,&quot;committed&quot;:false,&quot;active_agents&quot;:[],&quot;slice_state&quot;:{&quot;S1&quot;:&quot;author-verified PASS after owner disposition and W1-B helper repair&quot;,&quot;S1L&quot;:&quot;author receipt PASS_MECHANICAL&quot;,&quot;S1E&quot;:&quot;author receipt PASS&quot;,&quot;S2&quot;:&quot;author receipt PASS_FOCUSED&quot;,&quot;S3&quot;:&quot;author receipt PASS_FOCUSED&quot;,&quot;S3L&quot;:&quot;mechanical render PASS; RENDER_CHECK_PASS&quot;,&quot;S4&quot;:&quot;author-verified PASS after W1-A; GAP-BDL-001..003 resolved&quot;,&quot;S5&quot;:&quot;author-verified PASS after W1-C&quot;,&quot;S5L&quot;:&quot;author-verified CANDIDATE_READY on approved Deep Code fallback; PHASE-1 complete&quot;,&quot;S6&quot;:&quot;PASS; exact-candidate independent assurance, 417/417 tests, and owner visual evidence close SEIT-BDL-012&quot;,&quot;S7&quot;:&quot;ACCEPT; no grounded actionable introduced defects; focused review 102/102&quot;,&quot;S8&quot;:&quot;CANDIDATE_READY / PASS; no material system-level gaps&quot;,&quot;S9A&quot;:&quot;PASS author verified; README opening, role table, and evidence-backed install guidance complete&quot;,&quot;S9B&quot;:&quot;PASS author verified; Copilot native Test Engineering hooks and contracts complete&quot;,&quot;S9C&quot;:&quot;PASS author verified; Manifest CSP and renderer contract 1.0.1 complete&quot;,&quot;S9D&quot;:&quot;PASS read-only validation; 11 host dispositions recorded&quot;},&quot;changed_product_paths&quot;:&quot;103 changed product paths relative to baseline; 126 total commit paths enumerated in closeout.changed_paths.&quot;,&quot;suite&quot;:{&quot;command&quot;:&quot;node --test test/*.test.mjs&quot;,&quot;passed&quot;:417,&quot;failed&quot;:0,&quot;total&quot;:417,&quot;exit_code&quot;:0},&quot;schema&quot;:{&quot;command&quot;:&quot;python3 test/schema-validation.py plus actual artifact validation&quot;,&quot;passed&quot;:256,&quot;failed&quot;:0,&quot;actual_errors&quot;:0,&quot;exit_code&quot;:0}}</dd>
+            <dt>execution_events</dt>
+            <dd>[object Object], [object Object], [object Object], [object Object]</dd>
+            <dt>owner_acceptance_record</dt>
+            <dd>{&quot;status&quot;:&quot;ACCEPTED&quot;,&quot;authority&quot;:&quot;DEC-BDL-077&quot;,&quot;recorded_at&quot;:&quot;2026-09-13T21:06:21Z&quot;,&quot;owner_statement&quot;:&quot;ok approved&quot;,&quot;candidate_product_tree_sha256&quot;:&quot;884508aa264255746674a2865e6abc264dc68f07010e239b4bc4e5c22267535d&quot;,&quot;publication_release_deployment&quot;:&quot;NOT_AUTHORIZED&quot;}</dd>
+            <dt>phase_3_gate_summary</dt>
+            <dd>{&quot;candidate_product_tree_sha256&quot;:&quot;884508aa264255746674a2865e6abc264dc68f07010e239b4bc4e5c22267535d&quot;,&quot;s6&quot;:&quot;PASS&quot;,&quot;s7&quot;:&quot;ACCEPT&quot;,&quot;s7_findings&quot;:[],&quot;s8&quot;:&quot;CANDIDATE_READY / PASS&quot;,&quot;risks&quot;:{&quot;RISK-BDL-001&quot;:&quot;CLOSED_MITIGATED&quot;,&quot;RISK-BDL-002&quot;:&quot;CLOSED_MITIGATED&quot;,&quot;RISK-BDL-003&quot;:&quot;CLOSED_MITIGATED&quot;},&quot;owner_visual&quot;:&quot;PASS under DEC-BDL-076&quot;,&quot;owner_acceptance&quot;:&quot;ACCEPTED under DEC-BDL-077&quot;}</dd>
+            <dt>plan_amendments</dt>
+            <dd>[object Object], [object Object], [object Object], [object Object]</dd>
+            <dt>recovery_fixes</dt>
+            <dd>REC-SVG-001 / Grok Build xhigh: SVG entity preservation fixed; fail-before recorded, 14 renderer tests passed and controller reproduced 100 preserved ampersands with zero double-escapes., REC-PROFILE-001 / Grok Build xhigh: role/session restrictions fixed; nine illegal combinations now rejected, optional/disabled cases preserved, full schema harness 256/256 passed using installed validator.</dd>
+            <dt>resolved_gaps</dt>
+            <dd>GAP-BDL-005: stale descriptive model source and limitations metadata refreshed on both planning model rows. No view binding was added, replaced, or re-derived and no modeling mode was selected on the owner&#39;s behalf., GAP-BDL-006: the technical plan, design, workspace, journey scope record, and handoff no longer require the deleted process HTML pages; seit.json planning-input digests were recomputed and bound., GAP-BDL-001 through GAP-BDL-003: W1-A retargeted public links and tests to the two retained SVGs; the three standalone process HTML pages remain absent., GAP-BDL-004: W1-C packages profiles.json, templates, renderer tools, and GitHub Copilot hooks while excluding legacy lineups.json., F2 planning-role over-recursion: W1-B restricts Requirements Engineer rejection to slice-shaped nodes; plan-package now passes with no findings., F3 and F6 terminology alignment: W1-A and W1-C replace active Explorer, Expedition, Crewmate, Park Ranger, and prefixed Integration Engineer session wording in their bounded surfaces., SEIT-BDL-012: the owner performed CMD-BDL-VISUAL on Manifest sha256:6dc9242539f25ff1cf660b71680f21c976f865f0d48b98786497a5df44b2284b and reported PASS under DEC-BDL-073., S7-001 through S7-005: the single authorized aggregate repair is complete; focused regressions and the 407-test suite pass, deterministic closure passed, and no automatic rereview ran.</dd>
+            <dt>risk_disposition</dt>
+            <dd>[object Object], [object Object], [object Object]</dd>
+          </dl>
+          <h3>Slice receipts</h3>
+          <p class="table-hint">Tables scroll horizontally on a narrow screen.</p>
+          <div class="table-scroll" role="region" tabindex="0" aria-labelledby="cap-receipts">
+            <table>
+              <caption id="cap-receipts">Append-only slice receipts</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Slice</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Route</th>
+                  <th scope="col">Residual / blocker</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="row-plan">
+                  <th scope="row" class="id">S1L</th>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>PASS_MECHANICAL</span></td>
+                  <td>AGY / AGY default</td>
+                  <td>Full suite is not PASS: pending package/host work and post-rename test/reference alignment remain visible. No assurance spent.</td>
+                </tr>
+                <tr class="row-pass">
+                  <th scope="row" class="id">S1E</th>
+                  <td><span class="status status-pass"><span class="mark" aria-hidden="true"></span>PASS</span></td>
+                  <td>AGY / AGY default</td>
+                  <td>none recorded</td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">S1</th>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>PARTIAL</span></td>
+                  <td>Grok Build / harness default</td>
+                  <td>{&quot;type&quot;:&quot;OWNER_DECISION_REQUIRED&quot;,&quot;task&quot;:&quot;S1L&quot;,&quot;reason&quot;:&quot;Approved rename destinations are in the slice write set, but these six sources are omitted; deleting them requires a write-set amendment.&quot;,&quot;source_directories&quot;:[&quot;skills/crewmate/&quot;,&quot;skills/park-ranger/&quot;,&quot;skills/gather-supplies/&quot;,&quot;skills/set-bearings/&quot;,&quot;skills/repository-fit/&quot;,&quot;skills/map-the-route/&quot;],&quot;approval_status&quot;:&quot;asked; unanswered&quot;,&quot;approval_status_note&quot;:&quot;Accurate when this receipt was recorded. Retained unchanged as history.&quot;,&quot;current_status&quot;:&quot;RESOLVED&quot;,&quot;resolved_by&quot;:&quot;DEC-BDL-063&quot;,&quot;resolved_at&quot;:&quot;2026-09-13T04:56:16Z&quot;,&quot;resolution&quot;:&quot;The owner kept the S1L write set unchanged and clarified that the approved renames preserve existing skill files and content. The disappearance of each old source path is intrinsic to the approved rename, not a separate source-deletion amendment. The S1L receipt records the six completed renames with byte and mode comparisons.&quot;}</td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">S2</th>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>PASS_FOCUSED</span></td>
+                  <td>Grok Build / harness default</td>
+                  <td>none recorded</td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">S3</th>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>PASS_FOCUSED</span></td>
+                  <td>Grok Build / harness default</td>
+                  <td>none recorded</td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">S4</th>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>PASS_DOCUMENTATION_AND_REFERENCE_ALIGNMENT</span></td>
+                  <td>Grok Build / harness default</td>
+                  <td>none recorded</td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">S4</th>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>CANDIDATE_READY</span></td>
+                  <td>Grok Build / harness default</td>
+                  <td>none recorded</td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">S1</th>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>CANDIDATE_READY</span></td>
+                  <td>Grok Build / harness default</td>
+                  <td>none recorded</td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">S5</th>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>CANDIDATE_READY</span></td>
+                  <td>Grok Build / harness default</td>
+                  <td>none recorded</td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">S5L</th>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>CANDIDATE_READY</span></td>
+                  <td>Deep Code CLI / deepseek-v4-flash / max</td>
+                  <td>none recorded</td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">S6</th>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>NEEDS_MORE_EVIDENCE</span></td>
+                  <td>Grok Build / harness default</td>
+                  <td>Owner disposition required for SEIT-BDL-012 before S7.</td>
+                </tr>
+                <tr class="row-pass">
+                  <th scope="row" class="id">S6</th>
+                  <td><span class="status status-pass"><span class="mark" aria-hidden="true"></span>PASS</span></td>
+                  <td>—</td>
+                  <td>none recorded</td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">S7</th>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>REPAIR_REQUIRED</span></td>
+                  <td>Codex CLI / gpt-6-astra / medium</td>
+                  <td>Deterministic repair closure required before S8.</td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">S7-REPAIR</th>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>PASS_DETERMINISTIC_CLOSURE</span></td>
+                  <td>Grok Build / harness default</td>
+                  <td>none recorded</td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">S8</th>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>CANDIDATE_READY</span></td>
+                  <td>Codex CLI / gpt-6-astra / high</td>
+                  <td>none recorded</td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">S9A</th>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>PASS_AUTHOR_VERIFIED</span></td>
+                  <td>Grok Build / harness default</td>
+                  <td>none recorded</td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">S9B</th>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>PASS_AUTHOR_VERIFIED</span></td>
+                  <td>Grok Build / harness default</td>
+                  <td>none recorded</td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">S9C</th>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>PASS_AUTHOR_VERIFIED</span></td>
+                  <td>Grok Build / harness default</td>
+                  <td>none recorded</td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">S9D</th>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>PASS_READ_ONLY_VALIDATION</span></td>
+                  <td>Grok Build / harness default</td>
+                  <td>none recorded</td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">S9C-PRESENTATION-REPAIR</th>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>PASS_AUTHOR_VERIFIED</span></td>
+                  <td>Grok Build / harness default + Light Implementer</td>
+                  <td>none recorded</td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">S9C-COMPLETION-VIEW</th>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>PASS_AUTHOR_VERIFIED</span></td>
+                  <td>Light Implementer</td>
+                  <td>none recorded</td>
+                </tr>
+                <tr class="row-pass">
+                  <th scope="row" class="id">PHASE-3-S6</th>
+                  <td><span class="status status-pass"><span class="mark" aria-hidden="true"></span>PASS</span></td>
+                  <td>Grok Build / harness default</td>
+                  <td>none recorded</td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">PHASE-3-S7</th>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>ACCEPT</span></td>
+                  <td>Codex CLI / gpt-6-astra / medium</td>
+                  <td>none recorded</td>
+                </tr>
+                <tr class="row-plan">
+                  <th scope="row" class="id">PHASE-3-S8</th>
+                  <td><span class="status status-plan"><span class="mark" aria-hidden="true"></span>CANDIDATE_READY</span></td>
+                  <td>Codex CLI / gpt-6-astra / high</td>
+                  <td>none recorded</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p class="banner"><strong>Non-authoritative projection.</strong> Source artifacts remain the authority. State: closeout.</p>
+        </section>
+      </main>
+    </div>
+    <footer class="colophon">
+      <p>Bearing Delivery Lifecycle Alignment — Definition of Done Manifest. State: closeout. Template 1.0.1. Self-contained HTML and CSS with no script, no external font, no CDN, and no network image.</p>
+    </footer>
+  </div>
+</body>
+</html>

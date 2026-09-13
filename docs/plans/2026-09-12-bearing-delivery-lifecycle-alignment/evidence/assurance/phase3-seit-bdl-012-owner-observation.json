@@ -1,0 +1,17 @@
+{
+  "schema_version": "1",
+  "kind": "owner_visual_observation",
+  "lifecycle_id": "BDL-2026-09-12",
+  "proof_row": "SEIT-BDL-012",
+  "command_id": "CMD-BDL-VISUAL",
+  "recorded_at": "2026-09-13T20:41:20Z",
+  "observer": "Human owner",
+  "artifact": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/bearing-delivery-lifecycle-alignment-dod-manifest.html",
+  "artifact_sha256": "8c3f1acf5163044510ac9fc06cf96ea94e08107b1e84fca6ebaa8a7d653fdcc0",
+  "template_version": "1.0.1",
+  "procedure": "Human owner inspected the corrected completion Manifest after current task and risk statuses replaced stale planning-state labels.",
+  "expected_result": "The Manifest is legible and the completion task/risk tables show accurate current state without stale BLOCKED or OPEN labels.",
+  "owner_statement": "ok its passed lets continue",
+  "status": "PASS",
+  "agent_workaround_used": false
+}

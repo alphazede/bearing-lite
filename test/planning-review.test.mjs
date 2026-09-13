@@ -17,13 +17,11 @@ const review = (extra = {}) => ({
   candidate,
   reviewer_slots: [
     { slot_id: "slot-a", primary_route_ref: "route-a", fallback_route_refs: ["route-a2"] },
-    { slot_id: "slot-b", primary_route_ref: "route-b", fallback_route_refs: ["route-b2"] },
   ],
   round_number: 1,
   completed_rounds: 1,
   receipts: [
     { slot_id: "slot-a", selected_route_ref: "route-a", ...candidate, independent: true, findings_isolated: true },
-    { slot_id: "slot-b", selected_route_ref: "route-b", ...candidate, independent: true, findings_isolated: true },
   ],
   aggregation_complete: true,
   aggregated_repairs: 1,
@@ -38,7 +36,7 @@ const policyDocument = readFileSync(
 const documentedPolicy = JSON.parse(policyDocument.match(/```json\n([\s\S]*?)\n```/)[1]);
 
 describe("model-neutral planning review", () => {
-  it("accepts exactly two independent slots, one shared candidate, one repair, and deterministic PASS", () => {
+  it("accepts exactly one independent slot, one shared candidate, one repair, and deterministic PASS", () => {
     assert.deepEqual(core.POLICY, documentedPolicy);
     assert.deepEqual(core.evaluatePlanningReview(review()), { outcome: "PASS", reason: "repair_gate_passed" });
     assert.match(transition.evaluate({ action_kind: "planning_review_transition", planning_review: review() }).reason, /planning_review:PASS/);
@@ -47,13 +45,11 @@ describe("model-neutral planning review", () => {
 
   it("returns exact reasons for policy violations", () => {
     const mismatch = review();
-    mismatch.receipts = mismatch.receipts.map((receipt, index) =>
-      index ? { ...receipt, candidate_digest: "other" } : receipt
-    );
+    mismatch.receipts = mismatch.receipts.map((receipt) => ({ ...receipt, candidate_digest: "other" }));
     const cases = [
       [mismatch, "HALT", "candidate_or_independence_mismatch"],
-      [review({ reviewer_slots: [review().reviewer_slots[0], review().reviewer_slots[0]] }), "OWNER_AMENDMENT_REQUIRED", "slot_binding_invalid"],
-      [review({ reviewer_slots: [{ ...review().reviewer_slots[0], exhausted: true }, review().reviewer_slots[1]] }), "FAIL_ROUND", "reviewer_slot_exhausted"],
+      [review({ reviewer_slots: [review().reviewer_slots[0], { slot_id: "slot-b", primary_route_ref: "route-b", fallback_route_refs: [] }] }), "OWNER_AMENDMENT_REQUIRED", "slot_binding_invalid"],
+      [review({ reviewer_slots: [{ ...review().reviewer_slots[0], exhausted: true }] }), "FAIL_ROUND", "reviewer_slot_exhausted"],
       [review({ round_number: 2, completed_rounds: 2 }), "HALT", "review_round_limit"],
       [review({ aggregated_repairs: 2 }), "HALT", "aggregated_repair_limit"],
       [review({ automatic_rereview_requested: true }), "OWNER_AMENDMENT_REQUIRED", "automatic_rereview_prohibited"],
@@ -107,8 +103,8 @@ describe("model-neutral planning review", () => {
     assert.match(router, /Planning review is a separate pre-dispatch gate/);
     assert.match(router, /`max_assurance_rounds` is 1/);
     assert.doesNotMatch(policy, /Claude|Codex|Grok|Cursor|Kimi|AGY|Pi|DeepCode|OpenAI|Anthropic/i);
-    const parkRanger = transition.evaluate({ from_state: "EVIDENCE_READY", to_state: "REVIEWING", required_assurance: ["Park Ranger"] });
-    assert.equal(parkRanger.outcome, "REROUTE");
+    const reviewer = transition.evaluate({ from_state: "EVIDENCE_READY", to_state: "REVIEWING", required_assurance: ["Reviewer"] });
+    assert.equal(reviewer.outcome, "REROUTE");
   });
 
   it("records honest positive and negative coverage for every supported harness", () => {

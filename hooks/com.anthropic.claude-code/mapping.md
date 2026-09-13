@@ -17,9 +17,13 @@ procedural.
 | AGY | `.agy/` (strict `plugin.json`) | none | skills-only |
 | Pi | `package.json` `"pi"` + `pi-package` | none (TypeScript extensions, not command hooks) | skills-only |
 | DeepCode | `.deepcode/skills` or interoperable `.agents/skills` discovery | none | skills-only |
+| GitHub Copilot | Agent Plugins 1.0 `plugin.json` + `com.github.copilot/` | `com.github.copilot/hooks/hooks.json` (`SessionStart`, `PreToolUse`, `Stop`, `SubagentStop`) | partial |
 
-Do **not** set `hooks` on Claude, Codex, or Grok host manifests. Those hosts
-auto-load `hooks/hooks.json`; declaring both is a duplicate-file error.
+Do **not** set `hooks` on the root Agent Plugins 1.0 `plugin.json`, or on Claude,
+Codex, or Grok host manifests. Root `hooks` is outside the closed Agent Plugins
+1.0 field set. Claude, Codex, and Grok auto-load `hooks/hooks.json`; declaring
+both is a duplicate-file error. GitHub Copilot in VS Code discovers plugin hooks
+from `com.github.copilot/hooks/hooks.json`.
 
 Skill-copy into a host skills directory does **not** register hooks. Plugin
 install or disable uses the host's native controls. Bearing Lite never copies
@@ -43,19 +47,19 @@ registered separately, and a `Stop` event reaches both.
 The shared planning-review evaluator is used by transition and closeout when a
 client supplies a structured `planning_review` record. Current session-start /
 stop mappings cannot derive that nested record safely, so Claude Code, Codex,
-Grok Build, Cursor, and Kimi remain partial and the check is procedural there.
-AGY, Pi, and DeepCode remain skills-only. Do not claim full planning-review
-enforcement for any of these hosts until a native event supplies the complete
-record.
+Grok Build, Cursor, Kimi, and GitHub Copilot remain partial and the check is
+procedural there. AGY, Pi, and DeepCode remain skills-only. Do not claim full
+planning-review enforcement for any of these hosts until a native event supplies
+the complete record.
 
 The per-declared-phase-or-wave assurance record
 (`skills/bearing-lite/references/assurance-policy.md`) is evaluated by the same
 `transition` class through the `assurance_transition` action_kind. No mapped
 host exposes a hook event that carries the frozen declaration and the visible
 task record, so the assurance budget is procedural on every mapped host:
-Claude Code, Codex, Grok Build, Cursor, and Kimi Code stay partial, and AGY,
-Pi, and DeepCode stay skills-only. No host may advertise an enforcement of the
-assurance budget it cannot perform.
+Claude Code, Codex, Grok Build, Cursor, Kimi Code, and GitHub Copilot stay
+partial, and AGY, Pi, and DeepCode stay skills-only. No host may advertise an
+enforcement of the assurance budget it cannot perform.
 
 The adapter accepts snake_case and camelCase (`hook_event_name` /
 `hookEventName`, `cwd` / `workspaceRoot`).
@@ -108,13 +112,24 @@ this adapter must not advertise enforcement it cannot perform.
 | Pi | te_test_write UNAVAILABLE | te_completion UNAVAILABLE | child te_completion UNAVAILABLE |
 | AGY | te_test_write UNAVAILABLE | te_completion UNAVAILABLE | child te_completion UNAVAILABLE |
 | DeepCode | te_test_write UNAVAILABLE | te_completion UNAVAILABLE | child te_completion UNAVAILABLE |
+| GitHub Copilot | native `PreToolUse` deny | native `Stop` deny | native `SubagentStop` deny |
 
 Cursor's `stop` guidance message is advisory text, not a hard completion
 block, and Cursor exposes no distinct hard child-stop deny; neither is
 registered as one. Kimi Code, Pi, AGY, and DeepCode carry no verified native
-Test Engineering blocking at all, so `hooks/te-host.cjs` returns `UNAVAILABLE`
-for every class on those hosts rather than claiming an enforcement it cannot
-deliver.
+Test Engineering blocking in this adapter, so `hooks/te-host.cjs` returns
+`UNAVAILABLE` for every class on those hosts rather than claiming an
+enforcement it cannot deliver.
+
+GitHub Copilot in VS Code is a native TE host. Agent Plugins 1.0 discovers
+`com.github.copilot/hooks/hooks.json` and expands `${PLUGIN_ROOT}`; the TE
+commands quote that path and pass `--host=copilot`. Copilot `PreToolUse` denies
+through `hookSpecificOutput.permissionDecision`. Copilot `Stop` denies through
+`hookSpecificOutput` with `hookEventName` `Stop`, `decision` `block`, and
+`reason`. Copilot `SubagentStop` denies through a top-level `decision` block
+and `reason`. `Stop` and `SubagentStop` carry `stop_hook_active`; a true
+re-entry terminates as quiet success so a deny cannot loop. Transition-order,
+protected-action, planning-review, and assurance-budget stay procedural.
 
 ## Derived fields
 
@@ -134,10 +149,10 @@ trees) and sets only:
 payload. Missing values stay missing, so activation advises the router instead
 of inventing context.
 
-The Router writes the visible `checkout_lease` before any planning write or
-dispatch; its nested non-placeholder Journey identity is the Router-invoked
-signal during planning. The plan-level Explorer-versus-Expedition value is
-recorded later at the route review.
+The Orchestrator writes the visible `checkout_lease` before any planning write
+or dispatch; its nested non-placeholder Lifecycle identity is the
+Router-invoked signal during planning. The plan-level lifecycle setting is
+recorded later at the integrated owner review.
 
 ## Outcome translation
 
@@ -148,6 +163,10 @@ recorded later at the route review.
 | Stop/SubagentStop with no discoverable Journey | quiet success (empty JSON; no `additionalContext`) | always `0` |
 | first-pass Stop/SubagentStop with a discoverable Journey | `hookSpecificOutput.additionalContext` | always `0` |
 | `BLOCK` | JSON `decision: "block"` only; this mapping never requests protected completion | always `0` |
+| Copilot `PreToolUse` deny | `hookSpecificOutput.permissionDecision` `"deny"` | always `0` |
+| Copilot `Stop` deny | `hookSpecificOutput` `{ hookEventName: "Stop", decision: "block", reason }` | always `0` |
+| Copilot `SubagentStop` deny | top-level `{ decision: "block", reason }` | always `0` |
+| Copilot `Stop`/`SubagentStop` re-entry (`stop_hook_active`) | quiet success (empty JSON) | always `0` |
 
 A discoverable Journey is a visible plan with a `task_id`, `assigned_role`,
 non-placeholder journey marker, or `checkout_lease` block. Empty cwd and

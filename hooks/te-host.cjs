@@ -69,6 +69,7 @@ const HOST_SUPPORT = Object.freeze({
   grok: FULL_NATIVE,
   codex: FULL_NATIVE,
   "claude-code": FULL_NATIVE,
+  copilot: FULL_NATIVE,
   cursor: Object.freeze({
     write_time_deny: NATIVE,
     completion_deny: UNAVAILABLE,
@@ -116,6 +117,10 @@ function presentString(value) {
     return undefined;
   }
   return trimmed;
+}
+
+function isTruthyFlag(value) {
+  return value === true || value === "true";
 }
 
 /** Normalize Claude, Codex, Grok, Cursor, and Kimi event spellings. */
@@ -508,6 +513,19 @@ function handle(envelope, options) {
     );
   }
 
+  if (
+    host === "copilot" &&
+    hookClass === TE_COMPLETION &&
+    (isTruthyFlag(input.stop_hook_active) || isTruthyFlag(input.stopHookActive))
+  ) {
+    return hostOutput(
+      hookClass,
+      ALLOW,
+      "stop_hook_active: re-entry terminates quietly",
+      { hookEventName: eventName, host, code: "stop_hook_active" }
+    );
+  }
+
   const root = path.resolve(
     presentString(input.cwd) || presentString(input.workspaceRoot) || process.cwd()
   );
@@ -522,12 +540,13 @@ function handle(envelope, options) {
       hookClass,
       "capability_inactive: test-engineering is unselected and not required; " +
         "the class fails open and this is not a failure",
-      { hookEventName: eventName, code: resolved.code }
+      { hookEventName: eventName, host, code: resolved.code }
     );
   }
   if (resolved.status !== "ACTIVE" || !resolved.evaluator) {
     return unavailable(hookClass, resolved.message || "typed_capability_gap", {
       hookEventName: eventName,
+      host,
       code: resolved.code || "typed_capability_gap",
       recovery: resolved.recovery,
     });
@@ -545,7 +564,7 @@ function handle(envelope, options) {
       hookClass,
       "evaluator_failure: the test-engineering evaluator did not return a " +
         "verdict; enforcement is unavailable for this event",
-      { hookEventName: eventName, code: "evaluator_failure" }
+      { hookEventName: eventName, host, code: "evaluator_failure" }
     );
   }
 
@@ -554,14 +573,14 @@ function handle(envelope, options) {
     return unavailable(
       hookClass,
       "evaluator_verdict_unrecognized: enforcement is unavailable for this event",
-      { hookEventName: eventName, code: "evaluator_verdict_unrecognized" }
+      { hookEventName: eventName, host, code: "evaluator_verdict_unrecognized" }
     );
   }
 
   const reason =
     (isPlainObject(result) ? presentString(result.reason) : undefined) ||
     "test_engineering_verdict";
-  return toHostResponse(hookClass, verdict, reason, { hookEventName: eventName });
+  return toHostResponse(hookClass, verdict, reason, { hookEventName: eventName, host });
 }
 
 function flag(value) {
@@ -602,7 +621,23 @@ function toWire(response) {
       },
     };
   }
-  if (response.decision === "block") return { decision: "block", reason: response.reason };
+  if (response.decision === "block") {
+    // VS Code Stop deny is nested; Claude/Codex/Grok and VS Code SubagentStop
+    // keep the top-level decision block.
+    if (
+      presentString(inner.host) === "copilot" &&
+      normalizeEvent(inner.hookEventName) === "stop"
+    ) {
+      return {
+        hookSpecificOutput: {
+          hookEventName: "Stop",
+          decision: "block",
+          reason: response.reason,
+        },
+      };
+    }
+    return { decision: "block", reason: response.reason };
+  }
   return {};
 }
 

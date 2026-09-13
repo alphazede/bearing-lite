@@ -1,0 +1,1249 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1312 2856" role="img" aria-labelledby="process-views-title process-views-desc">
+  <title id="process-views-title">Bearing Delivery Lifecycle process views</title>
+  <desc id="process-views-desc">Prepared projection of the approved overview, planning, and implementation process diagrams. Not a SysML semantic model. Overview: Five sequential stages across the software development lifecycle: 01 Work Intake, 02 Lifecycle Planning, 03 Owner Authorization Gate, 04 Lifecycle Implementation, and 05 Completed Result and Evidence. A feedback loop returns requested changes from Owner Authorization back to Planning, an aggregate repair loop operates within in-wave implementation, and a correction path returns findings from Lifecycle-completion system validation to the responsible Implementer. Deployment and release remain under separate authority. Planning: Four sequential planning stages mapping plain SDLC activities to Bearing Delivery Lifecycle roles: 01 Intake and Context (Intake, Architectural Alignment, Scope Definition), 02 Architecture and Integration (Planning and Design, Requirements Engineer when applicable, Systems Modeler, Integration Engineer planning), 03 V&amp;V and Synthesis (Planning Test Engineer, Plan Integrator), and 04 Owner Authorization Gate. An iterative triad between Systems Modeler, Integration Engineer planning, and Planning Test Engineer indicates that linear ordering is unsettled. A feedback loop returns requested changes back to the responsible planning role. Implementation: Implementation lifecycle showing two distinct operational zones: Zone A comprises the repeating declared work-unit loop (01 Baseline Input, 02 Work-Unit Realization with distinct Test Implementer, Product Implementer, and Light Implementer roles, 03 In-Wave V&amp;V and Defect Review with ATE and Reviewer, plus an in-wave repair loop). Zone B comprises the distinct Lifecycle-completion gate (04 Lifecycle-Completion System Validation by Integration Engineer execution running once at Lifecycle completion by default, with a correction path back to Implementers) and 05 Closeout and Evidence Handover. Production release remains under separate authority. Systems Modeler Transfer Function: Proposed architecture under Requirements System issue 107 defining F(bound SDoc, owner-approved model decisions, viewpoints, stable IDs, SysML v2 profile, brand profile) -&gt; (SysML v2, HTML). The governed Requirements System transfer-function boundary encapsulates model skeleton construction, tailored SSC-G-101-2023 v1.1 structure and layout rules, native model semantic validation with a closed typed-findings feedback loop, and the SysON/Sirius graphics engine performing automated diagram layout and rendering under agreed style guides and registered brand visual identity. The engine does not invent architecture or grant approval. Outputs are canonical SysML v2 and human-readable HTML views consumed by the Bearing Definition of Done Manifest, preserving canonical SDoc as the requirements authority.</desc>
+  <rect x="0" y="0" width="1312" height="2856" fill="#090d16" />
+  <g font-family="Segoe UI, Helvetica Neue, Arial, sans-serif">
+    <g id="panel-overview">
+      <rect x="8" y="12" width="1296" height="674" rx="10" fill="#090d16" stroke="#233554" stroke-width="1.2" />
+      <rect x="20" y="20" width="132" height="22" rx="4" fill="#0c4a6e" stroke="#0284c7" stroke-width="1" />
+      <text x="86" y="35" fill="#38bdf8" font-size="11" font-weight="700" text-anchor="middle">Overview</text>
+      <g transform="translate(16,48)">
+            <title id="overview-diagram-title">Bearing Delivery Lifecycle Process Overview Diagram</title>
+            <desc id="overview-diagram-desc">
+              Five sequential stages across the software development lifecycle: 01 Work Intake, 02 Lifecycle Planning, 03 Owner Authorization Gate, 04 Lifecycle Implementation, and 05 Completed Result and Evidence. A feedback loop returns requested changes from Owner Authorization back to Planning, an aggregate repair loop operates within in-wave implementation, and a correction path returns findings from Lifecycle-completion system validation to the responsible Implementer. Deployment and release remain under separate authority.
+            </desc>
+
+            <defs>
+              <marker id="overview-arrow-cyan" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#38bdf8" />
+              </marker>
+              <marker id="overview-arrow-emerald" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#10b981" />
+              </marker>
+              <marker id="overview-arrow-rose-up" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#f43f5e" />
+              </marker>
+
+              <linearGradient id="overview-grad-col1" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#14233c" />
+                <stop offset="100%" stop-color="#0c1626" />
+              </linearGradient>
+              <linearGradient id="overview-grad-col2" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#182046" />
+                <stop offset="100%" stop-color="#0f142d" />
+              </linearGradient>
+              <linearGradient id="overview-grad-col3" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#0d2e2b" />
+                <stop offset="100%" stop-color="#071b19" />
+              </linearGradient>
+              <linearGradient id="overview-grad-col4" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#1a1e42" />
+                <stop offset="100%" stop-color="#10132b" />
+              </linearGradient>
+              <linearGradient id="overview-grad-col5" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#152636" />
+                <stop offset="100%" stop-color="#0b1722" />
+              </linearGradient>
+            </defs>
+
+            
+            <rect x="20" y="18" width="175" height="22" rx="4" fill="#0c4a6e" stroke="#0284c7" stroke-width="1" />
+            <text x="107" y="33" fill="#38bdf8" font-size="10" font-weight="700" text-anchor="middle">01 · WORK INTAKE</text>
+
+            <rect x="220" y="18" width="290" height="22" rx="4" fill="#312e81" stroke="#6366f1" stroke-width="1" />
+            <text x="365" y="33" fill="#a5b4fc" font-size="10" font-weight="700" text-anchor="middle">02 · LIFECYCLE PLANNING</text>
+
+            <rect x="535" y="18" width="175" height="22" rx="4" fill="#064e3b" stroke="#10b981" stroke-width="1" />
+            <text x="622" y="33" fill="#6ee7b7" font-size="10" font-weight="700" text-anchor="middle">03 · AUTHORIZATION GATE</text>
+
+            <rect x="735" y="18" width="305" height="22" rx="4" fill="#312e81" stroke="#6366f1" stroke-width="1" />
+            <text x="887" y="33" fill="#a5b4fc" font-size="10" font-weight="700" text-anchor="middle">04 · LIFECYCLE IMPLEMENTATION</text>
+
+            <rect x="1065" y="18" width="195" height="22" rx="4" fill="#0c4a6e" stroke="#0284c7" stroke-width="1" />
+            <text x="1162" y="33" fill="#38bdf8" font-size="10" font-weight="700" text-anchor="middle">05 · RESULT &amp; EVIDENCE</text>
+
+            
+            <g id="overview-box-overview-inputs">
+              <rect x="20" y="48" width="175" height="415" rx="10" fill="url(#overview-grad-col1)" stroke="#0284c7" stroke-width="1.5" />
+              <text x="35" y="74" fill="#f8fafc" font-size="14" font-weight="800">Work Intake</text>
+              <text x="35" y="91" fill="#cbd5e1" font-size="10.5">SDLC Intake &amp; Context</text>
+              <line x1="35" y1="100" x2="180" y2="100" stroke="#1e3a5f" stroke-width="1" />
+
+              <rect x="30" y="108" width="155" height="54" rx="6" fill="#101e33" stroke="#1a3150" stroke-width="1" />
+              <circle cx="42" cy="123" r="3.5" fill="#38bdf8" />
+              <text x="52" y="122" fill="#f8fafc" font-size="10.5" font-weight="700">Incoming Requests</text>
+              <text x="52" y="136" fill="#cbd5e1" font-size="9">Feature Story · Defect</text>
+              <text x="52" y="149" fill="#94a3b8" font-size="8.5">Technical Task · Change Req.</text>
+
+              <rect x="30" y="168" width="155" height="54" rx="6" fill="#101e33" stroke="#1a3150" stroke-width="1" />
+              <circle cx="42" cy="183" r="3.5" fill="#38bdf8" />
+              <text x="52" y="182" fill="#f8fafc" font-size="10.5" font-weight="700">Baseline Context</text>
+              <text x="52" y="196" fill="#cbd5e1" font-size="9">Target repo &amp; branch lease</text>
+              <text x="52" y="209" fill="#94a3b8" font-size="8.5">Checkout baseline location</text>
+
+              <rect x="30" y="228" width="155" height="52" rx="6" fill="#101e33" stroke="#1a3150" stroke-width="1" />
+              <circle cx="42" cy="243" r="3.5" fill="#38bdf8" />
+              <text x="52" y="242" fill="#f8fafc" font-size="10.5" font-weight="700">Scope Definition</text>
+              <text x="52" y="256" fill="#cbd5e1" font-size="9">Included &amp; excluded work</text>
+              <text x="52" y="269" fill="#94a3b8" font-size="8.5">Desired outcome &amp; rules</text>
+
+              <rect x="30" y="286" width="155" height="58" rx="6" fill="#251b0a" stroke="#d97706" stroke-width="1" />
+              <polygon points="40,296 46,306 34,306" fill="#fde68a" />
+              <text x="52" y="302" fill="#fde68a" font-size="8.5" font-weight="700">DISCUSSION POINT</text>
+              <text x="38" y="316" fill="#fde68a" font-size="8.5">Supporting inputs to settle:</text>
+              <text x="38" y="330" fill="#cbd5e1" font-size="8">context, limits &amp; constraints</text>
+
+              <rect x="30" y="352" width="155" height="24" rx="4" fill="#082f49" />
+              <text x="107" y="368" fill="#38bdf8" font-size="9" font-weight="700" text-anchor="middle">Orchestrator Handoff →</text>
+            </g>
+
+            
+            <path d="M 195 240 L 218 240" stroke="#38bdf8" stroke-width="2.5" fill="none" marker-end="url(#overview-arrow-cyan)" />
+
+            
+            <g id="overview-box-overview-planning">
+              <rect x="220" y="48" width="290" height="415" rx="10" fill="url(#overview-grad-col2)" stroke="#6366f1" stroke-width="1.5" />
+              <text x="235" y="74" fill="#f8fafc" font-size="14" font-weight="800">Lifecycle Planning</text>
+              <text x="235" y="91" fill="#a5b4fc" font-size="10.5">Architecture, Design &amp; V&amp;V Planning</text>
+              <line x1="235" y1="100" x2="495" y2="100" stroke="#3730a3" stroke-width="1" />
+
+              <rect x="230" y="108" width="270" height="38" rx="6" fill="#151b3c" stroke="#2e336b" stroke-width="1" />
+              <rect x="238" y="115" width="16" height="16" rx="3" fill="#312e81" />
+              <text x="246" y="127" fill="#a5b4fc" font-size="9" font-weight="800" text-anchor="middle">1</text>
+              <text x="260" y="123" fill="#f8fafc" font-size="10" font-weight="700">Intake, Alignment &amp; Scope</text>
+              <text x="260" y="136" fill="#cbd5e1" font-size="8.5">Intake · Architectural Alignment · Scope Definition</text>
+
+              <rect x="230" y="150" width="270" height="42" rx="6" fill="#151b3c" stroke="#2e336b" stroke-width="1" />
+              <rect x="238" y="158" width="16" height="16" rx="3" fill="#312e81" />
+              <text x="246" y="170" fill="#a5b4fc" font-size="9" font-weight="800" text-anchor="middle">2</text>
+              <text x="260" y="165" fill="#f8fafc" font-size="10" font-weight="700">Planning &amp; Design (Orchestration)</text>
+              <text x="260" y="178" fill="#cbd5e1" font-size="8.5">Planning and Design · Requirements Analysis (when applicable)</text>
+
+              
+              <rect x="230" y="196" width="270" height="142" rx="6" fill="#121735" stroke="#6366f1" stroke-width="1.2" stroke-dasharray="4 3" />
+              <rect x="238" y="202" width="160" height="15" rx="3" fill="#312e81" />
+              <text x="244" y="213" fill="#a5b4fc" font-size="8" font-weight="700">APPROVED ORDER · CONCURRENT SPECIALISTS</text>
+
+              <rect x="236" y="222" width="258" height="30" rx="4" fill="#182046" stroke="#2e336b" stroke-width="1" />
+              <text x="244" y="235" fill="#f8fafc" font-size="9.5" font-weight="700">Systems Modeler</text>
+              <text x="244" y="247" fill="#cbd5e1" font-size="7.6">Structural views, behavioral models &amp; SysON transfer function</text>
+
+              <rect x="236" y="256" width="258" height="36" rx="4" fill="#182046" stroke="#2e336b" stroke-width="1" />
+              <text x="244" y="269" fill="#f8fafc" font-size="9.5" font-weight="700">Integration Engineer planning</text>
+              <text x="244" y="280" fill="#cbd5e1" font-size="8">Compatibility, interfaces, assembly order, stubs, rollback &amp; recovery</text>
+
+              <rect x="236" y="296" width="258" height="32" rx="4" fill="#182046" stroke="#2e336b" stroke-width="1" />
+              <text x="244" y="309" fill="#f8fafc" font-size="9.5" font-weight="700">Planning Test Engineer</text>
+              <text x="244" y="321" fill="#cbd5e1" font-size="8">SEIT verification &amp; validation plan baseline &amp; harness design</text>
+
+              <rect x="230" y="342" width="270" height="34" rx="6" fill="#151b3c" stroke="#2e336b" stroke-width="1" />
+              <rect x="238" y="349" width="16" height="16" rx="3" fill="#312e81" />
+              <text x="246" y="361" fill="#a5b4fc" font-size="9" font-weight="800" text-anchor="middle">3</text>
+              <text x="260" y="356" fill="#f8fafc" font-size="10" font-weight="700">Work Breakdown &amp; Reconciliation</text>
+              <text x="260" y="368" fill="#cbd5e1" font-size="8.5">Plan Integrator (packets, write sets &amp; execution sequence)</text>
+
+              <rect x="230" y="380" width="270" height="42" rx="6" fill="#1c2552" stroke="#4f46e5" stroke-width="1" />
+              <text x="365" y="394" fill="#c7d2fe" font-size="9" font-weight="700" text-anchor="middle">DELIVERABLE: DEFINITION OF DONE MANIFEST</text>
+              <text x="365" y="406" fill="#94a3b8" font-size="8" text-anchor="middle">&lt;plan-name&gt;-dod-manifest.html (Planning State · Non-authoritative)</text>
+              <text x="365" y="417" fill="#cbd5e1" font-size="7.5" text-anchor="middle">Proposed criteria, integrated plan, traceability, sequence &amp; review status</text>
+            </g>
+
+            
+            <path d="M 510 240 L 533 240" stroke="#38bdf8" stroke-width="2.5" fill="none" marker-end="url(#overview-arrow-cyan)" />
+
+            
+            <g id="overview-box-overview-auth">
+              <rect x="535" y="48" width="175" height="415" rx="10" fill="url(#overview-grad-col3)" stroke="#10b981" stroke-width="1.5" />
+              <text x="548" y="74" fill="#f8fafc" font-size="14" font-weight="800">Owner Gate</text>
+              <text x="548" y="91" fill="#6ee7b7" font-size="10.5">Plan Baseline Review</text>
+              <line x1="548" y1="100" x2="695" y2="100" stroke="#134e4a" stroke-width="1" />
+
+              <rect x="543" y="108" width="159" height="54" rx="6" fill="#0a2521" stroke="#115e59" stroke-width="1" />
+              <text x="622" y="124" fill="#a7f3d0" font-size="10" font-weight="700" text-anchor="middle">Single Decision Gate</text>
+              <text x="622" y="138" fill="#cbd5e1" font-size="8.5" text-anchor="middle">Owner reviews complete plan:</text>
+              <text x="622" y="151" fill="#94a3b8" font-size="8" text-anchor="middle">outcome, design, V&amp;V &amp; DoD Manifest</text>
+
+              <rect x="543" y="168" width="159" height="48" rx="6" fill="#064e3b" stroke="#10b981" stroke-width="1" />
+              <polygon points="555,185 558,193 568,181" fill="none" stroke="#6ee7b7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              <text x="574" y="186" fill="#6ee7b7" font-size="10" font-weight="800">AUTHORIZED</text>
+              <text x="574" y="198" fill="#d1fae5" font-size="8">Dispatches execution</text>
+              <text x="574" y="209" fill="#a7f3d0" font-size="8">Baseline locked</text>
+
+              <rect x="543" y="222" width="159" height="50" rx="6" fill="#380916" stroke="#f43f5e" stroke-width="1" />
+              <circle cx="557" cy="240" r="6" fill="#881337" />
+              <path d="M 557 236 L 557 242 M 557 244 L 557 246" stroke="#fda4af" stroke-width="1.5" stroke-linecap="round" />
+              <text x="568" y="239" fill="#fda4af" font-size="9.5" font-weight="800">CHANGES REQUESTED</text>
+              <text x="568" y="252" fill="#fecdd3" font-size="8">Returns to responsible role</text>
+              <text x="568" y="263" fill="#fda4af" font-size="7.8">Planning feedback loop</text>
+
+              <rect x="543" y="278" width="159" height="52" rx="6" fill="#251b0a" stroke="#d97706" stroke-width="1" />
+              <polygon points="553,288 559,298 547,298" fill="#fde68a" />
+              <text x="564" y="294" fill="#fde68a" font-size="8.5" font-weight="700">DISCUSSION POINT</text>
+              <text x="550" y="309" fill="#cbd5e1" font-size="8">Reviewer configuration</text>
+              <text x="550" y="321" fill="#94a3b8" font-size="7.8">remains under owner review</text>
+
+              <rect x="543" y="336" width="159" height="44" rx="6" fill="#0c231f" stroke="#115e59" stroke-width="1" />
+              <text x="622" y="352" fill="#a7f3d0" font-size="8.5" font-weight="700" text-anchor="middle">NON-AUTHORITY NOTICE</text>
+              <text x="622" y="365" fill="#94a3b8" font-size="7.5" text-anchor="middle">DoD Manifest never grants execution,</text>
+              <text x="622" y="375" fill="#94a3b8" font-size="7.5" text-anchor="middle">acceptance, release or deploy authority</text>
+
+              <rect x="543" y="386" width="159" height="24" rx="4" fill="#047857" />
+              <text x="622" y="402" fill="#ffffff" font-size="9" font-weight="700" text-anchor="middle">Authorized Baseline →</text>
+            </g>
+
+            
+            <path d="M 710 240 L 733 240" stroke="#10b981" stroke-width="2.5" fill="none" marker-end="url(#overview-arrow-emerald)" />
+
+            
+            <g id="overview-box-overview-impl">
+              <rect x="735" y="48" width="305" height="415" rx="10" fill="url(#overview-grad-col4)" stroke="#6366f1" stroke-width="1.5" />
+              <text x="750" y="74" fill="#f8fafc" font-size="14" font-weight="800">Lifecycle Implementation</text>
+              <text x="750" y="91" fill="#a5b4fc" font-size="10.5">Build, Progressive V&amp;V &amp; Validation</text>
+              <line x1="750" y1="100" x2="1025" y2="100" stroke="#3730a3" stroke-width="1" />
+
+              <rect x="745" y="108" width="285" height="66" rx="6" fill="#151b3c" stroke="#2e336b" stroke-width="1" />
+              <rect x="753" y="114" width="16" height="16" rx="3" fill="#312e81" />
+              <text x="761" y="126" fill="#a5b4fc" font-size="9" font-weight="800" text-anchor="middle">1</text>
+              <text x="775" y="122" fill="#f8fafc" font-size="10" font-weight="700">Coordinator &amp; Realization</text>
+              <text x="775" y="135" fill="#cbd5e1" font-size="8.5">Test Implementer (tests &amp; fixtures) · Product Implementer (build)</text>
+              <text x="775" y="147" fill="#94a3b8" font-size="8">Distinct responsibilities · Light Implementer (mechanical work)</text>
+              <text x="775" y="159" fill="#94a3b8" font-size="8">Continuous deterministic checks (lint, format &amp; unit tests)</text>
+
+              <rect x="745" y="180" width="285" height="64" rx="6" fill="#151b3c" stroke="#2e336b" stroke-width="1" />
+              <rect x="753" y="186" width="16" height="16" rx="3" fill="#312e81" />
+              <text x="761" y="198" fill="#a5b4fc" font-size="9" font-weight="800" text-anchor="middle">2</text>
+              <text x="775" y="194" fill="#f8fafc" font-size="10" font-weight="700">In-Wave Assembly &amp; Defect Review</text>
+              <text x="775" y="207" fill="#cbd5e1" font-size="8.5">Assurance Test Engineer (ATE): progressive assembly &amp; V&amp;V</text>
+              <text x="775" y="219" fill="#94a3b8" font-size="8">Reviewer: independent defect evaluation at review boundary</text>
+              <text x="775" y="231" fill="#fda4af" font-size="8">In-wave repair: findings → Implementer (1 round; recheck, no auto rereview)</text>
+
+              <rect x="745" y="250" width="285" height="98" rx="6" fill="#0d2624" stroke="#10b981" stroke-width="1.3" />
+              <rect x="753" y="257" width="16" height="16" rx="3" fill="#047857" />
+              <text x="761" y="269" fill="#6ee7b7" font-size="9" font-weight="800" text-anchor="middle">3</text>
+              <text x="775" y="265" fill="#f8fafc" font-size="10" font-weight="700">System Validation (Lifecycle Completion)</text>
+              <text x="775" y="278" fill="#6ee7b7" font-size="8.8" font-weight="700">Integration Engineer execution session</text>
+              <text x="775" y="291" fill="#cbd5e1" font-size="8.2">Validates whole system against owner-approved outcome</text>
+              <text x="775" y="304" fill="#a7f3d0" font-size="8.2" font-weight="700">RUNS ONCE AT LIFECYCLE COMPLETION BY DEFAULT</text>
+              <text x="775" y="317" fill="#fde68a" font-size="8">Assessment-boundary override requires explicit owner approval</text>
+              <text x="775" y="329" fill="#94a3b8" font-size="7.5">Phase/increment count, resume, or rename is NOT an override</text>
+              <text x="775" y="340" fill="#fda4af" font-size="7.5" font-weight="600">Findings return to Implementer via correction path below</text>
+
+              <rect x="745" y="354" width="285" height="30" rx="4" fill="#29121f" stroke="#f43f5e" stroke-width="1" />
+              <text x="887" y="366" fill="#fda4af" font-size="8.5" font-weight="700" text-anchor="middle">BOUNDED CORRECTION &amp; DETERMINISTIC RECHECK</text>
+              <text x="887" y="377" fill="#cbd5e1" font-size="7.5" text-anchor="middle">Findings return to responsible Implementer without automatic rereview</text>
+
+              <rect x="745" y="390" width="285" height="20" rx="4" fill="#312e81" />
+              <text x="887" y="404" fill="#a5b4fc" font-size="8.5" font-weight="700" text-anchor="middle">Inspect Implementation Detail (Page 03) →</text>
+            </g>
+
+            
+            <path d="M 1040 240 L 1063 240" stroke="#38bdf8" stroke-width="2.5" fill="none" marker-end="url(#overview-arrow-cyan)" />
+
+            
+            <g id="overview-box-overview-output">
+              <rect x="1065" y="48" width="195" height="415" rx="10" fill="url(#overview-grad-col5)" stroke="#0284c7" stroke-width="1.5" />
+              <text x="1080" y="74" fill="#f8fafc" font-size="14" font-weight="800">Result &amp; Evidence</text>
+              <text x="1080" y="91" fill="#38bdf8" font-size="10.5">Completed Change Artifacts</text>
+              <line x1="1080" y1="100" x2="1245" y2="100" stroke="#1e3a5f" stroke-width="1" />
+
+              <rect x="1075" y="108" width="175" height="50" rx="6" fill="#0d2133" stroke="#1e3a5f" stroke-width="1" />
+              <circle cx="1087" cy="123" r="3.5" fill="#38bdf8" />
+              <text x="1097" y="122" fill="#f8fafc" font-size="10" font-weight="700">Target Code Changes</text>
+              <text x="1097" y="136" fill="#cbd5e1" font-size="8.5">Implemented feature or fix</text>
+              <text x="1097" y="148" fill="#94a3b8" font-size="8">Confined to exact write set</text>
+
+              <rect x="1075" y="164" width="175" height="50" rx="6" fill="#0d2133" stroke="#1e3a5f" stroke-width="1" />
+              <circle cx="1087" cy="179" r="3.5" fill="#38bdf8" />
+              <text x="1097" y="178" fill="#f8fafc" font-size="10" font-weight="700">Traceable Evidence</text>
+              <text x="1097" y="192" fill="#cbd5e1" font-size="8.5">V&amp;V test logs &amp; check runs</text>
+              <text x="1097" y="204" fill="#94a3b8" font-size="8">ATE &amp; IE assessment trace</text>
+
+              <rect x="1075" y="220" width="175" height="66" rx="6" fill="#1c2552" stroke="#4f46e5" stroke-width="1" />
+              <text x="1162" y="235" fill="#c7d2fe" font-size="8.5" font-weight="700" text-anchor="middle">DOD MANIFEST: CLOSEOUT</text>
+              <text x="1162" y="248" fill="#94a3b8" font-size="7.5" text-anchor="middle">&lt;plan-name&gt;-dod-manifest.html</text>
+              <text x="1162" y="261" fill="#cbd5e1" font-size="8" text-anchor="middle">Evidence of passed vs open criteria</text>
+              <text x="1162" y="274" fill="#94a3b8" font-size="7.5" text-anchor="middle">Non-authoritative projection</text>
+
+              <rect x="1075" y="292" width="175" height="66" rx="6" fill="#2a1e12" stroke="#d97706" stroke-width="1" />
+              <rect x="1083" y="298" width="98" height="15" rx="3" fill="#b45309" />
+              <text x="1132" y="309" fill="#ffffff" font-size="7.2" font-weight="800" text-anchor="middle">SEPARATE AUTHORITY</text>
+              <text x="1083" y="325" fill="#fde68a" font-size="9.5" font-weight="700">Release &amp; Deploy Gate</text>
+              <text x="1083" y="338" fill="#cbd5e1" font-size="8">Deployment authority is separate</text>
+              <text x="1083" y="350" fill="#94a3b8" font-size="8">from Lifecycle completion.</text>
+
+              <rect x="1075" y="364" width="175" height="34" rx="6" fill="#064e3b" stroke="#10b981" stroke-width="1" />
+              <polygon points="1087,378 1090,384 1097,374" fill="none" stroke="#6ee7b7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              <text x="1105" y="378" fill="#6ee7b7" font-size="9.5" font-weight="800">COMPLETE LIFECYCLE</text>
+              <text x="1105" y="390" fill="#a7f3d0" font-size="8">Verified change + evidence</text>
+            </g>
+
+            
+            <g id="overview-loop-planning-feedback">
+              <path d="M 622 463
+                       L 622 498
+                       Q 622 514 602 514
+                       L 385 514
+                       Q 365 514 365 498
+                       L 365 468"
+                    fill="none"
+                    stroke="#f43f5e"
+                    stroke-width="2.2"
+                    stroke-dasharray="7 4"
+                   
+                    marker-end="url(#overview-arrow-rose-up)" />
+
+              <rect x="390" y="497" width="240" height="32" rx="16" fill="#1f0913" stroke="#f43f5e" stroke-width="1.5" />
+              <circle cx="408" cy="513" r="7" fill="#881337" />
+              <path d="M 411 510 A 3.5 3.5 0 1 0 411 516" fill="none" stroke="#fda4af" stroke-width="1.4" stroke-linecap="round" />
+              <path d="M 411 508 L 411 511 L 408 511" fill="none" stroke="#fda4af" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+              <text x="422" y="509" fill="#fda4af" font-size="8.5" font-weight="800">PLANNING FEEDBACK LOOP</text>
+              <text x="422" y="521" fill="#cbd5e1" font-size="7.5">Requested changes return to responsible planning role</text>
+            </g>
+
+            
+            <g id="overview-path-system-validation-correction">
+              <path d="M 887 463
+                       L 887 550
+                       Q 887 568 867 568
+                       L 795 568
+                       Q 775 568 775 550
+                       L 775 468"
+                    fill="none"
+                    stroke="#f43f5e"
+                    stroke-width="2.2"
+                    stroke-dasharray="7 4"
+                   
+                    marker-end="url(#overview-arrow-rose-up)" />
+
+              <rect x="740" y="552" width="280" height="32" rx="16" fill="#1f0913" stroke="#f43f5e" stroke-width="1.5" />
+              <circle cx="758" cy="568" r="7" fill="#881337" />
+              <path d="M 761 565 A 3.5 3.5 0 1 0 761 571" fill="none" stroke="#fda4af" stroke-width="1.4" stroke-linecap="round" />
+              <path d="M 761 563 L 761 566 L 758 566" fill="none" stroke="#fda4af" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+              <text x="772" y="564" fill="#fda4af" font-size="8.5" font-weight="800">SYSTEM VALIDATION CORRECTION PATH</text>
+              <text x="772" y="576" fill="#cbd5e1" font-size="7.5">Findings return to Implementer for bounded correction &amp; recheck</text>
+            </g>
+
+            <text x="20" y="612" fill="#cbd5e1" font-size="10" font-weight="600">
+              FORWARD FLOW: Work Request Intake → Lifecycle Planning → Owner Authorization Gate → Lifecycle Implementation → Completed Result &amp; Evidence (Release/Deployment Separate)
+            </text>
+          
+      </g>
+    </g>
+    <g id="panel-planning">
+      <rect x="8" y="694" width="1296" height="694" rx="10" fill="#090d16" stroke="#233554" stroke-width="1.2" />
+      <rect x="20" y="702" width="132" height="22" rx="4" fill="#312e81" stroke="#6366f1" stroke-width="1" />
+      <text x="86" y="717" fill="#a5b4fc" font-size="11" font-weight="700" text-anchor="middle">Planning</text>
+      <g transform="translate(16,730)">
+            <title id="planning-diagram-title">Bearing Delivery Lifecycle Planning Process Detail Diagram</title>
+            <desc id="planning-diagram-desc">
+              Four sequential planning stages mapping plain SDLC activities to Bearing Delivery Lifecycle roles: 01 Intake and Context (Intake, Architectural Alignment, Scope Definition), 02 Architecture and Integration (Planning and Design, Requirements Engineer when applicable, Systems Modeler, Integration Engineer planning), 03 V&amp;V and Synthesis (Planning Test Engineer, Plan Integrator), and 04 Owner Authorization Gate. An iterative triad between Systems Modeler, Integration Engineer planning, and Planning Test Engineer indicates that linear ordering is unsettled. A feedback loop returns requested changes back to the responsible planning role.
+            </desc>
+
+            <defs>
+              <marker id="planning-arrow-cyan" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#38bdf8" />
+              </marker>
+              <marker id="planning-arrow-emerald" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#10b981" />
+              </marker>
+              <marker id="planning-arrow-rose-up" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#f43f5e" />
+              </marker>
+
+              <linearGradient id="planning-grad-p1" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#14233c" />
+                <stop offset="100%" stop-color="#0c1626" />
+              </linearGradient>
+              <linearGradient id="planning-grad-p2" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#182046" />
+                <stop offset="100%" stop-color="#0f142d" />
+              </linearGradient>
+              <linearGradient id="planning-grad-p3" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#152636" />
+                <stop offset="100%" stop-color="#0b1722" />
+              </linearGradient>
+              <linearGradient id="planning-grad-p4" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#0d2e2b" />
+                <stop offset="100%" stop-color="#071b19" />
+              </linearGradient>
+            </defs>
+
+            
+            <rect x="20" y="18" width="235" height="22" rx="4" fill="#0c4a6e" stroke="#0284c7" stroke-width="1" />
+            <text x="137" y="33" fill="#38bdf8" font-size="10" font-weight="700" text-anchor="middle">01 · INTAKE &amp; CONTEXT</text>
+
+            <rect x="275" y="18" width="325" height="22" rx="4" fill="#312e81" stroke="#6366f1" stroke-width="1" />
+            <text x="437" y="33" fill="#a5b4fc" font-size="10" font-weight="700" text-anchor="middle">02 · PLANNING, ARCHITECTURE &amp; INTEGRATION</text>
+
+            <rect x="620" y="18" width="275" height="22" rx="4" fill="#0f3b46" stroke="#0d9488" stroke-width="1" />
+            <text x="757" y="33" fill="#5eead4" font-size="10" font-weight="700" text-anchor="middle">03 · V&amp;V &amp; SYNTHESIS</text>
+
+            <rect x="915" y="18" width="240" height="22" rx="4" fill="#064e3b" stroke="#10b981" stroke-width="1" />
+            <text x="1035" y="33" fill="#6ee7b7" font-size="10" font-weight="700" text-anchor="middle">04 · OWNER AUTHORIZATION GATE</text>
+
+            
+            <g id="planning-box-plan-col1">
+              <rect x="20" y="48" width="235" height="435" rx="10" fill="url(#planning-grad-p1)" stroke="#0284c7" stroke-width="1.5" />
+              <text x="35" y="74" fill="#f8fafc" font-size="14" font-weight="800">Intake &amp; Context</text>
+              <text x="35" y="91" fill="#cbd5e1" font-size="10.5">SDLC Scoping &amp; Discovery</text>
+              <line x1="35" y1="100" x2="240" y2="100" stroke="#1e3a5f" stroke-width="1" />
+
+              <rect x="30" y="108" width="215" height="52" rx="6" fill="#101e33" stroke="#1a3150" stroke-width="1" />
+              <rect x="38" y="115" width="18" height="18" rx="3" fill="#0c4a6e" />
+              <text x="47" y="128" fill="#38bdf8" font-size="9.5" font-weight="800" text-anchor="middle">1</text>
+              <text x="64" y="123" fill="#f8fafc" font-size="10.5" font-weight="700">Work Intake</text>
+              <text x="64" y="136" fill="#38bdf8" font-size="9">Orchestrator &amp; Intake</text>
+              <text x="64" y="148" fill="#cbd5e1" font-size="8.2">Confirms target repo, checkout lease,</text>
+              <text x="64" y="157" fill="#94a3b8" font-size="7.8">baseline &amp; planning location</text>
+
+              <rect x="30" y="166" width="215" height="48" rx="6" fill="#101e33" stroke="#1a3150" stroke-width="1" />
+              <rect x="38" y="173" width="18" height="18" rx="3" fill="#0c4a6e" />
+              <text x="47" y="186" fill="#38bdf8" font-size="9.5" font-weight="800" text-anchor="middle">2</text>
+              <text x="64" y="181" fill="#f8fafc" font-size="10.5" font-weight="700">Current-State Alignment</text>
+              <text x="64" y="194" fill="#38bdf8" font-size="9">Architectural Alignment</text>
+              <text x="64" y="206" fill="#cbd5e1" font-size="8.2">Codebase baseline, directory map &amp; context</text>
+
+              <rect x="30" y="220" width="215" height="56" rx="6" fill="#101e33" stroke="#1a3150" stroke-width="1" />
+              <rect x="38" y="227" width="18" height="18" rx="3" fill="#0c4a6e" />
+              <text x="47" y="240" fill="#38bdf8" font-size="9.5" font-weight="800" text-anchor="middle">3</text>
+              <text x="64" y="235" fill="#f8fafc" font-size="10.5" font-weight="700">Stakeholder Scope &amp; Intent</text>
+              <text x="64" y="248" fill="#38bdf8" font-size="9">Scope Definition</text>
+              <text x="64" y="260" fill="#cbd5e1" font-size="8.2">Included &amp; excluded work inside Lifecycle</text>
+              <text x="64" y="271" fill="#94a3b8" font-size="7.8">Constraints &amp; intent; unresolved blocks routing</text>
+
+              <rect x="30" y="282" width="215" height="56" rx="6" fill="#251b0a" stroke="#d97706" stroke-width="1" />
+              <polygon points="40,292 46,302 34,302" fill="#6ee7b7" />
+              <text x="52" y="298" fill="#6ee7b7" font-size="8.5" font-weight="700">SETTLED INPUTS</text>
+              <text x="38" y="312" fill="#cbd5e1" font-size="8.2">Feature Story, Defect, Technical Task,</text>
+              <text x="38" y="324" fill="#cbd5e1" font-size="8">or Change Request</text>
+
+              <rect x="30" y="346" width="215" height="24" rx="4" fill="#082f49" />
+              <text x="137" y="362" fill="#38bdf8" font-size="9" font-weight="700" text-anchor="middle">Intent Settled → Orchestration →</text>
+            </g>
+
+            
+            <path d="M 255 240 L 275 240" stroke="#38bdf8" stroke-width="2.5" fill="none" marker-end="url(#planning-arrow-cyan)" />
+
+            
+            <g id="planning-box-plan-col2">
+              <rect x="275" y="48" width="325" height="435" rx="10" fill="url(#planning-grad-p2)" stroke="#6366f1" stroke-width="1.5" />
+              <text x="290" y="74" fill="#f8fafc" font-size="14" font-weight="800">Architecture &amp; Integration</text>
+              <text x="290" y="91" fill="#a5b4fc" font-size="10.5">SDLC Modeling &amp; Interface Strategy</text>
+              <line x1="290" y1="100" x2="585" y2="100" stroke="#3730a3" stroke-width="1" />
+
+              <rect x="285" y="108" width="305" height="42" rx="6" fill="#151b3c" stroke="#2e336b" stroke-width="1" />
+              <rect x="293" y="115" width="18" height="18" rx="3" fill="#312e81" />
+              <text x="302" y="128" fill="#a5b4fc" font-size="9.5" font-weight="800" text-anchor="middle">4</text>
+              <text x="319" y="123" fill="#f8fafc" font-size="10.5" font-weight="700">Planning Orchestration</text>
+              <text x="319" y="136" fill="#a5b4fc" font-size="9">Planning and Design</text>
+              <text x="319" y="146" fill="#cbd5e1" font-size="8">Coordinates specialist contributions &amp; dependencies</text>
+
+              <rect x="285" y="154" width="305" height="52" rx="6" fill="#151b3c" stroke="#2e336b" stroke-width="1" />
+              <rect x="293" y="161" width="18" height="18" rx="3" fill="#312e81" />
+              <text x="302" y="174" fill="#a5b4fc" font-size="9.5" font-weight="800" text-anchor="middle">5</text>
+              <text x="319" y="169" fill="#f8fafc" font-size="10.5" font-weight="700">Requirements &amp; Acceptance Analysis</text>
+              <text x="319" y="182" fill="#a5b4fc" font-size="9">Requirements Engineer · when applicable</text>
+              <text x="319" y="193" fill="#cbd5e1" font-size="8">Criteria analysis when applicable to scope</text>
+              <text x="319" y="202" fill="#94a3b8" font-size="7.5">Standard SDLC activity; creates no requirements register</text>
+
+              
+              <rect x="285" y="212" width="305" height="160" rx="6" fill="#121735" stroke="#6366f1" stroke-width="1.3" stroke-dasharray="4 3" />
+              <rect x="293" y="218" width="220" height="16" rx="3" fill="#312e81" />
+              <text x="300" y="230" fill="#a5b4fc" font-size="8.5" font-weight="700">APPROVED ORDER · CONCURRENT SPECIALISTS</text>
+
+              <rect x="293" y="238" width="289" height="34" rx="4" fill="#182046" stroke="#2e336b" stroke-width="1" />
+              <text x="301" y="249" fill="#f8fafc" font-size="9.5" font-weight="700">6 · Systems Modeler</text>
+              <text x="301" y="259" fill="#cbd5e1" font-size="7.6">Structural decomposition, behavioral models &amp; interface boundaries</text>
+              <text x="301" y="268" fill="#a5b4fc" font-size="7.2" font-weight="600">Requirements System Transfer Function (SysON Engine) -&gt; Page 04</text>
+
+              <rect x="293" y="276" width="289" height="46" rx="4" fill="#182046" stroke="#2e336b" stroke-width="1" />
+              <text x="301" y="289" fill="#f8fafc" font-size="9.5" font-weight="700">7 · Integration Engineer planning</text>
+              <text x="301" y="301" fill="#a5b4fc" font-size="8.5">Compatibility, interfaces, assembly strategy &amp; order</text>
+              <text x="301" y="313" fill="#cbd5e1" font-size="7.8">Readiness, V&amp;V handoffs, anomaly handling, rollback &amp; recovery planning</text>
+
+              <rect x="293" y="326" width="289" height="38" rx="4" fill="#251b0a" stroke="#d97706" stroke-width="1" />
+              <polygon points="301,334 307,344 295,344" fill="#fde68a" />
+              <text x="313" y="339" fill="#fde68a" font-size="8" font-weight="700">DISCUSSION POINT: SPECIALIST SEQUENCING</text>
+              <text x="301" y="352" fill="#cbd5e1" font-size="7.5">Linear order of Systems Modeler, Planning IE &amp; Planning TE is unsettled</text>
+              <text x="301" y="361" fill="#94a3b8" font-size="7.2">Collaborative feedback relationship shown rather than rigid sequence</text>
+
+              <rect x="285" y="378" width="305" height="24" rx="4" fill="#312e81" />
+              <text x="437" y="394" fill="#a5b4fc" font-size="9" font-weight="700" text-anchor="middle">Design &amp; Strategy to V&amp;V Synthesis →</text>
+            </g>
+
+            
+            <path d="M 582 295 C 610 295, 610 140, 630 140" fill="none" stroke="#a5b4fc" stroke-width="1.8" stroke-dasharray="4 3" marker-end="url(#planning-arrow-cyan)" />
+            <path d="M 630 152 C 605 152, 605 255, 582 255" fill="none" stroke="#5eead4" stroke-width="1.8" stroke-dasharray="4 3" marker-end="url(#planning-arrow-cyan)" />
+
+            
+            <path d="M 600 240 L 620 240" stroke="#38bdf8" stroke-width="2.5" fill="none" marker-end="url(#planning-arrow-cyan)" />
+
+            
+            <g id="planning-box-plan-col3">
+              <rect x="620" y="48" width="275" height="435" rx="10" fill="url(#planning-grad-p3)" stroke="#0d9488" stroke-width="1.5" />
+              <text x="635" y="74" fill="#f8fafc" font-size="14" font-weight="800">V&amp;V &amp; Synthesis</text>
+              <text x="635" y="91" fill="#5eead4" font-size="10.5">SDLC Test Strategy &amp; Work Breakdown</text>
+              <line x1="635" y1="100" x2="880" y2="100" stroke="#134e4a" stroke-width="1" />
+
+              <rect x="630" y="108" width="255" height="56" rx="6" fill="#0d2328" stroke="#155e5b" stroke-width="1" />
+              <rect x="638" y="115" width="18" height="18" rx="3" fill="#0f3b46" />
+              <text x="647" y="128" fill="#5eead4" font-size="9.5" font-weight="800" text-anchor="middle">8</text>
+              <text x="664" y="123" fill="#f8fafc" font-size="10.5" font-weight="700">V&amp;V Planning (SEIT)</text>
+              <text x="664" y="136" fill="#5eead4" font-size="9">Planning Test Engineer (Iterative)</text>
+              <text x="664" y="148" fill="#cbd5e1" font-size="8.2">Test strategies, test harness design &amp; criteria</text>
+              <text x="664" y="159" fill="#94a3b8" font-size="7.8">Verification &amp; validation plan baseline</text>
+
+              <rect x="630" y="170" width="255" height="56" rx="6" fill="#0d2328" stroke="#155e5b" stroke-width="1" />
+              <rect x="638" y="177" width="18" height="18" rx="3" fill="#0f3b46" />
+              <text x="647" y="190" fill="#5eead4" font-size="9.5" font-weight="800" text-anchor="middle">9</text>
+              <text x="664" y="185" fill="#f8fafc" font-size="10.5" font-weight="700">Work Breakdown &amp; Reconciliation</text>
+              <text x="664" y="198" fill="#5eead4" font-size="9">Plan Integrator</text>
+              <text x="664" y="210" fill="#cbd5e1" font-size="8.2">Reconciles model, integration strategy &amp; tests</text>
+              <text x="664" y="221" fill="#94a3b8" font-size="7.8">Constructs bounded execution packets &amp; sequence</text>
+
+              <rect x="630" y="234" width="255" height="120" rx="6" fill="#08282b" stroke="#0d9488" stroke-width="1" />
+              <text x="757" y="252" fill="#5eead4" font-size="9.5" font-weight="700" text-anchor="middle">PLANNING PACKAGE DELIVERABLES</text>
+              <circle cx="646" cy="268" r="2.5" fill="#5eead4" />
+              <text x="656" y="271" fill="#cbd5e1" font-size="8.2">Technical plan &amp; architectural design</text>
+              <circle cx="646" cy="284" r="2.5" fill="#5eead4" />
+              <text x="656" y="287" fill="#cbd5e1" font-size="8.2">SEIT: verification &amp; validation plan</text>
+              <circle cx="646" cy="300" r="2.5" fill="#5eead4" />
+              <text x="656" y="303" fill="#cbd5e1" font-size="8.2">Execution sequence &amp; bounded task packets</text>
+              <circle cx="646" cy="316" r="2.5" fill="#5eead4" />
+              <text x="656" y="319" fill="#fde68a" font-size="8.2" font-weight="600">&lt;plan-name&gt;-dod-manifest.html</text>
+              <text x="656" y="331" fill="#cbd5e1" font-size="7.5">Planning State: proposed criteria &amp; review view</text>
+              <text x="656" y="342" fill="#94a3b8" font-size="7.2">Non-authoritative human-readable projection</text>
+
+              <rect x="630" y="362" width="255" height="24" rx="4" fill="#0f3b46" />
+              <text x="757" y="378" fill="#5eead4" font-size="9" font-weight="700" text-anchor="middle">Package Ready for Review →</text>
+            </g>
+
+            
+            <path d="M 895 240 L 915 240" stroke="#38bdf8" stroke-width="2.5" fill="none" marker-end="url(#planning-arrow-cyan)" />
+
+            
+            <g id="planning-box-plan-col4">
+              <rect x="915" y="48" width="240" height="435" rx="10" fill="url(#planning-grad-p4)" stroke="#10b981" stroke-width="1.5" />
+              <text x="930" y="74" fill="#f8fafc" font-size="14" font-weight="800">Owner Authorization</text>
+              <text x="930" y="91" fill="#6ee7b7" font-size="10.5">SDLC Plan Baseline Review</text>
+              <line x1="930" y1="100" x2="1140" y2="100" stroke="#134e4a" stroke-width="1" />
+
+              <rect x="925" y="108" width="220" height="54" rx="6" fill="#0a2521" stroke="#115e59" stroke-width="1" />
+              <rect x="933" y="115" width="18" height="18" rx="3" fill="#064e3b" />
+              <text x="942" y="128" fill="#6ee7b7" font-size="9.5" font-weight="800" text-anchor="middle">10</text>
+              <text x="958" y="123" fill="#f8fafc" font-size="10.5" font-weight="700">Planning Package Review</text>
+              <text x="958" y="136" fill="#6ee7b7" font-size="9">Owner Review &amp; Sign-Off</text>
+              <text x="958" y="148" fill="#cbd5e1" font-size="8.2">Evaluate completeness, interfaces &amp; criteria</text>
+
+              <rect x="925" y="168" width="220" height="48" rx="6" fill="#064e3b" stroke="#10b981" stroke-width="1" />
+              <polygon points="937,185 940,193 950,181" fill="none" stroke="#6ee7b7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              <text x="956" y="186" fill="#6ee7b7" font-size="10" font-weight="800">AUTHORIZED</text>
+              <text x="956" y="198" fill="#d1fae5" font-size="8.2">Dispatches Lifecycle Implementation</text>
+              <text x="956" y="209" fill="#a7f3d0" font-size="7.8">Plan baseline officially locked</text>
+
+              <rect x="925" y="222" width="220" height="52" rx="6" fill="#380916" stroke="#f43f5e" stroke-width="1" />
+              <circle cx="940" cy="240" r="6" fill="#881337" />
+              <path d="M 940 236 L 940 242 M 940 244 L 940 246" stroke="#fda4af" stroke-width="1.5" stroke-linecap="round" />
+              <text x="954" y="238" fill="#fda4af" font-size="10" font-weight="800">CHANGES REQUESTED</text>
+              <text x="954" y="251" fill="#fecdd3" font-size="8.2">Returns to responsible planning role</text>
+              <text x="954" y="262" fill="#fda4af" font-size="7.8">Via closed feedback loop below</text>
+
+              <rect x="925" y="280" width="220" height="50" rx="6" fill="#251b0a" stroke="#d97706" stroke-width="1" />
+              <polygon points="935,290 941,300 929,300" fill="#fde68a" />
+              <text x="946" y="295" fill="#fde68a" font-size="8.5" font-weight="700">DISCUSSION POINT: REVIEW CONFIG</text>
+              <text x="935" y="309" fill="#cbd5e1" font-size="8">Reviewer configuration remains under review;</text>
+              <text x="935" y="321" fill="#94a3b8" font-size="7.5">no 2-reviewer rule assumed</text>
+
+              <rect x="925" y="336" width="220" height="46" rx="6" fill="#0c231f" stroke="#115e59" stroke-width="1" />
+              <text x="1035" y="352" fill="#a7f3d0" font-size="8.5" font-weight="700" text-anchor="middle">NON-AUTHORITY NOTICE</text>
+              <text x="1035" y="365" fill="#94a3b8" font-size="7.5" text-anchor="middle">DoD Manifest never grants execution, acceptance,</text>
+              <text x="1035" y="375" fill="#94a3b8" font-size="7.5" text-anchor="middle">release, or deployment authority</text>
+
+              <rect x="925" y="390" width="220" height="24" rx="4" fill="#047857" />
+              <text x="1035" y="406" fill="#ffffff" font-size="9" font-weight="700" text-anchor="middle">Dispatch Implementation →</text>
+            </g>
+
+            
+            <path d="M 1155 240 L 1175 240" stroke="#10b981" stroke-width="2.5" fill="none" marker-end="url(#planning-arrow-emerald)" />
+
+            
+            <g id="planning-pass-implementation">
+              <rect x="1178" y="195" width="88" height="90" rx="8" fill="#064e3b" stroke="#10b981" stroke-width="1.5" />
+              <circle cx="1222" cy="222" r="12" fill="#047857" />
+              <polygon points="1215,222 1219,228 1229,218" fill="none" stroke="#6ee7b7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              <text x="1222" y="248" fill="#6ee7b7" font-size="9.5" font-weight="800" text-anchor="middle">AUTHORIZED</text>
+              <text x="1222" y="260" fill="#d1fae5" font-size="7.5" text-anchor="middle">To Implementation</text>
+              <text x="1222" y="271" fill="#a7f3d0" font-size="7.2" text-anchor="middle">(Page 03)</text>
+            </g>
+
+            
+            <g id="planning-loop-planning-feedback-detail">
+              <path d="M 1035 483
+                       L 1035 528
+                       Q 1035 546 1015 546
+                       L 457 546
+                       Q 437 546 437 528
+                       L 437 488"
+                    fill="none"
+                    stroke="#f43f5e"
+                    stroke-width="2.2"
+                    stroke-dasharray="7 4"
+                   
+                    marker-end="url(#planning-arrow-rose-up)" />
+
+              <rect x="460" y="528" width="530" height="34" rx="17" fill="#1f0913" stroke="#f43f5e" stroke-width="1.5" />
+              <circle cx="478" cy="545" r="8" fill="#881337" />
+              <path d="M 481 541 A 4 4 0 1 0 481 549" fill="none" stroke="#fda4af" stroke-width="1.5" stroke-linecap="round" />
+              <path d="M 481 539 L 481 543 L 477 543" fill="none" stroke="#fda4af" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+              <text x="495" y="541" fill="#fda4af" font-size="8.5" font-weight="800">FEEDBACK LOOP: Requested changes / missing decisions → responsible planning role</text>
+              <text x="495" y="554" fill="#cbd5e1" font-size="7.5">Returns to Scope Definition (intent/scope), Systems Modeler (architecture), IE planning (interfaces), or TE planning (V&amp;V)</text>
+            </g>
+
+            <text x="20" y="615" fill="#cbd5e1" font-size="10" font-weight="600">
+              PLANNING PIPELINE: Intake → Architectural Alignment → Scope Definition → Planning and Design → specialist planning → Plan Integrator → owner authorization
+            </text>
+          
+      </g>
+    </g>
+    <g id="panel-implementation">
+      <rect x="8" y="1396" width="1296" height="714" rx="10" fill="#090d16" stroke="#233554" stroke-width="1.2" />
+      <rect x="20" y="1404" width="168" height="22" rx="4" fill="#064e3b" stroke="#10b981" stroke-width="1" />
+      <text x="104" y="1419" fill="#6ee7b7" font-size="11" font-weight="700" text-anchor="middle">Implementation</text>
+      <g transform="translate(16,1432)">
+            <title id="implementation-diagram-title">Bearing Delivery Lifecycle Implementation Process Detail Diagram</title>
+            <desc id="implementation-diagram-desc">
+              Implementation lifecycle showing two distinct operational zones: Zone A comprises the repeating declared work-unit loop (01 Baseline Input, 02 Work-Unit Realization with distinct Test Implementer, Product Implementer, and Light Implementer roles, 03 In-Wave V&amp;V and Defect Review with ATE and Reviewer, plus an in-wave repair loop). Zone B comprises the distinct Lifecycle-completion gate (04 Lifecycle-Completion System Validation by Integration Engineer execution running once at Lifecycle completion by default, with a correction path back to Implementers) and 05 Closeout and Evidence Handover. Production release remains under separate authority.
+            </desc>
+
+            <defs>
+              <marker id="implementation-arrow-cyan" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#38bdf8" />
+              </marker>
+              <marker id="implementation-arrow-emerald" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#10b981" />
+              </marker>
+              <marker id="implementation-arrow-rose-up" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#f43f5e" />
+              </marker>
+
+              <linearGradient id="implementation-grad-i1" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#14233c" />
+                <stop offset="100%" stop-color="#0c1626" />
+              </linearGradient>
+              <linearGradient id="implementation-grad-i2" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#182046" />
+                <stop offset="100%" stop-color="#0f142d" />
+              </linearGradient>
+              <linearGradient id="implementation-grad-i3" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#152636" />
+                <stop offset="100%" stop-color="#0b1722" />
+              </linearGradient>
+              <linearGradient id="implementation-grad-i4" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#0d2e2b" />
+                <stop offset="100%" stop-color="#071b19" />
+              </linearGradient>
+              <linearGradient id="implementation-grad-i5" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#152636" />
+                <stop offset="100%" stop-color="#0b1722" />
+              </linearGradient>
+            </defs>
+
+            
+            <rect x="20" y="10" width="775" height="495" rx="12" fill="none" stroke="#233554" stroke-width="1.2" stroke-dasharray="5 5" />
+            <text x="35" y="24" fill="#38bdf8" font-size="9" font-weight="800">ZONE A: REPEATING DECLARED WORK-UNIT CYCLE (PHASES / WAVES)</text>
+
+            <rect x="810" y="10" width="450" height="495" rx="12" fill="none" stroke="#10b981" stroke-width="1.2" stroke-dasharray="5 5" />
+            <text x="825" y="24" fill="#6ee7b7" font-size="9" font-weight="800">ZONE B: DISTINCT LIFECYCLE-COMPLETION GATE &amp; CLOSEOUT</text>
+
+            
+            <rect x="25" y="32" width="145" height="20" rx="4" fill="#0c4a6e" stroke="#0284c7" stroke-width="1" />
+            <text x="97" y="46" fill="#38bdf8" font-size="9.5" font-weight="700" text-anchor="middle">01 · BASELINE INPUT</text>
+
+            <rect x="195" y="32" width="280" height="20" rx="4" fill="#312e81" stroke="#6366f1" stroke-width="1" />
+            <text x="335" y="46" fill="#a5b4fc" font-size="9.5" font-weight="700" text-anchor="middle">02 · WORK-UNIT REALIZATION</text>
+
+            <rect x="495" y="32" width="285" height="20" rx="4" fill="#0f3b46" stroke="#0d9488" stroke-width="1" />
+            <text x="637" y="46" fill="#5eead4" font-size="9.5" font-weight="700" text-anchor="middle">03 · IN-WAVE V&amp;V &amp; REVIEW</text>
+
+            <rect x="825" y="32" width="265" height="20" rx="4" fill="#064e3b" stroke="#10b981" stroke-width="1" />
+            <text x="957" y="46" fill="#6ee7b7" font-size="9.5" font-weight="700" text-anchor="middle">04 · SYSTEM VALIDATION</text>
+
+            <rect x="1105" y="32" width="145" height="20" rx="4" fill="#0c4a6e" stroke="#0284c7" stroke-width="1" />
+            <text x="1177" y="46" fill="#38bdf8" font-size="9.5" font-weight="700" text-anchor="middle">05 · CLOSEOUT &amp; EVIDENCE</text>
+
+            
+            <g id="implementation-box-impl-col1">
+              <rect x="25" y="58" width="155" height="415" rx="10" fill="url(#implementation-grad-i1)" stroke="#0284c7" stroke-width="1.5" />
+              <text x="38" y="82" fill="#f8fafc" font-size="13.5" font-weight="800">Authorized Plan</text>
+              <text x="38" y="98" fill="#cbd5e1" font-size="10.5">Execution Baseline</text>
+              <line x1="38" y1="106" x2="168" y2="106" stroke="#1e3a5f" stroke-width="1" />
+
+              <rect x="33" y="114" width="139" height="48" rx="6" fill="#101e33" stroke="#1a3150" stroke-width="1" />
+              <circle cx="43" cy="128" r="3" fill="#38bdf8" />
+              <text x="52" y="127" fill="#f8fafc" font-size="10" font-weight="700">Approved Baseline</text>
+              <text x="52" y="140" fill="#cbd5e1" font-size="8.5">Agreed design &amp; sequence</text>
+              <text x="52" y="151" fill="#94a3b8" font-size="8">Owner-authorized plan</text>
+
+              <rect x="33" y="168" width="139" height="48" rx="6" fill="#101e33" stroke="#1a3150" stroke-width="1" />
+              <circle cx="43" cy="182" r="3" fill="#38bdf8" />
+              <text x="52" y="181" fill="#f8fafc" font-size="10" font-weight="700">Packet Boundaries</text>
+              <text x="52" y="194" fill="#cbd5e1" font-size="8.5">Assigned write sets</text>
+              <text x="52" y="205" fill="#94a3b8" font-size="8">Explicit repository limits</text>
+
+              <rect x="33" y="222" width="139" height="48" rx="6" fill="#101e33" stroke="#1a3150" stroke-width="1" />
+              <circle cx="43" cy="236" r="3" fill="#38bdf8" />
+              <text x="52" y="235" fill="#f8fafc" font-size="10" font-weight="700">V&amp;V Requirements</text>
+              <text x="52" y="248" fill="#cbd5e1" font-size="8.5">SEIT acceptance tests</text>
+              <text x="52" y="259" fill="#94a3b8" font-size="8">Verification criteria</text>
+
+              <rect x="33" y="276" width="139" height="48" rx="6" fill="#101e33" stroke="#1a3150" stroke-width="1" />
+              <circle cx="43" cy="290" r="3" fill="#38bdf8" />
+              <text x="52" y="289" fill="#f8fafc" font-size="10" font-weight="700">Checkout Lease</text>
+              <text x="52" y="302" fill="#cbd5e1" font-size="8.5">Active lease confirmed</text>
+              <text x="52" y="313" fill="#94a3b8" font-size="8">Exclusive target branch</text>
+
+              <rect x="33" y="336" width="139" height="24" rx="4" fill="#082f49" />
+              <text x="102" y="352" fill="#38bdf8" font-size="9" font-weight="700" text-anchor="middle">Dispatch Work Unit →</text>
+            </g>
+
+            
+            <path d="M 180 240 L 195 240" stroke="#38bdf8" stroke-width="2.5" fill="none" marker-end="url(#implementation-arrow-cyan)" />
+
+            
+            <g id="implementation-box-impl-col2">
+              <rect x="195" y="58" width="280" height="415" rx="10" fill="url(#implementation-grad-i2)" stroke="#6366f1" stroke-width="1.5" />
+              <text x="208" y="82" fill="#f8fafc" font-size="13.5" font-weight="800">Work-Unit Realization</text>
+              <text x="208" y="98" fill="#a5b4fc" font-size="10.5">Coordinator, Test Authorship &amp; Build</text>
+              <line x1="208" y1="106" x2="465" y2="106" stroke="#3730a3" stroke-width="1" />
+
+              <rect x="205" y="112" width="260" height="30" rx="4" fill="#1b234b" stroke="#3730a3" stroke-width="1" />
+              <text x="214" y="125" fill="#a5b4fc" font-size="9" font-weight="800">Coordinator</text>
+              <text x="275" y="125" fill="#cbd5e1" font-size="8.2">Coordinates approved in-wave packet execution</text>
+
+              <rect x="205" y="148" width="260" height="52" rx="6" fill="#151b3c" stroke="#2e336b" stroke-width="1" />
+              <rect x="213" y="155" width="18" height="18" rx="3" fill="#312e81" />
+              <text x="222" y="168" fill="#a5b4fc" font-size="9.5" font-weight="800" text-anchor="middle">1</text>
+              <text x="237" y="163" fill="#f8fafc" font-size="10.5" font-weight="700">Test Development</text>
+              <text x="237" y="176" fill="#a5b4fc" font-size="9">Test Implementer</text>
+              <text x="237" y="188" fill="#cbd5e1" font-size="8.2">Authors executable tests &amp; fixtures; distinct from product</text>
+
+              <rect x="205" y="206" width="260" height="50" rx="6" fill="#151b3c" stroke="#2e336b" stroke-width="1" />
+              <rect x="213" y="213" width="18" height="18" rx="3" fill="#312e81" />
+              <text x="222" y="226" fill="#a5b4fc" font-size="9.5" font-weight="800" text-anchor="middle">2</text>
+              <text x="237" y="221" fill="#f8fafc" font-size="10.5" font-weight="700">Feature Build</text>
+              <text x="237" y="234" fill="#a5b4fc" font-size="9">Product Implementer</text>
+              <text x="237" y="246" fill="#cbd5e1" font-size="8.2">Implements product within assigned write set</text>
+
+              <rect x="205" y="262" width="260" height="44" rx="6" fill="#151b3c" stroke="#2e336b" stroke-width="1" />
+              <rect x="213" y="269" width="18" height="18" rx="3" fill="#312e81" />
+              <text x="222" y="282" fill="#a5b4fc" font-size="9.5" font-weight="800" text-anchor="middle">3</text>
+              <text x="237" y="277" fill="#f8fafc" font-size="10.5" font-weight="700">Mechanical Work Slices</text>
+              <text x="237" y="290" fill="#a5b4fc" font-size="9">Light Implementer</text>
+              <text x="237" y="300" fill="#cbd5e1" font-size="8">Approved deterministic, scaffold or bind packets</text>
+
+              <rect x="205" y="312" width="260" height="44" rx="6" fill="#151b3c" stroke="#2e336b" stroke-width="1" />
+              <rect x="213" y="319" width="18" height="18" rx="3" fill="#312e81" />
+              <text x="222" y="332" fill="#a5b4fc" font-size="9.5" font-weight="800" text-anchor="middle">4</text>
+              <text x="237" y="327" fill="#f8fafc" font-size="10.5" font-weight="700">Continuous / Focused Verification</text>
+              <text x="237" y="340" fill="#a5b4fc" font-size="9">Assigned Deterministic Checks</text>
+              <text x="237" y="350" fill="#cbd5e1" font-size="8">Local test suites, linting &amp; format validation</text>
+
+              <rect x="205" y="364" width="260" height="24" rx="4" fill="#312e81" />
+              <text x="335" y="380" fill="#a5b4fc" font-size="9.5" font-weight="700" text-anchor="middle">Candidate Ready for Verification →</text>
+            </g>
+
+            
+            <path d="M 475 240 L 495 240" stroke="#38bdf8" stroke-width="2.5" fill="none" marker-end="url(#implementation-arrow-cyan)" />
+
+            
+            <g id="implementation-box-impl-col3">
+              <rect x="495" y="58" width="285" height="415" rx="10" fill="url(#implementation-grad-i3)" stroke="#0d9488" stroke-width="1.5" />
+              <text x="508" y="82" fill="#f8fafc" font-size="13.5" font-weight="800">Verification &amp; Review</text>
+              <text x="508" y="98" fill="#5eead4" font-size="10.5">SDLC Integration &amp; Defect Discovery</text>
+              <line x1="508" y1="106" x2="768" y2="106" stroke="#134e4a" stroke-width="1" />
+
+              <rect x="505" y="112" width="265" height="64" rx="6" fill="#0d2328" stroke="#155e5b" stroke-width="1" />
+              <rect x="513" y="119" width="18" height="18" rx="3" fill="#0f3b46" />
+              <text x="522" y="132" fill="#5eead4" font-size="9.5" font-weight="800" text-anchor="middle">5</text>
+              <text x="537" y="127" fill="#f8fafc" font-size="10.5" font-weight="700">Component Assembly &amp; V&amp;V</text>
+              <text x="537" y="140" fill="#5eead4" font-size="9">Assurance Test Engineer (ATE)</text>
+              <text x="537" y="152" fill="#cbd5e1" font-size="8.2">Assembles/configures approved elements in verification env</text>
+              <text x="537" y="163" fill="#94a3b8" font-size="7.8">Exercises interfaces &amp; evaluates V&amp;V evidence</text>
+              <text x="537" y="173" fill="#fda4af" font-size="7.5">Product/test repairs return to appropriate Implementer</text>
+
+              <rect x="505" y="182" width="265" height="54" rx="6" fill="#0d2328" stroke="#155e5b" stroke-width="1" />
+              <rect x="513" y="189" width="18" height="18" rx="3" fill="#0f3b46" />
+              <text x="522" y="202" fill="#5eead4" font-size="9.5" font-weight="800" text-anchor="middle">6</text>
+              <text x="537" y="197" fill="#f8fafc" font-size="10.5" font-weight="700">Independent Defect Review</text>
+              <text x="537" y="210" fill="#5eead4" font-size="9">Reviewer · when declared</text>
+              <text x="537" y="222" fill="#cbd5e1" font-size="8.2">Reviews introduced defects at review boundary in fresh session</text>
+              <text x="537" y="232" fill="#94a3b8" font-size="7.8">Objective code review; no author self-review</text>
+
+              <rect x="505" y="242" width="265" height="70" rx="6" fill="#29121f" stroke="#f43f5e" stroke-width="1" />
+              <text x="637" y="258" fill="#fda4af" font-size="9" font-weight="700" text-anchor="middle">BOUNDED REPAIR POLICY (1 ROUND)</text>
+              <text x="637" y="272" fill="#cbd5e1" font-size="8.2" text-anchor="middle">Findings aggregate → responsible Implementer role</text>
+              <text x="637" y="285" fill="#cbd5e1" font-size="8" text-anchor="middle">Product or Test Implementer repairs code or tests</text>
+              <text x="637" y="298" fill="#fda4af" font-size="8" text-anchor="middle">Deterministic recheck without automatic rereview</text>
+
+              <rect x="505" y="322" width="265" height="34" rx="4" fill="#0f3b46" />
+              <text x="637" y="337" fill="#5eead4" font-size="9" font-weight="700" text-anchor="middle">Next Declared Work Unit (Wave) OR</text>
+              <text x="637" y="349" fill="#a7f3d0" font-size="8.2" text-anchor="middle">Advance to Lifecycle-End Gate →</text>
+            </g>
+
+            
+            <path d="M 637 458
+                     L 637 492
+                     Q 637 508 617 508
+                     L 355 508
+                     Q 335 508 335 492
+                     L 335 463"
+                  fill="none"
+                  stroke="#f43f5e"
+                  stroke-width="2.2"
+                  stroke-dasharray="7 4"
+                 
+                  marker-end="url(#implementation-arrow-rose-up)" />
+
+            <rect x="355" y="492" width="265" height="32" rx="16" fill="#1f0913" stroke="#f43f5e" stroke-width="1.5" />
+            <circle cx="372" cy="508" r="7" fill="#881337" />
+            <text x="385" y="504" fill="#fda4af" font-size="8.5" font-weight="800">IN-WAVE REPAIR LOOP</text>
+            <text x="385" y="516" fill="#cbd5e1" font-size="7.5">Aggregate findings → repair role → deterministic recheck</text>
+
+            
+            <path d="M 780 240 L 825 240" stroke="#10b981" stroke-width="2.8" fill="none" marker-end="url(#implementation-arrow-emerald)" />
+
+            
+            <g id="implementation-box-impl-col4">
+              <rect x="825" y="58" width="265" height="415" rx="10" fill="url(#implementation-grad-i4)" stroke="#10b981" stroke-width="1.8" />
+              <text x="838" y="82" fill="#f8fafc" font-size="13.5" font-weight="800">System Validation</text>
+              <text x="838" y="98" fill="#6ee7b7" font-size="10.5">SDLC Final Integrated Assessment</text>
+              <line x1="838" y1="106" x2="1075" y2="106" stroke="#134e4a" stroke-width="1" />
+
+              <rect x="835" y="112" width="245" height="82" rx="6" fill="#0a2521" stroke="#115e59" stroke-width="1.2" />
+              <rect x="843" y="119" width="18" height="18" rx="3" fill="#064e3b" />
+              <text x="852" y="132" fill="#6ee7b7" font-size="9.5" font-weight="800" text-anchor="middle">7</text>
+              <text x="867" y="127" fill="#f8fafc" font-size="10.5" font-weight="700">Lifecycle-End System Validation</text>
+              <text x="867" y="140" fill="#6ee7b7" font-size="9">Integration Engineer execution</text>
+              <text x="867" y="152" fill="#d1fae5" font-size="8.2">Final system-level validation of the whole result</text>
+              <text x="867" y="164" fill="#a7f3d0" font-size="8.2">Validates against owner-approved outcome</text>
+              <text x="867" y="176" fill="#6ee7b7" font-size="8.2" font-weight="700">RUNS ONCE AT LIFECYCLE COMPLETION BY DEFAULT</text>
+              <text x="867" y="188" fill="#fda4af" font-size="7.5" font-weight="600">Findings return to Implementer via correction path</text>
+
+              <rect x="835" y="200" width="245" height="84" rx="6" fill="#251b0a" stroke="#d97706" stroke-width="1" />
+              <polygon points="845,210 851,220 839,220" fill="#fde68a" />
+              <text x="857" y="215" fill="#fde68a" font-size="8.2" font-weight="700">CONFIGURABLE CADENCE OVERRIDE</text>
+              <text x="845" y="229" fill="#cbd5e1" font-size="7.8">An explicit owner-approved override in the</text>
+              <text x="845" y="240" fill="#cbd5e1" font-size="7.8">approved lifecycle plan can modify this default.</text>
+              <text x="845" y="252" fill="#cbd5e1" font-size="7.8">Override values are slice, phase, or lifecycle.</text>
+              <text x="845" y="264" fill="#fde68a" font-size="7.6" font-weight="600">NOT AN OVERRIDE: Phase count, increment count,</text>
+              <text x="845" y="275" fill="#fde68a" font-size="7.6" font-weight="600">resume, rename, model or route change.</text>
+
+              <rect x="835" y="290" width="245" height="44" rx="6" fill="#0d2e2b" stroke="#134e4a" stroke-width="1" />
+              <text x="845" y="305" fill="#a7f3d0" font-size="8.8" font-weight="700">Integrated Technical Assessment</text>
+              <text x="845" y="318" fill="#cbd5e1" font-size="7.8">Evaluates complete candidate integrity,</text>
+              <text x="845" y="328" fill="#94a3b8" font-size="7.8">cross-component interfaces &amp; receipts</text>
+
+              <rect x="835" y="342" width="245" height="24" rx="4" fill="#047857" />
+              <text x="957" y="358" fill="#ffffff" font-size="9" font-weight="700" text-anchor="middle">Validation Complete → Closeout →</text>
+            </g>
+
+            
+            <path d="M 1090 240 L 1105 240" stroke="#10b981" stroke-width="2.5" fill="none" marker-end="url(#implementation-arrow-emerald)" />
+
+            
+            <g id="implementation-box-impl-col5">
+              <rect x="1105" y="58" width="145" height="415" rx="10" fill="url(#implementation-grad-i5)" stroke="#0284c7" stroke-width="1.5" />
+              <text x="1118" y="82" fill="#f8fafc" font-size="13.5" font-weight="800">Closeout</text>
+              <text x="1118" y="98" fill="#38bdf8" font-size="10.5">SDLC Handover</text>
+              <line x1="1118" y1="106" x2="1240" y2="106" stroke="#1e3a5f" stroke-width="1" />
+
+              <rect x="1112" y="112" width="131" height="46" rx="6" fill="#0d2133" stroke="#1e3a5f" stroke-width="1" />
+              <circle cx="1122" cy="126" r="3" fill="#38bdf8" />
+              <text x="1130" y="125" fill="#f8fafc" font-size="9.5" font-weight="700">Target Changes</text>
+              <text x="1130" y="138" fill="#cbd5e1" font-size="8">Verified code changes</text>
+              <text x="1130" y="148" fill="#94a3b8" font-size="7.5">Confined to exact write set</text>
+
+              <rect x="1112" y="164" width="131" height="46" rx="6" fill="#0d2133" stroke="#1e3a5f" stroke-width="1" />
+              <circle cx="1122" cy="178" r="3" fill="#38bdf8" />
+              <text x="1130" y="177" fill="#f8fafc" font-size="9.5" font-weight="700">Traceable Evidence</text>
+              <text x="1130" y="190" fill="#cbd5e1" font-size="8">V&amp;V receipts &amp; test logs</text>
+              <text x="1130" y="200" fill="#94a3b8" font-size="7.5">IE assessment record</text>
+
+              <rect x="1112" y="216" width="131" height="66" rx="6" fill="#1c2552" stroke="#4f46e5" stroke-width="1" />
+              <text x="1177" y="230" fill="#c7d2fe" font-size="8" font-weight="700" text-anchor="middle">DOD MANIFEST</text>
+              <text x="1177" y="242" fill="#94a3b8" font-size="7.2" text-anchor="middle">&lt;plan-name&gt;-dod-manifest.html</text>
+              <text x="1177" y="254" fill="#cbd5e1" font-size="7.5" text-anchor="middle">Closeout: passed vs open</text>
+              <text x="1177" y="266" fill="#94a3b8" font-size="7.2" text-anchor="middle">Non-authoritative</text>
+
+              <rect x="1112" y="288" width="131" height="74" rx="6" fill="#2a1e12" stroke="#d97706" stroke-width="1" />
+              <rect x="1118" y="294" width="95" height="15" rx="3" fill="#b45309" />
+              <text x="1165" y="305" fill="#ffffff" font-size="7" font-weight="800" text-anchor="middle">SEPARATE AUTHORITY</text>
+              <text x="1118" y="321" fill="#fde68a" font-size="9" font-weight="700">Deploy Gate</text>
+              <text x="1118" y="333" fill="#cbd5e1" font-size="7.5">Release/deployment</text>
+              <text x="1118" y="343" fill="#94a3b8" font-size="7.2">requires explicit separate</text>
+              <text x="1118" y="353" fill="#94a3b8" font-size="7.2">owner authority.</text>
+
+              <rect x="1112" y="368" width="131" height="42" rx="6" fill="#064e3b" stroke="#10b981" stroke-width="1" />
+              <polygon points="1122,388 1125,394 1132,384" fill="none" stroke="#6ee7b7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+              <text x="1138" y="386" fill="#6ee7b7" font-size="8.5" font-weight="800">COMPLETE</text>
+              <text x="1138" y="398" fill="#a7f3d0" font-size="7.2">Verified candidate</text>
+            </g>
+
+            
+            <g id="implementation-path-system-validation-correction-impl">
+              <path d="M 957 473
+                       L 957 565
+                       Q 957 585 937 585
+                       L 270 585
+                       Q 250 585 250 565
+                       L 250 473"
+                    fill="none"
+                    stroke="#f43f5e"
+                    stroke-width="2.2"
+                    stroke-dasharray="7 4"
+                   
+                    marker-end="url(#implementation-arrow-rose-up)" />
+
+              <rect x="420" y="568" width="510" height="34" rx="17" fill="#1f0913" stroke="#f43f5e" stroke-width="1.5" />
+              <circle cx="438" cy="585" r="8" fill="#881337" />
+              <path d="M 441 581 A 4 4 0 1 0 441 589" fill="none" stroke="#fda4af" stroke-width="1.5" stroke-linecap="round" />
+              <path d="M 441 579 L 441 583 L 437 583" fill="none" stroke="#fda4af" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+              <text x="455" y="581" fill="#fda4af" font-size="8.5" font-weight="800">LIFECYCLE-COMPLETION SYSTEM VALIDATION CORRECTION PATH</text>
+              <text x="455" y="594" fill="#cbd5e1" font-size="7.5">System-level findings return to responsible Implementer for bounded correction &amp; deterministic recheck</text>
+            </g>
+
+            <text x="25" y="635" fill="#cbd5e1" font-size="10" font-weight="600">
+              IMPLEMENTATION FLOW: Baseline Input → Work-Unit Realization (Test &amp; Build) → In-Wave V&amp;V &amp; Review → System Validation → Closeout
+            </text>
+          
+      </g>
+    </g>
+    <g id="panel-transfer-function">
+      <rect x="8" y="2118" width="1296" height="730" rx="10" fill="#090d16" stroke="#233554" stroke-width="1.2" />
+      <rect x="20" y="2126" width="310" height="22" rx="4" fill="#312e81" stroke="#6366f1" stroke-width="1" />
+      <text x="175" y="2141" fill="#a5b4fc" font-size="11" font-weight="700" text-anchor="middle">Systems Modeler · Transfer Function Detail</text>
+      <rect x="340" y="2126" width="270" height="22" rx="4" fill="#251b0a" stroke="#d97706" stroke-width="1" />
+      <text x="475" y="2141" fill="#fde68a" font-size="9" font-weight="700" text-anchor="middle">PROPOSED ARCHITECTURE · ISSUE #107</text>
+      <g transform="translate(16,2154)">
+            <title id="tf-diagram-title">Systems Modeler Requirements System Transfer Function Detail Diagram</title>
+            <desc id="tf-diagram-desc">
+              Detailed architecture view of the Requirements System transfer function proposed under issue 107. Inputs (bound SDoc candidate, owner-approved model decisions, viewpoints, stable IDs, SysML v2 style profile, and registered brand profile) enter the governed Requirements System transfer function boundary. Inside the boundary, the model skeleton is constructed and tailored SSC-G-101-2023 v1.1 rules applied; native semantic validation performs syntax, semantic, interface, and traceability checks with a closed typed-findings feedback loop; once checks pass, the SysON/Eclipse Sirius graphics engine performs automated diagram layout and rendering under agreed style guides and registered brand visual identity. The engine does not invent architecture or grant approval. Outputs are canonical SysML v2 and human-readable HTML views consumed by the Bearing Definition of Done Manifest.
+            </desc>
+
+            <defs>
+              <marker id="tf-arrow-cyan" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#38bdf8" />
+              </marker>
+              <marker id="tf-arrow-emerald" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#10b981" />
+              </marker>
+              <marker id="tf-arrow-rose-up" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#f43f5e" />
+              </marker>
+
+              <linearGradient id="tf-grad-col1" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#14233c" />
+                <stop offset="100%" stop-color="#0c1626" />
+              </linearGradient>
+              <linearGradient id="tf-grad-boundary" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#182046" />
+                <stop offset="100%" stop-color="#0f142d" />
+              </linearGradient>
+              <linearGradient id="tf-grad-col3" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#152636" />
+                <stop offset="100%" stop-color="#0b1722" />
+              </linearGradient>
+            </defs>
+
+            <!-- TOP STAGE HEADERS -->
+            <rect x="20" y="18" width="230" height="22" rx="4" fill="#0c4a6e" stroke="#0284c7" stroke-width="1" />
+            <text x="135" y="33" fill="#38bdf8" font-size="10" font-weight="700" text-anchor="middle">01 · REGISTERED INPUTS</text>
+
+            <rect x="270" y="18" width="705" height="22" rx="4" fill="#312e81" stroke="#6366f1" stroke-width="1" />
+            <text x="622" y="33" fill="#a5b4fc" font-size="10" font-weight="700" text-anchor="middle">02 · REQUIREMENTS SYSTEM TRANSFER-FUNCTION BOUNDARY (GOVERNED RUNTIME)</text>
+
+            <rect x="995" y="18" width="265" height="22" rx="4" fill="#064e3b" stroke="#10b981" stroke-width="1" />
+            <text x="1127" y="33" fill="#6ee7b7" font-size="10" font-weight="700" text-anchor="middle">03 · OUTPUTS &amp; CONSUMERS</text>
+
+            <!-- COLUMN 1: REGISTERED INPUTS -->
+            <g id="tf-box-inputs">
+              <rect x="20" y="48" width="230" height="555" rx="10" fill="url(#tf-grad-col1)" stroke="#0284c7" stroke-width="1.5" />
+              <text x="35" y="74" fill="#f8fafc" font-size="14" font-weight="800">Governed Inputs</text>
+              <text x="35" y="91" fill="#38bdf8" font-size="10.5">Transfer Function Arguments</text>
+              <line x1="35" y1="100" x2="235" y2="100" stroke="#1e3a5f" stroke-width="1" />
+
+              <rect x="30" y="108" width="210" height="84" rx="6" fill="#101e33" stroke="#1a3150" stroke-width="1" />
+              <circle cx="42" cy="122" r="3.5" fill="#38bdf8" />
+              <text x="52" y="122" fill="#f8fafc" font-size="10" font-weight="700">1 · Bound SDoc Candidate</text>
+              <text x="52" y="135" fill="#38bdf8" font-size="8.2" font-weight="600">Canonical Requirements Authority</text>
+              <text x="52" y="147" fill="#cbd5e1" font-size="7.8">Revision &amp; SHA-256 digest pinned</text>
+              <text x="52" y="158" fill="#cbd5e1" font-size="7.8">Requirements authoritative in SDoc</text>
+              <text x="52" y="169" fill="#94a3b8" font-size="7.5">Referenced by stable ID, not duplicated</text>
+              <text x="52" y="180" fill="#94a3b8" font-size="7.2">No Markdown/SysML req authority</text>
+
+              <rect x="30" y="200" width="210" height="84" rx="6" fill="#101e33" stroke="#1a3150" stroke-width="1" />
+              <circle cx="42" cy="214" r="3.5" fill="#38bdf8" />
+              <text x="52" y="214" fill="#f8fafc" font-size="10" font-weight="700">2 · Model Decisions &amp; Views</text>
+              <text x="52" y="227" fill="#38bdf8" font-size="8.2" font-weight="600">Owner-Approved Architecture</text>
+              <text x="52" y="239" fill="#cbd5e1" font-size="7.8">Decomposition, behaviors &amp; interfaces</text>
+              <text x="52" y="250" fill="#cbd5e1" font-size="7.8">Declared viewpoints &amp; stakeholder concerns</text>
+              <text x="52" y="261" fill="#cbd5e1" font-size="7.8">Scope, omissions &amp; question stated</text>
+              <text x="52" y="272" fill="#fda4af" font-size="7.4">Model-creator never invents architecture</text>
+
+              <rect x="30" y="292" width="210" height="74" rx="6" fill="#101e33" stroke="#1a3150" stroke-width="1" />
+              <circle cx="42" cy="306" r="3.5" fill="#38bdf8" />
+              <text x="52" y="306" fill="#f8fafc" font-size="10" font-weight="700">3 · Stable Identifiers</text>
+              <text x="52" y="319" fill="#38bdf8" font-size="8.2" font-weight="600">Namespace-Aware ID Scheme</text>
+              <text x="52" y="331" fill="#cbd5e1" font-size="7.8">Bound SDoc requirement UIDs</text>
+              <text x="52" y="342" fill="#cbd5e1" font-size="7.8">Stable model element IDs (MIDs)</text>
+              <text x="52" y="353" fill="#94a3b8" font-size="7.5">No repeated ancestor prefix strings</text>
+
+              <rect x="30" y="374" width="210" height="106" rx="6" fill="#101e33" stroke="#1a3150" stroke-width="1" />
+              <circle cx="42" cy="388" r="3.5" fill="#38bdf8" />
+              <text x="52" y="388" fill="#f8fafc" font-size="10" font-weight="700">4 · SysML v2 Style Profile</text>
+              <text x="52" y="401" fill="#a5b4fc" font-size="8.2" font-weight="600">SSC-G-101-2023 v1.1 Tailored</text>
+              <text x="52" y="413" fill="#cbd5e1" font-size="7.8">Structure &amp; relationship rules</text>
+              <text x="52" y="424" fill="#cbd5e1" font-size="7.8">Readability &amp; view layout constraints:</text>
+              <text x="52" y="435" fill="#94a3b8" font-size="7.5">• 1 principal context/direction per view</text>
+              <text x="52" y="446" fill="#94a3b8" font-size="7.5">• Bound view density · minimal frames</text>
+              <text x="52" y="457" fill="#94a3b8" font-size="7.5">• Semantic-only color paired w/ shape/text</text>
+              <text x="52" y="468" fill="#94a3b8" font-size="7.5">• Explicit connectors without shorthand</text>
+
+              <rect x="30" y="488" width="210" height="74" rx="6" fill="#251b0a" stroke="#d97706" stroke-width="1" />
+              <circle cx="42" cy="502" r="3.5" fill="#fde68a" />
+              <text x="52" y="502" fill="#fde68a" font-size="10" font-weight="700">5 · Registered Brand Profile</text>
+              <text x="52" y="515" fill="#cbd5e1" font-size="8">Registered brand_id (e.g. azedge logo)</text>
+              <text x="52" y="526" fill="#cbd5e1" font-size="7.8">Applied strictly to HTML presentation</text>
+              <text x="52" y="538" fill="#fde68a" font-size="7.5" font-weight="600">NEVER alters model semantics</text>
+              <text x="52" y="549" fill="#94a3b8" font-size="7.2">No logo invented or silently substituted</text>
+
+              <rect x="30" y="570" width="210" height="22" rx="4" fill="#082f49" />
+              <text x="135" y="585" fill="#38bdf8" font-size="8.8" font-weight="700" text-anchor="middle">Invoke RS Transfer Function -&gt;</text>
+            </g>
+
+            <!-- CONNECTOR INPUTS TO TRANSFER FUNCTION -->
+            <path d="M 250 325 L 268 325" stroke="#38bdf8" stroke-width="2.5" fill="none" marker-end="url(#tf-arrow-cyan)" />
+
+            <!-- COLUMN 2: REQUIREMENTS SYSTEM TRANSFER FUNCTION BOUNDARY -->
+            <g id="tf-box-transfer-function">
+              <rect x="270" y="48" width="705" height="555" rx="10" fill="url(#tf-grad-boundary)" stroke="#6366f1" stroke-width="1.8" />
+              <text x="288" y="74" fill="#f8fafc" font-size="14" font-weight="800">Requirements System Transfer-Function Boundary</text>
+              <text x="288" y="90" fill="#a5b4fc" font-size="9.8" font-weight="600">F(bound SDoc, owner decisions, viewpoints, stable IDs, SysML v2 profile, brand profile) -&gt; (SysML v2, HTML)</text>
+              <line x1="288" y1="98" x2="960" y2="98" stroke="#3730a3" stroke-width="1" />
+
+              <rect x="285" y="104" width="675" height="22" rx="4" fill="#182046" stroke="#4f46e5" stroke-width="1" />
+              <text x="622" y="119" fill="#c7d2fe" font-size="8.5" font-weight="700" text-anchor="middle">GOVERNED PIPELINE · ISSUE #107 PROPOSED ARCHITECTURE · CANONICAL SDOC REQUIREMENTS AUTHORITY</text>
+
+              <!-- SUB-STAGE A: MODEL CONSTRUCTION -->
+              <g id="tf-stage-construction">
+                <rect x="285" y="132" width="205" height="318" rx="6" fill="#121735" stroke="#4338ca" stroke-width="1.2" />
+                <rect x="293" y="138" width="18" height="18" rx="3" fill="#312e81" />
+                <text x="302" y="151" fill="#a5b4fc" font-size="9.5" font-weight="800" text-anchor="middle">A</text>
+                <text x="317" y="146" fill="#f8fafc" font-size="10" font-weight="700">Model Construction</text>
+                <text x="317" y="158" fill="#a5b4fc" font-size="8">Skeleton &amp; Profile Mapping</text>
+                <line x1="293" y1="164" x2="480" y2="164" stroke="#2e336b" stroke-width="1" />
+
+                <rect x="293" y="170" width="189" height="54" rx="4" fill="#182046" stroke="#2e336b" stroke-width="1" />
+                <text x="301" y="183" fill="#f8fafc" font-size="8.8" font-weight="700">1 · Verify Bound SDoc</text>
+                <text x="301" y="195" fill="#cbd5e1" font-size="7.6">Verifies commit SHA &amp; digest</text>
+                <text x="301" y="206" fill="#fda4af" font-size="7.4">Rejects unbound / stale SDoc</text>
+                <text x="301" y="216" fill="#94a3b8" font-size="7.2">Maps SDoc UIDs by reference</text>
+
+                <rect x="293" y="228" width="189" height="74" rx="4" fill="#182046" stroke="#2e336b" stroke-width="1" />
+                <text x="301" y="241" fill="#f8fafc" font-size="8.8" font-weight="700">2 · Structure Profile</text>
+                <text x="301" y="253" fill="#cbd5e1" font-size="7.6">One registered root namespace</text>
+                <text x="301" y="264" fill="#cbd5e1" font-size="7.6">Explicit package ownership</text>
+                <text x="301" y="275" fill="#cbd5e1" font-size="7.6">Explicit typing (ports, usages, flows)</text>
+                <text x="301" y="286" fill="#cbd5e1" font-size="7.6">Views are projections, not owners</text>
+                <text x="301" y="296" fill="#94a3b8" font-size="7.2">Separate domain, behavior &amp; views</text>
+
+                <rect x="293" y="306" width="189" height="80" rx="4" fill="#182046" stroke="#2e336b" stroke-width="1" />
+                <text x="301" y="319" fill="#f8fafc" font-size="8.8" font-weight="700">3 · Style Constraints Bind</text>
+                <text x="301" y="331" fill="#a5b4fc" font-size="7.6">SSC-G-101 v1.1 adapted to SysML v2</text>
+                <text x="301" y="342" fill="#cbd5e1" font-size="7.6">Stable rule IDs &amp; provenance kept</text>
+                <text x="301" y="353" fill="#cbd5e1" font-size="7.6">Dispositions: adopt / adapt / n/a</text>
+                <text x="301" y="364" fill="#cbd5e1" font-size="7.6">Unknown owner/type stays typed gap</text>
+                <text x="301" y="375" fill="#fda4af" font-size="7.2">Generates skeleton without inventing</text>
+
+                <rect x="293" y="390" width="189" height="30" rx="4" fill="#082f49" stroke="#0284c7" stroke-width="1" />
+                <text x="387" y="403" fill="#38bdf8" font-size="8" font-weight="700" text-anchor="middle">Model Candidate IR -&gt;</text>
+                <text x="387" y="414" fill="#cbd5e1" font-size="7.2" text-anchor="middle">Passes to semantic checker</text>
+
+                <rect x="293" y="424" width="189" height="22" rx="4" fill="#182046" stroke="#2e336b" stroke-width="1" />
+                <text x="387" y="439" fill="#a5b4fc" font-size="7.5" font-weight="600" text-anchor="middle">Governed Model Synthesis</text>
+              </g>
+
+              <!-- CONNECTOR A TO B -->
+              <path d="M 490 298 L 503 298" stroke="#a5b4fc" stroke-width="2" fill="none" marker-end="url(#tf-arrow-cyan)" />
+
+              <!-- SUB-STAGE B: SEMANTIC VALIDATION -->
+              <g id="tf-stage-validation">
+                <rect x="505" y="132" width="205" height="318" rx="6" fill="#121735" stroke="#4338ca" stroke-width="1.2" />
+                <rect x="513" y="138" width="18" height="18" rx="3" fill="#312e81" />
+                <text x="522" y="151" fill="#a5b4fc" font-size="9.5" font-weight="800" text-anchor="middle">B</text>
+                <text x="537" y="146" fill="#f8fafc" font-size="10" font-weight="700">Semantic Validation</text>
+                <text x="537" y="158" fill="#a5b4fc" font-size="8">RS Checker &amp; Feedback</text>
+                <line x1="513" y1="164" x2="700" y2="164" stroke="#2e336b" stroke-width="1" />
+
+                <rect x="513" y="170" width="189" height="92" rx="4" fill="#182046" stroke="#2e336b" stroke-width="1" />
+                <text x="521" y="183" fill="#f8fafc" font-size="8.8" font-weight="700">4 · Native Model Checker</text>
+                <text x="521" y="195" fill="#cbd5e1" font-size="7.6">Syntax &amp; SysML v2 semantics</text>
+                <text x="521" y="206" fill="#cbd5e1" font-size="7.6">Ownership, typing &amp; uniqueness</text>
+                <text x="521" y="217" fill="#cbd5e1" font-size="7.6">Interface ends &amp; connector compatibility</text>
+                <text x="521" y="228" fill="#cbd5e1" font-size="7.6">Traceability to bound SDoc UIDs</text>
+                <text x="521" y="239" fill="#cbd5e1" font-size="7.6">View metadata, question &amp; scope</text>
+                <text x="521" y="250" fill="#94a3b8" font-size="7.2">SSC-G-101 presentation rules check</text>
+
+                <rect x="513" y="266" width="189" height="70" rx="4" fill="#29121f" stroke="#f43f5e" stroke-width="1" />
+                <circle cx="525" cy="278" r="4.5" fill="#881337" />
+                <text x="534" y="281" fill="#fda4af" font-size="8.2" font-weight="800">TYPED FINDINGS</text>
+                <text x="521" y="293" fill="#fda4af" font-size="7.4" font-weight="600">Blocking checks stop pipeline:</text>
+                <text x="521" y="304" fill="#cbd5e1" font-size="7.4">NO candidate output on failure</text>
+                <text x="521" y="315" fill="#cbd5e1" font-size="7.4">Stable findings feed back to</text>
+                <text x="521" y="325" fill="#a5b4fc" font-size="7.4">model-creator via loop below</text>
+
+                <rect x="513" y="340" width="189" height="52" rx="4" fill="#064e3b" stroke="#10b981" stroke-width="1" />
+                <polygon points="523,356 526,362 534,352" fill="none" stroke="#6ee7b7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                <text x="539" y="356" fill="#6ee7b7" font-size="8.8" font-weight="800">CHECKS PASS GATE</text>
+                <text x="521" y="369" fill="#d1fae5" font-size="7.6">All semantic checks validated</text>
+                <text x="521" y="380" fill="#a7f3d0" font-size="7.4">Deterministic: byte-identical proof</text>
+
+                <rect x="513" y="396" width="189" height="24" rx="4" fill="#047857" />
+                <text x="607" y="412" fill="#ffffff" font-size="8.2" font-weight="700" text-anchor="middle">Passed -&gt; SysON Render -&gt;</text>
+
+                <rect x="513" y="424" width="189" height="22" rx="4" fill="#0d2624" stroke="#10b981" stroke-width="1" />
+                <text x="607" y="439" fill="#6ee7b7" font-size="7.5" font-weight="600" text-anchor="middle">Semantic Authority Gated</text>
+              </g>
+
+              <!-- CONNECTOR B TO C -->
+              <path d="M 710 366 L 723 366" stroke="#10b981" stroke-width="2" fill="none" marker-end="url(#tf-arrow-emerald)" />
+
+              <!-- SUB-STAGE C: SYSON GRAPHICS ENGINE -->
+              <g id="tf-stage-rendering">
+                <rect x="725" y="132" width="235" height="318" rx="6" fill="#0c231f" stroke="#10b981" stroke-width="1.5" />
+                <rect x="733" y="138" width="18" height="18" rx="3" fill="#064e3b" />
+                <text x="742" y="151" fill="#6ee7b7" font-size="9.5" font-weight="800" text-anchor="middle">C</text>
+                <text x="757" y="146" fill="#f8fafc" font-size="10" font-weight="800">SysON Graphics Engine</text>
+                <text x="757" y="158" fill="#6ee7b7" font-size="8" font-weight="700">Automated Layout &amp; Rendering</text>
+                <line x1="733" y1="164" x2="950" y2="164" stroke="#115e59" stroke-width="1" />
+
+                <rect x="733" y="170" width="219" height="96" rx="4" fill="#08282b" stroke="#0d9488" stroke-width="1" />
+                <rect x="739" y="176" width="150" height="15" rx="3" fill="#0f3b46" />
+                <text x="814" y="187" fill="#5eead4" font-size="7.4" font-weight="800" text-anchor="middle">SysON / Eclipse Sirius Engine</text>
+                <text x="741" y="203" fill="#f8fafc" font-size="8.8" font-weight="700">5 · Diagram Layout &amp; Render</text>
+                <text x="741" y="215" fill="#6ee7b7" font-size="7.8" font-weight="700">SysON graphic generator does work:</text>
+                <text x="741" y="226" fill="#cbd5e1" font-size="7.5">• View layout, routing &amp; graphic export</text>
+                <text x="741" y="237" fill="#cbd5e1" font-size="7.5">• Applies agreed SSC-G-101 style guides</text>
+                <text x="741" y="248" fill="#cbd5e1" font-size="7.5">• 1 context/direction · bounded density</text>
+                <text x="741" y="259" fill="#94a3b8" font-size="7.2">• Semantic color only; paired w/ shape</text>
+
+                <rect x="733" y="270" width="219" height="66" rx="4" fill="#08282b" stroke="#0d9488" stroke-width="1" />
+                <text x="741" y="283" fill="#f8fafc" font-size="8.8" font-weight="700">6 · HTML &amp; Brand Presentation</text>
+                <text x="741" y="295" fill="#cbd5e1" font-size="7.6">Applies registered brand_id (azedge)</text>
+                <text x="741" y="306" fill="#cbd5e1" font-size="7.6">Logo &amp; palette to HTML views only</text>
+                <text x="741" y="317" fill="#fde68a" font-size="7.5" font-weight="600">Model meaning UNCHANGED by brand</text>
+                <text x="741" y="328" fill="#94a3b8" font-size="7.2">Deterministic vector SVG / PNG export</text>
+
+                <rect x="733" y="340" width="219" height="48" rx="4" fill="#251b0a" stroke="#d97706" stroke-width="1" />
+                <polygon points="743,348 748,358 738,358" fill="#fde68a" />
+                <text x="754" y="354" fill="#fde68a" font-size="8" font-weight="700">GOVERNED ENGINE BOUNDARY</text>
+                <text x="741" y="366" fill="#cbd5e1" font-size="7.5">Engine does graphics rendering ONLY</text>
+                <text x="741" y="377" fill="#fda4af" font-size="7.3">Does NOT invent architecture / approve</text>
+
+                <rect x="733" y="392" width="219" height="30" rx="4" fill="#1c2552" stroke="#4f46e5" stroke-width="1" />
+                <text x="842" y="405" fill="#c7d2fe" font-size="8" font-weight="700" text-anchor="middle">SERIALIZATION &amp; EMISSION</text>
+                <text x="842" y="416" fill="#cbd5e1" font-size="7.4" text-anchor="middle">Canonical SysML v2 + HTML Views -&gt;</text>
+
+                <rect x="733" y="426" width="219" height="22" rx="4" fill="#047857" />
+                <text x="842" y="441" fill="#ffffff" font-size="8" font-weight="700" text-anchor="middle">Emit Validated Artifacts -&gt;</text>
+              </g>
+
+              <!-- TYPED FINDINGS FEEDBACK LOOP (CONTAINED WITHIN TRANSFER FUNCTION) -->
+              <g id="tf-loop-typed-findings">
+                <path d="M 607 336
+                         L 607 465
+                         Q 607 476 590 476
+                         L 404 476
+                         Q 387 476 387 465
+                         L 387 448"
+                      fill="none"
+                      stroke="#f43f5e"
+                      stroke-width="2"
+                      stroke-dasharray="6 3"
+                      marker-end="url(#tf-arrow-rose-up)" />
+
+                <rect x="360" y="462" width="455" height="28" rx="14" fill="#1f0913" stroke="#f43f5e" stroke-width="1.5" />
+                <circle cx="376" cy="476" r="6" fill="#881337" />
+                <path d="M 379 473 A 3 3 0 1 0 379 479" fill="none" stroke="#fda4af" stroke-width="1.2" stroke-linecap="round" />
+                <path d="M 379 471 L 379 474 L 376 474" fill="none" stroke="#fda4af" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
+                <text x="390" y="473" fill="#fda4af" font-size="8" font-weight="800">TYPED FINDINGS FEEDBACK LOOP (CLOSED CORRECTION)</text>
+                <text x="390" y="484" fill="#cbd5e1" font-size="7.2">Blocking findings return to model-creator / Systems Modeler · no candidate output emitted</text>
+              </g>
+
+              <!-- BOTTOM GOVERNED SUMMARY -->
+              <rect x="285" y="506" width="675" height="38" rx="4" fill="#151b3c" stroke="#2e336b" stroke-width="1" />
+              <text x="622" y="520" fill="#cbd5e1" font-size="8" font-weight="600" text-anchor="middle">GOVERNED PIPELINE: Style guides &amp; brand profile remain explicit constraints inside the transfer function.</text>
+              <text x="622" y="533" fill="#94a3b8" font-size="7.4" text-anchor="middle">SysON engine replaces previous renderer for diagram layout/export; does not alter model authority or bypass validation.</text>
+            </g>
+
+            <!-- CONNECTOR TRANSFER FUNCTION TO OUTPUTS -->
+            <path d="M 975 410 L 993 410" stroke="#10b981" stroke-width="2.5" fill="none" marker-end="url(#tf-arrow-emerald)" />
+
+            <!-- COLUMN 3: OUTPUTS & CONSUMERS -->
+            <g id="tf-box-outputs">
+              <rect x="995" y="48" width="265" height="555" rx="10" fill="url(#tf-grad-col3)" stroke="#10b981" stroke-width="1.5" />
+              <text x="1010" y="74" fill="#f8fafc" font-size="14" font-weight="800">Outputs &amp; Consumers</text>
+              <text x="1010" y="91" fill="#6ee7b7" font-size="10.5">Dual Outputs &amp; Bearing Lifecycle</text>
+              <line x1="1010" y1="100" x2="1245" y2="100" stroke="#134e4a" stroke-width="1" />
+
+              <rect x="1005" y="108" width="245" height="76" rx="6" fill="#0d2328" stroke="#155e5b" stroke-width="1" />
+              <circle cx="1017" cy="122" r="3.5" fill="#5eead4" />
+              <text x="1027" y="122" fill="#f8fafc" font-size="9.5" font-weight="700">1 · Canonical SysML v2</text>
+              <text x="1027" y="135" fill="#5eead4" font-size="8.2" font-weight="600">Official System-Model Authority (.sysml)</text>
+              <text x="1027" y="147" fill="#cbd5e1" font-size="7.8">OMG SysML 2.0 language authority</text>
+              <text x="1027" y="158" fill="#cbd5e1" font-size="7.8">References bound SDoc UIDs by stable ID</text>
+              <text x="1027" y="169" fill="#94a3b8" font-size="7.3">No Markdown/ad-hoc model authority</text>
+
+              <rect x="1005" y="190" width="245" height="76" rx="6" fill="#0d2328" stroke="#155e5b" stroke-width="1" />
+              <circle cx="1017" cy="204" r="3.5" fill="#5eead4" />
+              <text x="1027" y="204" fill="#f8fafc" font-size="9.5" font-weight="700">2 · Human HTML &amp; Views</text>
+              <text x="1027" y="217" fill="#5eead4" font-size="8.2" font-weight="600">Deterministic Review Projection</text>
+              <text x="1027" y="229" fill="#cbd5e1" font-size="7.8">Rendered diagrams generated by SysON</text>
+              <text x="1027" y="240" fill="#cbd5e1" font-size="7.8">Registered brand identity (azedge) applied</text>
+              <text x="1027" y="251" fill="#94a3b8" font-size="7.3">Human review projection; never model authority</text>
+
+              <rect x="1005" y="272" width="245" height="88" rx="6" fill="#1c2552" stroke="#4f46e5" stroke-width="1" />
+              <text x="1127" y="287" fill="#c7d2fe" font-size="8.8" font-weight="700" text-anchor="middle">CONSUMER: DOD MANIFEST</text>
+              <text x="1127" y="300" fill="#94a3b8" font-size="7.8" text-anchor="middle">&lt;plan-name&gt;-dod-manifest.html</text>
+              <text x="1127" y="312" fill="#cbd5e1" font-size="7.8" text-anchor="middle">Embeds SysON model views into planning package</text>
+              <text x="1127" y="324" fill="#cbd5e1" font-size="7.6" text-anchor="middle">Verifies view presence &amp; digest freshness</text>
+              <text x="1127" y="336" fill="#fde68a" font-size="7.5" font-weight="600" text-anchor="middle">Bearing output is Manifest, NOT model authority</text>
+              <text x="1127" y="348" fill="#94a3b8" font-size="7.2" text-anchor="middle">Manifest never grants execution or release authority</text>
+
+              <rect x="1005" y="366" width="245" height="74" rx="6" fill="#151b3c" stroke="#2e336b" stroke-width="1" />
+              <text x="1015" y="380" fill="#a5b4fc" font-size="9" font-weight="700">Downstream Planning Roles</text>
+              <text x="1015" y="393" fill="#cbd5e1" font-size="7.8">Integration Engineer planning:</text>
+              <text x="1015" y="404" fill="#94a3b8" font-size="7.3">Interface compatibility, assembly order &amp; recovery</text>
+              <text x="1015" y="416" fill="#cbd5e1" font-size="7.8">Planning Test Engineer (SEIT):</text>
+              <text x="1015" y="427" fill="#94a3b8" font-size="7.3">Binds proof cases to model elements &amp; views</text>
+
+              <rect x="1005" y="446" width="245" height="98" rx="6" fill="#0a2521" stroke="#115e59" stroke-width="1" />
+              <text x="1127" y="461" fill="#a7f3d0" font-size="8.5" font-weight="700" text-anchor="middle">AUTHORITY &amp; STATUS BOUNDARIES</text>
+              <text x="1015" y="474" fill="#cbd5e1" font-size="7.5">• SDoc remains requirements authority</text>
+              <text x="1015" y="485" fill="#cbd5e1" font-size="7.5">• SysML v2 is semantic system-model authority</text>
+              <text x="1015" y="496" fill="#cbd5e1" font-size="7.5">• SysON renders graphics; does not approve</text>
+              <text x="1015" y="507" fill="#cbd5e1" font-size="7.5">• Branding applied to HTML presentation only</text>
+              <text x="1015" y="519" fill="#fde68a" font-size="7.4" font-weight="600">• Issue #107 proposed; not active runtime</text>
+              <text x="1015" y="530" fill="#94a3b8" font-size="7.2">• Release &amp; deploy remain separate owner gate</text>
+
+              <rect x="1005" y="550" width="245" height="24" rx="4" fill="#047857" />
+              <text x="1127" y="566" fill="#ffffff" font-size="8.5" font-weight="700" text-anchor="middle">Integrated Planning Baseline -&gt;</text>
+            </g>
+
+            <!-- FORWARD FLOW -->
+            <text x="20" y="618" fill="#cbd5e1" font-size="9" font-weight="600">TRANSFER FUNCTION FLOW: Bound SDoc + Approved Decisions + Viewpoints + Stable IDs + Style &amp; Brand Profiles</text>
+            <text x="20" y="632" fill="#cbd5e1" font-size="9" font-weight="600">-&gt; RS Model Construction -&gt; Semantic Validation (Typed Feedback Loop) -&gt; SysON Graphic Generator Layout &amp; Render -&gt; Canonical SysML v2 + HTML Views -&gt; DoD Manifest</text>
+      </g>
+    </g>
+  </g>
+</svg>

@@ -175,14 +175,14 @@ export function validateTaskRecord(task, ctx = {}) {
   }
 
   // Single-writer: only parent coordinator may write transitions.
-  const parent = ctx.parentCoordinator ?? "explorer";
+  const parent = ctx.parentCoordinator ?? "coordinator";
   if (ctx.writer !== undefined && ctx.writer !== parent) {
     const workerRoles = new Set([
-      "crewmate",
+      "implementer",
       "test-engineer",
       "validator",
-      "park-ranger",
-      "surveyor",
+      "reviewer",
+      "integration-engineer",
     ]);
     if (workerRoles.has(ctx.writer) || ctx.writer !== parent) {
       diagnostics.push({
@@ -703,7 +703,7 @@ function baseTask(overrides = {}) {
     task_id: "T1",
     outcome: "add S8 tests",
     status: "PROPOSED",
-    assigned_role: "crewmate",
+    assigned_role: "implementer",
     depends_on: [],
     next_action: "implement write set",
     ...overrides,
@@ -712,16 +712,16 @@ function baseTask(overrides = {}) {
 
 describe("CMD-TASK-01 task-record (SEIT-TASK-RECORD-01, SEIT-SINGLE-WRITER-01)", () => {
   it("template records planning proposals for one integrated review", () => {
-    assert.match(TEMPLATE, /Journey settings/i);
-    assert.match(TEMPLATE, /journey:\s*<Explorer Journey \| Expedition>/i);
+    assert.match(TEMPLATE, /Lifecycle settings/i);
+    assert.match(TEMPLATE, /lifecycle:\s*<direct packet \| coordinator wave \| orchestrated waves>/i);
     assert.match(
       TEMPLATE,
-      /review_cadence:\s*at-end/i
+      /review_cadence:\s*phase/i
     );
-    assert.match(TEMPLATE, /lineup_snapshot:/i);
+    assert.match(TEMPLATE, /profile_snapshot:/i);
     assert.match(TEMPLATE, /complete five-artifact package/i);
     assert.match(TEMPLATE, /integrated owner review approves or changes/i);
-    assert.match(TEMPLATE, /no\s+pre-Map lineup or route-review gate/i);
+    assert.match(TEMPLATE, /no\s+pre-planning profile or route-review gate/i);
     assert.match(TEMPLATE, /implementation\.json/);
     assert.doesNotMatch(TEMPLATE, /implementation\.md/);
   });
@@ -731,17 +731,18 @@ describe("CMD-TASK-01 task-record (SEIT-TASK-RECORD-01, SEIT-SINGLE-WRITER-01)",
     assert.match(TEMPLATE, /Assurance Test Engineer|required_assurance:.*Test Engineer/s);
     assert.doesNotMatch(TEMPLATE, /required_assurance:\s*\[Validator\]/);
     assert.doesNotMatch(TEMPLATE, /Crewmate, Validator, Park Ranger/);
+    assert.doesNotMatch(TEMPLATE, /Implementer, Validator, Reviewer/);
   });
 
-  it("template records split Crewmate write sets and no self-certification", () => {
+  it("template records split Implementer write sets and no self-certification", () => {
     assert.match(TEMPLATE, /test-writing/);
     assert.match(TEMPLATE, /product write set excludes tests|excludes tests/i);
     assert.match(TEMPLATE, /self-certif/i);
   });
 
   it("template records snapshot precedence and the dated amendment path", () => {
-    assert.match(TEMPLATE, /lineup_snapshot:/i);
-    assert.match(TEMPLATE, /becomes authoritative only after\s+the integrated owner approval/i);
+    assert.match(TEMPLATE, /profile_snapshot:/i);
+    assert.match(TEMPLATE, /becomes authoritative only\s+after\s+the integrated owner approval/i);
     assert.match(TEMPLATE, /explicit owner-confirmed dated visible amendment/i);
     assert.match(TEMPLATE, /not from the current global defaults file/i);
     assert.match(TEMPLATE, /amendment date/i);
@@ -769,7 +770,7 @@ describe("CMD-TASK-01 task-record (SEIT-TASK-RECORD-01, SEIT-SINGLE-WRITER-01)",
     assert.match(TEMPLATE, /wave_receipt:/);
     assert.match(TEMPLATE, /checked_at:\s*<wave_start \| external_change \| commit>/);
     assert.match(TEMPLATE, /not before every/);
-    assert.match(TEMPLATE, /Router alone changes cross-wave/);
+    assert.match(TEMPLATE, /Orchestrator alone changes cross-wave/);
     assert.match(
       TEMPLATE,
       /```markdown\n- candidate_ref:[\s\S]*- changed_paths:[\s\S]*- tests:[\s\S]*- findings:[\s\S]*- verdict:/
@@ -855,14 +856,14 @@ describe("CMD-TASK-01 task-record (SEIT-TASK-RECORD-01, SEIT-SINGLE-WRITER-01)",
 
   it("single-writer: parent coordinator owns transitions; worker overwrite rejected", () => {
     const parentWrite = validateTaskRecord(baseTask({ status: "READY" }), {
-      writer: "explorer",
-      parentCoordinator: "explorer",
+      writer: "coordinator",
+      parentCoordinator: "coordinator",
     });
     assert.equal(parentWrite.ok, true);
 
     const workerOverwrite = validateTaskRecord(baseTask({ status: "COMPLETE" }), {
-      writer: "crewmate",
-      parentCoordinator: "explorer",
+      writer: "implementer",
+      parentCoordinator: "coordinator",
     });
     assert.equal(workerOverwrite.ok, false);
     if (!workerOverwrite.ok) {
@@ -881,8 +882,8 @@ describe("CMD-TASK-01 task-record (SEIT-TASK-RECORD-01, SEIT-SINGLE-WRITER-01)",
 
   it("unexpected concurrent edit is preserved and overwrite rejected", () => {
     const verdict = validateTaskRecord(baseTask(), {
-      writer: "explorer",
-      parentCoordinator: "explorer",
+      writer: "coordinator",
+      parentCoordinator: "coordinator",
       priorRevision: "rev-a",
       observedRevision: "rev-b-foreign",
     });
@@ -1354,7 +1355,7 @@ export const MAX_ASSURANCE_ROUNDS = 1;
 
 const ASSURANCE_TERMINAL_SUCCESS = new Set(["PASS", "ACCEPT", "ACCEPT_WITH_FINDINGS"]);
 const ASSURANCE_TERMINAL_STOP = new Set(["BLOCK"]);
-const ASSURANCE_COORDINATORS = new Set(["router", "explorer", "navigator"]);
+const ASSURANCE_COORDINATORS = new Set(["orchestrator", "coordinator", "navigator"]);
 
 /**
  * @typedef {{
@@ -1365,8 +1366,8 @@ const ASSURANCE_COORDINATORS = new Set(["router", "explorer", "navigator"]);
  *
  * @typedef {{
  *   action: 'dispatch' | 'result',
- *   route: 'direct' | 'explorer_wave' | 'expedition',
- *   coordinator: 'router' | 'explorer' | 'navigator',
+ *   route: 'direct' | 'coordinator_wave' | 'orchestrated',
+ *   coordinator: 'orchestrator' | 'coordinator' | 'navigator',
  *   candidate_ref: string,
  *   lineage?: string,
  *   result?: string,
@@ -1485,8 +1486,8 @@ export function admitAssuranceRound(record, event) {
 }
 
 /**
- * @param {'direct'|'explorer_wave'|'expedition'} route
- * @param {'router'|'explorer'|'navigator'} coordinator
+ * @param {'direct'|'coordinator_wave'|'orchestrated'} route
+ * @param {'orchestrator'|'coordinator'|'navigator'} coordinator
  * @param {string[]} results
  * @param {{ lineage?: string, start?: AssuranceRecord }} [opts]
  */
@@ -1539,7 +1540,7 @@ describe("CMD-TASK-01 assurance-round bound", () => {
   });
 
   it("Direct route spends the final repair without another review", () => {
-    const played = playAssuranceRoute("direct", "router", ["REPAIR_REQUIRED"]);
+    const played = playAssuranceRoute("direct", "orchestrator", ["REPAIR_REQUIRED"]);
     const last = played.steps[played.steps.length - 1];
     assert.equal(last.status, "CORRECTION_REQUIRED");
     assert.equal(last.code, "final_repair_closes_gate");
@@ -1551,7 +1552,7 @@ describe("CMD-TASK-01 assurance-round bound", () => {
     const second = admitAssuranceRound(played.record, {
       action: "dispatch",
       route: "direct",
-      coordinator: "router",
+      coordinator: "orchestrator",
       candidate_ref: "cand-L1-1",
       lineage: "L1",
     });
@@ -1562,8 +1563,8 @@ describe("CMD-TASK-01 assurance-round bound", () => {
     assert.equal(second.assurance_rounds, MAX_ASSURANCE_ROUNDS);
   });
 
-  it("Expedition route spends the same final repair before stopping review", () => {
-    const played = playAssuranceRoute("expedition", "router", ["FAIL"]);
+  it("Orchestrated-wave route spends the same final repair before stopping review", () => {
+    const played = playAssuranceRoute("orchestrated", "orchestrator", ["FAIL"]);
     const last = played.steps[played.steps.length - 1];
     assert.equal(last.status, "CORRECTION_REQUIRED");
     assert.equal(last.code, "final_repair_closes_gate");
@@ -1573,26 +1574,26 @@ describe("CMD-TASK-01 assurance-round bound", () => {
   });
 
   it("PASS or ACCEPT_WITH_FINDINGS at the bound is terminal, not another repair", () => {
-    const passAtBound = playAssuranceRoute("direct", "router", ["PASS"]);
+    const passAtBound = playAssuranceRoute("direct", "orchestrator", ["PASS"]);
     const passLast = passAtBound.steps[passAtBound.steps.length - 1];
     assert.equal(passLast.status, "COMPLETE");
     assert.equal(passLast.terminal, true);
     assert.equal(passLast.assurance_rounds, MAX_ASSURANCE_ROUNDS);
 
-    const residual = playAssuranceRoute("expedition", "router", ["ACCEPT_WITH_FINDINGS"]);
+    const residual = playAssuranceRoute("orchestrated", "orchestrator", ["ACCEPT_WITH_FINDINGS"]);
     const residualLast = residual.steps[residual.steps.length - 1];
     assert.equal(residualLast.status, "COMPLETE");
     assert.equal(residualLast.terminal, true);
     assert.equal(residualLast.dispatch, false);
   });
 
-  it("a replacement candidate does not reset the Journey-wide count", () => {
-    const exhausted = playAssuranceRoute("direct", "router", ["FAIL"]);
+  it("a replacement candidate does not reset the Lifecycle-wide count", () => {
+    const exhausted = playAssuranceRoute("direct", "orchestrator", ["FAIL"]);
     assert.equal(exhausted.record.assurance_rounds, MAX_ASSURANCE_ROUNDS);
     const nextLine = admitAssuranceRound(exhausted.record, {
       action: "dispatch",
       route: "direct",
-      coordinator: "router",
+      coordinator: "orchestrator",
       candidate_ref: "cand-new",
       lineage: "L2",
     });

@@ -1,0 +1,359 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/alphazede/bearing-lite/schemas/profiles.schema.json",
+  "title": "Bearing Lite profiles.json",
+  "description": "User-owned named profile catalog. Packaged bytes stay an empty catalog with no defaults. Selection is not an authority grant. Normal runtime never reads lineups.json or default-role-lineup.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "profiles"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Integer 1. The string \"1\" used by Lifecycle artifacts is invalid here."
+    },
+    "profiles": {
+      "type": "object",
+      "description": "Named profiles. Empty object is valid. Unlimited keys; no maxProperties.",
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/profile"
+      }
+    },
+    "defaults": {
+      "type": "object",
+      "description": "Optional user-owned recommendations. Not a grant.",
+      "additionalProperties": false,
+      "properties": {
+        "planning": {
+          "type": "string",
+          "minLength": 1
+        },
+        "implementation": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  },
+  "$defs": {
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "harness",
+        "model",
+        "reasoning"
+      ],
+      "properties": {
+        "harness": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reasoning": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "fallback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "condition",
+        "harness",
+        "model",
+        "reasoning"
+      ],
+      "properties": {
+        "condition": {
+          "type": "string",
+          "minLength": 1
+        },
+        "harness": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reasoning": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "cadence": {
+      "type": "string",
+      "enum": [
+        "slice",
+        "phase",
+        "lifecycle"
+      ]
+    },
+    "route": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "primary",
+        "ordered_fallbacks"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "primary": {
+          "$ref": "#/$defs/identity"
+        },
+        "ordered_fallbacks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/fallback"
+          }
+        }
+      }
+    },
+    "reviewerRoute": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "primary",
+        "ordered_fallbacks"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "primary": {
+          "$ref": "#/$defs/identity"
+        },
+        "ordered_fallbacks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/fallback"
+          }
+        },
+        "cadence": {
+          "$ref": "#/$defs/cadence"
+        }
+      }
+    },
+    "assuranceSession": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "primary",
+        "ordered_fallbacks"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "primary": {
+          "$ref": "#/$defs/identity"
+        },
+        "ordered_fallbacks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/fallback"
+          }
+        },
+        "cadence": {
+          "$ref": "#/$defs/cadence"
+        }
+      }
+    },
+    "sessionedRole": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sessions"
+      ],
+      "properties": {
+        "sessions": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": false,
+          "properties": {
+            "planning": {
+              "$ref": "#/$defs/route"
+            }
+          }
+        }
+      }
+    },
+    "testEngineerRole": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sessions"
+      ],
+      "properties": {
+        "sessions": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": false,
+          "properties": {
+            "planning": {
+              "$ref": "#/$defs/route"
+            },
+            "assurance": {
+              "$ref": "#/$defs/assuranceSession"
+            }
+          }
+        }
+      }
+    },
+    "integrationEngineerRole": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sessions"
+      ],
+      "properties": {
+        "sessions": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": false,
+          "properties": {
+            "planning": {
+              "$ref": "#/$defs/route"
+            },
+            "execution": {
+              "$ref": "#/$defs/assuranceSession"
+            }
+          }
+        }
+      }
+    },
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "roles"
+      ],
+      "properties": {
+        "roles": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "implementer": {
+              "$ref": "#/$defs/route"
+            },
+            "light_implementer": {
+              "$ref": "#/$defs/route"
+            },
+            "coordinator": {
+              "$ref": "#/$defs/route"
+            },
+            "reviewer": {
+              "$ref": "#/$defs/reviewerRoute"
+            },
+            "scribe": {
+              "$ref": "#/$defs/route"
+            },
+            "plan_integrator": {
+              "$ref": "#/$defs/route"
+            },
+            "systems_modeler": {
+              "$ref": "#/$defs/sessionedRole"
+            },
+            "test_engineer": {
+              "$ref": "#/$defs/testEngineerRole"
+            },
+            "integration_engineer": {
+              "$ref": "#/$defs/integrationEngineerRole"
+            },
+            "requirements_engineer": {
+              "$ref": "#/$defs/sessionedRole"
+            }
+          }
+        },
+        "development_strategy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode"
+          ],
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": [
+                "single_implementer",
+                "tdd"
+              ]
+            }
+          }
+        },
+        "planning_to_implementation_clean_session": {
+          "type": "boolean"
+        },
+        "concurrency": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "dispatch_ready_independent_work": {
+              "type": "boolean"
+            },
+            "preserve_order_for_dependencies_interfaces_write_overlap_and_shared_mutable_resources": {
+              "type": "boolean"
+            }
+          }
+        },
+        "holds": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": [
+              "id",
+              "effect"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "effect": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "deterministic_verification": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "reverify": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "enabled"
+              ],
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

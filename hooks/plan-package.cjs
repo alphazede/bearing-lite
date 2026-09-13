@@ -4,7 +4,7 @@
  * Map the Route freeze (#70, #73, #77, #80): pure checks over a planning package.
  * checkRoles: every command a slice runs whose seit procedure names an actor
  * must name the slice's role. checkWorkClass validates light slices;
- * checkPlanningRoles excludes planning-only roles from Expedition slices.
+ * checkPlanningRoles excludes planning-only roles from Lifecycle implementation slices.
  * verifyDigests: every planning input digest
  * embedded in seit.json matches the file on disk; the manifest digest over
  * those inputs plus seit.json matches implementation.json's
@@ -70,13 +70,14 @@ function checkWorkClass(node, findings = []) {
   return findings;
 }
 
-/** #80: Requirements Engineer is planning-only and never an Expedition slice. */
+/** #80: Requirements Engineer is planning-only and never a Lifecycle implementation slice. */
 function checkPlanningRoles(node, findings = []) {
   if (Array.isArray(node)) node.forEach((item) => checkPlanningRoles(item, findings));
   else if (node && typeof node === "object") {
-    if (typeof node.role === "string" && node.role.startsWith("Requirements Engineer")) {
+    const isSlice = typeof node.id === "string" || Array.isArray(node.command_ids);
+    if (isSlice && typeof node.role === "string" && node.role.startsWith("Requirements Engineer")) {
       findings.push({
-        code: "planning_role_in_expedition",
+        code: "planning_role_in_lifecycle",
         step: typeof node.id === "string" ? node.id : null,
         role: node.role,
       });

@@ -1,0 +1,280 @@
+{
+  "schema_version": "1",
+  "kind": "assurance_receipt",
+  "slice": "S6",
+  "role": "Test Engineer",
+  "session": "assurance",
+  "authority": "assurance",
+  "stage": "assurance",
+  "cadence_unit": "PHASE-1",
+  "declared_boundary": "PHASE-1 end / PHASE-2 S6 assurance",
+  "lifecycle_id": "BDL-2026-09-12",
+  "recorded_at": "2026-09-13T16:24:54Z",
+  "verdict": "NEEDS_MORE_EVIDENCE",
+  "independence": {
+    "fresh_session": true,
+    "native_session_id": "7b9f9d0d-3cc2-4a1c-8de9-9b28284aba70",
+    "route": "Grok Build / harness default",
+    "author_session_resumed": false,
+    "author_diagnostics_used_as_pass": false,
+    "memory_used_as_proof": false
+  },
+  "produced_by": {
+    "role": "Test Engineer / assurance",
+    "identity": "Grok Build / harness default",
+    "session": "7b9f9d0d-3cc2-4a1c-8de9-9b28284aba70"
+  },
+  "owner_authority": ["DEC-BDL-060", "DEC-BDL-062", "DEC-BDL-068", "DEC-BDL-072"],
+  "candidate_ref": "b5cec79f04f6f6ea506a2ad89bf937aab143d876",
+  "candidate_revision": "b5cec79f04f6f6ea506a2ad89bf937aab143d876",
+  "candidate_identity": {
+    "repository": "alphazede/bearing-lite",
+    "checkout": "/home/spectre/alphazede/Alphazedehq/bearing-lite",
+    "branch": "main",
+    "head": "b5cec79f04f6f6ea506a2ad89bf937aab143d876",
+    "lease_generation": 1,
+    "lease_state": "active",
+    "product_tree_sha256": "24b79eddc21a37460015bc63cbf046e40024bbc4f77d855142fa49282bfd0c9c",
+    "product_tree_algorithm": "sorted existing tracked plus nonignored untracked paths, excluding docs/plans/; path NUL decimal permissions(mode&511) NUL file bytes or symlink target NUL",
+    "planning_candidate_digest_declared": "acaeda8cf479fa886b0f0fb4d3028ac781f538fe3a15100867c170a185c54ce6",
+    "observed_planning_file_sha256": {
+      "bearing-delivery-lifecycle-alignment-technical-plan.md": "f5c315e663c97aeacbdc325575cecffe1f17ac2f1ead0ad1a58c06a8eb2a23c7",
+      "design.md": "6649efaaf0e5d7f27892c55e1a66fab4139d36abd878bbbda87ca8e0db5fa2d4",
+      "seit.json": "e05270a4082771d599f2003d30ea60b3582739cdafb8f72b232792ad9263ccf1"
+    },
+    "manifest_sha256": "9663797dc070c7ee0db9ff0e5f796d3a751baf4cd9cb06edf3b92b3fab1e17c4",
+    "bran_status": "unavailable",
+    "bran_reason": "checkout has no native .bran/policy.yaml"
+  },
+  "changed_paths": [
+    "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/assurance/s6-assurance.json"
+  ],
+  "write_set_respected": true,
+  "tests": [
+    {
+      "id": "CMD-BDL-TEST",
+      "command": "node --test test/*.test.mjs",
+      "exit_code": 0,
+      "passed": 400,
+      "failed": 0,
+      "total": 400,
+      "result": "PASS"
+    },
+    {
+      "id": "CMD-BDL-SCHEMA",
+      "command": "python3 -B import test/schema-validation.py without __main__/bootstrap; run_cases(); validate live journey.json, implementation.json, and seit.json with installed jsonschema Draft202012Validator",
+      "exit_code": 0,
+      "harness_passed": 256,
+      "harness_failed": 0,
+      "jsonschema_version": "4.25.1",
+      "live_artifacts": {
+        "journey.json": { "error_count": 0, "errors": [] },
+        "implementation.json": { "error_count": 0, "errors": [] },
+        "seit.json": { "error_count": 0, "errors": [] }
+      },
+      "result": "PASS"
+    },
+    {
+      "id": "CMD-BDL-S1",
+      "command": "node --test test/s1-contracts.test.mjs",
+      "exit_code": 0,
+      "passed": 10,
+      "failed": 0,
+      "result": "PASS"
+    },
+    {
+      "id": "CMD-BDL-MANIFEST",
+      "command": "node --test test/dod-manifest.test.mjs",
+      "exit_code": 0,
+      "passed": 14,
+      "failed": 0,
+      "result": "PASS"
+    },
+    {
+      "id": "CMD-BDL-RENDER",
+      "command": "node tools/render-dod-manifest.mjs docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/implementation.json --check",
+      "exit_code": 0,
+      "output": "RENDER_CHECK_PASS digest=sha256:9663797dc070c7ee0db9ff0e5f796d3a751baf4cd9cb06edf3b92b3fab1e17c4 template=1.0.0",
+      "result": "PASS"
+    },
+    {
+      "id": "CMD-BDL-NO-EXPLORER",
+      "command": "test ! -e skills/explorer",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "id": "CMD-BDL-MUSE",
+      "command": "for skill in skills/*/SKILL.md; do muse skills validate \"$(dirname \"$skill\")\" --json; done",
+      "exit_code": 0,
+      "skills_validated": 17,
+      "all_valid_true": true,
+      "result": "PASS"
+    },
+    {
+      "id": "CMD-BDL-PLUGIN",
+      "command": "node --test test/plugin-manifest.test.mjs test/package-boundary.test.mjs",
+      "exit_code": 0,
+      "passed": 18,
+      "failed": 0,
+      "result": "PASS"
+    },
+    {
+      "id": "CMD-BDL-DOCS",
+      "command": "node --test test/public-boundary.test.mjs test/skills-conformance.test.mjs",
+      "exit_code": 0,
+      "passed": 50,
+      "failed": 0,
+      "result": "PASS"
+    },
+    {
+      "id": "CMD-BDL-PACK",
+      "command": "npm pack --dry-run --json",
+      "exit_code": 0,
+      "name": "@alphazede/bearing-lite",
+      "version": "0.2.2",
+      "entry_count": 68,
+      "includes": [
+        "profiles.json",
+        "schemas/profiles.schema.json",
+        "schemas/verification.schema.json",
+        "templates/dod-manifest-v1.html",
+        "tools/render-dod-manifest.mjs",
+        "com.github.copilot/hooks/hooks.json"
+      ],
+      "absent": [
+        "lineups.json",
+        "skills/explorer",
+        "skills/surveyor",
+        "docs/plans"
+      ],
+      "result": "PASS"
+    },
+    {
+      "id": "CMD-BDL-DIFF",
+      "command": "git diff --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "id": "CMD-BDL-VISUAL",
+      "command": "human procedure: open the rendered DoD Manifest at wide and narrow viewport widths",
+      "executable_by_agent": false,
+      "ran": false,
+      "result": "INCONCLUSIVE",
+      "reason_code": "visual_demonstration_unavailable"
+    }
+  ],
+  "proof_rows": [
+    {
+      "id": "SEIT-BDL-001",
+      "command_id": "CMD-BDL-DOCS",
+      "method": "analysis and inspection",
+      "tests_enforce_approved_behavior": true,
+      "status": "PASS",
+      "evidence": "CMD-BDL-DOCS exit 0, 50/50. Public-boundary tests assert ordered Intake → Architectural Alignment → Scope Definition → Planning and Design, one Integration Engineer and one Test Engineer with named sessions, absence of deleted process HTML, resolved public links, and no active retired terms. Skills-conformance tests assert Lite roles, no Explorer/Surveyor/Validator as active roles, and phase/lifecycle cadence wording."
+    },
+    {
+      "id": "SEIT-BDL-002",
+      "command_id": "CMD-BDL-SCHEMA",
+      "method": "schema validation",
+      "tests_enforce_approved_behavior": true,
+      "status": "PASS",
+      "evidence": "run_cases() 256/256 using installed jsonschema 4.25.1 without bootstrap. Negative role/session fixtures reject illegal combinations; omitted and explicitly disabled sessions accept. Live journey.json, implementation.json, and seit.json produced 0 schema errors."
+    },
+    {
+      "id": "SEIT-BDL-003",
+      "command_id": "CMD-BDL-RENDER",
+      "method": "deterministic render comparison",
+      "tests_enforce_approved_behavior": true,
+      "status": "PASS",
+      "evidence": "RENDER_CHECK_PASS digest=sha256:9663797dc070c7ee0db9ff0e5f796d3a751baf4cd9cb06edf3b92b3fab1e17c4 template=1.0.0. This is structural/byte evidence only and is not a visual demonstration."
+    },
+    {
+      "id": "SEIT-BDL-004",
+      "command_id": "CMD-BDL-TEST",
+      "method": "contract tests",
+      "tests_enforce_approved_behavior": true,
+      "status": "PASS",
+      "evidence": "Full Node suite 400/400. verification.test.mjs rejects candidate mismatch, author diagnostics submitted as assurance, self-certification, selected/required unavailable backends, INCONCLUSIVE as a gate, stale evidence, and automatic rereview."
+    },
+    {
+      "id": "SEIT-BDL-005",
+      "command_id": "CMD-BDL-PLUGIN",
+      "method": "standard and package inspection",
+      "tests_enforce_approved_behavior": true,
+      "status": "PASS",
+      "evidence": "plugin-manifest and package-boundary 18/18. Closed Agent Plugins manifest, Copilot hook path packaged, no top-level hooks field, public-only files allowlist."
+    },
+    {
+      "id": "SEIT-BDL-006",
+      "command_id": "CMD-BDL-MUSE",
+      "method": "host-native automated validation",
+      "tests_enforce_approved_behavior": true,
+      "status": "PASS",
+      "evidence": "Muse Code validated all 17 shipped skill directories with valid true and compatibility result compatible. skills/prompt reports unknown_fields okf_status, tags, title, type and remains valid true."
+    },
+    {
+      "id": "SEIT-BDL-007",
+      "command_id": "CMD-BDL-PACK",
+      "method": "package dry run",
+      "tests_enforce_approved_behavior": true,
+      "status": "PASS",
+      "evidence": "npm pack --dry-run --json exit 0, 68 entries. Required public files present; lineups.json, Explorer, Surveyor, credentials, and planning evidence absent from the tarball."
+    },
+    {
+      "id": "SEIT-BDL-009",
+      "command_id": "CMD-BDL-NO-EXPLORER",
+      "method": "deterministic absence inspection",
+      "tests_enforce_approved_behavior": true,
+      "status": "PASS",
+      "evidence": "test ! -e skills/explorer exit 0. Package inventory contains no Explorer path. Public-boundary and skills-conformance tests reject Explorer as an active public role."
+    },
+    {
+      "id": "SEIT-BDL-010",
+      "command_id": "CMD-BDL-S1",
+      "method": "preservation inspection against the frozen migration map",
+      "tests_enforce_approved_behavior": true,
+      "status": "PASS",
+      "evidence": "s1-contracts 10/10. Frozen map operations, empty catalog bytes, copy_unchanged prompt skill, and post-rename Implementer/Reviewer/Coordinator names are asserted. Packaged catalog remains {\"schema_version\":1,\"profiles\":{}}."
+    },
+    {
+      "id": "SEIT-BDL-011",
+      "command_id": "CMD-BDL-MANIFEST",
+      "method": "applicability-typed model-view inspection",
+      "tests_enforce_approved_behavior": true,
+      "status": "PASS",
+      "evidence": "dod-manifest 14/14 covering activated missing/stale failure, explicit N/A visibility, inactive unselected/unrequired pass-without-view, sanitization, entity preservation, and supplemental closeout.model_views binding."
+    },
+    {
+      "id": "SEIT-BDL-012",
+      "command_id": "CMD-BDL-VISUAL",
+      "method": "human-observed presentation demonstration",
+      "executable_by_agent": false,
+      "status": "INCONCLUSIVE",
+      "reason_code": "visual_demonstration_unavailable",
+      "owner_evidence_in_approved_artifacts": false,
+      "substitutes_used_as_pass": false,
+      "evidence": "No owner observation, waiver, or substitute-acceptance exists in the approved artifacts. Journey records only an earlier agent ENVIRONMENT_FAILURE for local-file browser navigation. This session did not open local files in a browser, start localhost, use CDP, or substitute another browser surface."
+    }
+  ],
+  "findings": [
+    {
+      "id": "SEIT-BDL-012",
+      "classification": "missing_evidence",
+      "status": "INCONCLUSIVE",
+      "reason_code": "visual_demonstration_unavailable",
+      "detail": "Applicable S6 proof row SEIT-BDL-012 remains INCONCLUSIVE. PASS is prohibited while this applicable case is INCONCLUSIVE. Deterministic SEIT-BDL-003 and SEIT-BDL-011 passed and were not treated as visual substitutes. Only the owner may perform CMD-BDL-VISUAL, waive it, or accept those deterministic cases as sufficient."
+    }
+  ],
+  "blocker": "WAITING_ON: owner performance, waiver, or acceptance of substitutes for SEIT-BDL-012 / CMD-BDL-VISUAL",
+  "seit_bdl_012": {
+    "status": "INCONCLUSIVE",
+    "reason_code": "visual_demonstration_unavailable",
+    "owner_evidence": false,
+    "agent_workaround_attempted": false
+  },
+  "gate_eligible": false,
+  "pass_includes_applicable_inconclusive": false,
+  "next": "Do not dispatch S7. Owner disposition of SEIT-BDL-012 is required before this assurance round can become PASS."
+}

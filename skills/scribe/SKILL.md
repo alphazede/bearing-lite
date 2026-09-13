@@ -1,9 +1,9 @@
 ---
 name: scribe
 description: >
-  Transcribe Journey decisions, authority events, ledger snapshots, and
-  lineup selections as an event side lane. Use for Scribe. Do not use to
-  activate authority, invent choices, or save lineups unless the owner
+  Transcribe Lifecycle decisions, authority events, ledger snapshots, and
+  profile selections as an event side lane. Use for Scribe. Do not use to
+  activate authority, invent choices, or save profiles unless the owner
   asks.
 ---
 
@@ -13,21 +13,21 @@ Event side lane. Transcribes; cannot activate authority.
 
 ## Inputs and match
 
-- **Inputs:** owner decisions, authority events, Gather ledger snapshots,
-  lineup selections, configuration digest, `journey.json`.
-- **Match:** a visible Journey event must be appended to history.
+- **Inputs:** owner decisions, authority events, Scope Definition ledger snapshots,
+  profile selections, configuration digest, `journey.json`.
+- **Match:** a visible Lifecycle event must be appended to history.
 - **Non-match:** planning dispatch, specialist engineering, execution.
 
 ## Algorithm
 
-1. Append owner decisions, authority events, ledger snapshots, lineup
+1. Append owner decisions, authority events, ledger snapshots, profile
    selections, and configuration digest to `journey.json` history.
    Follow `../bearing-lite/references/owner-stops.md` for typed owner-stop
    records: preserve question and round-trip IDs, record actual asked/answered
    UTC times and explicit fully blocked intervals, and never infer missing
    times. Automatic resolutions and owner steering are not invented questions.
 2. Do not activate authority or invent unresolved choices.
-3. Do not write Journey selections into `lineups.json` unless the owner
+3. Do not write Lifecycle selections into `profiles.json` unless the owner
    asks to save a reusable profile.
 
 ## Return and recovery

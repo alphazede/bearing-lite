@@ -83,7 +83,7 @@ function normalizeAssurance(value) {
   return [String(value)].filter((s) => s && s !== "none");
 }
 
-/** Normalize role labels for order comparison (Validator vs validator vs park-ranger). */
+/** Normalize role labels for order comparison (Validator vs validator vs reviewer). */
 function normalizeRoleKey(role) {
   return String(role)
     .trim()
@@ -94,15 +94,23 @@ function normalizeRoleKey(role) {
 /**
  * Map the next missing assurance role to the state that should receive it.
  * Assurance Test Engineer (or the retired Validator label) -> VALIDATING,
- * Park Ranger -> REVIEWING, Surveyor -> ACCEPTANCE.
+ * Reviewer (or retired Park Ranger) -> REVIEWING,
+ * Integration Engineer execution (or retired Surveyor) -> ACCEPTANCE.
  */
 function assuranceTargetState(role) {
   const key = normalizeRoleKey(role);
   if (key === "validator" || key === "assurance-test-engineer" || key === "test-engineer") {
     return "VALIDATING";
   }
-  if (key === "park-ranger" || key === "parkranger") return "REVIEWING";
-  if (key === "surveyor") return "ACCEPTANCE";
+  if (key === "reviewer" || key === "park-ranger" || key === "parkranger") return "REVIEWING";
+  if (
+    key === "surveyor" ||
+    key === "integration-engineer" ||
+    key === "integration-engineer-execution" ||
+    key === "execution-integration-engineer"
+  ) {
+    return "ACCEPTANCE";
+  }
   return null;
 }
 

@@ -84,7 +84,7 @@ JOURNEY_TOP_FIELDS = (
     "decisions",
     "open_decisions",
     "planning_receipts",
-    "lineup_selection",
+    "profile_selection",
 )
 
 # CONTRACT-EMV-008 slice fields with the canonical reasoning_level object.
@@ -111,7 +111,7 @@ IMPLEMENTATION_TOP_FIELDS = (
     "artifact",
     "source_baseline",
     "journey_settings",
-    "lineup_freeze",
+    "profile_freeze",
     "waves",
     "dependencies",
     "slices",
@@ -170,26 +170,61 @@ FORBIDDEN_SLICE_ALIASES = ("reasoning",)
 FORBIDDEN_AUTHORITY_ALIASES = ("granting_owner_decision", "expiry")
 FORBIDDEN_PROOF_ALIASES = ("evidence", "pass_fail")
 
-LINEUPS_SCHEMA_NAME = "lineups.schema.json"
-LINEUPS_FIXTURE_PATH = ROOT / "test" / "fixtures" / "lineups-populated.example.json"
-LINEUPS_SHIPPED_PATH = ROOT / "lineups.json"
-LINEUPS_MISSING_SCHEMA = f"missing schemas/{LINEUPS_SCHEMA_NAME}"
-LINEUPS_PHASE_FIELDS = (
-    "planned_planning_assignments",
-    "implementation_assignments",
+PROFILES_SCHEMA_NAME = "profiles.schema.json"
+VERIFICATION_SCHEMA_NAME = "verification.schema.json"
+VERIFICATION_MISSING_SCHEMA = f"missing schemas/{VERIFICATION_SCHEMA_NAME}"
+VERIFICATION_REQUEST_FIELDS = (
+    "schema_version",
+    "kind",
+    "candidate_ref",
+    "candidate_revision",
+    "claim_id",
+    "claim_type",
+    "backend",
+    "stage",
+    "authority",
+    "expected_result",
+    "command_configuration",
+    "selected",
+    "required",
 )
-LINEUPS_ASSIGNMENT_FIELDS = ("role", "primary", "ordered_fallbacks")
-LINEUPS_PRIMARY_FIELDS = ("harness", "model", "reasoning")
-LINEUPS_FALLBACK_FIELDS = ("condition", "harness", "model", "reasoning")
-LINEUPS_PACKAGED_DEFAULT_FIELDS = ("default", "providers", "models")
-LINEUPS_ROOT_FIELDS = ("schema_version", "lineups")
-LINEUPS_DEFAULT_FIELDS = ("planning", "implementation")
-LINEUPS_INVALID_NAMES = (
+VERIFICATION_RECEIPT_FIELDS = (
+    "schema_version",
+    "kind",
+    "status",
+    "candidate_ref",
+    "candidate_revision",
+    "claim_id",
+    "backend",
+    "backend_version",
+    "command_configuration",
+    "evidence_digest",
+    "authority",
+    "produced_by",
+)
+SYN_DIGEST = "b" * 64
+PROFILES_FIXTURE_PATH = ROOT / "test" / "fixtures" / "profiles-populated.example.json"
+PROFILES_SHIPPED_PATH = ROOT / "profiles.json"
+PROFILES_MISSING_SCHEMA = f"missing schemas/{PROFILES_SCHEMA_NAME}"
+PROFILES_PRIMARY_FIELDS = ("harness", "model", "reasoning")
+PROFILES_FALLBACK_FIELDS = ("condition", "harness", "model", "reasoning")
+PROFILES_PACKAGED_DEFAULT_FIELDS = ("default", "providers", "models", "lineups")
+PROFILES_ROOT_FIELDS = ("schema_version", "profiles")
+PROFILES_DEFAULT_FIELDS = ("planning", "implementation")
+PROFILES_INVALID_NAMES = (
     ("profile_name_leading_digit", "1fixture"),
     ("profile_name_with_space", "fixture alpha"),
     ("profile_name_path_like", "fixture/alpha"),
     ("profile_name_leading_underscore", "_fixture"),
     ("profile_name_empty", ""),
+)
+RETIRED_ROLE_KEYS = (
+    "surveyor",
+    "explorer",
+    "crewmate",
+    "navigator",
+    "park_ranger",
+    "validator",
 )
 
 
@@ -264,12 +299,18 @@ def load_schemas() -> dict[str, dict | None]:
             die_env(f"missing {path.relative_to(ROOT)}")
         with path.open(encoding="utf-8") as fh:
             out[key] = json.load(fh)
-    lineups_path = SCHEMAS_DIR / LINEUPS_SCHEMA_NAME
-    if lineups_path.is_file():
-        with lineups_path.open(encoding="utf-8") as fh:
-            out["lineups"] = json.load(fh)
+    profiles_path = SCHEMAS_DIR / PROFILES_SCHEMA_NAME
+    if profiles_path.is_file():
+        with profiles_path.open(encoding="utf-8") as fh:
+            out["profiles"] = json.load(fh)
     else:
-        out["lineups"] = None
+        out["profiles"] = None
+    verification_path = SCHEMAS_DIR / VERIFICATION_SCHEMA_NAME
+    if verification_path.is_file():
+        with verification_path.open(encoding="utf-8") as fh:
+            out["verification"] = json.load(fh)
+    else:
+        out["verification"] = None
     return out
 
 
@@ -353,7 +394,7 @@ def complete_journey(**overrides: object) -> dict:
                 "status": "recorded",
             }
         ],
-        "lineup_selection": {
+        "profile_selection": {
             "status": "owner-confirmed",
             "selection_is_authority_grant": False,
         },
@@ -382,7 +423,7 @@ def complete_authority(**overrides: object) -> dict:
             "actions": ["publish"],
             "paths": [],
         },
-        "role_grants": [{"role": "Crewmate"}],
+        "role_grants": [{"role": "Implementer"}],
         "effective": True,
         "expiry_conditions": [
             "The granting owner revokes this synthetic envelope.",
@@ -406,7 +447,7 @@ def complete_review_path() -> dict:
 def complete_slice(**overrides: object) -> dict:
     slice_ = {
         "id": SYN_SLICE,
-        "role": "Crewmate",
+        "role": "Implementer",
         "goal": "Validate portable Lite artifact schemas with synthetic fixtures.",
         "type": "test-first",
         "requirement_ids": ["AC-SYN-001"],
@@ -453,7 +494,7 @@ def complete_implementation(slices: list[dict] | None = None, **overrides: objec
                 "c": 1,
             }
         },
-        "lineup_freeze": {
+        "profile_freeze": {
             "state": "frozen",
             "selection_is_authority_grant": False,
         },
@@ -612,7 +653,7 @@ def sparse_slice() -> dict:
     """Former complete_slice: sibling reasoning string, no reasoning_level."""
     return {
         "id": SYN_SLICE,
-        "role": "Crewmate",
+        "role": "Implementer",
         "goal": "Validate portable Lite artifact schemas with synthetic fixtures.",
         "type": "test-first",
         "requirement_ids": ["AC-SYN-001"],
@@ -698,26 +739,57 @@ def has_content(value: object) -> bool:
 
 
 def empty_shipped_catalog() -> dict:
-    with LINEUPS_SHIPPED_PATH.open(encoding="utf-8") as fh:
+    with PROFILES_SHIPPED_PATH.open(encoding="utf-8") as fh:
         return copy.deepcopy(json.load(fh))
 
 
 def complete_user_catalog(**overrides: object) -> dict:
-    with LINEUPS_FIXTURE_PATH.open(encoding="utf-8") as fh:
+    with PROFILES_FIXTURE_PATH.open(encoding="utf-8") as fh:
         doc = json.load(fh)
     doc.update(overrides)
     return doc
 
 
 def complete_profile() -> dict:
-    return copy.deepcopy(complete_user_catalog()["lineups"]["fixture-alpha"])
+    return copy.deepcopy(complete_user_catalog()["profiles"]["fixture-alpha"])
 
 
 def catalog_named(name: str) -> dict:
     return {
         "schema_version": 1,
-        "lineups": {name: complete_profile()},
+        "profiles": {name: complete_profile()},
     }
+
+
+def profile_session_route(*, enabled: bool = True, cadence: str | None = None) -> dict:
+    route = {
+        "enabled": enabled,
+        "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a",
+        },
+        "ordered_fallbacks": [],
+    }
+    if cadence is not None:
+        route["cadence"] = cadence
+    return route
+
+
+def catalog_with_role_sessions(role: str, sessions: dict) -> dict:
+    doc = complete_user_catalog()
+    doc["profiles"]["fixture-alpha"]["roles"][role] = {
+        "sessions": copy.deepcopy(sessions),
+    }
+    return doc
+
+
+def catalog_omitting_roles(*roles: str) -> dict:
+    doc = complete_user_catalog()
+    profile_roles = doc["profiles"]["fixture-alpha"]["roles"]
+    for role in roles:
+        profile_roles.pop(role, None)
+    return doc
 
 
 def duplicate_raw_key_messages(raw: str) -> list[str]:
@@ -738,70 +810,62 @@ def duplicate_raw_key_messages(raw: str) -> list[str]:
     return found
 
 
-def lineups_extra_oracle_messages(instance: object, raw: str | None) -> list[str]:
+def profiles_extra_oracle_messages(instance: object, raw: str | None) -> list[str]:
     """Checks JSON Schema cannot solely express. Not a catalog service."""
     messages: list[str] = []
     if raw is not None:
         messages.extend(duplicate_raw_key_messages(raw))
     if not isinstance(instance, dict):
         return messages
-    lineups = instance.get("lineups")
-    if isinstance(lineups, dict):
+    if "lineups" in instance:
+        messages.append("catalog uses retired live field lineups")
+    profiles = instance.get("profiles")
+    if isinstance(profiles, dict):
         folded: dict[str, str] = {}
-        for name in lineups:
+        for name in profiles:
             key = name.lower()
             prior = folded.get(key)
             if prior is not None and prior != name:
                 messages.append(
-                    f"lineups: ASCII case-fold collision {prior!r} and {name!r}"
+                    f"profiles: ASCII case-fold collision {prior!r} and {name!r}"
                 )
             else:
                 folded[key] = name
-        for name, profile in lineups.items():
+        for name, profile in profiles.items():
             if not isinstance(profile, dict):
                 continue
-            for phase in LINEUPS_PHASE_FIELDS:
-                assignments = profile.get(phase)
-                if not isinstance(assignments, list):
-                    continue
-                seen_roles: list[str] = []
-                for item in assignments:
-                    if not isinstance(item, dict):
-                        continue
-                    role = item.get("role")
-                    if isinstance(role, str):
-                        if role in seen_roles:
-                            messages.append(
-                                f"lineups.{name}.{phase}: duplicate role {role!r}"
-                            )
-                        else:
-                            seen_roles.append(role)
+            roles = profile.get("roles")
+            if not isinstance(roles, dict):
+                continue
+            for role_key in roles:
+                if role_key in RETIRED_ROLE_KEYS:
+                    messages.append(f"profiles.{name}.roles: retired role {role_key!r}")
     defaults = instance.get("defaults")
-    if isinstance(defaults, dict) and isinstance(lineups, dict):
-        for field in LINEUPS_DEFAULT_FIELDS:
+    if isinstance(defaults, dict) and isinstance(profiles, dict):
+        for field in PROFILES_DEFAULT_FIELDS:
             if field not in defaults:
                 continue
             value = defaults[field]
-            if value not in lineups:
+            if value not in profiles:
                 messages.append(
-                    f"defaults.{field}: does not resolve to an existing lineup name"
+                    f"defaults.{field}: does not resolve to an existing profile name"
                 )
     return messages
 
 
-def lineups_errors(schema: dict, instance: object, raw: str | None) -> list[str]:
+def profiles_errors(schema: dict, instance: object, raw: str | None) -> list[str]:
     parsed = instance
     if parsed is None and raw is not None:
         parsed = json.loads(raw)
     messages = errors_for(schema, parsed)
-    messages.extend(lineups_extra_oracle_messages(parsed, raw))
+    messages.extend(profiles_extra_oracle_messages(parsed, raw))
     return messages
 
 
 def raw_duplicate_profile_keys() -> str:
     profile = json.dumps(complete_profile(), separators=(",", ":"))
     return (
-        '{"schema_version":1,"lineups":{'
+        '{"schema_version":1,"profiles":{'
         f'"fixture-alpha":{profile},'
         f'"fixture-alpha":{profile}'
         "}}"
@@ -836,7 +900,7 @@ def cases() -> list[tuple[str, str, str, object, str]]:
             slices=[complete_slice(role="Light Implementer", work_class="light", work_class_reason="scaffold run", command_ids=[])]
         ), "reject"),
         ("SEIT-EMV-022", "implementation_light_slice_wrong_role", "implementation", complete_implementation(
-            slices=[complete_slice(role="Crewmate", work_class="light", work_class_reason="scaffold run", command_ids=["CMD-1"])]
+            slices=[complete_slice(role="Implementer", work_class="light", work_class_reason="scaffold run", command_ids=["CMD-1"])]
         ), "reject"),
         ("SEIT-EMV-022", "implementation_work_class_outside_enum", "implementation", complete_implementation(
             slices=[complete_slice(work_class="easy")]
@@ -1026,38 +1090,32 @@ def cases() -> list[tuple[str, str, str, object, str]]:
     return out
 
 
-def lineups_cases() -> list[tuple[str, str, object, str, str | None]]:
+def profiles_cases() -> list[tuple[str, str, object, str, str | None]]:
     """(seit_id, name, instance, expect accept|reject, raw)."""
-    wrong_assignments = complete_user_catalog()
-    wrong_assignments["lineups"]["fixture-alpha"]["planned_planning_assignments"] = {}
     wrong_primary = complete_user_catalog()
-    wrong_primary["lineups"]["fixture-alpha"]["planned_planning_assignments"][0]["primary"] = "harness-a"
+    wrong_primary["profiles"]["fixture-alpha"]["roles"]["implementer"]["primary"] = "harness-a"
     wrong_fallbacks = complete_user_catalog()
-    wrong_fallbacks["lineups"]["fixture-alpha"]["planned_planning_assignments"][0]["ordered_fallbacks"] = {
+    wrong_fallbacks["profiles"]["fixture-alpha"]["roles"]["implementer"]["ordered_fallbacks"] = {
         "condition": "condition-first",
     }
-    dup_planning = complete_user_catalog()
-    planning_dup = copy.deepcopy(
-        dup_planning["lineups"]["fixture-alpha"]["planned_planning_assignments"][0]
-    )
-    planning_dup["primary"]["model"] = "model-dup"
-    dup_planning["lineups"]["fixture-alpha"]["planned_planning_assignments"].append(planning_dup)
-    dup_impl = complete_user_catalog()
-    impl_dup = copy.deepcopy(
-        dup_impl["lineups"]["fixture-alpha"]["implementation_assignments"][0]
-    )
-    impl_dup["primary"]["model"] = "model-dup"
-    dup_impl["lineups"]["fixture-alpha"]["implementation_assignments"].append(impl_dup)
     collision = complete_user_catalog()
-    collision["lineups"]["Fixture-Alpha"] = copy.deepcopy(collision["lineups"]["fixture-alpha"])
+    collision["profiles"]["Fixture-Alpha"] = copy.deepcopy(collision["profiles"]["fixture-alpha"])
+    retired = complete_user_catalog()
+    retired["profiles"]["fixture-alpha"]["roles"]["surveyor"] = {
+        "enabled": True,
+        "primary": {"harness": "harness-a", "model": "model-a", "reasoning": "reasoning-a"},
+        "ordered_fallbacks": [],
+    }
+    bad_cadence = complete_user_catalog()
+    bad_cadence["profiles"]["fixture-alpha"]["roles"]["reviewer"]["cadence"] = "wave"
+    missing_roles = omit_nested(complete_user_catalog(), "profiles", "fixture-alpha", "roles")
 
     out: list[tuple[str, str, object, str, str | None]] = [
-        ("SEIT-EMV-026", "empty_shipped_catalog_without_defaults", empty_shipped_catalog(), "accept", None),
-        ("SEIT-EMV-026", "complete_populated_user_catalog_with_resolving_defaults", complete_user_catalog(), "accept", None),
-        ("SEIT-EMV-026", "populated_catalog_without_defaults_field", omit(complete_user_catalog(), "defaults"), "accept", None),
-        ("SEIT-EMV-026", "unlimited_lineup_keys", {
+        ("SEIT-BDL-002", "complete_populated_user_catalog_with_resolving_defaults", complete_user_catalog(), "accept", None),
+        ("SEIT-BDL-002", "populated_catalog_without_defaults_field", omit(complete_user_catalog(), "defaults"), "accept", None),
+        ("SEIT-BDL-002", "unlimited_profile_keys", {
             "schema_version": 1,
-            "lineups": {
+            "profiles": {
                 "fixture-alpha": complete_profile(),
                 "fixture-beta": complete_profile(),
                 "fixture-gamma": complete_profile(),
@@ -1067,103 +1125,254 @@ def lineups_cases() -> list[tuple[str, str, object, str, str | None]]:
                 "implementation": "fixture-gamma",
             },
         }, "accept", None),
-        ("SEIT-EMV-026", "long_profile_name_no_128_ceiling", catalog_named("A" + ("a" * 128)), "accept", None),
-        ("SEIT-EMV-026", "schema_version_string_1", complete_user_catalog(schema_version="1"), "reject", None),
-        ("SEIT-EMV-026", "schema_version_not_1", complete_user_catalog(schema_version=2), "reject", None),
-        ("SEIT-EMV-026", "lineups_array_not_object", complete_user_catalog(lineups=[]), "reject", None),
-        ("SEIT-EMV-026", "profile_not_object", {
+        ("SEIT-BDL-002", "long_profile_name_no_128_ceiling", catalog_named("A" + ("a" * 128)), "accept", None),
+        ("SEIT-BDL-002", "schema_version_string_1", complete_user_catalog(schema_version="1"), "reject", None),
+        ("SEIT-BDL-002", "schema_version_not_1", complete_user_catalog(schema_version=2), "reject", None),
+        ("SEIT-BDL-002", "profiles_array_not_object", complete_user_catalog(profiles=[]), "reject", None),
+        ("SEIT-BDL-002", "profile_not_object", {
             "schema_version": 1,
-            "lineups": {"fixture-alpha": "not-an-object"},
+            "profiles": {"fixture-alpha": "not-an-object"},
         }, "reject", None),
-        ("SEIT-EMV-026", "assignments_not_array", wrong_assignments, "reject", None),
-        ("SEIT-EMV-026", "primary_not_object", wrong_primary, "reject", None),
-        ("SEIT-EMV-026", "ordered_fallbacks_not_array", wrong_fallbacks, "reject", None),
-        ("SEIT-EMV-026", "duplicate_raw_json_keys", None, "reject", raw_duplicate_profile_keys()),
-        ("SEIT-EMV-026", "duplicate_role_in_planning_phase", dup_planning, "reject", None),
-        ("SEIT-EMV-026", "duplicate_role_in_implementation_phase", dup_impl, "reject", None),
-        ("SEIT-EMV-026", "ascii_case_fold_collision", collision, "reject", None),
-        ("SEIT-EMV-026", "defaults_planning_does_not_resolve", complete_user_catalog(
+        ("SEIT-BDL-002", "primary_not_object", wrong_primary, "reject", None),
+        ("SEIT-BDL-002", "ordered_fallbacks_not_array", wrong_fallbacks, "reject", None),
+        ("SEIT-BDL-002", "duplicate_raw_json_keys", None, "reject", raw_duplicate_profile_keys()),
+        ("SEIT-BDL-002", "ascii_case_fold_collision", collision, "reject", None),
+        ("SEIT-BDL-002", "defaults_planning_does_not_resolve", complete_user_catalog(
             defaults={"planning": "missing-profile", "implementation": "fixture-beta"}
         ), "reject", None),
-        ("SEIT-EMV-026", "defaults_implementation_does_not_resolve", complete_user_catalog(
+        ("SEIT-BDL-002", "defaults_implementation_does_not_resolve", complete_user_catalog(
             defaults={"planning": "fixture-alpha", "implementation": "missing-profile"}
         ), "reject", None),
+        ("SEIT-BDL-002", "retired_surveyor_role_rejected", retired, "reject", None),
+        ("SEIT-BDL-002", "invalid_cadence_rejected", bad_cadence, "reject", None),
+        ("SEIT-BDL-002", "profile_missing_roles", missing_roles, "reject", None),
+        ("SEIT-BDL-002", "legacy_lineups_root_rejected", complete_user_catalog() | {"lineups": {}}, "reject", None),
     ]
 
-    for field in LINEUPS_ROOT_FIELDS:
+    if PROFILES_SHIPPED_PATH.is_file():
+        out.insert(0, (
+            "SEIT-BDL-002",
+            "empty_shipped_catalog_without_defaults",
+            empty_shipped_catalog(),
+            "accept",
+            None,
+        ))
+    else:
+        out.insert(0, (
+            "SEIT-BDL-002",
+            "empty_shipped_catalog_without_defaults",
+            {"schema_version": 1, "profiles": {"not-empty": complete_profile()}},
+            "reject",
+            None,
+        ))
+
+    for field in PROFILES_ROOT_FIELDS:
         out.append((
-            "SEIT-EMV-026",
+            "SEIT-BDL-002",
             f"catalog_missing_{field}",
             omit_nested(complete_user_catalog(), field),
             "reject",
             None,
         ))
-    for field in LINEUPS_PHASE_FIELDS:
+    for field in PROFILES_PRIMARY_FIELDS:
         out.append((
-            "SEIT-EMV-026",
-            f"profile_missing_{field}",
-            omit_nested(complete_user_catalog(), "lineups", "fixture-alpha", field),
-            "reject",
-            None,
-        ))
-        emptied = complete_user_catalog()
-        emptied["lineups"]["fixture-alpha"][field] = []
-        out.append((
-            "SEIT-EMV-026",
-            f"profile_empty_{field}",
-            emptied,
-            "reject",
-            None,
-        ))
-    for field in LINEUPS_ASSIGNMENT_FIELDS:
-        out.append((
-            "SEIT-EMV-026",
-            f"assignment_missing_{field}",
-            omit_nested(
-                complete_user_catalog(),
-                "lineups", "fixture-alpha", "planned_planning_assignments", "0", field,
-            ),
-            "reject",
-            None,
-        ))
-    for field in LINEUPS_PRIMARY_FIELDS:
-        out.append((
-            "SEIT-EMV-026",
+            "SEIT-BDL-002",
             f"primary_missing_{field}",
             omit_nested(
                 complete_user_catalog(),
-                "lineups", "fixture-alpha", "planned_planning_assignments", "0", "primary", field,
+                "profiles", "fixture-alpha", "roles", "implementer", "primary", field,
             ),
             "reject",
             None,
         ))
-    for field in LINEUPS_FALLBACK_FIELDS:
+    for field in PROFILES_FALLBACK_FIELDS:
         out.append((
-            "SEIT-EMV-026",
+            "SEIT-BDL-002",
             f"fallback_missing_{field}",
             omit_nested(
                 complete_user_catalog(),
-                "lineups", "fixture-alpha", "planned_planning_assignments", "0",
+                "profiles", "fixture-alpha", "roles", "implementer",
                 "ordered_fallbacks", "0", field,
             ),
             "reject",
             None,
         ))
-    for field in LINEUPS_PACKAGED_DEFAULT_FIELDS:
+    for field in PROFILES_PACKAGED_DEFAULT_FIELDS:
         out.append((
-            "SEIT-EMV-026",
+            "SEIT-BDL-002",
             f"extra_packaged_{field}_field",
             complete_user_catalog() | {field: {"fixture": "no"}},
             "reject",
             None,
         ))
-    for name, value in LINEUPS_INVALID_NAMES:
+    for name, value in PROFILES_INVALID_NAMES:
         out.append((
-            "SEIT-EMV-026",
+            "SEIT-BDL-002",
             name,
             catalog_named(value),
             "reject",
             None,
+        ))
+
+    planning = profile_session_route()
+    disabled_planning = profile_session_route(enabled=False)
+    assurance = profile_session_route(cadence="phase")
+    disabled_assurance = profile_session_route(enabled=False, cadence="phase")
+    execution = profile_session_route(cadence="lifecycle")
+    disabled_execution = profile_session_route(enabled=False, cadence="lifecycle")
+    out.extend([
+        ("SEIT-BDL-002", "systems_modeler_execution_session_rejected", catalog_with_role_sessions(
+            "systems_modeler", {"execution": execution}
+        ), "reject", None),
+        ("SEIT-BDL-002", "systems_modeler_assurance_session_rejected", catalog_with_role_sessions(
+            "systems_modeler", {"assurance": assurance}
+        ), "reject", None),
+        ("SEIT-BDL-002", "systems_modeler_planning_and_execution_rejected", catalog_with_role_sessions(
+            "systems_modeler", {"planning": planning, "execution": execution}
+        ), "reject", None),
+        ("SEIT-BDL-002", "requirements_engineer_execution_session_rejected", catalog_with_role_sessions(
+            "requirements_engineer", {"execution": execution}
+        ), "reject", None),
+        ("SEIT-BDL-002", "requirements_engineer_assurance_session_rejected", catalog_with_role_sessions(
+            "requirements_engineer", {"assurance": assurance}
+        ), "reject", None),
+        ("SEIT-BDL-002", "test_engineer_execution_session_rejected", catalog_with_role_sessions(
+            "test_engineer", {"execution": execution}
+        ), "reject", None),
+        ("SEIT-BDL-002", "test_engineer_planning_and_execution_rejected", catalog_with_role_sessions(
+            "test_engineer", {"planning": planning, "execution": execution}
+        ), "reject", None),
+        ("SEIT-BDL-002", "integration_engineer_assurance_session_rejected", catalog_with_role_sessions(
+            "integration_engineer", {"assurance": assurance}
+        ), "reject", None),
+        ("SEIT-BDL-002", "integration_engineer_planning_and_assurance_rejected", catalog_with_role_sessions(
+            "integration_engineer", {"planning": planning, "assurance": assurance}
+        ), "reject", None),
+        ("SEIT-BDL-002", "omitted_sessioned_roles_accepted", catalog_omitting_roles(
+            "systems_modeler",
+            "requirements_engineer",
+            "test_engineer",
+            "integration_engineer",
+        ), "accept", None),
+        ("SEIT-BDL-002", "systems_modeler_planning_explicitly_disabled", catalog_with_role_sessions(
+            "systems_modeler", {"planning": disabled_planning}
+        ), "accept", None),
+        ("SEIT-BDL-002", "requirements_engineer_planning_explicitly_disabled", catalog_with_role_sessions(
+            "requirements_engineer", {"planning": disabled_planning}
+        ), "accept", None),
+        ("SEIT-BDL-002", "test_engineer_assurance_explicitly_disabled", catalog_with_role_sessions(
+            "test_engineer", {"assurance": disabled_assurance}
+        ), "accept", None),
+        ("SEIT-BDL-002", "integration_engineer_execution_explicitly_disabled", catalog_with_role_sessions(
+            "integration_engineer", {"execution": disabled_execution}
+        ), "accept", None),
+        ("SEIT-BDL-002", "test_engineer_planning_only_omits_assurance", catalog_with_role_sessions(
+            "test_engineer", {"planning": planning}
+        ), "accept", None),
+        ("SEIT-BDL-002", "integration_engineer_planning_only_omits_execution", catalog_with_role_sessions(
+            "integration_engineer", {"planning": planning}
+        ), "accept", None),
+        ("SEIT-BDL-002", "sessioned_planning_primary_missing_harness", catalog_with_role_sessions(
+            "systems_modeler",
+            {
+                "planning": {
+                    "enabled": True,
+                    "primary": {"model": "model-a", "reasoning": "reasoning-a"},
+                    "ordered_fallbacks": [],
+                }
+            },
+        ), "reject", None),
+    ])
+    return out
+
+
+def complete_verification_request(**overrides: object) -> dict:
+    doc = {
+        "schema_version": "1",
+        "kind": "request",
+        "candidate_ref": "cand-syn-001",
+        "candidate_revision": SYN_REV,
+        "candidate_digest": SYN_DIGEST,
+        "claim_id": "SEIT-SYN-BIN-001",
+        "claim_type": "binary_reachability",
+        "backend": "reverify",
+        "stage": "assurance",
+        "authority": "assurance",
+        "expected_result": "VERIFIED",
+        "command_configuration": {"command": "reverify check --claim SEIT-SYN-BIN-001"},
+        "selected": True,
+        "required": True,
+    }
+    doc.update(overrides)
+    return doc
+
+
+def complete_verification_receipt(**overrides: object) -> dict:
+    doc = {
+        "schema_version": "1",
+        "kind": "receipt",
+        "status": "VERIFIED",
+        "candidate_ref": "cand-syn-001",
+        "candidate_revision": SYN_REV,
+        "candidate_digest": SYN_DIGEST,
+        "claim_id": "SEIT-SYN-BIN-001",
+        "backend": "reverify",
+        "backend_version": "reverify-0.0-test",
+        "command_configuration": {"command": "reverify check --claim SEIT-SYN-BIN-001"},
+        "evidence_digest": SYN_DIGEST,
+        "authority": "assurance",
+        "produced_by": {
+            "role": "test_engineer.assurance",
+            "identity": "ate-syn-001",
+            "session": "sess-ate-syn",
+        },
+        "stage": "assurance",
+    }
+    doc.update(overrides)
+    return doc
+
+
+def verification_cases() -> list[tuple[str, str, object, str]]:
+    """(seit_id, name, instance, expect accept|reject)."""
+    out: list[tuple[str, str, object, str]] = [
+        ("SEIT-BDL-004", "complete_verification_request", complete_verification_request(), "accept"),
+        ("SEIT-BDL-004", "complete_verification_receipt", complete_verification_receipt(), "accept"),
+        ("SEIT-BDL-004", "complete_diagnostic_request", complete_verification_request(
+            authority="diagnostic", stage="implementation", selected=False, required=False
+        ), "accept"),
+        ("SEIT-BDL-004", "complete_diagnostic_receipt", complete_verification_receipt(
+            authority="diagnostic", stage="implementation",
+            produced_by={"role": "implementer", "identity": "author-syn", "session": "sess-impl-syn"},
+        ), "accept"),
+        ("SEIT-BDL-004", "receipt_inconclusive_status", complete_verification_receipt(status="INCONCLUSIVE"), "accept"),
+        ("SEIT-BDL-004", "receipt_error_status", complete_verification_receipt(status="ERROR"), "accept"),
+        ("SEIT-BDL-004", "request_schema_version_integer", complete_verification_request(schema_version=1), "reject"),
+        ("SEIT-BDL-004", "receipt_invalid_status", complete_verification_receipt(status="PASS"), "reject"),
+        ("SEIT-BDL-004", "request_invalid_authority", complete_verification_request(authority="self"), "reject"),
+        ("SEIT-BDL-004", "receipt_evidence_digest_not_sha256", complete_verification_receipt(
+            evidence_digest="not-a-digest"
+        ), "reject"),
+        ("SEIT-BDL-004", "request_empty_command_configuration", complete_verification_request(
+            command_configuration={}
+        ), "reject"),
+        ("SEIT-BDL-004", "receipt_produced_by_missing_session", complete_verification_receipt(
+            produced_by={"role": "test_engineer.assurance", "identity": "ate-syn-001"}
+        ), "reject"),
+        ("SEIT-BDL-004", "request_kind_receipt_hybrid", complete_verification_request(kind="receipt"), "reject"),
+    ]
+    for field in VERIFICATION_REQUEST_FIELDS:
+        out.append((
+            "SEIT-BDL-004",
+            f"request_missing_{field}",
+            omit(complete_verification_request(), field),
+            "reject",
+        ))
+    for field in VERIFICATION_RECEIPT_FIELDS:
+        out.append((
+            "SEIT-BDL-004",
+            f"receipt_missing_{field}",
+            omit(complete_verification_receipt(), field),
+            "reject",
         ))
     return out
 
@@ -1381,20 +1590,47 @@ def run_cases() -> int:
         print(f"FAIL {line}: {detail}")
         failed += 1
 
-    lineups_schema = schemas.get("lineups")
-    try:
-        lineup_case_list = lineups_cases()
-    except OSError as exc:
-        print(f"FAIL SEIT-EMV-026 lineups_populated_fixture: {exc}")
+    if not PROFILES_SHIPPED_PATH.is_file():
+        print("FAIL SEIT-BDL-002 empty_shipped_catalog_without_defaults: missing profiles.json (pending S1L)")
         failed += 1
-        lineup_case_list = []
-    for seit_id, name, instance, expect, raw in lineup_case_list:
+    profiles_schema = schemas.get("profiles")
+    try:
+        profile_case_list = profiles_cases()
+    except OSError as exc:
+        print(f"FAIL SEIT-BDL-002 profiles_populated_fixture: {exc}")
+        failed += 1
+        profile_case_list = []
+    for seit_id, name, instance, expect, raw in profile_case_list:
         line = f"{seit_id} {name}"
-        if not isinstance(lineups_schema, dict):
-            print(f"FAIL {line}: {LINEUPS_MISSING_SCHEMA}")
+        if not isinstance(profiles_schema, dict):
+            print(f"FAIL {line}: {PROFILES_MISSING_SCHEMA}")
             failed += 1
             continue
-        messages = lineups_errors(lineups_schema, instance, raw)
+        if name == "empty_shipped_catalog_without_defaults" and not PROFILES_SHIPPED_PATH.is_file():
+            continue
+        messages = profiles_errors(profiles_schema, instance, raw)
+        accepted = not messages
+        want_accept = expect == "accept"
+        ok = accepted if want_accept else not accepted
+        if ok:
+            print(f"PASS {line}")
+            passed += 1
+            continue
+        failed += 1
+        if want_accept:
+            first = messages[0] if messages else "rejected with no message"
+            print(f"FAIL {line}: rejected (expected accept): {first}")
+        else:
+            print(f"FAIL {line}: accepted (expected reject)")
+
+    verification_schema = schemas.get("verification")
+    for seit_id, name, instance, expect in verification_cases():
+        line = f"{seit_id} {name}"
+        if not isinstance(verification_schema, dict):
+            print(f"FAIL {line}: {VERIFICATION_MISSING_SCHEMA}")
+            failed += 1
+            continue
+        messages = errors_for(verification_schema, instance)
         accepted = not messages
         want_accept = expect == "accept"
         ok = accepted if want_accept else not accepted

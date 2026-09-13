@@ -20,8 +20,11 @@ const APPROVED_FILES_ALLOWLIST = [
   "CONTRIBUTING.md",
   "SECURITY.md",
   "LICENSE-APACHE",
-  "lineups.json",
+  "profiles.json",
   "schemas/",
+  "templates/",
+  "tools/",
+  "com.github.copilot/",
 ];
 
 const REQUIRED_SCHEMA_FILES = [
@@ -29,6 +32,7 @@ const REQUIRED_SCHEMA_FILES = [
   "schemas/implementation.schema.json",
   "schemas/authority.schema.json",
   "schemas/journey.schema.json",
+  "schemas/profiles.schema.json",
 ];
 
 const ALWAYS_ON_SEIT_SECTIONS = [
@@ -274,7 +278,7 @@ describe("CMD-PACKAGE-01 package-boundary (SEIT-PACKAGE-01)", () => {
     assert.equal(packVerdict.ok, true, JSON.stringify(packVerdict));
   });
 
-  it("npm pack includes lineups.json and schema files and no private paths", () => {
+  it("npm pack includes profiles.json and schema files and no private paths", () => {
     const out = execFileSync("npm", ["pack", "--dry-run", "--json"], {
       cwd: ROOT,
       encoding: "utf8",
@@ -282,7 +286,11 @@ describe("CMD-PACKAGE-01 package-boundary (SEIT-PACKAGE-01)", () => {
     });
     const parsed = JSON.parse(out);
     const paths = parsed[0].files.map(/** @param {{path:string}} f */ (f) => f.path);
-    assert.ok(paths.includes("lineups.json"));
+    assert.ok(paths.includes("profiles.json"));
+    assert.ok(!paths.includes("lineups.json"), "legacy lineups.json must not be packed");
+    assert.ok(paths.includes("templates/dod-manifest-v1.html"));
+    assert.ok(paths.includes("tools/render-dod-manifest.mjs"));
+    assert.ok(paths.includes("com.github.copilot/hooks/hooks.json"));
     for (const rel of REQUIRED_SCHEMA_FILES) {
       assert.ok(paths.includes(rel), `npm pack must include ${rel}`);
     }

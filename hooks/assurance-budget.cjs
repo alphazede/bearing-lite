@@ -1,7 +1,7 @@
 "use strict";
 
 /**
- * Per-declared-phase-or-wave assurance budget (ROUTER-EMV-CADENCE-IMPLEMENTATION-001).
+ * Per-declared-cadence-unit assurance budget (ROUTER-EMV-CADENCE-IMPLEMENTATION-001).
  * Exact runtime mirror of `skills/bearing-lite/references/assurance-policy.md`.
  * A pure evaluator behind the existing `transition` class, like planning-review.cjs:
  * it declares no HOOK_CLASS and registers no host event.
@@ -30,15 +30,34 @@ function readJson(file) {
   }
 }
 
+function idsFrom(list, key) {
+  if (!Array.isArray(list)) return [];
+  return list.map((item) => item && item[key]).filter((id) => typeof id === "string" && id);
+}
+
+function lifecycleId(declaration) {
+  const settings = isPlainObject(declaration.journey_settings) ? declaration.journey_settings : {};
+  if (typeof settings.lifecycle_id === "string" && settings.lifecycle_id) return settings.lifecycle_id;
+  if (typeof declaration.lifecycle_id === "string" && declaration.lifecycle_id) {
+    return declaration.lifecycle_id;
+  }
+  if (typeof declaration.journey === "string" && declaration.journey) return declaration.journey;
+  if (isPlainObject(declaration.journey) && typeof declaration.journey.id === "string" && declaration.journey.id) {
+    return declaration.journey.id;
+  }
+  return "";
+}
+
 /** Declared unit ids from the frozen declaration, in declaration order. */
-function declaredUnits(declaration) {
-  const waves = Array.isArray(declaration.waves) ? declaration.waves : [];
-  const waveIds = waves.map((wave) => wave && wave.id).filter((id) => typeof id === "string" && id);
+function declaredUnits(declaration, unitKind) {
+  if (unitKind === "slice") return idsFrom(declaration.slices, "id");
+  if (unitKind === "lifecycle") {
+    const id = lifecycleId(declaration);
+    return id ? [id] : [];
+  }
+  const waveIds = idsFrom(declaration.waves, "id");
   if (waveIds.length) return waveIds;
-  const phases = Array.isArray(declaration.phases) ? declaration.phases : [];
-  const phaseIds = phases
-    .map((phase) => phase && phase.phaseId)
-    .filter((id) => typeof id === "string" && id);
+  const phaseIds = idsFrom(declaration.phases, "phaseId");
   if (phaseIds.length) return phaseIds;
   return [DIRECT];
 }
@@ -54,9 +73,12 @@ function evaluateAssuranceBudget(input) {
     if (!isPlainObject(input)) {
       return verdict("NEEDS_MORE_EVIDENCE", "assurance_request_missing");
     }
+    const sliceRequested = input.request_scope === "slice" || input.unit_kind === "slice";
+    const cadence = typeof input.cadence === "string" ? input.cadence : POLICY.default_cadence?.["test_engineer.assurance"] || "phase";
     if (
-      POLICY.automatic_per_slice_review === "prohibited" &&
-      (input.request_scope === "slice" || input.unit_kind === "slice")
+      sliceRequested &&
+      (POLICY.automatic_per_slice_review === "prohibited" ||
+        (POLICY.automatic_per_slice_review === "cadence_gated" && cadence !== "slice"))
     ) {
       return verdict("OWNER_AMENDMENT_REQUIRED", "automatic_per_slice_review_prohibited");
     }
@@ -85,7 +107,7 @@ function evaluateAssuranceBudget(input) {
       return verdict("NEEDS_MORE_EVIDENCE", "task_record_journey_mismatch");
     }
 
-    const declared = declaredUnits(declaration);
+    const declared = declaredUnits(declaration, input.unit_kind);
     const requested =
       typeof input.assurance_unit === "string" && input.assurance_unit
         ? input.assurance_unit

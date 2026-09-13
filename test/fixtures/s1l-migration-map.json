@@ -1,0 +1,108 @@
+{
+  "slice": "S1L",
+  "empty_profiles_catalog_bytes": "{\"schema_version\":1,\"profiles\":{}}",
+  "empty_profiles_catalog": {
+    "schema_version": 1,
+    "profiles": {}
+  },
+  "user_catalog": "~/.agents/bearing-lite/profiles.json",
+  "packaged_catalog": "profiles.json",
+  "legacy_user_catalog": "~/.agents/bearing-lite/lineups.json",
+  "legacy_packaged_catalog": "lineups.json",
+  "legacy_schema": "schemas/lineups.schema.json",
+  "legacy_markdown": "~/.agents/bearing-lite/default-role-lineup.md",
+  "prompt_source_parameter": "PROMPT_SKILL_SOURCE",
+  "prompt_destination": "skills/prompt/SKILL.md",
+  "prompt_compare": "cmp -s",
+  "prompt_source_notes": "PROMPT_SKILL_SOURCE is a dispatch parameter naming a read-only unchanged prompt SKILL.md. Do not embed a machine-local path in this fixture.",
+  "rename_policy": "DEC-BDL-063: approved rename disappearance of old source paths is intrinsic to the rename, not a separate source-deletion amendment. Preserve skill file content and behavior; replace names and configuration references.",
+  "operations": [
+    {
+      "op": "write",
+      "destination": "profiles.json",
+      "bytes": "{\"schema_version\":1,\"profiles\":{}}",
+      "note": "Exact empty packaged catalog. No defaults, providers, models, or named profiles."
+    },
+    {
+      "op": "delete",
+      "source": "lineups.json"
+    },
+    {
+      "op": "delete",
+      "source": "schemas/lineups.schema.json"
+    },
+    {
+      "op": "copy_into",
+      "source": "skills/crewmate/",
+      "destination": "skills/implementer/",
+      "files": ["SKILL.md"],
+      "source_delete": "intrinsic_to_rename"
+    },
+    {
+      "op": "copy_into",
+      "source": "skills/park-ranger/",
+      "destination": "skills/reviewer/",
+      "files": ["SKILL.md"],
+      "source_delete": "intrinsic_to_rename"
+    },
+    {
+      "op": "copy_into",
+      "source": "skills/repository-fit/",
+      "destination": "skills/intake/",
+      "files": ["SKILL.md"],
+      "source_delete": "intrinsic_to_rename"
+    },
+    {
+      "op": "copy_into",
+      "source": "skills/set-bearings/",
+      "destination": "skills/architectural-alignment/",
+      "files": ["SKILL.md", "templates/workspace.md"],
+      "source_delete": "intrinsic_to_rename"
+    },
+    {
+      "op": "copy_into",
+      "source": "skills/gather-supplies/",
+      "destination": "skills/scope-definition/",
+      "files": ["SKILL.md"],
+      "source_delete": "intrinsic_to_rename"
+    },
+    {
+      "op": "copy_into",
+      "source": "skills/map-the-route/",
+      "destination": "skills/planning-and-design/",
+      "files": ["SKILL.md", "references/artifact-grammar.md"],
+      "source_delete": "intrinsic_to_rename"
+    },
+    {
+      "op": "copy",
+      "source": "skills/explorer/SKILL.md",
+      "destination": "skills/coordinator/SKILL.md",
+      "note": "Preserve migrated Coordinator content. S1E removes skills/explorer/ after this copy."
+    },
+    {
+      "op": "delete_tree",
+      "source": "skills/surveyor/"
+    },
+    {
+      "op": "delete_tree",
+      "source": "skills/navigator/"
+    },
+    {
+      "op": "delete_tree",
+      "source": "skills/validator/"
+    },
+    {
+      "op": "copy_unchanged",
+      "source_parameter": "PROMPT_SKILL_SOURCE",
+      "destination": "skills/prompt/SKILL.md",
+      "verify": "cmp -s SOURCE DESTINATION"
+    }
+  ],
+  "not_in_s1l": [
+    "skills/onboard-bearing/SKILL.md is authored by S1",
+    "skills/explorer/ is removed by S1E after this copy",
+    "Do not edit prompt bytes",
+    "Do not write user ~/.agents/bearing-lite/profiles.json",
+    "Do not invent Integration Engineer execution routes"
+  ]
+}

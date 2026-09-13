@@ -1,0 +1,268 @@
+{
+  "schema_version": "1",
+  "kind": "integration_assessment_receipt",
+  "role": "Integration Engineer",
+  "session": "execution",
+  "slice": "S8",
+  "lifecycle_id": "BDL-2026-09-12",
+  "cadence_unit": "PHASE-3",
+  "declared_boundary": "PHASE-3 / lifecycle completion",
+  "recorded_at": "2026-09-13T20:55:54.979189+00:00",
+  "verdict": "CANDIDATE_READY",
+  "typed_outcome": "PASS",
+  "candidate_ref": "884508aa264255746674a2865e6abc264dc68f07010e239b4bc4e5c22267535d",
+  "candidate_revision": "b5cec79f04f6f6ea506a2ad89bf937aab143d876",
+  "candidate_identity": {
+    "product_tree_sha256_before": "884508aa264255746674a2865e6abc264dc68f07010e239b4bc4e5c22267535d",
+    "product_tree_sha256_after": "884508aa264255746674a2865e6abc264dc68f07010e239b4bc4e5c22267535d",
+    "product_path_count": 141,
+    "branch": "main",
+    "uncommitted_candidate": true,
+    "algorithm": "sorted existing tracked plus nonignored untracked paths, excluding docs/plans/; path NUL decimal permissions(mode&511) NUL file bytes or symlink target NUL"
+  },
+  "independence": {
+    "fresh_session": true,
+    "fork_turns": "none",
+    "agent_task": "/root/phase3_s8_integration",
+    "route": "gpt-6-astra",
+    "reasoning": "high",
+    "candidate_authorship": false,
+    "author_session_resumed": false,
+    "reviewer_session_resumed": false,
+    "coordinator_confirmed_no_author_or_assurance_or_reviewer_ancestry": true,
+    "confirmation": "Parent confirmed this dispatch used fork_turns=none and provided only the bounded S8 prompt. This session performed no product, planning, test, or review authorship.",
+    "diagnostic_checks_used_as_assurance": false,
+    "owner_acceptance_granted": false
+  },
+  "authority": [
+    "DEC-BDL-074",
+    "DEC-BDL-075",
+    "DEC-BDL-076"
+  ],
+  "evidence_bindings": [
+    {
+      "path": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/implementation.json",
+      "sha256": "32bab09eb71263b04e9eb741741df503222b41525bf6f65b10e128b2e1a333cb"
+    },
+    {
+      "path": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/bearing-delivery-lifecycle-alignment-dod-manifest.html",
+      "sha256": "8c3f1acf5163044510ac9fc06cf96ea94e08107b1e84fca6ebaa8a7d653fdcc0"
+    },
+    {
+      "path": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/assurance/phase3-s6-assurance-final.json",
+      "sha256": "57b5a2c684c5fd100d04b818ef0dcb2d0d19280ed792465ccbdbf948c1dcaf02"
+    },
+    {
+      "path": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/review/phase3-s7-review.json",
+      "sha256": "013070571376574c1f088c0ea0e17762999f4109666468f14838e93fe959d394"
+    },
+    {
+      "path": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/host-compatibility/phase3-host-validation.json",
+      "sha256": "cb9c633469460dbcf51c4c449df05d18a3f6a842e8802e9ba5c6286bf2525ded"
+    },
+    {
+      "path": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/assurance/phase3-seit-bdl-012-owner-observation.json",
+      "sha256": "b5e23d9dd6e8f27129589eb26bb2dccd87b36e7c213de6b1452833e918ea1145"
+    }
+  ],
+  "entry_evidence": {
+    "s6": {
+      "verdict": "PASS",
+      "gate_eligible": true,
+      "candidate_ref": "884508aa264255746674a2865e6abc264dc68f07010e239b4bc4e5c22267535d",
+      "independent_executable_tests": {
+        "passed": 417,
+        "failed": 0
+      },
+      "owner_visual_authority": "DEC-BDL-076"
+    },
+    "s7": {
+      "verdict": "ACCEPT",
+      "typed_outcome": "PASS",
+      "candidate_ref": "884508aa264255746674a2865e6abc264dc68f07010e239b4bc4e5c22267535d",
+      "findings": [],
+      "focused_tests": {
+        "passed": 102,
+        "failed": 0
+      }
+    },
+    "assessment": "Exact candidate bindings and fresh-session identities are valid; both receipts are consumed for their declared roles without replacing either role."
+  },
+  "approved_outcome": "One clear input-to-evidence Bearing Delivery Lifecycle; profiles.json as sole persistent configuration; provider-neutral role/session routing; bounded implementation and independent assurance; deterministic accessible DoD Manifest; honest Agent Plugins, Copilot, and Muse support.",
+  "interface_assessment": [
+    {
+      "contracts": [
+        "CONTRACT-BDL-001",
+        "AC-BDL-006",
+        "AC-BDL-007"
+      ],
+      "endpoints": "onboard-bearing -> profiles.json snapshot -> Orchestrator",
+      "status": "PASS",
+      "evidence": "The empty shipped catalog, profiles schema, onboarding skill and profile reference agree on explicit-only writes, semantic migration, frozen selection and ordered fallbacks. hooks/profiles.cjs classifies legacy presence as MIGRATION_REQUIRED and never reads legacy bytes as live configuration. Named selection validation remains the documented skills procedure, not a new runtime library. Focused journey-config checks pass."
+    },
+    {
+      "contracts": [
+        "CONTRACT-BDL-002",
+        "CONTRACT-BDL-003",
+        "AC-BDL-001",
+        "AC-BDL-002",
+        "AC-BDL-003",
+        "AC-BDL-004",
+        "AC-BDL-005",
+        "AC-BDL-011"
+      ],
+      "endpoints": "Planning stages -> Plan Integrator -> bounded implementation sessions",
+      "status": "PASS",
+      "evidence": "README and role skills preserve Intake, Architectural Alignment, Scope Definition, Planning and Design, one integrated owner gate, exact write sets, single_implementer/tdd ordering, independent ready lanes, profile/session cadence, one liveness check and no duplicate dispatch. Live journey/implementation/SEIT schema validation and plan-package return PASS. Role-routing and public-boundary tests pass; retired active roles and legacy catalog are absent from the package."
+    },
+    {
+      "contracts": [
+        "CONTRACT-BDL-005",
+        "CONTRACT-BDL-006",
+        "CONTRACT-BDL-007",
+        "AC-BDL-009"
+      ],
+      "endpoints": "Implementer diagnostics -> independent assurance -> Reviewer -> Integration Engineer",
+      "status": "PASS",
+      "evidence": "hooks/verification.cjs binds request and receipt to candidate, claim, backend, command/configuration and evidence. Focused verification tests exercise diagnostic rejection at assurance, self-certification rejection, stale/mismatched evidence, unavailable selected/required backends, INCONCLUSIVE rejection and deterministic closure without automatic rereview. Exact-candidate S6 PASS and S7 ACCEPT satisfy this session entry."
+    },
+    {
+      "contracts": [
+        "DES-BDL-011",
+        "AC-BDL-010"
+      ],
+      "endpoints": "Package inventory -> host discovery -> Copilot hook adapter / Muse skills",
+      "status": "PASS_WITH_DECLARED_HOST_LIMITATIONS",
+      "evidence": "npm dry-run contains 68 entries including the empty profiles catalog, schemas, 17 skill directories, renderer/template and com.github.copilot/hooks/hooks.json; excludes private plans and retired role/catalog paths. Copilot registration resolves packaged adapters. Traced event -> host support -> capability resolver -> evaluator -> wire response; focused tests pass for PreToolUse deny, nested Stop block, top-level SubagentStop block and stop-hook re-entry. S9D provides versioned dispositions for all 11 advertised/required clients; S6 independently validated all 17 skills with installed Muse 1.2.1. No installation or native VS Code/Copilot execution is inferred from adapter tests."
+    },
+    {
+      "contracts": [
+        "CONTRACT-BDL-004",
+        "AC-BDL-008",
+        "AC-BDL-012"
+      ],
+      "endpoints": "implementation.json + fixed template + model bindings -> human DoD Manifest",
+      "status": "PASS",
+      "evidence": "Renderer --check reproduces exact owner-observed Manifest digest 8c3f1acf5163044510ac9fc06cf96ea94e08107b1e84fca6ebaa8a7d653fdcc0 with template 1.0.1. HTML inspection confirms nine ordered sections, restrictive CSP, no script/iframe/form/object/embed tags, zero BLOCKED labels and three CLOSED_MITIGATED risk statuses. Current model metadata identifies derived SVGs and non-normative text views; native SysML is not invented. Accessibility/presentation evidence is the exact-digest owner observation under DEC-BDL-076, not this session structural inspection."
+    },
+    {
+      "contracts": [
+        "CONTRACT-BDL-008",
+        "SEIT-BDL-008"
+      ],
+      "endpoints": "Integration Engineer execution assessment -> Owner Authority",
+      "status": "PASS",
+      "evidence": "This receipt binds the stable integrated product and independent entry evidence to the approved outcome. No unresolved material system-level gap was demonstrated. The final evidence projection and owner acceptance remain separate actions."
+    }
+  ],
+  "tests": [
+    {
+      "command": "Python hashlib product-tree and evidence binding assertions before and after assessment",
+      "exit_code": 0,
+      "result": "Exact candidate, 141 paths, and all six evidence/source bindings match."
+    },
+    {
+      "command": "node tools/render-dod-manifest.mjs docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/implementation.json --check",
+      "exit_code": 0,
+      "result": "RENDER_CHECK_PASS",
+      "manifest_sha256": "8c3f1acf5163044510ac9fc06cf96ea94e08107b1e84fca6ebaa8a7d653fdcc0",
+      "template_version": "1.0.1"
+    },
+    {
+      "command": "node hooks/plan-package.cjs docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment",
+      "exit_code": 0,
+      "result": "PASS",
+      "manifest_digest": "acaeda8cf479fa886b0f0fb4d3028ac781f538fe3a15100867c170a185c54ce6",
+      "findings": []
+    },
+    {
+      "command": "npm pack --dry-run --json",
+      "exit_code": 0,
+      "result": "PASS",
+      "package": "@alphazede/bearing-lite",
+      "version": "0.2.2",
+      "entry_count": 68,
+      "archive_written": false
+    },
+    {
+      "command": "node --test test/journey-config.test.mjs test/role-routing.test.mjs test/verification.test.mjs test/te-hook-contract.test.mjs test/public-boundary.test.mjs test/package-boundary.test.mjs",
+      "exit_code": 0,
+      "passed": 102,
+      "failed": 0,
+      "purpose": "Integration diagnostics at connected configuration, role, verification, host and packaging boundaries; not Test Engineer assurance or Reviewer adjudication."
+    },
+    {
+      "command": "Python jsonschema.Draft202012Validator on live journey.json, implementation.json and seit.json against repository schemas",
+      "exit_code": 0,
+      "result": "PASS",
+      "error_count": 0
+    },
+    {
+      "command": "Python html.parser structural inspection of the exact Manifest and owner/host evidence digest verification",
+      "exit_code": 0,
+      "result": "PASS",
+      "sections": 9,
+      "blocked_labels": 0,
+      "closed_mitigated_labels": 3,
+      "bytes": 159382
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "git diff --check -- docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/integration/phase3-s8-integration.json",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "gap_disposition": {
+    "unresolved_material_gaps": [],
+    "historical_planning_gaps": "SEIT known_contract_gaps retains original open status history. Current closeout.resolved_gaps explicitly resolves GAP-BDL-001..004; GAP-BDL-005/006 additionally carry status_current=resolved in SEIT. Current links/package inventory/model metadata, live schemas, plan-package and renderer checks corroborate resolution. Historical open labels are not treated as new product failures.",
+    "risks": [
+      {
+        "id": "RISK-BDL-001",
+        "status": "CLOSED_MITIGATED"
+      },
+      {
+        "id": "RISK-BDL-002",
+        "status": "CLOSED_MITIGATED"
+      },
+      {
+        "id": "RISK-BDL-003",
+        "status": "CLOSED_MITIGATED"
+      }
+    ],
+    "risk_authority": "DEC-BDL-075"
+  },
+  "final_assembly": {
+    "status": "PENDING_ORCHESTRATOR_ASSEMBLY",
+    "product_gap": false,
+    "action": "Append current S6/S7/S8 actuals and DEC-BDL-076 visual disposition from journey.json and immutable receipts, replace superseded pending closeout presentation text, and regenerate/check the Manifest once. Preserve approved planning history and owner_acceptance pending.",
+    "binding_limit": "This receipt assesses the pinned pre-assembly source/Manifest bytes and product candidate. A later evidence-only Manifest digest must be recorded by final assembly; this receipt does not claim it was already rendered or visually observed.",
+    "owner_acceptance": "PENDING",
+    "publication_release_deployment": "NOT_AUTHORIZED_BY_THIS_RECEIPT"
+  },
+  "findings": [],
+  "blocker": null,
+  "remaining_limitations": [
+    "Host-native installations and user configuration writes were not repeated. Copilot CLI was unavailable; Copilot VS Code is package/contract evidence rather than a live extension session. Cursor/Kimi installation evidence remains UI/TUI procedure evidence.",
+    "Transition-order, protected-action, planning-review and assurance-budget enforcement remain procedural on every host as documented; portable skills remain usable without command hooks. Selected-or-required missing specialized capabilities are typed gaps, not success.",
+    "Muse 1.2.1 was validated by S6; prospective SEIT names 1.1.1. No unsupported install or native hook claim is made.",
+    "The uncommitted candidate is technically ready. Final projection assembly, human owner acceptance, commit/publication/release/deployment and remote closeout are outside this assessment authority."
+  ],
+  "changed_paths": [
+    "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/integration/phase3-s8-integration.json"
+  ],
+  "write_set_respected": true,
+  "product_paths_mutated": false,
+  "bran_status": "unavailable",
+  "bran_reason": "Nested repository has no native .bran/policy.yaml; bounded direct surface reads were used.",
+  "closeout": {
+    "path": ".closeout.json",
+    "present": false,
+    "declared_commands": [],
+    "checked_before_return": true
+  }
+}

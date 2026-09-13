@@ -1,0 +1,64 @@
+{
+  "schema_version": "1",
+  "kind": "repair_closure",
+  "phase": "PHASE-3",
+  "authority": "DEC-BDL-074; DEC-BDL-075",
+  "recorded_at": "2026-09-13T20:00:03Z",
+  "status": "PASS_AUTHOR_VERIFIED",
+  "typed_outcome": "PASS",
+  "finding": "Owner visual inspection showed immutable planning task/risk status presented as current state.",
+  "resolution": "Renderer now presents planned and current task/risk state side by side. Light Implementer closed all three current risk dispositions as CLOSED_MITIGATED under DEC-BDL-075 while preserving planning rows.",
+  "candidate_product_tree_sha256": "8bde490392e7bba4b2151bcd96efcfd017c44b7431eff9d790170c358750dfaf",
+  "product_path_count": 141,
+  "changed_product_paths": [
+    "tools/render-dod-manifest.mjs",
+    "test/dod-manifest.test.mjs"
+  ],
+  "sessions": [
+    {
+      "role": "Implementer",
+      "route": "Grok Build / harness default",
+      "native_session_id": "8e7d77e2-7f74-4b75-b83b-5c8e4adf0103",
+      "changed_paths": [
+        "tools/render-dod-manifest.mjs",
+        "test/dod-manifest.test.mjs"
+      ]
+    },
+    {
+      "role": "Light Implementer",
+      "route": "Codex collaboration agent",
+      "session": "/root/close_phase3_risks",
+      "changed_paths": [
+        "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/implementation.json",
+        "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/bearing-delivery-lifecycle-alignment-dod-manifest.html"
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "command": "node --test test/dod-manifest.test.mjs",
+      "exit_code": 0,
+      "passed": 18,
+      "failed": 0
+    },
+    {
+      "command": "node --test test/*.test.mjs",
+      "exit_code": 0,
+      "passed": 417,
+      "failed": 0
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0
+    }
+  ],
+  "risk_disposition": {
+    "RISK-BDL-001": "CLOSED_MITIGATED",
+    "RISK-BDL-002": "CLOSED_MITIGATED",
+    "RISK-BDL-003": "CLOSED_MITIGATED"
+  },
+  "prior_phase3_assurance": "STALE because the product candidate changed before owner visual closure",
+  "active_agents": [],
+  "blocker": null,
+  "next": "fresh independent Test Engineer assurance"
+}

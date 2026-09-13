@@ -1,0 +1,484 @@
+{
+  "schema_version": "1",
+  "kind": "integration_assessment_receipt",
+  "lifecycle_id": "BDL-2026-09-12",
+  "slice": "S8",
+  "stage": "integration",
+  "session": "execution",
+  "recorded_at": "2026-09-13T17:48:38Z",
+  "role": "Integration Engineer",
+  "route": {
+    "approved_harness": "Codex CLI",
+    "approved_model": "gpt-6-astra",
+    "approved_reasoning": "high",
+    "authority": "DEC-BDL-068",
+    "observed_harness": "Codex active execution session",
+    "observed_model_family": "GPT-6",
+    "runtime_model_id_exposed": false,
+    "runtime_reasoning_setting_exposed": false,
+    "note": "Approved route is read from the immutable decision; exact backend model/effort cannot be independently attested from the exposed session metadata."
+  },
+  "independence": {
+    "fresh_session": true,
+    "author_ancestry": false,
+    "author_session_resumed": false,
+    "planning_session_resumed": false,
+    "s7_reviewer_session_resumed": false,
+    "subagents_dispatched": 0,
+    "basis": "This conversation starts with the bounded S8 execution assignment and contains no candidate authorship, planning authorship, repair, or S7 execution. Prior receipts were independently read and byte-verified.",
+    "diagnostic_results_self_certify": false,
+    "owner_acceptance_claimed": false
+  },
+  "authority": {
+    "allowed_write_set": [
+      "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/integration/s8-integration.json"
+    ],
+    "narrowed_from_planned_s8": true,
+    "current_user_instruction_controls": true,
+    "product_edits": false,
+    "planning_edits": false,
+    "manifest_edits": false,
+    "review_rounds_run": 0,
+    "repair_rounds_run": 0,
+    "owner_visual_procedure_run": false,
+    "remote_actions": [],
+    "commit_authorized": false
+  },
+  "bran_status": "unavailable",
+  "bran_refs": {
+    "coverage": "Target checkout lacks native .bran/policy.yaml; parent repository coverage is not inherited.",
+    "runtime_pin_sha256": "be2c9716697e82cdd206d0e5803246884a4035a99b0c7dbdbfb55fd00a5f807c",
+    "runtime_pin_verified": true,
+    "verified_paths": [
+      ".bran/policy.yaml (absent)"
+    ],
+    "extra_discovery_avoided": false,
+    "reason": "Bounded direct reads were necessary after the use-bran unavailable fallback; no BRAN cache or source mutation."
+  },
+  "candidate_ref": "b5cec79f04f6f6ea506a2ad89bf937aab143d876",
+  "candidate_identity": {
+    "repository": "alphazede/bearing-lite",
+    "branch": "main",
+    "baseline": "b5cec79f04f6f6ea506a2ad89bf937aab143d876",
+    "head": "b5cec79f04f6f6ea506a2ad89bf937aab143d876",
+    "product_tree_sha256": "54aff5fddfc1b53fe52ef138f585a26b9ac361e6184e032f61894cbdc00fad05",
+    "product_path_count": 141,
+    "product_tree_algorithm": "sorted existing tracked plus nonignored untracked paths, excluding docs/plans/; path NUL decimal permissions(mode&511) NUL file bytes or symlink target NUL",
+    "planning_digest": "acaeda8cf479fa886b0f0fb4d3028ac781f538fe3a15100867c170a185c54ce6",
+    "dod_manifest_sha256": "7fbcb9e36a87a3d0d5ff66f34541e78a8684231dedadec98be5feeeb841da456",
+    "lease_generation": 1,
+    "lease_state": "active",
+    "uncommitted_product_candidate": true
+  },
+  "identity_verification": {
+    "status": "PASS",
+    "before_evidence_reliance": true,
+    "head_branch_product_count_digest_match": true,
+    "planning_package_check": "PASS with no findings",
+    "manifest_byte_check": "PASS template 1.0.0",
+    "evidence_hashes_match": true,
+    "open_owner_decisions": 0,
+    "pre_receipt_snapshot_paths": 168,
+    "pre_receipt_changed_paths": [],
+    "final_write_precondition": "Recompute product/HEAD/branch/Manifest and compare all tracked/nonignored path modes/content hashes against the read-only snapshot before writing this receipt.",
+    "final_identity_match": true
+  },
+  "approved_outcome": "A user can start with a Feature Story, Defect, Technical Task, or Change Request and follow Intake, Architectural Alignment, Scope Definition, Planning and Design, owner authorization, bounded implementation, assurance, review, Integration Engineer execution assessment, and completion evidence. The generated DoD Manifest makes planned and actual work reviewable without becoming execution authority.",
+  "contract_coverage": [
+    {
+      "id": "AC-BDL-001",
+      "status": "PASS",
+      "topic": "Lifecycle coherence",
+      "evidence": "README.md; docs/architecture/bearing-delivery-lifecycle.md; docs/guides/lifecycle.md; retained derived SVGs",
+      "assessment": "One input-to-evidence flow; public terminology, existing links and retired-role boundaries verified by 17 public-boundary and 33 skill-conformance cases."
+    },
+    {
+      "id": "AC-BDL-002",
+      "status": "PASS",
+      "topic": "Planning and structural authority",
+      "evidence": "skills/bearing-lite/SKILL.md; skills/planning-and-design/SKILL.md; skills/plan-integrator/SKILL.md; public lifecycle specification",
+      "assessment": "Public process contract states initial frame, Integration Engineer planning, specialist work, one targeted reconciliation, mechanical assembly, planning review and exact owner authorization. Orchestrator structural role is distinct from specialist judgment; planning freeze PASS."
+    },
+    {
+      "id": "AC-BDL-003",
+      "status": "PASS",
+      "topic": "Bounded implementation and concurrency",
+      "evidence": "docs/architecture/bearing-delivery-lifecycle.md; skills/coordinator/SKILL.md; implementation.json dependencies and slices",
+      "assessment": "single_implementer and ordered tdd supported; concurrency requires disjoint write sets and mutable resources; unresolved interfaces stop dispatch. Existing S6 and repair suite evidence retained."
+    },
+    {
+      "id": "AC-BDL-004",
+      "status": "PASS",
+      "topic": "Cadence and budget",
+      "evidence": "schemas/profiles.schema.json; hooks/assurance-budget.cjs; hooks/policy.cjs; skills/bearing-lite/references/assurance-policy.md",
+      "assessment": "phase/phase/lifecycle defaults and all three cadence values agree. S7-002 unit resolver reads slices, phases/waves or lifecycle identity; spent unit counters and rereview prohibition retained."
+    },
+    {
+      "id": "AC-BDL-005",
+      "status": "PASS",
+      "topic": "Retired role removal",
+      "evidence": "skills/ catalog; README.md; test/skills-conformance.test.mjs",
+      "assessment": "17 skill directories; no active retired role directories. Public/skill checks PASS. Historical migration and private planning references remain distinguishable from active routes."
+    },
+    {
+      "id": "AC-BDL-006",
+      "status": "PASS",
+      "topic": "Persistent profile and migration",
+      "evidence": "profiles.json; schemas/profiles.schema.json; hooks/profiles.cjs; skills/bearing-lite/references/profiles.md",
+      "assessment": "Empty shipped catalog validates; only home-derived profiles.json is live configuration. Legacy lineup presence yields MIGRATION_REQUIRED without a runtime fallback; the approved run's legacy snapshot exception remains explicit."
+    },
+    {
+      "id": "AC-BDL-007",
+      "status": "PASS",
+      "topic": "Explicit onboarding",
+      "evidence": "skills/onboard-bearing/SKILL.md; README.md; schemas/profiles.schema.json",
+      "assessment": "One setting at a time, explicit user choices only, atomic write/readback contract, credentials excluded, Reverify refusal persists false. Inspected without reading or changing user configuration."
+    },
+    {
+      "id": "AC-BDL-008",
+      "status": "PASS",
+      "topic": "Reviewable deterministic Manifest",
+      "evidence": "templates/dod-manifest-v1.html; tools/render-dod-manifest.mjs; implementation.json.dod_manifest; owner observation",
+      "assessment": "Exact --check and SHA-256 PASS; nine sections, fixed tables, model binding, append-only closeout and visible historical/actual states. Safe/unsafe CSS checks PASS. Visual PASS is attributed only to DEC-BDL-073, not to this agent or current regenerated bytes."
+    },
+    {
+      "id": "AC-BDL-009",
+      "status": "PASS",
+      "topic": "Diagnostic/assurance separation",
+      "evidence": "hooks/verification.cjs; schemas/verification.schema.json; skills/bearing-lite/references/verification.md",
+      "assessment": "21 direct verification cases PASS, including digest omission/mismatch, revision-only control, self-certification rejection, inactive optional backend, unavailable required backend, stale evidence, closure and no automatic rereview."
+    },
+    {
+      "id": "AC-BDL-010",
+      "status": "PASS",
+      "topic": "Provider-neutral host/package behavior",
+      "evidence": "plugin.json; package.json; com.github.copilot/hooks/hooks.json; hooks/com.anthropic.claude-code/host.cjs; S6 and repair closure",
+      "assessment": "10 closed-field plugin tests PASS. Both Copilot shell commands preserve space-containing paths and emit JSON at actual root. Exact-candidate closure records 68 npm pack entries and 17 Muse validations; no new native installation claim."
+    },
+    {
+      "id": "AC-BDL-011",
+      "status": "PASS",
+      "topic": "Resume without duplicate dispatch",
+      "evidence": "skills/bearing-lite/references/resume.md; docs/architecture/bearing-delivery-lifecycle.md; skills/coordinator/SKILL.md",
+      "assessment": "One native liveness check when available, RUNNING never duplicated, COMPLETED advances from durable evidence, UNKNOWN waits unless owner directs resume; no watchdog or accepted-planning replay."
+    },
+    {
+      "id": "AC-BDL-012",
+      "status": "PASS",
+      "topic": "Visible completion, recovery and owner authority",
+      "evidence": "design.md CONTRACT-BDL-008; implementation.json.dod_manifest.closeout; SEIT-BDL-008; this receipt",
+      "assessment": "Actual slice receipts, repair counts, resolved/open gaps, model provenance and pending owner acceptance remain visible. This receipt supplies S8 technical determination; the frozen Manifest remains an accurate pre-S8 projection awaiting authorized append-only closeout."
+    }
+  ],
+  "seit_bdl_008": {
+    "status": "PASS",
+    "method": "Lifecycle-end system-level validation and integrated technical assessment",
+    "contracts": [
+      "AC-BDL-001",
+      "AC-BDL-012",
+      "CONTRACT-BDL-008"
+    ],
+    "coherent": true,
+    "reviewable": true,
+    "portable": true,
+    "unresolved_material_system_gaps": [],
+    "basis": "Approved contracts compared across public specification, skills, schemas, evaluators, Manifest, host/package surfaces and byte-bound prior assurance/review/repair evidence. Fresh read-only diagnostic checks supplement, not replace, independent assurance and single review."
+  },
+  "interface_assessment": {
+    "structural": "Producer/consumer responsibilities and exchanged artifacts are identified in design.md CONTRACT-BDL-001..008, live schemas and proof rows.",
+    "semantic": "Explicit profile choices feed Orchestrator snapshots; specialist outputs feed mechanical plan assembly; exact slices bind implementers; candidate-bound diagnostics feed independent assurance; review dispositions plus deterministic closure feed S8; S8 returns a technical assessment to the human owner.",
+    "connected_evidence": "Current planning freeze and render check, 21 verification cases, actual host command responses and the byte-bound S6/repair receipts. Structural/schema checks alone are not treated as runtime proof.",
+    "model_disposition": "diagram-assisted explanatory views; no native SysML conformance claim.",
+    "method_sources": [
+      "Requested Integration Engineer execution skill",
+      "Integration Engineering method skill",
+      "IFACE-PROFILE-EMV-001"
+    ],
+    "standards_note": "NASA Appendix H is a method reference only; ISO/IEC/IEEE 24748-6 is metadata-only. No external standard conformance or invented clause coverage is claimed."
+  },
+  "historical_gap_disposition": {
+    "source": "seit.json.known_contract_gaps and implementation.json.dod_manifest.closeout.resolved_gaps",
+    "unresolved": [],
+    "assessments": [
+      {
+        "ids": [
+          "GAP-BDL-001",
+          "GAP-BDL-002",
+          "GAP-BDL-003"
+        ],
+        "status": "RESOLVED",
+        "evidence": "Append-only W1-A closure plus current 17/17 public-boundary checks: retained SVG links resolve, deleted process HTML is not required."
+      },
+      {
+        "ids": [
+          "GAP-BDL-004"
+        ],
+        "status": "RESOLVED",
+        "evidence": "W1-C append-only closure, package allowlist inspection, current plugin/public checks and exact-candidate 68-entry package receipt."
+      },
+      {
+        "ids": [
+          "GAP-BDL-005",
+          "GAP-BDL-006"
+        ],
+        "status": "RESOLVED",
+        "evidence": "DEC-BDL-066 resolution/status_current, refreshed model descriptions, bound planning inputs, current plan-package and deterministic render PASS."
+      }
+    ],
+    "precedence": "Original open/status and pre-execution narrative fields are preserved history; current append-only resolved_gaps and evidence establish closure without altering SEIT or planning."
+  },
+  "seit_bdl_012": {
+    "status": "PASS_OWNER_RECORDED",
+    "authority": "DEC-BDL-073",
+    "evidence_path": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/assurance/seit-bdl-012-owner-observation.json",
+    "observed_artifact_sha256": "6dc9242539f25ff1cf660b71680f21c976f865f0d48b98786497a5df44b2284b",
+    "current_artifact_sha256": "7fbcb9e36a87a3d0d5ff66f34541e78a8684231dedadec98be5feeeb841da456",
+    "performed_by_this_session": false,
+    "substitution_used": false,
+    "note": "Owner PASS closes the older planned INCONCLUSIVE state per the current instruction. No claim that the owner visually inspected the later regenerated bytes; this session's current-byte render check is structural only."
+  },
+  "evidence": [
+    {
+      "path": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/assurance/s6-assurance.json",
+      "sha256": "ec1d6df056dc0447cc9d62160f512e07b3f0540d64b4058677ad7d9fbb51032c",
+      "byte_identity_verified": true,
+      "assessment": "Independent S6 on pre-repair tree 24b79eddc21a37460015bc63cbf046e40024bbc4f77d855142fa49282bfd0c9c; executable cases PASS; original visual INCONCLUSIVE retained."
+    },
+    {
+      "path": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/assurance/seit-bdl-012-owner-observation.json",
+      "sha256": "a186c42dfe1e63b9ce4b2fb275e3728c9e413b6a1c9f99acb2e89a772873dae1",
+      "byte_identity_verified": true,
+      "assessment": "Owner-only visual PASS under DEC-BDL-073; observed Manifest 6dc9242539f25ff1cf660b71680f21c976f865f0d48b98786497a5df44b2284b."
+    },
+    {
+      "path": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/review/s7-review.json",
+      "sha256": "c699d0db02d03ffefbe1c50e8c44a367093711ada324e6e1a2c896e547edb328",
+      "byte_identity_verified": true,
+      "assessment": "Single S7 REPAIR_REQUIRED with five findings; preserved, not rerun."
+    },
+    {
+      "path": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/repair/s7-repair-closure.json",
+      "sha256": "2576120b22efe4afc6066af03ba66aacbae1eb9758f5c165dd1e4d55383ff240",
+      "byte_identity_verified": true,
+      "assessment": "One aggregate repair, all five findings resolved, exact current product hash; 407 Node cases, 256 schema cases, zero live schema errors, 17 Muse skills, 68 package entries; all commands exit 0."
+    }
+  ],
+  "commands": [
+    {
+      "id": "S8-CMD-01",
+      "command": "node hooks/plan-package.cjs docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment",
+      "exit_code": 0,
+      "result": "PASS",
+      "output": "{\n  \"outcome\": \"PASS\",\n  \"manifest_digest\": \"acaeda8cf479fa886b0f0fb4d3028ac781f538fe3a15100867c170a185c54ce6\",\n  \"findings\": []\n}",
+      "authority": "diagnostic",
+      "filesystem_writes": false
+    },
+    {
+      "id": "S8-CMD-02",
+      "command": "node tools/render-dod-manifest.mjs docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/implementation.json --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "output": "RENDER_CHECK_PASS digest=sha256:7fbcb9e36a87a3d0d5ff66f34541e78a8684231dedadec98be5feeeb841da456 output=/home/spectre/alphazede/Alphazedehq/bearing-lite/docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/bearing-delivery-lifecycle-alignment-dod-manifest.html template=1.0.0",
+      "authority": "diagnostic",
+      "filesystem_writes": false
+    },
+    {
+      "id": "S8-CMD-03",
+      "command": "git diff --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "output": "",
+      "authority": "diagnostic",
+      "filesystem_writes": false
+    },
+    {
+      "id": "S8-CMD-04",
+      "command": "node --test test/verification.test.mjs",
+      "exit_code": 0,
+      "result": "PASS",
+      "output": "# tests 1\n# suites 0\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0",
+      "authority": "diagnostic",
+      "filesystem_writes": false
+    },
+    {
+      "id": "S8-CMD-05",
+      "command": "python3 -B - <<'PY'\nimport json,pathlib\nfrom jsonschema import Draft202012Validator\np=pathlib.Path('docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment')\nfor n in ['journey','implementation','seit']:\n s=json.loads(pathlib.Path('schemas',n+'.schema.json').read_text());d=json.loads((p/(n+'.json')).read_text()); errors=[e.message for e in Draft202012Validator(s).iter_errors(d)];print(json.dumps({'artifact':n+'.json','errors':errors,'error_count':len(errors)}));assert not errors\nPY",
+      "exit_code": 0,
+      "result": "PASS",
+      "output": "{\"artifact\": \"journey.json\", \"errors\": [], \"error_count\": 0}\n{\"artifact\": \"implementation.json\", \"errors\": [], \"error_count\": 0}\n{\"artifact\": \"seit.json\", \"errors\": [], \"error_count\": 0}",
+      "authority": "diagnostic",
+      "filesystem_writes": false
+    },
+    {
+      "id": "S8-CMD-06",
+      "command": "env -u NODE_TEST_CONTEXT -u NODE_OPTIONS node --test --test-reporter=tap test/verification.test.mjs",
+      "exit_code": 0,
+      "result": "PASS",
+      "output": "# tests 1\n# suites 0\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0",
+      "authority": "diagnostic",
+      "filesystem_writes": false
+    },
+    {
+      "id": "S8-CMD-07",
+      "command": "node --input-type=module <<'JS'\nimport assert from 'node:assert/strict';\nimport {readFileSync} from 'node:fs';\nimport {sanitizeSvg,renderDodManifest,sha256Hex} from './tools/render-dod-manifest.mjs';\nconst source=JSON.parse(readFileSync('docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/implementation.json','utf8'));\nfunction render(svg){const d=structuredClone(source);d.dod_manifest.models=[{id:'S8-FIXTURE',required:true,selected:true,render_status:'READY',digest:sha256Hex(svg),view:{format:'svg',inline:svg}}];delete d.dod_manifest.closeout.model_views;return renderDodManifest(d).html;}\nconst svg='<svg xmlns=\"http://www.w3.org/2000/svg\"><style>#s8, #s9 { display: none !important; }</style><text x=\"0\" y=\"20\">Model</text></svg>';\nconst html=render(svg);assert.match(html,/\\.dod-svg-[0-9a-f]+ #s8,\\s*\\.dod-svg-[0-9a-f]+ #s9/);assert.doesNotMatch(html,/<style>#s8,/);assert.match(html,/id=\"s8\"/);assert.match(html,/id=\"s9\"/);\nconsole.log('S7-003 PASS: complete in-memory rendering scopes both selectors and retains risk/authority sections.');\nconst escaped='<svg xmlns=\"http://www.w3.org/2000/svg\"><style>@im\\\\70ort \"https://example.invalid/model.css\";</style></svg>';\nassert.throws(()=>sanitizeSvg(escaped),e=>e.code==='UNSAFE_ASSET');assert.throws(()=>render(escaped),e=>e.code==='UNSAFE_ASSET');assert.throws(()=>sanitizeSvg('<svg><rect style=\"fill: u\\\\72l(https://example.invalid/x)\" /></svg>'),e=>e.code==='UNSAFE_ASSET');\nconsole.log('S7-004 PASS: escaped import rejected by sanitizer and complete render; escaped external style URL rejected. Expected negative-test behavior; no URL contacted.');\nconst safe=render('<svg xmlns=\"http://www.w3.org/2000/svg\"><style>text { fill: #0e5c66; }</style><text x=\"0\" y=\"20\">Model</text></svg>');assert.match(safe,/text\\s*\\{\\s*fill:\\s*#0e5c66/);\nconsole.log('S7-003 safe-style control PASS; all rendering remained in memory.');\nJS",
+      "exit_code": 0,
+      "result": "PASS",
+      "output": "S7-003 PASS: complete in-memory rendering scopes both selectors and retains risk/authority sections.\nS7-004 PASS: escaped import rejected by sanitizer and complete render; escaped external style URL rejected. Expected negative-test behavior; no URL contacted.\nS7-003 safe-style control PASS; all rendering remained in memory.",
+      "authority": "diagnostic",
+      "filesystem_writes": false
+    },
+    {
+      "id": "S8-CMD-08",
+      "command": "python3 -B - <<'PY'\nimport json, pathlib, shlex,subprocess\nroot=pathlib.Path.cwd(); hooks=json.loads((root/'com.github.copilot/hooks/hooks.json').read_text())['hooks']\nfor event, entries in hooks.items():\n cmd=entries[0]['command'];fake='/example/plugin with spaces';parts=shlex.split(cmd.replace('${PLUGIN_ROOT}',fake));assert parts==['node',fake+'/hooks/com.anthropic.claude-code/host.cjs'];result=subprocess.run(cmd.replace('${PLUGIN_ROOT}',str(root)),shell=True,input=json.dumps({'hook_event_name':event,'cwd':str(root),'session_id':'s8-readonly'}),capture_output=True,text=True);assert result.returncode==0;d=json.loads(result.stdout);print(json.dumps({'event':event,'space_path_argv_check':'PASS','actual_path_shell_exit_code':result.returncode,'response_is_object':isinstance(d,dict)}))\nPY",
+      "exit_code": 0,
+      "result": "PASS",
+      "output": "{\"event\": \"SessionStart\", \"space_path_argv_check\": \"PASS\", \"actual_path_shell_exit_code\": 0, \"response_is_object\": true}\n{\"event\": \"Stop\", \"space_path_argv_check\": \"PASS\", \"actual_path_shell_exit_code\": 0, \"response_is_object\": true}",
+      "authority": "diagnostic",
+      "filesystem_writes": false
+    },
+    {
+      "id": "S8-CMD-09",
+      "command": "node test/verification.test.mjs",
+      "exit_code": 0,
+      "result": "PASS",
+      "output": "# tests 21\n# suites 1\n# pass 21\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0",
+      "authority": "diagnostic",
+      "filesystem_writes": false
+    },
+    {
+      "id": "S8-CMD-10",
+      "command": "node test/public-boundary.test.mjs",
+      "exit_code": 0,
+      "result": "PASS",
+      "output": "# tests 17\n# suites 1\n# pass 17\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0",
+      "authority": "diagnostic",
+      "filesystem_writes": false
+    },
+    {
+      "id": "S8-CMD-11",
+      "command": "node test/skills-conformance.test.mjs",
+      "exit_code": 0,
+      "result": "PASS",
+      "output": "# tests 33\n# suites 1\n# pass 33\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0",
+      "authority": "diagnostic",
+      "filesystem_writes": false
+    },
+    {
+      "id": "S8-CMD-12",
+      "command": "node test/plugin-manifest.test.mjs",
+      "exit_code": 0,
+      "result": "PASS",
+      "output": "# tests 10\n# suites 1\n# pass 10\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0",
+      "authority": "diagnostic",
+      "filesystem_writes": false
+    }
+  ],
+  "s7_finding_closure": [
+    {
+      "id": "S7-001",
+      "status": "RESOLVED",
+      "classification": "product_defect_repaired",
+      "paths": [
+        "hooks/verification.cjs:59",
+        "test/verification.test.mjs"
+      ],
+      "repaired_behavior": "sameCandidate requires equal present digests whenever either side supplies one; neither supplied preserves revision-only comparison.",
+      "evidence": "node test/verification.test.mjs: 21 PASS, 0 FAIL, including omitted/wrong digest rejection and revision-only success.",
+      "closure_receipt": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/repair/s7-repair-closure.json"
+    },
+    {
+      "id": "S7-002",
+      "status": "RESOLVED",
+      "classification": "product_defect_repaired",
+      "paths": [
+        "hooks/assurance-budget.cjs:48",
+        "test/assurance-budget.test.mjs:349",
+        "skills/bearing-lite/references/assurance-policy.md"
+      ],
+      "repaired_behavior": "Declared slice IDs and lifecycle ID now resolve alongside phase/wave IDs. Budget lookup still keys unit_kind and unit ID; spent counts, one repair, deterministic gate and rereview prohibitions remain.",
+      "evidence": "Inspected real transition/evaluator path and regression cases for open slice/phase/lifecycle and spent slice/lifecycle. Exact-candidate repair closure full 407/407 includes these durable-file cases; not rerun because they create temporary paths outside this session's write set.",
+      "closure_receipt": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/repair/s7-repair-closure.json"
+    },
+    {
+      "id": "S7-003",
+      "status": "RESOLVED",
+      "classification": "product_defect_repaired",
+      "paths": [
+        "tools/render-dod-manifest.mjs:363",
+        "tools/render-dod-manifest.mjs:694",
+        "test/dod-manifest.test.mjs"
+      ],
+      "repaired_behavior": "SVG gets a content-derived scope class; stylesheet selectors are scoped before insertion.",
+      "evidence": "In-memory complete renderer scopes #s8 and #s9, retains risk/authority sections, and preserves safe text styling; all assertions PASS. No browser observation claimed.",
+      "closure_receipt": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/repair/s7-repair-closure.json"
+    },
+    {
+      "id": "S7-004",
+      "status": "RESOLVED",
+      "classification": "product_defect_repaired",
+      "paths": [
+        "tools/render-dod-manifest.mjs:282",
+        "tools/render-dod-manifest.mjs:344",
+        "test/dod-manifest.test.mjs:510"
+      ],
+      "repaired_behavior": "CSS escape decoding precedes import/resource checks at stylesheet and style-attribute entry points.",
+      "evidence": "Sanitizer and complete render reject escaped @import with UNSAFE_ASSET; escaped external URL in style attribute also rejected. Expected negative-test PASS; no network request.",
+      "closure_receipt": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/repair/s7-repair-closure.json"
+    },
+    {
+      "id": "S7-005",
+      "status": "RESOLVED",
+      "classification": "product_defect_repaired",
+      "paths": [
+        "com.github.copilot/hooks/hooks.json",
+        "test/host-mapping.test.mjs:273"
+      ],
+      "repaired_behavior": "Both hook commands quote the complete expanded script path.",
+      "evidence": "Read-only shell tokenization at a space-containing root PASS for both events; actual-root shell executions exit 0 and emit JSON. Exact-candidate closure includes real space-path regression; no native VS Code session or install performed.",
+      "closure_receipt": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/repair/s7-repair-closure.json"
+    }
+  ],
+  "execution_observations": [
+    {
+      "classification": "harness",
+      "status": "RESOLVED_FOR_EVIDENCE",
+      "observation": "The two node --test invocations returned exit 0 but summarized one test-file unit rather than 21 constituent cases. Unsetting NODE_TEST_CONTEXT/NODE_OPTIONS did not alter output. Direct execution of the existing test module exposed 21 PASS, 0 FAIL. Exact root cause is not established and no product defect or issue is inferred."
+    },
+    {
+      "classification": "expected_negative_test_behavior",
+      "status": "PASS",
+      "observation": "REJECT/ERROR/INCONCLUSIVE and UNSAFE_ASSET outputs on invalid inputs satisfy the negative contracts; they are not operational/product failures."
+    }
+  ],
+  "findings": [],
+  "remaining_risks": [
+    "Native VS Code/Copilot sessions and Muse installation were not launched here; portability assessment is limited to shipped contracts, current read-only command checks and the exact-candidate prior validation/package evidence.",
+    "The owner's visual PASS identifies an earlier Manifest digest. It is retained under DEC-BDL-073 and current owner direction; no agent asserts a new visual PASS for the regenerated Manifest.",
+    "Exact backend model and reasoning settings are not exposed by this session; the approved route is recorded separately from observable identity.",
+    "Final append-only closeout projection and owner acceptance remain pending. This receipt does not change the Manifest, task state or authority and grants no publication or deployment."
+  ],
+  "changed_paths": [
+    "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/integration/s8-integration.json"
+  ],
+  "product_changed_paths": [],
+  "planning_changed_paths": [],
+  "write_set_respected": true,
+  "mutation_verification": {
+    "scope": "Tracked plus nonignored untracked paths, including planning files and deleted-path markers",
+    "baseline_path_count": 168,
+    "before_receipt_changed_paths": [],
+    "after_receipt_expected_changed_paths": [
+      "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/integration/s8-integration.json"
+    ],
+    "shared_checkout_note": "Pre-existing dirty product state belongs to the pinned candidate. No other agent changes were observed during the snapshot interval.",
+    "after_receipt_observed_changed_paths": [
+      "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/integration/s8-integration.json"
+    ],
+    "post_write_product_tree_sha256": "54aff5fddfc1b53fe52ef138f585a26b9ac361e6184e032f61894cbdc00fad05"
+  },
+  "typed_outcome": "PASS",
+  "integration_verdict": "CANDIDATE_READY",
+  "verdict": "CANDIDATE_READY",
+  "blocker": null,
+  "next": "Return this exact-candidate S8 receipt to the owner/Orchestrator. An authorized writer may append S8 completion evidence and regenerate the Manifest; owner acceptance remains human-only. No automatic rereview, additional repair, commit or publication is authorized by this assessment."
+}

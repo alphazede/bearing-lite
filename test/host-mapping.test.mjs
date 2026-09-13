@@ -12,6 +12,7 @@ import {
   writeFileSync,
   rmSync,
   readFileSync,
+  symlinkSync,
 } from "node:fs";
 import { spawnSync } from "node:child_process";
 import os from "node:os";
@@ -26,13 +27,13 @@ const HOST_BIN = path.join(ROOT, "hooks/com.anthropic.claude-code/host.cjs");
 
 const READY_PLAN = `# Journey
 
-- journey: Explorer Journey
+- journey: Bearing Delivery Lifecycle
 - review_cadence: at-end
 
 ### task_id: T1
 - outcome: add host mapping
 - status: IN_PROGRESS
-- assigned_role: crewmate
+- assigned_role: Implementer
 - depends_on: []
 - next_action: write host adapter
 - scope: hooks/
@@ -52,13 +53,13 @@ const INCOMPLETE_PLAN = `# Notes
 
 const COMPLETE_PLAN = `# Journey
 
-- journey: Explorer Journey
+- journey: Bearing Delivery Lifecycle
 - review_cadence: at-end
 
 ### task_id: T1
 - outcome: add host mapping
 - status: IN_PROGRESS
-- assigned_role: crewmate
+- assigned_role: Implementer
 - depends_on: []
 - next_action: confirm closeout
 - scope: hooks/
@@ -74,13 +75,13 @@ const COMPLETE_PLAN = `# Journey
 
 const INTENT_AS_RECEIPT_PLAN = `# Journey
 
-- journey: Explorer Journey
+- journey: Bearing Delivery Lifecycle
 - review_cadence: at-end
 
 ### task_id: T1
 - outcome: add host mapping
 - status: IN_PROGRESS
-- assigned_role: crewmate
+- assigned_role: Implementer
 - depends_on: []
 - next_action: confirm closeout
 - scope: hooks/
@@ -253,6 +254,130 @@ describe("verified host mapping", () => {
     );
   });
 
+  function copilotCommands(hooks, event) {
+    return (hooks.hooks[event] || []).flatMap((entry) => {
+      if (typeof entry.command === "string") return [entry.command];
+      return (entry.hooks || [])
+        .map((hook) => hook.command)
+        .filter((command) => typeof command === "string");
+    });
+  }
+
+  it("discovers GitHub Copilot hooks from the Agent Plugins 1.0 namespace path", () => {
+    const copilotHooksPath = path.join(ROOT, "com.github.copilot/hooks/hooks.json");
+    assert.ok(
+      existsSync(copilotHooksPath),
+      "com.github.copilot/hooks/hooks.json is the documented Agent Plugins 1.0 Copilot hook path"
+    );
+    const copilotHooks = JSON.parse(readFileSync(copilotHooksPath, "utf8"));
+    assert.match(JSON.stringify(copilotHooks.hooks.SessionStart), /host\.cjs/);
+    assert.match(JSON.stringify(copilotHooks.hooks.Stop), /host\.cjs/);
+    assert.match(JSON.stringify(copilotHooks), /\$\{PLUGIN_ROOT\}/);
+    const session = copilotCommands(copilotHooks, "SessionStart");
+    assert.equal(session.length, 1);
+    assert.match(session[0], /host\.cjs/);
+    assert.doesNotMatch(session[0], /te-host\.cjs/);
+
+    const preToolUse = copilotCommands(copilotHooks, "PreToolUse");
+    assert.equal(preToolUse.length, 1, "Copilot PreToolUse must route to te-host.cjs");
+    assert.match(preToolUse[0], /"\$\{PLUGIN_ROOT\}\/hooks\/te-host\.cjs"/);
+    assert.match(preToolUse[0], /--host=copilot/);
+
+    const stop = copilotCommands(copilotHooks, "Stop");
+    assert.ok(
+      stop.some((command) => /host\.cjs/.test(command) && !/te-host\.cjs/.test(command)),
+      "Copilot Stop must keep activation/closeout host.cjs"
+    );
+    const stopTe = stop.filter((command) => /te-host\.cjs/.test(command));
+    assert.equal(stopTe.length, 1, "Copilot Stop must register te-host.cjs once");
+    assert.match(stopTe[0], /"\$\{PLUGIN_ROOT\}\/hooks\/te-host\.cjs"/);
+    assert.match(stopTe[0], /--host=copilot/);
+
+    const child = copilotCommands(copilotHooks, "SubagentStop");
+    assert.equal(child.length, 1, "Copilot SubagentStop must route to te-host.cjs");
+    assert.match(child[0], /"\$\{PLUGIN_ROOT\}\/hooks\/te-host\.cjs"/);
+    assert.match(child[0], /--host=copilot/);
+  });
+
+  it("executes Copilot SessionStart and Stop when PLUGIN_ROOT contains spaces", () => {
+    const copilotHooks = JSON.parse(
+      readFileSync(path.join(ROOT, "com.github.copilot/hooks/hooks.json"), "utf8")
+    );
+    const pluginRoot = path.join(tmp, "plugin with spaces");
+    symlinkSync(ROOT, pluginRoot);
+    const cwd = path.join(tmp, "copilot-spaces-cwd");
+    mkdirSync(cwd);
+    writePlan(cwd, READY_PLAN);
+    for (const event of ["SessionStart", "Stop"]) {
+      const command = copilotHooks.hooks[event][0].command;
+      assert.match(command, /"\$\{PLUGIN_ROOT\}\/hooks\/com\.anthropic\.claude-code\/host\.cjs"/);
+      const result = spawnSync(command, {
+        shell: true,
+        cwd,
+        input: JSON.stringify({
+          session_id: "copilot-spaces",
+          transcript_path: "/tmp/t.jsonl",
+          cwd,
+          hook_event_name: event,
+        }),
+        encoding: "utf8",
+        timeout: 10_000,
+        env: { ...process.env, PLUGIN_ROOT: pluginRoot },
+      });
+      assert.equal(result.status, 0, `${event} stderr=${result.stderr} stdout=${result.stdout}`);
+      assert.doesNotMatch(String(result.stderr), /MODULE_NOT_FOUND/);
+      const parsed = JSON.parse(result.stdout);
+      assert.equal(typeof parsed, "object");
+      assert.equal(parsed.hookSpecificOutput.hookEventName, event);
+    }
+  });
+
+  it("executes Copilot TE commands when PLUGIN_ROOT contains spaces as one script argument", () => {
+    const copilotHooks = JSON.parse(
+      readFileSync(path.join(ROOT, "com.github.copilot/hooks/hooks.json"), "utf8")
+    );
+    const pluginRoot = path.join(tmp, "te plugin with spaces");
+    symlinkSync(ROOT, pluginRoot);
+    const cwd = path.join(tmp, "copilot-te-spaces-cwd");
+    mkdirSync(cwd);
+    writePlan(cwd, READY_PLAN);
+    const quotedTe = /"\$\{PLUGIN_ROOT\}\/hooks\/te-host\.cjs" --host=copilot/;
+    const commands = ["PreToolUse", "Stop", "SubagentStop"].flatMap((event) =>
+      copilotCommands(copilotHooks, event).filter((command) => /te-host\.cjs/.test(command))
+    );
+    assert.equal(commands.length, 3);
+    for (const command of commands) {
+      assert.match(command, quotedTe);
+      const split = spawnSync(
+        "python3",
+        ["-c", "import shlex,sys; print('\\n'.join(shlex.split(sys.argv[1])))", command.replaceAll("${PLUGIN_ROOT}", pluginRoot)],
+        { encoding: "utf8" }
+      );
+      assert.equal(split.status, 0, split.stderr);
+      const argv = split.stdout.trim().split("\n");
+      assert.equal(argv[0], "node");
+      assert.equal(argv[1], path.join(pluginRoot, "hooks/te-host.cjs"));
+      assert.equal(argv[2], "--host=copilot");
+      const result = spawnSync(command, {
+        shell: true,
+        cwd,
+        input: JSON.stringify({
+          session_id: "copilot-te-spaces",
+          cwd,
+          hook_event_name: "PreToolUse",
+          tool_name: "editFiles",
+          tool_input: { files: ["src/main.ts"] },
+        }),
+        encoding: "utf8",
+        timeout: 10_000,
+        env: { ...process.env, PLUGIN_ROOT: pluginRoot },
+      });
+      assert.equal(result.status, 0, `stderr=${result.stderr} stdout=${result.stdout}`);
+      assert.doesNotMatch(String(result.stderr), /MODULE_NOT_FOUND/);
+      assert.deepEqual(JSON.parse(result.stdout), {});
+    }
+  });
+
   it("derives plan_present, role, and next_action from visible Markdown", () => {
     const cwd = path.join(tmp, "ready");
     mkdirSync(cwd);
@@ -260,7 +385,7 @@ describe("verified host mapping", () => {
     const derived = host.deriveContext(cwd);
     assert.equal(derived.plan_present, true);
     assert.equal(derived.router_invoked, true);
-    assert.equal(derived.assigned_role, "crewmate");
+    assert.equal(derived.assigned_role, "Implementer");
     assert.equal(derived.next_action_known, true);
     assert.equal(derived.next_action, "write host adapter");
   });
@@ -305,7 +430,7 @@ describe("verified host mapping", () => {
     mkdirSync(cwd);
     writePlan(
       cwd,
-      `# Journey template copy\n\n- journey: <Explorer Journey | Expedition>\n- review_cadence: at-end\n- choice_basis: <owner-confirmed recommendation and reason>\n- lineup_snapshot: <named active, standby, and unused role instances>\n`
+      `# Lifecycle template copy\n\n- journey: <Lifecycle id>\n- review_cadence: at-end\n- choice_basis: <proposed recommendation and reason; owner-approved at integrated review>\n- profile_snapshot: <named implementation/assurance instances plus the planning_review binding below>\n`
     );
     const derived = host.deriveContext(cwd);
     assert.equal(derived.router_invoked, false);
@@ -525,7 +650,7 @@ describe("verified host mapping", () => {
       cwd,
       `# Lease-first notes
 
-- journey: Explorer Journey
+- journey: Bearing Delivery Lifecycle
 `
     );
     const derived = host.deriveContext(cwd);
@@ -646,5 +771,24 @@ describe("verified host mapping", () => {
       assert.ok(row, `mapping.md must state TE support for ${host}`);
       assert.match(row, /UNAVAILABLE/, host);
     }
+    const copilotHonesty = mapping
+      .split("\n")
+      .find(
+        (line) =>
+          /^\|\s*GitHub Copilot\b/.test(line) &&
+          /native/.test(line) &&
+          /PreToolUse/.test(line)
+      );
+    assert.ok(
+      copilotHonesty,
+      "mapping.md must carry a GitHub Copilot native TE honesty row"
+    );
+    assert.match(copilotHonesty, /native `PreToolUse` deny/);
+    assert.match(copilotHonesty, /native `Stop` deny/);
+    assert.match(copilotHonesty, /native `SubagentStop` deny/);
+    assert.doesNotMatch(copilotHonesty, /UNAVAILABLE/);
+    assert.match(mapping, /stop_hook_active/);
+    assert.match(mapping, /permissionDecision/);
+    assert.match(mapping, /--host=copilot/);
   });
 });

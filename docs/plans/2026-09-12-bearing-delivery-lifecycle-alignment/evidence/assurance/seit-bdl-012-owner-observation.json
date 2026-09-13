@@ -1,0 +1,19 @@
+{
+  "schema_version": "1",
+  "kind": "owner_visual_observation",
+  "lifecycle_id": "BDL-2026-09-12",
+  "proof_row": "SEIT-BDL-012",
+  "command_id": "CMD-BDL-VISUAL",
+  "recorded_at": "2026-09-13T17:06:40Z",
+  "observer": "Human owner",
+  "artifact": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/bearing-delivery-lifecycle-alignment-dod-manifest.html",
+  "artifact_sha256": "6dc9242539f25ff1cf660b71680f21c976f865f0d48b98786497a5df44b2284b",
+  "open_command": "xdg-open bearing-delivery-lifecycle-alignment-dod-manifest.html",
+  "open_exit_code": 0,
+  "open_result": "Opening in existing browser session.",
+  "procedure": "Human observer opened the DoD Manifest, inspected it at wide and narrow widths, checked the nine ordered sections, fixed tables, status chips, model figures, visible N/A reasons, keyboard focus, navigation, contrast, and print layout.",
+  "expected_result": "The Manifest is legible and navigable at wide and narrow widths with visible status and N/A reasons and no clipped or unreachable content.",
+  "owner_statement": "yes this passes",
+  "status": "PASS",
+  "agent_workaround_used": false
+}

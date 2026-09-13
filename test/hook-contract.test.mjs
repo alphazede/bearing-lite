@@ -56,6 +56,8 @@ const EVALUATOR_MODULES = new Set([
   "plan-package.cjs", // #70/#73 Map the Route freeze checks
   "reconcile.cjs", // #64 deterministic evidence reconciliation
   "owner-stops.cjs", // #79 procedural preflight and local wait metrics
+  "profiles.cjs", // S1 profile catalog / MIGRATION_REQUIRED classifier
+  "verification.cjs", // S2 deterministic verification adapter; no HOOK_CLASS
 ]);
 /** Additional TE class modules, allowed but not yet required by this case. */
 const TE_CLASS_FILES = Object.freeze(["te-capability.cjs", "te-host.cjs"]);
