@@ -72,9 +72,9 @@ Two steps, so request and receipt are built from one source and their
 Three refusals carry the contract:
 
 - **Generative operations are denied.** A backend operation that proposes
-  claims returns `generative_backend_operation_denied`. A money-risk assurance
-  gate confines artificial intelligence to build time, so a proposing model
-  cannot be in the evidence path. An unlisted operation returns
+  claims returns `generative_backend_operation_denied`. An operation that
+  proposes the claims it then verifies is circular, so it cannot produce
+  independent evidence. An unlisted operation returns
   `backend_operation_unsupported` rather than being guessed.
 - **Analysis-derived verdicts cannot close a gate.** When a backend marks its
   evidence as recovered rather than read, the receipt is sealed
@@ -85,6 +85,9 @@ Three refusals carry the contract:
   parse returns `claim_malformed` with the backend's own detail, and no
   receipt. Sealing it as `INCONCLUSIVE` would read as "not proven" and quietly
   weaken the gate.
+
+These refusals are stated in engineering terms. An adopting project maps them
+to whatever assurance standard it follows.
 
 Authority is never defaulted because one backend serves both levels. An
 Implementer, Light Implementer, or Integration Engineer execution run is

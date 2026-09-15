@@ -86,6 +86,17 @@ const INTERNAL_METADATA_COUPLING = {
   re: /okf_status|public_boundary\s*:/,
 };
 
+/**
+ * An adopting organization's internal standard is not this product's rationale.
+ * A shipped file must state its reasons in engineering terms and leave the
+ * mapping to the adopter. The pattern literals are split so that this guard
+ * does not itself match a repository-wide scan for such citations.
+ */
+const INTERNAL_STANDARD_PATTERNS = [
+  { code: "internal_standard_citation", re: /COE-[A-Z]{2,}-[0-9]{3}/ },
+  { code: "internal_standard_citation", re: /money[-\s]risk/i },
+];
+
 const DEEP_COUPLING_PATTERNS = [
   OLD_PACKAGE_NAME_COUPLING,
   { code: "deep_product_coupling", re: /require\(["']\.\.\/src\// },
@@ -137,6 +148,7 @@ export function scanContent(relPath, content) {
     ...PRIVATE_PATH_PATTERNS,
     ...MODEL_PIN_PATTERNS,
     ...DEEP_COUPLING_PATTERNS,
+    ...INTERNAL_STANDARD_PATTERNS,
   ];
   const trustedPrompt = isTrustedUnchangedPromptSkill(relPath, content);
   for (const pattern of groups) {
@@ -367,6 +379,28 @@ describe("CMD-PUBLIC-01 public-boundary (SEIT-PUBLIC-01, SEIT-MODEL-01, SEIT-IND
     assert.equal(verdict.ok, false);
     if (!verdict.ok) {
       assert.ok(verdict.diagnostics.some((d) => d.code === "deep_product_coupling"));
+    }
+  });
+
+  it("negative: injected internal standard citation fails validation", () => {
+    // Literals are assembled so this fixture does not itself read as a citation.
+    const standardId = ["COE", "ELSD", "006"].join("-");
+    const policyPhrase = ["money", "risk"].join("-");
+    const verdict = scanPublicLiteSurfaces({
+      extraFiles: [
+        {
+          path: "skills/bearing-lite/references/FIXTURE.md",
+          content: `A ${policyPhrase} assurance gate forbids it (${standardId}).\n`,
+        },
+      ],
+    });
+    assert.equal(verdict.ok, false);
+    if (!verdict.ok) {
+      const hits = verdict.diagnostics.filter(
+        (d) => d.path === "skills/bearing-lite/references/FIXTURE.md"
+      );
+      assert.equal(hits.length, 2, JSON.stringify(hits));
+      assert.ok(hits.every((d) => d.code === "internal_standard_citation"));
     }
   });
 

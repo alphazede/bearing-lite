@@ -13,8 +13,9 @@
  * selects one for a task.
  *
  * Three rules carry the weight:
- *   - A generative backend operation is denied. A money-risk assurance gate is
- *     not a place for a proposing model (COE-ELSD-006).
+ *   - A generative backend operation is denied. An operation that proposes the
+ *     claims it then verifies is circular, so it cannot produce independent
+ *     evidence. An adopting project maps this to whatever standard it follows.
  *   - An analysis-derived verdict is sealed as INCONCLUSIVE, so a heuristic
  *     answer cannot close a gate. The raw verdict stays visible in the receipt.
  *   - A malformed claim is a typed rejection, never a quiet unproven receipt.
