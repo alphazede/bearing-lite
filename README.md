@@ -71,7 +71,9 @@ If Bearing Lite helps keep a long agent task scoped and reviewable,
    No value is preselected.
 4. If you decline Reverify or decline its download, onboard-bearing persists
    `reverify.enabled: false` for that named profile and does not ask again
-   during ordinary Lifecycles.
+   during ordinary Lifecycles. Reverify is an optional third-party backend.
+   Bearing Lite does not bundle, download, or install it, and never invokes
+   it; the adapter only judges receipts a caller produces.
 5. A leftover `~/.agents/bearing-lite/lineups.json` is not live configuration.
    Runtime returns `MIGRATION_REQUIRED` until onboard-bearing migrates it.
 
