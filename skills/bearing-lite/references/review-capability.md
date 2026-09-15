@@ -70,6 +70,15 @@ excluded files and the ordering, so the balance depends on the diff. A large
 change carrying generated files, lockfiles or vendored code gains. A small,
 clean change pays the rule cost with little to exclude.
 
+## The two halves are independent
+
+`planCoverage` and `summarizeCoverage` give the file list and the exclusions at
+near-zero token cost; `planRules` is a separate call, so a caller may use the
+coverage half and skip the rules entirely. On a real 14-file diff the rule
+payload was 19,134 bytes, roughly 4,784 estimated tokens, and the rules are
+generic code-quality rules that can pull a plan-drift reviewer toward style
+nits. The adopter decides which halves to use.
+
 ## Configuration
 
 `review.coverage_assist` records `enabled` and `required`. Nothing else. The
