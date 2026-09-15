@@ -64,8 +64,9 @@ under the same `unit_kind` + `unit_id` key.
   halts with `assurance_round_limit`.
 - A repairable verdict permits at most one aggregate repair. A second repair
   halts with `assurance_repair_limit`.
-- After that repair the coordinator closes the unit on a deterministic `PASS`
-  gate; a missing or non-`PASS` gate halts with
+- After that repair the parent controller closes the unit on a deterministic
+  `PASS` gate (Orchestrator on a direct packet, Coordinator on a coordinator
+  wave); a missing or non-`PASS` gate halts with
   `deterministic_post_repair_gate_required`.
 - The repaired unit is never reviewed again. `automatic_rereview_requested` and
   `review_after_repair` both require an owner amendment.

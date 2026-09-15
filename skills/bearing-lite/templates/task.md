@@ -153,10 +153,11 @@ Neither self-certifies.
 required assurance against Bearing Lite `max_assurance_rounds`. A repair or
 replacement candidate does not reset it; the next distinct declared phase or
 wave carries its own budget. The parent
-coordinator writes the count before dispatch. If the review permits correction, spend at
-most one remaining `attempts` repair, run deterministic coordinator verification,
-and close the gate without another review. A failed repair or scope change
-returns `OWNER_DECISION_REQUIRED`.
+controller writes the count before dispatch: Orchestrator on a direct packet,
+Coordinator on a coordinator wave. If the review permits correction, spend at
+most one remaining `attempts` repair, run deterministic parent-controller
+verification, and close the gate without another review. A failed repair or
+scope change returns `OWNER_DECISION_REQUIRED`.
 
 ## Waiting or correcting only
 
@@ -173,4 +174,4 @@ review. Any source or candidate change during deployment is separately scoped.
 
 ## Single-writer reminder
 
-Only the parent coordinator updates this block after rereading it. Implementer, Test Engineer, Reviewer, and Integration Engineer execution return compact receipts (`verdict`, `candidate_ref`, `changed_paths`, `tests`, `findings`, `blocker`); the coordinator records transitions. Orchestrator alone changes cross-wave dependencies or global sequencing. Update `implementation.json` and the DoD Manifest once per wave, plus owner-decision or blocker changes.
+Only the parent controller updates this block after rereading it. The parent controller is the Orchestrator on a direct packet and the Coordinator on a coordinator wave. Implementer, Test Engineer, Reviewer, and Integration Engineer execution return compact receipts (`verdict`, `candidate_ref`, `changed_paths`, `tests`, `findings`, `blocker`); the parent controller records transitions. Workers do not edit the plan. Implementer must not self-certify. Orchestrator alone changes cross-wave dependencies or global sequencing. Update `implementation.json` and the DoD Manifest once per wave, plus owner-decision or blocker changes. Direct packets never dispatch Coordinator.

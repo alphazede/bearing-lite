@@ -61,7 +61,7 @@ const STATUSES = new Set([
 
 /**
  * @param {Record<string, unknown>} task
- * @param {{ phase?: 'always'|'before_execution'|'after_candidate'|'waiting_correcting', writer?: string, parentCoordinator?: string, priorRevision?: string, observedRevision?: string }} [ctx]
+ * @param {{ phase?: 'always'|'before_execution'|'after_candidate'|'waiting_correcting', writer?: string, parentController?: string, parentCoordinator?: string, priorRevision?: string, observedRevision?: string }} [ctx]
  * @returns {TaskVerdict}
  */
 export function validateTaskRecord(task, ctx = {}) {
@@ -174,8 +174,9 @@ export function validateTaskRecord(task, ctx = {}) {
     }
   }
 
-  // Single-writer: only parent coordinator may write transitions.
-  const parent = ctx.parentCoordinator ?? "coordinator";
+  // Single-writer: only the parent controller may write transitions.
+  // Orchestrator on a direct packet; Coordinator on a coordinator wave.
+  const parent = ctx.parentController ?? ctx.parentCoordinator ?? "coordinator";
   if (ctx.writer !== undefined && ctx.writer !== parent) {
     const workerRoles = new Set([
       "implementer",
@@ -187,7 +188,7 @@ export function validateTaskRecord(task, ctx = {}) {
     if (workerRoles.has(ctx.writer) || ctx.writer !== parent) {
       diagnostics.push({
         code: "wrong_writer",
-        message: `writer "${ctx.writer}" may not overwrite task state owned by parent coordinator "${parent}"`,
+        message: `writer "${ctx.writer}" may not overwrite task state owned by parent controller "${parent}"`,
         field: "writer",
       });
     }
@@ -854,16 +855,16 @@ describe("CMD-TASK-01 task-record (SEIT-TASK-RECORD-01, SEIT-SINGLE-WRITER-01)",
     assert.equal(after.ok, true, JSON.stringify(after));
   });
 
-  it("single-writer: parent coordinator owns transitions; worker overwrite rejected", () => {
+  it("single-writer: parent controller owns transitions; worker overwrite rejected", () => {
     const parentWrite = validateTaskRecord(baseTask({ status: "READY" }), {
       writer: "coordinator",
-      parentCoordinator: "coordinator",
+      parentController: "coordinator",
     });
     assert.equal(parentWrite.ok, true);
 
     const workerOverwrite = validateTaskRecord(baseTask({ status: "COMPLETE" }), {
       writer: "implementer",
-      parentCoordinator: "coordinator",
+      parentController: "coordinator",
     });
     assert.equal(workerOverwrite.ok, false);
     if (!workerOverwrite.ok) {
@@ -872,11 +873,44 @@ describe("CMD-TASK-01 task-record (SEIT-TASK-RECORD-01, SEIT-SINGLE-WRITER-01)",
 
     const validatorWrite = validateTaskRecord(baseTask({ status: "VALIDATING" }), {
       writer: "validator",
-      parentCoordinator: "navigator",
+      parentController: "navigator",
     });
     assert.equal(validatorWrite.ok, false);
     if (!validatorWrite.ok) {
       assert.ok(validatorWrite.diagnostics.some((d) => d.code === "wrong_writer"));
+    }
+  });
+
+  it("single-writer: Orchestrator is parent controller on a direct packet", () => {
+    assert.match(TEMPLATE, /parent controller is the Orchestrator on a direct packet/i);
+    assert.match(TEMPLATE, /Coordinator on a coordinator wave/i);
+    assert.match(TEMPLATE, /Direct packets never dispatch Coordinator/i);
+    assert.match(TEMPLATE, /Implementer must not self-certify/i);
+    assert.match(TEMPLATE, /Workers do not edit the plan/i);
+    assert.doesNotMatch(TEMPLATE, /Only the parent coordinator updates/);
+
+    const orchestratorWrite = validateTaskRecord(baseTask({ status: "READY" }), {
+      writer: "orchestrator",
+      parentController: "orchestrator",
+    });
+    assert.equal(orchestratorWrite.ok, true);
+
+    const implementerOverwrite = validateTaskRecord(baseTask({ status: "COMPLETE" }), {
+      writer: "implementer",
+      parentController: "orchestrator",
+    });
+    assert.equal(implementerOverwrite.ok, false);
+    if (!implementerOverwrite.ok) {
+      assert.ok(implementerOverwrite.diagnostics.some((d) => d.code === "wrong_writer"));
+    }
+
+    const implicitCoordinator = validateTaskRecord(baseTask({ status: "READY" }), {
+      writer: "coordinator",
+      parentController: "orchestrator",
+    });
+    assert.equal(implicitCoordinator.ok, false);
+    if (!implicitCoordinator.ok) {
+      assert.ok(implicitCoordinator.diagnostics.some((d) => d.code === "wrong_writer"));
     }
   });
 
@@ -1350,7 +1384,7 @@ describe("CMD-TASK-01 checkout-lease admission", () => {
   });
 });
 
-/** Named Bearing Lite bound. Coordinators honor this; reviewers do not redispatch. */
+/** Named Bearing Lite bound. Parent controllers honor this; reviewers do not redispatch. */
 export const MAX_ASSURANCE_ROUNDS = 1;
 
 const ASSURANCE_TERMINAL_SUCCESS = new Set(["PASS", "ACCEPT", "ACCEPT_WITH_FINDINGS"]);

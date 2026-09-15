@@ -12,7 +12,9 @@ verified candidate, evidence, and a Definition of Done Manifest closeout.
 3. **Scope Definition** settles material owner decisions.
 4. **Planning and Design** produces the five-artifact package.
 5. The owner approves or changes that package once.
-6. **Implementer** and **Coordinator** execute bounded slices. Light
+6. **Implementer** executes bounded slices. Direct packets never dispatch
+   **Coordinator**; the Orchestrator is the parent controller. Coordinator
+   continues only when the approved graph has a one-wave need. Light
    Implementer takes mechanical slices.
 7. **Test Engineer assurance** and **Reviewer** run at the configured
    cadence, default `phase`.

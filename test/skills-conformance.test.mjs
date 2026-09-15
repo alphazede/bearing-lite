@@ -322,6 +322,35 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     assert.ok(!existsSync(path.join(SKILLS_DIR, "navigator", "SKILL.md")));
   });
 
+  it("Coordinator match/non-match states the one-wave activation predicate", () => {
+    const coordinator = readFileSync(path.join(SKILLS_DIR, "coordinator", "SKILL.md"), "utf8");
+    const router = readFileSync(path.join(SKILLS_DIR, "bearing-lite", "SKILL.md"), "utf8");
+    const onboard = readFileSync(path.join(SKILLS_DIR, "onboard-bearing", "SKILL.md"), "utf8");
+    const reviewer = readFileSync(path.join(SKILLS_DIR, "reviewer", "SKILL.md"), "utf8");
+    assert.match(coordinator, /\*\*Match:\*\*/);
+    assert.match(coordinator, /two or more proven-independent packets/);
+    assert.match(coordinator, /shared wave evidence/);
+    assert.match(coordinator, /aggregate repair ownership/);
+    assert.match(coordinator, /roles\.coordinator\.enabled/);
+    assert.match(coordinator, /available, not that every packet dispatches Coordinator/);
+    assert.match(coordinator, /\*\*Non-match:\*\*/);
+    assert.match(coordinator, /direct packet/);
+    assert.match(coordinator, /never force Coordinator/);
+    assert.match(coordinator, /Orchestrator is the parent controller/);
+    assert.match(coordinator, /not a capability gap/);
+    assert.match(coordinator, /typed capability gap/);
+    assert.match(coordinator, /not Orchestrator substitution/);
+    assert.match(router, /Direct packets never dispatch Coordinator/);
+    assert.match(router, /Orchestrator is the parent controller/);
+    assert.match(router, /typed capability gap, not substitution/);
+    assert.match(onboard, /Enabling Coordinator adds value only for a one-wave need/);
+    assert.match(onboard, /explicit disabled choice/);
+    assert.match(onboard, /disabled Coordinator\s+on a true direct packet is not a capability gap/);
+    assert.match(reviewer, /parent controller/);
+    assert.match(reviewer, /Orchestrator on a direct packet, Coordinator on a coordinator wave/);
+    assert.doesNotMatch(reviewer, /the coordinator then runs deterministic verification/);
+  });
+
   it("each skill frontmatter name equals directory and description is present", () => {
     for (const name of skillDirs) {
       const text = readFileSync(path.join(SKILLS_DIR, name, "SKILL.md"), "utf8");

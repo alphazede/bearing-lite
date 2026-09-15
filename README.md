@@ -64,7 +64,11 @@ If Bearing Lite helps keep a long agent task scoped and reviewable,
 3. Configure named role and session routes, fallbacks, development strategy
    (`single_implementer` or `tdd`), planning review, assurance cadence,
    concurrency, the planning-to-implementation clean-session boolean, holds,
-   and optional Reverify. No value is preselected.
+   and optional Reverify. Enabling Coordinator adds value only when a wave has
+   two or more proven-independent packets, shared wave evidence to integrate
+   once, or aggregate repair ownership; an explicit disabled choice is allowed,
+   and disabling Coordinator on a true direct packet is not a capability gap.
+   No value is preselected.
 4. If you decline Reverify or decline its download, onboard-bearing persists
    `reverify.enabled: false` for that named profile and does not ask again
    during ordinary Lifecycles.
@@ -224,8 +228,9 @@ register hooks. That path remains first-class. See
    Definition of Done Manifest together.
 3. **Review once:** approve or change the proposed route, user-owned
    primary/fallback profile, role states, reasoning, cadence, and plan.
-4. **Dispatch bounded sessions** with compact receipts. Implementer and
-   Coordinator may continue in-wave; declared assurance starts fresh at the
+4. **Dispatch bounded sessions** with compact receipts. Implementer may
+   continue in-wave. Coordinator continues only on a coordinator wave; direct
+   packets never dispatch Coordinator. Declared assurance starts fresh at the
    configured cadence boundary.
 5. **Record state visibly.** The project's human-readable Markdown plan is the
    only task-state record: task blocks, task states, and their transitions. The
@@ -255,14 +260,21 @@ The Bearing Lite Orchestrator is the stateful planning controller, not a work
 role. It invokes only missing planning stages, has Planning and Design
 generate all five artifacts with proposed profile and cadence, then presents
 one integrated owner review before dispatching bounded implementation.
-Coordinator owns proven-independent in-wave lanes without a nested
-coordinator. Assurance Test Engineer, Reviewer, and Integration Engineer
+Direct packets never dispatch Coordinator; the Orchestrator is the parent
+controller and bookkeeper. Coordinator is dispatched only when the approved
+graph has a one-wave need: two or more proven-independent packets, shared
+wave evidence to integrate once, or aggregate repair ownership. It then owns
+proven-independent in-wave lanes without a nested coordinator.
+`roles.coordinator.enabled` means the route is available, not that every
+packet gets a Coordinator. A wave that needs Coordinator while the route is
+omitted or disabled is a typed capability gap, not silent Orchestrator
+substitution. Assurance Test Engineer, Reviewer, and Integration Engineer
 execution appear when declared at the configured cadence boundary. Diagrams
 explain orientation; they never authorize a transition.
 
 | Role | Sessions | Primary work |
 |---|---|---|
-| **Orchestrator** | planning control | User-facing; planning-state writer; wave sequencing. Observed, not selected. |
+| **Orchestrator** | planning control | User-facing; planning-state writer; wave sequencing; direct-packet parent controller and bookkeeper. Observed, not selected. |
 | **Intake** | planning | Confirms repository and plan directory |
 | **Architectural Alignment** | planning | Workspace map and architecture extract |
 | **Scope Definition** | planning | One owner question at a time |
@@ -270,7 +282,7 @@ explain orientation; they never authorize a transition.
 | **Requirements Engineer** | planning | Quality gate when a register applies |
 | **Systems Modeler** | planning | After requirements; before design finalization |
 | **Plan Integrator** | planning | Mechanical assembly; no new judgment |
-| **Coordinator** | implementation | One-wave controller; proven-independent lanes |
+| **Coordinator** | implementation | Optional one-wave controller; proven-independent lanes. Not dispatched on a direct packet |
 | **Implementer** | implementation | Split Test Implementer / Product Implementer; neither self-certifies |
 | **Light Implementer** | implementation | `work_class: light` slices only |
 | **Scribe** | planning and implementation | Transcribes; cannot activate authority |
@@ -303,7 +315,7 @@ Failure escalates to the nearest role whose scope can see it:
 
 | Failure scope | Escalates to |
 |---|---|
-| Within one slice or packet | Coordinator or nearest parent |
+| Within one slice or packet | Parent controller: Orchestrator on a direct packet, Coordinator on a coordinator wave |
 | Across slices in a wave | Coordinator |
 | Across waves or phases | Orchestrator |
 | Contract, security, or authority change | Owner Authority |
@@ -320,8 +332,10 @@ optional `VALIDATING` / `REVIEWING` when required, then `ACCEPTANCE` →
 `COMPLETE`. `WAITING_ON` holds for missing prerequisites, checkout-lease
 conflict, or assurance dispatch.
 Ordinary execution corrections remain bounded. The assurance gate allows one
-review-directed repair, followed by deterministic coordinator verification and
-no second review. Diagrams never create state or authorize transitions.
+review-directed repair, followed by deterministic parent-controller
+verification (Orchestrator on a direct packet, Coordinator on a coordinator
+wave) and no second review. Diagrams never create state or authorize
+transitions.
 
 `hooks/reconcile.cjs` deterministically applies evidence events to Lifecycle
 state. It is a short-lived Orchestrator-run invocation, not a daemon or host
@@ -331,10 +345,12 @@ merges, or closes issues.
 
 ## Implementation process (explanatory)
 
-Default packet completion is author self-check plus coordinator confirmation.
-Declared independent assurance runs at the configured cadence boundary. A
-repairable verdict permits one repair; deterministic coordinator verification
-then closes the gate without another review. Once the Lifecycle is `COMPLETE`,
+Default packet completion is author self-check plus parent-controller
+confirmation: Orchestrator on a direct packet, Coordinator on a coordinator
+wave. Implementer must not self-certify. Declared independent assurance runs
+at the configured cadence boundary. A repairable verdict permits one repair;
+deterministic parent-controller verification then closes the gate without
+another review. Once the Lifecycle is `COMPLETE`,
 an already authorized deployment proceeds with operational checks and rollback
 readiness, not a new assurance round. Source-changing deployment work is
 separate work.
@@ -345,7 +361,7 @@ flowchart LR
     C --> R[Single independent review]
     R -->|Pass| X[COMPLETE]
     R -->|Repairable| F[One repair]
-    F --> V[Coordinator verification]
+    F --> V[Parent-controller verification]
     V --> X
     X --> D[Authorized deploy and operational verification]
 ```

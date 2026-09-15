@@ -14,7 +14,7 @@
  * present; `te-host.cjs` builds the request from real trusted state and hands
  * policy to that evaluator. So these tests assert Lite's own behavior —
  * capability gating, event-to-class mapping, real Git candidate state,
- * coordinator-authored trusted assignment, and verdict translation — and they
+ * coordinator- or orchestrator-authored trusted assignment, and verdict translation — and they
  * assert that Lite never substitutes a local decision for the evaluator's.
  * No HQ evaluator, skill text, fingerprint rule, or receipt policy is cloned
  * here; the loader is the contract.
@@ -142,9 +142,9 @@ function commitAll(dir, message) {
 }
 
 /**
- * Coordinator-authored plan: `checkout_lease` plus a Lite task record.
- * This is the trusted-assignment source, and it is never the writer's own
- * payload.
+ * Coordinator- or orchestrator-authored plan: `checkout_lease` plus a Lite
+ * task record. This is the trusted-assignment source, and it is never the
+ * writer's own payload.
  */
 function writePlan(dir, task) {
   const scope = task.write_set.join(", ");
@@ -692,7 +692,7 @@ describe("Lite TE host adapter (hooks/te-host.cjs)", () => {
     assert.deepEqual(request.candidate.scope_paths, ["src/"]);
   });
 
-  it("takes trusted assignment from the coordinator plan, not the tool payload", () => {
+  it("takes trusted assignment from the visible plan, not the tool payload", () => {
     const teHost = loadTe("te-host.cjs");
     setVerdict(ws, { verdict: "ALLOW", reason: "double" });
     teHost.handle(

@@ -16,8 +16,8 @@ Wave authority. Coordinates more and implements less than Implementer.
 - **Inputs:** approved baseline, wave objective, packet graph, dependencies,
   scope, authority, profile from the recorded Lifecycle snapshot, visible wave
   receipt, acceptance, and compact return schema.
-- **Match:** one wave needs packet sequencing, dispatch, integration, or proven-independent lane coordination.
-- **Non-match:** one bounded packet needs no orchestration, multiple waves conflict, or assurance alone is requested.
+- **Match:** the approved graph has a one-wave need: two or more proven-independent packets, shared wave evidence to integrate once, or aggregate repair ownership. `roles.coordinator.enabled` means the route is available, not that every packet dispatches Coordinator.
+- **Non-match:** a direct packet (never force Coordinator; Orchestrator is the parent controller), omitted or disabled Coordinator on a true direct packet (not a capability gap), multiple waves conflict, or assurance alone is requested. A wave that needs Coordinator while omitted or disabled is a typed capability gap, not Orchestrator substitution.
 
 ## Algorithm
 1. Continue this wave when identity, authority, route, and generation are

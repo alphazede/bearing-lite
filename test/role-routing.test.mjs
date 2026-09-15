@@ -26,6 +26,10 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
  *   assignValidator?: boolean,
  *   assignTrailBoss?: boolean,
  *   assignSubExplorer?: boolean,
+ *   coordinatorRoute?: 'enabled' | 'disabled' | 'omitted',
+ *   implicitCoordinatorDispatch?: boolean,
+ *   sharedWaveEvidence?: boolean,
+ *   aggregateRepairOwnership?: boolean,
  * }} RouteInput
  *
  * @typedef {{
@@ -34,6 +38,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
  *   dormant: Role[],
  *   coordinators: Role[],
  *   workers: Role[],
+ *   parentController: 'orchestrator' | 'coordinator',
  * } | {
  *   ok: false,
  *   code: string,
@@ -101,16 +106,42 @@ export function selectRoute(input) {
       message: "Trail Boss and Sub-Explorer stay out of Lite",
     };
   }
+  if (input.kind === "direct" && input.implicitCoordinatorDispatch === true) {
+    return {
+      ok: false,
+      code: "implicit_coordinator_dispatch",
+      message: "Direct packets never dispatch Coordinator",
+    };
+  }
 
   /** @type {Role[]} */
   const active = [];
+  const packetCount = input.packetCount ?? (input.kind === "direct" ? 1 : 2);
+  const oneWaveNeed =
+    input.kind !== "direct" &&
+    (packetCount >= 2 ||
+      input.sharedWaveEvidence === true ||
+      input.aggregateRepairOwnership === true ||
+      input.kind === "coordinator_wave" ||
+      input.kind === "expedition");
+  const coordinatorRoute = input.coordinatorRoute ?? "enabled";
+  const coordinatorAvailable = coordinatorRoute === "enabled";
 
   if (input.kind === "direct") {
     active.push("implementer");
-  } else if (input.kind === "coordinator_wave") {
-    active.push("coordinator", "implementer");
-  } else if (input.kind === "expedition") {
-    active.push("coordinator", "implementer");
+  } else if (input.kind === "coordinator_wave" || input.kind === "expedition") {
+    if (oneWaveNeed && !coordinatorAvailable) {
+      return {
+        ok: false,
+        code: "typed_capability_gap",
+        message:
+          "A wave that needs Coordinator while the route is omitted or disabled is a typed capability gap, not silent Orchestrator substitution",
+      };
+    }
+    if (oneWaveNeed && coordinatorAvailable) {
+      active.push("coordinator");
+    }
+    active.push("implementer");
   } else {
     return {
       ok: false,
@@ -158,6 +189,7 @@ export function selectRoute(input) {
     dormant,
     coordinators,
     workers,
+    parentController: coordinators.length > 0 ? "coordinator" : "orchestrator",
   };
 }
 
@@ -171,6 +203,7 @@ describe("CMD-ROUTING-01 role-routing (SEIT-ROUTING-01)", () => {
       assert.deepEqual(verdict.coordinators, []);
       assert.ok(verdict.dormant.includes("coordinator"));
       assert.ok(!verdict.active.includes("navigator"));
+      assert.equal(verdict.parentController, "orchestrator");
     }
   });
 
@@ -185,6 +218,7 @@ describe("CMD-ROUTING-01 role-routing (SEIT-ROUTING-01)", () => {
       assert.ok(verdict.active.includes("coordinator"));
       assert.ok(verdict.active.includes("implementer"));
       assert.ok(!verdict.active.includes("navigator"));
+      assert.equal(verdict.parentController, "coordinator");
     }
   });
 
@@ -294,6 +328,94 @@ describe("CMD-ROUTING-01 role-routing (SEIT-ROUTING-01)", () => {
     assert.equal(verdict.ok, false);
     if (!verdict.ok) {
       assert.equal(verdict.code, "single_packet_forces_controllers");
+    }
+  });
+
+  it("positive: direct packet executes without Coordinator whether omitted, disabled, or enabled", () => {
+    for (const coordinatorRoute of /** @type {const} */ (["omitted", "disabled", "enabled"])) {
+      const verdict = selectRoute({
+        kind: "direct",
+        packetCount: 1,
+        coordinatorRoute,
+      });
+      assert.equal(verdict.ok, true, coordinatorRoute);
+      if (verdict.ok) {
+        assert.deepEqual(verdict.active, ["implementer"]);
+        assert.deepEqual(verdict.coordinators, []);
+        assert.ok(verdict.dormant.includes("coordinator"));
+        assert.equal(verdict.parentController, "orchestrator");
+        assert.ok(!verdict.active.includes("coordinator"));
+      }
+    }
+  });
+
+  it("positive: disabling Coordinator on a true direct packet is not a capability gap", () => {
+    const omitted = selectRoute({ kind: "direct", coordinatorRoute: "omitted" });
+    const disabled = selectRoute({ kind: "direct", coordinatorRoute: "disabled" });
+    assert.equal(omitted.ok, true);
+    assert.equal(disabled.ok, true);
+    if (omitted.ok) {
+      assert.equal(omitted.parentController, "orchestrator");
+      assert.ok(!omitted.active.includes("coordinator"));
+    }
+    if (disabled.ok) {
+      assert.equal(disabled.parentController, "orchestrator");
+      assert.ok(!disabled.active.includes("coordinator"));
+    }
+    const router = readFileSync(path.join(ROOT, "skills/bearing-lite/SKILL.md"), "utf8");
+    const onboarding = readFileSync(path.join(ROOT, "docs/guides/onboarding.md"), "utf8");
+    assert.match(router, /Direct packets never dispatch Coordinator/);
+    assert.match(router, /Orchestrator is the parent controller/);
+    assert.match(onboarding, /Disabling Coordinator on a true direct packet is not a capability gap/);
+    assert.match(onboarding, /explicit disabled choice/);
+  });
+
+  it("negative: implicit Coordinator dispatch on a direct packet is rejected", () => {
+    const verdict = selectRoute({
+      kind: "direct",
+      packetCount: 1,
+      implicitCoordinatorDispatch: true,
+      coordinatorRoute: "enabled",
+    });
+    assert.equal(verdict.ok, false);
+    if (!verdict.ok) {
+      assert.equal(verdict.code, "implicit_coordinator_dispatch");
+    }
+    const routing = readFileSync(
+      path.join(ROOT, "skills/bearing-lite/references/role-routing.mmd"),
+      "utf8"
+    );
+    assert.match(routing, /direct packet not yet/);
+    assert.match(routing, /coordinator wave not yet/);
+    assert.equal(routing.includes("A -->|not yet| E"), false);
+  });
+
+  it("negative: a coordinator wave with omitted or disabled Coordinator is a typed capability gap", () => {
+    for (const coordinatorRoute of /** @type {const} */ (["omitted", "disabled"])) {
+      const verdict = selectRoute({
+        kind: "coordinator_wave",
+        packetCount: 2,
+        sharedWaveEvidence: true,
+        coordinatorRoute,
+      });
+      assert.equal(verdict.ok, false, coordinatorRoute);
+      if (!verdict.ok) {
+        assert.equal(verdict.code, "typed_capability_gap");
+        assert.match(verdict.message, /not silent Orchestrator substitution/);
+      }
+    }
+  });
+
+  it("Coordinator enabled does not dispatch on a direct packet", () => {
+    const verdict = selectRoute({
+      kind: "direct",
+      packetCount: 1,
+      coordinatorRoute: "enabled",
+    });
+    assert.equal(verdict.ok, true);
+    if (verdict.ok) {
+      assert.ok(!verdict.active.includes("coordinator"));
+      assert.equal(verdict.parentController, "orchestrator");
     }
   });
 

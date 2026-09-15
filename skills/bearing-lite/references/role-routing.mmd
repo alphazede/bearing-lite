@@ -17,5 +17,6 @@ flowchart TD
     A -->|Assurance Test Engineer declared| V[Fresh Assurance Test Engineer]
     A -->|Reviewer declared| PK[Fresh Reviewer]
     A -->|Integration Engineer execution declared| S[Fresh Integration Engineer execution]
-    A -->|not yet| E
+    A -->|direct packet not yet| C
+    A -->|coordinator wave not yet| E
     V & PK & S -->|compact receipt| R
