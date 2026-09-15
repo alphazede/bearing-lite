@@ -50,3 +50,43 @@ that selection and must not invent V&V.
 
 Stale evidence is a receipt bound to a prior candidate or to a pre-repair
 evidence digest. Candidate mismatch fails closed.
+
+## Receipt bridge
+
+`hooks/verification-bridge.cjs` shapes the request and receipt this adapter
+judges. It is a pure evaluator on the same terms: no `HOOK_CLASS`, no host
+event, no download, and no process execution. It never runs a backend. The
+caller runs the planned command and hands the output back.
+
+Two steps, so request and receipt are built from one source and their
+`command_configuration` stays deeply equal:
+
+- `planVerification(spec)` validates the intent and returns the `request` plus
+  a runnable `argv`. Activation, authority, stage, expected result, claim, and
+  candidate must all be bound; nothing is defaulted.
+- `sealVerification({ plan, output, produced_by })` returns the receipt.
+  `backend_version` is read from the run, `evidence_digest` is SHA-256 over
+  canonical JSON of the backend output, and `authority` is carried from the
+  plan.
+
+Three refusals carry the contract:
+
+- **Generative operations are denied.** A backend operation that proposes
+  claims returns `generative_backend_operation_denied`. A money-risk assurance
+  gate confines artificial intelligence to build time, so a proposing model
+  cannot be in the evidence path. An unlisted operation returns
+  `backend_operation_unsupported` rather than being guessed.
+- **Analysis-derived verdicts cannot close a gate.** When a backend marks its
+  evidence as recovered rather than read, the receipt is sealed
+  `INCONCLUSIVE` with `evidence_tier: derived`, and the raw `backend_verdict`
+  stays visible. A heuristic answer is recorded, never promoted.
+  Directly observed evidence seals at `evidence_tier: observed`.
+- **A malformed claim is a typed rejection.** A claim the backend could not
+  parse returns `claim_malformed` with the backend's own detail, and no
+  receipt. Sealing it as `INCONCLUSIVE` would read as "not proven" and quietly
+  weaken the gate.
+
+Authority is never defaulted because one backend serves both levels. An
+Implementer, Light Implementer, or Integration Engineer execution run is
+`diagnostic` and cannot pass a gate; only an independent Test Engineer
+assurance session produces `assurance`.
