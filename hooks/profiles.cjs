@@ -110,12 +110,44 @@ function evaluateCatalogState(input) {
   return { outcome: "READY", reason: "profiles_live", path: profilesPath };
 }
 
+const DIGEST_EXCLUDED_KEYS = new Set(["cadence", "route", "authority"]);
+
 function deepCopy(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+function canonicalJson(value) {
+  if (value === null || typeof value !== "object") {
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) {
+    return "[" + value.map(canonicalJson).join(",") + "]";
+  }
+  const keys = Object.keys(value).sort();
+  return (
+    "{" +
+    keys.map((key) => JSON.stringify(key) + ":" + canonicalJson(value[key])).join(",") +
+    "}"
+  );
+}
+
+function digestMaterial(value) {
+  if (Array.isArray(value)) {
+    return value.map(digestMaterial);
+  }
+  if (!isPlainObject(value)) {
+    return value;
+  }
+  const out = {};
+  for (const key of Object.keys(value)) {
+    if (DIGEST_EXCLUDED_KEYS.has(key)) continue;
+    out[key] = digestMaterial(value[key]);
+  }
+  return out;
+}
+
 function sha256Hex(value) {
-  return crypto.createHash("sha256").update(JSON.stringify(value), "utf8").digest("hex");
+  return crypto.createHash("sha256").update(canonicalJson(value), "utf8").digest("hex");
 }
 
 function identityComplete(primary) {
@@ -130,12 +162,21 @@ function identityComplete(primary) {
   );
 }
 
+function isWellFormedFallback(entry) {
+  return (
+    identityComplete(entry) &&
+    typeof entry.condition === "string" &&
+    entry.condition.length > 0
+  );
+}
+
 function isWellFormedRoute(route) {
   return (
     isPlainObject(route) &&
     typeof route.enabled === "boolean" &&
     identityComplete(route.primary) &&
-    Array.isArray(route.ordered_fallbacks)
+    Array.isArray(route.ordered_fallbacks) &&
+    route.ordered_fallbacks.every(isWellFormedFallback)
   );
 }
 
@@ -169,15 +210,21 @@ function evaluateTddTestImplementerRoute(input) {
 
 /**
  * Deep-copy selected routes and fallback order; bind a SHA-256 digest of that copy.
+ * TDD missing/disabled/malformed Test Implementer fails closed with no snapshot or digest.
+ * Digest is canonical JSON of selected entries with fallback order; excludes cadence, route, and authority.
  * @param {{ profile?: object }} [input]
- * @returns {{ snapshot: { roles: object }, digest: string }}
+ * @returns {{ snapshot: { roles: object }, digest: string } | { outcome: string, onboard: boolean }}
  */
 function freezeSelectedRoutes(input) {
   const profile = (input && input.profile) || {};
+  const classified = evaluateTddTestImplementerRoute({ profile, action: "freeze" });
+  if (classified.outcome === "OWNER_DECISION_REQUIRED") {
+    return failClosedTddRoute();
+  }
   const roles = isPlainObject(profile.roles) ? deepCopy(profile.roles) : {};
   return {
     snapshot: { roles },
-    digest: sha256Hex(roles),
+    digest: sha256Hex(digestMaterial(roles)),
   };
 }
 
