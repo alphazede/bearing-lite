@@ -61,6 +61,16 @@ function assertFailClosedNoCopy(result, action) {
   assert.equal(copied, undefined, `${action} must not invent a Test Implementer route`);
 }
 
+function assertFreezeFailClosed(result, label) {
+  assertFailClosedNoCopy(result, label);
+  assert.equal(result.digest, undefined, `${label} must not bind a digest of the unusable route`);
+  assert.equal(
+    result.snapshot,
+    undefined,
+    `${label} must not return a frozen snapshot of the unusable route`
+  );
+}
+
 describe("Issue 97 Test Implementer TDD route", () => {
   it("schema exposes optional roles.test_implementer as a closed $ref route", () => {
     const schema = JSON.parse(readFileSync(SCHEMA_PATH, "utf8"));
@@ -156,6 +166,23 @@ describe("Issue 97 Test Implementer TDD route", () => {
     }
   });
 
+  it("selecting, freezing, or dispatching TDD with malformed test_implementer fallback entries fails closed", () => {
+    assert.equal(typeof profilesHook.evaluateTddTestImplementerRoute, "function");
+    const gamma = loadFixture().profiles["fixture-gamma"];
+    const identityMissingCondition = clone(gamma.roles.test_implementer.ordered_fallbacks[0]);
+    delete identityMissingCondition.condition;
+    const malformedFallbackLists = [[null], [{}], [identityMissingCondition]];
+    const actions = [...TDD_ROUTE_ACTIONS, "migrate"];
+    for (const fallbacks of malformedFallbackLists) {
+      const profile = clone(gamma);
+      profile.roles.test_implementer.ordered_fallbacks = fallbacks;
+      for (const action of actions) {
+        const result = profilesHook.evaluateTddTestImplementerRoute({ profile, action });
+        assertFailClosedNoCopy(result, `${action} ${JSON.stringify(fallbacks)}`);
+      }
+    }
+  });
+
   it("single_implementer without test_implementer stays dispatchable and ignores a present route", () => {
     assert.equal(typeof profilesHook.evaluateTddTestImplementerRoute, "function");
     const alpha = clone(loadFixture().profiles["fixture-alpha"]);
@@ -200,6 +227,59 @@ describe("Issue 97 Test Implementer TDD route", () => {
     assert.equal(frozen.digest, originalDigest);
     const mutated = profilesHook.freezeSelectedRoutes({ profile });
     assert.notEqual(mutated.digest, originalDigest);
+  });
+
+  it("freezeSelectedRoutes fails closed for missing, disabled, or malformed TDD test_implementer", () => {
+    assert.equal(typeof profilesHook.freezeSelectedRoutes, "function");
+    const missing = clone(loadFixture().profiles["fixture-beta"]);
+    const disabled = clone(loadFixture().profiles["fixture-gamma"]);
+    disabled.roles.test_implementer.enabled = false;
+    const malformed = clone(loadFixture().profiles["fixture-gamma"]);
+    malformed.roles.test_implementer = { enabled: true };
+    const cases = [
+      ["missing", missing],
+      ["disabled", disabled],
+      ["malformed", malformed],
+    ];
+    for (const [label, profile] of cases) {
+      const result = profilesHook.freezeSelectedRoutes({ profile });
+      assertFreezeFailClosed(result, `freeze ${label}`);
+    }
+  });
+
+  it("configuration digest is unchanged when an identity's JSON keys are reordered", () => {
+    assert.equal(typeof profilesHook.freezeSelectedRoutes, "function");
+    const baseline = clone(loadFixture().profiles["fixture-gamma"]);
+    const original = profilesHook.freezeSelectedRoutes({ profile: baseline });
+    assert.match(original.digest, /^[0-9a-f]{64}$/);
+    const reordered = clone(loadFixture().profiles["fixture-gamma"]);
+    const primary = reordered.roles.test_implementer.primary;
+    reordered.roles.test_implementer.primary = {
+      reasoning: primary.reasoning,
+      model: primary.model,
+      harness: primary.harness,
+    };
+    const reorderedFrozen = profilesHook.freezeSelectedRoutes({ profile: reordered });
+    assert.equal(
+      reorderedFrozen.digest,
+      original.digest,
+      "reordering an identity's JSON keys must not change the digest"
+    );
+  });
+
+  it("configuration digest excludes reviewer cadence", () => {
+    assert.equal(typeof profilesHook.freezeSelectedRoutes, "function");
+    const baseline = clone(loadFixture().profiles["fixture-gamma"]);
+    const original = profilesHook.freezeSelectedRoutes({ profile: baseline });
+    assert.match(original.digest, /^[0-9a-f]{64}$/);
+    const cadenceOnly = clone(loadFixture().profiles["fixture-gamma"]);
+    cadenceOnly.roles.reviewer.cadence = "lifecycle";
+    const cadenceFrozen = profilesHook.freezeSelectedRoutes({ profile: cadenceOnly });
+    assert.equal(
+      cadenceFrozen.digest,
+      original.digest,
+      "changing only reviewer cadence must not change the digest"
+    );
   });
 
   it("migration asks for Test Implementer and does not copy another role", () => {
