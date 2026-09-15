@@ -7,7 +7,7 @@ authority differs.
 
 | Role | Responsibility |
 |---|---|
-| Orchestrator | Owner conversation, lease, sequencing, structural readiness |
+| Orchestrator | Owner conversation, lease, sequencing, structural readiness; parent controller and bookkeeper on a direct packet |
 | Intake | Repository and plan-directory confirmation |
 | Architectural Alignment | Workspace map and architecture extract |
 | Scope Definition | One owner question at a time until shared understanding |
@@ -22,7 +22,7 @@ authority differs.
 
 | Role | Responsibility |
 |---|---|
-| Coordinator | One wave; proven-independent lanes; no nested coordinator |
+| Coordinator | Optional one-wave controller; proven-independent lanes; no nested coordinator. Dispatched only for a one-wave need; never on a direct packet |
 | Implementer | Bounded packet. Test Implementer writes tests first when `tdd`; Product Implementer writes product. `single_implementer` writes both. Neither self-certifies. |
 | Light Implementer | Mechanical `work_class: light` slices |
 | Test Engineer (assurance) | Independent V&V of the exact candidate. Default cadence `phase`. |

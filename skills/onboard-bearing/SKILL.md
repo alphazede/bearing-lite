@@ -32,8 +32,11 @@ user's explicit instruction. Preserves every unaddressed existing value.
 3. Ask settings one at a time with no preselected value: named role/session
    routes and fallbacks, session enablement, development strategy,
    planning review, assurance cadence, concurrency, clean-session, holds, and
-   optional Reverify. Declining Reverify or its download persists
-   `reverify.enabled: false` for that named profile.
+   optional Reverify. Enabling Coordinator adds value only for a one-wave need
+   (two or more proven-independent packets, shared wave evidence, or aggregate
+   repair ownership); permit an explicit disabled choice. A disabled Coordinator
+   on a true direct packet is not a capability gap. Declining Reverify or its
+   download persists `reverify.enabled: false` for that named profile.
 4. Write only explicit choices atomically. Validate Draft 2020-12 readback
    against `schemas/profiles.schema.json`. Store no credentials.
 

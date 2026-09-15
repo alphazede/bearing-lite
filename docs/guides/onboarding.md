@@ -16,6 +16,17 @@ enablement, development strategy, planning review, assurance cadence,
 concurrency, planning-to-implementation clean-session, holds, and optional
 Reverify. No value is preselected.
 
+Enabling Coordinator adds value only when the approved implementation graph
+has a one-wave need: two or more proven-independent packets in the same
+wave, shared wave evidence that must be integrated once per wave, or
+aggregate repair ownership across packets in that wave.
+`roles.coordinator.enabled` means the route is available, not that every
+packet gets a Coordinator. Direct packets never dispatch Coordinator; the
+Orchestrator is the parent controller. Permit an explicit disabled choice.
+Disabling Coordinator on a true direct packet is not a capability gap. A
+wave that needs Coordinator while the route is omitted or disabled is a
+typed capability gap, not silent Orchestrator substitution.
+
 ## Reverify
 
 If you want Reverify and it is unavailable, onboard-bearing asks whether to

@@ -77,8 +77,8 @@ Bearing Lite ships no Test Engineering evaluator and no Test Engineering
 method content. The adapter resolves the `test-engineering` capability, loads
 the evaluator at `skills/test-engineering/hooks/te-evaluator.cjs` when that
 capability is present in the workspace, builds the request from the real Git
-checkout and the coordinator-authored plan, and returns the evaluator verdict
-unchanged.
+checkout and the visible coordinator- or orchestrator-authored plan, and
+returns the evaluator verdict unchanged.
 
 | Capability state | Class result |
 |---|---|
@@ -86,8 +86,9 @@ unchanged.
 | selected or required, evaluator absent | `UNAVAILABLE` with `code: typed_capability_gap`; a typed gap, never silent success |
 | selected or required, evaluator loaded | the evaluator verdict, verbatim |
 
-Trusted assignment comes from the visible coordinator-authored plan, never
-from the tool payload or the transcript. Candidate state comes from the
+Trusted assignment comes from the visible coordinator- or
+orchestrator-authored plan, never from the tool payload or the transcript.
+Candidate state comes from the
 installed Git executable: the committed `diff_base..HEAD` change plus the
 working tree, scoped to the trusted write set. An empty trusted scope covers
 nothing, so unrelated shared dirt never enters the candidate. Derived runtime

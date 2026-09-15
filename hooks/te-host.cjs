@@ -10,7 +10,8 @@
  *
  * Lite owns the adapter, never the policy. This module maps the host event to
  * a class, builds the request from real state — the installed Git checkout and
- * the coordinator-authored plan, never the writer's own tool payload — and
+ * the visible coordinator- or orchestrator-authored plan, never the writer's
+ * own tool payload — and
  * hands the request to the evaluator loaded by capability. The verdict comes
  * back verbatim. When the capability is inactive the class fails open; when it
  * is activated but unavailable the result is a typed gap, never silent
@@ -229,9 +230,9 @@ const EMPTY_ASSIGNMENT = Object.freeze({
 });
 
 /**
- * Trusted assignment and diff base, taken only from the coordinator-authored
- * plan in the workspace. The writer's own tool payload and transcript are
- * never a source here.
+ * Trusted assignment and diff base, taken only from the visible coordinator-
+ * or orchestrator-authored plan in the workspace, depending on lifecycle kind.
+ * The writer's own tool payload and transcript are never a source here.
  *
  * `authority_id` and `candidate_revision` are the evaluator's spellings for
  * the plan's own `authority` and checkout-lease revision. They are the same

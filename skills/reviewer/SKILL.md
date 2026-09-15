@@ -46,10 +46,11 @@ Return `BLOCK`, `REPAIR_REQUIRED`, `ACCEPT_WITH_FINDINGS`, or `ACCEPT` with
 verdict, candidate_ref, changed_paths, tests, findings, and blocker.
 `ACCEPT`, `ACCEPT_WITH_FINDINGS`, and `BLOCK` are terminal. `REPAIR_REQUIRED`
 permits bounded correction. `ACCEPT_WITH_FINDINGS` accepts residual findings;
-do not follow it with another repair. Coordinators enforce
+do not follow it with another repair. The parent controller
+(Orchestrator on a direct packet, Coordinator on a coordinator wave) enforces
 `max_assurance_rounds` of 1 per declared phase or wave. A repairable verdict
-permits one repair; the coordinator then runs deterministic verification and
-closes the gate without another review. Do not review or repair that declared
+permits one repair; the parent controller then runs deterministic verification
+and closes the gate without another review. Do not review or repair that declared
 unit again. The next distinct declared phase or wave carries its own budget. A
 failed repair or scope change returns to Owner Authority.
 

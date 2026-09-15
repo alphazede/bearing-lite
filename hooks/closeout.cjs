@@ -62,7 +62,7 @@ const RECOVERY_INVALID_VERDICT =
   "Replace verdict with a closed role-return token: " +
   [...VERDICT_VALUES].join(", ");
 const RECOVERY_COMPLETE =
-  "Handoff is complete; parent coordinator may advance using the project plan only";
+  "Handoff is complete; parent controller may advance using the project plan only (Orchestrator on a direct packet, Coordinator on a coordinator wave)";
 const RECOVERY_BLOCK_COMPLETION =
   "Do not mark COMPLETE; restore missing assurance, candidate match, or handoff fields first. Repair and owner channels remain open";
 const RECOVERY_CHANNEL =

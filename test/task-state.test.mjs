@@ -35,18 +35,18 @@ export const DECLARED_STATES = Object.freeze([
 
 /** Active owners by state (from task-state.md). */
 export const STATE_OWNERS = Object.freeze({
-  PROPOSED: "Parent coordinator",
-  READY: "Parent coordinator",
-  WAITING_ON: "Parent coordinator",
-  IN_PROGRESS: "Assigned worker or coordinator",
-  EVIDENCE_READY: "Parent coordinator",
+  PROPOSED: "Parent controller",
+  READY: "Parent controller",
+  WAITING_ON: "Parent controller",
+  IN_PROGRESS: "Assigned worker or parent controller",
+  EVIDENCE_READY: "Parent controller",
   VALIDATING: "Assurance Test Engineer",
   REVIEWING: "Reviewer when required",
   ACCEPTANCE:
-    "Integration Engineer execution, Owner Authority, or parent coordinator when required_assurance is none",
-  CORRECTION_REQUIRED: "Orchestrator or nearest parent coordinator",
+    "Integration Engineer execution, Owner Authority, or parent controller when required_assurance is none",
+  CORRECTION_REQUIRED: "Orchestrator or nearest parent controller",
   OWNER_DECISION_REQUIRED: "Owner Authority",
-  COMPLETE: "Parent coordinator after assurance",
+  COMPLETE: "Parent controller after assurance",
   CANCELLED: "Owner Authority or authorized parent",
 });
 
@@ -151,7 +151,7 @@ describe("CMD-STATE-01 task-state (SEIT-STATE-01)", () => {
   /**
    * Regression: product ACCEPTANCE active owner must preserve Integration
    * Engineer execution and Owner Authority and conditionally name parent
-   * coordinator only for required_assurance: none.
+   * controller only for required_assurance: none.
    */
   it("VALIDATING is owned by Assurance Test Engineer, not Validator", () => {
     const row = TASK_STATE.match(/\|\s*`VALIDATING`\s*\|\s*([^|\n]+)\|/);
@@ -175,7 +175,7 @@ describe("CMD-STATE-01 task-state (SEIT-STATE-01)", () => {
     );
   });
 
-  it("ACCEPTANCE names parent coordinator only when required_assurance is none", () => {
+  it("ACCEPTANCE names parent controller only when required_assurance is none", () => {
     const row = TASK_STATE.match(/\|\s*`ACCEPTANCE`\s*\|\s*([^|\n]+)\|/);
     assert.ok(row, "ACCEPTANCE owner table row must exist");
     const ownerCell = row[1].trim();
@@ -184,22 +184,34 @@ describe("CMD-STATE-01 task-state (SEIT-STATE-01)", () => {
     assert.match(ownerCell, /Integration Engineer execution/);
     assert.match(ownerCell, /Owner Authority/);
 
-    // Conditionally add parent coordinator for the none-assurance path only.
-    assert.match(ownerCell, /parent coordinator/i);
+    // Conditionally add parent controller for the none-assurance path only.
+    assert.match(ownerCell, /parent controller/i);
     assert.match(
       ownerCell,
       /required_assurance[`'\s]*is[`'\s]*`?none`?|required_assurance:\s*none/i,
-      "parent coordinator must be gated on required_assurance is none"
+      "parent controller must be gated on required_assurance is none"
     );
 
-    // Must not claim parent coordinator as the unconditional sole owner.
+    // Must not claim parent controller as the unconditional sole owner.
     assert.notEqual(
       ownerCell.replace(/`/g, "").trim().toLowerCase(),
-      "parent coordinator"
+      "parent controller"
     );
+    assert.doesNotMatch(ownerCell, /parent coordinator/i);
 
     // Fixture owner constant stays synchronized with the product table.
     assert.equal(STATE_OWNERS.ACCEPTANCE, ownerCell.replace(/`/g, "").trim());
+  });
+
+  it("parent controller is Orchestrator on a direct packet and Coordinator on a coordinator wave", () => {
+    assert.match(TASK_STATE, /parent controller is the Orchestrator on a direct packet/i);
+    assert.match(TASK_STATE, /Coordinator on a coordinator wave/i);
+    assert.match(TASK_STATE, /Direct packets never dispatch Coordinator/i);
+    assert.match(TASK_STATE, /roles\.coordinator\.enabled/i);
+    assert.match(TASK_STATE, /typed capability gap/i);
+    assert.match(TASK_STATE, /not silent Orchestrator substitution/i);
+    assert.match(TASK_STATE, /Implementer must not self-certify/i);
+    assert.doesNotMatch(TASK_STATE, /One parent coordinator writes/);
   });
 
   it("covers every legal transition with owners", () => {
