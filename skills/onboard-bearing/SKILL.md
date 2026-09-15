@@ -45,6 +45,9 @@ user's explicit instruction. Preserves every unaddressed existing value.
    ownership); permit an explicit disabled choice. A disabled Coordinator
    on a true direct packet is not a capability gap. Declining Reverify or its
    download persists `reverify.enabled: false` for that named profile.
+   Ask whether a parallel review capability is enabled and required
+   (`review.parallel_review`); an explicit disabled choice is not a capability
+   gap, and its provider, model and credentials stay in its own tooling.
 4. Write only explicit choices atomically. Validate Draft 2020-12 readback
    against `schemas/profiles.schema.json`. Store no credentials.
 

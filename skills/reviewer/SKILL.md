@@ -15,8 +15,7 @@ Independent defect assurance, outside the mutation-authority ladder.
 ## Inputs and match
 
 - **Inputs:** approved baseline, exact candidate ref and diff, author identity,
-  relevant evidence, declared cadence boundary, review focus, and
-  compact return schema.
+  relevant evidence, declared cadence boundary, review focus, return schema.
 - **Match:** Reviewer is declared and the configured slice, phase, or
   lifecycle candidate is stable at that boundary. Default cadence is `phase`.
 - **Non-match:** unconfigured slice or round boundary, candidate is
@@ -27,18 +26,22 @@ Independent defect assurance, outside the mutation-authority ladder.
 
 1. Start a fresh session; reject author identity, author ancestry, candidate
    discontinuity, or any boundary other than the declared cadence unit.
-   Consume the Assurance
-   Test Engineer receipt. Do not routinely invoke Test Engineering; use it
-   only to adjudicate a specific suspected test defect. Deterministic
-   verification may support a suspected defect; author diagnostics cannot
-   satisfy assurance, and post-repair closure adds no review round.
+   Consume the Assurance Test Engineer receipt. Invoke Test Engineering only to
+   adjudicate a specific suspected test defect. Deterministic verification may
+   support a suspected defect; author diagnostics cannot satisfy assurance, and
+   post-repair closure adds no review round.
 2. Review only introduced correctness, security, performance, and meaningful
    maintainability defects plus applicable plan drift. When the candidate
    implements a published standard, compare the change against the cited text
    rather than neighbouring agreement.
 3. Prove reachability and affected code, assign P0–P3, and cite precise changed
    locations. Avoid speculation and nits.
-4. Return a patch verdict and repair targets. Never implement a finding.
+4. With a parallel review capability configured: launch it, then freeze your own
+   first pass before reading its findings. Reconciliation refuses an unfrozen or
+   altered frozen set. Keep each finding's provenance and surface severity
+   conflicts. The capability is a tool, never a role, and never the verdict.
+   Activated but unavailable is a typed capability gap, not equivalent coverage.
+5. Return a patch verdict and repair targets. Never implement a finding.
 
 ## Return and recovery
 
@@ -50,8 +53,8 @@ do not follow it with another repair. The parent controller
 (Orchestrator on a direct packet, Coordinator on a coordinator wave) enforces
 `max_assurance_rounds` of 1 per declared phase or wave. A repairable verdict
 permits one repair; the parent controller then runs deterministic verification
-and closes the gate without another review. Do not review or repair that declared
-unit again. The next distinct declared phase or wave carries its own budget. A
-failed repair or scope change returns to Owner Authority.
+and closes the gate without another review. Do not review or repair that
+that unit again. The next distinct declared unit carries its own budget.
+A failed repair or scope change returns to Owner Authority.
 
 Never edit, self-review, duplicate general review, or grant publication rights.
