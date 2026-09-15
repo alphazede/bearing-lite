@@ -355,6 +355,28 @@
               }
             }
           }
+        },
+        "review": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Optional Reviewer capabilities. A capability is a tool the Reviewer invokes, never a role and never an authority source.",
+          "properties": {
+            "parallel_review": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "enabled"
+              ],
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "required": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
         }
       }
     }

@@ -59,6 +59,7 @@ const EVALUATOR_MODULES = new Set([
   "profiles.cjs", // S1 profile catalog / MIGRATION_REQUIRED classifier
   "verification.cjs", // S2 deterministic verification adapter; no HOOK_CLASS
   "verification-bridge.cjs", // #105 receipt bridge; no HOOK_CLASS, no execution
+  "review-capability.cjs", // #104 parallel review capability; no HOOK_CLASS
 ]);
 /** Additional TE class modules, allowed but not yet required by this case. */
 const TE_CLASS_FILES = Object.freeze(["te-capability.cjs", "te-host.cjs"]);

@@ -31,6 +31,15 @@ Disabling Coordinator on a true direct packet is not a capability gap. A
 wave that needs Coordinator while the route is omitted or disabled is a
 typed capability gap, not silent Orchestrator substitution.
 
+## Parallel review
+
+An optional second detection path the Reviewer may run beside its own review.
+Ask whether to enable it and whether it is required; permit an explicit
+disabled choice, which is not a capability gap. Bearing Lite records only those
+two booleans under `review.parallel_review`. The capability keeps its own
+provider, model, and credential configuration in its own tooling; onboard-bearing
+never selects them.
+
 ## Reverify
 
 If you want Reverify and it is unavailable, onboard-bearing asks whether to
