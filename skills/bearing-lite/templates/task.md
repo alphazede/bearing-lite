@@ -132,6 +132,12 @@ Field rules:
 
 `required_assurance` lists only roles that must accept the same candidate (for example `Assurance Test Engineer`, and `Reviewer` or `Integration Engineer execution` when their triggers apply).
 
+The parent controller resolves each declared capability once and states
+`enabled`, `required`, and `available` in the packet. A worker never probes for
+a capability: discovery spends a turn on plumbing before any work starts, and a
+capability the packet does not declare is not used. Declared but unavailable is
+a typed capability gap, never silently equivalent coverage.
+
 Test Implementer write set is tests and approved fixtures only. Product
 write set excludes tests and must not weaken independently authored tests.
 Neither self-certifies.
