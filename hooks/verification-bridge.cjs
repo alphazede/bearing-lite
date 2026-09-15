@@ -12,6 +12,14 @@
  * no process execution. A backend is never a role and availability never
  * selects one for a task.
  *
+ * The caller states each backend's invocation shape and operation policy in
+ * the spec. The bridge validates and assembles; it knows no tool's flags and
+ * no backend's subcommands, so a backend with a different command layout is
+ * planned the same way. A caller-supplied command line is never read, so raw
+ * text cannot bypass the operation policy. The shape and the values are stored
+ * together in `command_configuration`, so a rerun is reproducible from the
+ * receipt alone.
+ *
  * Three rules carry the weight:
  *   - A generative backend operation is denied. An operation that proposes the
  *     claims it then verifies is circular, so it cannot produce independent
@@ -37,12 +45,16 @@ const CANDIDATE_REQUIRED = Object.freeze(["candidate_ref", "candidate_revision"]
 const SHA256 = /^[0-9a-f]{64}$/;
 
 /**
- * Backend operations this bridge will plan. Read-only inspection only.
- * A proposing or rewriting operation is denied rather than omitted, so the
- * refusal is explicit instead of looking like an unsupported name.
+ * Slots a caller template may use. Each names a value the bridge substitutes;
+ * any other template entry passes through untouched and is never interpreted.
+ * A template entry is either exactly one of these slots or a literal: entries
+ * mixing literal text with braces are rejected, so a validated value cannot be
+ * smuggled in beside the checked one.
  */
-const ALLOWED_OPERATIONS = Object.freeze(["verify"]);
-const DENIED_OPERATIONS = Object.freeze(["reconstruct"]);
+const SLOT_OPERATION = "{operation}";
+const SLOT_TARGET = "{target}";
+const SLOT_CLAIM = "{claim}";
+const SLOT_ARGS = "{args}";
 
 /** Marker a backend uses to say a verdict was recovered, not read. */
 const DERIVED_MARKER = /^\s*DERIVED\b/i;
@@ -102,11 +114,16 @@ function candidateFields(candidate) {
  * the resulting receipt must match. Nothing is executed here.
  *
  * @param {{
- *   backend?: string, backend_operation?: string, claim_id?: string,
- *   claim_type?: string, claim?: object, target?: string, candidate?: object,
- *   stage?: string, authority?: string, expected_result?: string,
- *   selected?: boolean, required?: boolean, args?: string[]
+ *   backend?: string, backend_operation?: string,
+ *   backend_operations?: {allowed?: string[], denied?: string[]},
+ *   invocation?: {executable?: string, argv_template?: string[]},
+ *   claim_id?: string, claim_type?: string, claim?: object, target?: string,
+ *   candidate?: object, stage?: string, authority?: string,
+ *   expected_result?: string, selected?: boolean, required?: boolean,
+ *   args?: string[]
  * }} [spec]
+ * A caller-supplied `argv` is never read: the runnable command is always
+ * assembled from the validated operation, target, claim, and template.
  * @returns {{outcome: string, reason?: string, request?: object, argv?: string[]}}
  */
 function planVerification(spec) {
@@ -114,12 +131,29 @@ function planVerification(spec) {
 
   if (!nonempty(spec.backend)) return fail("NEEDS_MORE_EVIDENCE", "backend_unspecified");
 
+  // Operation policy travels with the caller: each backend declares which
+  // operations read evidence and which would propose it. The bridge enforces
+  // the declared policy; it carries no backend's operation list itself. A
+  // proposing operation is denied rather than omitted, so the refusal stays
+  // explicit instead of looking like an unsupported name.
+  const policy = spec.backend_operations;
+  if (
+    !isPlainObject(policy) ||
+    !Array.isArray(policy.allowed) ||
+    policy.allowed.length === 0 ||
+    !policy.allowed.every(nonempty) ||
+    !Array.isArray(policy.denied) ||
+    !policy.denied.every(nonempty)
+  ) {
+    return fail("NEEDS_MORE_EVIDENCE", "backend_operations_unbound");
+  }
+
   const operation = spec.backend_operation;
   if (!nonempty(operation)) return fail("NEEDS_MORE_EVIDENCE", "backend_operation_unspecified");
-  if (DENIED_OPERATIONS.includes(operation)) {
+  if (policy.denied.includes(operation)) {
     return fail("REJECT", "generative_backend_operation_denied");
   }
-  if (!ALLOWED_OPERATIONS.includes(operation)) {
+  if (!policy.allowed.includes(operation)) {
     return fail("REJECT", "backend_operation_unsupported");
   }
 
@@ -155,18 +189,67 @@ function planVerification(spec) {
     return fail("NEEDS_MORE_EVIDENCE", "activation_unbound");
   }
 
+  // The invocation shape is the caller's: an executable plus a template whose
+  // slots the bridge fills with the validated values. Literals pass through
+  // uninterpreted. Each run-critical value appears exactly once, so the stored
+  // shape plus the stored values rebuild the command deterministically.
+  const invocation = spec.invocation;
+  const template = isPlainObject(invocation) ? invocation.argv_template : undefined;
+  if (!isPlainObject(invocation) || !nonempty(invocation.executable)) {
+    return fail("NEEDS_MORE_EVIDENCE", "invocation_unbound");
+  }
+  if (
+    invocation.executable.includes("{") ||
+    invocation.executable.includes("}") ||
+    !Array.isArray(template)
+  ) {
+    return fail("NEEDS_MORE_EVIDENCE", "invocation_unbound");
+  }
+  const slots = { operation: 0, target: 0, claim: 0, args: 0 };
+  for (const entry of template) {
+    if (typeof entry !== "string" || entry.length === 0) {
+      return fail("NEEDS_MORE_EVIDENCE", "invocation_unbound");
+    }
+    if (entry === SLOT_OPERATION) slots.operation += 1;
+    else if (entry === SLOT_TARGET) slots.target += 1;
+    else if (entry === SLOT_CLAIM) slots.claim += 1;
+    else if (entry === SLOT_ARGS) slots.args += 1;
+    else if (entry.includes("{") || entry.includes("}")) {
+      return fail("NEEDS_MORE_EVIDENCE", "invocation_unbound");
+    }
+  }
+  if (slots.operation !== 1 || slots.target !== 1 || slots.claim !== 1 || slots.args > 1) {
+    return fail("NEEDS_MORE_EVIDENCE", "invocation_unbound");
+  }
+
   const extraArgs = Array.isArray(spec.args) ? spec.args.map(String) : [];
   const claimJson = canonicalJson(spec.claim);
-  const argv = [spec.backend, operation, spec.target, "--claim", claimJson, "--json", ...extraArgs];
+  const argv = [invocation.executable];
+  let spliced = false;
+  for (const entry of template) {
+    if (entry === SLOT_OPERATION) argv.push(operation);
+    else if (entry === SLOT_TARGET) argv.push(spec.target);
+    else if (entry === SLOT_CLAIM) argv.push(claimJson);
+    else if (entry === SLOT_ARGS) {
+      argv.push(...extraArgs);
+      spliced = true;
+    } else argv.push(entry);
+  }
+  if (!spliced) argv.push(...extraArgs);
 
   // The adapter requires request and receipt command_configuration to be deeply
-  // equal, so both are built once, here.
+  // equal, so both are built once, here. The invocation shape is stored with
+  // the values, so the command rebuilds from the receipt alone.
   const command_configuration = {
     backend: spec.backend,
     operation,
     target: spec.target,
     claim: claimJson,
     args: extraArgs,
+    invocation: {
+      executable: invocation.executable,
+      argv_template: [...template],
+    },
   };
 
   const request = {
@@ -286,6 +369,4 @@ module.exports = {
   planVerification,
   sealVerification,
   canonicalJson,
-  ALLOWED_OPERATIONS,
-  DENIED_OPERATIONS,
 };
