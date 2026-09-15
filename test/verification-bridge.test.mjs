@@ -31,6 +31,11 @@ function spec(extra = {}) {
   return {
     backend: "reverify",
     backend_operation: "verify",
+    backend_operations: { allowed: ["verify"], denied: ["reconstruct"] },
+    invocation: {
+      executable: "reverify",
+      argv_template: ["{operation}", "{target}", "--claim", "{claim}", "--json"],
+    },
     claim_id: "SEIT-BDL-BIN-001",
     claim_type: "binary_section",
     claim: { kind: "section_present", name: ".text" },
@@ -43,6 +48,58 @@ function spec(extra = {}) {
     required: true,
     ...extra,
   };
+}
+
+/** Rebuild the runnable command from a stored command_configuration alone. */
+function reassemble(commandConfiguration) {
+  const { invocation, operation, target, claim, args } = commandConfiguration;
+  const out = [invocation.executable];
+  for (const entry of invocation.argv_template) {
+    if (entry === "{operation}") out.push(operation);
+    else if (entry === "{target}") out.push(target);
+    else if (entry === "{claim}") out.push(claim);
+    else if (entry === "{args}") out.push(...args);
+    else out.push(entry);
+  }
+  if (!invocation.argv_template.includes("{args}")) out.push(...args);
+  return out;
+}
+
+/** A differently-shaped backend: checksum identity over a target artifact. */
+function checksumSpec(extra = {}) {
+  return {
+    backend: "checksum",
+    backend_operation: "digest",
+    backend_operations: { allowed: ["digest"], denied: ["synthesize"] },
+    invocation: {
+      executable: "sha256sum",
+      argv_template: ["{target}", "{operation}", "--expect", "{claim}"],
+    },
+    claim_id: "SEIT-BDL-BIN-002",
+    claim_type: "binary_identity",
+    claim: { kind: "checksum_match", sha256: DIGEST },
+    target: "firmware.bin",
+    candidate,
+    stage: "assurance",
+    authority: "assurance",
+    expected_result: "VERIFIED",
+    selected: true,
+    required: true,
+    ...extra,
+  };
+}
+
+function checksumOutput(extra = {}) {
+  const result = {
+    kind: "checksum_match",
+    verdict: "VERIFIED",
+    detail: "checksum matches",
+    evidence: {},
+    ...(extra.result || {}),
+  };
+  const out = { backend_version: "checksum 1.2.3", results: [result] };
+  delete extra.result;
+  return { ...out, ...extra };
 }
 
 /** A backend result as reverify --json emits it. */
@@ -80,6 +137,19 @@ describe("verification receipt bridge (#105)", () => {
 
   it("plans a request and the exact command configuration to run", () => {
     const plan = planned();
+    assert.deepEqual(plan.argv, [
+      "reverify",
+      "verify",
+      "firmware.bin",
+      "--claim",
+      bridge.canonicalJson({ kind: "section_present", name: ".text" }),
+      "--json",
+    ]);
+    assert.deepEqual(
+      reassemble(plan.request.command_configuration),
+      plan.argv,
+      "the receipt alone rebuilds the command",
+    );
     assert.equal(plan.request.kind, "request");
     assert.equal(plan.request.schema_version, "1");
     assert.equal(plan.request.claim_id, "SEIT-BDL-BIN-001");
@@ -274,12 +344,143 @@ describe("verification receipt bridge (#105)", () => {
     assert.equal(verdict.reason, "diagnostic_cannot_satisfy_assurance_gate");
   });
 
-  it("is backend neutral: it names no backend and no engine in its logic", () => {
+  it("is invocation-shape independent: the caller template fixes argv layout, not the bridge", () => {
     const source = require("node:fs").readFileSync(
       path.join(ROOT, "hooks/verification-bridge.cjs"),
       "utf8",
     );
     const code = source.replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, "");
     assert.doesNotMatch(code, /reverify|angr|capstone|unicorn|lief/i);
+    // A fixed layout returning here fails this test: the old hardcoded flags
+    // must not survive in the bridge in any form.
+    assert.doesNotMatch(code, /--claim|--json/);
+
+    const claimed = bridge.canonicalJson({ kind: "section_present", name: ".text" });
+    const alt = ["{target}", "{operation}", "--expect", "{claim}"];
+    const plan = planned({
+      invocation: { executable: "reverify", argv_template: alt },
+    });
+    assert.deepEqual(plan.argv, ["reverify", "firmware.bin", "verify", "--expect", claimed]);
+    assert.deepEqual(plan.request.command_configuration.invocation.argv_template, alt);
+    assert.deepEqual(
+      reassemble(plan.request.command_configuration),
+      plan.argv,
+      "an unfamiliar layout still rebuilds from the receipt alone",
+    );
+
+    // Extra args splice at the declared slot, or append when it is absent.
+    const spliced = planned({
+      invocation: {
+        executable: "reverify",
+        argv_template: ["{operation}", "{args}", "{target}", "{claim}"],
+      },
+      args: ["--strict"],
+    });
+    assert.deepEqual(spliced.argv, [
+      "reverify",
+      "verify",
+      "--strict",
+      "firmware.bin",
+      claimed,
+    ]);
+    const appended = planned({ args: ["--strict"] });
+    assert.equal(appended.argv.at(-1), "--strict");
+  });
+
+  it("requires the caller-stated operation policy and invocation shape", () => {
+    const noPolicy = bridge.planVerification(spec({ backend_operations: undefined }));
+    assert.equal(noPolicy.outcome, "NEEDS_MORE_EVIDENCE");
+    assert.equal(noPolicy.reason, "backend_operations_unbound");
+
+    const emptyPolicy = bridge.planVerification(
+      spec({ backend_operations: { allowed: [], denied: [] } }),
+    );
+    assert.equal(emptyPolicy.outcome, "NEEDS_MORE_EVIDENCE");
+    assert.equal(emptyPolicy.reason, "backend_operations_unbound");
+
+    const noShape = bridge.planVerification(spec({ invocation: undefined }));
+    assert.equal(noShape.outcome, "NEEDS_MORE_EVIDENCE");
+    assert.equal(noShape.reason, "invocation_unbound");
+
+    const missingSlot = bridge.planVerification(
+      spec({ invocation: { executable: "reverify", argv_template: ["{operation}", "{target}"] } }),
+    );
+    assert.equal(missingSlot.outcome, "NEEDS_MORE_EVIDENCE");
+    assert.equal(missingSlot.reason, "invocation_unbound");
+  });
+
+  it("enforces the caller policy per backend instead of a bridge-wide list", () => {
+    const denied = bridge.planVerification(
+      checksumSpec({ backend_operation: "synthesize" }),
+    );
+    assert.equal(denied.outcome, "REJECT");
+    assert.equal(denied.reason, "generative_backend_operation_denied");
+    assert.equal(denied.request, undefined, "no request is produced");
+
+    // The other backend's allowed operation is unlisted here, so it is refused.
+    const unlisted = bridge.planVerification(checksumSpec({ backend_operation: "verify" }));
+    assert.equal(unlisted.outcome, "REJECT");
+    assert.equal(unlisted.reason, "backend_operation_unsupported");
+  });
+
+  it("ignores a caller-supplied argv so raw text cannot bypass policy", () => {
+    const plan = bridge.planVerification(
+      spec({ argv: ["reverify", "reconstruct", "firmware.bin", "--claim", "{}", "--json"] }),
+    );
+    assert.equal(plan.outcome, "READY");
+    assert.deepEqual(plan.argv, [
+      "reverify",
+      "verify",
+      "firmware.bin",
+      "--claim",
+      bridge.canonicalJson({ kind: "section_present", name: ".text" }),
+      "--json",
+    ]);
+
+    const smuggled = bridge.planVerification(
+      spec({
+        backend_operation: "reconstruct",
+        argv: ["reverify", "verify", "firmware.bin"],
+      }),
+    );
+    assert.equal(smuggled.outcome, "REJECT");
+    assert.equal(smuggled.reason, "generative_backend_operation_denied");
+  });
+
+  it("plans and seals a checksum identity claim from a differently-shaped backend", () => {
+    const plan = bridge.planVerification(checksumSpec());
+    assert.equal(plan.outcome, "READY", JSON.stringify(plan));
+    assert.deepEqual(plan.argv, [
+      "sha256sum",
+      "firmware.bin",
+      "digest",
+      "--expect",
+      bridge.canonicalJson({ kind: "checksum_match", sha256: DIGEST }),
+    ]);
+    assert.ok(!plan.argv.includes("--claim") && !plan.argv.includes("--json"));
+
+    const seal = bridge.sealVerification({
+      plan,
+      output: checksumOutput(),
+      produced_by: ate,
+    });
+    assert.equal(seal.outcome, "READY", JSON.stringify(seal));
+    assert.equal(seal.receipt.status, "VERIFIED");
+    assert.deepEqual(
+      seal.receipt.command_configuration,
+      plan.request.command_configuration,
+    );
+    assert.deepEqual(reassemble(seal.receipt.command_configuration), plan.argv);
+
+    const verdict = adapter.evaluateVerification({
+      request: plan.request,
+      receipt: seal.receipt,
+      candidate,
+      backend: { name: "checksum", enabled: true, available: true },
+      author,
+      gate: "assurance",
+    });
+    assert.equal(verdict.outcome, "PASS", JSON.stringify(verdict));
+    assert.equal(verdict.gate_eligible, true, JSON.stringify(verdict));
   });
 });
