@@ -38,7 +38,7 @@ Do not give the agent responsibilities owned by another role.
 
 ```text
 ROLE
-Crewmate
+Product Implementer
 
 RESPONSIBILITY
 Implement one approved slice.
@@ -115,7 +115,7 @@ LOOP
 
 Adapt the loop to the role.
 
-### Crewmate Loop
+### Product Implementer Loop
 
 ```text
 Observe
@@ -125,7 +125,7 @@ Observe
 → Report
 ```
 
-### Validator Loop
+### Test Engineer Loop
 
 ```text
 Read contract
@@ -135,7 +135,7 @@ Read contract
 → Report
 ```
 
-### Park Ranger Loop
+### Reviewer Loop
 
 ```text
 Inspect diff
@@ -145,26 +145,25 @@ Inspect diff
 → Report verdict
 ```
 
-### Explorer Loop
+### Coordinator Loop
 
 ```text
-Read phase state
-→ Select ready work
-→ Dispatch agent
+Read wave state
+→ Select ready packets
+→ Dispatch bounded packet
 → Evaluate returned evidence
 → Advance, repair, or escalate
 ```
 
-### Navigator &Trail Boss Loop
+### Orchestrator Loop
 
 ```text
-Read global state
+Read Lifecycle state
 → Identify ready phases
-→ Allocate Explorers
+→ Dispatch direct packets or one Coordinator wave
 → Monitor dependencies
 → Resolve conflicts
 → Integrate or escalate
-→ Completeness you have authority except for OWNER DECISions
 ```
 
 ## VERIFY

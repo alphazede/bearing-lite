@@ -97,7 +97,7 @@ const DEEP_COUPLING_PATTERNS = [
 /** DEC-BDL-042: unchanged public prompt skill; metadata exemption is digest-bound. */
 const TRUSTED_PUBLIC_PROMPT_SKILL = "skills/prompt/SKILL.md";
 const TRUSTED_PUBLIC_PROMPT_SKILL_SHA256 =
-  "ca4f3908df9257f8fc1bdb2562c49cae70757db11eb201d59aba091b1da380ff";
+  "22254390e69e1d712ef1f631d2e91d394d18142b5168b0f895e9a9b45b4bf1e3";
 
 /**
  * @param {string} content
