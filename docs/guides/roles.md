@@ -23,7 +23,8 @@ authority differs.
 | Role | Responsibility |
 |---|---|
 | Coordinator | Optional one-wave controller; proven-independent lanes; no nested coordinator. Dispatched only for a one-wave need; never on a direct packet |
-| Implementer | Bounded packet. Test Implementer writes tests first when `tdd`; Product Implementer writes product. `single_implementer` writes both. Neither self-certifies. |
+| Test Implementer | TDD test-first author (`roles.test_implementer`). Write set is tests and approved fixtures only. Runs before Product Implementer. |
+| Product Implementer | Product write set under `tdd` (`roles.implementer`); combined author under `single_implementer`. Write set excludes tests. Neither self-certifies. |
 | Light Implementer | Mechanical `work_class: light` slices |
 | Test Engineer (assurance) | Independent V&V of the exact candidate. Default cadence `phase`. |
 | Reviewer | Independent defect review. Default cadence `phase`. |

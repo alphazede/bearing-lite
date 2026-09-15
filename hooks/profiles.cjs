@@ -3,8 +3,10 @@
 /**
  * Profile catalog presence and migration classifier (DES-BDL-004/005).
  * Pure evaluator: never writes, never treats lineups.json as live configuration.
+ * TDD Test Implementer route checks do not invalidate catalog load.
  */
 
+const crypto = require("node:crypto");
 const fs = require("node:fs");
 const path = require("node:path");
 
@@ -108,12 +110,85 @@ function evaluateCatalogState(input) {
   return { outcome: "READY", reason: "profiles_live", path: profilesPath };
 }
 
+function deepCopy(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function sha256Hex(value) {
+  return crypto.createHash("sha256").update(JSON.stringify(value), "utf8").digest("hex");
+}
+
+function identityComplete(primary) {
+  return (
+    isPlainObject(primary) &&
+    typeof primary.harness === "string" &&
+    primary.harness.length > 0 &&
+    typeof primary.model === "string" &&
+    primary.model.length > 0 &&
+    typeof primary.reasoning === "string" &&
+    primary.reasoning.length > 0
+  );
+}
+
+function isWellFormedRoute(route) {
+  return (
+    isPlainObject(route) &&
+    typeof route.enabled === "boolean" &&
+    identityComplete(route.primary) &&
+    Array.isArray(route.ordered_fallbacks)
+  );
+}
+
+function failClosedTddRoute() {
+  return { outcome: "OWNER_DECISION_REQUIRED", onboard: true };
+}
+
+/**
+ * Classify Test Implementer use for select|freeze|dispatch|migrate.
+ * Catalog load stays READY when a TDD profile omits the route.
+ * @param {{ profile?: object, action?: string }} [input]
+ * @returns {{ outcome: string, onboard?: boolean, used_test_implementer?: boolean }}
+ */
+function evaluateTddTestImplementerRoute(input) {
+  const profile = (input && input.profile) || {};
+  const mode =
+    isPlainObject(profile.development_strategy) &&
+    typeof profile.development_strategy.mode === "string"
+      ? profile.development_strategy.mode
+      : "";
+  if (mode !== "tdd") {
+    return { outcome: "READY", used_test_implementer: false };
+  }
+  const roles = isPlainObject(profile.roles) ? profile.roles : {};
+  const route = roles.test_implementer;
+  if (route === undefined || !isWellFormedRoute(route) || route.enabled !== true) {
+    return failClosedTddRoute();
+  }
+  return { outcome: "READY", used_test_implementer: true };
+}
+
+/**
+ * Deep-copy selected routes and fallback order; bind a SHA-256 digest of that copy.
+ * @param {{ profile?: object }} [input]
+ * @returns {{ snapshot: { roles: object }, digest: string }}
+ */
+function freezeSelectedRoutes(input) {
+  const profile = (input && input.profile) || {};
+  const roles = isPlainObject(profile.roles) ? deepCopy(profile.roles) : {};
+  return {
+    snapshot: { roles },
+    digest: sha256Hex(roles),
+  };
+}
+
 function packagedCatalogBytes() {
   return PACKAGED_BYTES;
 }
 
 module.exports = {
   evaluateCatalogState,
+  evaluateTddTestImplementerRoute,
+  freezeSelectedRoutes,
   packagedCatalogBytes,
   PACKAGED_BYTES,
 };

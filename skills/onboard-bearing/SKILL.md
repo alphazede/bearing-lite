@@ -26,15 +26,23 @@ user's explicit instruction. Preserves every unaddressed existing value.
    search, merge, prefer, or fall back to `lineups.json`.
 2. If a user `lineups.json` exists, return `MIGRATION_REQUIRED`. Do not
    consume it as live configuration. Migration validates the lineup, asks
-   which route to assign to Integration Engineer execution, writes a
-   semantically equivalent `profiles.json`, validates readback, then removes
-   `lineups.json`. Do not auto-assign Surveyor or any retired role.
+   which route to assign to Integration Engineer execution, and must ask
+   for the missing Test Implementer; it never copies or invents that route.
+   It then writes a semantically equivalent `profiles.json`, validates
+   readback, then removes `lineups.json`. Do not auto-assign Surveyor or any
+   retired role.
 3. Ask settings one at a time with no preselected value: named role/session
    routes and fallbacks, session enablement, development strategy,
    planning review, assurance cadence, concurrency, clean-session, holds, and
-   optional Reverify. Enabling Coordinator adds value only for a one-wave need
-   (two or more proven-independent packets, shared wave evidence, or aggregate
-   repair ownership); permit an explicit disabled choice. A disabled Coordinator
+   optional Reverify. When `development_strategy.mode` is `tdd`, collect Test
+   Implementer (`roles.test_implementer`) independently of Product Implementer
+   (`roles.implementer`). A missing, disabled, or malformed Test Implementer
+   route returns `OWNER_DECISION_REQUIRED` with an onboard prompt; must ask
+   for the missing Test Implementer and never copies or invents a route from
+   Product Implementer, Test Engineer, Light Implementer, or a retired role.
+   `single_implementer` stays valid with no `test_implementer` field. Enabling Coordinator adds value only for a one-wave need
+   (two or more proven-independent packets, shared wave evidence, or aggregate repair
+   ownership); permit an explicit disabled choice. A disabled Coordinator
    on a true direct packet is not a capability gap. Declining Reverify or its
    download persists `reverify.enabled: false` for that named profile.
 4. Write only explicit choices atomically. Validate Draft 2020-12 readback

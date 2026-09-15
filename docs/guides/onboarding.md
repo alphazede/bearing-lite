@@ -14,7 +14,11 @@ Use this page after installing the plugin or copying `skills/`.
 Settings include named role and session routes, fallbacks, session
 enablement, development strategy, planning review, assurance cadence,
 concurrency, planning-to-implementation clean-session, holds, and optional
-Reverify. No value is preselected.
+Reverify. No value is preselected. When development strategy is `tdd`,
+collect Test Implementer independently of Product Implementer. Do not copy
+Product Implementer, Test Engineer, Light Implementer, or a retired role.
+A missing Test Implementer route must ask; it is not inferred.
+`single_implementer` stays valid with no Test Implementer field.
 
 Enabling Coordinator adds value only when the approved implementation graph
 has a one-wave need: two or more proven-independent packets in the same

@@ -21,10 +21,7 @@ Lowest mutation authority and highest hands-on work in the Bearing ladder.
 - **Match:** one packet is `READY` and every input is fixed.
 - **Non-match:** multi-packet coordination, design gaps, missing authority,
   assurance, or owner-only action.
-- **Split:** `tdd` orders test-writing Test Implementer before Product Implementer.
-  Test Implementer may change only tests and approved fixtures. Product Implementer
-  write set excludes tests and must not weaken independently authored tests.
-  `single_implementer` writes product plus tests. Neither self-certifies.
+- **Split:** `tdd` orders Test Implementer before Product Implementer from the frozen snapshot. Test Implementer may change only tests and approved fixtures. Product Implementer write set excludes tests and must not weaken independently authored tests. Same-feature parallel is prohibited. `single_implementer` writes product plus tests. Neither self-certifies.
 
 ## Algorithm
 
