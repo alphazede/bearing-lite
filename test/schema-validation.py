@@ -777,14 +777,14 @@ def catalog_from_fixture_profiles(*names: str) -> dict:
 def with_review_capability(enabled: bool, required: bool) -> dict:
     doc = complete_user_catalog()
     doc["profiles"]["fixture-alpha"]["review"] = {
-        "parallel_review": {"enabled": enabled, "required": required}
+        "coverage_assist": {"enabled": enabled, "required": required}
     }
     return doc
 
 
 def review_missing_enabled() -> dict:
     doc = complete_user_catalog()
-    doc["profiles"]["fixture-alpha"]["review"] = {"parallel_review": {"required": True}}
+    doc["profiles"]["fixture-alpha"]["review"] = {"coverage_assist": {"required": True}}
     return doc
 
 
@@ -1344,9 +1344,9 @@ def profiles_cases() -> list[tuple[str, str, object, str, str | None]]:
             "fixture-beta"
         ), "accept", None),
         ("SEIT-BDL-002", "single_implementer_with_present_test_implementer_accepted", single_with_test_implementer, "accept", None),
-        ("SEIT-BDL-002", "review_parallel_capability_accepted", with_review_capability(True, False), "accept", None),
-        ("SEIT-BDL-002", "review_parallel_capability_required_accepted", with_review_capability(True, True), "accept", None),
-        ("SEIT-BDL-002", "review_parallel_capability_disabled_accepted", with_review_capability(False, False), "accept", None),
+        ("SEIT-BDL-002", "review_coverage_assist_accepted", with_review_capability(True, False), "accept", None),
+        ("SEIT-BDL-002", "review_coverage_assist_required_accepted", with_review_capability(True, True), "accept", None),
+        ("SEIT-BDL-002", "review_coverage_assist_disabled_accepted", with_review_capability(False, False), "accept", None),
         ("SEIT-BDL-002", "review_capability_without_enabled_rejected", review_missing_enabled(), "reject", None),
         ("SEIT-BDL-002", "unknown_review_capability_rejected", review_unknown_key(), "reject", None),
     ])

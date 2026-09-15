@@ -359,9 +359,9 @@
         "review": {
           "type": "object",
           "additionalProperties": false,
-          "description": "Optional Reviewer capabilities. A capability is a tool the Reviewer invokes, never a role and never an authority source.",
+          "description": "Optional Reviewer capabilities. A capability is a tool the Reviewer uses as its method, never a role and never an authority source.",
           "properties": {
-            "parallel_review": {
+            "coverage_assist": {
               "type": "object",
               "additionalProperties": false,
               "required": [
@@ -374,7 +374,8 @@
                 "required": {
                   "type": "boolean"
                 }
-              }
+              },
+              "description": "Deterministic file selection and rule resolution for the Reviewer. It finds no defects and produces no verdict."
             }
           }
         }
