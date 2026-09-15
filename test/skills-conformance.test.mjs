@@ -578,9 +578,9 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     assert.match(text, /published standard/);
   });
 
-  it("split Implementer separates test-writing from product and neither self-certifies", () => {
+  it("split Implementer separates Test Implementer from Product Implementer and neither self-certifies", () => {
     const implementer = readFileSync(path.join(SKILLS_DIR, "implementer", "SKILL.md"), "utf8");
-    assert.match(implementer, /test-writing/);
+    assert.match(implementer, /Test Implementer/);
     assert.match(implementer, /product Implementer|product implementation|Product Implementer/i);
     assert.match(
       implementer,

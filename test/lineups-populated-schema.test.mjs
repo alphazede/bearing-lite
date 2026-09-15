@@ -235,13 +235,32 @@ describe("AC-EMV-026 populated lineups catalog (SEIT-EMV-026 / ROUTER-EMV-002-00
     assert.equal(catalog.schema_version, 1);
     assert.equal(typeof catalog.schema_version, "number");
     assert.equal(catalog.profiles && typeof catalog.profiles === "object" && !Array.isArray(catalog.profiles), true);
-    assert.deepEqual(Object.keys(catalog.profiles).sort(), ["fixture-alpha", "fixture-beta"]);
+    assert.deepEqual(Object.keys(catalog.profiles).sort(), [
+      "fixture-alpha",
+      "fixture-beta",
+      "fixture-gamma",
+    ]);
     for (const name of Object.keys(catalog.profiles)) {
       assert.equal(NAME_PATTERN.test(name), true, name);
       const profile = catalog.profiles[name];
       assert.equal(profile.roles && typeof profile.roles === "object", true, `${name}.roles`);
       assert.ok(Object.keys(profile.roles).length >= 1, `${name}.roles min keys`);
     }
+    const alpha = catalog.profiles["fixture-alpha"];
+    const beta = catalog.profiles["fixture-beta"];
+    const gamma = catalog.profiles["fixture-gamma"];
+    assert.equal(alpha.development_strategy.mode, "single_implementer");
+    assert.equal("test_implementer" in alpha.roles, false);
+    assert.equal(beta.development_strategy.mode, "tdd");
+    assert.equal("test_implementer" in beta.roles, false);
+    assert.equal(gamma.development_strategy.mode, "tdd");
+    assert.equal(gamma.roles.test_implementer.enabled, true);
+    assert.equal(gamma.roles.implementer.enabled, true);
+    assert.notDeepEqual(gamma.roles.test_implementer.primary, gamma.roles.implementer.primary);
+    assert.notDeepEqual(
+      gamma.roles.test_implementer.ordered_fallbacks,
+      gamma.roles.implementer.ordered_fallbacks,
+    );
     const fallbacks = firstTwoFallbacks(catalog);
     assert.ok(fallbacks, "fixture must include at least two ordered fallbacks");
     assert.notDeepEqual(fallbacks[0], fallbacks[1], "fallback array order is significant");

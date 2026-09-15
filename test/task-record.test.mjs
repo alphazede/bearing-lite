@@ -736,7 +736,8 @@ describe("CMD-TASK-01 task-record (SEIT-TASK-RECORD-01, SEIT-SINGLE-WRITER-01)",
   });
 
   it("template records split Implementer write sets and no self-certification", () => {
-    assert.match(TEMPLATE, /test-writing/);
+    assert.match(TEMPLATE, /Test Implementer/);
+    assert.doesNotMatch(TEMPLATE, /Test-writing Implementer|test-writing Implementer/);
     assert.match(TEMPLATE, /product write set excludes tests|excludes tests/i);
     assert.match(TEMPLATE, /self-certif/i);
   });

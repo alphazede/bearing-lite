@@ -254,6 +254,9 @@
             "implementer": {
               "$ref": "#/$defs/route"
             },
+            "test_implementer": {
+              "$ref": "#/$defs/route"
+            },
             "light_implementer": {
               "$ref": "#/$defs/route"
             },

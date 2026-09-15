@@ -3,16 +3,15 @@ name: bearing-lite
 description: Bearing Lite Orchestrator for Lifecycles. Not for ordinary work, assigned packets, implementation, or publication.
 ---
 
-Orchestrator alone writes Lifecycle planning state, owns owner conversation, and owns
-sequencing; planning nodes return owner questions. Plugin hosts are partial; skill-copy is skills-only.
+Orchestrator alone writes Lifecycle planning state, owns sequencing; planning nodes return owner questions. Plugin hosts are partial; skill-copy is skills-only.
 
 1. Say `Preparing this Lifecycle.` Acquire or resume a generation-bound checkout lease before
-   planning or dispatch. A live same-checkout competitor returns `WAITING_ON` with sanitized identity.
+   planning or dispatch. Same-checkout competitor returns `WAITING_ON` with sanitized identity.
 2. Resume the next incomplete stage in the same generation; refresh `candidate_revision`.
    One host-native liveness check classifies RUNNING, COMPLETED, INACTIVE, or UNKNOWN.
    Never replay accepted stages or duplicate dispatch.
    UNKNOWN without owner-requested resume returns `WAITING_ON`.
-3. Profile comes only from `~/.agents/bearing-lite/profiles.json`;
+3. Profile comes only from `~/.agents/bearing-lite/profiles.json` (`references/profiles.md`);
    a missing catalog returns `no_named_profiles`,
    never a generated file; never infer identity values. Leftover lineup returns
    `MIGRATION_REQUIRED`. The Orchestrator is observed, not selected.
@@ -26,8 +25,9 @@ sequencing; planning nodes return owner questions. Plugin hosts are partial; ski
    approval-or-change gate. Record the approved Lifecycle type and snapshot.
    Never add a staged profile or route-review gate. Dispatch only after approval.
 7. Direct packets never dispatch Coordinator; Orchestrator is the parent controller.
+   tdd: Test Implementer (`roles.test_implementer`) before Product Implementer from the frozen snapshot.
    Implementer may continue in-wave. `work_class: light` slices go to Light
-   Implementer; `reclassify: judgement` re-dispatches to Implementer. Use visible wave receipts and update implementation and DoD Manifest once per wave.
+   Implementer; `reclassify: judgement` re-dispatches to Implementer. Use visible wave receipts once per wave.
 
 Return `READY`, `WAITING_ON`, `OWNER_DECISION_REQUIRED`, or `COMPLETE`.
 `max_assurance_rounds` is 1 per declared phase or wave-end, not per Lifecycle;

@@ -743,11 +743,35 @@ def empty_shipped_catalog() -> dict:
         return copy.deepcopy(json.load(fh))
 
 
-def complete_user_catalog(**overrides: object) -> dict:
+def load_profiles_fixture() -> dict:
     with PROFILES_FIXTURE_PATH.open(encoding="utf-8") as fh:
-        doc = json.load(fh)
+        return json.load(fh)
+
+
+def complete_user_catalog(**overrides: object) -> dict:
+    """Alpha + beta only. fixture-gamma is the TDD-positive test_implementer catalog."""
+    doc = load_profiles_fixture()
+    profiles = doc.get("profiles")
+    if isinstance(profiles, dict):
+        profiles.pop("fixture-gamma", None)
     doc.update(overrides)
     return doc
+
+
+def complete_populated_fixture_catalog(**overrides: object) -> dict:
+    doc = load_profiles_fixture()
+    doc.update(overrides)
+    return doc
+
+
+def catalog_from_fixture_profiles(*names: str) -> dict:
+    fixture = load_profiles_fixture()
+    return {
+        "schema_version": 1,
+        "profiles": {
+            name: copy.deepcopy(fixture["profiles"][name]) for name in names
+        },
+    }
 
 
 def complete_profile() -> dict:
@@ -1109,6 +1133,12 @@ def profiles_cases() -> list[tuple[str, str, object, str, str | None]]:
     bad_cadence = complete_user_catalog()
     bad_cadence["profiles"]["fixture-alpha"]["roles"]["reviewer"]["cadence"] = "wave"
     missing_roles = omit_nested(complete_user_catalog(), "profiles", "fixture-alpha", "roles")
+    unknown_role = complete_user_catalog()
+    unknown_role["profiles"]["fixture-alpha"]["roles"]["not_a_configurable_role"] = profile_session_route()
+    single_with_test_implementer = complete_user_catalog()
+    single_with_test_implementer["profiles"]["fixture-alpha"]["roles"]["test_implementer"] = copy.deepcopy(
+        load_profiles_fixture()["profiles"]["fixture-gamma"]["roles"]["test_implementer"]
+    )
 
     out: list[tuple[str, str, object, str, str | None]] = [
         ("SEIT-BDL-002", "complete_populated_user_catalog_with_resolving_defaults", complete_user_catalog(), "accept", None),
@@ -1282,6 +1312,18 @@ def profiles_cases() -> list[tuple[str, str, object, str, str | None]]:
                 }
             },
         ), "reject", None),
+        ("SEIT-BDL-002", "test_implementer_route_accepted", catalog_from_fixture_profiles(
+            "fixture-gamma"
+        ), "accept", None),
+        ("SEIT-BDL-002", "complete_populated_catalog_includes_tdd_test_implementer", complete_populated_fixture_catalog(), "accept", None),
+        ("SEIT-BDL-002", "unknown_extra_role_key_rejected", unknown_role, "reject", None),
+        ("SEIT-BDL-002", "single_implementer_without_test_implementer_accepted", catalog_from_fixture_profiles(
+            "fixture-alpha"
+        ), "accept", None),
+        ("SEIT-BDL-002", "tdd_missing_test_implementer_schema_accepted", catalog_from_fixture_profiles(
+            "fixture-beta"
+        ), "accept", None),
+        ("SEIT-BDL-002", "single_implementer_with_present_test_implementer_accepted", single_with_test_implementer, "accept", None),
     ])
     return out
 
@@ -1487,6 +1529,29 @@ def check_fixture_contract_fields() -> tuple[bool, str]:
     return True, "complete fixtures include CONTRACT-EMV-007/008/009 named structures and lease identity fields"
 
 
+def check_test_implementer_role_field(profiles_schema: dict | None) -> tuple[bool, str]:
+    if not isinstance(profiles_schema, dict):
+        return False, PROFILES_MISSING_SCHEMA
+    profile = (profiles_schema.get("$defs") or {}).get("profile")
+    if not isinstance(profile, dict):
+        return False, "profiles schema missing $defs.profile"
+    roles = (profile.get("properties") or {}).get("roles")
+    if not isinstance(roles, dict):
+        return False, "profiles schema missing roles"
+    if roles.get("additionalProperties") is not False:
+        return False, "roles.additionalProperties must be false"
+    props = roles.get("properties")
+    if not isinstance(props, dict):
+        return False, "roles.properties missing"
+    spec = props.get("test_implementer")
+    if not isinstance(spec, dict) or spec.get("$ref") != "#/$defs/route":
+        return False, "roles.test_implementer must $ref #/$defs/route"
+    implementer = props.get("implementer")
+    if not isinstance(implementer, dict) or implementer.get("$ref") != "#/$defs/route":
+        return False, "roles.implementer must remain a $ref route"
+    return True, "optional roles.test_implementer $ref route with closed role keys"
+
+
 def check_nkc(implementation_schema: dict) -> tuple[bool, str]:
     props = collect_properties(implementation_schema)
     missing = []
@@ -1594,6 +1659,16 @@ def run_cases() -> int:
         print("FAIL SEIT-BDL-002 empty_shipped_catalog_without_defaults: missing profiles.json (pending S1L)")
         failed += 1
     profiles_schema = schemas.get("profiles")
+    ok, detail = check_test_implementer_role_field(
+        profiles_schema if isinstance(profiles_schema, dict) else None
+    )
+    line = "SEIT-BDL-002 test_implementer_role_field"
+    if ok:
+        print(f"PASS {line}: {detail}")
+        passed += 1
+    else:
+        print(f"FAIL {line}: {detail}")
+        failed += 1
     try:
         profile_case_list = profiles_cases()
     except OSError as exc:

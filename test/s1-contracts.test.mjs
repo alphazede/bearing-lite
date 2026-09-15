@@ -34,6 +34,7 @@ describe("S1 profiles, migration, resume, and role/session contracts", () => {
     assert.equal(alpha.roles.integration_engineer.sessions.execution.cadence, "lifecycle");
     assert.equal(alpha.roles.reviewer.cadence, "phase");
     assert.equal(alpha.development_strategy.mode, "single_implementer");
+    assert.equal("test_implementer" in alpha.roles, false);
     assert.equal(alpha.deterministic_verification.reverify.enabled, false);
     assert.equal("surveyor" in alpha.roles, false);
     assert.equal("explorer" in alpha.roles, false);
@@ -161,7 +162,7 @@ describe("S1 profiles, migration, resume, and role/session contracts", () => {
     assert.match(implementer, /^name: implementer$/m);
     assert.match(reviewer, /^name: reviewer$/m);
     assert.match(coordinator, /^name: coordinator$/m);
-    assert.match(implementer, /test-writing/);
+    assert.match(implementer, /Test Implementer/);
     assert.match(implementer, /must not weaken independently authored tests/i);
     assert.match(implementer, /Neither.*self-certif/i);
     assert.match(implementer, /published standard/);

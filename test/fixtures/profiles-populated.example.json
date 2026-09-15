@@ -218,6 +218,96 @@
       "development_strategy": {
         "mode": "tdd"
       }
+    },
+    "fixture-gamma": {
+      "roles": {
+        "test_implementer": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-d",
+            "model": "model-d",
+            "reasoning": "reasoning-d"
+          },
+          "ordered_fallbacks": [
+            {
+              "condition": "condition-test-first",
+              "harness": "harness-e",
+              "model": "model-e",
+              "reasoning": "reasoning-e"
+            },
+            {
+              "condition": "condition-test-second",
+              "harness": "harness-f",
+              "model": "model-f",
+              "reasoning": "reasoning-f"
+            }
+          ]
+        },
+        "implementer": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-g",
+            "model": "model-g",
+            "reasoning": "reasoning-g"
+          },
+          "ordered_fallbacks": [
+            {
+              "condition": "condition-product-first",
+              "harness": "harness-h",
+              "model": "model-h",
+              "reasoning": "reasoning-h"
+            }
+          ]
+        },
+        "reviewer": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-b",
+            "model": "model-b",
+            "reasoning": "reasoning-b"
+          },
+          "ordered_fallbacks": [
+            {
+              "condition": "condition-first",
+              "harness": "harness-a",
+              "model": "model-a",
+              "reasoning": "reasoning-a"
+            }
+          ],
+          "cadence": "phase"
+        },
+        "test_engineer": {
+          "sessions": {
+            "assurance": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-b",
+                "model": "model-b",
+                "reasoning": "reasoning-b"
+              },
+              "ordered_fallbacks": [],
+              "cadence": "phase"
+            }
+          }
+        },
+        "integration_engineer": {
+          "sessions": {
+            "execution": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-b",
+                "model": "model-b",
+                "reasoning": "reasoning-b"
+              },
+              "ordered_fallbacks": [],
+              "cadence": "lifecycle"
+            }
+          }
+        }
+      },
+      "development_strategy": {
+        "mode": "tdd"
+      }
     }
   },
   "defaults": {

@@ -283,7 +283,8 @@ explain orientation; they never authorize a transition.
 | **Systems Modeler** | planning | After requirements; before design finalization |
 | **Plan Integrator** | planning | Mechanical assembly; no new judgment |
 | **Coordinator** | implementation | Optional one-wave controller; proven-independent lanes. Not dispatched on a direct packet |
-| **Implementer** | implementation | Split Test Implementer / Product Implementer; neither self-certifies |
+| **Test Implementer** | implementation | TDD test-first author (`roles.test_implementer`); tests and approved fixtures only |
+| **Product Implementer** | implementation | Product write set under `tdd` (`roles.implementer`); combined author under `single_implementer`. Neither self-certifies |
 | **Light Implementer** | implementation | `work_class: light` slices only |
 | **Scribe** | planning and implementation | Transcribes; cannot activate authority |
 | **Test Engineer** | planning and assurance sessions | Planning Test Engineer authors V&V; Assurance Test Engineer assesses the candidate. Default assurance cadence: `phase` |

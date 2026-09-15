@@ -483,7 +483,7 @@ describe("Lite TE host adapter (hooks/te-host.cjs)", () => {
     base = commitAll(ws, "baseline");
     writePlan(ws, {
       task_id: "T-TE-1",
-      assigned_role: "Test-writing Implementer",
+      assigned_role: "Test Implementer",
       role_instance: "TW-LITE-TE-HOOKS",
       write_set: ["test/te-example.test.mjs"],
       authority: "AUTH-EMV-001",
@@ -612,7 +612,7 @@ describe("Lite TE host adapter (hooks/te-host.cjs)", () => {
       task_id: "T-TE-1",
       role: "Test Engineering",
       role_instance: "TW-LITE-TE-HOOKS",
-      assigned_writer_role: "Test-writing Implementer",
+      assigned_writer_role: "Test Implementer",
       method: "test",
       authorizes_write_tests: true,
       write_scope: ["test/te-example.test.mjs"],
@@ -708,7 +708,7 @@ describe("Lite TE host adapter (hooks/te-host.cjs)", () => {
       { selected: true }
     );
     const request = lastRequest(ws);
-    assert.equal(request.assignment.assigned_role, "Test-writing Implementer");
+    assert.equal(request.assignment.assigned_role, "Test Implementer");
     assert.equal(request.assignment.role_instance, "TW-LITE-TE-HOOKS");
     assert.equal(request.assignment.task_id, "T-TE-1");
     assert.equal(request.assignment.authority, "AUTH-EMV-001");
@@ -1199,7 +1199,7 @@ describe("Lite TE host adapter (hooks/te-host.cjs)", () => {
     const dirBase = commitAll(dir, "baseline");
     writePlan(dir, {
       task_id: "T-TE-6",
-      assigned_role: "Test-writing Implementer",
+      assigned_role: "Test Implementer",
       role_instance: "TW-SUPPORTED-WRITE",
       write_set: ["test/te-example.test.mjs"],
       authority: "AUTH-EMV-001",

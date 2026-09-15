@@ -132,7 +132,7 @@ Field rules:
 
 `required_assurance` lists only roles that must accept the same candidate (for example `Assurance Test Engineer`, and `Reviewer` or `Integration Engineer execution` when their triggers apply).
 
-test-writing Implementer write set is tests and approved fixtures only. Product
+Test Implementer write set is tests and approved fixtures only. Product
 write set excludes tests and must not weaken independently authored tests.
 Neither self-certifies.
 

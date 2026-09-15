@@ -30,7 +30,8 @@ and validates a semantically equivalent `profiles.json`, and removes
 
 ## Configurable roles
 
-Catalog entries assign nested role/session routes for Implementer, Light
+Catalog entries assign nested role/session routes for Product Implementer
+(`implementer`), Test Implementer (`test_implementer`), Light
 Implementer, Coordinator, Reviewer, Test Engineer, Scribe, Plan Integrator,
 Systems Modeler, Integration Engineer, and Requirements Engineer. Systems
 Modeler has a planning session; Test Engineer has planning and assurance
@@ -111,6 +112,8 @@ frozen snapshot copy. Digest that copy only: selected entries with fallback
 order and selection sources. Exclude N/K/C, review cadence, route, and
 authority. Canonical JSON: UTF-8, sort_keys, compact separators.
 Later catalog edits do not mutate the frozen snapshot copy or its digest.
+For `tdd`, freeze both `test_implementer` and `implementer` routes and
+fallback order into that frozen snapshot copy.
 
 ## Save
 
@@ -131,8 +134,18 @@ entries.
 
 `development_strategy.mode` is `single_implementer` (speed default) or
 `tdd`. `tdd` orders Test Implementer before Product Implementer for a
-behavior-changing slice. Independent dependency-ready slices may run
-concurrently when write sets and mutable resources do not overlap.
+behavior-changing slice. There is no parallel Test Implementer/Product
+Implementer mode for one feature; same-feature parallel is prohibited.
+Independent dependency-ready slices may run concurrently when write sets
+and mutable resources do not overlap. `single_implementer` stays valid
+with no `test_implementer` field; a present Test Implementer route is
+ignored.
+
+Selecting, freezing, dispatching, or migrating a `tdd` profile with a
+missing, disabled, or malformed `test_implementer` route returns
+`OWNER_DECISION_REQUIRED` and an onboard prompt. Never copy from Product
+Implementer (`roles.implementer`), Test Engineer (`test_engineer`), Light
+Implementer (`light_implementer`), or a retired role.
 
 `planning_to_implementation_clean_session` is an explicit boolean with no
 preselected value. An approved Lifecycle may freeze an override in
@@ -146,4 +159,7 @@ Coordinator, Park Ranger to Reviewer, Light Implementer unchanged, Test
 Engineer planning-phase rows to `test_engineer.planning` and
 implementation-phase rows to `test_engineer.assurance`. Do not auto-assign
 Integration Engineer execution from Surveyor; onboard-bearing asks which
-route to assign. Validate the new profile, then remove `lineups.json`.
+route to assign. Migration must ask for the missing Test Implementer
+route; it never copies or invents `test_implementer` from Product
+Implementer, Test Engineer, Light Implementer, or a retired role.
+Validate the new profile, then remove `lineups.json`.

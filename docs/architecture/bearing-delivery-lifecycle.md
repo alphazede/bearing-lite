@@ -61,6 +61,10 @@ changes plus tests. `tdd` orders Test Implementer before Product Implementer
 for a behavior-changing slice. There is no parallel Test Implementer/Product
 Implementer mode for one feature. Independent dependency-ready slices may run
 concurrently when write sets and mutable resources do not overlap.
+`tdd` profiles persist independent `roles.test_implementer` and
+`roles.implementer` routes. Planning freezes both. Missing, disabled, or
+malformed Test Implementer routes fail closed rather than copying another
+role.
 
 Light Implementer executes only `work_class: light` slices. A
 `reclassify: judgement` result returns the work to Implementer.

@@ -429,6 +429,35 @@ describe("CMD-ROUTING-01 role-routing (SEIT-ROUTING-01)", () => {
       assert.equal(verdict.code, "expedition_omits_wave_coordination");
     }
   });
+
+  it("tdd dispatches Test Implementer before Product Implementer from the frozen snapshot", () => {
+    const router = readFileSync(path.join(ROOT, "skills/bearing-lite/SKILL.md"), "utf8");
+    assert.match(router, /Test Implementer/);
+    assert.match(router, /test_implementer|roles\.test_implementer/);
+    assert.match(
+      router,
+      /Test Implementer[\s\S]{0,160}before[\s\S]{0,80}Product Implementer/
+    );
+    assert.match(router, /frozen snapshot|profile_freeze/);
+  });
+
+  it("tdd never copies Test Implementer from Product Implementer, Test Engineer, Light Implementer, or a retired role", () => {
+    const profiles = readFileSync(
+      path.join(ROOT, "skills/bearing-lite/references/profiles.md"),
+      "utf8"
+    );
+    const onboard = readFileSync(path.join(ROOT, "skills/onboard-bearing/SKILL.md"), "utf8");
+    const text = `${profiles}\n${onboard}`;
+    assert.match(text, /test_implementer/);
+    assert.match(text, /OWNER_DECISION_REQUIRED/);
+    assert.match(
+      text,
+      /never copy|do not copy|must not copy|must ask for the missing Test Implementer/i
+    );
+    assert.match(text, /Product Implementer|roles\.implementer/);
+    assert.match(text, /Test Engineer|test_engineer/);
+    assert.match(text, /Light Implementer|light_implementer/);
+  });
 });
 
 /** Visible #33A lease fields. Packet B revalidates this record; it does not add fields. */
