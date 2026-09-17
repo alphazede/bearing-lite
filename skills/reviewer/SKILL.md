@@ -37,10 +37,10 @@ Independent defect assurance, outside the mutation-authority ladder.
 3. Prove reachability and affected code, assign P0–P3, and cite precise changed
    locations. Avoid speculation and nits.
 4. Use a coverage-assist capability only when the packet declares it; never
-   probe for one. It returns reviewable files, exclusions with reasons, and the
-   rules per file. Its list is advisory: read an excluded file when the change
-   warrants it. It finds no defects and never produces the verdict. Declared
-   but unavailable is a typed capability gap, not equivalent coverage.
+   probe. OpenCodeReview (OCR) is one; the packet carries its invocation. It
+   returns reviewable files, exclusions with reasons, and rules. The list is
+   advisory: read an excluded file when warranted. It finds no defects and no
+   verdict. Declared but unavailable is a typed gap, never equivalent coverage.
 5. Return a patch verdict and repair targets. Never implement a finding.
 
 ## Return and recovery
