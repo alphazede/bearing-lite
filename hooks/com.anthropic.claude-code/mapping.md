@@ -32,8 +32,8 @@ To carry the Orchestrator write-set lock, merge `hooks/skill-copy-write-lock.jso
 into the host settings and point the command at `hooks/orchestrator-write-lock.cjs`.
 If that fragment is not installed, activation records `write_lock: absent`
 (a typed capability gap, not silent). Plugin install or disable uses the host's
-native controls. Bearing Lite never copies adapters into global hook
-configuration.
+native controls. Skill-copy and plugin install do not reload already-running
+sessions. Bearing Lite never copies adapters into global hook configuration.
 
 ## Event map
 

@@ -62,7 +62,8 @@ under the same `unit_kind` + `unit_id` key.
 - One review round per declared cadence unit (slice, phase or wave, or
   lifecycle). A second round on the same unit
   halts with `assurance_round_limit`.
-- A repairable verdict permits at most one aggregate repair. A second repair
+- A repairable verdict permits at most one aggregate repair. Aggregate findings
+  before that repair; role packets share the bound. A second repair
   halts with `assurance_repair_limit`.
 - After that repair the parent controller closes the unit on a deterministic
   `PASS` gate (Orchestrator on a direct packet, Coordinator on a coordinator

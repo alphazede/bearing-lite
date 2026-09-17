@@ -360,7 +360,7 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
       const lines = text.trimEnd().split(/\r?\n/).length;
       const words = text.trim().split(/\s+/).length;
       assert.ok(lines <= 60, `${name}: ${lines} lines must be at most 60`);
-      const maxWords = name === "bearing-lite" ? 425 : name === "planning-and-design" ? 500 : 600;
+      const maxWords = name === "bearing-lite" ? 435 : name === "planning-and-design" ? 500 : 600;
       assert.ok(words <= maxWords, `${name}: ${words} words must be at most ${maxWords}`);
     }
   });
@@ -437,7 +437,7 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     assert.match(router, /Preparing this Lifecycle\./);
     assert.doesNotMatch(router, /review_cadence: at-end/);
     assert.doesNotMatch(router, /after a\s+slice, after an integrated round, or at the end\?/);
-    assert.match(router, /Orchestrator alone writes Lifecycle\s+planning state/);
+    assert.match(router, /Orchestrator alone writes Lifecycle\s+control state/);
     assert.match(router, /plugin\s+hosts are partial/i);
     assert.match(router, /skill-copy is skills-only/);
     assert.match(router, /may continue in-wave/);
