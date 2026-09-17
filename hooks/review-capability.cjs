@@ -81,7 +81,12 @@ function planCoverage(spec) {
     return fail("INACTIVE", "capability_unselected_unrequired");
   }
   // Activated but missing is a typed gap. Never report equivalent coverage.
-  if (!declared.available) return fail("UNAVAILABLE", "typed_capability_gap");
+  // required: halt; enabled-only: proceed with a recorded note.
+  if (!declared.available) {
+    return fail("UNAVAILABLE", "typed_capability_gap", {
+      proceed: declared.required ? "halt" : "proceed-with-note",
+    });
+  }
 
   const candidate = spec.candidate;
   if (!candidateBound(candidate)) return fail("NEEDS_MORE_EVIDENCE", "candidate_unbound");

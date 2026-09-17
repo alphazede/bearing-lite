@@ -34,12 +34,16 @@ on plumbing before reviewing anything, which is the cost this avoids.
 | Declared state | Result |
 |---|---|
 | neither enabled nor required | `INACTIVE` / `capability_unselected_unrequired` |
-| activated, unavailable | `UNAVAILABLE` / `typed_capability_gap` |
+| enabled, not required, unavailable | `UNAVAILABLE` / `typed_capability_gap`, `proceed: proceed-with-note` |
+| required (with or without enabled), unavailable | `UNAVAILABLE` / `typed_capability_gap`, `proceed: halt` |
 | activated, available | `READY` with the planned invocation |
 
-An explicit disabled choice is allowed and is not a gap. An activated capability
-that cannot run is a typed gap; never report equivalent coverage from what
-remains.
+`enabled` means the role may proceed with a recorded note. `required` means the
+role may not proceed without the capability (halt). Both stay typed gaps when
+unavailable. An omitted `required` on a legacy profile is false; there is no
+migration. An explicit disabled choice is allowed and is not a gap. An activated
+capability that cannot run is a typed gap; never report equivalent coverage from
+what remains.
 
 ## Sequence
 
@@ -81,6 +85,7 @@ nits. The adopter decides which halves to use.
 
 ## Configuration
 
-`review.coverage_assist` records `enabled` and `required`. Nothing else. The
-capability keeps its own configuration in its own tooling, and Bearing Lite
-never selects credentials, providers or models for it.
+`review.coverage_assist` records `enabled` (required in the schema) and optional
+`required` (legacy omission is false). Nothing else. The capability keeps its
+own configuration in its own tooling, and Bearing Lite never selects
+credentials, providers or models for it.
