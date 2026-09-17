@@ -116,9 +116,16 @@ For `tdd`, freeze both `test_implementer` and `implementer` routes and
 fallback order into that frozen snapshot copy.
 Selected capability sections (`review`, `deterministic_verification`) are
 frozen alongside routes, and relevant packets must consume that binding.
+The parent controller declares Reviewer and assurance packets from that
+frozen snapshot copy, never from the live catalog.
 OCR means OpenCodeReview via `coverage_assist`, not a new role or backend
 hard dependency. Older roles-only snapshots need explicit reconciliation
-or owner amendment, not live-catalog hot reload.
+or owner amendment, not live-catalog hot reload. Reconcile by re-freezing
+the same named profile and comparing SHA-256 digests: equal digest means
+the snapshot is current; unequal digest, or omitted `review` /
+`deterministic_verification` on an otherwise selected profile, requires a
+dated owner-confirmed visible amendment before packets consume a new
+binding.
 
 ## Save
 
