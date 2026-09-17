@@ -23,6 +23,14 @@ function isPlainObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
+function writeLockStatus(input) {
+  if (!isPlainObject(input)) return "absent";
+  if (input.write_lock === "present" || input.write_lock === "absent") {
+    return input.write_lock;
+  }
+  return "absent";
+}
+
 function result(outcome, reason, recovery, extra) {
   const body = {
     hook_class: HOOK_CLASS,
@@ -33,6 +41,9 @@ function result(outcome, reason, recovery, extra) {
   };
   if (extra && typeof extra.protected_action === "string" && extra.protected_action) {
     body.protected_action = extra.protected_action;
+  }
+  if (extra && (extra.write_lock === "present" || extra.write_lock === "absent")) {
+    body.write_lock = extra.write_lock;
   }
   return body;
 }
@@ -61,6 +72,8 @@ function evaluate(input) {
       return unavailable("malformed_input");
     }
 
+    const writeLock = writeLockStatus(input);
+
     if (input.infrastructure_failure) {
       const kind = String(input.infrastructure_failure);
       return unavailable(kind || "infrastructure_failure");
@@ -77,7 +90,8 @@ function evaluate(input) {
       return result(
         "ADVISE",
         "channel_open",
-        "Keep repair, status, owner communication, and safe rollback available"
+        "Keep repair, status, owner communication, and safe rollback available",
+        { write_lock: writeLock }
       );
     }
 
@@ -101,10 +115,12 @@ function evaluate(input) {
       if (!role) gaps.push("assigned_role");
       if (!routerInvoked) gaps.push("router");
       if (missingStages.length > 0) gaps.push("planning_stages:" + missingStages.join(","));
-      return result("ADVISE", "context_incomplete:" + gaps.join("+"), RECOVERY_ROUTER);
+      return result("ADVISE", "context_incomplete:" + gaps.join("+"), RECOVERY_ROUTER, {
+        write_lock: writeLock,
+      });
     }
 
-    return result("ADVISE", "context_ready", RECOVERY_CONTINUE);
+    return result("ADVISE", "context_ready", RECOVERY_CONTINUE, { write_lock: writeLock });
   } catch {
     return unavailable("adapter_exception");
   }

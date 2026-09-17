@@ -1,0 +1,17 @@
+{
+  "description": "Skill-copy PreToolUse fragment for the #112 Orchestrator write-set lock. Merge into the host settings hooks object. Point command at this package's hooks/orchestrator-write-lock.cjs. If this fragment is not installed, activation records write_lock: absent.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit|NotebookEdit|apply_patch|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["hooks/orchestrator-write-lock.cjs"]
+          }
+        ]
+      }
+    ]
+  }
+}

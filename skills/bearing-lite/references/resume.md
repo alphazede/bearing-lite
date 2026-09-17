@@ -28,3 +28,9 @@ A resumed or fallback agent does not receive raw conversation history. It
 continues the same pass and budget from durable artifacts. Confirmed owner
 decisions stay confirmed. A changed envelope, conflicting writer, new
 authority, or explicit owner choice starts fresh.
+
+Router-drafted planning artifacts are a historical exception, not a pattern.
+New Lifecycles fail closed on them: dispatch Planning and Design (or a
+planning delta) instead of authoring `*-technical-plan.md`, `design.md`,
+`workspace.md`, `seit.json`, or `implementation.json` in the Orchestrator
+session.

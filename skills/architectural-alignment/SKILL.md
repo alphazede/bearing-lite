@@ -9,7 +9,8 @@ description: >
 
 # Architectural Alignment
 
-Fresh planning node. The Orchestrator announces `Aligning architecture in <repo>.`
+Fresh planning node. If you are the Orchestrator, dispatch this; do not execute it.
+The Orchestrator announces `Aligning architecture in <repo>.`
 
 ## Inputs and match
 

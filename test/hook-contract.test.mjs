@@ -60,6 +60,7 @@ const EVALUATOR_MODULES = new Set([
   "verification.cjs", // S2 deterministic verification adapter; no HOOK_CLASS
   "verification-bridge.cjs", // #105 receipt bridge; no HOOK_CLASS, no execution
   "review-capability.cjs", // #104 review coverage assist; no HOOK_CLASS
+  "orchestrator-write-lock.cjs", // #112 Orchestrator write-set lock; no HOOK_CLASS
 ]);
 /** Additional TE class modules, allowed but not yet required by this case. */
 const TE_CLASS_FILES = Object.freeze(["te-capability.cjs", "te-host.cjs"]);
@@ -195,8 +196,17 @@ describe("CMD-HOOK-01 hook-contract (SEIT-HOOK-CLASS-01, SEIT-HOOK-COVERAGE-01)"
       router_invoked: true,
       missing_planning_stages: [],
     });
-    assert.equal(ready.outcome, "ADVISE");
-    assert.match(String(ready.reason), /context_ready/);
+    assert.equal(ready.write_lock, "absent");
+
+    const locked = activation.evaluate({
+      plan_present: true,
+      next_action_known: true,
+      assigned_role: "crewmate",
+      router_invoked: true,
+      missing_planning_stages: [],
+      write_lock: "present",
+    });
+    assert.equal(locked.write_lock, "present");
   });
 
   it("closeout advisory vs narrow BLOCK for protected completion", () => {

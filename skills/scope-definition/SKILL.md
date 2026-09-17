@@ -9,7 +9,7 @@ description: >
 
 # Scope Definition
 
-Planning node after Architectural Alignment, not a persona or plan-state writer.
+Fresh planning node. If you are the Orchestrator, dispatch this; do not execute it.
 
 ## Match and inputs
 
@@ -20,7 +20,7 @@ Planning node after Architectural Alignment, not a persona or plan-state writer.
 - **Non-match:** evidence can answer it, the owner already decided it, or a work
   packet is ready.
 - **Inputs:** goal, visible plan state, repository evidence, prior decisions,
-  open decision tree, and return schema.
+  open decision tree, and return schema. Runs after Architectural Alignment.
 
 ## Algorithm
 

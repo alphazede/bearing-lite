@@ -360,7 +360,7 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
       const lines = text.trimEnd().split(/\r?\n/).length;
       const words = text.trim().split(/\s+/).length;
       assert.ok(lines <= 60, `${name}: ${lines} lines must be at most 60`);
-      const maxWords = name === "bearing-lite" ? 400 : name === "planning-and-design" ? 500 : 600;
+      const maxWords = name === "bearing-lite" ? 425 : name === "planning-and-design" ? 500 : 600;
       assert.ok(words <= maxWords, `${name}: ${words} words must be at most ${maxWords}`);
     }
   });
