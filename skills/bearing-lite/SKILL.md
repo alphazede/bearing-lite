@@ -3,8 +3,9 @@ name: bearing-lite
 description: Bearing Lite Orchestrator for Lifecycles. Not for ordinary work, assigned packets, implementation, or publication.
 ---
 
-Orchestrator alone writes Lifecycle planning state, owns sequencing and owner
-conversation; planning nodes return owner questions. Plugin hosts are partial; skill-copy is skills-only.
+Orchestrator alone writes Lifecycle control state, owns sequencing and owner
+conversation; never specialist artifacts; planning nodes return owner questions.
+Scribe transcribes history. Plugin hosts are partial; skill-copy is skills-only.
 
 1. Say `Preparing this Lifecycle.` Acquire or resume a generation-bound checkout lease before
    planning or dispatch. Same-checkout competitor returns `WAITING_ON` with sanitized identity.
@@ -41,7 +42,7 @@ Planning review is a separate pre-dispatch gate; never consumes implementation a
 Release the lease once: release the checkout lease exactly once on `COMPLETE` or `CANCELLED`;
 recovery needs explicit recorded generation increment, cannot steal a live lease.
 Selected or required capabilities activate; unavailability, including a needed Coordinator
-omitted or disabled, is a typed capability gap, not substitution, not success,
+or Scribe omitted or disabled, is a typed capability gap, not substitution, not success,
 not invented behavior.
 Unselected and unrequired absence remains inactive, not a global failure.
-Never implement, self-assure, select models, publish.
+Never implement, self-assure, select models, publish, or transcribe history.

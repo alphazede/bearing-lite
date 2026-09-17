@@ -18,6 +18,7 @@ The Orchestrator announces `Aligning architecture in <repo>.`
   title, visible existing artifacts, repository rules, and return schema.
 - **Match:** the workspace, repository map, or architecture extract is missing or stale.
 - **Non-match:** both are current and usable by Scope Definition or Planning and Design.
+  Completed alignment is not repeated unless relevant source changes invalidate its map.
 
 ## Algorithm
 
@@ -31,10 +32,9 @@ The Orchestrator announces `Aligning architecture in <repo>.`
    root manifest, task runner, CI entrypoint, top-level instructions, and root
    test configs. Strictly prohibit discovery traversal into repo-relative
    `src/`, `lib/`, `vendor/`, and `docs/`.
-4. Extract existing architecture covering the affected scope. If none exists or
-   evidence does not cover it, record that gap, establish minimum system context
-   from repository facts and owner intent, and activate Systems Modeler rather
-   than inventing architecture.
+4. Map existing architecture covering the affected scope and hand off. If none
+   exists or evidence does not cover it, record that gap and activate Systems
+   Modeler; do not design missing architecture.
 5. If bounds are exhausted before required anchors are found, return
    `NEEDS_EVIDENCE` naming the missing anchor. Never compose unobserved commands.
 6. Create missing plan directory or update `workspace.md` in place, preserving
