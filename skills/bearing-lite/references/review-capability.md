@@ -27,7 +27,8 @@ execution passes that already follow.
 
 The parent controller resolves availability once and states it in the packet.
 It copies `enabled` and `required` from the frozen Lifecycle snapshot's
-`review.coverage_assist`, never from the live catalog. It resolves
+`review.coverage_assist`, never from the live catalog, and must normalize an
+omitted `required` to `false` before declaring. It resolves
 OpenCodeReview (OCR) identity and host availability explicitly: the packet
 names OpenCodeReview as `capability`. If that identity or availability
 cannot be resolved, declare `available: false` and return a typed gap. A
