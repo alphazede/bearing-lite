@@ -159,7 +159,8 @@ function backendState(input, request) {
  *   closure_eligible: boolean,
  *   rereview: false,
  *   download_attempted: false,
- *   backend_is_role: false
+ *   backend_is_role: false,
+ *   proceed?: string
  * }}
  */
 function evaluateVerification(input) {

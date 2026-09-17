@@ -32,7 +32,8 @@ assurance receipts remain distinguishable.
 
 Activation is selected OR required. Unavailability of an activated backend is a
 typed gap (`ERROR` / `backend_unavailable`), not success and not invented
-behavior. Only unselected AND unrequired absence stays inactive and is not a
+behavior. Required unavailability emits `proceed: "halt"`; enabled-only
+unavailability emits `proceed: "proceed-with-note"`. Only unselected AND unrequired absence stays inactive and is not a
 global failure. Assurance packets consume frozen `deterministic_verification`
 from the Lifecycle snapshot, never the live catalog. Reverify identity stays
 `reverify`; a generic backend name must not stand in for an absent binding.
