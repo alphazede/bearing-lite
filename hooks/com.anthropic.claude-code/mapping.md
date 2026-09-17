@@ -3,7 +3,8 @@
 This adapter is the verified native mapping for hosts that share a
 session-start / stop command hook. Coverage is **partial**: activation and
 closeout are executable; transition-order and protected-action stay
-procedural.
+procedural. The Orchestrator write-set lock is executable only where the
+host has a native pre-write deny.
 
 ## Hosts
 
@@ -26,9 +27,13 @@ Codex, or Grok host manifests. Root `hooks` is outside the closed Agent Plugins
 both is a duplicate-file error. GitHub Copilot in VS Code discovers plugin hooks
 from `com.github.copilot/hooks/hooks.json`.
 
-Skill-copy into a host skills directory does **not** register hooks. Plugin
-install or disable uses the host's native controls. Bearing Lite never copies
-adapters into global hook configuration.
+Skill-copy into a host skills directory does **not** register plugin hooks.
+To carry the Orchestrator write-set lock, merge `hooks/skill-copy-write-lock.json`
+into the host settings and point the command at `hooks/orchestrator-write-lock.cjs`.
+If that fragment is not installed, activation records `write_lock: absent`
+(a typed capability gap, not silent). Plugin install or disable uses the host's
+native controls. Bearing Lite never copies adapters into global hook
+configuration.
 
 ## Event map
 
@@ -37,13 +42,16 @@ adapters into global hook configuration.
 | `SessionStart`, `sessionStart`, `session_start` | activation | yes, advisory |
 | `Stop`, `stop` | closeout | yes, advisory only |
 | `PreToolUse`, `preToolUse`, `beforeShellExecution`, `apply_patch` | te_test_write | only where the host has a native write-time deny |
+| `PreToolUse`, `preToolUse`, `beforeShellExecution`, `apply_patch` | orchestrator write-set lock | only where the host has a native write-time deny; otherwise documented fallback |
 | `Stop`, `stop`, `SubagentStop`, `subagentStop` | te_completion | only where the host has a native completion or child-stop deny |
 | any other host event | none | unmapped; fail open as `UNAVAILABLE` |
 
 `hooks/com.anthropic.claude-code/host.cjs` owns activation and closeout and
 maps no Test Engineering class. `hooks/te-host.cjs` owns te_test_write and
-te_completion and maps neither of the original four. The two adapters are
-registered separately, and a `Stop` event reaches both.
+te_completion and maps neither of the original four. `hooks/orchestrator-write-lock.cjs`
+is a pure evaluator invoked on the same write-time events; it is not a fifth
+original class. The adapters are registered separately, and a `Stop` event
+reaches activation/closeout and TE completion.
 
 The shared planning-review evaluator is used by transition and closeout when a
 client supplies a structured `planning_review` record. Current session-start /
@@ -133,6 +141,26 @@ through `hookSpecificOutput.permissionDecision`. Copilot `Stop` denies through
 and `reason`. `Stop` and `SubagentStop` carry `stop_hook_active`; a true
 re-entry terminates as quiet success so a deny cannot loop. Transition-order,
 protected-action, planning-review, and assurance-budget stay procedural.
+This Copilot mapping does not yet register the Orchestrator write-set lock;
+use the documented fallback until that host file is wired.
+
+## Orchestrator write-set lock
+
+`hooks/orchestrator-write-lock.cjs` denies Orchestrator sessions (no
+`BEARING_ROLE`, empty, or `orchestrator`) writing `*-technical-plan.md`,
+`design.md`, `workspace.md`, `seit.json`, `implementation.json`,
+`*-dod-manifest.html`, `repository-map.md`, or `docs/coe/**`. Refusal names
+the owning role and the dispatch command (`BEARING_ROLE=<role>`). A session
+with a non-Orchestrator `BEARING_ROLE` is allowed. Dispatch every specialist
+and stage session as a separate process with `BEARING_ROLE` set.
+
+| Host | write-set lock |
+|---|---|
+| Claude Code, Codex, Grok Build, Cursor | native `PreToolUse` / Cursor write-time deny |
+| GitHub Copilot, Kimi Code, Pi, AGY, DeepCode, Qwen Code, Muse Code | no lock in this mapping; fallback is procedural plus `write_lock: absent` on skill-copy |
+
+Activation receipts include `write_lock: present` when plugin `hooks.json`
+wires the evaluator, otherwise `write_lock: absent`.
 
 ## Derived fields
 

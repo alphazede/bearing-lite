@@ -9,15 +9,14 @@ description: >
 
 # Planning and Design
 
-Fresh planning node. The Orchestrator writes Lifecycle state and owns conversation.
+Fresh planning node. If you are the Orchestrator, dispatch this; do not execute it.
 
 ## Match, inputs, and non-match
 
 - **Match:** material intent is settled and any technical-plan, design, SEIT,
-  implementation graph, or DoD Manifest is missing.
-- **Inputs:** confirmed decisions, workspace.md and evidence, artifact status,
-  requirements register, repository rules, proposed owner-supplied profile and
-  cadence, plus the return schema.
+  implementation graph, or DoD Manifest is missing, or a named delta packet.
+- **Inputs:** confirmed decisions, workspace.md and evidence, artifact status, requirements register,
+  repository rules, proposed owner-supplied profile and cadence, plus the return schema. Delta: named findings and proposed text.
 - **Non-match:** unresolved material scope, behavior, authority, risk, or
   acceptance intent returns `REROUTE_SCOPE_DEFINITION`; generate no
   `implementation.json` or Manifest.
@@ -46,15 +45,16 @@ Fresh planning node. The Orchestrator writes Lifecycle state and owns conversati
    requirements. DoD Manifest states: `planning` then append-only closeout.
 5. Give every slice stable requirement/design/SEIT IDs, dependencies, exact
    write set, authority, role, session rule, evidence, recovery, and stop rule.
-6. Follow `../bearing-lite/references/owner-stops.md`.
-   Open and verify the Manifest, then request exactly one integrated owner review
-   of outcome, design, route, profile, cadence, and plan. Dispatch remains
-   prohibited until approval. An owner change regenerates affected artifacts,
-   then returns to this same gate; never insert a profile or route pause.
+6. Follow `../bearing-lite/references/owner-stops.md`. Open and verify the Manifest,
+   then request exactly one integrated owner review of outcome, design, route, profile,
+   cadence, and plan. An owner change regenerates affected artifacts, then returns to
+   this same gate; never insert a profile or route pause. Delta mode: apply named
+   findings, re-embed digests, return `DELTA_APPLIED`; no fresh package.
 
 ## Return and recovery
 
-Return `PLAN_REVIEW_READY`, `REROUTE_SCOPE_DEFINITION`,
+Return `PLAN_REVIEW_READY`, `REROUTE_SCOPE_DEFINITION`, `DELTA_APPLIED`,
 `NEEDS_OWNER_DECISION`, or `VALIDATION_FAILED` with paths, evidence, blocker,
-and next action. Owner-decision pauses do not consume correction rounds. At
-most three evidence-changing correction rounds; never implement or invent approval.
+and next action. Owner-decision pauses do not consume correction rounds. At most
+two evidence-changing correction rounds; a third is an owner-stops class C question.
+Never implement or invent approval.

@@ -283,6 +283,7 @@ function formatAdvice(verdict) {
     "Bearing Lite " + verdict.hook_class + ": " + verdict.outcome,
     verdict.reason ? "reason: " + verdict.reason : "",
     verdict.recovery ? "recovery: " + verdict.recovery : "",
+    verdict.write_lock ? "write_lock: " + verdict.write_lock : "",
     "Coverage: this host mapping is partial. activation and closeout are executable; transition and protected_action remain procedural.",
   ].filter(Boolean);
   return lines.join("\n").slice(0, 4000);
@@ -323,6 +324,22 @@ function toHostResponse(eventName, verdict) {
   return body;
 }
 
+function detectWriteLock() {
+  try {
+    const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "hooks.json"), "utf8"));
+    const pre = manifest.hooks && manifest.hooks.PreToolUse;
+    if (!Array.isArray(pre)) return "absent";
+    const wired = pre.some((entry) =>
+      (entry.hooks || []).some((hook) =>
+        (hook.args || []).some((arg) => String(arg).includes("orchestrator-write-lock.cjs"))
+      )
+    );
+    return wired ? "present" : "absent";
+  } catch {
+    return "absent";
+  }
+}
+
 function evaluateForHost(eventName, derived) {
   if (classForEvent(eventName) === "closeout") {
     const task = derived.active_task || {};
@@ -342,6 +359,7 @@ function evaluateForHost(eventName, derived) {
     next_action: derived.next_action,
     assigned_role: derived.assigned_role,
     router_invoked: derived.router_invoked === true,
+    write_lock: detectWriteLock(),
   });
 }
 

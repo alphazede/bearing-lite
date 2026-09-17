@@ -19,8 +19,8 @@ conversation; planning nodes return owner questions. Plugin hosts are partial; s
    The recorded snapshot is authoritative for this Lifecycle. Dispatch uses that snapshot.
    Later edits to `~/.agents/bearing-lite/profiles.json` have no effect on it
    except by explicit owner-confirmed dated visible amendment.
-3. Run Intake → Architectural Alignment → Scope Definition; unresolved material intent blocks Planning and Design.
-   Invoke Planning and Design once settled.
+3. Run Intake → Architectural Alignment → Scope Definition as dispatched sessions with `BEARING_ROLE` set; reading a stage `SKILL.md` is not running it. unresolved material intent blocks Planning and Design.
+   Invoke Planning and Design once settled; consume the receipt. Plan-artifact findings dispatch a delta (`BEARING_ROLE=planning_and_design`).
    Do not ask for profile or route before it; carry owner-supplied profile and cadence.
 4. Enforce `references/review-policy.md`, `references/owner-stops.md`. Show one integrated
    approval-or-change gate. Record the approved Lifecycle type and snapshot.

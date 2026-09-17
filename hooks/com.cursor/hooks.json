@@ -14,11 +14,17 @@
     "preToolUse": [
       {
         "command": "node ./hooks/te-host.cjs --host=cursor"
+      },
+      {
+        "command": "node ./hooks/orchestrator-write-lock.cjs --host=cursor"
       }
     ],
     "beforeShellExecution": [
       {
         "command": "node ./hooks/te-host.cjs --host=cursor"
+      },
+      {
+        "command": "node ./hooks/orchestrator-write-lock.cjs --host=cursor"
       }
     ]
   }

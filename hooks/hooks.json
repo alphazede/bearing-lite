@@ -30,6 +30,20 @@
             "statusMessage": "Bearing Lite test-engineering write check"
           }
         ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit|NotebookEdit|apply_patch|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/orchestrator-write-lock.cjs"
+            ],
+            "timeout": 15,
+            "statusMessage": "Bearing Lite orchestrator write-set lock"
+          }
+        ]
       }
     ],
     "Stop": [

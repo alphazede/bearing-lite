@@ -48,8 +48,10 @@ SDoc, publishes, selects models or profiles, or writes tests.
 
 Return `PASS`, `REPAIRABLE_FAILURE`, `NEEDS_MORE_EVIDENCE`, or
 `NEEDS_OWNER_DECISION` with verdict, candidate_ref, changed_paths, per-row
-findings, and blocker. Rerun the gate on each corrected register within Planning and
-Design's correction rounds. Exhaustion with fixable rows returns
+findings, and blocker. Rerun the gate on each corrected register only inside
+Planning and Design's first two correction rounds; a third round is an
+owner-stops class C question (default: apply the specialist's exact proposed
+text, verify it mechanically, list residual at the integrated gate). Exhaustion with fixable rows returns
 `NEEDS_OWNER_DECISION` listing those rows, never silent acceptance. Missing
 `requirements-engineering` method skill is a typed capability gap.
 

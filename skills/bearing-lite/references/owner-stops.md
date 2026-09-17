@@ -9,7 +9,7 @@ extra role, review gate, approval checkpoint, or scope to resolve uncertainty.
 | --- | --- | --- |
 | A | Existing policy | Apply the cited rule and record a dated execution receipt. A real policy conflict is a C boundary decision. |
 | B | Approved fallback | Verify unavailability under the frozen fallback condition; activate the next eligible approved route and record evidence. Changing the profile or fallback condition is C. |
-| C | Bound, scope, or policy conflict | Ask for the smallest amendment when it blocks ready work. Never reset a spent bound. |
+| C | Bound, scope, policy conflict, or a third planning-gate correction round | Ask for the smallest amendment when it blocks ready work. Never reset a spent bound. After two evidence-changing correction rounds of any planning gate, a further round is this class; the default is to apply the specialist's exact proposed text, verify it mechanically, and list the residual at the integrated gate. |
 | D | Continue approved work | Use the effective continuation grant; never ask again while its conditions hold. Missing or expired authority is F. |
 | E | Integrated plan approval | Present the package once for approval or change; execution waits for explicit approval. |
 | F | Authority reserved to the owner | Ask only when the action is not already expressly authorized. Owner holds remain effective until explicitly lifted. |

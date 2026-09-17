@@ -9,7 +9,8 @@ description: >
 
 # Intake
 
-Fresh planning node. It returns evidence; the Orchestrator records the decision.
+Fresh planning node. If you are the Orchestrator, dispatch this; do not execute it.
+It returns evidence; the Orchestrator records the decision.
 Intake handles input and repository selection.
 
 ## Inputs and match
