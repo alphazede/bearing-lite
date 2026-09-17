@@ -97,6 +97,25 @@ function dispatchFor(owner) {
   return `Dispatch skills/${owner.replace(/_/g, "-")} with BEARING_ROLE=${owner}`;
 }
 
+const LOCKED_TOKEN_RE =
+  /(?:^|[^\w./-])((?:[\w./-]*\/)?(?:design\.md|workspace\.md|seit\.json|implementation\.json|repository-map\.md|[\w.-]*-technical-plan\.md|[\w.-]*-dod-manifest\.html|docs\/coe(?:\/[\w./-]*)?))(?:[^\w./-]|$)/g;
+
+function fieldText(value) {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value) || isPlainObject(value)) return JSON.stringify(value);
+  return undefined;
+}
+
+function scanLockedTokens(text, out) {
+  if (typeof text !== "string" || !text) return;
+  const hits = text.match(LOCKED_TOKEN_RE);
+  if (!hits) return;
+  for (const hit of hits) {
+    const token = hit.replace(/^[^\w./-]+|[^\w./-]+$/g, "");
+    if (token) out.add(posix(token));
+  }
+}
+
 function collectPaths(input) {
   const out = new Set();
   const toolInput = isPlainObject(input.tool_input)
@@ -109,9 +128,13 @@ function collectPaths(input) {
     toolInput.file_path,
     toolInput.filePath,
     toolInput.path,
+    toolInput.file,
+    toolInput.filename,
     toolInput.notebook_path,
     input.file_path,
     input.filePath,
+    input.file,
+    input.filename,
   ]) {
     const target = presentString(value);
     if (target) out.add(posix(target));
@@ -123,17 +146,9 @@ function collectPaths(input) {
       if (target) out.add(posix(target));
     }
   }
-  const command = presentString(toolInput.command) || presentString(input.command);
-  if (command) {
-    const hits = command.match(
-      /(?:^|[^\w./-])((?:[\w./-]*\/)?(?:design\.md|workspace\.md|seit\.json|implementation\.json|repository-map\.md|[\w.-]*-technical-plan\.md|[\w.-]*-dod-manifest\.html|docs\/coe(?:\/[\w./-]*)?))(?:[^\w./-]|$)/g
-    );
-    if (hits) {
-      for (const hit of hits) {
-        const token = hit.replace(/^[^\w./-]+|[^\w./-]+$/g, "");
-        if (token) out.add(posix(token));
-      }
-    }
+  scanLockedTokens(presentString(toolInput.command) || presentString(input.command), out);
+  for (const key of ["patch", "diff", "content", "text", "edits"]) {
+    scanLockedTokens(fieldText(toolInput[key]) || fieldText(input[key]), out);
   }
   return [...out];
 }
@@ -256,7 +271,12 @@ function handle(envelope, options) {
   const root = path.resolve(
     presentString(input.cwd) || presentString(input.workspaceRoot) || process.cwd()
   );
-  const role = presentString(opts.role) || presentString(process.env.BEARING_ROLE);
+  const role =
+    presentString(opts.role) ||
+    presentString(process.env.BEARING_ROLE) ||
+    presentString(input.role) ||
+    presentString(input.BEARING_ROLE) ||
+    presentString(input.assigned_role);
   const result = evaluate({
     role,
     paths: envelopePaths(input, root),

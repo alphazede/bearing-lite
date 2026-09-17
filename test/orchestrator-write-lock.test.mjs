@@ -52,4 +52,45 @@ describe("#112 orchestrator write-set lock", () => {
     assert.equal(lock.evaluate({ write_lock: "absent" }).write_lock, "absent");
     assert.equal(lock.evaluate({ write_lock: "present" }).write_lock, "present");
   });
+
+  it("denies a pathless apply_patch body that names design.md", () => {
+    const lock = require(LOCK);
+    const result = lock.evaluate({
+      tool_input: { patch: "*** Update File: design.md\n@@\n+x\n" },
+    });
+    assert.equal(result.verdict, "DENY_DISPATCH");
+    assert.match(String(result.reason), /planning_and_design/);
+  });
+
+  it("denies file/filename keys that name a locked artifact", () => {
+    const lock = require(LOCK);
+    for (const key of ["file", "filename"]) {
+      const result = lock.evaluate({ tool_input: { [key]: "design.md" } });
+      assert.equal(result.verdict, "DENY_DISPATCH", key);
+    }
+  });
+
+  it("handle honors envelope role and still denies Orchestrator", () => {
+    const lock = require(LOCK);
+    const saved = process.env.BEARING_ROLE;
+    delete process.env.BEARING_ROLE;
+    try {
+      const allowed = lock.handle({
+        hook_event_name: "PreToolUse",
+        assigned_role: "planning_and_design",
+        tool_input: { file_path: "design.md" },
+      });
+      assert.equal(allowed.hookSpecificOutput.verdict, "ALLOW");
+
+      const denied = lock.handle({
+        hook_event_name: "PreToolUse",
+        role: "orchestrator",
+        tool_input: { file_path: "design.md" },
+      });
+      assert.equal(denied.hookSpecificOutput.verdict, "DENY_DISPATCH");
+    } finally {
+      if (saved === undefined) delete process.env.BEARING_ROLE;
+      else process.env.BEARING_ROLE = saved;
+    }
+  });
 });
