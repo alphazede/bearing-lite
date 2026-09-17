@@ -22,6 +22,8 @@ Lowest mutation authority and highest hands-on work in the Bearing ladder.
 - **Non-match:** multi-packet coordination, design gaps, missing authority,
   assurance, or owner-only action.
 - **Split:** `tdd` orders Test Implementer before Product Implementer from the frozen snapshot. Test Implementer may change only tests and approved fixtures. Product Implementer write set excludes tests and must not weaken independently authored tests. Same-feature parallel is prohibited. `single_implementer` writes product plus tests. Neither self-certifies.
+- **Repair:** consume the frozen review receipt after parent-accepted `REPAIR_REQUIRED`:
+  candidate ref/revision/digest, finding IDs, write set, same worktree/branch/generation.
 
 ## Algorithm
 
@@ -44,8 +46,8 @@ Lowest mutation authority and highest hands-on work in the Bearing ladder.
    authority.
 4. Run assigned focused commands and author self-checks. At-end review never removes
    deterministic testing or grants independent-review identity; diagnostic verification receipts never satisfy an assurance gate.
-5. Preserve unrelated work. Return only the compact receipt.
-6. Stop on acceptance, authority boundary, design gap, or exhausted correction.
+5. Preserve unrelated work. Return only the compact receipt. Stop on acceptance,
+   authority boundary, design gap, or exhausted correction.
 
 ## Return and recovery
 
@@ -54,4 +56,5 @@ Return `CANDIDATE_READY`, `PARTIAL`, `WAITING_ON`, or
 findings, and blocker. Attempts 1–3 require new evidence, hypothesis, or
 narrower strategy.
 
-Never expand scope, self-certify as assurance, publish, or hide a failure.
+One repair; close by deterministic verification; no extra review; dispatch if
+session cannot be preserved. Never expand scope, self-certify as assurance, publish, or hide a failure.

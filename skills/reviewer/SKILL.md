@@ -28,20 +28,20 @@ Independent defect assurance, outside the mutation-authority ladder.
    discontinuity, or any boundary other than the declared cadence unit.
    Consume the Assurance Test Engineer receipt. Invoke Test Engineering only to
    adjudicate a specific suspected test defect. Deterministic verification may
-   support a suspected defect; author diagnostics cannot satisfy assurance, and
-   post-repair closure adds no review round.
+   support a suspected defect; author diagnostics cannot satisfy assurance, and post-repair closure adds no review round.
 2. Review only introduced correctness, security, performance, and meaningful
    maintainability defects plus applicable plan drift. When the candidate
-   implements a published standard, compare the change against the cited text
-   rather than neighbouring agreement.
+   implements a published standard, compare the change against the cited text rather than neighbouring agreement.
 3. Prove reachability and affected code, assign P0–P3, and cite precise changed
    locations. Avoid speculation and nits.
 4. Use a coverage-assist capability only when the packet declares it; never
    probe. OpenCodeReview (OCR) is one; the packet carries its invocation. It
    returns reviewable files, exclusions with reasons, and rules. The list is
-   advisory: read an excluded file when warranted. It finds no defects and no
-   verdict. Declared but unavailable is a typed gap, never equivalent coverage.
-5. Return a patch verdict and repair targets. Never implement a finding.
+   advisory: read an excluded file when warranted. It finds no defects and no verdict. Declared but unavailable is a typed gap, never equivalent coverage.
+5. Return a patch verdict and repair targets. While Reviewer, never edit the
+   candidate; persist a frozen receipt first: ref/revision/digest, verdict,
+   finding IDs, severity, locations, reachability, reproducer, SEIT refs, repair
+   target, write set. Parent-accepted `REPAIR_REQUIRED` may record an explicit Repair Implementer transition on the same lineage; else dispatch. Preserve context.
 
 ## Return and recovery
 
@@ -53,8 +53,8 @@ do not follow it with another repair. The parent controller
 (Orchestrator on a direct packet, Coordinator on a coordinator wave) enforces
 `max_assurance_rounds` of 1 per declared phase or wave. A repairable verdict
 permits one repair; the parent controller then runs deterministic verification
-and closes the gate without another review. Do not review or repair that
-that unit again. The next distinct declared unit carries its own budget.
-A failed repair or scope change returns to Owner Authority.
+and closes the gate without another review. Do not review or repair that unit
+again. The next distinct declared unit carries its own budget. A failed repair,
+scope change, or defect outside the frozen receipt returns to Owner Authority.
 
-Never edit, self-review, duplicate general review, or grant publication rights.
+Never self-review, duplicate general review, or grant publication rights.
