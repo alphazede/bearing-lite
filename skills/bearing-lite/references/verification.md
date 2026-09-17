@@ -33,7 +33,10 @@ assurance receipts remain distinguishable.
 Activation is selected OR required. Unavailability of an activated backend is a
 typed gap (`ERROR` / `backend_unavailable`), not success and not invented
 behavior. Only unselected AND unrequired absence stays inactive and is not a
-global failure. Profile `reverify.enabled` records user configuration;
+global failure. Assurance packets consume frozen `deterministic_verification`
+from the Lifecycle snapshot, never the live catalog. Reverify identity stays
+`reverify`; a generic backend name must not stand in for an absent binding.
+Profile `reverify.enabled` records user configuration;
 availability does not select Reverify for every task. Planning Test Engineer
 selects it on an applicable binary-level SEIT claim; Plan Integrator copies
 that selection and must not invent V&V.

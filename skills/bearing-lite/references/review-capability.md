@@ -26,10 +26,17 @@ execution passes that already follow.
 ## Declared, never discovered
 
 The parent controller resolves availability once and states it in the packet.
-`planCoverage` requires a complete declaration of `enabled`, `required` and
-`available`; an incomplete one returns `capability_not_declared` rather than
-falling back to a probe. A Reviewer that discovers its own tooling spends a turn
-on plumbing before reviewing anything, which is the cost this avoids.
+It copies `enabled` and `required` from the frozen Lifecycle snapshot's
+`review.coverage_assist`, never from the live catalog. It resolves
+OpenCodeReview (OCR) identity and host availability explicitly: the packet
+names OpenCodeReview as `capability`. If that identity or availability
+cannot be resolved, declare `available: false` and return a typed gap. A
+generic capability name must not stand in for an absent OpenCodeReview
+binding. `planCoverage` requires a complete declaration of `enabled`,
+`required` and `available`; an incomplete one returns
+`capability_not_declared` rather than falling back to a probe. A Reviewer
+that discovers its own tooling spends a turn on plumbing before reviewing
+anything, which is the cost this avoids.
 
 | Declared state | Result |
 |---|---|
