@@ -96,3 +96,6 @@ nits. The adopter decides which halves to use.
 `required` (legacy omission is false). Nothing else. The capability keeps its
 own configuration in its own tooling, and Bearing Lite never selects
 credentials, providers or models for it.
+
+Per-harness host readiness (binary on PATH, Cursor allowlist) is owner-machine
+configuration. It folds into issue #92 plugin-install testing, not this repo.
