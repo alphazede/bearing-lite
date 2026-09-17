@@ -369,13 +369,15 @@
               ],
               "properties": {
                 "enabled": {
-                  "type": "boolean"
+                  "type": "boolean",
+                  "description": "When true, the role may proceed with a recorded note if the capability is unavailable. Activated-but-unavailable remains a typed gap."
                 },
                 "required": {
-                  "type": "boolean"
+                  "type": "boolean",
+                  "description": "When true, the role may not proceed without the capability (halt). Omitted on legacy profiles is false; no migration. Activated-but-unavailable remains a typed gap."
                 }
               },
-              "description": "Deterministic file selection and rule resolution for the Reviewer. It finds no defects and produces no verdict."
+              "description": "Deterministic file selection and rule resolution for the Reviewer. It finds no defects and produces no verdict. enabled and required are independent: required has force when both are true."
             }
           }
         }

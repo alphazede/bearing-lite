@@ -42,7 +42,7 @@ function deepEqual(a, b) {
 }
 
 function result(outcome, reason, extra = {}) {
-  return {
+  const out = {
     outcome,
     reason,
     status: extra.status ?? null,
@@ -53,6 +53,8 @@ function result(outcome, reason, extra = {}) {
     download_attempted: false,
     backend_is_role: false,
   };
+  if (Object.hasOwn(extra, "proceed")) out.proceed = extra.proceed;
+  return out;
 }
 
 function present(value) {
@@ -186,7 +188,10 @@ function evaluateVerification(input) {
         return result("INACTIVE", "backend_unselected_unrequired");
       }
     } else if (backend.enabled === false || backend.available !== true) {
-      return result("ERROR", "backend_unavailable", { status: "ERROR" });
+      return result("ERROR", "backend_unavailable", {
+        status: "ERROR",
+        proceed: backend.required ? "halt" : "proceed-with-note",
+      });
     }
 
     if (!Object.hasOwn(input, "receipt") || input.receipt === undefined || input.receipt === null) {
