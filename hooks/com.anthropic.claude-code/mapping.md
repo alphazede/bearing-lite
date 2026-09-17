@@ -152,7 +152,9 @@ use the documented fallback until that host file is wired.
 `*-dod-manifest.html`, `repository-map.md`, or `docs/coe/**`. Refusal names
 the owning role and the dispatch command (`BEARING_ROLE=<role>`). A session
 with a non-Orchestrator `BEARING_ROLE` is allowed. Dispatch every specialist
-and stage session as a separate process with `BEARING_ROLE` set.
+and stage session as a separate process with `BEARING_ROLE` set. Locked
+basenames match at any path (`/tmp/workspace.md`, nested `x/docs/coe/y.md`);
+that breadth is intentional, not a repo-root-only check.
 
 | Host | write-set lock |
 |---|---|
