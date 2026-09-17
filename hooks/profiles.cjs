@@ -209,11 +209,11 @@ function evaluateTddTestImplementerRoute(input) {
 }
 
 /**
- * Deep-copy selected routes and fallback order; bind a SHA-256 digest of that copy.
+ * Deep-copy selected routes, capabilities, and fallback order; bind a SHA-256 digest of that copy.
  * TDD missing/disabled/malformed Test Implementer fails closed with no snapshot or digest.
  * Digest is canonical JSON of selected entries with fallback order; excludes cadence, route, and authority.
  * @param {{ profile?: object }} [input]
- * @returns {{ snapshot: { roles: object }, digest: string } | { outcome: string, onboard: boolean }}
+ * @returns {{ snapshot: { roles: object, review?: object, deterministic_verification?: object }, digest: string } | { outcome: string, onboard: boolean }}
  */
 function freezeSelectedRoutes(input) {
   const profile = (input && input.profile) || {};
@@ -222,9 +222,19 @@ function freezeSelectedRoutes(input) {
     return failClosedTddRoute();
   }
   const roles = isPlainObject(profile.roles) ? deepCopy(profile.roles) : {};
+  const snapshot = { roles };
+  const material = { ...roles };
+  if (isPlainObject(profile.review)) {
+    snapshot.review = deepCopy(profile.review);
+    material.review = snapshot.review;
+  }
+  if (isPlainObject(profile.deterministic_verification)) {
+    snapshot.deterministic_verification = deepCopy(profile.deterministic_verification);
+    material.deterministic_verification = snapshot.deterministic_verification;
+  }
   return {
-    snapshot: { roles },
-    digest: sha256Hex(digestMaterial(roles)),
+    snapshot,
+    digest: sha256Hex(digestMaterial(material)),
   };
 }
 

@@ -114,6 +114,11 @@ authority. Canonical JSON: UTF-8, sort_keys, compact separators.
 Later catalog edits do not mutate the frozen snapshot copy or its digest.
 For `tdd`, freeze both `test_implementer` and `implementer` routes and
 fallback order into that frozen snapshot copy.
+Selected capability sections (`review`, `deterministic_verification`) are
+frozen alongside routes, and relevant packets must consume that binding.
+OCR means OpenCodeReview via `coverage_assist`, not a new role or backend
+hard dependency. Older roles-only snapshots need explicit reconciliation
+or owner amendment, not live-catalog hot reload.
 
 ## Save
 
