@@ -95,6 +95,17 @@ describe("closeout git-sync", () => {
     }
   });
 
+  it("stays silent when the checkout is already current", () => {
+    const { t, local } = fixture();
+    try {
+      // Nothing fetched, nothing ahead/behind: on Stop an unconditional message
+      // would start a turn that fires Stop again, forever.
+      assert.equal(formatAdvice(sync(local)), null);
+    } finally {
+      fs.rmSync(t, { recursive: true, force: true });
+    }
+  });
+
   it("skips outside a git checkout and prints nothing for it", () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "bl-git-sync-none-"));
     try {
