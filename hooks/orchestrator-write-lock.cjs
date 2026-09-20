@@ -106,13 +106,299 @@ function fieldText(value) {
   return undefined;
 }
 
-function scanLockedTokens(text, out) {
+function mentionsLockedToken(text) {
+  if (typeof text !== "string" || !text) return false;
+  LOCKED_TOKEN_RE.lastIndex = 0;
+  return LOCKED_TOKEN_RE.test(text);
+}
+
+function stripQuotes(value) {
+  const s = String(value);
+  if (s.length >= 2) {
+    const first = s[0];
+    const last = s[s.length - 1];
+    if ((first === '"' && last === '"') || (first === "'" && last === "'")) {
+      return s.slice(1, -1);
+    }
+  }
+  return s;
+}
+
+function isLockedPath(value) {
+  const target = presentString(value);
+  if (!target) return false;
+  return ownerFor(posix(stripQuotes(target))) !== null;
+}
+
+// Verbs that mutate any locked path passed as an operand (rm, truncate, ...).
+const WRITE_ANY_VERBS = new Set([
+  "rm",
+  "rmdir",
+  "unlink",
+  "shred",
+  "truncate",
+  "touch",
+  "tee",
+  "chmod",
+  "chown",
+  "chattr",
+  "patch",
+  "ed",
+  "ex",
+  "vi",
+  "vim",
+  "nvim",
+  "nano",
+  "emacs",
+  "micro",
+  "rename",
+]);
+
+// Verbs that only threaten the protected path as the destination operand.
+const WRITE_DEST_VERBS = new Set(["mv", "cp", "install", "ln"]);
+
+const GIT_WRITE_SUBCOMMANDS = new Set([
+  "apply",
+  "checkout",
+  "restore",
+  "mv",
+  "rm",
+  "clean",
+  "am",
+  "update-index",
+]);
+
+const SHELL_VERBS = new Set(["sh", "bash", "dash", "ksh", "zsh"]);
+
+// In-place edit drivers: only a write when the in-place flag is present.
+const INPLACE_VERBS = new Set(["sed", "perl", "ruby", "awk", "gawk"]);
+
+// Write() calls inside interpreter one-liners, e.g. open(f, "w").
+const SCRIPT_WRITE_CALL_RE =
+  /writeFile(Sync)?\s*\(|appendFile(Sync)?\s*\(|createWriteStream\s*\(|file_put_contents\s*\(|["'][wax][bt+]*\+?["']|["']\+?>{1,2}["']/;
+const SCRIPT_VERBS = new Set([
+  "python",
+  "python3",
+  "node",
+  "deno",
+  "bun",
+  "ruby",
+  "php",
+  "perl",
+]);
+
+const WRAPPER_PREFIXES = new Set(["sudo", "doas", "command", "builtin", "env"]);
+
+function splitTokens(segment) {
+  return String(segment)
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+function verbOf(tokens) {
+  let i = 0;
+  while (i < tokens.length) {
+    const raw = stripQuotes(tokens[i]);
+    if (WRAPPER_PREFIXES.has(basename(raw))) {
+      i += 1;
+      continue;
+    }
+    if (/^[A-Za-z_][A-Za-z0-9_]*=/.test(raw)) {
+      i += 1;
+      continue;
+    }
+    return { verb: basename(raw), index: i };
+  }
+  return { verb: "", index: tokens.length };
+}
+
+function operandsOf(tokens, from) {
+  const out = [];
+  for (let i = from; i < tokens.length; i += 1) {
+    const raw = stripQuotes(tokens[i]);
+    if (!raw || raw === "-" || raw === "--") continue;
+    if (raw.startsWith("-") && !/^-\d/.test(raw)) continue;
+    if (/^[A-Za-z_][A-Za-z0-9_]*=/.test(raw) && !/^(of|if)=/i.test(raw)) continue;
+    out.push(raw);
+  }
+  return out;
+}
+
+function quotedRanges(text) {
+  const ranges = [];
+  let quote = null;
+  let start = -1;
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i];
+    if (quote) {
+      if (ch === quote && text[i - 1] !== "\\") {
+        ranges.push([start, i]);
+        quote = null;
+      }
+    } else if ((ch === '"' || ch === "'") && !/[A-Za-z0-9_]$/.test(text.slice(0, i))) {
+      quote = ch;
+      start = i;
+    }
+  }
+  return ranges;
+}
+
+function inRanges(ranges, index) {
+  return ranges.some(([from, to]) => index > from && index < to);
+}
+
+function cleanTarget(value) {
+  return String(value || "").replace(/^["']+/, "");
+}
+
+function unwrapPayload(text) {
+  const t = String(text).trim();
+  if (t.length >= 2) {
+    const first = t[0];
+    const last = t[t.length - 1];
+    if ((first === "'" && last === "'") || (first === '"' && last === '"')) {
+      return t.slice(1, -1);
+    }
+  }
+  return text;
+}
+
+function stripQuotedSpans(text) {
+  let out = "";
+  let quote = null;
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i];
+    if (quote) {
+      if (ch === quote && text[i - 1] !== "\\") quote = null;
+      else out += " ";
+    } else if (ch === '"' || ch === "'") {
+      quote = ch;
+      out += " ";
+    } else {
+      out += ch;
+    }
+  }
+  return out;
+}
+
+function segmentWritesLocked(segment, depth) {
+  let text = String(segment);
+  if (!mentionsLockedToken(text)) return false;
+  if ((depth || 0) > 2) return true;
+
+  // A `-c` payload runs as a nested command: assess it directly, since its
+  // quotes are execution syntax, not printed text. Then assess the outer
+  // remainder (e.g. `bash -c 'echo hi' > design.md`).
+  const outerTokens = splitTokens(text);
+  if (outerTokens.length) {
+    const outer = verbOf(outerTokens);
+    if (SHELL_VERBS.has(outer.verb)) {
+      const args = outerTokens.slice(outer.index + 1);
+      const flagAt = args.findIndex((token) => /^(--command$|-[A-Za-z]*c)/.test(stripQuotes(token)));
+      if (flagAt >= 0) {
+        const payload = unwrapPayload(args.slice(flagAt + 1).join(" "));
+        if (segmentWritesLocked(payload, (depth || 0) + 1)) return true;
+        text = stripQuotedSpans(text);
+        if (!mentionsLockedToken(text)) return false;
+      } else {
+        return false;
+      }
+    }
+  }
+
+  // Redirection onto a locked path: `>`, `>>`, `>|`, `<>`, `2>`, `of=`.
+  // A `>` inside quotes is printed text, not a redirect (`echo "a > b"`).
+  const quotes = quotedRanges(text);
+  for (const redirect of text.matchAll(/(?:\d+\s*)?(>>?\|?|<>)\s*(["']?)([^\s|&;]+)/g)) {
+    const operatorIndex = (redirect.index || 0) + redirect[0].indexOf(redirect[1]);
+    if (inRanges(quotes, operatorIndex)) continue;
+    if (isLockedPath(cleanTarget(redirect[3]))) return true;
+  }
+  for (const dd of text.matchAll(/\bof\s*=\s*(["']?)([^\s|&;]+)/gi)) {
+    if (inRanges(quotes, dd.index || 0)) continue;
+    if (isLockedPath(cleanTarget((dd[1] || "") + dd[2]))) return true;
+  }
+
+  const tokens = splitTokens(text);
+  if (!tokens.length) return false;
+  const { verb, index } = verbOf(tokens);
+  const rest = tokens.slice(index + 1).join(" ");
+
+  if (WRITE_ANY_VERBS.has(verb)) {
+    return operandsOf(tokens, index + 1).some(isLockedPath);
+  }
+  if (WRITE_DEST_VERBS.has(verb)) {
+    const operands = operandsOf(tokens, index + 1);
+    return operands.length > 0 && isLockedPath(operands[operands.length - 1]);
+  }
+  if (verb === "git") {
+    const operands = operandsOf(tokens, index + 1);
+    const sub = String(operands[0] || "").toLowerCase();
+    if (GIT_WRITE_SUBCOMMANDS.has(sub)) return operands.some(isLockedPath);
+    return false;
+  }
+  if (verb === "find") {
+    if (/(^|\s)(-delete)(\s|$)/.test(` ${rest} `)) return true;
+    const exec = rest.match(/-exec(dir)?\s+([^\s]+)/);
+    if (exec && (WRITE_ANY_VERBS.has(basename(exec[2])) || WRITE_DEST_VERBS.has(basename(exec[2])))) {
+      return true;
+    }
+    return false;
+  }
+  if (INPLACE_VERBS.has(verb)) {
+    if (/(^|\s)--in-place(\s|=|$)|(^\s*|\s)-[A-Za-z]*i/i.test(` ${rest}`)) {
+      return operandsOf(tokens, index + 1).some(isLockedPath);
+    }
+    return false;
+  }
+  if (verb === "dd") return false;
+  if (verb === "apply_patch" || verb === "applypatch" || verb === "patch") {
+    return true;
+  }
+  if (SCRIPT_VERBS.has(verb)) {
+    return SCRIPT_WRITE_CALL_RE.test(text);
+  }
+  if (verb === "xargs") {
+    const operands = operandsOf(tokens, index + 1);
+    if (operands.some((token) => WRITE_ANY_VERBS.has(basename(String(token))))) return true;
+    return false;
+  }
+  return false;
+}
+
+function scanCommandWriteTargets(command, out) {
+  if (typeof command !== "string" || !command) return;
+  if (!mentionsLockedToken(command)) return;
+  // Split pipelines / lists so `cat locked | tee /tmp/out` stays a read of
+  // the locked path: only the segment that writes it counts.
+  const segments = String(command).split(/[|\n;]+/).flatMap((part) => part.split(/&&|\|\|/));
+  for (const segment of segments) {
+    if (!mentionsLockedToken(segment)) continue;
+    if (!segmentWritesLocked(segment, 0)) continue;
+    LOCKED_TOKEN_RE.lastIndex = 0;
+    let hit;
+    const guard = { count: 0 };
+    while ((hit = LOCKED_TOKEN_RE.exec(segment)) !== null && guard.count < 25) {
+      guard.count += 1;
+      const token = String(hit[1] || "").replace(/^[^\w./-]+|[^\w./-]+$/g, "");
+      if (token && ownerFor(posix(token)) !== null) out.add(posix(token));
+    }
+    LOCKED_TOKEN_RE.lastIndex = 0;
+  }
+}
+
+// Patch/diff bodies describe write operations, so only their file-target
+// lines (not prose inside added lines) name write targets.
+function scanPatchTargets(text, out) {
   if (typeof text !== "string" || !text) return;
-  const hits = text.match(LOCKED_TOKEN_RE);
-  if (!hits) return;
-  for (const hit of hits) {
-    const token = hit.replace(/^[^\w./-]+|[^\w./-]+$/g, "");
-    if (token) out.add(posix(token));
+  for (const line of text.split("\n")) {
+    const target =
+      line.match(/^\s*\*\*\*\s*(?:Update|Add|Delete|Rename)\s+File:\s*(\S+)/) ||
+      line.match(/^\s*(?:---|\+\+\+)\s+(?:[ab]\/)?(\S+)/) ||
+      line.match(/^\s*(?:File|Path):\s*(\S+)/i);
+    if (!target) continue;
+    const candidate = stripQuotes(target[1].replace(/[,:;]+$/, ""));
+    if (isLockedPath(candidate)) out.add(posix(stripQuotes(candidate)));
   }
 }
 
@@ -146,9 +432,16 @@ function collectPaths(input) {
       if (target) out.add(posix(target));
     }
   }
-  scanLockedTokens(presentString(toolInput.command) || presentString(input.command), out);
-  for (const key of ["patch", "diff", "content", "text", "edits"]) {
-    scanLockedTokens(fieldText(toolInput[key]) || fieldText(input[key]), out);
+  // A bare mention of a protected filename inside a shell command or file
+  // body is not a write to that file (#158). Only command segments that
+  // genuinely write the protected path, and patch/diff file-target lines,
+  // count as write attempts.
+  scanCommandWriteTargets(
+    presentString(toolInput.command) || presentString(input.command),
+    out
+  );
+  for (const key of ["patch", "diff"]) {
+    scanPatchTargets(fieldText(toolInput[key]) || fieldText(input[key]), out);
   }
   return [...out];
 }
