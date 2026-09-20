@@ -70,6 +70,46 @@ describe("#112 orchestrator write-set lock", () => {
     }
   });
 
+  it("allows read-only inspection commands against a locked path (#158)", () => {
+    const lock = require(LOCK);
+    for (const command of [
+      "cat docs/plans/example/design.md",
+      "sha256sum docs/plans/example/design.md",
+      "grep -n lifecycle docs/plans/example/design.md",
+      "git diff -- docs/plans/example/design.md",
+      "git show HEAD:docs/plans/example/design.md",
+      "sed -n '1,40p' docs/plans/example/design.md",
+      "cp docs/plans/example/design.md /tmp/review-copy.md",
+    ]) {
+      const result = lock.evaluate({ tool_input: { command } });
+      assert.equal(result.verdict, "ALLOW", command);
+    }
+  });
+
+  it("allows prose that merely mentions a locked artifact (#158)", () => {
+    const lock = require(LOCK);
+    const result = lock.evaluate({
+      tool_input: { file_path: "/tmp/notes.md", content: "see design.md for the plan" },
+    });
+    assert.equal(result.verdict, "ALLOW");
+  });
+
+  it("still denies genuine shell writes to a locked path (#158)", () => {
+    const lock = require(LOCK);
+    for (const command of [
+      "echo x > docs/plans/example/design.md",
+      "printf x >> design.md",
+      "cat /tmp/a | tee design.md",
+      "rm design.md",
+      "mv /tmp/a design.md",
+      "truncate -s 0 design.md",
+      "sed -i s/a/b/ design.md",
+    ]) {
+      const result = lock.evaluate({ tool_input: { command } });
+      assert.equal(result.verdict, "DENY_DISPATCH", command);
+    }
+  });
+
   it("handle honors envelope role and still denies Orchestrator", () => {
     const lock = require(LOCK);
     const saved = process.env.BEARING_ROLE;
