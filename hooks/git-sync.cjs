@@ -103,7 +103,9 @@ function formatAdvice(facts) {
   if (!facts.fetched) lines.push("fetch from origin failed; state below may be stale");
   lines.push(...facts.actions);
   lines.push(...facts.attention);
-  if (lines.length === 0) return "Bearing Lite git-sync: checkout current with origin.";
+  // Nothing to report: stay silent. On Stop, any additionalContext starts a new
+  // turn, which fires Stop again -- an unconditional message never terminates.
+  if (lines.length === 0) return null;
   return "Bearing Lite git-sync: " + lines.join("; ") + ".";
 }
 
