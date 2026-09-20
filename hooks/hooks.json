@@ -1,5 +1,5 @@
 {
-  "description": "Bearing Lite verified Claude Code and Codex mapping. Partial coverage: activation on SessionStart, closeout on Stop, and the Test Engineering classes te_test_write on PreToolUse and te_completion on Stop and SubagentStop. Transition-order and protected-action remain procedural.",
+  "description": "Bearing Lite verified Claude Code and Codex mapping. Partial coverage: activation on SessionStart, closeout and the advisory git-sync on Stop, and the Test Engineering classes te_test_write on PreToolUse and te_completion on Stop and SubagentStop. Transition-order and protected-action remain procedural.",
   "hooks": {
     "SessionStart": [
       {
@@ -70,6 +70,19 @@
             ],
             "timeout": 15,
             "statusMessage": "Bearing Lite test-engineering completion check"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/git-sync.cjs"
+            ],
+            "timeout": 15,
+            "statusMessage": "Bearing Lite closeout git-sync"
           }
         ]
       }

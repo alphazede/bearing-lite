@@ -61,6 +61,7 @@ const EVALUATOR_MODULES = new Set([
   "verification-bridge.cjs", // #105 receipt bridge; no HOOK_CLASS, no execution
   "review-capability.cjs", // #104 review coverage assist; no HOOK_CLASS
   "orchestrator-write-lock.cjs", // #112 Orchestrator write-set lock; no HOOK_CLASS
+  "git-sync.cjs", // closeout git-sync: advisory, fast-forward only, never a policy class
 ]);
 /** Additional TE class modules, allowed but not yet required by this case. */
 const TE_CLASS_FILES = Object.freeze(["te-capability.cjs", "te-host.cjs"]);
