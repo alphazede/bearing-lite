@@ -1,0 +1,4 @@
+interface:
+  display_name: "Write Agent Handoff"
+  short_description: "Create concise agent handoffs and work packets"
+  default_prompt: "Use $prompt to create a concise, executable handoff for another agent."
