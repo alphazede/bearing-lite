@@ -41,6 +41,7 @@ sessions. Bearing Lite never copies adapters into global hook configuration.
 |---|---|---|
 | `SessionStart`, `sessionStart`, `session_start` | activation | yes, advisory |
 | `Stop`, `stop` | closeout | yes, advisory only |
+| `Stop`, `stop` | git-sync (`hooks/git-sync.cjs`) | yes, advisory only: fast-forwards the session checkout from origin, moves an unchecked-out `main` ref, and names unpushed, diverged, or upstream-less branches; never merges, pushes, or blocks |
 | `PreToolUse`, `preToolUse`, `beforeShellExecution`, `apply_patch` | te_test_write | only where the host has a native write-time deny |
 | `PreToolUse`, `preToolUse`, `beforeShellExecution`, `apply_patch` | orchestrator write-set lock | only where the host has a native write-time deny; otherwise documented fallback |
 | `Stop`, `stop`, `SubagentStop`, `subagentStop` | te_completion | only where the host has a native completion or child-stop deny |

@@ -198,7 +198,8 @@ into `~/.deepcode/skills` or `~/.agents/skills`.
 
 Claude Code, Codex, Grok Build, Cursor, Kimi Code, and GitHub Copilot clients
 are **partial** hook clients: session start runs the activation advisory and
-stop runs the closeout advisory. GitHub Copilot also has the implemented Test
+stop runs the closeout advisory and the git-sync advisory, which fast-forwards
+the session checkout from origin and names anything still unpushed. GitHub Copilot also has the implemented Test
 Engineering channels `PreToolUse`, `Stop`, and `SubagentStop`. Qwen Code, AGY,
 Pi, DeepCode, and Muse Code are **skills-only**. Qwen installs the root Agent
 Plugins 1.0 package and loads its skills; Bearing ships no Qwen-specific hook
