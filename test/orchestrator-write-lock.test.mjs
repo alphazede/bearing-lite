@@ -128,9 +128,10 @@ describe("#112 orchestrator write-set lock", () => {
       });
       assert.equal(response.hookSpecificOutput.verdict, "DENY_DISPATCH");
       assert.equal(response.hookSpecificOutput.version, pkg.version);
-      assert.match(
-        String(response.hookSpecificOutput.permissionDecisionReason),
-        new RegExp(`bearing-lite v${pkg.version.replace(/\./g, "\\.")}`)
+      assert.ok(
+        String(response.hookSpecificOutput.permissionDecisionReason).includes(
+          `bearing-lite v${pkg.version}`
+        )
       );
     } finally {
       if (saved === undefined) delete process.env.BEARING_ROLE;
