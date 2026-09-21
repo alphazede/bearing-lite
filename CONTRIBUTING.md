@@ -60,7 +60,12 @@ checkout):
 node --test test/public-boundary.test.mjs test/skills-conformance.test.mjs
 node --test test/*.test.mjs
 python3 test/schema-validation.py
+node hooks/write-set-check.cjs -- <paths the slice wrote>
 ```
+
+`git diff --check` alone does not examine untracked files. `write-set-check.cjs`
+is the write-set hygiene command: it inspects each named path, including newly
+added ones, and fails if any path was omitted.
 
 Schema validation requires Python 3.12. `python3 test/schema-validation.py` is
 the required developer and CI gate (`CMD-LITE-SCHEMA-VALIDATE`). It installs the

@@ -151,6 +151,171 @@ function verifyDigests(dir) {
   return { manifest_digest, findings };
 }
 
+const HISTORICAL_GATE = new Set([
+  "HISTORICAL",
+  "SUPERSEDED",
+  "ARCHIVED",
+  "COMPLETED",
+  "RETIRED",
+  "INACTIVE",
+]);
+
+function walk(node, visit) {
+  if (Array.isArray(node)) {
+    for (const item of node) walk(item, visit);
+  } else if (node && typeof node === "object") {
+    visit(node);
+    for (const value of Object.values(node)) walk(value, visit);
+  }
+}
+
+/** #121: duplicate active gate IDs, including numeric/named object keys. */
+function checkDuplicateGates(root, findings = [], loc = "root") {
+  walk(root, (node) => {
+    const conds = node.entry_conditions;
+    if (!conds) return;
+    const items = Array.isArray(conds)
+      ? conds.map((item, i) => [String(i), item])
+      : Object.entries(conds);
+    const seen = new Map();
+    for (const [key, item] of items) {
+      if (!item || typeof item !== "object" || typeof item.id !== "string") continue;
+      const status = String(item.status || item.state || "ACTIVE").toUpperCase();
+      if (HISTORICAL_GATE.has(status)) continue;
+      const prev = seen.get(item.id);
+      if (prev) {
+        findings.push({
+          code: "duplicate_active_gate_id",
+          id: item.id,
+          locations: [prev, loc + ".entry_conditions." + key],
+        });
+      } else {
+        seen.set(item.id, loc + ".entry_conditions." + key);
+      }
+    }
+  });
+  return findings;
+}
+
+function sliceIndex(implementation) {
+  const byId = new Map();
+  walk(implementation, (node) => {
+    if (typeof node.id !== "string" || typeof node.role !== "string") return;
+    const list = byId.get(node.id) || [];
+    list.push(node);
+    byId.set(node.id, list);
+  });
+  return byId;
+}
+
+function receiptIds(root) {
+  const ids = new Set();
+  walk(root, (node) => {
+    if (typeof node.completed_receipt === "string") ids.add(node.completed_receipt);
+    if (typeof node.completed_receipt_id === "string") ids.add(node.completed_receipt_id);
+    if (Array.isArray(node.completed_receipts)) {
+      for (const item of node.completed_receipts) {
+        if (typeof item === "string") ids.add(item);
+        else if (item && typeof item.id === "string") ids.add(item.id);
+      }
+    }
+  });
+  return ids;
+}
+
+function stepRefs(node) {
+  const refs = [];
+  for (const key of ["integration_step", "integration_step_id", "step_id", "step"]) {
+    if (typeof node[key] === "string") refs.push(node[key]);
+  }
+  if (Array.isArray(node.requires)) {
+    for (const item of node.requires) {
+      if (typeof item === "string") refs.push(item);
+      else if (item && typeof item.id === "string") refs.push(item.id);
+    }
+  }
+  if (Array.isArray(node.integration_steps)) {
+    for (const item of node.integration_steps) {
+      if (typeof item === "string") refs.push(item);
+      else if (item && typeof item.id === "string") refs.push(item.id);
+    }
+  }
+  return refs;
+}
+
+function semanticKey(node) {
+  return [node.activity, node.kind, node.role, node.exit].filter((v) => typeof v === "string").join("|");
+}
+
+/** #121: referenced integration-step exits must map to one semantic slice or a preserved receipt. */
+function checkIntegrationStepRefs(implementation, findings = []) {
+  const slices = sliceIndex(implementation);
+  const receipts = receiptIds(implementation);
+  walk(implementation, (node) => {
+    for (const ref of stepRefs(node)) {
+      if (receipts.has(ref)) continue;
+      const hits = slices.get(ref) || [];
+      const keys = new Set(hits.map(semanticKey));
+      if (!hits.length || keys.size !== 1) {
+        findings.push({
+          code: "unresolved_integration_step",
+          step: ref,
+          matches: hits.length,
+          colliding_semantics: keys.size > 1,
+        });
+      }
+    }
+  });
+  return findings;
+}
+
+/** #121: live frozen-content hashes must match the files they name. */
+function checkFrozenHashes(dir, findings = []) {
+  const root = repoRoot(dir);
+  let names = [];
+  try {
+    names = fs.readdirSync(dir);
+  } catch {
+    return findings;
+  }
+  for (const name of names) {
+    if (!name.endsWith(".json")) continue;
+    const data = readJson(path.join(dir, name));
+    const maps = [];
+    if (data?.source_file_hashes && typeof data.source_file_hashes === "object") {
+      maps.push(data.source_file_hashes);
+    }
+    if (data?.plan_integration?.source_file_hashes && typeof data.plan_integration.source_file_hashes === "object") {
+      maps.push(data.plan_integration.source_file_hashes);
+    }
+    walk(data, (node) => {
+      if (node && typeof node.live_source_file_hashes === "object") maps.push(node.live_source_file_hashes);
+    });
+    for (const hashes of maps) {
+      for (const [rel, recorded] of Object.entries(hashes)) {
+        if (typeof recorded !== "string") continue;
+        const candidates = [path.resolve(dir, rel), path.resolve(root, rel)];
+        const file = candidates.find((p) => fs.existsSync(p));
+        if (!file) {
+          findings.push({ code: "frozen_hash_missing", path: rel, from: name });
+          continue;
+        }
+        const actual = sha256(fs.readFileSync(file));
+        if (actual !== recorded) {
+          findings.push({
+            code: "frozen_hash_mismatch",
+            path: rel,
+            from: name,
+            recorded,
+            actual,
+          });
+        }
+      }
+    }
+  }
+  return findings;
+}
+
 function freeze(dir) {
   const digests = verifyDigests(dir);
   const seit = readJson(path.join(dir, "seit.json"));
@@ -159,12 +324,25 @@ function freeze(dir) {
     ...checkRoles(seit, implementation),
     ...checkWorkClass(implementation),
     ...checkPlanningRoles(implementation),
+    ...checkDuplicateGates(implementation),
+    ...checkDuplicateGates(seit),
+    ...checkIntegrationStepRefs(implementation),
+    ...checkFrozenHashes(dir),
     ...digests.findings,
   ];
   return { outcome: findings.length ? "FAIL" : "PASS", manifest_digest: digests.manifest_digest, findings };
 }
 
-module.exports = { checkRoles, checkWorkClass, checkPlanningRoles, verifyDigests, freeze };
+module.exports = {
+  checkRoles,
+  checkWorkClass,
+  checkPlanningRoles,
+  checkDuplicateGates,
+  checkIntegrationStepRefs,
+  checkFrozenHashes,
+  verifyDigests,
+  freeze,
+};
 
 if (require.main === module) {
   const dir = process.argv[2];

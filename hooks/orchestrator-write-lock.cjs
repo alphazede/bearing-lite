@@ -157,6 +157,22 @@ function isLockedPath(value) {
   return ownerFor(posix(stripQuotes(target))) !== null;
 }
 
+function loadRoundLock(root) {
+  try {
+    const data = JSON.parse(fs.readFileSync(path.join(root, ".bearing-round.lock"), "utf8"));
+    return data && typeof data === "object" ? data : null;
+  } catch {
+    return null;
+  }
+}
+
+function isUnder(root, planDir, target) {
+  const base = path.resolve(root, presentString(planDir) || ".");
+  const abs = path.isAbsolute(target) ? path.resolve(target) : path.resolve(root, target);
+  const rel = path.relative(base, abs);
+  return rel === "" || (rel && !rel.startsWith("..") && !path.isAbsolute(rel));
+}
+
 // Verbs that mutate any locked path passed as an operand (rm, truncate, ...).
 const WRITE_ANY_VERBS = new Set([
   "rm",
@@ -499,6 +515,19 @@ function evaluate(input) {
       dispatch,
     };
   }
+  const root = presentString(body.cwd) || process.cwd();
+  const round = loadRoundLock(root);
+  if (round && isOrchestrator(role)) {
+    for (const rel of paths) {
+      if (!isUnder(root, round.plan_dir, rel)) continue;
+      return {
+        verdict: DENY_DISPATCH,
+        reason: `frozen_candidate: review is bound to ${presentString(round.candidate) || "the frozen candidate"}; Orchestrator plan-dir writes are deferred (bearing-lite v${hookVersion()})`,
+        owner: "planning_and_design",
+        dispatch: dispatchFor("planning_and_design"),
+      };
+    }
+  }
   return { verdict: ALLOW, reason: "path_not_locked" };
 }
 
@@ -600,6 +629,7 @@ function handle(envelope, options) {
     presentString(input.assigned_role);
   const result = evaluate({
     role,
+    cwd: root,
     paths: envelopePaths(input, root),
     tool_input: isPlainObject(input.tool_input)
       ? input.tool_input

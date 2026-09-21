@@ -16,7 +16,12 @@ const require = createRequire(import.meta.url);
 const { sync, formatAdvice } = require(path.join(ROOT, "hooks/git-sync.cjs"));
 
 const git = (cwd, ...args) =>
-  execFileSync("git", ["-c", "user.name=t", "-c", "user.email=t@t", ...args], { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+  execFileSync("git", ["-c", "user.name=t", "-c", "user.email=t@t", ...args], {
+    cwd,
+    encoding: "utf8",
+    env: { ...process.env, GIT_AUTHOR_NAME: "t", GIT_AUTHOR_EMAIL: "t@t", GIT_COMMITTER_NAME: "t", GIT_COMMITTER_EMAIL: "t@t" },
+    stdio: ["ignore", "pipe", "pipe"],
+  }).trim();
 
 function fixture() {
   const t = fs.mkdtempSync(path.join(os.tmpdir(), "bl-git-sync-"));
@@ -71,7 +76,9 @@ describe("closeout git-sync", () => {
   it("reports unpushed and diverged branches instead of merging", () => {
     const { t, origin, local } = fixture();
     try {
-      git(local, "commit", "-q", "--allow-empty", "-m", "local-work");
+      fs.writeFileSync(path.join(local, "local.txt"), "mine\n");
+      git(local, "add", "local.txt");
+      git(local, "commit", "-q", "-m", "local-work");
       assert.match(sync(local).attention[0], /1 unpushed commit/);
       advanceOrigin(origin, "feature", "feature-two");
       const facts = sync(local);
@@ -86,7 +93,9 @@ describe("closeout git-sync", () => {
     const { t, local } = fixture();
     try {
       git(local, "switch", "-q", "-c", "unpublished");
-      git(local, "commit", "-q", "--allow-empty", "-m", "draft");
+      fs.writeFileSync(path.join(local, "draft.txt"), "draft\n");
+      git(local, "add", "draft.txt");
+      git(local, "commit", "-q", "-m", "draft");
       const facts = sync(local);
       assert.match(facts.attention[0], /no upstream and 1 commit/);
       assert.equal(git(local, "ls-remote", "--heads", "origin", "unpublished"), "");
@@ -114,6 +123,82 @@ describe("closeout git-sync", () => {
       assert.equal(formatAdvice(facts), null);
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("treats a rebase-merged local ref as stale, not unpushed (#133)", () => {
+    const t = fs.mkdtempSync(path.join(os.tmpdir(), "bl-git-sync-"));
+    const origin = path.join(t, "origin");
+    const local = path.join(t, "local");
+    try {
+      git(t, "init", "-q", "-b", "main", origin);
+      fs.writeFileSync(path.join(origin, "base.txt"), "base\n");
+      git(origin, "add", "base.txt");
+      git(origin, "commit", "-q", "-m", "base");
+      git(t, "clone", "-q", origin, local);
+      fs.writeFileSync(path.join(local, "landed.txt"), "landed\n");
+      git(local, "add", "landed.txt");
+      git(local, "commit", "-q", "-m", "landed");
+      git(local, "push", "-q", "origin", "HEAD:refs/heads/tmp");
+      const tree = git(origin, "rev-parse", "tmp^{tree}");
+      const parent = git(origin, "rev-parse", "main");
+      const replayed = git(origin, "commit-tree", tree, "-p", parent, "-m", "rebase-land");
+      git(origin, "update-ref", "refs/heads/main", replayed);
+      git(local, "fetch", "-q", "origin");
+      const facts = sync(local);
+      const advice = (facts.attention || []).join("; ");
+      assert.doesNotMatch(advice, /unpushed commit|open a PR|merge origin in, then push/);
+      assert.match(advice, /stale|rewrite|reset/);
+    } finally {
+      fs.rmSync(t, { recursive: true, force: true });
+    }
+  });
+
+  it("reports a tree-equal rewritten main as stale rather than asking for a PR (#133)", () => {
+    const t = fs.mkdtempSync(path.join(os.tmpdir(), "bl-git-sync-"));
+    const origin = path.join(t, "origin");
+    const local = path.join(t, "local");
+    try {
+      git(t, "init", "-q", "-b", "main", origin);
+      fs.writeFileSync(path.join(origin, "a.txt"), "a\n");
+      git(origin, "add", "a.txt");
+      git(origin, "commit", "-q", "-m", "one");
+      git(t, "clone", "-q", origin, local);
+      fs.writeFileSync(path.join(origin, "a.txt"), "a\n");
+      git(origin, "commit", "-q", "--allow-empty", "--amend", "-m", "one-rewritten");
+      git(local, "fetch", "-q", "origin");
+      const facts = sync(local);
+      const advice = (facts.attention || []).join("; ");
+      assert.match(advice, /stale|rewrite|reset/);
+      assert.doesNotMatch(advice, /open a PR for them|unpushed commit/);
+    } finally {
+      fs.rmSync(t, { recursive: true, force: true });
+    }
+  });
+
+  it("returns no additionalContext on Stop re-entry (#134)", () => {
+    const { handle } = require(path.join(ROOT, "hooks/git-sync.cjs"));
+    const { t, local } = fixture();
+    try {
+      fs.writeFileSync(path.join(local, "local.txt"), "mine\n");
+      git(local, "add", "local.txt");
+      git(local, "commit", "-q", "-m", "local-work");
+      const first = handle({ cwd: local, hook_event_name: "Stop" });
+      assert.ok(first.hookSpecificOutput?.additionalContext);
+      const again = handle({
+        cwd: local,
+        hook_event_name: "Stop",
+        stop_hook_active: true,
+      });
+      assert.deepEqual(again, {});
+      const camel = handle({
+        cwd: local,
+        hookEventName: "Stop",
+        stopHookActive: "true",
+      });
+      assert.deepEqual(camel, {});
+    } finally {
+      fs.rmSync(t, { recursive: true, force: true });
     }
   });
 });
