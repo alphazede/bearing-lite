@@ -328,7 +328,12 @@ describe("verified host mapping", () => {
       assert.doesNotMatch(String(result.stderr), /MODULE_NOT_FOUND/);
       const parsed = JSON.parse(result.stdout);
       assert.equal(typeof parsed, "object");
-      assert.equal(parsed.hookSpecificOutput.hookEventName, event);
+      if (event === "Stop") {
+        assert.equal(parsed.hookSpecificOutput, undefined);
+        assert.equal(parsed.decision, undefined);
+      } else {
+        assert.equal(parsed.hookSpecificOutput.hookEventName, event);
+      }
     }
   });
 

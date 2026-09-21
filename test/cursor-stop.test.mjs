@@ -9,7 +9,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const { project } = createRequire(import.meta.url)(path.join(ROOT, "hooks/cursor-stop.cjs"));
+const { project, quietAdvice } = createRequire(import.meta.url)(
+  path.join(ROOT, "hooks/cursor-stop.cjs")
+);
 
 describe("cursor stop wire", () => {
   it("keeps stop advice as additional_context", () => {
@@ -51,6 +53,44 @@ describe("cursor stop wire", () => {
       hookSpecificOutput: { hookEventName: "SessionStart", additionalContext: "hi" },
     };
     assert.equal(project(body), body);
+  });
+
+  it("omits stop advice on the shared Claude, Codex, Grok, Kimi, and Copilot wire", () => {
+    assert.deepEqual(
+      quietAdvice({
+        hookSpecificOutput: {
+          hookEventName: "Stop",
+          additionalContext: "Bearing Lite closeout: ADVISE",
+        },
+      }),
+      {}
+    );
+  });
+
+  it("keeps a shared-wire continue request as decision block", () => {
+    assert.deepEqual(
+      quietAdvice({
+        decision: "block",
+        reason: "still running",
+        hookSpecificOutput: { hookEventName: "Stop", additionalContext: "still running" },
+      }),
+      { decision: "block", reason: "still running" }
+    );
+  });
+
+  it("prints no stop additionalContext without --host=cursor", () => {
+    const out = execFileSync(
+      process.execPath,
+      [path.join(ROOT, "hooks/com.anthropic.claude-code/host.cjs")],
+      {
+        input: JSON.stringify({ hook_event_name: "Stop", cwd: ROOT }),
+        encoding: "utf8",
+      }
+    );
+    const parsed = JSON.parse(out);
+    assert.equal(parsed.hookSpecificOutput, undefined);
+    assert.equal(parsed.decision, undefined);
+    assert.equal(parsed.followup_message, undefined);
   });
 
   it("projects host.cjs stop stdout when --host=cursor", () => {
