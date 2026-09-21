@@ -110,6 +110,46 @@ describe("#112 orchestrator write-set lock", () => {
     }
   });
 
+  it("names the build in a refusal (#129)", () => {
+    const lock = require(LOCK);
+    const pkg = JSON.parse(readFileSync(path.join(ROOT, "package.json"), "utf8"));
+    const denied = lock.evaluate({ tool_input: { file_path: "design.md" } });
+    assert.equal(denied.verdict, "DENY_DISPATCH");
+    assert.match(String(denied.reason), /bearing-lite v\d+\.\d+\.\d+/);
+    assert.ok(String(denied.reason).includes(`bearing-lite v${pkg.version}`));
+
+    const saved = process.env.BEARING_ROLE;
+    delete process.env.BEARING_ROLE;
+    try {
+      const response = lock.handle({
+        hook_event_name: "PreToolUse",
+        role: "orchestrator",
+        tool_input: { file_path: "design.md" },
+      });
+      assert.equal(response.hookSpecificOutput.verdict, "DENY_DISPATCH");
+      assert.equal(response.hookSpecificOutput.version, pkg.version);
+      assert.match(
+        String(response.hookSpecificOutput.permissionDecisionReason),
+        new RegExp(`bearing-lite v${pkg.version.replace(/\./g, "\\.")}`)
+      );
+    } finally {
+      if (saved === undefined) delete process.env.BEARING_ROLE;
+      else process.env.BEARING_ROLE = saved;
+    }
+  });
+
+  it("allows prose mention of a governed file while denying a genuine write (#129)", () => {
+    const lock = require(LOCK);
+    const prose = lock.evaluate({
+      tool_input: { file_path: "/tmp/notes.md", content: "see design.md for the plan" },
+    });
+    assert.equal(prose.verdict, "ALLOW", "prose mention must not count as a write");
+    const write = lock.evaluate({
+      tool_input: { command: "echo x > docs/plans/example/design.md" },
+    });
+    assert.equal(write.verdict, "DENY_DISPATCH", "genuine shell write stays denied");
+  });
+
   it("handle honors envelope role and still denies Orchestrator", () => {
     const lock = require(LOCK);
     const saved = process.env.BEARING_ROLE;

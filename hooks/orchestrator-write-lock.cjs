@@ -26,6 +26,33 @@ const HOST_SUPPORT = Object.freeze({
 });
 const DEFAULT_HOST = "claude-code";
 
+// Build identity (#129): a refusal must name the build that produced it.
+// package.json is the canonical source: it ships at the plugin root (one
+// level above hooks/) in both a repo checkout and an installed plugin cache
+// directory, so resolving relative to __dirname (not cwd) works in both.
+// plugin.json mirrors the version and is the fallback; "unknown" is the
+// last resort so the hook never throws when manifests are absent.
+function readManifestVersion(file) {
+  try {
+    const data = JSON.parse(fs.readFileSync(file, "utf8"));
+    const version = data && typeof data.version === "string" ? data.version.trim() : "";
+    return version || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+let cachedVersion;
+function hookVersion() {
+  if (cachedVersion) return cachedVersion;
+  const root = path.join(__dirname, "..");
+  cachedVersion =
+    readManifestVersion(path.join(root, "package.json")) ||
+    readManifestVersion(path.join(root, "plugin.json")) ||
+    "unknown";
+  return cachedVersion;
+}
+
 const WRITE_EVENTS = new Set([
   "pretooluse",
   "beforeshellexecution",
@@ -467,7 +494,7 @@ function evaluate(input) {
         : "";
     return {
       verdict: DENY_DISPATCH,
-      reason: `Orchestrator cannot write ${basename(rel)}; owning role is ${owner}.${delta} ${dispatch}`,
+      reason: `Orchestrator cannot write ${basename(rel)}; owning role is ${owner}.${delta} ${dispatch} (bearing-lite v${hookVersion()})`,
       owner,
       dispatch,
     };
@@ -499,6 +526,7 @@ function hostOutput(verdict, reason, extra) {
       verdict,
       reason,
       invented: false,
+      version: hookVersion(),
     },
   };
   for (const [key, value] of Object.entries(extra || {})) {
@@ -628,6 +656,7 @@ module.exports = {
   handle,
   toWire,
   ownerFor,
+  hookVersion,
 };
 
 if (require.main === module) {
