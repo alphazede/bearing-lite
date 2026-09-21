@@ -2,3 +2,6 @@ node_modules/
 coverage/
 *.tgz
 .bearing/
+
+# AGY install-time link; see .agy/README.md
+.agy/skills
