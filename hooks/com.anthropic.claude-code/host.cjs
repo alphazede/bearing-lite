@@ -19,6 +19,7 @@ const path = require("node:path");
 
 const activation = require("../activation.cjs");
 const closeout = require("../closeout.cjs");
+const cursorStop = require("../cursor-stop.cjs");
 
 const HOST = "com.anthropic.claude-code";
 const COVERAGE = Object.freeze({
@@ -432,7 +433,9 @@ function main() {
     return;
   }
 
-  process.stdout.write(JSON.stringify(handle(trimmed)) + "\n");
+  let response = handle(trimmed);
+  if (cursorStop.usesCursorStop()) response = cursorStop.project(response);
+  process.stdout.write(JSON.stringify(response) + "\n");
   process.exit(0);
 }
 

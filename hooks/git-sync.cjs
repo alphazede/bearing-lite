@@ -11,6 +11,7 @@
  */
 
 const { execFileSync } = require("node:child_process");
+const cursorStop = require("./cursor-stop.cjs");
 
 const GIT_TIMEOUT_MS = 10_000;
 
@@ -186,6 +187,7 @@ function main() {
   } catch {
     response = {};
   }
+  if (cursorStop.usesCursorStop()) response = cursorStop.project(response);
   if (response && Object.keys(response).length) {
     process.stdout.write(JSON.stringify(response) + "\n");
   }
