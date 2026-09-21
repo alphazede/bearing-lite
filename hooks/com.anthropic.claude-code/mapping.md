@@ -202,6 +202,11 @@ recorded later at the integrated owner review.
 | Copilot `SubagentStop` deny | top-level `{ decision: "block", reason }` | always `0` |
 | Copilot `Stop`/`SubagentStop` re-entry (`stop_hook_active`) | quiet success (empty JSON) | always `0` |
 
+Cursor stop commands pass `--host=cursor`. That projects stop advice to
+`additional_context`. `followup_message` is sent only when the hook asks to
+continue (`decision: "block"`). It is not a completion deny. `continue: false`
+stays context.
+
 A discoverable Journey is a visible plan with a `task_id`, `assigned_role`,
 non-placeholder journey marker, or `checkout_lease` block. Empty cwd and
 `stop_hook_active` re-entry stay quiet. Never map policy or infrastructure to

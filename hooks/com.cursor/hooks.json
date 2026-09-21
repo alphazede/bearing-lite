@@ -8,10 +8,10 @@
     ],
     "stop": [
       {
-        "command": "node ./hooks/com.anthropic.claude-code/host.cjs"
+        "command": "node ./hooks/com.anthropic.claude-code/host.cjs --host=cursor"
       },
       {
-        "command": "node ./hooks/git-sync.cjs"
+        "command": "node ./hooks/git-sync.cjs --host=cursor"
       }
     ],
     "preToolUse": [
