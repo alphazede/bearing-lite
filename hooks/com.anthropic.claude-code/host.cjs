@@ -434,7 +434,7 @@ function main() {
   }
 
   let response = handle(trimmed);
-  if (cursorStop.usesCursorStop()) response = cursorStop.project(response);
+  response = cursorStop.projectStop(response);
   process.stdout.write(JSON.stringify(response) + "\n");
   process.exit(0);
 }

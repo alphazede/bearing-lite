@@ -187,7 +187,7 @@ function main() {
   } catch {
     response = {};
   }
-  if (cursorStop.usesCursorStop()) response = cursorStop.project(response);
+  response = cursorStop.projectStop(response);
   if (response && Object.keys(response).length) {
     process.stdout.write(JSON.stringify(response) + "\n");
   }

@@ -202,10 +202,14 @@ recorded later at the integrated owner review.
 | Copilot `SubagentStop` deny | top-level `{ decision: "block", reason }` | always `0` |
 | Copilot `Stop`/`SubagentStop` re-entry (`stop_hook_active`) | quiet success (empty JSON) | always `0` |
 
-Cursor stop commands pass `--host=cursor`. That projects stop advice to
-`additional_context`. `followup_message` is sent only when the hook asks to
-continue (`decision: "block"`). It is not a completion deny. `continue: false`
-stays context.
+Stop advice does not start another turn. Claude Code and Grok Build continue
+the conversation when Stop returns `additionalContext`. Codex continues only
+on `decision: "block"` and rejects Stop `additionalContext`. Kimi Code and
+GitHub Copilot run this same adapter. Those wires omit advisory Stop context.
+`decision: "block"` is the only continue request. Cursor stop commands pass
+`--host=cursor` and keep advice as `additional_context`. `followup_message`
+is sent only for `decision: "block"` and is not a completion deny. Pi, AGY,
+DeepCode, and Qwen Code register no stop hook.
 
 A discoverable Journey is a visible plan with a `task_id`, `assigned_role`,
 non-placeholder journey marker, or `checkout_lease` block. Empty cwd and
