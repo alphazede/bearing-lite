@@ -162,3 +162,75 @@ describe("plan-package (#70 embedded digest freeze)", () => {
     assert.equal(freeze(dir).outcome, "FAIL");
   });
 });
+
+describe("plan-package (#121 freeze guards)", () => {
+  it("rejects duplicate active gate IDs and allows unique or historical ones", () => {
+    const { checkDuplicateGates } = require(path.join(ROOT, "hooks/plan-package.cjs"));
+    const dup = checkDuplicateGates({
+      integration: {
+        entry_conditions: {
+          0: { id: "EC-2", status: "MET" },
+          named: { id: "EC-2", status: "NOT_MET" },
+        },
+      },
+    });
+    assert.equal(dup[0].code, "duplicate_active_gate_id");
+    assert.equal(dup[0].id, "EC-2");
+    assert.deepEqual(
+      checkDuplicateGates({
+        integration: {
+          entry_conditions: [
+            { id: "EC-2", status: "MET" },
+            { id: "EC-2", status: "HISTORICAL" },
+          ],
+        },
+      }),
+      []
+    );
+  });
+
+  it("rejects an integration-step id that collides with a different activity", () => {
+    const { checkIntegrationStepRefs } = require(path.join(ROOT, "hooks/plan-package.cjs"));
+    const impl = {
+      waves: [
+        {
+          slices: [
+            { id: "INT-3", role: "Integration Engineer", activity: "assemble" },
+            { id: "INT-3", role: "Integration Engineer", activity: "other" },
+          ],
+        },
+      ],
+      integration: { entry_conditions: [{ id: "EC-1", integration_step: "INT-3" }] },
+    };
+    const findings = checkIntegrationStepRefs(impl);
+    assert.ok(findings.some((f) => f.code === "unresolved_integration_step" && f.colliding_semantics));
+    const mapped = {
+      waves: [{ slices: [{ id: "INT-3", role: "Integration Engineer", activity: "assemble" }] }],
+      integration: { entry_conditions: [{ id: "EC-1", integration_step: "INT-3" }] },
+    };
+    assert.deepEqual(checkIntegrationStepRefs(mapped), []);
+  });
+
+  it("fails a one-character live hash corruption and ignores historical maps", () => {
+    const { checkFrozenHashes } = require(path.join(ROOT, "hooks/plan-package.cjs"));
+    const repo = mkdtempSync(path.join(os.tmpdir(), "plan-hash-"));
+    const dir = path.join(repo, "docs/plans/x");
+    mkdirSync(path.join(repo, ".git"), { recursive: true });
+    mkdirSync(dir, { recursive: true });
+    const body = '{"ok":true}\n';
+    writeFileSync(path.join(dir, "outcome-view.json"), body);
+    const good = sha(body);
+    const bad = good.slice(0, -1) + (good.endsWith("a") ? "b" : "a");
+    writeFileSync(
+      path.join(dir, "plan-integration.json"),
+      JSON.stringify({ source_file_hashes: { "outcome-view.json": bad } })
+    );
+    const mismatch = checkFrozenHashes(dir);
+    assert.equal(mismatch[0].code, "frozen_hash_mismatch");
+    writeFileSync(
+      path.join(dir, "plan-integration.json"),
+      JSON.stringify({ source_file_hashes: { "outcome-view.json": good } })
+    );
+    assert.deepEqual(checkFrozenHashes(dir), []);
+  });
+});

@@ -4,8 +4,9 @@
  */
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { createRequire } from "node:module";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -149,6 +150,56 @@ describe("#112 orchestrator write-set lock", () => {
       tool_input: { command: "echo x > docs/plans/example/design.md" },
     });
     assert.equal(write.verdict, "DENY_DISPATCH", "genuine shell write stays denied");
+  });
+
+  it("allows #132 cases that only name a locked artifact", () => {
+    const lock = require(LOCK);
+    const cases = [
+      { tool_input: { command: "python3 tools/coe/lint-plan-spec.py" } },
+      { tool_input: { command: "BEARING_ROLE=planning_and_design python3 tools/coe/lint-plan-spec.py" } },
+      { tool_input: { command: "gh pr create --body-file /tmp/pr.md" } },
+      { tool_input: { command: "cat <<EOF > /tmp/packet.md\nDo not edit implementation.json\nEOF" } },
+      { tool_input: { file_path: "/tmp/packet.md", content: "see design.md" } },
+      { tool_input: { command: "grep lifecycle docs/plans/example/design.md | wc -l" } },
+    ];
+    for (const input of cases) {
+      assert.equal(lock.evaluate(input).verdict, "ALLOW", JSON.stringify(input.tool_input));
+    }
+  });
+
+  it("still denies genuine writes named in #132", () => {
+    const lock = require(LOCK);
+    for (const command of [
+      "echo x > docs/plans/example/design.md",
+      "tee docs/coe/index.md </dev/null",
+    ]) {
+      assert.equal(lock.evaluate({ tool_input: { command } }).verdict, "DENY_DISPATCH", command);
+    }
+  });
+
+  it("defers Orchestrator plan-dir writes while a review round is frozen (#119)", () => {
+    const lock = require(LOCK);
+    const dir = path.join(os.tmpdir(), "bl-round-" + process.pid);
+    mkdirSync(path.join(dir, "docs/plans/x"), { recursive: true });
+    writeFileSync(
+      path.join(dir, ".bearing-round.lock"),
+      JSON.stringify({ candidate: "cand-1", plan_dir: "docs/plans/x" })
+    );
+    try {
+      const denied = lock.evaluate({
+        cwd: dir,
+        tool_input: { file_path: path.join(dir, "docs/plans/x", "notes.md") },
+      });
+      assert.equal(denied.verdict, "DENY_DISPATCH");
+      assert.match(String(denied.reason), /frozen_candidate/);
+      const allowed = lock.evaluate({
+        cwd: dir,
+        tool_input: { file_path: path.join(dir, "scratch.md") },
+      });
+      assert.equal(allowed.verdict, "ALLOW");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   it("handle honors envelope role and still denies Orchestrator", () => {

@@ -108,7 +108,7 @@ const DEEP_COUPLING_PATTERNS = [
 /** DEC-BDL-042: unchanged public prompt skill; metadata exemption is digest-bound. */
 const TRUSTED_PUBLIC_PROMPT_SKILL = "skills/prompt/SKILL.md";
 const TRUSTED_PUBLIC_PROMPT_SKILL_SHA256 =
-  "22254390e69e1d712ef1f631d2e91d394d18142b5168b0f895e9a9b45b4bf1e3";
+  "a2381d1aba78327332a3b2bc6823e1503876805b3ae317ae65e407b3297a404e";
 
 /**
  * @param {string} content
@@ -409,7 +409,10 @@ describe("CMD-PUBLIC-01 public-boundary (SEIT-PUBLIC-01, SEIT-MODEL-01, SEIT-IND
     assert.equal(sha256Utf8(trusted), TRUSTED_PUBLIC_PROMPT_SKILL_SHA256);
     assert.equal(scanContent(TRUSTED_PUBLIC_PROMPT_SKILL, trusted).length, 0);
 
-    const mutatedMetadata = scanContent(TRUSTED_PUBLIC_PROMPT_SKILL, `${trusted}\n`);
+    const mutatedMetadata = scanContent(
+      TRUSTED_PUBLIC_PROMPT_SKILL,
+      trusted.replace("name: prompt", "name: prompt\nokf_status: active")
+    );
     assert.ok(mutatedMetadata.some((d) => d.code === "deep_product_coupling"));
 
     const siblingMetadata = scanContent("skills/prompt/NOTES.md", "---\nokf_status: active\n---\n");

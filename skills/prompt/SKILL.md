@@ -168,10 +168,15 @@ Read Lifecycle state
 
 ## VERIFY
 
-Define how success is proven.
+Name the repository's own gate first — the CI required checks, documented
+`tools/` script, or CONTRIBUTING command — and require its exit code. Author-chosen
+criteria may supplement that gate; they must not replace it. A VERIFY list that
+omits the repository gate is incomplete.
 
 ```text
 VERIFY
+- repository gate: `node --test test/*.test.mjs` and `python3 test/schema-validation.py` exit 0
+  (or the workflow required checks this repository already enforces)
 - CMD-UNIT-AUTH passes
 - unauthorized path test fails before repair and passes afterward
 - existing valid-path tests remain passing

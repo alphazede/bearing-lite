@@ -47,17 +47,29 @@ function sync(cwd) {
   } else {
     const upstream = tryGit(root, ["rev-parse", "--abbrev-ref", "-q", branch + "@{upstream}"]);
     if (!upstream) {
-      const unpublished = tryGit(root, ["rev-list", "--count", "origin/main.." + branch]);
-      facts.attention.push(
-        "branch " + branch + " has no upstream" +
-          (unpublished && unpublished !== "0" ? " and " + unpublished + " commit(s) origin does not have" : "") +
-          ": push it and open a PR to main"
-      );
+      const unpublished = Number(tryGit(root, ["rev-list", "--count", "origin/main.." + branch]) || 0);
+      if (unpublished > 0 && alreadyUpstream(root, "origin/main", branch)) {
+        facts.attention.push(
+          "branch " + branch + " has no upstream; its commits are already on origin/main after a rewrite: reset it to origin/main or delete it; do not push or open a duplicate PR"
+        );
+      } else {
+        facts.attention.push(
+          "branch " + branch + " has no upstream" +
+            (unpublished > 0 ? " and " + unpublished + " commit(s) origin does not have" : "") +
+            ": push it and open a PR to main"
+        );
+      }
     } else {
       const behind = Number(tryGit(root, ["rev-list", "--count", branch + ".." + upstream]) || 0);
       const ahead = Number(tryGit(root, ["rev-list", "--count", upstream + ".." + branch]) || 0);
       const dirty = (tryGit(root, ["status", "--porcelain", "--untracked-files=no"]) || "") !== "";
-      if (ahead > 0 && behind > 0) {
+      if (ahead > 0 && alreadyUpstream(root, upstream, branch)) {
+        facts.attention.push(
+          "branch " + branch + " is stale after an upstream rewrite (SHA ahead " + ahead +
+            (behind > 0 ? ", behind " + behind : "") +
+            "): reset it to " + upstream + " or delete it; do not push or open a duplicate PR"
+        );
+      } else if (ahead > 0 && behind > 0) {
         facts.attention.push("branch " + branch + " diverged from " + upstream + " (ahead " + ahead + ", behind " + behind + "): merge origin in, then push");
       } else if (ahead > 0) {
         facts.attention.push("branch " + branch + " has " + ahead + " unpushed commit(s): push it" + (branch === "main" ? " via a PR (main is PR-only)" : ""));
@@ -89,12 +101,36 @@ function sync(cwd) {
             facts.actions.push("moved local main to origin/main");
           }
         }
+      } else if (alreadyUpstream(root, "origin/main", "main")) {
+        facts.attention.push(
+          "local main is stale after an upstream rewrite: reset it to origin/main; never commit on main and do not open a duplicate PR"
+        );
       } else {
         facts.attention.push("local main has commits origin/main lacks: open a PR for them; never commit on main");
       }
     }
   }
   return facts;
+}
+
+/** True when local commits are already on upstream by tree or patch-id (#133). */
+function alreadyUpstream(root, upstream, branch) {
+  if (tryGit(root, ["rev-parse", "--verify", upstream]) === null) return false;
+  if (tryGit(root, ["diff", "--quiet", branch, upstream]) !== null) return true;
+  const cherry = tryGit(root, ["cherry", upstream, branch]);
+  if (cherry === null) return false;
+  if (!cherry) return true;
+  return !cherry.split("\n").some((line) => line.startsWith("+"));
+}
+
+function isTruthyFlag(value) {
+  return value === true || value === "true" || value === 1 || value === "1";
+}
+
+function isStopReentry(input, eventName) {
+  const event = String(eventName || "").replace(/[_\-\s]/g, "").toLowerCase();
+  if (event !== "stop" && event !== "subagentstop") return false;
+  return isTruthyFlag(input.stop_hook_active) || isTruthyFlag(input.stopHookActive);
 }
 
 function formatAdvice(facts) {
@@ -117,30 +153,45 @@ function readStdinSync() {
   }
 }
 
-function main() {
-  let cwd = process.cwd();
-  let event = "Stop";
+function handle(raw) {
+  let input = {};
   try {
-    const input = JSON.parse(readStdinSync() || "{}");
-    if (typeof input.cwd === "string" && input.cwd) cwd = input.cwd;
-    if (typeof input.hook_event_name === "string") event = input.hook_event_name;
+    input = typeof raw === "string" ? JSON.parse(raw || "{}") : raw && typeof raw === "object" ? raw : {};
   } catch {
-    // Malformed input is not a policy event; fall back to the process cwd.
+    input = {};
   }
+  const cwd = typeof input.cwd === "string" && input.cwd ? input.cwd : process.cwd();
+  const event =
+    typeof input.hook_event_name === "string"
+      ? input.hook_event_name
+      : typeof input.hookEventName === "string"
+        ? input.hookEventName
+        : "Stop";
+  // #134: a Stop re-entry exists only because this hook already spoke. Stay quiet.
+  if (isStopReentry(input, event)) return {};
   let text = null;
   try {
     text = formatAdvice(sync(cwd));
   } catch {
     text = "Bearing Lite git-sync UNAVAILABLE: git failed; check origin state manually.";
   }
-  if (text) {
-    process.stdout.write(
-      JSON.stringify({ hookSpecificOutput: { hookEventName: event, additionalContext: text } }) + "\n"
-    );
+  if (!text) return {};
+  return { hookSpecificOutput: { hookEventName: event, additionalContext: text } };
+}
+
+function main() {
+  let response = {};
+  try {
+    response = handle(readStdinSync() || "{}");
+  } catch {
+    response = {};
+  }
+  if (response && Object.keys(response).length) {
+    process.stdout.write(JSON.stringify(response) + "\n");
   }
   process.exit(0);
 }
 
-module.exports = { sync, formatAdvice };
+module.exports = { sync, formatAdvice, handle, alreadyUpstream };
 
 if (require.main === module) main();

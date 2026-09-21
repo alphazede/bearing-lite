@@ -102,6 +102,12 @@ completed slices.
 Stale, forged, or drifted receipts fail closed. Changed HEAD, authority,
 generation, route, or writer overlap forces revalidation or a fresh session.
 
+While a review or assurance round is bound to a candidate, write
+`.bearing-round.lock` in the checkout (`candidate`, `plan_dir`). Orchestrator
+writes under `plan_dir` are deferred until the lock is removed. Independent
+roles receive distinct `evidence_dir` values and must not read a sibling
+role's directory.
+
 ## Always present
 
 ```markdown
