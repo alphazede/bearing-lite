@@ -3,7 +3,7 @@
   "journey": {
     "id": "AGR-2026-09-22",
     "title": "Assurance gate chain and review flow (#143, #144, #145, #136, #135, #146)",
-    "status": "planning",
+    "status": "implementation",
     "planning_repository": "alphazede/bearing-lite"
   },
   "checkout_lease": {
@@ -107,17 +107,23 @@
       "issue": "authority",
       "decision": "Land on main by PR once checks are green. npm release ($publish-bearing-lite) is out of this Lifecycle and owner-only. Out of scope: #139, #122, #92.",
       "source": "Scope Definition shared understanding confirmed by owner"
-    }
-  ],
-  "open_decisions": [
+    },
     {
-      "id": "OD-AGR-001",
-      "question": "Reviewer receipt encoding: skill prose + conformance test (DES-144.01, current plan) or machine-validated receipt schema?",
-      "raised_by": "planning_and_design",
-      "status": "open",
-      "gate": "integrated owner review"
+      "id": "DEC-AGR-013",
+      "at": "2026-09-23T13:04:07Z",
+      "by": "Owner",
+      "decision": "OD-AGR-001 resolved: Reviewer receipt stays skill prose plus conformance test (DES-144.01); no new receipt schema in this Lifecycle.",
+      "source": "owner answer at integrated review gate"
+    },
+    {
+      "id": "DEC-AGR-014",
+      "at": "2026-09-23T14:08:12Z",
+      "by": "Owner",
+      "decision": "Integrated owner review APPROVED: planning package at feat/assurance-gate-review-flow 8718219 (plan-package manifest digest 4ab2675dbbc893c28109d65fabcbc329b25a071abbde8d13fdbecd4409b3187a; DoD Manifest sha256:500d2a17bf78a96b7c276d9c00f8511a279bb8e4afc502e582f97c2f38c8d015), frozen primary profile snapshot, tdd, cadence reviewer=phase, test_engineer.assurance=lifecycle, integration_engineer.execution=lifecycle. Lifecycle type: standard implementation. Authority: implement, land by PR when checks are green; no npm release.",
+      "source": "owner 'approved'"
     }
   ],
+  "open_decisions": [],
   "planning_receipts": [
     {
       "stage": "intake",
