@@ -162,10 +162,111 @@ function evaluateAssuranceBudget(input) {
     if (rounds >= POLICY.review_rounds) {
       return verdict("HALT", "assurance_round_limit");
     }
+    if (input.role === "reviewer") {
+      const gateReceipt = receipts.find((receipt) => {
+        if (!isPlainObject(receipt) || receipt.kind !== "gate_chain") return false;
+        const id = receipt.unit_id || receipt.assurance_unit;
+        if (id !== requested) return false;
+        return receipt.verdict === "PASS" || receipt.verdict === "VERIFIED";
+      });
+      if (!gateReceipt) {
+        return verdict("NEEDS_MORE_EVIDENCE", "reviewer_gate_chain_receipt_missing");
+      }
+      return verdict("PASS", "reviewer_consumes_gate_chain_receipt");
+    }
     return verdict("PASS", "assurance_round_available");
   } catch {
     return verdict("NEEDS_MORE_EVIDENCE", "assurance_budget_unavailable");
   }
 }
 
-module.exports = { POLICY, evaluateAssuranceBudget };
+const sameTestIds = (a, b) => {
+  if (!Array.isArray(a) || !Array.isArray(b) || !a.length) return false;
+  if (a.length !== b.length) return false;
+  const set = new Set(a);
+  return b.every((id) => set.has(id));
+};
+
+/**
+ * Fail-fast deterministic gate chain over POLICY.gate_order.
+ * Declared-but-missing tool or `not_run` is a typed gap
+ * (NEEDS_MORE_EVIDENCE), never PASS; undeclared gates fail closed unless
+ * NOT_APPLICABLE with a reason; the red-then-green gate needs a receipt
+ * holding both the baseline failing run and the candidate passing run over
+ * the same test ids.
+ *
+ * @param {{ gate_declarations?: object, results?: object }} input
+ * @returns {{ outcome: string, failed_gate?: string, gates: Array<{ gate: string, outcome: string }> }}
+ */
+function evaluateGateChain(input) {
+  const gates = [];
+  const fail = (gate, outcome) => {
+    gates.push({ gate, outcome });
+    return { outcome, failed_gate: gate, gates };
+  };
+  try {
+    if (!isPlainObject(input)) {
+      return { outcome: "NEEDS_MORE_EVIDENCE", failed_gate: POLICY.gate_order[0], gates };
+    }
+    const declarations = isPlainObject(input.gate_declarations) ? input.gate_declarations : {};
+    const results = isPlainObject(input.results) ? input.results : {};
+    for (const gate of POLICY.gate_order) {
+      const declaration = declarations[gate];
+      if (!isPlainObject(declaration)) {
+        return fail(gate, "NEEDS_MORE_EVIDENCE");
+      }
+      if (declaration.status === "NOT_APPLICABLE") {
+        if (typeof declaration.reason !== "string" || !declaration.reason.trim()) {
+          return fail(gate, "NEEDS_MORE_EVIDENCE");
+        }
+        gates.push({ gate, outcome: "PASS" });
+        continue;
+      }
+      if (declaration.status !== "DECLARED" || !declaration.tool || !declaration.threshold) {
+        return fail(gate, "NEEDS_MORE_EVIDENCE");
+      }
+      const result = results[gate];
+      if (!isPlainObject(result)) {
+        return fail(gate, "NEEDS_MORE_EVIDENCE");
+      }
+      if (result.tool_available === false || result.outcome === "not_run") {
+        return fail(gate, "NEEDS_MORE_EVIDENCE");
+      }
+      if (gate === "red_then_green") {
+        const receipt = isPlainObject(result.receipt) ? result.receipt : null;
+        const baseline = receipt && isPlainObject(receipt.baseline) ? receipt.baseline : null;
+        const candidate = receipt && isPlainObject(receipt.candidate) ? receipt.candidate : null;
+        const valid =
+          baseline &&
+          candidate &&
+          baseline.outcome === "FAIL" &&
+          candidate.outcome === "PASS" &&
+          sameTestIds(baseline.test_ids, candidate.test_ids);
+        if (!valid) {
+          return fail(gate, "NEEDS_MORE_EVIDENCE");
+        }
+        gates.push({ gate, outcome: "PASS" });
+        continue;
+      }
+      if (result.outcome === "FAIL") {
+        return fail(gate, "FAIL");
+      }
+      if (
+        typeof result.score === "number" &&
+        typeof declaration.threshold === "number" &&
+        result.score < declaration.threshold
+      ) {
+        return fail(gate, "FAIL");
+      }
+      if (result.outcome !== "PASS") {
+        return fail(gate, "NEEDS_MORE_EVIDENCE");
+      }
+      gates.push({ gate, outcome: "PASS" });
+    }
+    return { outcome: "PASS", gates };
+  } catch {
+    return { outcome: "NEEDS_MORE_EVIDENCE", failed_gate: POLICY.gate_order[0], gates };
+  }
+}
+
+module.exports = { POLICY, evaluateAssuranceBudget, evaluateGateChain };

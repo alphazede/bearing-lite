@@ -1,0 +1,28 @@
+{
+  "wave": "Wave 2",
+  "status": "EVIDENCE_READY",
+  "at": "2026-09-23T14:36:28Z",
+  "parent_controller": "Orchestrator",
+  "route": "Muse Code / Muse Spark 1.3 / xhigh (implementer)",
+  "slices": [
+    "S5",
+    "S6",
+    "S8",
+    "S9",
+    "S10"
+  ],
+  "deterministic_receipt": {
+    "gate-chain": "12/12",
+    "manifest-pin-guard": "8/8",
+    "orchestrator-write": "6/6",
+    "reviewer-evidence": "2/7 (5 red owned by S7, Wave 3)",
+    "CMD-PREEXISTING": "566/566 (565 + 1 new planning-review guard case)",
+    "CMD-SCHEMA": "268/268",
+    "CMD-DIFFCHECK": "clean",
+    "CMD-SCOPE": "empty output (pass)",
+    "CMD-GATE-DECL": "exit 0",
+    "plan-package": "PASS 4ab2675d"
+  },
+  "verified_by": "Orchestrator rerun on integrated tree",
+  "assurance_rounds": 0
+}

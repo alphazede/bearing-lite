@@ -33,8 +33,8 @@ separate catalog roles.
    approved, planning-gated register.
 2. Assurance Test Engineer starts a fresh session; reject author ancestry;
    evaluate the exact stable candidate at the declared cadence boundary only.
-   VALIDATING is owned here. Independently rerun required deterministic claims
-   and attach `assurance` receipts; author diagnostic receipts cannot PASS.
+   VALIDATING is owned here. The Assurance Test Engineer independently reruns the gate-chain at the declared cadence boundary for required deterministic claims
+   and attaches `assurance` receipts; author gate-chain receipts are diagnostic-only and cannot PASS an assurance gate.
 3. When a published standard is cited, verify the document and clause.
 4. Return the smallest missing proof. Never mutate the candidate.
 
@@ -49,3 +49,7 @@ next distinct declared phase or wave carries its own budget.
 
 Never implement, self-certify, replace Reviewer or Integration Engineer
 execution, or grant owner-only approval.
+
+## Gate-chain claim types
+
+Planning Test Engineer declares per-plan `seit.json` claims with the mutation, changed-line coverage, and red-then-green claim types, naming the target repository's own tool plus its threshold; `method` stays a plain string, never a schema enum. Each claim type defines a typed-gap outcome: a declared gate with a missing tool or a `not_run` outcome is a typed gap, never PASS. Every red-then-green receipt binds the baseline failing run and the candidate passing run over the same test ids.

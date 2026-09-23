@@ -9,7 +9,10 @@
  * embedded in seit.json matches the file on disk; the manifest digest over
  * those inputs plus seit.json matches implementation.json's
  * planning_review.candidate_digest; missing artifacts, inputs, digests, or a
- * specification Journey's SDoc register fail closed.
+ * specification Journey's SDoc register fail closed. checkLivePins (#135):
+ * every live register_sha256 pin in the repository write set must match the
+ * recorded authority.json baseline, naming offenders with file:line;
+ * gate-evidence/dated-receipt paths and HISTORICAL_GATE-marked values are allow-listed.
  * CLI: node <plugin root>/hooks/plan-package.cjs <plan dir> -> JSON, exit 1 on any finding.
  */
 
@@ -316,6 +319,58 @@ function checkFrozenHashes(dir, findings = []) {
   return findings;
 }
 
+/** DES-135.01: collect every repository-relative write_set entry. */
+function collectWriteSet(node, out = []) {
+  if (Array.isArray(node)) node.forEach((item) => collectWriteSet(item, out));
+  else if (node && typeof node === "object") {
+    if (Array.isArray(node.write_set)) {
+      for (const entry of node.write_set) {
+        if (typeof entry === "string" && entry) out.push(entry);
+      }
+    }
+    for (const value of Object.values(node)) collectWriteSet(value, out);
+  }
+  return out;
+}
+
+const PIN_ALLOW_PATH = /(gate-evidence|receipt)/i;
+const PIN_HISTORICAL =
+  /"(status|state)"\s*:\s*"(HISTORICAL|SUPERSEDED|ARCHIVED|COMPLETED|RETIRED|INACTIVE)"|^\s*(status|state)\s*:\s*(HISTORICAL|SUPERSEDED|ARCHIVED|COMPLETED|RETIRED|INACTIVE)\b/im;
+const PIN_PATTERN = /register_sha256\s*:\s*([0-9a-fA-F]{64})/g;
+const DATED_RECEIPT_LINE = /^\d{4}-\d{2}-\d{2}\s+receipt\b/i;
+
+/** DES-135.01 (Pin-hygiene): live pins across the repository write set match the recorded baseline. */
+function checkLivePins(dir, findings = []) {
+  const implementation = readJson(path.join(dir, "implementation.json"));
+  const recorded = readJson(path.join(dir, "authority.json"))?.requirement_register?.sha256;
+  if (!implementation || typeof recorded !== "string" || !/^[0-9a-f]{64}$/i.test(recorded)) return findings;
+  const baseline = recorded.toLowerCase();
+  const root = repoRoot(dir);
+  const seen = new Set();
+  for (const rel of collectWriteSet(implementation)) {
+    if (seen.has(rel) || PIN_ALLOW_PATH.test(rel)) continue;
+    seen.add(rel);
+    const file = path.resolve(root, rel);
+    if (file !== root && !file.startsWith(root + path.sep)) continue;
+    let text;
+    try {
+      text = fs.readFileSync(file, "utf8");
+    } catch {
+      continue;
+    }
+    if (PIN_HISTORICAL.test(text)) continue;
+    text.split("\n").forEach((line, index) => {
+      if (DATED_RECEIPT_LINE.test(line)) return;
+      for (const match of line.matchAll(PIN_PATTERN)) {
+        if (match[1].toLowerCase() !== baseline) {
+          findings.push({ code: "stale_register_pin", location: `${rel}:${index + 1}`, recorded: baseline, actual: match[1].toLowerCase() });
+        }
+      }
+    });
+  }
+  return findings;
+}
+
 function freeze(dir) {
   const digests = verifyDigests(dir);
   const seit = readJson(path.join(dir, "seit.json"));
@@ -328,6 +383,7 @@ function freeze(dir) {
     ...checkDuplicateGates(seit),
     ...checkIntegrationStepRefs(implementation),
     ...checkFrozenHashes(dir),
+    ...checkLivePins(dir),
     ...digests.findings,
   ];
   return { outcome: findings.length ? "FAIL" : "PASS", manifest_digest: digests.manifest_digest, findings };
@@ -340,6 +396,7 @@ module.exports = {
   checkDuplicateGates,
   checkIntegrationStepRefs,
   checkFrozenHashes,
+  checkLivePins,
   verifyDigests,
   freeze,
 };

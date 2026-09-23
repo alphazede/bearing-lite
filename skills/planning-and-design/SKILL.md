@@ -37,19 +37,19 @@ Fresh planning node. If you are the Orchestrator, dispatch this; do not execute 
    cadence. Bind the one planning-review slot to owner-supplied
    primary and ordered fallback route references under one candidate ref,
    revision, and digest. Use supplied identities; never invent them.
-4. After those stable source inputs, freeze: `node <plugin root>/hooks/plan-package.cjs <plan dir>`
-   must PASS; any finding halts. Then generate `implementation.json` and the
-   DoD Manifest input together. Each includes the proposed
+4. After those stable source inputs, generate `implementation.json`; then freeze: `node <plugin root>/hooks/plan-package.cjs <plan dir>`
+   must PASS (any finding halts), then generate the DoD Manifest input together with its rendered HTML. Each includes the proposed
    route, profile, role states, reasoning, cadence, traceability, waves,
    recovery, approval boundaries, and register references versus Lifecycle-local
    requirements. DoD Manifest states: `planning` then append-only closeout.
 5. Give every slice stable requirement/design/SEIT IDs, dependencies, exact
    write set, authority, role, session rule, evidence, recovery, and stop rule.
-6. Follow `../bearing-lite/references/owner-stops.md`. Open and verify the Manifest,
-   then request exactly one integrated owner review of outcome, design, route, profile,
-   cadence, and plan. An owner change regenerates affected artifacts, then returns to
-   this same gate; never insert a profile or route pause. Delta mode: apply named
-   findings, re-embed digests, return `DELTA_APPLIED`; no fresh package.
+6. Follow `../bearing-lite/references/owner-stops.md`. Open and verify the Manifest, then request
+   exactly one integrated owner review of outcome, design, route, profile, cadence, and plan. Review
+   presentation is gated by `hooks/planning-review.cjs` `evaluatePlanningReview()`, which returns
+   `NEEDS_MORE_EVIDENCE` / `manifest_not_generated` without the Manifest. An owner change regenerates
+   affected artifacts, then returns to this same gate; never insert a profile or route pause. Delta
+   mode: apply named findings, re-embed digests, return `DELTA_APPLIED`; no fresh package.
 
 ## Return and recovery
 

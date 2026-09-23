@@ -9,7 +9,7 @@ description: >
 
 # Architectural Alignment
 
-Fresh planning node. If you are the Orchestrator, dispatch this; do not execute it.
+Fresh planning node. The Orchestrator owns and writes `workspace.md` and `repository-map.md` in the confirmed plan directory.
 The Orchestrator announces `Aligning architecture in <repo>.`
 
 ## Inputs and match
