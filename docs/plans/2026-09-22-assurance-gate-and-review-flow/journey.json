@@ -109,7 +109,15 @@
       "source": "Scope Definition shared understanding confirmed by owner"
     }
   ],
-  "open_decisions": [],
+  "open_decisions": [
+    {
+      "id": "OD-AGR-001",
+      "question": "Reviewer receipt encoding: skill prose + conformance test (DES-144.01, current plan) or machine-validated receipt schema?",
+      "raised_by": "planning_and_design",
+      "status": "open",
+      "gate": "integrated owner review"
+    }
+  ],
   "planning_receipts": [
     {
       "stage": "intake",
@@ -198,6 +206,45 @@
       },
       "orchestrator_verification": "plan-package.cjs PASS rerun; implementation.json and seit.json schema-valid; git diff --check clean",
       "residual": "CMD-SCOPE union list lacks new S8 path test/planning-review.test.mjs"
+    },
+    {
+      "stage": "planning_review",
+      "status": "REPAIR_REQUIRED",
+      "round": 1,
+      "at": "2026-09-23T03:53:26Z",
+      "slot_id": "planning-review-1",
+      "selected_route": "Cursor Agent / Grok 4.7 / high",
+      "candidate_ref": "feat/assurance-gate-review-flow",
+      "candidate_revision": "3ade91cbd81ecc31d47242e86d1cefba05d5c6b1",
+      "candidate_digest": "be778fdc824251d080939343fa6154a225d9d9da0b337eac246adfabe46340a4",
+      "findings": [
+        {
+          "id": "PR-1",
+          "severity": "P1",
+          "actionable": true,
+          "summary": "seit.json CMD-SCOPE command and union_write_set omit test/planning-review.test.mjs (S8 write set)"
+        }
+      ],
+      "advisory": [
+        "SEIT-145.02 and SEIT-144.04 not on a product slice seit_proof_rows list"
+      ],
+      "review_rounds_used": 1,
+      "repairs_allowed": 1
+    },
+    {
+      "stage": "planning_review_repair",
+      "status": "DELTA_APPLIED",
+      "at": "2026-09-23T03:55:31Z",
+      "route": "Muse Code / Muse Spark 1.3 / high (BEARING_ROLE=planning_and_design)",
+      "finding": "PR-1",
+      "post_repair_gate": {
+        "plan_package": "PASS",
+        "manifest_digest": "4ab2675dbbc893c28109d65fabcbc329b25a071abbde8d13fdbecd4409b3187a",
+        "schemas": "seit.json, implementation.json valid",
+        "render_check": "RENDER_CHECK_PASS sha256:500d2a17bf78a96b7c276d9c00f8511a279bb8e4afc502e582f97c2f38c8d015",
+        "diff_check": "clean"
+      },
+      "verdict": "deterministic_PASS; planning review closed (1 round, 1 repair); no re-review"
     }
   ],
   "profile_selection": {
