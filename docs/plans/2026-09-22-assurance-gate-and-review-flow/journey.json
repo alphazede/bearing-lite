@@ -3,7 +3,7 @@
   "journey": {
     "id": "AGR-2026-09-22",
     "title": "Assurance gate chain and review flow (#143, #144, #145, #136, #135, #146)",
-    "status": "implementation",
+    "status": "complete",
     "planning_repository": "alphazede/bearing-lite"
   },
   "checkout_lease": {
@@ -15,7 +15,9 @@
     "candidate_revision": "174773e4bbec85a24b5675a20a26b99b4690ea99",
     "acquired_at": "2026-09-23T03:13:38Z",
     "generation": 1,
-    "state": "active"
+    "state": "released",
+    "released_at": "2026-09-23T15:40:13Z",
+    "release_reason": "Lifecycle COMPLETE: all assurance satisfied; landed via PR #147 (merge 566332c8b7e44d713abfc974adae0f2cc7267c8a). Issue closure and npm release remain owner-only."
   },
   "decisions": [
     {
