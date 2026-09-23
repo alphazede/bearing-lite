@@ -45,7 +45,7 @@ Lowest mutation authority and highest hands-on work in the Bearing ladder.
    document and clause before changing code; neighbouring behavior is not the
    authority.
 4. Run assigned focused commands and author self-checks. At-end review never removes
-   deterministic testing or grants independent-review identity; diagnostic verification receipts never satisfy an assurance gate.
+   deterministic testing or grants independent-review identity; diagnostic verification receipts never satisfy an assurance gate. Report results against the mutation, changed-line coverage, and red-then-green claim types with the target repository's own tool; a declared gate with a missing tool or a `not_run` outcome is a typed gap, never PASS. Every red-then-green receipt binds the baseline failing run and the candidate passing run over the same test ids; author gate-chain receipts are diagnostic and cannot satisfy an assurance gate.
 5. Preserve unrelated work. Return only the compact receipt. Stop on acceptance,
    authority boundary, design gap, or exhausted correction.
 

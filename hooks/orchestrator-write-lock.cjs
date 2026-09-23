@@ -503,14 +503,22 @@ function evaluate(input) {
   for (const rel of paths) {
     const owner = ownerFor(rel);
     if (!owner) continue;
+    // DES-146.01: workspace.md / repository-map.md are Orchestrator-owned.
+    if (owner === "architectural_alignment") continue;
     const dispatch = dispatchFor(owner);
     const delta =
       body.finding === true || owner === "planning_and_design"
         ? " Dispatch a planning delta; do not edit the artifact."
         : "";
+    // A role-less session is never silently treated as the Orchestrator:
+    // name the separate-process BEARING_ROLE fallback instead.
+    const reason =
+      role === "orchestrator"
+        ? `Orchestrator cannot write ${basename(rel)}; owning role is ${owner}.${delta} ${dispatch} (bearing-lite v${hookVersion()})`
+        : `Session without a role cannot write ${basename(rel)}; owning role is ${owner}. Run it as a separate process with BEARING_ROLE=${owner}.${delta} ${dispatch} (bearing-lite v${hookVersion()})`;
     return {
       verdict: DENY_DISPATCH,
-      reason: `Orchestrator cannot write ${basename(rel)}; owning role is ${owner}.${delta} ${dispatch} (bearing-lite v${hookVersion()})`,
+      reason,
       owner,
       dispatch,
     };

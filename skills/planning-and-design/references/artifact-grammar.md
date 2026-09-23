@@ -65,6 +65,9 @@ optional derived export and is never authority.
    specification` plus `journey_settings.requirement_register`. The freeze
    fails without an existing register; the Requirements Engineer gates it
    before the integrated owner review; no later implementation wave re-gates it.
+8. Companion artifacts cite the `authority.json` baseline or the bound host
+   by reference instead of carrying their own register-digest copy; do not
+   copy the register digest into pins, receipts, or evidence.
 
 ## Published standards
 

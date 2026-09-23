@@ -1,5 +1,8 @@
 "use strict";
 
+const fs = require("node:fs");
+const path = require("node:path");
+
 const { PLANNING_REVIEW_POLICY: POLICY } = require("./policy.cjs");
 
 const sameCandidate = (a, b) =>
@@ -7,9 +10,25 @@ const sameCandidate = (a, b) =>
     (key) => typeof a?.[key] === "string" && a[key] && a[key] === b?.[key]
   );
 
+function manifestGenerated(input) {
+  const name = input?.dod_manifest?.output_name;
+  const dir = input?.plan_dir;
+  if (typeof name !== "string" || !name || typeof dir !== "string" || !dir) return false;
+  try {
+    return fs.statSync(path.join(dir, name)).isFile();
+  } catch {
+    return false;
+  }
+}
+
 function evaluatePlanningReview(input) {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     return { outcome: "NEEDS_MORE_EVIDENCE", reason: "planning_review_missing" };
+  }
+  // DES-136.01: the owner-review gate is unreachable until the DoD Manifest
+  // projection and its rendered HTML both exist.
+  if (!manifestGenerated(input)) {
+    return { outcome: "NEEDS_MORE_EVIDENCE", reason: "manifest_not_generated" };
   }
   // #69: a specification Journey gates its requirement register at planning;
   // existence on disk is checked by hooks/plan-package.cjs at the freeze.

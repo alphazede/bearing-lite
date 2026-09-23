@@ -97,3 +97,13 @@ Authority is never defaulted because one backend serves both levels. An
 Implementer, Light Implementer, or Integration Engineer execution run is
 `diagnostic` and cannot pass a gate; only an independent Test Engineer
 assurance session produces `assurance`.
+
+## Gate-chain claim types
+
+Deterministic gate-chain claims use the mutation, changed-line coverage, and
+red-then-green claim types, each naming the target repository's own tool plus
+its threshold; `method` stays a plain string, never a schema enum. Each claim
+type defines a typed-gap outcome: a declared gate with a missing tool or a
+`not_run` outcome is a typed gap, never PASS. The Assurance Test Engineer independently reruns the gate-chain at the declared cadence boundary; author gate-chain receipts are diagnostic and cannot satisfy an assurance gate. Every
+red-then-green receipt binds the baseline failing run and the candidate passing run
+over the same test ids.

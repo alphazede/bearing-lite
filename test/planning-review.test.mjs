@@ -1,7 +1,8 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -13,8 +14,13 @@ const closeout = require(path.join(ROOT, "hooks/closeout.cjs"));
 const host = require(path.join(ROOT, "hooks/com.anthropic.claude-code/host.cjs"));
 
 const candidate = { candidate_ref: "plan", candidate_revision: "r1", candidate_digest: "d1" };
+const MANIFEST_DIR = mkdtempSync(path.join(os.tmpdir(), "planning-review-"));
+const MANIFEST_NAME = "plan-dod-manifest.html";
+writeFileSync(path.join(MANIFEST_DIR, MANIFEST_NAME), "<!doctype html><title>DoD</title>");
 const review = (extra = {}) => ({
   candidate,
+  plan_dir: MANIFEST_DIR,
+  dod_manifest: { output_name: MANIFEST_NAME },
   reviewer_slots: [
     { slot_id: "slot-a", primary_route_ref: "route-a", fallback_route_refs: ["route-a2"] },
   ],
@@ -59,6 +65,16 @@ describe("model-neutral planning review", () => {
     for (const [value, outcome, reason] of cases) {
       assert.deepEqual(core.evaluatePlanningReview(value), { outcome, reason });
     }
+  });
+
+  it("fails closed when the DoD Manifest is not generated", () => {
+    assert.deepEqual(core.evaluatePlanningReview(review({ dod_manifest: undefined })), {
+      outcome: "NEEDS_MORE_EVIDENCE", reason: "manifest_not_generated",
+    });
+    assert.deepEqual(
+      core.evaluatePlanningReview(review({ dod_manifest: { output_name: "missing-dod-manifest.html" } })),
+      { outcome: "NEEDS_MORE_EVIDENCE", reason: "manifest_not_generated" }
+    );
   });
 
   it("distinguishes a pending first round from an exceeded round", () => {
