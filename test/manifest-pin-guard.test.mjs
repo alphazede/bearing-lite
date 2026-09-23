@@ -205,3 +205,35 @@ test("W2-F9 missing or invalid authority digest produces a finding", (t) => {
       `authority sha256 ${String(sha256)} must produce a typed finding`);
   }
 });
+
+test("IE-F1 real package without register freezes PASS", (t) => {
+  const rel = "docs/plans/2026-09-22-assurance-gate-and-review-flow";
+  const root = temporary(t);
+  const dir = path.join(root, rel);
+  mkdirSync(path.join(root, ".git"));
+  mkdirSync(dir, { recursive: true });
+  for (const name of [
+    "implementation.json", "seit.json", "assurance-gate-and-review-flow-technical-plan.md", "design.md",
+  ]) {
+    writeFileSync(path.join(dir, name), readFileSync(path.join(ROOT, rel, name)));
+  }
+  assert.ok(!readdirSync(dir).includes("authority.json"));
+  const result = freeze(dir);
+  assert.equal(result.outcome, "PASS", JSON.stringify(result.findings));
+  assert.ok(!result.findings.some((finding) => finding.code === "missing_register_baseline"));
+});
+
+test("IE-F1 real repository packages freeze", () => {
+  const { spawnSync } = require("node:child_process");
+  const names = [
+    "2026-09-22-assurance-gate-and-review-flow",
+    "2026-09-12-bearing-delivery-lifecycle-alignment",
+  ];
+  const actual = names.map((name) => {
+    const dir = path.join(ROOT, "docs/plans", name);
+    const run = spawnSync(process.execPath, [path.join(ROOT, "hooks/plan-package.cjs"), dir], { encoding: "utf8" });
+    const { outcome, findings } = JSON.parse(run.stdout);
+    return { name, exit: run.status, outcome, findings };
+  });
+  assert.deepEqual(actual, names.map((name) => ({ name, exit: 0, outcome: "PASS", findings: [] })));
+});

@@ -346,7 +346,15 @@ const DATED_RECEIPT_LINE = /^\d{4}-\d{2}-\d{2}\s+receipt\b/i;
 function checkLivePins(dir, findings = []) {
   const implementation = readJson(path.join(dir, "implementation.json"));
   if (!implementation) return findings;
-  const recorded = readJson(path.join(dir, "authority.json"))?.requirement_register?.sha256;
+  const authority = readJson(path.join(dir, "authority.json"));
+  // IE-F1: fail closed only when the package declares or requires a register
+  // (specification journey or authority.json carrying a register entry);
+  // packages with no register skip the live-pin baseline check cleanly.
+  const requiresRegister =
+    implementation?.journey_settings?.journey_type === "specification" ||
+    (authority && authority.requirement_register != null);
+  if (!requiresRegister) return findings;
+  const recorded = authority?.requirement_register?.sha256;
   if (typeof recorded !== "string" || !/^[0-9a-f]{64}$/i.test(recorded)) {
     // Fail closed: without a recorded baseline no live pin can be verified.
     if (collectWriteSet(implementation).length) {
