@@ -1,0 +1,34 @@
+{
+  "wave": "Wave 1",
+  "status": "EVIDENCE_READY",
+  "at": "2026-09-23T14:14:11Z",
+  "parent_controller": "Orchestrator",
+  "route": "Codex CLI / GPT-6 Sol / xhigh (test_implementer)",
+  "slices": {
+    "S1": {
+      "path": "test/gate-chain.test.mjs",
+      "red": "1 pass (guard) / 11 fail (evaluator export absent, receipt rule absent)"
+    },
+    "S2": {
+      "path": "test/reviewer-evidence.test.mjs",
+      "red": "0 pass / 7 fail (rules absent; hook returns PASS instead of typed gap)"
+    },
+    "S3": {
+      "path": "test/manifest-pin-guard.test.mjs",
+      "red": "1 pass (guard) / 7 fail (manifest guard, pin sweep absent)"
+    },
+    "S4": {
+      "path": "test/orchestrator-write.test.mjs",
+      "red": "2 pass (guards) / 4 fail (orchestrator write denied, fallback absent)"
+    }
+  },
+  "deterministic_receipt": {
+    "CMD-PREEXISTING": "565/565 pass",
+    "CMD-SCHEMA": "268/268",
+    "CMD-DIFFCHECK": "clean",
+    "CMD-WRITESET": "PASS",
+    "imports": "node: standard library only"
+  },
+  "verified_by": "Orchestrator rerun",
+  "assurance_rounds": 0
+}
