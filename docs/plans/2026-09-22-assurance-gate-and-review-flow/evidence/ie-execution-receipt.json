@@ -1,0 +1,109 @@
+{
+  "receipt_kind": "integration_engineer_execution",
+  "role": "integration_engineer",
+  "session": "fresh execution session; no author ancestry",
+  "candidate_ref": "feat/assurance-gate-review-flow",
+  "candidate_revision": "c52e5158d21be211f2e119af9d1e560269397baf",
+  "baseline_revision": "174773e",
+  "verdict": "FAIL",
+  "checks": [
+    {
+      "id": "IE-01",
+      "command": "git status --porcelain=v1",
+      "result": "PASS: clean before receipt"
+    },
+    {
+      "id": "IE-02",
+      "command": "git diff --name-only 174773e --",
+      "result": "PASS: 25 paths = 17 declared slice paths + test/planning-review.test.mjs (S8 write set in implementation.json) + 7 plan-directory artifacts; no out-of-set product paths"
+    },
+    {
+      "id": "IE-03",
+      "command": "git ls-files --others --exclude-standard",
+      "result": "PASS: none"
+    },
+    {
+      "id": "IE-04",
+      "command": "node hooks/write-set-check.cjs -- test/gate-chain.test.mjs ... skills/architectural-alignment/SKILL.md (17 declared paths)",
+      "result": "PASS exit 0, findings []"
+    },
+    {
+      "id": "IE-05",
+      "command": "node hooks/plan-package.cjs docs/plans/2026-09-22-assurance-gate-and-review-flow",
+      "result": "FAIL exit 1: missing_register_baseline path=authority.json; manifest_digest 4ab2675d... (digests OK). Baseline 174773e hook on same package: PASS. docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment also FAIL same code"
+    },
+    {
+      "id": "IE-06",
+      "command": "node tools/render-dod-manifest.mjs docs/plans/2026-09-22-assurance-gate-and-review-flow/implementation.json --check",
+      "result": "PASS RENDER_CHECK_PASS sha256:500d2a17..."
+    },
+    {
+      "id": "IE-07",
+      "command": "env -u BEARING_ROLE node --test test/*.test.mjs",
+      "result": "PASS 608/608, 0 fail"
+    },
+    {
+      "id": "IE-08",
+      "command": "env -u BEARING_ROLE node --test test/policy-drift.test.mjs test/gate-chain.test.mjs test/reviewer-evidence.test.mjs test/manifest-pin-guard.test.mjs test/orchestrator-write.test.mjs test/planning-review.test.mjs test/plan-package.test.mjs test/dod-manifest.test.mjs test/orchestrator-write-lock.test.mjs",
+      "result": "PASS 110/110 (policy block vs policy.cjs vs assurance-budget.cjs mirror enforced by policy-drift)"
+    },
+    {
+      "id": "IE-09",
+      "command": "python3 test/schema-validation.py",
+      "result": "PASS 268/268"
+    },
+    {
+      "id": "IE-10",
+      "command": "git diff --check 174773e --",
+      "result": "PASS"
+    },
+    {
+      "id": "IE-11",
+      "command": "hooks/hooks.json entry points (host.cjs SessionStart/Stop, te-host.cjs PreToolUse/Stop/SubagentStop, orchestrator-write-lock.cjs PreToolUse, git-sync.cjs Stop) fed sample envelopes with CLAUDE_PLUGIN_ROOT=repo",
+      "result": "PASS: all load, exit 0, single JSON document on stdout (diagnostics on stderr); SessionStart returns ADVISE context"
+    },
+    {
+      "id": "IE-12",
+      "command": "orchestrator-write-lock.cjs PreToolUse Write on plan-dir workspace.md/repository-map.md/design.md/seit.json with BEARING_ROLE unset and =orchestrator",
+      "result": "PASS: workspace.md and repository-map.md ALLOW (matches skills/architectural-alignment/SKILL.md line 12, Orchestrator-owned); design.md and seit.json DENY_DISPATCH permissionDecision=deny, owner planning_and_design"
+    }
+  ],
+  "per_issue_acceptance": {
+    "#143": {
+      "status": "ACCEPTED",
+      "basis": "gate-chain tests + policy-drift mirror green; ATE PASS"
+    },
+    "#144": {
+      "status": "ACCEPTED",
+      "basis": "reviewer-evidence tests green; Reviewer skill consumes S5 receipt shape; Wave 3 Reviewer ACCEPT"
+    },
+    "#145": {
+      "status": "ACCEPTED",
+      "basis": "mixed-cadence receipt rule tests green in reviewer-evidence suite"
+    },
+    "#136": {
+      "status": "ACCEPTED",
+      "basis": "planning-review guard tests + DoD Manifest render --check PASS on real package"
+    },
+    "#135": {
+      "status": "NOT_ACCEPTED",
+      "basis": "sweep detects stale pins in fixtures, but on real packages without authority.json plan-package now fails closed (IE-05); planning-and-design skill does not instruct authors to create authority.json, so the freeze step cannot pass for this Lifecycle's own package"
+    },
+    "#146": {
+      "status": "ACCEPTED",
+      "basis": "orchestrator-write tests green; installed hook verdicts match skill text (IE-12)"
+    }
+  },
+  "findings": [
+    {
+      "id": "IE-F1",
+      "severity": "blocking",
+      "title": "plan-package freeze regresses: missing_register_baseline fails every package without authority.json",
+      "evidence": "hooks/plan-package.cjs:349-355 (added in 90eea69 W2 fail-open repair) pushes missing_register_baseline whenever implementation.json has a write set and authority.json lacks requirement_register.sha256. Candidate package and 2026-09-12 package both FAIL; 174773e hook PASS on the same package. wave-2-receipt plan-package PASS 4ab2675d predates 90eea69. Full suite green because fixtures always supply authority.json.",
+      "impact": "Declared lifecycle-end check IE-05 fails; non-specification Journeys (no SDoc register) cannot freeze; AC-135.01..04 do not require a baseline when no register exists.",
+      "route": "bounded plan correction to S9 owner (plan-package.cjs + artifact-grammar.md/planning-and-design skill): either scope the fail-closed to specification Journeys / packages that carry register pins, or make authority.json a documented required planning artifact and add it to this package; add a regression test on a real no-register package. Not repaired here per authority."
+    }
+  ],
+  "blocker": "IE-F1",
+  "notes": "BRAN native policy unavailable; repository discovery used. Receipts from this session are diagnostic and do not self-certify. ATE receipt bound to 40aaeec; c52e515 adds only that receipt."
+}
