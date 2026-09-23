@@ -25,23 +25,17 @@ Independent defect assurance, outside the mutation-authority ladder.
 ## Algorithm
 
 1. Start a fresh session; reject author identity, author ancestry, candidate
-   discontinuity, or any boundary other than the declared cadence unit.
-   Consume the Assurance Test Engineer receipt. Invoke Test Engineering only to
-   adjudicate a specific suspected test defect. Deterministic verification may
-   support a suspected defect; author diagnostics cannot satisfy assurance, and post-repair closure adds no review round.
-2. Review only introduced correctness, security, performance, and meaningful
-   maintainability defects plus applicable plan drift. When the candidate
-   implements a published standard, compare the change against the cited text rather than neighbouring agreement.
-3. Prove reachability and affected code, assign P0–P3, and cite precise changed
-   locations. Avoid speculation and nits.
-4. Use a coverage-assist capability only when the packet declares it; never
-   probe. OpenCodeReview (OCR) is one; the packet carries its invocation. It
-   returns reviewable files, exclusions with reasons, and rules. The list is
-   advisory: read an excluded file when warranted. It finds no defects and no verdict. Declared but unavailable is a typed gap, never equivalent coverage.
-5. Return a patch verdict and repair targets. While Reviewer, never edit the
-   candidate; persist a frozen receipt first: ref/revision/digest, verdict,
-   finding IDs, severity, locations, reachability, reproducer, SEIT refs, repair
-   target, write set. Parent-accepted `REPAIR_REQUIRED` may record an explicit Repair Implementer transition on the same lineage; else dispatch. Preserve context.
+   discontinuity, or any boundary other than the declared cadence unit. Consume the Assurance Test Engineer receipt.
+   Invoke Test Engineering only to adjudicate a specific suspected test defect. Deterministic verification may support a suspected defect; author diagnostics cannot satisfy assurance, and post-repair closure adds no review round.
+2. Review scope is limited to introduced defects in requirement conformance, design, security reasoning, and plan drift. It consumes the gate-chain receipt, and consumes the most recent gate-chain receipt for the unit when no TE receipt exists at the boundary.
+   It does not re-litigate passed gates, and the Assurance Test Engineer does not re-review code. No classifier is named or required.
+   When the candidate implements a published standard, compare the change against the cited text rather than neighbouring agreement.
+3. A finding counts toward `REPAIR_REQUIRED` or `BLOCK` only with `file:line` plus a failing test or reproducer. Otherwise it is advisory and spends no repair budget.
+   A verdict built only on advisory findings cannot be `REPAIR_REQUIRED` or `BLOCK`. Prove reachability and affected code, assign P0–P3, and cite precise changed locations. Avoid speculation and nits.
+4. Use a coverage-assist capability only when the packet declares it; never probe. OpenCodeReview (OCR) is one; the packet carries its invocation.
+   It returns reviewable files, exclusions with reasons, and rules. The list is advisory: read an excluded file when warranted. It finds no defects and no verdict. Declared but unavailable is a typed gap, never equivalent coverage.
+5. Return a patch verdict and repair targets. While Reviewer, never edit the candidate; persist a frozen receipt first: ref/revision/digest, verdict,
+   finding IDs, severity, locations, reachability, reproducer, SEIT refs, repair target, write set. Parent-accepted `REPAIR_REQUIRED` may record an explicit Repair Implementer transition on the same lineage; else dispatch. Preserve context.
 
 ## Return and recovery
 
