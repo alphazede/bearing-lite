@@ -1,0 +1,537 @@
+{
+  "schema_version": "1",
+  "journey": {
+    "id": "AGR-2026-09-22",
+    "title": "Assurance gate chain and review flow (#143, #144, #145, #136, #135, #146)",
+    "status": "planning",
+    "planning_repository": "alphazede/bearing-lite"
+  },
+  "checkout_lease": {
+    "journey": "AGR-2026-09-22",
+    "controller": "Claude Code Orchestrator (Claude Opus 5.5)",
+    "repository": "alphazede/bearing-lite",
+    "checkout": "/home/spectre/src/bearing-lite-agr",
+    "branch": "feat/assurance-gate-review-flow",
+    "candidate_revision": "174773e4bbec85a24b5675a20a26b99b4690ea99",
+    "acquired_at": "2026-09-23T03:13:38Z",
+    "generation": 1,
+    "state": "active"
+  },
+  "decisions": [
+    {
+      "id": "DEC-AGR-001",
+      "at": "2026-09-23T03:13:38Z",
+      "by": "Owner",
+      "decision": "Target repository alphazede/bearing-lite (main @ 174773e, v1.1.3); Lifecycle worked in worktree /home/spectre/src/bearing-lite-agr on branch feat/assurance-gate-review-flow; plan directory docs/plans/2026-09-22-assurance-gate-and-review-flow/.",
+      "source": "Intake FIT_PROPOSED confirmed via owner answer"
+    },
+    {
+      "id": "DEC-AGR-002",
+      "at": "2026-09-23T03:13:38Z",
+      "by": "Owner",
+      "decision": "Scope: issues #143, #144, #145 plus related #136 and #135. Out of scope: #139, #122, #92.",
+      "source": "owner answer to scope question"
+    },
+    {
+      "id": "DEC-AGR-003",
+      "at": "2026-09-23T03:13:38Z",
+      "by": "Owner",
+      "decision": "Profile: primary. Snapshot recorded in profile_selection is authoritative for this Lifecycle.",
+      "source": "owner request"
+    },
+    {
+      "id": "DEC-AGR-004",
+      "at": "2026-09-23T03:21:22Z",
+      "by": "Owner",
+      "decision": "Planning stages without a profile route use the frozen snapshot route of the closest role: Architectural Alignment -> systems_modeler.planning; Scope Definition -> requirements_engineer.planning; Planning and Design -> plan_integrator. Every stage is dispatched as a separate process with BEARING_ROLE in its environment.",
+      "source": "owner instruction 'use what we have in the roles'"
+    },
+    {
+      "id": "DEC-AGR-005",
+      "at": "2026-09-23T03:23:34Z",
+      "by": "Owner",
+      "decision": "Add #146 (orchestrator_write_lock blocks Orchestrator-owned Architectural Alignment; in-process subagents cannot carry BEARING_ROLE) to Lifecycle scope. #139 stays out of scope.",
+      "source": "owner answer"
+    },
+    {
+      "id": "DEC-AGR-006",
+      "at": "2026-09-23T03:23:34Z",
+      "by": "Owner",
+      "decision": "Owner amendment to DEC-AGR-004: Architectural Alignment, including Scope Definition, is owned by the planning Orchestrator for this Lifecycle. Scope Definition runs in the Orchestrator session. The already-written workspace.md (Muse route) is retained. Planning and Design and specialist roles keep snapshot routes via separate processes with BEARING_ROLE set. This deviates from current skill text pending #146.",
+      "source": "owner answer"
+    },
+    {
+      "id": "DEC-AGR-007",
+      "at": "2026-09-23T03:28:36Z",
+      "by": "Owner",
+      "issue": "#146",
+      "decision": "Architectural Alignment and Scope Definition become Orchestrator-owned: orchestrator-write-lock allows Orchestrator writes to workspace.md and repository-map.md; skill text matches. Specialist artifacts stay role-locked. The hook also learns in-process subagent roles from the host envelope where a harness exposes them; otherwise the fallback is a separate process with BEARING_ROLE, named in the deny message; a subagent is never silently treated as the Orchestrator.",
+      "source": "Scope Definition shared understanding confirmed by owner"
+    },
+    {
+      "id": "DEC-AGR-008",
+      "at": "2026-09-23T03:28:36Z",
+      "by": "Owner",
+      "issue": "#145",
+      "decision": "At a boundary with no Assurance Test Engineer receipt, the Reviewer consumes the #143 deterministic gate-chain receipt for that unit; neither receipt is a typed gap, never PASS. Therefore the gate chain runs at every Reviewer boundary.",
+      "source": "Scope Definition shared understanding confirmed by owner"
+    },
+    {
+      "id": "DEC-AGR-009",
+      "at": "2026-09-23T03:28:36Z",
+      "by": "Owner",
+      "issue": "#144",
+      "decision": "Actionable findings require file:line plus a failing test or reproducer; others are advisory and cannot produce REPAIR_REQUIRED or BLOCK. Reviewer scope narrows to what gates cannot prove; Assurance Test Engineer does not re-review code. Finding classifier DEFERRED to AlphaZedeHQ #148 / bearing-lite #122 (owner-approved destination).",
+      "source": "Scope Definition shared understanding confirmed by owner"
+    },
+    {
+      "id": "DEC-AGR-010",
+      "at": "2026-09-23T03:28:36Z",
+      "by": "Owner",
+      "issue": "#143",
+      "decision": "Fixed fail-fast gate chain: build, types/lint, red-then-green, mutation score, changed-line coverage, Reverify, then Reviewer. Mutation and changed-line coverage are declared per plan in seit.json (repository tool + threshold); declared = hard gate, missing tool or not_run = typed gap; undeclared requires NOT_APPLICABLE with reason. Policy and hook mirror stay in sync via the drift test.",
+      "source": "Scope Definition shared understanding confirmed by owner"
+    },
+    {
+      "id": "DEC-AGR-011",
+      "at": "2026-09-23T03:28:36Z",
+      "by": "Owner",
+      "issue": "#136/#135",
+      "decision": "#136: owner-review gate cannot be presented before the DoD Manifest is generated. #135: replace prose-pinned live digests with a tool check plus an allow-list for historical records. Guard location and allow-list format are Planning and Design decisions.",
+      "source": "Scope Definition shared understanding confirmed by owner"
+    },
+    {
+      "id": "DEC-AGR-012",
+      "at": "2026-09-23T03:28:36Z",
+      "by": "Owner",
+      "issue": "authority",
+      "decision": "Land on main by PR once checks are green. npm release ($publish-bearing-lite) is out of this Lifecycle and owner-only. Out of scope: #139, #122, #92.",
+      "source": "Scope Definition shared understanding confirmed by owner"
+    }
+  ],
+  "open_decisions": [],
+  "planning_receipts": [
+    {
+      "stage": "intake",
+      "status": "FIT_CONFIRMED",
+      "at": "2026-09-23T03:13:38Z"
+    },
+    {
+      "stage": "architectural_alignment",
+      "status": "WORKSPACE_READY",
+      "at": "2026-09-23T03:21:22Z",
+      "route": "Muse Code / Muse Spark 1.3 / high",
+      "path": "docs/plans/2026-09-22-assurance-gate-and-review-flow/workspace.md",
+      "note": "First in-process attempt BLOCKED by orchestrator-write-lock (BEARING_ROLE absent from process env); no write occurred."
+    },
+    {
+      "stage": "scope_definition",
+      "status": "SHARED_UNDERSTANDING_CONFIRMED",
+      "at": "2026-09-23T03:28:36Z",
+      "route": "Orchestrator session (DEC-AGR-006)",
+      "decisions": [
+        "DEC-AGR-007",
+        "DEC-AGR-008",
+        "DEC-AGR-009",
+        "DEC-AGR-010",
+        "DEC-AGR-011",
+        "DEC-AGR-012"
+      ],
+      "open": 0
+    },
+    {
+      "stage": "planning_and_design",
+      "status": "PASS",
+      "scope": "procedure steps 1-3",
+      "at": "2026-09-23T03:32:21Z",
+      "route": "Muse Code / Muse Spark 1.3 / high (plan_integrator route per DEC-AGR-004)",
+      "paths": [
+        "assurance-gate-and-review-flow-technical-plan.md",
+        "design.md",
+        "seit.json"
+      ],
+      "summary": "25 AC + 2 RISK, 27 SEIT rows, 10 slices / 3 waves; no requirements register (Lifecycle-local proof)",
+      "orchestrator_verification": "seit.json schema-valid; git status only plan dir; git diff --check clean",
+      "open_confirmation": "Reviewer receipt: skill prose + conformance test (DES-144.01) vs machine-validated schema; carried to owner gate"
+    },
+    {
+      "stage": "test_engineer.planning",
+      "status": "PASS",
+      "at": "2026-09-23T03:38:51Z",
+      "route": "Claude Code / Claude Opus 5.5 / medium",
+      "paths": [
+        "evidence/te-planning-seit-final.json",
+        "evidence/te-planning-receipt.md"
+      ],
+      "findings_for_plan_integrator": [
+        "TE-F1 test/planning-review.test.mjs needs to be in S8 write set",
+        "TE-F2 AC-143.07 evaluator belongs to S5",
+        "TE-F3 per-slice SEIT row lists need update",
+        "TE-F4 confirm three skill files outside write sets do not present owner review"
+      ],
+      "mutation_coverage": "NOT_APPLICABLE (no repository tool; no new dependencies)",
+      "reverify": "not selected (no binary-level claim)",
+      "note": "Proposal only; seit.json ownership is planning_and_design per write-lock (see #146 comment)."
+    },
+    {
+      "stage": "integration_engineer.planning",
+      "status": "REPAIRABLE_FAILURE",
+      "at": "2026-09-23T03:38:51Z",
+      "route": "Codex CLI / GPT-6 Sol / xhigh",
+      "paths": [
+        "evidence/ie-planning-assembly.md"
+      ],
+      "findings": [
+        "17 distinct write paths, no overlaps, no missing dependencies",
+        "P&D step 4 freeze precedes implementation.json but plan-package.cjs requires it; S8 scope must cover the sequence correction"
+      ],
+      "baseline": "env -u BEARING_ROLE node --test: 565/565; schema-validation 268/268; policy-drift 3/3; with BEARING_ROLE inherited, harness-acceptance test fails 564/565"
+    },
+    {
+      "stage": "plan_integrator",
+      "status": "PASS",
+      "at": "2026-09-23T03:46:41Z",
+      "route": "Muse Code / Muse Spark 1.3 / high (BEARING_ROLE=planning_and_design)",
+      "plan_package": {
+        "outcome": "PASS",
+        "manifest_digest": "be778fdc824251d080939343fa6154a225d9d9da0b337eac246adfabe46340a4"
+      },
+      "orchestrator_verification": "plan-package.cjs PASS rerun; implementation.json and seit.json schema-valid; git diff --check clean",
+      "residual": "CMD-SCOPE union list lacks new S8 path test/planning-review.test.mjs"
+    }
+  ],
+  "profile_selection": {
+    "profile": "primary",
+    "source": "~/.agents/bearing-lite/profiles.json",
+    "source_sha256": "3d32a511b35010a6eb100e97c0cf983a511f201aeb988cae058ce157eb75caa8",
+    "snapshot_at": "2026-09-23T03:13:38Z",
+    "snapshot": {
+      "roles": {
+        "implementer": {
+          "enabled": true,
+          "primary": {
+            "harness": "Muse Code",
+            "model": "Muse Spark 1.3",
+            "reasoning": "xhigh"
+          },
+          "ordered_fallbacks": [
+            {
+              "condition": "Verified unavailability or usage/rate-limit exhaustion of the primary route.",
+              "harness": "Codex CLI",
+              "model": "GPT-6 Sol",
+              "reasoning": "high"
+            },
+            {
+              "condition": "Verified unavailability or usage/rate-limit exhaustion of the primary and all preceding approved fallbacks.",
+              "harness": "Cursor Agent",
+              "model": "Grok 4.7",
+              "reasoning": "high"
+            }
+          ]
+        },
+        "test_implementer": {
+          "enabled": true,
+          "primary": {
+            "harness": "Codex CLI",
+            "model": "GPT-6 Sol",
+            "reasoning": "xhigh"
+          },
+          "ordered_fallbacks": [
+            {
+              "condition": "Verified unavailability or usage/rate-limit exhaustion of the primary route.",
+              "harness": "Claude Code",
+              "model": "Claude Opus 5.5",
+              "reasoning": "medium"
+            },
+            {
+              "condition": "Verified unavailability or usage/rate-limit exhaustion of the primary and all preceding approved fallbacks.",
+              "harness": "Cursor Agent",
+              "model": "Grok 4.7",
+              "reasoning": "high"
+            }
+          ]
+        },
+        "light_implementer": {
+          "enabled": true,
+          "primary": {
+            "harness": "Muse Code",
+            "model": "Muse Spark 1.3",
+            "reasoning": "medium"
+          },
+          "ordered_fallbacks": [
+            {
+              "condition": "Verified unavailability or usage/rate-limit exhaustion of the primary route.",
+              "harness": "Cursor Agent",
+              "model": "Grok 4.7 Fast",
+              "reasoning": "low"
+            },
+            {
+              "condition": "Verified unavailability or usage/rate-limit exhaustion of the primary and all preceding approved fallbacks.",
+              "harness": "AGY",
+              "model": "Gemini 3.8 Flash",
+              "reasoning": "medium"
+            }
+          ]
+        },
+        "coordinator": {
+          "enabled": true,
+          "primary": {
+            "harness": "AGY",
+            "model": "Gemini 3.8 Flash",
+            "reasoning": "medium"
+          },
+          "ordered_fallbacks": [
+            {
+              "condition": "Verified unavailability or usage/rate-limit exhaustion of the primary route.",
+              "harness": "Cursor Agent",
+              "model": "Grok 4.7",
+              "reasoning": "medium"
+            },
+            {
+              "condition": "Verified unavailability or usage/rate-limit exhaustion of the primary and all preceding approved fallbacks.",
+              "harness": "Deep Code CLI",
+              "model": "deepseek-v4-flash",
+              "reasoning": "max"
+            }
+          ]
+        },
+        "reviewer": {
+          "enabled": true,
+          "primary": {
+            "harness": "Cursor Agent",
+            "model": "Grok 4.7",
+            "reasoning": "high"
+          },
+          "ordered_fallbacks": [
+            {
+              "condition": "Verified unavailability or usage/rate-limit exhaustion of the primary route.",
+              "harness": "Codex CLI",
+              "model": "GPT-6 Sol",
+              "reasoning": "xhigh"
+            },
+            {
+              "condition": "Verified unavailability or usage/rate-limit exhaustion of the primary and all preceding approved fallbacks.",
+              "harness": "Claude Code",
+              "model": "Claude Opus 5.5",
+              "reasoning": "medium"
+            }
+          ],
+          "cadence": "phase"
+        },
+        "scribe": {
+          "enabled": true,
+          "primary": {
+            "harness": "AGY",
+            "model": "Gemini 3.8 Flash",
+            "reasoning": "medium"
+          },
+          "ordered_fallbacks": [
+            {
+              "condition": "Verified unavailability or usage/rate-limit exhaustion of the primary route.",
+              "harness": "Deep Code CLI",
+              "model": "deepseek-v4-flash",
+              "reasoning": "max"
+            },
+            {
+              "condition": "Verified unavailability or usage/rate-limit exhaustion of the primary and all preceding approved fallbacks.",
+              "harness": "Codex CLI",
+              "model": "GPT-6 Luna",
+              "reasoning": "max"
+            }
+          ]
+        },
+        "plan_integrator": {
+          "enabled": true,
+          "primary": {
+            "harness": "Muse Code",
+            "model": "Muse Spark 1.3",
+            "reasoning": "high"
+          },
+          "ordered_fallbacks": [
+            {
+              "condition": "Verified unavailability or usage/rate-limit exhaustion of the primary route.",
+              "harness": "Cursor Agent",
+              "model": "Grok 4.7",
+              "reasoning": "medium"
+            },
+            {
+              "condition": "Verified unavailability or usage/rate-limit exhaustion of the primary and all preceding approved fallbacks.",
+              "harness": "Codex CLI",
+              "model": "GPT-6 Luna",
+              "reasoning": "max"
+            }
+          ]
+        },
+        "systems_modeler": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "Muse Code",
+                "model": "Muse Spark 1.3",
+                "reasoning": "high"
+              },
+              "ordered_fallbacks": [
+                {
+                  "condition": "Verified unavailability or usage/rate-limit exhaustion of the primary route.",
+                  "harness": "Codex CLI",
+                  "model": "GPT-6 Sol",
+                  "reasoning": "medium"
+                },
+                {
+                  "condition": "Verified unavailability or usage/rate-limit exhaustion of the primary and all preceding approved fallbacks.",
+                  "harness": "Cursor Agent",
+                  "model": "Grok 4.7",
+                  "reasoning": "medium"
+                }
+              ]
+            }
+          }
+        },
+        "test_engineer": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "Claude Code",
+                "model": "Claude Opus 5.5",
+                "reasoning": "medium"
+              },
+              "ordered_fallbacks": [
+                {
+                  "condition": "Verified unavailability or usage/rate-limit exhaustion of the primary route.",
+                  "harness": "Codex CLI",
+                  "model": "GPT-6 Sol",
+                  "reasoning": "xhigh"
+                },
+                {
+                  "condition": "Verified unavailability or usage/rate-limit exhaustion of the primary and all preceding approved fallbacks.",
+                  "harness": "Cursor Agent",
+                  "model": "Grok 4.7",
+                  "reasoning": "high"
+                }
+              ]
+            },
+            "assurance": {
+              "enabled": true,
+              "primary": {
+                "harness": "Claude Code",
+                "model": "Claude Opus 5.5",
+                "reasoning": "medium"
+              },
+              "ordered_fallbacks": [
+                {
+                  "condition": "Verified unavailability or usage/rate-limit exhaustion of the primary route.",
+                  "harness": "Codex CLI",
+                  "model": "GPT-6 Sol",
+                  "reasoning": "xhigh"
+                },
+                {
+                  "condition": "Verified unavailability or usage/rate-limit exhaustion of the primary and all preceding approved fallbacks.",
+                  "harness": "Cursor Agent",
+                  "model": "Grok 4.7",
+                  "reasoning": "high"
+                }
+              ],
+              "cadence": "lifecycle"
+            }
+          }
+        },
+        "integration_engineer": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "Codex CLI",
+                "model": "GPT-6 Sol",
+                "reasoning": "xhigh"
+              },
+              "ordered_fallbacks": [
+                {
+                  "condition": "Verified unavailability or usage/rate-limit exhaustion of the primary route.",
+                  "harness": "Cursor Agent",
+                  "model": "Grok 4.7",
+                  "reasoning": "high"
+                },
+                {
+                  "condition": "Verified unavailability or usage/rate-limit exhaustion of the primary and all preceding approved fallbacks.",
+                  "harness": "Claude Code",
+                  "model": "Claude Opus 5.5",
+                  "reasoning": "medium"
+                }
+              ]
+            },
+            "execution": {
+              "enabled": true,
+              "primary": {
+                "harness": "Claude Code",
+                "model": "Claude Opus 5.5",
+                "reasoning": "medium"
+              },
+              "ordered_fallbacks": [
+                {
+                  "condition": "Verified unavailability or usage/rate-limit exhaustion of the primary route.",
+                  "harness": "Codex CLI",
+                  "model": "GPT-6 Sol",
+                  "reasoning": "xhigh"
+                },
+                {
+                  "condition": "Verified unavailability or usage/rate-limit exhaustion of the primary and all preceding approved fallbacks.",
+                  "harness": "Cursor Agent",
+                  "model": "Grok 4.7",
+                  "reasoning": "high"
+                }
+              ],
+              "cadence": "lifecycle"
+            }
+          }
+        },
+        "requirements_engineer": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "Cursor Agent",
+                "model": "Grok 4.7",
+                "reasoning": "high"
+              },
+              "ordered_fallbacks": [
+                {
+                  "condition": "Verified unavailability or usage/rate-limit exhaustion of the primary route.",
+                  "harness": "Claude Code",
+                  "model": "Claude Opus 5.5",
+                  "reasoning": "medium"
+                },
+                {
+                  "condition": "Verified unavailability or usage/rate-limit exhaustion of the primary and all preceding approved fallbacks.",
+                  "harness": "Codex CLI",
+                  "model": "GPT-6 Sol",
+                  "reasoning": "xhigh"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "development_strategy": {
+        "mode": "tdd"
+      },
+      "concurrency": {
+        "dispatch_ready_independent_work": true,
+        "preserve_order_for_dependencies_interfaces_write_overlap_and_shared_mutable_resources": true
+      },
+      "planning_to_implementation_clean_session": true,
+      "deterministic_verification": {
+        "reverify": {
+          "enabled": true
+        }
+      },
+      "review": {
+        "coverage_assist": {
+          "enabled": true,
+          "required": false
+        }
+      }
+    }
+  }
+}

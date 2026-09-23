@@ -1,0 +1,1290 @@
+{
+  "schema_version": "1.0",
+  "artifact": {
+    "lifecycle": "AGR-2026-09-22",
+    "plan_dir": "docs/plans/2026-09-22-assurance-gate-and-review-flow/",
+    "status": "final-prospective",
+    "finalized_by": "Planning Test Engineer session",
+    "finalized_at": "2026-09-22",
+    "supersedes": "docs/plans/2026-09-22-assurance-gate-and-review-flow/seit.json (draft, 27 rows)",
+    "receipt": "docs/plans/2026-09-22-assurance-gate-and-review-flow/evidence/te-planning-receipt.md"
+  },
+  "source_baseline": {
+    "repository": "alphazede/bearing-lite",
+    "revision": "174773e4bbec85a24b5675a20a26b99b4690ea99",
+    "branch": "feat/assurance-gate-review-flow",
+    "planning_inputs": [
+      {
+        "path": "docs/plans/2026-09-22-assurance-gate-and-review-flow/assurance-gate-and-review-flow-technical-plan.md",
+        "sha256": "6114627c515ab4a92b51eed8732a0ca938641f10fda337fc2c72fc8afa5f4f15",
+        "binding_status": "bound"
+      },
+      {
+        "path": "docs/plans/2026-09-22-assurance-gate-and-review-flow/design.md",
+        "sha256": "6b33d8a433d32029ece98fb44da5bbf4d0232ce96ad3b1828690b998606f18c7",
+        "binding_status": "bound"
+      }
+    ],
+    "planning_input_note": "Planning inputs bound by the Plan Integrator after TE-F1..TE-F4/IE reconciliation; digests recomputed over the reconciled files."
+  },
+  "decision_baseline": {
+    "kind": "decision-baseline-projection",
+    "confirmed_decisions": {
+      "DEC-AGR-001": "confirmed",
+      "DEC-AGR-002": "confirmed",
+      "DEC-AGR-003": "confirmed",
+      "DEC-AGR-004": "confirmed",
+      "DEC-AGR-005": "confirmed",
+      "DEC-AGR-006": "confirmed",
+      "DEC-AGR-007": "confirmed",
+      "DEC-AGR-008": "confirmed",
+      "DEC-AGR-009": "confirmed",
+      "DEC-AGR-010": "confirmed",
+      "DEC-AGR-011": "confirmed",
+      "DEC-AGR-012": "confirmed",
+      "82635ef2": "specification-journey-only, no register in this Lifecycle"
+    },
+    "open_items": []
+  },
+  "responsibility_and_change_authority": {
+    "author": "Planning and Design node (plan_integrator route)",
+    "owner": "planning Orchestrator",
+    "change_authority": "owner amendment only; journey.json is Orchestrator-owned and untouched",
+    "seit_finalization": "Planning Test Engineer (prospective); the Plan Integrator adopts this file into seit.json; Assurance Test Engineer reruns in a fresh session"
+  },
+  "applicable_documents_and_precedence": {
+    "precedence": [
+      "journey.json DEC-AGR-001..012",
+      "this technical plan",
+      "design.md",
+      "CONTRIBUTING.md provider neutrality",
+      "assurance-policy.md JSON block (runtime behavior, post-implementation)"
+    ]
+  },
+  "system_description_and_requirements_flowdown": {
+    "system": "bearing-lite policy+hook+skill assurance chain",
+    "flowdown": "each AC maps to one design ID and one SEIT row; no requirements register exists so all rows are Lifecycle-local proof"
+  },
+  "vv_methods": {
+    "methods": [
+      "test (node:test suites exercising hook evaluators)",
+      "inspection (deterministic node:test text assertions over skill/policy prose, hosted in this Lifecycle's new test files)",
+      "analysis (git path-set comparison against the declared union write set)"
+    ],
+    "reverify": "profile-enabled, NOT_SELECTED: no applicable binary-level claim exists. Every change is JavaScript or Markdown source interpreted by node; there is no compiled, packaged, or binary artifact in scope, and npm packaging is out of scope (DEC-AGR-012). Status is not_applicable_no_binary_level_claim, not not_run.",
+    "coverage_assist": "enabled, not required (profile snapshot). A Reviewer-side capability resolved at dispatch; if missing or unavailable it is recorded as a typed gap, never PASS, and it is not a SEIT gate.",
+    "llm_behavior_ceiling": "Reviewer and Test Engineer behavior is LLM skill prose. Deterministic proof reaches the text contract and the hook evaluators only; runtime adherence of an LLM session to the prose is not deterministically provable and is not claimed."
+  },
+  "levels": [
+    "unit",
+    "integration"
+  ],
+  "environments_fixtures_data_simulations_support": {
+    "environment": "repo checkout at leased revision",
+    "fixtures": "in-test fixtures for pins, receipts, manifests",
+    "data": "none",
+    "simulations": "absent-tool and missing-manifest simulations in-test",
+    "hermeticity": "Run every node:test command with BEARING_ROLE unset (env -u BEARING_ROLE). At baseline 174773e, CMD-TEST-ALL under an inherited BEARING_ROLE=test_engineer fails test/harness-acceptance.test.mjs 'evaluates packaged hook scripts with a write deny and an allowed counterpart' (ALLOW instead of DENY_DISPATCH); with BEARING_ROLE unset it passes. New tests that exercise hooks/orchestrator-write-lock.cjs must set or delete the role explicitly, never inherit it.",
+    "baseline_result": "env -u BEARING_ROLE node --test test/*.test.mjs: 565 tests, 565 pass expected (564/1 observed with inherited role; the 1 is the hermeticity case above); python3 test/schema-validation.py passed=268 failed=0; git diff --check exit 0"
+  },
+  "procedures_and_commands": [
+    {
+      "id": "CMD-TEST-ALL",
+      "command": "env -u BEARING_ROLE node --test test/*.test.mjs",
+      "pass": "exit 0, TAP '# fail 0'",
+      "description": "Full suite; required at every product-slice, wave 2/3, and Lifecycle boundary."
+    },
+    {
+      "id": "CMD-SUITE",
+      "command": "env -u BEARING_ROLE node --test <suite>",
+      "pass": "red phase: exit non-zero with each red-expected test id reported 'not ok' by an assertion (ERR_ASSERTION or explicit missing-export assertion), and no file-level SyntaxError or ERR_MODULE_NOT_FOUND; green phase: exit 0",
+      "description": "Per-suite red-then-green run for the four new test files."
+    },
+    {
+      "id": "CMD-PREEXISTING",
+      "command": "env -u BEARING_ROLE node --test $(ls test/*.test.mjs | grep -v -e 'test/gate-chain.test.mjs' -e 'test/reviewer-evidence.test.mjs' -e 'test/manifest-pin-guard.test.mjs' -e 'test/orchestrator-write.test.mjs')",
+      "pass": "exit 0",
+      "description": "Wave 1 exit gate: pre-existing suites stay green while the new test files are intentionally red."
+    },
+    {
+      "id": "CMD-SCHEMA",
+      "command": "python3 test/schema-validation.py",
+      "pass": "exit 0, failed=0"
+    },
+    {
+      "id": "CMD-DIFFCHECK",
+      "command": "git diff --check",
+      "pass": "exit 0, no output",
+      "description": "Whitespace hygiene on tracked diffs only."
+    },
+    {
+      "id": "CMD-WRITESET",
+      "command": "node hooks/write-set-check.cjs -- <paths the slice wrote>",
+      "pass": "exit 0, outcome PASS",
+      "description": "Whitespace hygiene including untracked new files (#118). Not a scope check."
+    },
+    {
+      "id": "CMD-SCOPE",
+      "command": "{ git diff --name-only 174773e4bbec85a24b5675a20a26b99b4690ea99; git ls-files --others --exclude-standard; } | sort -u | grep -v '^docs/plans/2026-09-22-assurance-gate-and-review-flow/' | grep -vxF -f <(printf '%s\\n' test/gate-chain.test.mjs test/reviewer-evidence.test.mjs test/manifest-pin-guard.test.mjs test/orchestrator-write.test.mjs skills/bearing-lite/references/assurance-policy.md hooks/policy.cjs hooks/assurance-budget.cjs skills/test-engineer/SKILL.md skills/implementer/SKILL.md skills/bearing-lite/references/verification.md skills/reviewer/SKILL.md hooks/planning-review.cjs skills/planning-and-design/SKILL.md hooks/plan-package.cjs skills/planning-and-design/references/artifact-grammar.md hooks/orchestrator-write-lock.cjs skills/architectural-alignment/SKILL.md)",
+      "pass": "no output (grep exit 1)",
+      "fail": "any printed path is outside the union write set",
+      "union_write_set": [
+        "test/gate-chain.test.mjs",
+        "test/reviewer-evidence.test.mjs",
+        "test/manifest-pin-guard.test.mjs",
+        "test/orchestrator-write.test.mjs",
+        "skills/bearing-lite/references/assurance-policy.md",
+        "hooks/policy.cjs",
+        "hooks/assurance-budget.cjs",
+        "skills/test-engineer/SKILL.md",
+        "skills/implementer/SKILL.md",
+        "skills/bearing-lite/references/verification.md",
+        "skills/reviewer/SKILL.md",
+        "hooks/planning-review.cjs",
+        "skills/planning-and-design/SKILL.md",
+        "hooks/plan-package.cjs",
+        "skills/planning-and-design/references/artifact-grammar.md",
+        "hooks/orchestrator-write-lock.cjs",
+        "skills/architectural-alignment/SKILL.md"
+      ],
+      "description": "Changed-path set must be a subset of the union slice write set plus the plan directory. Catches dependency, lockfile, version, manifest, and publish-config changes."
+    },
+    {
+      "id": "CMD-GATE-DECL",
+      "command": "python3 -c \"import json,sys;g=json.load(open(sys.argv[1]))['gate_declarations'];sys.exit(0 if all(g[k]['status']=='DECLARED' and g[k].get('tool') and g[k].get('threshold') or g[k]['status']=='NOT_APPLICABLE' and g[k].get('reason','').strip() for k in ('mutation','changed_line_coverage')) else 1)\" docs/plans/2026-09-22-assurance-gate-and-review-flow/seit.json",
+      "pass": "exit 0",
+      "description": "Self-application of DEC-AGR-010 to this plan's own seit.json once adopted."
+    }
+  ],
+  "required_commands": [
+    "CMD-TEST-ALL",
+    "CMD-SUITE",
+    "CMD-PREEXISTING",
+    "CMD-SCHEMA",
+    "CMD-DIFFCHECK",
+    "CMD-WRITESET",
+    "CMD-SCOPE",
+    "CMD-GATE-DECL"
+  ],
+  "evidence_and_pass_fail": {
+    "evidence": "TAP output of the named command, captured per run with candidate revision; author receipts are diagnostic-only; assurance receipts come from a fresh Assurance Test Engineer session rerunning the same commands",
+    "pass_fail": "PASS iff every proof row passes its pass_fail_rule on the exact candidate; a typed gap (missing tool, not_run, unavailable backend) is never PASS; NOT_APPLICABLE counts only with a non-empty reason in gate_declarations",
+    "tdd": "each row with tdd.red_expected=true needs a red run on the Test Implementer candidate and a green run on the Product Implementer candidate over the same test ids (AC-143.07 receipt shape); rows with red_expected=false are regression guards that must stay green throughout"
+  },
+  "anomaly_corrective_closure": {
+    "anomaly": "typed finding with file:line; advisory otherwise",
+    "corrective": "one aggregated repair per budget, then deterministic closure without rereview",
+    "closure": "deterministic PASS gate"
+  },
+  "integration_vv_sequence": [
+    "Wave 1 (S1-S4): CMD-SUITE red per new file for every red-expected row; CMD-PREEXISTING green; CMD-WRITESET per slice",
+    "Wave 2 (S5, S6, S8, S9, S10): CMD-SUITE green for gate-chain, manifest-pin-guard, orchestrator-write; reviewer-evidence rows owned by S5 (SEIT-145.01) green; CMD-TEST-ALL may still fail only on reviewer-evidence ids owned by S7",
+    "Wave 3 (S7): CMD-TEST-ALL green; CMD-SCHEMA, CMD-DIFFCHECK, CMD-SCOPE, CMD-GATE-DECL green",
+    "Lifecycle boundary: Assurance Test Engineer reruns all required commands in a fresh session"
+  ],
+  "cross_cutting_checks": [
+    "RISK-001 provider neutrality via test/public-boundary.test.mjs model-pin/provider-route scan inside CMD-TEST-ALL, and no new dependency via CMD-SCOPE (SEIT-RISK-001)",
+    "RISK-002 fail-closed vs typed-gap discipline (SEIT-RISK-002)",
+    "policy/hook mirror drift via test/policy-drift.test.mjs (SEIT-143.01)",
+    "hermetic role environment for all node:test runs"
+  ],
+  "traceability_matrix": [
+    {
+      "seit_row_id": "SEIT-143.01",
+      "acceptance_risk_id": "AC-143.01",
+      "design_contract_id": "DES-143.01",
+      "boundary_test_layer": "unit",
+      "positive_case": "policy block declares fixed gate order; mirror identical",
+      "negative_failure_case": "order missing or mirror drifted",
+      "command_procedure_id": "CMD-TEST-ALL",
+      "evidence": "TAP 'ok' for the AC-143.01 gate-order test in test/gate-chain.test.mjs and all three policy-drift tests"
+    },
+    {
+      "seit_row_id": "SEIT-143.02",
+      "acceptance_risk_id": "AC-143.02",
+      "design_contract_id": "DES-143.02",
+      "boundary_test_layer": "unit",
+      "positive_case": "TE skill defines 3 claim types with typed-gap outcomes",
+      "negative_failure_case": "claim type missing or gap outcome undefined",
+      "command_procedure_id": "CMD-TEST-ALL",
+      "evidence": "TAP 'ok' for the AC-143.02 test(s) in test/gate-chain.test.mjs"
+    },
+    {
+      "seit_row_id": "SEIT-143.03",
+      "acceptance_risk_id": "AC-143.03",
+      "design_contract_id": "DES-143.01",
+      "boundary_test_layer": "unit",
+      "positive_case": "declared gate with missing tool yields typed gap, not PASS",
+      "negative_failure_case": "missing tool yields PASS or silent skip",
+      "command_procedure_id": "CMD-TEST-ALL",
+      "evidence": "TAP 'ok' for the AC-143.03 tests; asserted outcome value is a typed gap"
+    },
+    {
+      "seit_row_id": "SEIT-143.04",
+      "acceptance_risk_id": "AC-143.04",
+      "design_contract_id": "DES-143.02",
+      "boundary_test_layer": "unit",
+      "positive_case": "Assurance TE reruns chain; author receipt cannot PASS",
+      "negative_failure_case": "author receipt accepted as PASS, or skill text lacks the independent-rerun rule",
+      "command_procedure_id": "CMD-TEST-ALL",
+      "evidence": "TAP 'ok' for AC-143.04 text and regression tests; reason string diagnostic_cannot_satisfy_assurance_gate"
+    },
+    {
+      "seit_row_id": "SEIT-143.05",
+      "acceptance_risk_id": "AC-143.05",
+      "design_contract_id": "DES-143.01",
+      "boundary_test_layer": "unit",
+      "positive_case": "suites cover missing tool, threshold failure, fail-fast order",
+      "negative_failure_case": "any of the three cases untested",
+      "command_procedure_id": "CMD-TEST-ALL",
+      "evidence": "TAP 'ok' line for each of the three titled tests"
+    },
+    {
+      "seit_row_id": "SEIT-143.06",
+      "acceptance_risk_id": "AC-143.06",
+      "design_contract_id": "DES-143.01",
+      "boundary_test_layer": "unit",
+      "positive_case": "per-plan seit declares tool+threshold or NOT_APPLICABLE with reason",
+      "negative_failure_case": "undeclared gate silently skipped",
+      "command_procedure_id": "CMD-TEST-ALL",
+      "evidence": "TAP 'ok' for the AC-143.06 tests; CMD-GATE-DECL exit 0"
+    },
+    {
+      "seit_row_id": "SEIT-143.07",
+      "acceptance_risk_id": "AC-143.07",
+      "design_contract_id": "DES-143.02",
+      "boundary_test_layer": "unit",
+      "positive_case": "receipt holds failing baseline run + passing candidate run",
+      "negative_failure_case": "receipt missing either run",
+      "command_procedure_id": "CMD-TEST-ALL",
+      "evidence": "TAP 'ok' for the AC-143.07 tests"
+    },
+    {
+      "seit_row_id": "SEIT-144.01",
+      "acceptance_risk_id": "AC-144.01",
+      "design_contract_id": "DES-144.01",
+      "boundary_test_layer": "unit",
+      "positive_case": "finding with file:line + reproducer is actionable; without is advisory",
+      "negative_failure_case": "reproducer-less finding marked actionable",
+      "command_procedure_id": "CMD-TEST-ALL",
+      "evidence": "TAP 'ok' for the AC-144.01 test(s) in test/reviewer-evidence.test.mjs"
+    },
+    {
+      "seit_row_id": "SEIT-144.02",
+      "acceptance_risk_id": "AC-144.02",
+      "design_contract_id": "DES-144.01",
+      "boundary_test_layer": "unit",
+      "positive_case": "advisory-only verdict is ACCEPT or ACCEPT_WITH_FINDINGS",
+      "negative_failure_case": "advisory-only verdict is REPAIR_REQUIRED/BLOCK",
+      "command_procedure_id": "CMD-TEST-ALL",
+      "evidence": "TAP 'ok' for the AC-144.02 test(s) in test/reviewer-evidence.test.mjs"
+    },
+    {
+      "seit_row_id": "SEIT-144.03",
+      "acceptance_risk_id": "AC-144.03",
+      "design_contract_id": "DES-144.01",
+      "boundary_test_layer": "unit",
+      "positive_case": "Reviewer skill narrows scope; consumes gate receipt; TE does not re-review",
+      "negative_failure_case": "scope text permits re-litigating passed gates",
+      "command_procedure_id": "CMD-TEST-ALL",
+      "evidence": "TAP 'ok' for the AC-144.03 test(s)"
+    },
+    {
+      "seit_row_id": "SEIT-144.04",
+      "acceptance_risk_id": "AC-144.04",
+      "design_contract_id": "DES-144.01",
+      "boundary_test_layer": "unit",
+      "positive_case": "downgrade behavior covered by test",
+      "negative_failure_case": "downgrade untested",
+      "command_procedure_id": "CMD-TEST-ALL",
+      "evidence": "TAP 'ok' for the AC-144.04 test(s) in test/reviewer-evidence.test.mjs"
+    },
+    {
+      "seit_row_id": "SEIT-145.01",
+      "acceptance_risk_id": "AC-145.01",
+      "design_contract_id": "DES-145.01",
+      "boundary_test_layer": "unit",
+      "positive_case": "phase Reviewer with no TE receipt consumes gate-chain receipt; chain runs at every Reviewer boundary",
+      "negative_failure_case": "Reviewer proceeds with no receipt, or case (2) returns PASS",
+      "command_procedure_id": "CMD-TEST-ALL",
+      "evidence": "TAP 'ok' for the AC-145.01 tests"
+    },
+    {
+      "seit_row_id": "SEIT-145.02",
+      "acceptance_risk_id": "AC-145.02",
+      "design_contract_id": "DES-145.01",
+      "boundary_test_layer": "unit",
+      "positive_case": "rule text in policy + Reviewer skill; lifecycle/phase test exists",
+      "negative_failure_case": "rule text or test missing",
+      "command_procedure_id": "CMD-TEST-ALL",
+      "evidence": "TAP 'ok' for the AC-145.02 tests and the SEIT-145.01 scenario"
+    },
+    {
+      "seit_row_id": "SEIT-136.01",
+      "acceptance_risk_id": "AC-136.01",
+      "design_contract_id": "DES-136.01",
+      "boundary_test_layer": "unit",
+      "positive_case": "review gate unreachable without dod_manifest + rendered HTML",
+      "negative_failure_case": "review presented with no manifest",
+      "command_procedure_id": "CMD-TEST-ALL",
+      "evidence": "TAP 'ok' for the AC-136.01 tests; asserted outcome and reason"
+    },
+    {
+      "seit_row_id": "SEIT-136.02",
+      "acceptance_risk_id": "AC-136.02",
+      "design_contract_id": "DES-136.01",
+      "boundary_test_layer": "unit",
+      "positive_case": "evaluatePlanningReview fails closed with typed reason; unit check exists",
+      "negative_failure_case": "missing-manifest package passes review",
+      "command_procedure_id": "CMD-TEST-ALL",
+      "evidence": "TAP 'ok' for the AC-136.02 test; deepEqual on outcome and reason"
+    },
+    {
+      "seit_row_id": "SEIT-136.03",
+      "acceptance_risk_id": "AC-136.03",
+      "design_contract_id": "DES-136.01",
+      "boundary_test_layer": "unit",
+      "positive_case": "planning-and-design step 6 references enforced guard",
+      "negative_failure_case": "step 6 is prose-only",
+      "command_procedure_id": "CMD-TEST-ALL",
+      "evidence": "TAP 'ok' for the AC-136.03 test"
+    },
+    {
+      "seit_row_id": "SEIT-135.01",
+      "acceptance_risk_id": "AC-135.01",
+      "design_contract_id": "DES-135.01",
+      "boundary_test_layer": "unit",
+      "positive_case": "stale live pin fails plan-package with file:line; historical records ignored",
+      "negative_failure_case": "stale pin passes or historical record flagged",
+      "command_procedure_id": "CMD-TEST-ALL",
+      "evidence": "TAP 'ok' for the AC-135.01 tests; asserted findings list"
+    },
+    {
+      "seit_row_id": "SEIT-135.02",
+      "acceptance_risk_id": "AC-135.02",
+      "design_contract_id": "DES-135.01",
+      "boundary_test_layer": "unit",
+      "positive_case": "guidance states cite-don't-copy rule",
+      "negative_failure_case": "guidance permits digest copies",
+      "command_procedure_id": "CMD-TEST-ALL",
+      "evidence": "TAP 'ok' for the AC-135.02 test"
+    },
+    {
+      "seit_row_id": "SEIT-135.03",
+      "acceptance_risk_id": "AC-135.03",
+      "design_contract_id": "DES-135.01",
+      "boundary_test_layer": "unit",
+      "positive_case": "sweep covers whole repo write set",
+      "negative_failure_case": "sweep limited to plan dir",
+      "command_procedure_id": "CMD-TEST-ALL",
+      "evidence": "TAP 'ok' for the AC-135.03 test"
+    },
+    {
+      "seit_row_id": "SEIT-135.04",
+      "acceptance_risk_id": "AC-135.04",
+      "design_contract_id": "DES-135.01",
+      "boundary_test_layer": "unit",
+      "positive_case": "one-byte register move fails; correct cascade passes",
+      "negative_failure_case": "move passes silently or cascade still fails",
+      "command_procedure_id": "CMD-TEST-ALL",
+      "evidence": "TAP 'ok' for the AC-135.04 test"
+    },
+    {
+      "seit_row_id": "SEIT-146.01",
+      "acceptance_risk_id": "AC-146.01",
+      "design_contract_id": "DES-146.01",
+      "boundary_test_layer": "unit",
+      "positive_case": "Orchestrator write to workspace.md succeeds; skill/hook agree",
+      "negative_failure_case": "write denied or texts disagree",
+      "command_procedure_id": "CMD-TEST-ALL",
+      "evidence": "TAP 'ok' for the AC-146.01 tests; verdict ALLOW"
+    },
+    {
+      "seit_row_id": "SEIT-146.02",
+      "acceptance_risk_id": "AC-146.02",
+      "design_contract_id": "DES-146.01",
+      "boundary_test_layer": "unit",
+      "positive_case": "envelope role honored where present; deny names BEARING_ROLE fallback; never silent-Orchestrator",
+      "negative_failure_case": "subagent silently treated as Orchestrator",
+      "command_procedure_id": "CMD-TEST-ALL",
+      "evidence": "TAP 'ok' for the AC-146.02 tests; asserted verdict and message text"
+    },
+    {
+      "seit_row_id": "SEIT-146.03",
+      "acceptance_risk_id": "AC-146.03",
+      "design_contract_id": "DES-146.01",
+      "boundary_test_layer": "unit",
+      "positive_case": "both lock cases covered by tests",
+      "negative_failure_case": "either case untested",
+      "command_procedure_id": "CMD-TEST-ALL",
+      "evidence": "TAP 'ok' for the tests titled 'AC-146.03 orchestrator-workspace' and 'AC-146.03 host-without-role'"
+    },
+    {
+      "seit_row_id": "SEIT-AUTH.01",
+      "acceptance_risk_id": "AC-AUTH.01",
+      "design_contract_id": "N/A-authority (DEC-AGR-012; no design contract)",
+      "boundary_test_layer": "unit",
+      "positive_case": "package lands by PR only; no publish step in any slice",
+      "negative_failure_case": "any version, manifest, or publish-config path appears in CMD-SCOPE output",
+      "command_procedure_id": "CMD-SCOPE",
+      "evidence": "CMD-SCOPE stdout empty"
+    },
+    {
+      "seit_row_id": "SEIT-RISK-001",
+      "acceptance_risk_id": "RISK-001",
+      "design_contract_id": "DES-143.02",
+      "boundary_test_layer": "unit",
+      "positive_case": "no public artifact names a concrete provider/model; no new dependency",
+      "negative_failure_case": "concrete name or new dependency present",
+      "command_procedure_id": "CMD-SCOPE",
+      "evidence": "CMD-SCOPE stdout empty; TAP 'ok' for test/public-boundary.test.mjs"
+    },
+    {
+      "seit_row_id": "SEIT-RISK-002",
+      "acceptance_risk_id": "RISK-002",
+      "design_contract_id": "DES-136.01",
+      "boundary_test_layer": "unit",
+      "positive_case": "integrity guards fail closed; unavailable backends stay typed gaps",
+      "negative_failure_case": "guard fail-open on integrity or backend treated as PASS",
+      "command_procedure_id": "CMD-TEST-ALL",
+      "evidence": "TAP 'ok' for the named suites"
+    },
+    {
+      "seit_row_id": "SEIT-136.04",
+      "acceptance_risk_id": "AC-136.04",
+      "design_contract_id": "DES-136.01",
+      "boundary_test_layer": "unit",
+      "positive_case": "all procedural review paths cite the guard",
+      "negative_failure_case": "a review path bypasses the guard",
+      "command_procedure_id": "CMD-TEST-ALL",
+      "evidence": "TAP 'ok' for the AC-136.04 tests"
+    }
+  ],
+  "proof_cases": [
+    {
+      "id": "SEIT-143.01",
+      "kind": "verification",
+      "requirement_id": "AC-143.01",
+      "design_id": "DES-143.01",
+      "command_id": "CMD-TEST-ALL",
+      "method": "test",
+      "preconditions": [
+        "baseline 174773e4bbec85a24b5675a20a26b99b4690ea99 leased",
+        "slice candidate stable",
+        "BEARING_ROLE unset in the test environment"
+      ],
+      "stimulus_or_procedure": "CMD-SUITE on test/gate-chain.test.mjs (asserts the gate order list in hooks/policy.cjs ASSURANCE_BUDGET_POLICY and in the assurance-policy.md JSON block); CMD-TEST-ALL includes test/policy-drift.test.mjs deepStrictEqual mirror check",
+      "expected_result": "order equals the seven DEC-AGR-010 gates in order build, types/lint, red-then-green, mutation, changed-line coverage, Reverify, Reviewer; token spelling is fixed by the S1 test and S5 conforms; policy-drift green",
+      "observable_evidence": "TAP 'ok' for the AC-143.01 gate-order test in test/gate-chain.test.mjs and all three policy-drift tests",
+      "pass_fail_rule": "PASS iff the AC-143.01 test passes and policy-drift passes; FAIL on missing key, wrong order, or a drift assertion failure",
+      "method_fields": {
+        "suite": [
+          "test/gate-chain.test.mjs",
+          "test/policy-drift.test.mjs"
+        ],
+        "tdd": {
+          "red_expected": true,
+          "test_slice": "S1",
+          "product_slice": "S5",
+          "red_reason_at_baseline": "gate order key absent from ASSURANCE_BUDGET_POLICY; policy-drift itself stays green at baseline (regression)"
+        }
+      },
+      "negative_or_failure_case": "order missing or mirror drifted"
+    },
+    {
+      "id": "SEIT-143.02",
+      "kind": "verification",
+      "requirement_id": "AC-143.02",
+      "design_id": "DES-143.02",
+      "command_id": "CMD-TEST-ALL",
+      "method": "inspection",
+      "preconditions": [
+        "baseline 174773e4bbec85a24b5675a20a26b99b4690ea99 leased",
+        "slice candidate stable",
+        "BEARING_ROLE unset in the test environment"
+      ],
+      "stimulus_or_procedure": "CMD-SUITE on test/gate-chain.test.mjs: text assertions over skills/test-engineer/SKILL.md and skills/bearing-lite/references/verification.md",
+      "expected_result": "both files name the mutation, changed-line coverage, and red-then-green claim types, each with a typed-gap outcome for missing tool and not_run",
+      "observable_evidence": "TAP 'ok' for the AC-143.02 test(s) in test/gate-chain.test.mjs",
+      "pass_fail_rule": "PASS iff all three claim types and their typed-gap outcomes match in both files",
+      "method_fields": {
+        "suite": "test/gate-chain.test.mjs",
+        "tdd": {
+          "red_expected": true,
+          "test_slice": "S1",
+          "product_slice": "S6",
+          "red_reason_at_baseline": "claim-type vocabulary absent from both files"
+        }
+      },
+      "negative_or_failure_case": "claim type missing or gap outcome undefined"
+    },
+    {
+      "id": "SEIT-143.03",
+      "kind": "verification",
+      "requirement_id": "AC-143.03",
+      "design_id": "DES-143.01",
+      "command_id": "CMD-TEST-ALL",
+      "method": "test",
+      "preconditions": [
+        "baseline 174773e4bbec85a24b5675a20a26b99b4690ea99 leased",
+        "slice candidate stable",
+        "BEARING_ROLE unset in the test environment"
+      ],
+      "stimulus_or_procedure": "call the gate-chain evaluator exported by hooks/assurance-budget.cjs with a declared mutation gate whose tool is missing, and again with outcome not_run",
+      "expected_result": "typed-gap outcome in both cases; outcome is not PASS",
+      "observable_evidence": "TAP 'ok' for the AC-143.03 tests; asserted outcome value is a typed gap",
+      "pass_fail_rule": "PASS iff both stimuli return a typed gap and neither returns PASS",
+      "method_fields": {
+        "suite": "test/gate-chain.test.mjs",
+        "tdd": {
+          "red_expected": true,
+          "test_slice": "S1",
+          "product_slice": "S5",
+          "red_reason_at_baseline": "no gate-chain evaluator is exported at baseline (explicit missing-export assertion)"
+        }
+      },
+      "negative_or_failure_case": "missing tool yields PASS or silent skip"
+    },
+    {
+      "id": "SEIT-143.04",
+      "kind": "verification",
+      "requirement_id": "AC-143.04",
+      "design_id": "DES-143.02",
+      "command_id": "CMD-TEST-ALL",
+      "method": "inspection+test",
+      "preconditions": [
+        "baseline 174773e4bbec85a24b5675a20a26b99b4690ea99 leased",
+        "slice candidate stable",
+        "BEARING_ROLE unset in the test environment"
+      ],
+      "stimulus_or_procedure": "(a) text assertions: test-engineer SKILL.md and verification.md state the Assurance Test Engineer independently reruns the gate chain at the boundary and author gate-chain receipts are diagnostic; (b) hooks/verification.cjs evaluate with gate 'assurance' and a diagnostic-authority gate-chain receipt",
+      "expected_result": "(a) rerun and diagnostic-only text present; (b) REJECT diagnostic_cannot_satisfy_assurance_gate",
+      "observable_evidence": "TAP 'ok' for AC-143.04 text and regression tests; reason string diagnostic_cannot_satisfy_assurance_gate",
+      "pass_fail_rule": "PASS iff (a) and (b) both pass",
+      "method_fields": {
+        "suite": "test/gate-chain.test.mjs",
+        "tdd": {
+          "red_expected": "partial",
+          "part_a": {
+            "red_expected": true,
+            "test_slice": "S1",
+            "product_slice": "S6",
+            "red_reason_at_baseline": "gate-chain rerun text absent"
+          },
+          "part_b": {
+            "red_expected": false,
+            "regression_reason": "existing hooks/verification.cjs already rejects diagnostic receipts at the assurance gate (baseline behavior)"
+          }
+        }
+      },
+      "negative_or_failure_case": "author receipt accepted as PASS, or skill text lacks the independent-rerun rule"
+    },
+    {
+      "id": "SEIT-143.05",
+      "kind": "verification",
+      "requirement_id": "AC-143.05",
+      "design_id": "DES-143.01",
+      "command_id": "CMD-TEST-ALL",
+      "method": "test",
+      "preconditions": [
+        "baseline 174773e4bbec85a24b5675a20a26b99b4690ea99 leased",
+        "slice candidate stable",
+        "BEARING_ROLE unset in the test environment"
+      ],
+      "stimulus_or_procedure": "CMD-SUITE on test/gate-chain.test.mjs; three tests titled with prefixes 'AC-143.05 missing-tool', 'AC-143.05 threshold', 'AC-143.05 fail-fast'",
+      "expected_result": "missing tool yields a typed gap; a declared threshold with a lower measured score fails; the first failing gate halts the chain and later gates are not reported as PASS",
+      "observable_evidence": "TAP 'ok' line for each of the three titled tests",
+      "pass_fail_rule": "PASS iff all three titled tests exist and pass",
+      "method_fields": {
+        "suite": "test/gate-chain.test.mjs",
+        "tdd": {
+          "red_expected": true,
+          "test_slice": "S1",
+          "product_slice": "S5",
+          "red_reason_at_baseline": "no gate-chain evaluator at baseline"
+        }
+      },
+      "negative_or_failure_case": "any of the three cases untested"
+    },
+    {
+      "id": "SEIT-143.06",
+      "kind": "verification",
+      "requirement_id": "AC-143.06",
+      "design_id": "DES-143.01",
+      "command_id": "CMD-TEST-ALL",
+      "method": "test",
+      "preconditions": [
+        "baseline 174773e4bbec85a24b5675a20a26b99b4690ea99 leased",
+        "slice candidate stable",
+        "BEARING_ROLE unset in the test environment"
+      ],
+      "stimulus_or_procedure": "evaluator input: (1) mutation undeclared with no NOT_APPLICABLE; (2) NOT_APPLICABLE with empty reason; (3) NOT_APPLICABLE with reason; (4) declared tool+threshold with passing measurement. Then CMD-GATE-DECL on this plan's adopted seit.json",
+      "expected_result": "(1) and (2) typed failure, not PASS; (3) accepted as non-gate; (4) hard gate evaluated; this plan's own declaration passes CMD-GATE-DECL",
+      "observable_evidence": "TAP 'ok' for the AC-143.06 tests; CMD-GATE-DECL exit 0",
+      "pass_fail_rule": "PASS iff all four cases behave as stated and CMD-GATE-DECL exits 0",
+      "method_fields": {
+        "suite": "test/gate-chain.test.mjs",
+        "tdd": {
+          "red_expected": true,
+          "test_slice": "S1",
+          "product_slice": "S5",
+          "red_reason_at_baseline": "no per-plan declaration evaluation at baseline; CMD-GATE-DECL is a plan-artifact check, not TDD"
+        }
+      },
+      "negative_or_failure_case": "undeclared gate silently skipped"
+    },
+    {
+      "id": "SEIT-143.07",
+      "kind": "verification",
+      "requirement_id": "AC-143.07",
+      "design_id": "DES-143.02",
+      "command_id": "CMD-TEST-ALL",
+      "method": "test+inspection",
+      "preconditions": [
+        "baseline 174773e4bbec85a24b5675a20a26b99b4690ea99 leased",
+        "slice candidate stable",
+        "BEARING_ROLE unset in the test environment"
+      ],
+      "stimulus_or_procedure": "(a) evaluator given a red-then-green receipt with only the passing run, only the failing run, or mismatched test ids; (b) text assertions that test-engineer and implementer SKILL.md define the receipt as baseline failing run plus candidate passing run",
+      "expected_result": "(a) each incomplete receipt is rejected as a typed gap, and a complete receipt is accepted; (b) receipt text present",
+      "observable_evidence": "TAP 'ok' for the AC-143.07 tests",
+      "pass_fail_rule": "PASS iff all incomplete variants are rejected, the complete receipt is accepted, and the text assertions pass",
+      "method_fields": {
+        "suite": "test/gate-chain.test.mjs",
+        "tdd": {
+          "red_expected": true,
+          "test_slice": "S1",
+          "product_slice": "S5+S6",
+          "red_reason_at_baseline": "no receipt evaluator or receipt text at baseline; see TE-F2 for slice trace"
+        }
+      },
+      "negative_or_failure_case": "receipt missing either run"
+    },
+    {
+      "id": "SEIT-144.01",
+      "kind": "verification",
+      "requirement_id": "AC-144.01",
+      "design_id": "DES-144.01",
+      "command_id": "CMD-TEST-ALL",
+      "method": "inspection",
+      "preconditions": [
+        "baseline 174773e4bbec85a24b5675a20a26b99b4690ea99 leased",
+        "slice candidate stable",
+        "BEARING_ROLE unset in the test environment"
+      ],
+      "stimulus_or_procedure": "CMD-SUITE on test/reviewer-evidence.test.mjs: text assertions over skills/reviewer/SKILL.md",
+      "expected_result": "a finding counts toward REPAIR_REQUIRED/BLOCK only with file:line plus a failing test or reproducer; otherwise it is advisory and spends no repair budget",
+      "observable_evidence": "TAP 'ok' for the AC-144.01 test(s) in test/reviewer-evidence.test.mjs",
+      "pass_fail_rule": "PASS iff all three clauses (location+reproducer requirement, advisory fallback, no repair budget spent) match",
+      "method_fields": {
+        "suite": "test/reviewer-evidence.test.mjs",
+        "tdd": {
+          "red_expected": true,
+          "test_slice": "S2",
+          "product_slice": "S7",
+          "red_reason_at_baseline": "evidence rule absent from reviewer SKILL.md"
+        }
+      },
+      "negative_or_failure_case": "reproducer-less finding marked actionable"
+    },
+    {
+      "id": "SEIT-144.02",
+      "kind": "verification",
+      "requirement_id": "AC-144.02",
+      "design_id": "DES-144.01",
+      "command_id": "CMD-TEST-ALL",
+      "method": "inspection",
+      "preconditions": [
+        "baseline 174773e4bbec85a24b5675a20a26b99b4690ea99 leased",
+        "slice candidate stable",
+        "BEARING_ROLE unset in the test environment"
+      ],
+      "stimulus_or_procedure": "CMD-SUITE on test/reviewer-evidence.test.mjs: text assertions over skills/reviewer/SKILL.md",
+      "expected_result": "a verdict built only on advisory findings cannot be REPAIR_REQUIRED or BLOCK",
+      "observable_evidence": "TAP 'ok' for the AC-144.02 test(s) in test/reviewer-evidence.test.mjs",
+      "pass_fail_rule": "PASS iff the prohibition matches",
+      "method_fields": {
+        "suite": "test/reviewer-evidence.test.mjs",
+        "tdd": {
+          "red_expected": true,
+          "test_slice": "S2",
+          "product_slice": "S7",
+          "red_reason_at_baseline": "evidence rule absent from reviewer SKILL.md"
+        }
+      },
+      "negative_or_failure_case": "advisory-only verdict is REPAIR_REQUIRED/BLOCK"
+    },
+    {
+      "id": "SEIT-144.03",
+      "kind": "verification",
+      "requirement_id": "AC-144.03",
+      "design_id": "DES-144.01",
+      "command_id": "CMD-TEST-ALL",
+      "method": "inspection",
+      "preconditions": [
+        "baseline 174773e4bbec85a24b5675a20a26b99b4690ea99 leased",
+        "slice candidate stable",
+        "BEARING_ROLE unset in the test environment"
+      ],
+      "stimulus_or_procedure": "CMD-SUITE on test/reviewer-evidence.test.mjs: text assertions over skills/reviewer/SKILL.md",
+      "expected_result": "scope limited to requirement conformance, design, security reasoning, plan drift; consumes the gate-chain receipt; does not re-litigate passed gates; Assurance TE does not re-review code; no classifier named or required",
+      "observable_evidence": "TAP 'ok' for the AC-144.03 test(s)",
+      "pass_fail_rule": "PASS iff every clause matches and no classifier requirement matches",
+      "method_fields": {
+        "suite": "test/reviewer-evidence.test.mjs",
+        "tdd": {
+          "red_expected": true,
+          "test_slice": "S2",
+          "product_slice": "S7",
+          "red_reason_at_baseline": "scope-narrowing text absent"
+        }
+      },
+      "negative_or_failure_case": "scope text permits re-litigating passed gates"
+    },
+    {
+      "id": "SEIT-144.04",
+      "kind": "verification",
+      "requirement_id": "AC-144.04",
+      "design_id": "DES-144.01",
+      "command_id": "CMD-TEST-ALL",
+      "method": "inspection",
+      "preconditions": [
+        "baseline 174773e4bbec85a24b5675a20a26b99b4690ea99 leased",
+        "slice candidate stable",
+        "BEARING_ROLE unset in the test environment"
+      ],
+      "stimulus_or_procedure": "CMD-SUITE on test/reviewer-evidence.test.mjs: text assertion over skills/reviewer/SKILL.md for the reproducer-less downgrade rule, plus a frozen-receipt fixture with the existing reproducer/locations fields empty for one finding checked against that rule's required fields",
+      "expected_result": "the reproducer-less finding is classified advisory by the stated rule",
+      "observable_evidence": "TAP 'ok' for the AC-144.04 test(s) in test/reviewer-evidence.test.mjs",
+      "pass_fail_rule": "PASS iff the downgrade test exists, is titled 'AC-144.04', and passes",
+      "method_fields": {
+        "suite": "test/reviewer-evidence.test.mjs",
+        "tdd": {
+          "red_expected": true,
+          "test_slice": "S2",
+          "product_slice": "S7",
+          "red_reason_at_baseline": "evidence rule absent from reviewer SKILL.md"
+        },
+        "ceiling": "no deterministic evaluator for Reviewer findings exists or is in scope (DES-144.01); runtime LLM adherence is not claimed"
+      },
+      "negative_or_failure_case": "downgrade untested"
+    },
+    {
+      "id": "SEIT-145.01",
+      "kind": "verification",
+      "requirement_id": "AC-145.01",
+      "design_id": "DES-145.01",
+      "command_id": "CMD-TEST-ALL",
+      "method": "test",
+      "preconditions": [
+        "baseline 174773e4bbec85a24b5675a20a26b99b4690ea99 leased",
+        "slice candidate stable",
+        "BEARING_ROLE unset in the test environment"
+      ],
+      "stimulus_or_procedure": "call hooks/assurance-budget.cjs (S5) with reviewer cadence phase and test_engineer.assurance cadence lifecycle at a phase boundary: (1) gate-chain receipt present, no TE receipt; (2) neither receipt",
+      "expected_result": "(1) Reviewer boundary proceeds consuming the gate-chain receipt; (2) typed gap, not PASS",
+      "observable_evidence": "TAP 'ok' for the AC-145.01 tests",
+      "pass_fail_rule": "PASS iff (1) consumes the gate-chain receipt and (2) returns a typed gap",
+      "method_fields": {
+        "suite": "test/reviewer-evidence.test.mjs",
+        "tdd": {
+          "red_expected": true,
+          "test_slice": "S2",
+          "product_slice": "S5",
+          "red_reason_at_baseline": "consumption rule absent from the evaluator at baseline"
+        }
+      },
+      "negative_or_failure_case": "Reviewer proceeds with no receipt, or case (2) returns PASS"
+    },
+    {
+      "id": "SEIT-145.02",
+      "kind": "verification",
+      "requirement_id": "AC-145.02",
+      "design_id": "DES-145.01",
+      "command_id": "CMD-TEST-ALL",
+      "method": "inspection",
+      "preconditions": [
+        "baseline 174773e4bbec85a24b5675a20a26b99b4690ea99 leased",
+        "slice candidate stable",
+        "BEARING_ROLE unset in the test environment"
+      ],
+      "stimulus_or_procedure": "CMD-SUITE on test/reviewer-evidence.test.mjs: text assertions over the assurance-policy.md JSON block and skills/reviewer/SKILL.md, plus the SEIT-145.01 lifecycle-TE/phase-Reviewer scenario",
+      "expected_result": "consumption rule present in both files; scenario test green",
+      "observable_evidence": "TAP 'ok' for the AC-145.02 tests and the SEIT-145.01 scenario",
+      "pass_fail_rule": "PASS iff the rule matches in both files and the scenario passes",
+      "method_fields": {
+        "suite": "test/reviewer-evidence.test.mjs",
+        "tdd": {
+          "red_expected": true,
+          "test_slice": "S2",
+          "product_slice": "S5+S7",
+          "red_reason_at_baseline": "rule text absent in both files"
+        }
+      },
+      "negative_or_failure_case": "rule text or test missing"
+    },
+    {
+      "id": "SEIT-136.01",
+      "kind": "verification",
+      "requirement_id": "AC-136.01",
+      "design_id": "DES-136.01",
+      "command_id": "CMD-TEST-ALL",
+      "method": "test",
+      "preconditions": [
+        "baseline 174773e4bbec85a24b5675a20a26b99b4690ea99 leased",
+        "slice candidate stable",
+        "BEARING_ROLE unset in the test environment"
+      ],
+      "stimulus_or_procedure": "evaluatePlanningReview() on an otherwise-PASS input: (1) no dod_manifest; (2) dod_manifest but no rendered <plan-name>-dod-manifest.html; (3) both present",
+      "expected_result": "(1) and (2) {outcome: NEEDS_MORE_EVIDENCE, reason: manifest_not_generated}; (3) not blocked by this reason",
+      "observable_evidence": "TAP 'ok' for the AC-136.01 tests; asserted outcome and reason",
+      "pass_fail_rule": "PASS iff (1) and (2) fail closed with the exact reason and (3) is not blocked by it; test/planning-review.test.mjs stays green (TE-F1)",
+      "method_fields": {
+        "suite": "test/manifest-pin-guard.test.mjs",
+        "tdd": {
+          "red_expected": true,
+          "test_slice": "S3",
+          "product_slice": "S8",
+          "red_reason_at_baseline": "no manifest check in evaluatePlanningReview at baseline"
+        }
+      },
+      "negative_or_failure_case": "review presented with no manifest"
+    },
+    {
+      "id": "SEIT-136.02",
+      "kind": "verification",
+      "requirement_id": "AC-136.02",
+      "design_id": "DES-136.01",
+      "command_id": "CMD-TEST-ALL",
+      "method": "test",
+      "preconditions": [
+        "baseline 174773e4bbec85a24b5675a20a26b99b4690ea99 leased",
+        "slice candidate stable",
+        "BEARING_ROLE unset in the test environment"
+      ],
+      "stimulus_or_procedure": "unit call evaluatePlanningReview() with the manifest absent",
+      "expected_result": "{outcome: 'NEEDS_MORE_EVIDENCE', reason: 'manifest_not_generated'}",
+      "observable_evidence": "TAP 'ok' for the AC-136.02 test; deepEqual on outcome and reason",
+      "pass_fail_rule": "PASS iff outcome and reason match exactly",
+      "method_fields": {
+        "suite": "test/manifest-pin-guard.test.mjs",
+        "tdd": {
+          "red_expected": true,
+          "test_slice": "S3",
+          "product_slice": "S8",
+          "red_reason_at_baseline": "returns a different outcome at baseline"
+        }
+      },
+      "negative_or_failure_case": "missing-manifest package passes review"
+    },
+    {
+      "id": "SEIT-136.03",
+      "kind": "verification",
+      "requirement_id": "AC-136.03",
+      "design_id": "DES-136.01",
+      "command_id": "CMD-TEST-ALL",
+      "method": "inspection",
+      "preconditions": [
+        "baseline 174773e4bbec85a24b5675a20a26b99b4690ea99 leased",
+        "slice candidate stable",
+        "BEARING_ROLE unset in the test environment"
+      ],
+      "stimulus_or_procedure": "CMD-SUITE on test/manifest-pin-guard.test.mjs: text assertion on step 6 of skills/planning-and-design/SKILL.md",
+      "expected_result": "step 6 names evaluatePlanningReview (hooks/planning-review.cjs) and manifest_not_generated",
+      "observable_evidence": "TAP 'ok' for the AC-136.03 test",
+      "pass_fail_rule": "PASS iff the step 6 text names both the guard and the reason",
+      "method_fields": {
+        "suite": "test/manifest-pin-guard.test.mjs",
+        "tdd": {
+          "red_expected": true,
+          "test_slice": "S3",
+          "product_slice": "S8",
+          "red_reason_at_baseline": "step 6 is prose-only at baseline"
+        }
+      },
+      "negative_or_failure_case": "step 6 is prose-only"
+    },
+    {
+      "id": "SEIT-135.01",
+      "kind": "verification",
+      "requirement_id": "AC-135.01",
+      "design_id": "DES-135.01",
+      "command_id": "CMD-TEST-ALL",
+      "method": "test",
+      "preconditions": [
+        "baseline 174773e4bbec85a24b5675a20a26b99b4690ea99 leased",
+        "slice candidate stable",
+        "BEARING_ROLE unset in the test environment"
+      ],
+      "stimulus_or_procedure": "temp-dir fixture: a live pin that disagrees with the recorded baseline, plus the same stale value in a gate-evidence file, a dated receipt row, and a record whose status is in HISTORICAL_GATE; run the new plan-package.cjs sweep",
+      "expected_result": "exactly the live pin reported, with file:line; the three historical records are not reported",
+      "observable_evidence": "TAP 'ok' for the AC-135.01 tests; asserted findings list",
+      "pass_fail_rule": "PASS iff the findings equal exactly the live pin with file:line",
+      "method_fields": {
+        "suite": "test/manifest-pin-guard.test.mjs",
+        "tdd": {
+          "red_expected": true,
+          "test_slice": "S3",
+          "product_slice": "S9",
+          "red_reason_at_baseline": "no pin sweep export at baseline"
+        }
+      },
+      "negative_or_failure_case": "stale pin passes or historical record flagged"
+    },
+    {
+      "id": "SEIT-135.02",
+      "kind": "verification",
+      "requirement_id": "AC-135.02",
+      "design_id": "DES-135.01",
+      "command_id": "CMD-TEST-ALL",
+      "method": "inspection",
+      "preconditions": [
+        "baseline 174773e4bbec85a24b5675a20a26b99b4690ea99 leased",
+        "slice candidate stable",
+        "BEARING_ROLE unset in the test environment"
+      ],
+      "stimulus_or_procedure": "CMD-SUITE on test/manifest-pin-guard.test.mjs: text assertion over skills/planning-and-design/references/artifact-grammar.md",
+      "expected_result": "the register section states companion artifacts cite authority.json or the bound host by reference and do not copy the register digest",
+      "observable_evidence": "TAP 'ok' for the AC-135.02 test",
+      "pass_fail_rule": "PASS iff the cite-by-reference rule matches",
+      "method_fields": {
+        "suite": "test/manifest-pin-guard.test.mjs",
+        "tdd": {
+          "red_expected": true,
+          "test_slice": "S3",
+          "product_slice": "S9",
+          "red_reason_at_baseline": "rule absent at baseline"
+        }
+      },
+      "negative_or_failure_case": "guidance permits digest copies"
+    },
+    {
+      "id": "SEIT-135.03",
+      "kind": "verification",
+      "requirement_id": "AC-135.03",
+      "design_id": "DES-135.01",
+      "command_id": "CMD-TEST-ALL",
+      "method": "test",
+      "preconditions": [
+        "baseline 174773e4bbec85a24b5675a20a26b99b4690ea99 leased",
+        "slice candidate stable",
+        "BEARING_ROLE unset in the test environment"
+      ],
+      "stimulus_or_procedure": "temp-dir fixture with a write set containing a stale pin outside docs/plans (for example under skills/)",
+      "expected_result": "that pin is reported with file:line",
+      "observable_evidence": "TAP 'ok' for the AC-135.03 test",
+      "pass_fail_rule": "PASS iff the out-of-plan-dir pin is reported",
+      "method_fields": {
+        "suite": "test/manifest-pin-guard.test.mjs",
+        "tdd": {
+          "red_expected": true,
+          "test_slice": "S3",
+          "product_slice": "S9",
+          "red_reason_at_baseline": "no sweep at baseline"
+        }
+      },
+      "negative_or_failure_case": "sweep limited to plan dir"
+    },
+    {
+      "id": "SEIT-135.04",
+      "kind": "verification",
+      "requirement_id": "AC-135.04",
+      "design_id": "DES-135.01",
+      "command_id": "CMD-TEST-ALL",
+      "method": "test",
+      "preconditions": [
+        "baseline 174773e4bbec85a24b5675a20a26b99b4690ea99 leased",
+        "slice candidate stable",
+        "BEARING_ROLE unset in the test environment"
+      ],
+      "stimulus_or_procedure": "temp-dir fixture: change a register fixture by one byte without cascading and run the sweep; then cascade the new digest to every live pin and rerun",
+      "expected_result": "first run fails naming every pin with file:line; second run passes",
+      "observable_evidence": "TAP 'ok' for the AC-135.04 test",
+      "pass_fail_rule": "PASS iff the first run names every stale pin and the second run returns no findings",
+      "method_fields": {
+        "suite": "test/manifest-pin-guard.test.mjs",
+        "tdd": {
+          "red_expected": true,
+          "test_slice": "S3",
+          "product_slice": "S9",
+          "red_reason_at_baseline": "no sweep at baseline"
+        }
+      },
+      "negative_or_failure_case": "move passes silently or cascade still fails"
+    },
+    {
+      "id": "SEIT-146.01",
+      "kind": "verification",
+      "requirement_id": "AC-146.01",
+      "design_id": "DES-146.01",
+      "command_id": "CMD-TEST-ALL",
+      "method": "test",
+      "preconditions": [
+        "baseline 174773e4bbec85a24b5675a20a26b99b4690ea99 leased",
+        "slice candidate stable",
+        "BEARING_ROLE unset in the test environment"
+      ],
+      "stimulus_or_procedure": "hooks/orchestrator-write-lock.cjs evaluate with role orchestrator (explicit) for writes to <plan>/workspace.md and <plan>/repository-map.md; text assertion that skills/architectural-alignment/SKILL.md states Orchestrator ownership",
+      "expected_result": "both writes ALLOW; skill text matches",
+      "observable_evidence": "TAP 'ok' for the AC-146.01 tests; verdict ALLOW",
+      "pass_fail_rule": "PASS iff both writes are allowed and the ownership text matches; existing test/orchestrator-write-lock.test.mjs and skills-conformance Architectural Alignment tests stay green",
+      "method_fields": {
+        "suite": "test/orchestrator-write.test.mjs",
+        "tdd": {
+          "red_expected": true,
+          "test_slice": "S4",
+          "product_slice": "S10",
+          "red_reason_at_baseline": "ownerFor() maps workspace.md and repository-map.md to architectural_alignment, so the Orchestrator is denied at baseline"
+        }
+      },
+      "negative_or_failure_case": "write denied or texts disagree"
+    },
+    {
+      "id": "SEIT-146.02",
+      "kind": "verification",
+      "requirement_id": "AC-146.02",
+      "design_id": "DES-146.01",
+      "command_id": "CMD-TEST-ALL",
+      "method": "test",
+      "preconditions": [
+        "baseline 174773e4bbec85a24b5675a20a26b99b4690ea99 leased",
+        "slice candidate stable",
+        "BEARING_ROLE unset in the test environment"
+      ],
+      "stimulus_or_procedure": "handle() with BEARING_ROLE deleted from process.env for a write to seit.json: (1) the host envelope carries a subagent role; (2) the envelope marks a subagent but carries no role",
+      "expected_result": "(1) the envelope role is used; (2) the write is denied and the deny message names the separate-process BEARING_ROLE fallback, not treated as Orchestrator",
+      "observable_evidence": "TAP 'ok' for the AC-146.02 tests; asserted verdict and message text",
+      "pass_fail_rule": "PASS iff (1) uses the envelope role and (2) is denied with the fallback named",
+      "method_fields": {
+        "suite": "test/orchestrator-write.test.mjs",
+        "tdd": {
+          "red_expected": true,
+          "test_slice": "S4",
+          "product_slice": "S10",
+          "red_reason_at_baseline": "role absent is treated as Orchestrator and the deny text names only a dispatch at baseline"
+        }
+      },
+      "negative_or_failure_case": "subagent silently treated as Orchestrator"
+    },
+    {
+      "id": "SEIT-146.03",
+      "kind": "verification",
+      "requirement_id": "AC-146.03",
+      "design_id": "DES-146.01",
+      "command_id": "CMD-TEST-ALL",
+      "method": "test",
+      "preconditions": [
+        "baseline 174773e4bbec85a24b5675a20a26b99b4690ea99 leased",
+        "slice candidate stable",
+        "BEARING_ROLE unset in the test environment"
+      ],
+      "stimulus_or_procedure": "CMD-SUITE on test/orchestrator-write.test.mjs",
+      "expected_result": "the Orchestrator workspace.md write case and the host-without-role case both exist and pass",
+      "observable_evidence": "TAP 'ok' for the tests titled 'AC-146.03 orchestrator-workspace' and 'AC-146.03 host-without-role'",
+      "pass_fail_rule": "PASS iff both titled tests exist and pass",
+      "method_fields": {
+        "suite": "test/orchestrator-write.test.mjs",
+        "tdd": {
+          "red_expected": true,
+          "test_slice": "S4",
+          "product_slice": "S10",
+          "red_reason_at_baseline": "same as SEIT-146.01 and SEIT-146.02"
+        }
+      },
+      "negative_or_failure_case": "either case untested"
+    },
+    {
+      "id": "SEIT-AUTH.01",
+      "kind": "verification",
+      "requirement_id": "AC-AUTH.01",
+      "design_id": "N/A-authority (DEC-AGR-012; no design contract)",
+      "command_id": "CMD-SCOPE",
+      "method": "analysis",
+      "preconditions": [
+        "baseline 174773e4bbec85a24b5675a20a26b99b4690ea99 leased",
+        "slice candidate stable",
+        "BEARING_ROLE unset in the test environment"
+      ],
+      "stimulus_or_procedure": "run CMD-SCOPE on the integrated candidate",
+      "expected_result": "no changed path outside the union write set; so package.json, plugin and host manifests, .claude-plugin/, and publish configuration are unchanged",
+      "observable_evidence": "CMD-SCOPE stdout empty",
+      "pass_fail_rule": "PASS iff CMD-SCOPE prints nothing. Landing by PR and absence of an npm release are closeout facts recorded by the Orchestrator, not SEIT claims",
+      "method_fields": {
+        "scope": "integrated candidate vs 174773e4bbec85a24b5675a20a26b99b4690ea99",
+        "tdd": {
+          "red_expected": false,
+          "regression_reason": "scope analysis, not TDD"
+        }
+      },
+      "negative_or_failure_case": "any version, manifest, or publish-config path appears in CMD-SCOPE output"
+    },
+    {
+      "id": "SEIT-RISK-001",
+      "kind": "verification",
+      "requirement_id": "RISK-001",
+      "design_id": "DES-143.02",
+      "command_id": "CMD-SCOPE",
+      "method": "analysis+test",
+      "preconditions": [
+        "baseline 174773e4bbec85a24b5675a20a26b99b4690ea99 leased",
+        "slice candidate stable",
+        "BEARING_ROLE unset in the test environment"
+      ],
+      "stimulus_or_procedure": "(a) CMD-SCOPE: package.json and any lockfile or requirements file unchanged; (b) CMD-TEST-ALL includes test/public-boundary.test.mjs, which scans packaged public surfaces for model pins and provider routes",
+      "expected_result": "no new dependency; public-boundary green",
+      "observable_evidence": "CMD-SCOPE stdout empty; TAP 'ok' for test/public-boundary.test.mjs",
+      "pass_fail_rule": "PASS iff (a) and (b) pass",
+      "method_fields": {
+        "scope": "full diff",
+        "tdd": {
+          "red_expected": false,
+          "regression_reason": "regression guard"
+        },
+        "secondary_command": "CMD-TEST-ALL",
+        "ceiling": "the public-boundary pattern list is finite; a name outside it needs Reviewer inspection"
+      },
+      "negative_or_failure_case": "concrete name or new dependency present"
+    },
+    {
+      "id": "SEIT-RISK-002",
+      "kind": "verification",
+      "requirement_id": "RISK-002",
+      "design_id": "DES-136.01",
+      "command_id": "CMD-TEST-ALL",
+      "method": "test",
+      "preconditions": [
+        "baseline 174773e4bbec85a24b5675a20a26b99b4690ea99 leased",
+        "slice candidate stable",
+        "BEARING_ROLE unset in the test environment"
+      ],
+      "stimulus_or_procedure": "integrity cases: missing manifest (SEIT-136.02) and stale pin (SEIT-135.01) fail closed; availability cases: missing gate tool (SEIT-143.03) is a typed gap; existing unavailable-backend suites stay green",
+      "expected_result": "closed vs gap correctly",
+      "observable_evidence": "TAP 'ok' for the named suites",
+      "pass_fail_rule": "PASS iff integrity cases fail closed, unavailability cases are typed gaps, and none returns PASS",
+      "method_fields": {
+        "suite": [
+          "test/manifest-pin-guard.test.mjs",
+          "test/gate-chain.test.mjs",
+          "test/review-capability.test.mjs",
+          "test/capability-gap.test.mjs"
+        ],
+        "tdd": {
+          "red_expected": "partial",
+          "new_cases": "red via the referenced rows",
+          "existing_suites": {
+            "red_expected": false,
+            "regression_reason": "unavailable-backend typed-gap behavior exists at baseline"
+          }
+        }
+      },
+      "negative_or_failure_case": "guard fail-open on integrity or backend treated as PASS"
+    },
+    {
+      "id": "SEIT-136.04",
+      "kind": "verification",
+      "requirement_id": "AC-136.04",
+      "design_id": "DES-136.01",
+      "command_id": "CMD-TEST-ALL",
+      "method": "inspection+test",
+      "preconditions": [
+        "baseline 174773e4bbec85a24b5675a20a26b99b4690ea99 leased",
+        "slice candidate stable",
+        "BEARING_ROLE unset in the test environment"
+      ],
+      "stimulus_or_procedure": "(a) assert hooks/planning-review.cjs is not registered as a host hook command in hooks/hooks.json or any host-specific hooks.json under hooks/; (b) assert the review-presentation skill path (planning-and-design step 6) cites the guard",
+      "expected_result": "(a) no host wiring, so no host adapter target; (b) guard cited",
+      "observable_evidence": "TAP 'ok' for the AC-136.04 tests",
+      "pass_fail_rule": "PASS iff (a) and (b) pass; scope limits in TE-F4",
+      "method_fields": {
+        "suite": "test/manifest-pin-guard.test.mjs",
+        "tdd": {
+          "red_expected": "partial",
+          "part_a": {
+            "red_expected": false,
+            "regression_reason": "planning-review.cjs is procedural at baseline"
+          },
+          "part_b": {
+            "red_expected": true,
+            "test_slice": "S3",
+            "product_slice": "S8",
+            "red_reason_at_baseline": "guard not cited at baseline"
+          }
+        }
+      },
+      "negative_or_failure_case": "a review path presents the gate without invoking the guard"
+    }
+  ],
+  "gate_declarations": {
+    "source": "DEC-AGR-010 per-plan declaration for this Lifecycle",
+    "build": {
+      "status": "NOT_APPLICABLE",
+      "reason": "No build step: hooks are CommonJS and tests ESM, loaded directly by node; module load failures surface as CMD-TEST-ALL failures."
+    },
+    "types_lint": {
+      "status": "NOT_APPLICABLE",
+      "reason": "Repository has no type checker or linter and no dependencies; adding one is a new dependency (RISK-001). Whitespace hygiene (CMD-DIFFCHECK, CMD-WRITESET) still runs as a required command but is not claimed as types/lint."
+    },
+    "red_then_green": {
+      "status": "DECLARED",
+      "tool": "node:test via CMD-SUITE",
+      "threshold": "every test id tagged with a red-expected SEIT row fails with an assertion at the Test Implementer candidate and passes at the Product Implementer candidate; red-expected ids = green ids",
+      "receipt": "per AC-143.07: failing run on the test-only candidate plus passing run on the product candidate, same test ids"
+    },
+    "mutation": {
+      "status": "NOT_APPLICABLE",
+      "reason": "bearing-lite has no mutation-testing tool: package.json declares no dependencies or devDependencies and the repo ships no mutation script. Adding one is a new dependency requiring maintainer approval (RISK-001) and no slice write set owns it."
+    },
+    "changed_line_coverage": {
+      "status": "NOT_APPLICABLE",
+      "reason": "No changed-line coverage tool exists in the repository. The node runtime's built-in experimental test coverage reports whole-file line coverage only and has no diff intersection; building one is new tooling outside every slice write set. Not used as a gate or as evidence."
+    },
+    "reverify": {
+      "status": "NOT_SELECTED",
+      "reason": "no applicable binary-level claim (see vv_methods.reverify)"
+    },
+    "reviewer": {
+      "status": "DECLARED",
+      "reason": "phase cadence per profile; consumes the gate-chain receipt per AC-145.01"
+    }
+  },
+  "planning_findings_for_plan_integrator": [
+    {
+      "id": "TE-F1",
+      "rows": [
+        "SEIT-136.01",
+        "SEIT-136.02"
+      ],
+      "finding": "A fail-closed manifest guard in evaluatePlanningReview() that triggers on absence breaks existing PASS assertions in test/planning-review.test.mjs (review() fixture without a manifest, asserted PASS directly and through transition.evaluate and closeout.evaluate). That file is in no slice write set, so CMD-TEST-ALL cannot be green.",
+      "needed": "add test/planning-review.test.mjs to the S3 write set (fixture gains manifest evidence), or narrow the guard trigger in design; Plan Integrator reconciliation, not an owner decision unless design intent changes"
+    },
+    {
+      "id": "TE-F2",
+      "rows": [
+        "SEIT-143.04",
+        "SEIT-143.07"
+      ],
+      "finding": "S6 writes prose only, but AC-143.07 needs an evaluator to reject an incomplete red-then-green receipt. The only code-bearing gate-chain write set is S5 (hooks/assurance-budget.cjs).",
+      "needed": "trace AC-143.07 (evaluator half) to S5 as well as S6, or accept S6 as prose-only with the evaluator half in S5"
+    },
+    {
+      "id": "TE-F3",
+      "rows": [
+        "SEIT-143.02",
+        "SEIT-144.03",
+        "SEIT-135.02",
+        "SEIT-136.03",
+        "SEIT-136.04"
+      ],
+      "finding": "Draft cited test/skills-conformance.test.mjs, which is in no slice write set, so those assertions could never be written. Re-homed to the Wave 1 test files.",
+      "needed": "Plan Integrator records the added SEIT rows per test slice (S1 += SEIT-143.01..04,06,07; S2 += SEIT-144.01..03, SEIT-145.01; S3 += SEIT-136.01,03,04, SEIT-135.02,03; S4 += SEIT-146.01,02)"
+    },
+    {
+      "id": "TE-F4",
+      "rows": [
+        "SEIT-136.04"
+      ],
+      "finding": "Owner-review wording also appears in skills/requirements-engineer/SKILL.md, skills/bearing-lite/templates/task.md, and skills/bearing-lite/references/role-routing.mmd, which are outside every write set. SEIT-136.04 scopes the proof to the paths that present the owner review (planning-and-design step 6) plus the non-host-wired check.",
+      "needed": "confirm those files only mention, and do not present, the owner review; otherwise add a write set"
+    }
+  ]
+}
