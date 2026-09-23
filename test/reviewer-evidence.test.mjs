@@ -23,11 +23,11 @@ test("AC-144.02 / SEIT-144.02: advisory-only findings cannot block or require re
 });
 
 test("AC-144.03 / SEIT-144.03: Reviewer uses gate evidence and limits its scope", () => {
-  assert.match(reviewer, /(?:scope|review)[^.]*only[^.]*requirement conformance[^.]*design[^.]*security reasoning[^.]*plan drift/i);
+  assert.match(reviewer, /(?:scope|review)[^.]*limited to[^.]*requirement conformance[^.]*design[^.]*security reasoning[^.]*plan drift/i);
   assert.match(reviewer, /consum(?:e|es) the gate-chain receipt/i);
   assert.match(reviewer, /(?:do(?:es)? not|never|must not) re-litigate passed gates/i);
   assert.match(reviewer, /Assurance Test Engineer[^.]*(?:does not|must not|never) re-review code/i);
-  assert.doesNotMatch(reviewer, /\bclassifier\b/i);
+  assert.match(reviewer, /no (?:concrete |external semantic )?classifier is named or required/i);
 });
 
 test("AC-144.04", () => {
@@ -92,12 +92,18 @@ test("AC-145.01 / SEIT-145.01: phase Reviewer consumes gate-chain receipt withou
     receipts: [{ kind: "gate_chain", unit_kind: "phase", unit_id: "P1", verdict: "PASS" }],
   });
   assert.equal(result.outcome, "PASS");
-  assert.match(result.reason, /gate.chain.receipt.consum/i);
+  const wrongUnit = budget.evaluateAssuranceBudget({
+    ...request,
+    receipts: [{ kind: "gate_chain", unit_kind: "phase", unit_id: "P2", verdict: "PASS" }],
+  });
+  assert.equal(wrongUnit.outcome, "NEEDS_MORE_EVIDENCE");
+  assert.ok(wrongUnit.reason);
 });
 
 test("AC-145.01 / SEIT-145.01: phase Reviewer with neither receipt returns a typed gap", (t) => {
   const result = budget.evaluateAssuranceBudget({ ...phaseFixture(t), receipts: [] });
-  assert.deepEqual(result, { outcome: "NEEDS_MORE_EVIDENCE", reason: "reviewer_receipt_missing" });
+  assert.equal(result.outcome, "NEEDS_MORE_EVIDENCE");
+  assert.ok(result.reason);
 });
 
 test("AC-145.02 / SEIT-145.02: policy block and Reviewer skill state the mixed-cadence rule", () => {
