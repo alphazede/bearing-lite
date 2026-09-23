@@ -156,3 +156,43 @@ test("AC-143.07 / SEIT-143.07 receipt prose binds baseline failure to candidate 
     assert.ok(/red[- ]then[- ]green receipt[\s\S]{0,180}baseline failing run[\s\S]{0,100}candidate passing run/i.test(text), `${file}: baseline-failure/candidate-pass receipt rule missing`);
   }
 });
+
+test("W2-F1 reviewer consumes only the latest PASS gate-chain receipt for its unit", (t) => {
+  const fs = require("node:fs");
+  const os = require("node:os");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "w2-gate-chain-"));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const declaration_path = path.join(dir, "declaration.json");
+  const task_record_path = path.join(dir, "task.json");
+  fs.writeFileSync(declaration_path, JSON.stringify({ phases: [{ phaseId: "P1" }] }));
+  fs.writeFileSync(task_record_path, JSON.stringify({ journey: "L1", units: [] }));
+  const request = {
+    journey: "L1", unit_kind: "phase", request_scope: "phase", assurance_unit: "P1",
+    cadence: "phase", role: "reviewer", declaration_path, task_record_path,
+  };
+  for (const later of ["FAIL", "VERIFIED"]) {
+    const receipts = ["PASS", later].map((verdict) => ({ kind: "gate_chain", unit_id: "P1", verdict }));
+    assert.deepEqual(assurance.evaluateAssuranceBudget({ ...request, receipts }), {
+      outcome: "NEEDS_MORE_EVIDENCE", reason: "reviewer_gate_chain_receipt_missing",
+    }, `later ${later} must supersede the earlier PASS`);
+  }
+});
+
+test("W2-F2 declared gate with omitted tool_available is a typed gap", () => {
+  const got = evaluate(declarations({ mutation: declared }), { mutation: { outcome: "PASS", score: 100 } });
+  assert.equal(got.outcome, "NEEDS_MORE_EVIDENCE");
+  assert.equal(got.failed_gate, "mutation");
+});
+
+test("W2-F3 red-then-green rejects duplicate candidate ids replacing a baseline id", () => {
+  const gates = declarations({ red_then_green: { status: "DECLARED", tool: "node:test", threshold: "same test ids" } });
+  const got = evaluate(gates, { red_then_green: {
+    tool_available: true, outcome: "PASS",
+    receipt: {
+      baseline: { outcome: "FAIL", test_ids: ["T-1", "T-2"] },
+      candidate: { outcome: "PASS", test_ids: ["T-1", "T-1"] },
+    },
+  } });
+  assert.equal(got.outcome, "NEEDS_MORE_EVIDENCE");
+  assert.equal(got.failed_gate, "red_then_green");
+});

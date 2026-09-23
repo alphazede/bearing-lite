@@ -85,3 +85,26 @@ test("AC-146.02 remaining locked artifact guard", () => {
   assert.equal(result.verdict, "DENY_DISPATCH");
   assert.equal(result.owner, "planning_and_design");
 });
+
+test("W2-F4 role-less subagent cannot write architectural-alignment artifacts", () => {
+  withoutBearingRole(() => {
+    for (const name of ["workspace.md", "repository-map.md"]) {
+      const response = lock.handle({
+        hook_event_name: "PreToolUse", agent_id: "child-1",
+        tool_input: { file_path: `docs/plans/example/${name}` },
+      });
+      assert.equal(response.hookSpecificOutput.verdict, "DENY_DISPATCH", name);
+      assert.match(response.hookSpecificOutput.permissionDecisionReason, /separate process.{0,100}BEARING_ROLE/i);
+    }
+  });
+});
+
+test("W2-F5 subagent assigned_role overrides inherited process role", () => {
+  withoutBearingRole(() => {
+    const response = lock.handle({
+      hook_event_name: "PreToolUse", agent_id: "child-1", assigned_role: "planning_and_design",
+      tool_input: { file_path: "docs/plans/example/seit.json" },
+    }, { role: "orchestrator" });
+    assert.equal(response.hookSpecificOutput.verdict, "ALLOW");
+  });
+});

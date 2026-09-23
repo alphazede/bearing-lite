@@ -333,7 +333,10 @@ function collectWriteSet(node, out = []) {
   return out;
 }
 
-const PIN_ALLOW_PATH = /(gate-evidence|receipt)/i;
+// Allow-listed only when the path genuinely lives under gate-evidence: a
+// name merely containing the substring (notes-receipt.md,
+// not-gate-evidence-live.md) still hides no live pin.
+const PIN_ALLOW_PATH = /(?:^|\/)gate-evidence(?:[.\-_\/]|$)/i;
 const PIN_HISTORICAL =
   /"(status|state)"\s*:\s*"(HISTORICAL|SUPERSEDED|ARCHIVED|COMPLETED|RETIRED|INACTIVE)"|^\s*(status|state)\s*:\s*(HISTORICAL|SUPERSEDED|ARCHIVED|COMPLETED|RETIRED|INACTIVE)\b/im;
 const PIN_PATTERN = /register_sha256\s*:\s*([0-9a-fA-F]{64})/g;
@@ -342,8 +345,15 @@ const DATED_RECEIPT_LINE = /^\d{4}-\d{2}-\d{2}\s+receipt\b/i;
 /** DES-135.01 (Pin-hygiene): live pins across the repository write set match the recorded baseline. */
 function checkLivePins(dir, findings = []) {
   const implementation = readJson(path.join(dir, "implementation.json"));
+  if (!implementation) return findings;
   const recorded = readJson(path.join(dir, "authority.json"))?.requirement_register?.sha256;
-  if (!implementation || typeof recorded !== "string" || !/^[0-9a-f]{64}$/i.test(recorded)) return findings;
+  if (typeof recorded !== "string" || !/^[0-9a-f]{64}$/i.test(recorded)) {
+    // Fail closed: without a recorded baseline no live pin can be verified.
+    if (collectWriteSet(implementation).length) {
+      findings.push({ code: "missing_register_baseline", path: "authority.json", recorded: typeof recorded === "string" ? recorded : null });
+    }
+    return findings;
+  }
   const baseline = recorded.toLowerCase();
   const root = repoRoot(dir);
   const seen = new Set();
@@ -358,9 +368,11 @@ function checkLivePins(dir, findings = []) {
     } catch {
       continue;
     }
-    if (PIN_HISTORICAL.test(text)) continue;
     text.split("\n").forEach((line, index) => {
       if (DATED_RECEIPT_LINE.test(line)) return;
+      // A HISTORICAL_GATE marker exempts only its own record line, never a
+      // live pin on another line of the same file.
+      if (PIN_HISTORICAL.test(line)) return;
       for (const match of line.matchAll(PIN_PATTERN)) {
         if (match[1].toLowerCase() !== baseline) {
           findings.push({ code: "stale_register_pin", location: `${rel}:${index + 1}`, recorded: baseline, actual: match[1].toLowerCase() });

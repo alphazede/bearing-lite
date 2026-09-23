@@ -619,6 +619,52 @@
       "status": "CLOSED",
       "assurance_rounds": 1,
       "repairs_used": 1
+    },
+    {
+      "unit": "Wave 2",
+      "stage": "review",
+      "at": "2026-09-23T14:52:37Z",
+      "route": "Cursor Agent / Grok 4.7 / high",
+      "candidate_revision": "807bde96fd52cea7cbd725d97bf77d9deadcb5b7",
+      "verdict": "REPAIR_REQUIRED",
+      "findings": [
+        "W2-F1 P1",
+        "W2-F2 P1",
+        "W2-F3 P2",
+        "W2-F4 P1",
+        "W2-F5 P1",
+        "W2-F6 P1",
+        "W2-F7 P1",
+        "W2-F8 P2",
+        "W2-F9 P2"
+      ],
+      "assurance_rounds": 1,
+      "repairs_remaining": 1,
+      "repair_plan": "single aggregated repair: Test Implementer regression tests first, then Product Implementer fixes (role packets share the bound)"
+    },
+    {
+      "unit": "Wave 2",
+      "stage": "repair",
+      "at": "2026-09-23T14:58:59Z",
+      "routes": [
+        "Codex CLI / GPT-6 Sol / xhigh (test_implementer: 9 regression tests, red first)",
+        "Muse Code / Muse Spark 1.3 / xhigh (implementer: hook fixes)"
+      ],
+      "fixed": [
+        "W2-F1",
+        "W2-F2",
+        "W2-F3",
+        "W2-F4",
+        "W2-F5",
+        "W2-F6",
+        "W2-F7",
+        "W2-F8",
+        "W2-F9"
+      ],
+      "post_repair_gate": "deterministic_PASS: gate-chain 15/15, manifest-pin-guard 12/12, orchestrator-write 8/8, reviewer-evidence 2/7 (S7 reds unchanged), CMD-PREEXISTING 566/566, schema 268/268, diff-check clean, 9/9 W2 tests pass",
+      "status": "CLOSED",
+      "assurance_rounds": 1,
+      "repairs_used": 1
     }
   ]
 }

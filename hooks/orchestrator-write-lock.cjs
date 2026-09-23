@@ -496,6 +496,9 @@ function collectPaths(input) {
 function evaluate(input) {
   const body = isPlainObject(input) ? input : {};
   const role = normalizeRole(body.role || body.BEARING_ROLE);
+  // An in-process subagent carries agent_id; a role-less subagent is never
+  // the Orchestrator, while a role-less session without agent_id is.
+  const agentId = presentString(body.agent_id);
   const paths = collectPaths(body);
   if (!isOrchestrator(role)) {
     return { verdict: ALLOW, reason: "role_write_allowed" };
@@ -504,7 +507,9 @@ function evaluate(input) {
     const owner = ownerFor(rel);
     if (!owner) continue;
     // DES-146.01: workspace.md / repository-map.md are Orchestrator-owned.
-    if (owner === "architectural_alignment") continue;
+    // Only the Orchestrator itself skips the deny: an explicit orchestrator
+    // role, or a role-less session that is not an in-process subagent.
+    if (owner === "architectural_alignment" && (role === "orchestrator" || !agentId)) continue;
     const dispatch = dispatchFor(owner);
     const delta =
       body.finding === true || owner === "planning_and_design"
@@ -629,7 +634,13 @@ function handle(envelope, options) {
   const root = path.resolve(
     presentString(input.cwd) || presentString(input.workspaceRoot) || process.cwd()
   );
+  // AC-146.02: the envelope role of an in-process subagent wins over the
+  // inherited parent BEARING_ROLE.
+  const subagentRole = presentString(input.agent_id)
+    ? presentString(input.assigned_role)
+    : undefined;
   const role =
+    subagentRole ||
     presentString(opts.role) ||
     presentString(process.env.BEARING_ROLE) ||
     presentString(input.role) ||
@@ -637,6 +648,7 @@ function handle(envelope, options) {
     presentString(input.assigned_role);
   const result = evaluate({
     role,
+    agent_id: presentString(input.agent_id),
     cwd: root,
     paths: envelopePaths(input, root),
     tool_input: isPlainObject(input.tool_input)
