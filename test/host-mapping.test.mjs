@@ -127,20 +127,30 @@ describe("verified host mapping", () => {
     rmSync(tmp, { recursive: true, force: true });
   });
 
+  it("declares every hook as one command string with no args (Codex has no args field)", () => {
+    const manifest = JSON.parse(readFileSync(path.join(ROOT, "hooks/hooks.json"), "utf8"));
+    for (const [event, entries] of Object.entries(manifest.hooks)) {
+      for (const command of entries.flatMap((entry) => entry.hooks)) {
+        assert.equal(command.args, undefined, `${event} hook must not use args`);
+        assert.match(command.command, /^node "\$\{CLAUDE_PLUGIN_ROOT\}\/hooks\/[^"]+\.cjs"$/, event);
+      }
+    }
+  });
+
   it("keeps the SessionStart activation and Stop closeout handlers on host.cjs", () => {
     const manifest = JSON.parse(readFileSync(path.join(ROOT, "hooks/hooks.json"), "utf8"));
     assert.ok(!manifest.hooks.PostToolUse);
     for (const event of ["SessionStart", "Stop"]) {
       const handlers = manifest.hooks[event].flatMap((entry) => entry.hooks);
       const activationOrCloseout = handlers.filter((command) =>
-        command.args?.some((arg) => arg.endsWith("com.anthropic.claude-code/host.cjs"))
+        command.command.includes("com.anthropic.claude-code/host.cjs")
       );
       assert.equal(activationOrCloseout.length, 1, event);
       assert.equal(activationOrCloseout[0].type, "command");
-      assert.equal(activationOrCloseout[0].command, "node");
-      assert.deepEqual(activationOrCloseout[0].args, [
-        "${CLAUDE_PLUGIN_ROOT}/hooks/com.anthropic.claude-code/host.cjs",
-      ]);
+      assert.equal(
+        activationOrCloseout[0].command,
+        'node "${CLAUDE_PLUGIN_ROOT}/hooks/com.anthropic.claude-code/host.cjs"'
+      );
     }
   });
 
@@ -153,10 +163,10 @@ describe("verified host mapping", () => {
       );
       const handlers = manifest.hooks[event].flatMap((entry) => entry.hooks);
       const te = handlers.filter((command) =>
-        command.args?.some((arg) => arg.endsWith("hooks/te-host.cjs"))
+        command.command.includes("hooks/te-host.cjs")
       );
       assert.equal(te.length, 1, `${event} must route to hooks/te-host.cjs`);
-      assert.equal(te[0].command, "node");
+      assert.equal(te[0].command, 'node "${CLAUDE_PLUGIN_ROOT}/hooks/te-host.cjs"');
     }
     // Stop-only registration is not child enforcement; SubagentStop is its own
     // handler, not an alias of Stop.

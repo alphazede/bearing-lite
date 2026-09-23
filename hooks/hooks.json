@@ -6,10 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node",
-            "args": [
-              "${CLAUDE_PLUGIN_ROOT}/hooks/com.anthropic.claude-code/host.cjs"
-            ],
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/com.anthropic.claude-code/host.cjs\"",
             "timeout": 15,
             "statusMessage": "Bearing Lite activation"
           }
@@ -22,10 +19,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node",
-            "args": [
-              "${CLAUDE_PLUGIN_ROOT}/hooks/te-host.cjs"
-            ],
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/te-host.cjs\"",
             "timeout": 15,
             "statusMessage": "Bearing Lite test-engineering write check"
           }
@@ -36,10 +30,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node",
-            "args": [
-              "${CLAUDE_PLUGIN_ROOT}/hooks/orchestrator-write-lock.cjs"
-            ],
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/orchestrator-write-lock.cjs\"",
             "timeout": 15,
             "statusMessage": "Bearing Lite orchestrator write-set lock"
           }
@@ -51,10 +42,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node",
-            "args": [
-              "${CLAUDE_PLUGIN_ROOT}/hooks/com.anthropic.claude-code/host.cjs"
-            ],
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/com.anthropic.claude-code/host.cjs\"",
             "timeout": 15,
             "statusMessage": "Bearing Lite closeout"
           }
@@ -64,10 +52,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node",
-            "args": [
-              "${CLAUDE_PLUGIN_ROOT}/hooks/te-host.cjs"
-            ],
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/te-host.cjs\"",
             "timeout": 15,
             "statusMessage": "Bearing Lite test-engineering completion check"
           }
@@ -77,10 +62,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node",
-            "args": [
-              "${CLAUDE_PLUGIN_ROOT}/hooks/git-sync.cjs"
-            ],
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/git-sync.cjs\"",
             "timeout": 15,
             "statusMessage": "Bearing Lite closeout git-sync"
           }
@@ -92,10 +74,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node",
-            "args": [
-              "${CLAUDE_PLUGIN_ROOT}/hooks/te-host.cjs"
-            ],
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/te-host.cjs\"",
             "timeout": 15,
             "statusMessage": "Bearing Lite test-engineering child completion check"
           }
