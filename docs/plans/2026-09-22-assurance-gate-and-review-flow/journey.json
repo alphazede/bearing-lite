@@ -586,5 +586,39 @@
         }
       }
     }
-  }
+  },
+  "execution_receipts": [
+    {
+      "unit": "Wave 1",
+      "stage": "review",
+      "at": "2026-09-23T14:29:12Z",
+      "route": "Cursor Agent / Grok 4.7 / high",
+      "candidate_revision": "16e3d22cc92c3bffa180b7f1efb6375b2eff087c",
+      "verdict": "REPAIR_REQUIRED",
+      "findings": [
+        "W1-01 P1",
+        "W1-02 P2",
+        "W1-03 P2",
+        "W1-04 P2"
+      ],
+      "assurance_rounds": 1,
+      "repairs_remaining": 1
+    },
+    {
+      "unit": "Wave 1",
+      "stage": "repair",
+      "at": "2026-09-23T14:33:08Z",
+      "route": "Codex CLI / GPT-6 Sol / xhigh (test_implementer)",
+      "fixed": [
+        "W1-01",
+        "W1-02",
+        "W1-03",
+        "W1-04"
+      ],
+      "post_repair_gate": "deterministic_PASS: focused suites red on missing behavior (4 guards pass, 29 fail), CMD-PREEXISTING 565/565, write-set PASS, diff-check clean",
+      "status": "CLOSED",
+      "assurance_rounds": 1,
+      "repairs_used": 1
+    }
+  ]
 }

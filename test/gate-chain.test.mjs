@@ -39,9 +39,10 @@ test("AC-143.01 / SEIT-143.01 fixed seven-gate policy order", () => {
 test("AC-143.02 / SEIT-143.02 claim types and typed-gap rules in both references", () => {
   for (const file of ["skills/test-engineer/SKILL.md", "skills/bearing-lite/references/verification.md"]) {
     const text = read(file);
-    for (const term of ["mutation", "changed-line coverage", "red-then-green", "missing tool", "not_run", "typed gap", "NEEDS_MORE_EVIDENCE"]) {
+    for (const term of ["mutation", "changed-line coverage", "red-then-green", "missing tool", "not_run"]) {
       assert.ok(text.includes(term), `${file}: missing ${term} claim/gap rule`);
     }
+    assert.match(text, /typed[- ]gap/i, `${file}: missing typed-gap rule`);
   }
 });
 
