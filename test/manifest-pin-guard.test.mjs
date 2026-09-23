@@ -165,3 +165,43 @@ test("SEIT-135.04: a one-byte register move names every stale pin, then a cascad
   for (const file of files) fixture.put(file, pin(digest));
   assert.deepEqual(freeze(fixture.dir).findings, []);
 });
+
+const { checkLivePins } = require(path.join(ROOT, "hooks/plan-package.cjs"));
+
+test("W2-F6 manifest must be rendered HTML inside plan_dir", (t) => {
+  const root = temporary(t);
+  const dir = path.join(root, "plan");
+  mkdirSync(dir);
+  writeFileSync(path.join(root, "outside-dod-manifest.html"), "<!doctype html>");
+  writeFileSync(path.join(dir, "notes.txt"), "not a manifest");
+  for (const output_name of ["../outside-dod-manifest.html", "notes.txt"]) {
+    assert.deepEqual(evaluatePlanningReview({ ...passingReview(dir), dod_manifest: { output_name } }), {
+      outcome: "NEEDS_MORE_EVIDENCE", reason: "manifest_not_generated",
+    }, output_name);
+  }
+});
+
+test("W2-F7 path names containing receipt or gate-evidence do not hide live pins", (t) => {
+  const files = ["docs/plans/x/notes-receipt.md", "docs/plans/x/not-gate-evidence-live.md"];
+  const fixture = packageFixture(t, files);
+  for (const file of files) fixture.put(file, pin("0".repeat(64)));
+  assert.deepEqual(locations(checkLivePins(fixture.dir)), files.map((file) => `${file}:2`).sort());
+});
+
+test("W2-F8 historical status exempts only its own record, not a live pin", (t) => {
+  const live = "docs/plans/x/mixed.md";
+  const fixture = packageFixture(t, [live]);
+  fixture.put(live, `status: COMPLETED\nregister_sha256: ${"0".repeat(64)}\n`);
+  assert.deepEqual(locations(checkLivePins(fixture.dir)), [`${live}:2`]);
+});
+
+test("W2-F9 missing or invalid authority digest produces a finding", (t) => {
+  for (const sha256 of [undefined, "not-a-digest"]) {
+    const live = "docs/plans/x/live.md";
+    const fixture = packageFixture(t, [live]);
+    fixture.put(live, pin("0".repeat(64)));
+    fixture.put("docs/plans/x/authority.json", JSON.stringify({ requirement_register: { sha256 } }));
+    assert.ok(checkLivePins(fixture.dir).some((finding) => typeof finding.code === "string"),
+      `authority sha256 ${String(sha256)} must produce a typed finding`);
+  }
+});

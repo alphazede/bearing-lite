@@ -163,13 +163,15 @@ function evaluateAssuranceBudget(input) {
       return verdict("HALT", "assurance_round_limit");
     }
     if (input.role === "reviewer") {
-      const gateReceipt = receipts.find((receipt) => {
+      // DES-145.01: consume the most recent gate-chain receipt for the unit;
+      // an earlier PASS never survives a later FAIL, and VERIFIED is not a PASS.
+      const unitReceipts = receipts.filter((receipt) => {
         if (!isPlainObject(receipt) || receipt.kind !== "gate_chain") return false;
         const id = receipt.unit_id || receipt.assurance_unit;
-        if (id !== requested) return false;
-        return receipt.verdict === "PASS" || receipt.verdict === "VERIFIED";
+        return id === requested;
       });
-      if (!gateReceipt) {
+      const latest = unitReceipts[unitReceipts.length - 1];
+      if (!latest || latest.verdict !== "PASS") {
         return verdict("NEEDS_MORE_EVIDENCE", "reviewer_gate_chain_receipt_missing");
       }
       return verdict("PASS", "reviewer_consumes_gate_chain_receipt");
@@ -183,8 +185,10 @@ function evaluateAssuranceBudget(input) {
 const sameTestIds = (a, b) => {
   if (!Array.isArray(a) || !Array.isArray(b) || !a.length) return false;
   if (a.length !== b.length) return false;
-  const set = new Set(a);
-  return b.every((id) => set.has(id));
+  // Multiset comparison: sorted equality rejects duplicate-swapped ids.
+  const sortedA = [...a].sort();
+  const sortedB = [...b].sort();
+  return sortedA.every((id, index) => id === sortedB[index]);
 };
 
 /**
@@ -229,7 +233,9 @@ function evaluateGateChain(input) {
       if (!isPlainObject(result)) {
         return fail(gate, "NEEDS_MORE_EVIDENCE");
       }
-      if (result.tool_available === false || result.outcome === "not_run") {
+      // A DECLARED gate passes only on a live tool: omitted tool_available
+      // is a typed gap, same as false or not_run.
+      if (result.tool_available !== true || result.outcome === "not_run") {
         return fail(gate, "NEEDS_MORE_EVIDENCE");
       }
       if (gate === "red_then_green") {

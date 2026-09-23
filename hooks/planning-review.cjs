@@ -14,8 +14,14 @@ function manifestGenerated(input) {
   const name = input?.dod_manifest?.output_name;
   const dir = input?.plan_dir;
   if (typeof name !== "string" || !name || typeof dir !== "string" || !dir) return false;
+  // The manifest is the rendered HTML inside plan_dir: reject escapes and
+  // sibling files that are not the rendered manifest.
+  if (!path.basename(name).endsWith("-dod-manifest.html")) return false;
+  const base = path.resolve(dir);
+  const file = path.resolve(base, name);
+  if (file !== base && !file.startsWith(base + path.sep)) return false;
   try {
-    return fs.statSync(path.join(dir, name)).isFile();
+    return fs.statSync(file).isFile();
   } catch {
     return false;
   }
