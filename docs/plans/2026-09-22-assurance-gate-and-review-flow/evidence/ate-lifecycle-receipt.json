@@ -1,0 +1,263 @@
+{
+  "candidate_ref": "feat/assurance-gate-review-flow",
+  "candidate_revision": "40aaeec7913693a277c23fe64327f4f7ad94ee27",
+  "baseline_revision": "174773e4bbec85a24b5675a20a26b99b4690ea99",
+  "cadence": "lifecycle",
+  "session": "Assurance Test Engineer, fresh session, no author ancestry",
+  "receipt_kind": "assurance",
+  "environment": "BEARING_ROLE unset for every node:test run (env -u BEARING_ROLE); node:test, python3",
+  "verdict": "PASS",
+  "commands": [
+    {
+      "id": "CMD-TEST-ALL",
+      "command": "env -u BEARING_ROLE node --test test/*.test.mjs",
+      "result": "PASS",
+      "evidence": "exit 0; # tests 608 # pass 608 # fail 0"
+    },
+    {
+      "id": "CMD-SUITE",
+      "command": "env -u BEARING_ROLE node --test test/{gate-chain,reviewer-evidence,manifest-pin-guard,orchestrator-write}.test.mjs",
+      "result": "PASS",
+      "evidence": "red @fb43090: exit 1 each; fail 11/7/7/4 (29 failures, all ERR_ASSERTION, no SyntaxError/ERR_MODULE_NOT_FOUND). green @40aaeec: exit 0 each; pass 15/7/12/8. All 29 red ids green at candidate under identical titles; candidate test files are additive only vs fb43090 (no deleted or altered lines), so the ids are the same."
+    },
+    {
+      "id": "CMD-PREEXISTING",
+      "command": "env -u BEARING_ROLE node --test <all but the 4 new suites> @fb43090",
+      "result": "PASS",
+      "evidence": "exit 0; 565/565 pass (matches seit baseline_result)"
+    },
+    {
+      "id": "CMD-SCHEMA",
+      "command": "python3 test/schema-validation.py",
+      "result": "PASS",
+      "evidence": "exit 0; passed=268 failed=0"
+    },
+    {
+      "id": "CMD-DIFFCHECK",
+      "command": "git diff --check",
+      "result": "PASS",
+      "evidence": "exit 0, no output (clean tree); supplementary git diff --check 174773e 40aaeec exit 0"
+    },
+    {
+      "id": "CMD-WRITESET",
+      "command": "node hooks/write-set-check.cjs -- $(git diff --name-only 174773e HEAD)",
+      "result": "PASS",
+      "evidence": "exit 0; outcome PASS, findings []"
+    },
+    {
+      "id": "CMD-SCOPE",
+      "command": "see procedures_and_commands CMD-SCOPE",
+      "result": "PASS",
+      "evidence": "no output, grep exit 1"
+    },
+    {
+      "id": "CMD-GATE-DECL",
+      "command": "see procedures_and_commands CMD-GATE-DECL",
+      "result": "PASS",
+      "evidence": "exit 0"
+    }
+  ],
+  "rows": [
+    {
+      "id": "SEIT-143.01",
+      "command": "CMD-TEST-ALL",
+      "result": "PASS",
+      "evidence": "env -u BEARING_ROLE node --test test/*.test.mjs @40aaeec: exit 0, 608 tests, pass 608, fail 0; 'AC-143.01 / SEIT-143.01 fixed seven-gate policy order' ok; policy-drift 3/3 ok (review-policy, assurance-policy mirror, shared module). red @fb43090 (git archive export, baseline product + Wave 1 tests): AC-143.01 not ok; green @40aaeec: ok; ERR_ASSERTION only, no SyntaxError/ERR_MODULE_NOT_FOUND"
+    },
+    {
+      "id": "SEIT-143.02",
+      "command": "CMD-TEST-ALL",
+      "result": "PASS",
+      "evidence": "env -u BEARING_ROLE node --test test/*.test.mjs @40aaeec: exit 0, 608 tests, pass 608, fail 0; 'AC-143.02 / SEIT-143.02 claim types and typed-gap rules in both references' ok. red @fb43090 (git archive export, baseline product + Wave 1 tests): not ok; green @40aaeec: ok; ERR_ASSERTION only, no SyntaxError/ERR_MODULE_NOT_FOUND"
+    },
+    {
+      "id": "SEIT-143.03",
+      "command": "CMD-TEST-ALL",
+      "result": "PASS",
+      "evidence": "env -u BEARING_ROLE node --test test/*.test.mjs @40aaeec: exit 0, 608 tests, pass 608, fail 0; 'AC-143.03 / SEIT-143.03 declared missing tool and not_run are typed gaps' ok; W2-F2 omitted tool_available typed gap ok. red @fb43090 (git archive export, baseline product + Wave 1 tests): not ok; green @40aaeec: ok; ERR_ASSERTION only, no SyntaxError/ERR_MODULE_NOT_FOUND"
+    },
+    {
+      "id": "SEIT-143.04",
+      "command": "CMD-TEST-ALL",
+      "result": "PASS",
+      "evidence": "env -u BEARING_ROLE node --test test/*.test.mjs @40aaeec: exit 0, 608 tests, pass 608, fail 0; part a 'independent boundary rerun and diagnostic-only prose' red @fb43090 (git archive export, baseline product + Wave 1 tests): not ok; green @40aaeec: ok; ERR_ASSERTION only, no SyntaxError/ERR_MODULE_NOT_FOUND; part b regression guard 'diagnostic receipt cannot satisfy assurance gate' ok at both fb43090 and 40aaeec"
+    },
+    {
+      "id": "SEIT-143.05",
+      "command": "CMD-TEST-ALL",
+      "result": "PASS",
+      "evidence": "env -u BEARING_ROLE node --test test/*.test.mjs @40aaeec: exit 0, 608 tests, pass 608, fail 0; three titled tests AC-143.05 missing-tool, threshold, fail-fast all ok. red @fb43090 (git archive export, baseline product + Wave 1 tests): all 3 not ok; green @40aaeec: all 3 ok; ERR_ASSERTION only, no SyntaxError/ERR_MODULE_NOT_FOUND"
+    },
+    {
+      "id": "SEIT-143.06",
+      "command": "CMD-TEST-ALL",
+      "result": "PASS",
+      "evidence": "env -u BEARING_ROLE node --test test/*.test.mjs @40aaeec: exit 0, 608 tests, pass 608, fail 0; both AC-143.06 tests ok; CMD-GATE-DECL exit 0 (mutation and changed_line_coverage NOT_APPLICABLE with non-empty reasons). red @fb43090 (git archive export, baseline product + Wave 1 tests): 2 not ok; green @40aaeec: 2 ok; ERR_ASSERTION only, no SyntaxError/ERR_MODULE_NOT_FOUND"
+    },
+    {
+      "id": "SEIT-143.07",
+      "command": "CMD-TEST-ALL",
+      "result": "PASS",
+      "evidence": "env -u BEARING_ROLE node --test test/*.test.mjs @40aaeec: exit 0, 608 tests, pass 608, fail 0; AC-143.07 evaluator test and receipt prose test ok; W2-F3 duplicate-id regression ok. red @fb43090 (git archive export, baseline product + Wave 1 tests): 2 not ok; green @40aaeec: 2 ok; ERR_ASSERTION only, no SyntaxError/ERR_MODULE_NOT_FOUND"
+    },
+    {
+      "id": "SEIT-144.01",
+      "command": "CMD-TEST-ALL",
+      "result": "PASS",
+      "evidence": "env -u BEARING_ROLE node --test test/*.test.mjs @40aaeec: exit 0, 608 tests, pass 608, fail 0; 'AC-144.01 / SEIT-144.01' ok. red @fb43090 (git archive export, baseline product + Wave 1 tests): not ok; green @40aaeec: ok; ERR_ASSERTION only, no SyntaxError/ERR_MODULE_NOT_FOUND"
+    },
+    {
+      "id": "SEIT-144.02",
+      "command": "CMD-TEST-ALL",
+      "result": "PASS",
+      "evidence": "env -u BEARING_ROLE node --test test/*.test.mjs @40aaeec: exit 0, 608 tests, pass 608, fail 0; 'AC-144.02 / SEIT-144.02' ok. red @fb43090 (git archive export, baseline product + Wave 1 tests): not ok; green @40aaeec: ok; ERR_ASSERTION only, no SyntaxError/ERR_MODULE_NOT_FOUND"
+    },
+    {
+      "id": "SEIT-144.03",
+      "command": "CMD-TEST-ALL",
+      "result": "PASS",
+      "evidence": "env -u BEARING_ROLE node --test test/*.test.mjs @40aaeec: exit 0, 608 tests, pass 608, fail 0; 'AC-144.03 / SEIT-144.03' ok. red @fb43090 (git archive export, baseline product + Wave 1 tests): not ok; green @40aaeec: ok; ERR_ASSERTION only, no SyntaxError/ERR_MODULE_NOT_FOUND"
+    },
+    {
+      "id": "SEIT-144.04",
+      "command": "CMD-TEST-ALL",
+      "result": "PASS",
+      "evidence": "env -u BEARING_ROLE node --test test/*.test.mjs @40aaeec: exit 0, 608 tests, pass 608, fail 0; test titled 'AC-144.04' exists and ok. red @fb43090 (git archive export, baseline product + Wave 1 tests): not ok; green @40aaeec: ok; ERR_ASSERTION only, no SyntaxError/ERR_MODULE_NOT_FOUND"
+    },
+    {
+      "id": "SEIT-145.01",
+      "command": "CMD-TEST-ALL",
+      "result": "PASS",
+      "evidence": "env -u BEARING_ROLE node --test test/*.test.mjs @40aaeec: exit 0, 608 tests, pass 608, fail 0; both AC-145.01 tests ok (consumes gate-chain receipt; neither receipt returns typed gap); W2-F1 latest-PASS-receipt regression ok. red @fb43090 (git archive export, baseline product + Wave 1 tests): 2 not ok; green @40aaeec: 2 ok; ERR_ASSERTION only, no SyntaxError/ERR_MODULE_NOT_FOUND"
+    },
+    {
+      "id": "SEIT-145.02",
+      "command": "CMD-TEST-ALL",
+      "result": "PASS",
+      "evidence": "env -u BEARING_ROLE node --test test/*.test.mjs @40aaeec: exit 0, 608 tests, pass 608, fail 0; 'AC-145.02 / SEIT-145.02' ok plus SEIT-145.01 scenario ok. red @fb43090 (git archive export, baseline product + Wave 1 tests): not ok; green @40aaeec: ok; ERR_ASSERTION only, no SyntaxError/ERR_MODULE_NOT_FOUND"
+    },
+    {
+      "id": "SEIT-136.01",
+      "command": "CMD-TEST-ALL",
+      "result": "PASS",
+      "evidence": "env -u BEARING_ROLE node --test test/*.test.mjs @40aaeec: exit 0, 608 tests, pass 608, fail 0; 'SEIT-136.01: the manifest projection and rendered HTML both gate review' ok; W2-F6 ok; test/planning-review.test.mjs 7/7 ok (TE-F1). red @fb43090 (git archive export, baseline product + Wave 1 tests): not ok; green @40aaeec: ok; ERR_ASSERTION only, no SyntaxError/ERR_MODULE_NOT_FOUND"
+    },
+    {
+      "id": "SEIT-136.02",
+      "command": "CMD-TEST-ALL",
+      "result": "PASS",
+      "evidence": "env -u BEARING_ROLE node --test test/*.test.mjs @40aaeec: exit 0, 608 tests, pass 608, fail 0; 'SEIT-136.02: absent manifest returns the exact fail-closed result' ok. red @fb43090 (git archive export, baseline product + Wave 1 tests): not ok; green @40aaeec: ok; ERR_ASSERTION only, no SyntaxError/ERR_MODULE_NOT_FOUND"
+    },
+    {
+      "id": "SEIT-136.03",
+      "command": "CMD-TEST-ALL",
+      "result": "PASS",
+      "evidence": "env -u BEARING_ROLE node --test test/*.test.mjs @40aaeec: exit 0, 608 tests, pass 608, fail 0; 'SEIT-136.03 and SEIT-136.04(b)' ok. red @fb43090 (git archive export, baseline product + Wave 1 tests): not ok; green @40aaeec: ok; ERR_ASSERTION only, no SyntaxError/ERR_MODULE_NOT_FOUND"
+    },
+    {
+      "id": "SEIT-136.04",
+      "command": "CMD-TEST-ALL",
+      "result": "PASS",
+      "evidence": "env -u BEARING_ROLE node --test test/*.test.mjs @40aaeec: exit 0, 608 tests, pass 608, fail 0; part a regression 'SEIT-136.04(a): planning-review is not registered as a host hook' ok at fb43090 and 40aaeec; part b shared with SEIT-136.03 test, red @fb43090 (git archive export, baseline product + Wave 1 tests): not ok; green @40aaeec: ok; ERR_ASSERTION only, no SyntaxError/ERR_MODULE_NOT_FOUND"
+    },
+    {
+      "id": "SEIT-135.01",
+      "command": "CMD-TEST-ALL",
+      "result": "PASS",
+      "evidence": "env -u BEARING_ROLE node --test test/*.test.mjs @40aaeec: exit 0, 608 tests, pass 608, fail 0; 'SEIT-135.01: only a stale live pin is reported with file:line' ok; W2-F7/F8/F9 regressions ok. red @fb43090 (git archive export, baseline product + Wave 1 tests): not ok; green @40aaeec: ok; ERR_ASSERTION only, no SyntaxError/ERR_MODULE_NOT_FOUND"
+    },
+    {
+      "id": "SEIT-135.02",
+      "command": "CMD-TEST-ALL",
+      "result": "PASS",
+      "evidence": "env -u BEARING_ROLE node --test test/*.test.mjs @40aaeec: exit 0, 608 tests, pass 608, fail 0; 'SEIT-135.02' ok. red @fb43090 (git archive export, baseline product + Wave 1 tests): not ok; green @40aaeec: ok; ERR_ASSERTION only, no SyntaxError/ERR_MODULE_NOT_FOUND"
+    },
+    {
+      "id": "SEIT-135.03",
+      "command": "CMD-TEST-ALL",
+      "result": "PASS",
+      "evidence": "env -u BEARING_ROLE node --test test/*.test.mjs @40aaeec: exit 0, 608 tests, pass 608, fail 0; 'SEIT-135.03' ok. red @fb43090 (git archive export, baseline product + Wave 1 tests): not ok; green @40aaeec: ok; ERR_ASSERTION only, no SyntaxError/ERR_MODULE_NOT_FOUND"
+    },
+    {
+      "id": "SEIT-135.04",
+      "command": "CMD-TEST-ALL",
+      "result": "PASS",
+      "evidence": "env -u BEARING_ROLE node --test test/*.test.mjs @40aaeec: exit 0, 608 tests, pass 608, fail 0; 'SEIT-135.04' ok. red @fb43090 (git archive export, baseline product + Wave 1 tests): not ok; green @40aaeec: ok; ERR_ASSERTION only, no SyntaxError/ERR_MODULE_NOT_FOUND"
+    },
+    {
+      "id": "SEIT-146.01",
+      "command": "CMD-TEST-ALL",
+      "result": "PASS",
+      "evidence": "env -u BEARING_ROLE node --test test/*.test.mjs @40aaeec: exit 0, 608 tests, pass 608, fail 0; 'AC-146.01 orchestrator-repository-map' and 'AC-146.01 architectural-alignment ownership text' ok; orchestrator-write-lock 16/16 ok; skills-conformance 34/34 ok. red @fb43090 (git archive export, baseline product + Wave 1 tests): 2 not ok; green @40aaeec: 2 ok; ERR_ASSERTION only, no SyntaxError/ERR_MODULE_NOT_FOUND"
+    },
+    {
+      "id": "SEIT-146.02",
+      "command": "CMD-TEST-ALL",
+      "result": "PASS",
+      "evidence": "env -u BEARING_ROLE node --test test/*.test.mjs @40aaeec: exit 0, 608 tests, pass 608, fail 0; stimulus 1 'AC-146.02 envelope-subagent-role' ok (ALLOW); stimulus 2 is the test titled 'AC-146.03 host-without-role' (DENY_DISPATCH, separate-process BEARING_ROLE text) ok. TDD: stimulus 2 red @fb43090 then green; the two AC-146.02-titled tests pass at fb43090 (see finding A1)"
+    },
+    {
+      "id": "SEIT-146.03",
+      "command": "CMD-TEST-ALL",
+      "result": "PASS",
+      "evidence": "env -u BEARING_ROLE node --test test/*.test.mjs @40aaeec: exit 0, 608 tests, pass 608, fail 0; tests 'AC-146.03 orchestrator-workspace' and 'AC-146.03 host-without-role' exist and ok. red @fb43090 (git archive export, baseline product + Wave 1 tests): 2 not ok; green @40aaeec: 2 ok; ERR_ASSERTION only, no SyntaxError/ERR_MODULE_NOT_FOUND"
+    },
+    {
+      "id": "SEIT-AUTH.01",
+      "command": "CMD-SCOPE",
+      "result": "PASS",
+      "evidence": "CMD-SCOPE @40aaeec vs 174773e: stdout empty, grep exit 1; changed paths are 18-path union write set subset plus plan dir; no package.json, lockfile, version, or publish-config path"
+    },
+    {
+      "id": "SEIT-RISK-001",
+      "command": "CMD-SCOPE + CMD-TEST-ALL",
+      "result": "PASS",
+      "evidence": "CMD-SCOPE stdout empty; test/public-boundary.test.mjs 19/19 ok; env -u BEARING_ROLE node --test test/*.test.mjs @40aaeec: exit 0, 608 tests, pass 608, fail 0"
+    },
+    {
+      "id": "SEIT-RISK-002",
+      "command": "CMD-TEST-ALL",
+      "result": "PASS",
+      "evidence": "env -u BEARING_ROLE node --test test/*.test.mjs @40aaeec: exit 0, 608 tests, pass 608, fail 0; manifest-pin-guard 12/12, gate-chain 15/15, review-capability 18/18, capability-gap 15/15 ok; fail-closed and typed-gap cases asserted, none returns PASS"
+    }
+  ],
+  "tdd_red_then_green": {
+    "red_revision": "fb43090 (tests-only over baseline product; 16e3d22 plus Wave 1 repair)",
+    "method": "git archive fb43090 exported to /tmp/ate-agr/red and run there, then removed; no worktree record",
+    "red_failing_ids": 29,
+    "green_at_candidate": 29,
+    "result": "PASS"
+  },
+  "gate_declarations_checked": {
+    "red_then_green": "DECLARED, rerun PASS",
+    "mutation": "NOT_APPLICABLE with reason",
+    "changed_line_coverage": "NOT_APPLICABLE with reason",
+    "reverify": "NOT_SELECTED: no binary-level claim",
+    "build": "NOT_APPLICABLE with reason",
+    "types_lint": "NOT_APPLICABLE with reason"
+  },
+  "smallest_missing_proof": null,
+  "findings": [
+    {
+      "id": "A1",
+      "severity": "advisory",
+      "row": "SEIT-146.02",
+      "finding": "The two tests titled AC-146.02 pass at red revision fb43090, so they were never red. The red half of SEIT-146.02 (stimulus 2, role-less subagent denied with the BEARING_ROLE fallback) is carried by the test titled 'AC-146.03 host-without-role', which is red at fb43090 and green at the candidate. Row behavior passes; the red-then-green trace sits under a different test title than the row's observable_evidence names.",
+      "location": "test/orchestrator-write.test.mjs:50, :62, :80"
+    },
+    {
+      "id": "A2",
+      "severity": "advisory",
+      "row": null,
+      "finding": "Pre-existing hermeticity case persists: with BEARING_ROLE=test_engineer inherited, CMD-TEST-ALL fails 1/608 (test/harness-acceptance.test.mjs 'evaluates packaged hook scripts with a write deny and an allowed counterpart'). This is the same case recorded at baseline; it is out of this Lifecycle's scope and the declared command unsets the role."
+    },
+    {
+      "id": "A3",
+      "severity": "advisory",
+      "row": null,
+      "finding": "The local block-destructive-git hook blocked 'git worktree add' under /tmp. The red run used a git archive export of fb43090 instead. It is equivalent for running tests and leaves no git state."
+    }
+  ],
+  "llm_behavior_ceiling": "Prose rows prove the text contract only; runtime LLM adherence is not claimed (seit vv_methods).",
+  "blocker": null
+}
