@@ -665,6 +665,45 @@
       "status": "CLOSED",
       "assurance_rounds": 1,
       "repairs_used": 1
+    },
+    {
+      "unit": "Wave 3",
+      "stage": "review",
+      "at": "2026-09-23T15:15:52Z",
+      "route": "Cursor Agent / Grok 4.7 / high",
+      "verdict": "ACCEPT",
+      "assurance_rounds": 1
+    },
+    {
+      "unit": "lifecycle",
+      "stage": "test_engineer.assurance",
+      "at": "2026-09-23T15:15:52Z",
+      "route": "Claude Code / Claude Opus 5.5 / medium",
+      "verdict": "PASS",
+      "rows": "27/27"
+    },
+    {
+      "unit": "lifecycle",
+      "stage": "integration_engineer.execution",
+      "at": "2026-09-23T15:15:52Z",
+      "route": "Claude Code / Claude Opus 5.5 / medium",
+      "verdict": "FAIL",
+      "findings": [
+        "IE-F1 plan-package missing_register_baseline regression from 90eea69"
+      ],
+      "assurance_rounds": 1
+    },
+    {
+      "unit": "lifecycle",
+      "stage": "repair",
+      "at": "2026-09-23T15:15:52Z",
+      "routes": [
+        "Codex CLI / GPT-6 Sol / xhigh (IE-F1 regression tests)",
+        "Muse Code / Muse Spark 1.3 / xhigh (plan-package fix)"
+      ],
+      "post_repair_gate": "deterministic_PASS: node --test 610/610; plan-package PASS on 2026-09-22 and 2026-09-12 packages; render --check PASS; schema 268/268; diff-check clean",
+      "status": "CLOSED",
+      "repairs_used": 1
     }
   ]
 }
