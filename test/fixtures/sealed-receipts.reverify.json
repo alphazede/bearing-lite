@@ -1,0 +1,82 @@
+{
+  "description": "Receipts exactly as sealVerification emits them. Regenerate with test/build-sealed-receipt-fixture.cjs.",
+  "receipts": {
+    "observed": {
+      "schema_version": "1",
+      "kind": "receipt",
+      "status": "VERIFIED",
+      "candidate_ref": "cand-1",
+      "candidate_revision": "b5cec79f04f6f6ea506a2ad89bf937aab143d876",
+      "candidate_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "claim_id": "SEIT-BDL-BIN-001",
+      "backend": "reverify",
+      "backend_version": "reverify 0.9.0",
+      "command_configuration": {
+        "backend": "reverify",
+        "operation": "verify",
+        "target": "firmware.bin",
+        "claim": "{\"kind\":\"section_present\",\"name\":\".text\"}",
+        "args": [],
+        "invocation": {
+          "executable": "reverify",
+          "argv_template": [
+            "{operation}",
+            "{target}",
+            "--claim",
+            "{claim}",
+            "--json"
+          ]
+        }
+      },
+      "evidence_digest": "679f1564eb1a34d0d61fde110ccca75c5a7d8b99cc2958bd6409c26a6d6559b0",
+      "authority": "assurance",
+      "produced_by": {
+        "role": "test_engineer.assurance",
+        "identity": "ate-1",
+        "session": "sess-ate"
+      },
+      "stage": "assurance",
+      "evidence_tier": "observed",
+      "backend_verdict": "VERIFIED"
+    },
+    "derived": {
+      "schema_version": "1",
+      "kind": "receipt",
+      "status": "INCONCLUSIVE",
+      "candidate_ref": "cand-1",
+      "candidate_revision": "b5cec79f04f6f6ea506a2ad89bf937aab143d876",
+      "candidate_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "claim_id": "SEIT-BDL-BIN-001",
+      "backend": "reverify",
+      "backend_version": "reverify 0.9.0",
+      "command_configuration": {
+        "backend": "reverify",
+        "operation": "verify",
+        "target": "firmware.bin",
+        "claim": "{\"kind\":\"section_present\",\"name\":\".text\"}",
+        "args": [],
+        "invocation": {
+          "executable": "reverify",
+          "argv_template": [
+            "{operation}",
+            "{target}",
+            "--claim",
+            "{claim}",
+            "--json"
+          ]
+        }
+      },
+      "evidence_digest": "e4f53d8f279e572e632b5fb47761fc1bd1b40d3bf52f79eb88c079ee0bb66aec",
+      "authority": "assurance",
+      "produced_by": {
+        "role": "test_engineer.assurance",
+        "identity": "ate-1",
+        "session": "sess-ate"
+      },
+      "stage": "assurance",
+      "evidence_tier": "derived",
+      "backend_verdict": "VERIFIED",
+      "evidence_engine": "cfg-recovery 1.2.0"
+    }
+  }
+}

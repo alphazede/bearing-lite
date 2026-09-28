@@ -1427,6 +1427,17 @@ def verification_cases() -> list[tuple[str, str, object, str]]:
         ), "reject"),
         ("SEIT-BDL-004", "request_kind_receipt_hybrid", complete_verification_request(kind="receipt"), "reject"),
     ]
+    sealed_path = ROOT / "test" / "fixtures" / "sealed-receipts.reverify.json"
+    with sealed_path.open(encoding="utf-8") as fh:
+        sealed = json.load(fh)["receipts"]
+    for key, receipt in sealed.items():
+        out.append(("SEIT-BDL-004", f"sealed_receipt_{key}", receipt, "accept"))
+    observed = sealed["observed"]
+    out.extend([
+        ("SEIT-BDL-004", "sealed_receipt_evidence_tier_invalid", {**observed, "evidence_tier": "guessed"}, "reject"),
+        ("SEIT-BDL-004", "sealed_receipt_backend_verdict_invalid", {**observed, "backend_verdict": "PASS"}, "reject"),
+        ("SEIT-BDL-004", "sealed_receipt_evidence_engine_empty", {**sealed["derived"], "evidence_engine": ""}, "reject"),
+    ])
     for field in VERIFICATION_REQUEST_FIELDS:
         out.append((
             "SEIT-BDL-004",

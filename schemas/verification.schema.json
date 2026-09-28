@@ -119,7 +119,10 @@
         "evidence_digest": { "$ref": "#/$defs/sha256" },
         "authority": { "$ref": "#/$defs/authority" },
         "produced_by": { "$ref": "#/$defs/produced_by" },
-        "stage": { "$ref": "#/$defs/stage" }
+        "stage": { "$ref": "#/$defs/stage" },
+        "evidence_tier": { "type": "string", "enum": ["observed", "derived"] },
+        "backend_verdict": { "$ref": "#/$defs/status" },
+        "evidence_engine": { "$ref": "#/$defs/nonempty" }
       }
     }
   }
