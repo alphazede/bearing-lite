@@ -184,6 +184,38 @@ test("W2-F2 declared gate with omitted tool_available is a typed gap", () => {
   assert.equal(got.failed_gate, "mutation");
 });
 
+test("#167 numeric-score gates without numeric evidence are typed gaps", () => {
+  for (const gate of ["mutation", "changed_line_coverage"]) {
+    const cases = [
+      [{ threshold: 80 }, { tool_available: true, outcome: "PASS" }],
+      [{ threshold: 80 }, { tool_available: true, outcome: "PASS", score: "12" }],
+      [{ threshold: "80" }, { tool_available: true, outcome: "PASS", score: 12 }],
+      [{ threshold: true }, { tool_available: true, outcome: "PASS", score: 12 }],
+    ];
+    for (const [decl, result] of cases) {
+      const got = evaluate(
+        declarations({ [gate]: { status: "DECLARED", tool: "fixture-tool", ...decl } }),
+        { [gate]: result },
+      );
+      assert.equal(got.outcome, "NEEDS_MORE_EVIDENCE", `${gate} ${JSON.stringify(decl)}`);
+      assert.equal(got.failed_gate, gate);
+    }
+  }
+});
+
+test("#167 numeric-score controls and non-numeric gates keep text thresholds", () => {
+  for (const gate of ["mutation", "changed_line_coverage"]) {
+    const decl = declarations({ [gate]: declared });
+    assert.equal(evaluate(decl, { [gate]: { tool_available: true, outcome: "PASS", score: 79 } }).outcome, "FAIL");
+    assert.equal(evaluate(decl, { [gate]: { tool_available: true, outcome: "PASS", score: 85 } }).outcome, "PASS");
+  }
+  const textGate = evaluate(
+    declarations({ build: { status: "DECLARED", tool: "fixture-tool", threshold: "present" } }),
+    { build: { tool_available: true, outcome: "PASS" } },
+  );
+  assert.equal(textGate.outcome, "PASS");
+});
+
 test("W2-F3 red-then-green rejects duplicate candidate ids replacing a baseline id", () => {
   const gates = declarations({ red_then_green: { status: "DECLARED", tool: "node:test", threshold: "same test ids" } });
   const got = evaluate(gates, { red_then_green: {

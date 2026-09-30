@@ -182,6 +182,10 @@ function evaluateAssuranceBudget(input) {
   }
 }
 
+const NUMERIC_SCORE_GATES = Array.isArray(POLICY.numeric_score_gates)
+  ? POLICY.numeric_score_gates
+  : [];
+
 const sameTestIds = (a, b) => {
   if (!Array.isArray(a) || !Array.isArray(b) || !a.length) return false;
   if (a.length !== b.length) return false;
@@ -197,7 +201,8 @@ const sameTestIds = (a, b) => {
  * (NEEDS_MORE_EVIDENCE), never PASS; undeclared gates fail closed unless
  * NOT_APPLICABLE with a reason; the red-then-green gate needs a receipt
  * holding both the baseline failing run and the candidate passing run over
- * the same test ids.
+ * the same test ids. Gates in POLICY.numeric_score_gates need a numeric
+ * threshold and a numeric score; anything else is a typed gap, never PASS.
  *
  * @param {{ gate_declarations?: object, results?: object }} input
  * @returns {{ outcome: string, failed_gate?: string, gates: Array<{ gate: string, outcome: string }> }}
@@ -256,6 +261,12 @@ function evaluateGateChain(input) {
       }
       if (result.outcome === "FAIL") {
         return fail(gate, "FAIL");
+      }
+      if (
+        NUMERIC_SCORE_GATES.includes(gate) &&
+        (!Number.isFinite(declaration.threshold) || !Number.isFinite(result.score))
+      ) {
+        return fail(gate, "NEEDS_MORE_EVIDENCE");
       }
       if (
         typeof result.score === "number" &&
