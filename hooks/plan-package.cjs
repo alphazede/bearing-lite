@@ -395,7 +395,9 @@ function checkLivePins(dir, findings = []) {
 function checkManifestProjection(implementation) {
   const manifest = implementation?.dod_manifest;
   // Older digest-only packages have no renderer input; validate supplied projections.
-  if (!manifest) return [];
+  if (manifest === undefined) return [];
+  const object = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
+  if (!object(manifest)) return [{ code: "manifest_section_shape_invalid", section: "dod_manifest" }];
   const findings = [];
   const text = (value) => typeof value === "string" && value.trim() &&
     value.trim().toLowerCase() !== "unspecified";
@@ -404,17 +406,39 @@ function checkManifestProjection(implementation) {
     : value && typeof value === "object" && Object.values(value).some(content));
   const rows = (value) => Array.isArray(value) ? value :
     value && typeof value === "object" ? [value] : [];
-  for (const row of rows(manifest.requirements)) {
-    if (row?.not_applicable === true && text(row.reason)) continue;
+  const sections = {};
+  for (const section of ["requirements", "architecture", "tasks", "documentation", "models"]) {
+    const value = manifest[section];
+    sections[section] = [];
+    if (value == null) continue;
+    if (!Array.isArray(value) && !object(value)) {
+      findings.push({ code: "manifest_section_shape_invalid", section });
+      continue;
+    }
+    if (object(value) && value.not_applicable === true && text(value.reason)) {
+      if (section === "documentation") sections[section] = [value];
+      continue;
+    }
+    rows(value).forEach((row, index) => {
+      if (!object(row)) {
+        findings.push({ code: "manifest_section_shape_invalid", section, index });
+        return;
+      }
+      if (["requirements", "architecture", "tasks"].includes(section) && row.not_applicable === true) {
+        findings.push({ code: "manifest_row_not_applicable", section, id: row.id ?? null });
+      }
+      sections[section].push(row);
+    });
+  }
+  for (const row of sections.requirements) {
     if (!text(row?.statement)) findings.push({ code: "manifest_requirement_statement_missing", id: row?.id ?? null });
   }
-  for (const row of rows(manifest.architecture)) {
-    if (row?.not_applicable === true && text(row.reason)) continue;
+  for (const row of sections.architecture) {
     if (!text(row?.decision) && !text(row?.summary)) {
       findings.push({ code: "manifest_architecture_summary_missing", id: row?.id ?? null });
     }
   }
-  const tasks = rows(manifest.tasks);
+  const tasks = sections.tasks;
   walk({ slices: implementation.slices, waves: implementation.waves }, (node) => {
     if (!Array.isArray(node.slices)) return;
     for (const slice of node.slices) {
@@ -424,7 +448,11 @@ function checkManifestProjection(implementation) {
     }
   });
   for (const row of tasks) {
-    if (row?.not_applicable === true && text(row.reason)) continue;
+    for (const field of ["depends_on", "write_set"]) {
+      if (Array.isArray(row[field]) && !row[field].every(text)) {
+        findings.push({ code: "manifest_task_field_invalid", id: row.id ?? null, field });
+      }
+    }
     const fields = {
       role: text(row?.role),
       route: content(row?.route) || content(row?.model_route) || content(row?.effective_route),
@@ -435,13 +463,13 @@ function checkManifestProjection(implementation) {
       if (!present) findings.push({ code: "manifest_task_field_missing", id: row?.id ?? null, field });
     }
   }
-  const documentation = rows(manifest.documentation);
+  const documentation = sections.documentation;
   if (!documentation.some((row) =>
     (row?.not_applicable === true && text(row.reason)) ||
     (text(row?.impact) && [row?.surface, row?.path, row?.id].some(text)))) {
     findings.push({ code: "manifest_documentation_unspecified" });
   }
-  for (const model of rows(manifest.models)) {
+  for (const model of sections.models) {
     if (!["diagram-assisted", "sysml-v2"].includes(model?.mode)) continue;
     const views = model.view ? [model.view] : rows(model.views);
     const supplement = rows(manifest.closeout?.model_views).filter((row) => row?.model_id === model.id);
