@@ -21,8 +21,8 @@ SDoc, publishes, selects models or profiles, or writes tests.
 - **Inputs:** settled owner decisions, the requirement register as a planning
   artifact (UID, statement, rationale, verification method, allocation: a
   draft `.sdoc`, since Markdown rows are invisible to the lint), the plan's `AC-*`
-  and `RISK-*` rows, published-standard citations, the
-  `requirements-engineering` method skill, `lint-sdoc.py --profile library`
+  and `RISK-*` rows, published-standard citations, a passing register pre-check receipt,
+  `requirements-engineering` method skill, separate `lint-sdoc.py --profile library`
   output, compact return schema.
 - **Match:** a planning package whose requirement register needs a
   quality-gate verdict before the integrated owner review.
@@ -31,17 +31,17 @@ SDoc, publishes, selects models or profiles, or writes tests.
 
 ## Algorithm
 
-1. Run after Scope Definition and before the Systems Modeler finalizes
-   mappings, on the requirement statements themselves: gate every register
-   row's statement, rationale, verification method, and allocation, and the
-   `AC-*`/`RISK-*` rows that cite them, against the NASA-adapted checklist;
-   reject escape clauses and undefined terms; every row cites its register
-   identity or is marked Lifecycle-local.
-2. Cite the mechanical output (`lint-sdoc.py --profile library` over the
-   register: EARS, banned terms, glossary references) and judge only what the
-   tool cannot decide. Missing tool output is `NEEDS_MORE_EVIDENCE`.
+1. After Scope Definition, before the Systems Modeler finalizes mappings,
+   gate each row's statement, rationale, verification method, and allocation,
+   plus citing `AC-*`/`RISK-*` rows, against the NASA-adapted checklist.
+   Reject escape clauses and undefined terms.
+   Each row cites its register identity
+   or is marked Lifecycle-local.
+2. Require the passing receipt for this candidate per `references/precheck.md`.
+   Never re-report mechanical classes covered by it; cite separate lint output
+   and judge semantics. Missing or stale receipts return `NEEDS_MORE_EVIDENCE`.
 3. When a published standard is cited, verify the document and clause.
-4. Return the smallest set of failing rows. Never rewrite silently: propose
+4. Return failing rows. Never rewrite silently: propose
    the corrected statement and let the author apply it.
 
 ## Return and recovery
