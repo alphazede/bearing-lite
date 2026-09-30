@@ -287,6 +287,55 @@ describe("plan-package (#153 complete manifest projection)", () => {
       rejects(doc, "manifest_task_field_missing");
     });
   }
+  for (const section of ["requirements", "architecture", "tasks"]) {
+    it(`F2 rejects per-row N/A in ${section}`, () => {
+      const doc = fixture();
+      doc.dod_manifest[section] = [{ id: section === "tasks" ? "S1" : "R1",
+        not_applicable: true, reason: "deferred" }];
+      rejects(doc, "manifest_row_not_applicable");
+      const codes = { requirements: "manifest_requirement_statement_missing",
+        architecture: "manifest_architecture_summary_missing", tasks: "manifest_task_field_missing" };
+      rejects(doc, codes[section]);
+    });
+  }
+  for (const [section, value] of [
+    ["requirements", 42], ["architecture", "bad"], ["tasks", 42],
+    ["documentation", false], ["models", "bad"],
+    ["requirements", [null]], ["architecture", [false]], ["tasks", [42]],
+  ]) {
+    it(`F3 rejects malformed ${section}: ${JSON.stringify(value)}`, () => {
+      const doc = fixture();
+      doc.dod_manifest[section] = value;
+      rejects(doc, "manifest_section_shape_invalid");
+    });
+  }
+  it("F3 rejects a malformed projection object", () => {
+    const doc = fixture();
+    doc.dod_manifest = 42;
+    rejects(doc, "manifest_section_shape_invalid");
+  });
+  for (const [field, value] of [["depends_on", [null]], ["write_set", [false]]]) {
+    it(`F3 rejects malformed task ${field} elements`, () => {
+      const doc = fixture();
+      doc.dod_manifest.tasks[0][field] = value;
+      const result = run(doc);
+      assert.equal(result.outcome, "FAIL");
+      assert.ok(result.findings.some((finding) => finding.code === "manifest_task_field_invalid" &&
+        finding.id === "S1" && finding.field === field), JSON.stringify(result));
+    });
+  }
+  it("permits section N/A with reason and empty lists without slices", () => {
+    for (const value of [[], { not_applicable: true, reason: "No applicable content." }]) {
+      const doc = fixture();
+      doc.slices = [];
+      for (const section of ["requirements", "architecture", "tasks"]) doc.dod_manifest[section] = value;
+      doc.dod_manifest.models = [];
+      assert.deepEqual(run(doc).findings, []);
+    }
+    const doc = fixture();
+    doc.dod_manifest.tasks[0].write_set = [];
+    assert.deepEqual(run(doc).findings, []);
+  });
   it("rejects unspecified documentation without explicit N/A and reason", () => {
     for (const documentation of [[], [{ surface: "unspecified", impact: "unspecified" }],
       { not_applicable: true }, { not_applicable: true, reason: "  " }]) {
