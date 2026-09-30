@@ -28,7 +28,8 @@ Fresh planning node. If you are the Orchestrator, dispatch this; do not execute 
    if repository evidence cannot decide, return `NEEDS_OWNER_DECISION`. Never
    infer one. Registered identities remain references; author only Lifecycle-local
    criteria; author the needed Lifecycle-level proof or return
-   `NEEDS_OWNER_DECISION` when register authority is unclear.
+   `NEEDS_OWNER_DECISION` when register authority is unclear. Copy the confirmed
+   quantity-definitions table into the glossary verbatim per `references/artifact-grammar.md`.
 2. Author and prospectively check, in dependency order, the testable
    technical-plan, `design.md`, and `seit.json`. Preserve IDs, do not drop
    Lifecycle-level proof or published-standard clause coverage, and select Reverify only on applicable binary-level SEIT claims; consume `references/allocation-inputs.md` before register allocation.
@@ -42,8 +43,7 @@ Fresh planning node. If you are the Orchestrator, dispatch this; do not execute 
    route, profile, role states, reasoning, cadence, traceability, waves,
    recovery, approval boundaries, and register references versus Lifecycle-local
    requirements. DoD Manifest states: `planning` then append-only closeout.
-5. Give every slice stable requirement/design/SEIT IDs, dependencies, exact
-   write set, authority, role, session rule, evidence, recovery, and stop rule.
+5. Give every slice stable requirement/design/SEIT IDs, dependencies, exact write set, authority, role, session rule, evidence, recovery, and stop rule.
 6. Follow `../bearing-lite/references/owner-stops.md`. Open and verify the Manifest, then request
    exactly one integrated owner review of outcome, design, route, profile, cadence, and plan. Review
    presentation is gated by `hooks/planning-review.cjs` `evaluatePlanningReview()`, which returns
