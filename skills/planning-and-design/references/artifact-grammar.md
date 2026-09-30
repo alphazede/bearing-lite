@@ -169,3 +169,31 @@ implementation. Each records its stage and exact input digests. The single owner
 the complete five-artifact package. Do not insert a lineup, route, or
 specification-only owner gate unless the owner explicitly requests staged
 approvals. The HTML becomes a frozen projection only after integrated owner approval.
+
+
+## DoD Manifest content freeze
+
+`implementation.json.dod_manifest` carries reviewable content before the freeze,
+not a reference index. Source references accompany content; they never replace it.
+
+- Requirement rows carry `statement` text, including the resolved statement of a
+  register reference in this derived projection; register authority stays unchanged.
+- Architecture rows carry `summary` or `decision` text.
+- Every slice in `slices` or `waves[].slices` has a task row keyed by the same `id`.
+  Each task carries `role`, `route` (or `model_route` / `effective_route`),
+  `depends_on`, and `write_set`. Empty lists explicitly mean no dependencies or
+  no writes; omitted fields do not.
+- Documentation carries a named `surface` / `path` / `id` and `impact`, or explicit
+  `not_applicable: true` with a non-empty `reason`. Unspecified rows alone fail.
+- Systems Modeler selection is projected as `models[].mode`. `diagram-assisted`
+  and `sysml-v2` require a `view` or `views` binding with `format: svg|png` and
+  `path`, or SVG `inline` content. Append-only `closeout.model_views` bindings
+  keyed by `model_id` also qualify. N/A cannot override these modes. The renderer
+  still verifies asset availability, digests, and safe embedding.
+
+The freeze emits `manifest_requirement_statement_missing`,
+`manifest_architecture_summary_missing`, `manifest_slice_task_missing`,
+`manifest_task_field_missing` (naming the field),
+`manifest_documentation_unspecified`, or `manifest_model_view_missing`.
+Historical digest-only packages without `dod_manifest` retain their existing
+checks; these content checks apply whenever a Manifest projection is supplied.

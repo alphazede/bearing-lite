@@ -206,7 +206,7 @@ test("W2-F9 missing or invalid authority digest produces a finding", (t) => {
   }
 });
 
-test("IE-F1 real package without register freezes PASS", (t) => {
+test("IE-F1 real package without register has only manifest content findings", (t) => {
   const rel = "docs/plans/2026-09-22-assurance-gate-and-review-flow";
   const root = temporary(t);
   const dir = path.join(root, rel);
@@ -219,8 +219,14 @@ test("IE-F1 real package without register freezes PASS", (t) => {
   }
   assert.ok(!readdirSync(dir).includes("authority.json"));
   const result = freeze(dir);
-  assert.equal(result.outcome, "PASS", JSON.stringify(result.findings));
   assert.ok(!result.findings.some((finding) => finding.code === "missing_register_baseline"));
+  const contentCodes = [
+    "manifest_requirement_statement_missing", "manifest_architecture_summary_missing",
+    "manifest_slice_task_missing", "manifest_task_field_missing",
+    "manifest_documentation_unspecified", "manifest_model_view_missing",
+  ];
+  assert.ok(result.findings.every((finding) => contentCodes.includes(finding.code)), JSON.stringify(result.findings));
+  assert.equal(result.outcome, result.findings.length ? "FAIL" : "PASS");
 });
 
 test("IE-F1 real repository packages freeze", () => {
@@ -235,5 +241,15 @@ test("IE-F1 real repository packages freeze", () => {
     const { outcome, findings } = JSON.parse(run.stdout);
     return { name, exit: run.status, outcome, findings };
   });
-  assert.deepEqual(actual, names.map((name) => ({ name, exit: 0, outcome: "PASS", findings: [] })));
+  const contentCodes = [
+    "manifest_requirement_statement_missing", "manifest_architecture_summary_missing",
+    "manifest_slice_task_missing", "manifest_task_field_missing",
+    "manifest_documentation_unspecified", "manifest_model_view_missing",
+  ];
+  for (const { exit, outcome, findings } of actual) {
+    assert.ok(!findings.some((finding) => finding.code === "missing_register_baseline"));
+    assert.ok(findings.every((finding) => contentCodes.includes(finding.code)), JSON.stringify(findings));
+    assert.equal(outcome, findings.length ? "FAIL" : "PASS");
+    assert.equal(exit, findings.length ? 1 : 0);
+  }
 });

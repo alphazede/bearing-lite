@@ -38,8 +38,8 @@ Fresh planning node. If you are the Orchestrator, dispatch this; do not execute 
    cadence. Bind the one planning-review slot to owner-supplied
    primary and ordered fallback route references under one candidate ref,
    revision, and digest. Use supplied identities; never invent them.
-4. After those stable source inputs, generate `implementation.json`; then freeze: `node <plugin root>/hooks/plan-package.cjs <plan dir>`
-   must PASS (any finding halts), then generate the DoD Manifest input together with its rendered HTML. Each includes the proposed
+4. After stable source inputs, generate `implementation.json` with DoD Manifest input carrying content, not references; freeze: `node <plugin root>/hooks/plan-package.cjs <plan dir>`
+   must PASS (any finding halts), then render the DoD Manifest input together with its HTML. Each includes the proposed
    route, profile, role states, reasoning, cadence, traceability, waves,
    recovery, approval boundaries, and register references versus Lifecycle-local
    requirements. DoD Manifest states: `planning` then append-only closeout.

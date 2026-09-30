@@ -1,0 +1,47 @@
+{
+  "slices": [
+    {
+      "id": "S1",
+      "role": "Implementer",
+      "model_route": {
+        "route_ref": "implementation"
+      },
+      "write_set": [
+        "hooks/plan-package.cjs"
+      ]
+    }
+  ],
+  "dod_manifest": {
+    "template_version": "1.0.1",
+    "output_name": "complete-dod-manifest.html",
+    "title": "Complete planning projection",
+    "requirements": [
+      {
+        "id": "AC-1",
+        "statement_ref": "technical-plan.md#AC-1"
+      }
+    ],
+    "architecture": [
+      {
+        "id": "DES-1",
+        "ref": "design.md"
+      }
+    ],
+    "tasks": [
+      {
+        "wave": "Wave 1",
+        "slices": [
+          "S1"
+        ]
+      }
+    ],
+    "documentation": [
+      {
+        "surface": "artifact-grammar.md"
+      }
+    ],
+    "models": {
+      "not_applicable": true
+    }
+  }
+}

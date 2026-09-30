@@ -391,11 +391,77 @@ function checkLivePins(dir, findings = []) {
   return findings;
 }
 
+/** #153: the owner projection carries content, not just source references. */
+function checkManifestProjection(implementation) {
+  const manifest = implementation?.dod_manifest;
+  // Older digest-only packages have no renderer input; validate supplied projections.
+  if (!manifest) return [];
+  const findings = [];
+  const text = (value) => typeof value === "string" && value.trim() &&
+    value.trim().toLowerCase() !== "unspecified";
+  const content = (value) => text(value) || (Array.isArray(value)
+    ? value.some(content)
+    : value && typeof value === "object" && Object.values(value).some(content));
+  const rows = (value) => Array.isArray(value) ? value :
+    value && typeof value === "object" ? [value] : [];
+  for (const row of rows(manifest.requirements)) {
+    if (row?.not_applicable === true && text(row.reason)) continue;
+    if (!text(row?.statement)) findings.push({ code: "manifest_requirement_statement_missing", id: row?.id ?? null });
+  }
+  for (const row of rows(manifest.architecture)) {
+    if (row?.not_applicable === true && text(row.reason)) continue;
+    if (!text(row?.decision) && !text(row?.summary)) {
+      findings.push({ code: "manifest_architecture_summary_missing", id: row?.id ?? null });
+    }
+  }
+  const tasks = rows(manifest.tasks);
+  walk({ slices: implementation.slices, waves: implementation.waves }, (node) => {
+    if (!Array.isArray(node.slices)) return;
+    for (const slice of node.slices) {
+      if (!tasks.some((task) => task?.id === slice?.id)) {
+        findings.push({ code: "manifest_slice_task_missing", id: slice?.id ?? null });
+      }
+    }
+  });
+  for (const row of tasks) {
+    if (row?.not_applicable === true && text(row.reason)) continue;
+    const fields = {
+      role: text(row?.role),
+      route: content(row?.route) || content(row?.model_route) || content(row?.effective_route),
+      depends_on: Array.isArray(row?.depends_on) || text(row?.depends_on),
+      write_set: Array.isArray(row?.write_set) || text(row?.write_set),
+    };
+    for (const [field, present] of Object.entries(fields)) {
+      if (!present) findings.push({ code: "manifest_task_field_missing", id: row?.id ?? null, field });
+    }
+  }
+  const documentation = rows(manifest.documentation);
+  if (!documentation.some((row) =>
+    (row?.not_applicable === true && text(row.reason)) ||
+    (text(row?.impact) && [row?.surface, row?.path, row?.id].some(text)))) {
+    findings.push({ code: "manifest_documentation_unspecified" });
+  }
+  for (const model of rows(manifest.models)) {
+    if (!["diagram-assisted", "sysml-v2"].includes(model?.mode)) continue;
+    const views = model.view ? [model.view] : rows(model.views);
+    const supplement = rows(manifest.closeout?.model_views).filter((row) => row?.model_id === model.id);
+    const bound = [...views, ...supplement.map((row) => row.view)].some((view) =>
+      ["svg", "png"].includes(view?.format) &&
+      (text(view.path) || (view.format === "svg" && text(view.inline))));
+    // N/A or deselection cannot override a selected modeling mode.
+    if (model.not_applicable === true || model.selected === false || !bound) {
+      findings.push({ code: "manifest_model_view_missing", id: model.id ?? null, mode: model.mode });
+    }
+  }
+  return findings;
+}
+
 function freeze(dir) {
   const digests = verifyDigests(dir);
   const seit = readJson(path.join(dir, "seit.json"));
   const implementation = readJson(path.join(dir, "implementation.json"));
   const findings = [
+    ...checkManifestProjection(implementation),
     ...checkRoles(seit, implementation),
     ...checkWorkClass(implementation),
     ...checkPlanningRoles(implementation),
@@ -410,6 +476,7 @@ function freeze(dir) {
 }
 
 module.exports = {
+  checkManifestProjection,
   checkRoles,
   checkWorkClass,
   checkPlanningRoles,
