@@ -12,6 +12,7 @@ runtime mirror of the block below; the block is authoritative.
 ```json
 {
   "gate_order": ["build", "types_lint", "red_then_green", "mutation", "changed_line_coverage", "reverify", "reviewer"],
+  "numeric_score_gates": ["mutation", "changed_line_coverage"],
   "mixed_cadence_reviewer_consumption": "consume the most recent gate-chain receipt for the unit when no TE receipt exists at the boundary; the gate chain therefore runs at every Reviewer boundary",
   "budget_scope": "per_declared_cadence_unit",
   "cadence_values": ["slice", "phase", "lifecycle"],
