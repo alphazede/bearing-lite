@@ -21,6 +21,10 @@ const routing = readFileSync(
   "utf8"
 );
 const modeler = readFileSync(path.join(ROOT, "skills/systems-modeler/SKILL.md"), "utf8");
+const pdSkill = readFileSync(
+  path.join(ROOT, "skills/planning-and-design/SKILL.md"),
+  "utf8"
+);
 const allocationInputs = readFileSync(
   path.join(ROOT, "skills/planning-and-design/references/allocation-inputs.md"),
   "utf8"
@@ -73,5 +77,10 @@ describe("CMD-STAGE-ORDER-01 systems-modeler contextual pass (SEIT-STAGE-ORDER-0
     assert.match(allocationInputs, /typed gap/);
     assert.match(allocationInputs, /NEEDS_OWNER_DECISION/);
     assert.match(allocationInputs, /Requirements Engineer/);
+  });
+
+  it("planning-and-design skill reaches allocation-inputs before register allocation", () => {
+    assert.match(pdSkill, /references\/allocation-inputs\.md/);
+    assert.match(pdSkill, /before register allocation/);
   });
 });
