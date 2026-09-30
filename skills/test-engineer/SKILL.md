@@ -48,7 +48,9 @@ one aggregate repair, then deterministic closure without another review. The
 next distinct declared phase or wave carries its own budget.
 
 Never implement, self-certify, replace Reviewer or Integration Engineer
-execution, or grant owner-only approval.
+execution, or grant owner-only approval. Lead and child sessions share one role:
+the lead splits independent evidence questions into child packets with own write
+directory, inputs, and time budget each, then only merges typed returns (`INSUFFICIENT` when missing).
 
 ## Gate-chain claim types
 

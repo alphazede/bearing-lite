@@ -30,7 +30,7 @@ Scribe transcribes history. Plugin hosts are partial; skill-copy is skills-only.
    tdd: frozen snapshot's Test Implementer (`roles.test_implementer`) before Product Implementer.
    Implementer may continue in-wave. `work_class: light` goes to Light Implementer;
    `reclassify: judgement` back to Implementer. Use visible wave receipts;
-   update implementation and DoD Manifest once per wave.
+   update implementation and DoD Manifest once per wave. Specialist fan-out children run under the lead's frozen route as one specialist dispatch, never extra reviewer or assurance rounds (see `references/specialist-fan-out.md`).
 
 Return `READY`, `WAITING_ON`, `OWNER_DECISION_REQUIRED`, `COMPLETE`.
 `max_assurance_rounds` is 1 per declared phase or wave-end, not per Lifecycle;

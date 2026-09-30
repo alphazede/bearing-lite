@@ -96,6 +96,17 @@ Do not invent permissions, budgets, deadlines, or reasoning levels.
 
 Do not specify a reasoning level for the agent unless the owner has explicitly instructed one. Otherwise omit it and let the agent's configured model default apply.
 
+## TIME BUDGET
+
+Every handoff carries one TIME BUDGET line. State the session time budget
+and a per-external-call bound smaller than the remaining session time.
+Stop starting new work at T minus 5 and write the result.
+
+```text
+TIME BUDGET
+session: 90 min; per-call: 20 min; stop new work at T minus 5, then write result
+```
+
 ## LOOP
 
 Write the shortest controlled execution loop.
@@ -231,6 +242,18 @@ STOP WHEN
 
 Do not stop merely because the work is difficult.
 
+## Fan-out (optional)
+
+When one objective holds independent questions, the receiving session may
+act as a lead and split them into up to N child sessions of the same role,
+one per question, where N is declared in the lead packet. Each child gets
+its own packet in this same handoff format, its own write directory, only
+its own inputs, and its own TIME BUDGET. Write directories must be distinct.
+Children hold the lead's authority and stop only through their own session
+handle. The lead only launches the children, waits for them, and merges
+their typed returns into one artifact; a missing answer is marked
+unanswered. The lead adds no findings beyond the merge.
+
 ## Final Check
 
 Before returning the handoff, confirm:
@@ -240,6 +263,7 @@ Before returning the handoff, confirm:
 - One objective
 - Known starting state
 - Clear authority
+- TIME BUDGET line
 - Controlled loop
 - Observable verification
 - Structured return
