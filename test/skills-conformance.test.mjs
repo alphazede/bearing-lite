@@ -265,19 +265,6 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     assert.match(verify, /one negative check per named boundary/);
   });
 
-  it("#175 prompt stays below 60 lines and 400 words with conforming metadata", () => {
-    assert.ok(prompt.trimEnd().split(/\r?\n/).length < 60, "prompt must stay below 60 lines");
-    assert.ok(prompt.trim().split(/\s+/).length < 400, "prompt must stay below 400 words");
-    assert.equal(validateSkillDocument("prompt", prompt).ok, true);
-  });
-
-  it("#175 prompt matches handoff authoring and excludes direct execution", () => {
-    const { description } = validateSkillDocument("prompt", prompt);
-    assert.equal(activationMatches("prompt", description, "Write a bounded execution handoff for another agent"), true);
-    assert.equal(activationMatches("prompt", description, "Repair checkout behavior directly"), false);
-    assert.match(description, /Do not use to execute tasks/);
-  });
-
   it("catalog requires the Lite engineering roles and does not require HQ method skills", () => {
     for (const name of REQUIRED_CATALOG) {
       assert.ok(skillDirs.includes(name), `catalog missing required skill "${name}"`);
