@@ -1,0 +1,64 @@
+{
+  "slices": [
+    {
+      "id": "S1",
+      "role": "Implementer",
+      "model_route": {
+        "route_ref": "implementation"
+      },
+      "write_set": [
+        "hooks/plan-package.cjs"
+      ]
+    }
+  ],
+  "dod_manifest": {
+    "template_version": "1.0.1",
+    "output_name": "complete-dod-manifest.html",
+    "title": "Complete planning projection",
+    "requirements": [
+      {
+        "id": "AC-1",
+        "statement": "Reject incomplete planning projections."
+      }
+    ],
+    "architecture": [
+      {
+        "id": "DES-1",
+        "summary": "Validate content in the package freeze."
+      }
+    ],
+    "tasks": [
+      {
+        "id": "S1",
+        "role": "Implementer",
+        "route": {
+          "route_ref": "implementation"
+        },
+        "depends_on": [],
+        "write_set": [
+          "hooks/plan-package.cjs"
+        ]
+      }
+    ],
+    "documentation": [
+      {
+        "surface": "artifact-grammar.md",
+        "impact": "Document the projection contract.",
+        "owner": "S1",
+        "timing": "planning",
+        "verification": "Read back the contract."
+      }
+    ],
+    "models": [
+      {
+        "id": "MODEL-1",
+        "mode": "diagram-assisted",
+        "view": {
+          "format": "svg",
+          "inline": "<svg xmlns=\"http://www.w3.org/2000/svg\"><title>Freeze flow</title></svg>"
+        },
+        "digest": "558f30dc2673f0c1013206015702ae12cf586a7be92fcd7ebf872939891b768c"
+      }
+    ]
+  }
+}

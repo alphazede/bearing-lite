@@ -234,3 +234,82 @@ describe("plan-package (#121 freeze guards)", () => {
     assert.deepEqual(checkFrozenHashes(dir), []);
   });
 });
+
+
+describe("plan-package (#153 complete manifest projection)", () => {
+  const fixture = (name = "complete") => JSON.parse(readFileSync(
+    path.join(ROOT, `test/fixtures/manifest-${name}.json`), "utf8"));
+  // Real freeze inputs: each mutation keeps the source digest valid.
+  const run = (doc) => {
+    const dir = mkdtempSync(path.join(os.tmpdir(), "manifest-freeze-"));
+    writeFileSync(path.join(dir, ".git"), "fixture repository marker");
+    writeFileSync(path.join(dir, "plan.md"), "# Stable source\n");
+    const seit = JSON.stringify({ source_baseline: { planning_inputs: [
+      { path: "plan.md", sha256: sha("# Stable source\n") },
+    ] } });
+    writeFileSync(path.join(dir, "seit.json"), seit);
+    doc.journey_settings = { planning_review: {
+      candidate_digest: sha([sha("# Stable source\n"), sha(seit)].join("\n")),
+    } };
+    writeFileSync(path.join(dir, "implementation.json"), JSON.stringify(doc));
+    return freeze(dir);
+  };
+  const rejects = (doc, code) => {
+    const result = run(doc);
+    assert.equal(result.outcome, "FAIL");
+    assert.ok(result.findings.some((finding) => finding.code === code), JSON.stringify(result));
+  };
+  it("rejects the reference-index fixture", () => {
+    rejects(fixture("reference-index"), "manifest_requirement_statement_missing");
+  });
+  it("passes the complete fixture", () => {
+    assert.deepEqual(run(fixture()).findings, []);
+  });
+  it("rejects a requirement without statement text", () => {
+    const doc = fixture();
+    doc.dod_manifest.requirements[0].statement = "  ";
+    rejects(doc, "manifest_requirement_statement_missing");
+  });
+  it("rejects architecture without a summary or decision", () => {
+    const doc = fixture();
+    delete doc.dod_manifest.architecture[0].summary;
+    rejects(doc, "manifest_architecture_summary_missing");
+  });
+  it("rejects a slice missing its task row", () => {
+    const doc = fixture();
+    doc.dod_manifest.tasks = [];
+    rejects(doc, "manifest_slice_task_missing");
+  });
+  for (const field of ["role", "route", "depends_on", "write_set"]) {
+    it(`rejects a task missing ${field}`, () => {
+      const doc = fixture();
+      delete doc.dod_manifest.tasks[0][field];
+      rejects(doc, "manifest_task_field_missing");
+    });
+  }
+  it("rejects unspecified documentation without explicit N/A and reason", () => {
+    for (const documentation of [[], [{ surface: "unspecified", impact: "unspecified" }],
+      { not_applicable: true }, { not_applicable: true, reason: "  " }]) {
+      const doc = fixture();
+      doc.dod_manifest.documentation = documentation;
+      rejects(doc, "manifest_documentation_unspecified");
+    }
+  });
+  it("permits explicit documentation N/A with a reason", () => {
+    const doc = fixture();
+    doc.dod_manifest.documentation = { not_applicable: true, reason: "No documentation changes." };
+    assert.deepEqual(run(doc).findings, []);
+  });
+  for (const mode of ["diagram-assisted", "sysml-v2"]) {
+    it(`rejects ${mode} without an embedded view`, () => {
+      const doc = fixture();
+      doc.dod_manifest.models = [{ id: "MODEL-1", mode, not_applicable: true }];
+      rejects(doc, "manifest_model_view_missing");
+    });
+  }
+  it("rejects empty view bindings", () => {
+    const doc = fixture();
+    doc.dod_manifest.models[0].view = {};
+    rejects(doc, "manifest_model_view_missing");
+  });
+});
