@@ -16,6 +16,7 @@ const STAGES = Object.freeze([
   "post_repair_closure",
 ]);
 const EXPECTED = Object.freeze(["VERIFIED", "REFUTED"]);
+const EVIDENCE_TIERS = Object.freeze(["observed", "derived"]);
 const SHA256 = /^[0-9a-f]{64}$/;
 const CANDIDATE_FIELDS = Object.freeze([
   "candidate_ref",
@@ -131,6 +132,14 @@ function receiptErrors(receipt) {
     return "verification_receipt_invalid";
   }
   if (receipt.stage !== undefined && !STAGES.includes(receipt.stage)) return "verification_receipt_invalid";
+  if (receipt.evidence_tier !== undefined && !EVIDENCE_TIERS.includes(receipt.evidence_tier)) {
+    return "verification_receipt_invalid";
+  }
+  // The bridge seals analysis-derived evidence as INCONCLUSIVE. A derived
+  // receipt that claims VERIFIED or REFUTED was not sealed that way.
+  if (receipt.evidence_tier === "derived" && EXPECTED.includes(receipt.status)) {
+    return "verification_receipt_invalid";
+  }
   return null;
 }
 

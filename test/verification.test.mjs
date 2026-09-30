@@ -129,6 +129,27 @@ describe("SEIT-BDL-004 deterministic verification adapter", () => {
     assert.equal(got.gate_eligible, false);
   });
 
+  it("refuses a derived-tier receipt that claims a gate-passing status", () => {
+    for (const status of ["VERIFIED", "REFUTED"]) {
+      const got = evaluate({
+        request: request({ expected_result: status }),
+        receipt: receipt({ status, evidence_tier: "derived", backend_verdict: status }),
+      });
+      assert.equal(got.outcome, "NEEDS_MORE_EVIDENCE", status);
+      assert.equal(got.reason, "verification_receipt_invalid", status);
+      assert.equal(got.gate_eligible, false, status);
+    }
+  });
+
+  it("refuses an unknown evidence tier and still passes an observed one", () => {
+    const unknown = evaluate({ receipt: receipt({ evidence_tier: "guessed" }) });
+    assert.equal(unknown.reason, "verification_receipt_invalid");
+    assert.equal(unknown.gate_eligible, false);
+    const observed = evaluate({ receipt: receipt({ evidence_tier: "observed", backend_verdict: "VERIFIED" }) });
+    assert.equal(observed.outcome, "PASS");
+    assert.equal(observed.gate_eligible, true);
+  });
+
   it("rejects a receipt that omits a digest supplied by the request and current candidate", () => {
     const unbound = receipt();
     delete unbound.candidate_digest;
