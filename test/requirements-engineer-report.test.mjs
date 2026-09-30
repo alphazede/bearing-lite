@@ -115,6 +115,8 @@ describe("requirements-engineer bounded gate report (#163)", () => {
     assert.match(ref, /corrected text/i);
     assert.match(ref, /JSON sidecar/i);
     assert.match(ref, /never prose/i);
+    assert.match(ref, /prose section or heading for a PASS row/i);
+    assert.match(ref, /only as a[\s\S]*JSON sidecar/i);
     assert.match(ref, /candidate_ref/);
     assert.match(ref, /lint-sdoc/);
     assert.match(ref, /uncovered/i);
