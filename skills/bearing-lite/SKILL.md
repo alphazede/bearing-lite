@@ -22,7 +22,7 @@ Scribe transcribes history. Plugin hosts are partial; skill-copy is skills-only.
    except by explicit owner-confirmed dated visible amendment.
 3. Run Intake → Architectural Alignment → Scope Definition as dispatched sessions with `BEARING_ROLE` set; reading a stage `SKILL.md` is not running it. unresolved material intent blocks Planning and Design.
    Invoke Planning and Design once settled; consume the receipt. When the Systems Modeler role is selected or required, run the Systems Modeler contextual pass (current flow, candidate placements with `file:line`, constraints) before the first register draft, per `../planning-and-design/references/allocation-inputs.md`; an unavailable Systems Modeler is a typed capability gap, never silent allocation. Plan-artifact findings dispatch a delta (`BEARING_ROLE=planning_and_design`).
-   Do not ask for profile or route before it; carry owner-supplied profile and cadence.
+   Before every Requirements Engineer dispatch, run `hooks/register-precheck.cjs` on the current register and technical plan per `../requirements-engineer/references/precheck.md`; dispatch only with its passing receipt. Failure returns to Planning and Design without dispatch or spending a correction round. Do not ask for profile or route before it; carry owner-supplied profile and cadence.
 4. Enforce `references/review-policy.md`, `references/owner-stops.md`. Show one integrated
    approval-or-change gate. Record the approved Lifecycle type and snapshot.
    Never add a staged profile or route-review gate. Dispatch only after approval.
