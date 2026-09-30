@@ -60,3 +60,15 @@ generation-bound checkout lease before any planning write or dispatch.
   current leased revision refreshes `candidate_revision` on the same
   generation. Foreign controller, branch/worktree, or unrelated HEAD still
   fail closed as `WAITING_ON`.
+
+## Planning stage order
+
+Planning runs Intake → Architectural Alignment → Scope Definition → Planning
+and Design. When the Systems Modeler role is selected or required, the
+Systems Modeler contextual pass (current flow, candidate placements with
+`file:line`, constraints) runs before the first register draft, and
+Planning and Design allocates against that placement receipt (see
+`../../planning-and-design/references/allocation-inputs.md`); an unavailable
+Systems Modeler is a typed capability gap, never silent allocation.
+Relationship mappings are still finalized only after the Requirements
+Engineer passes.

@@ -10,7 +10,8 @@ description: >
 # Systems Modeler
 
 One role with a planning session. Runs after the Requirements Engineer and
-before design finalization.
+before design finalization. When selected or required, it also runs a
+contextual pass before or alongside Planning and Design pass 1.
 
 ## Inputs and match
 
@@ -23,9 +24,10 @@ before design finalization.
 1. Select `sysml-v2`, `diagram-assisted`, or `not-applicable`. Attach
    view metadata. In `sysml-v2`, record model revision/digest and native
    or derived views.
-2. Contextual work may start before requirements stabilize. Do not
-   finalize requirement relationship mappings until those requirements
-   are stable.
+2. Run the contextual pass first when selected or required: current flow,
+   candidate placements with `file:line`, and constraints. Contextual work
+   may start before requirements stabilize. Do not finalize requirement
+   relationship mappings until the Requirements Engineer passes.
 3. Do not silently substitute Mermaid for mandated SysML. Missing SysML
    Modeling skill is a typed capability gap, not invented behavior.
 
