@@ -113,6 +113,17 @@ describe("#168 bounded specialist fan-out", () => {
     assert.doesNotMatch(prompt, /INSUFFICIENT/);
   });
 
+  it("shipped texts require distinct child write directories and a mandatory time budget", () => {
+    const prompt = read("skills/prompt/SKILL.md");
+    assert.match(prompt, /Every handoff carries one TIME BUDGET line/);
+    assert.match(prompt, /its own TIME BUDGET/);
+    assert.match(prompt, /Write directories must be distinct/);
+    const ref = read("skills/bearing-lite/references/specialist-fan-out.md");
+    assert.match(ref, /its own write directory/);
+    assert.match(ref, /must be distinct/);
+    assert.match(ref, /Every specialist\s+packet carries a session time budget/);
+  });
+
   it("Test Engineer skill describes lead and child sessions and merge-only lead", () => {
     const te = read("skills/test-engineer/SKILL.md");
     assert.match(te, /lead/i);
