@@ -6,8 +6,9 @@ packet-declared bound: the lead packet states it.
 
 Each child gets its own prompt-skill packet, its own write directory, only
 its own inputs, and a time budget: stop starting new work at T minus 5 and
-write the result. Every specialist packet carries a session time budget and
-a per-external-call bound smaller than the remaining session time.
+write the result. Write directories must be distinct. Every specialist
+packet carries a session time budget and a per-external-call bound smaller
+than the remaining session time.
 
 Children hold the lead's authority: they cannot select models, cannot write
 outside their directory, and stop only through their own session handle.
