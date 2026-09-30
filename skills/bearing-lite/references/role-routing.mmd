@@ -4,7 +4,9 @@ flowchart TD
     P -->|Intake| IN[Fresh Intake]
     P -->|Architectural Alignment| AA[Fresh Architectural Alignment]
     P -->|Scope Definition| SD[Fresh Scope Definition]
+    P -->|Systems Modeler contextual| SM[Fresh Systems Modeler contextual pass]
     P -->|Planning and Design| PD[Fresh Planning and Design]
+    SM -->|placement receipt| PD
     IN & AA & SD -->|typed return| R
     R --> PD
     PD -->|five artifacts with proposed route, profile, role states, reasoning, cadence| I{One integrated owner review}
