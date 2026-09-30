@@ -45,6 +45,34 @@ test('mixed round re-gates only requires_regate rows and spends one round', () =
   assert.equal(evaluate(input).correction_rounds, 2);
 });
 
+test('explicit null or wrong-typed context fails before closing or reserving a round', () => {
+  const mixed = () => {
+    const input = fixture();
+    input.after[1].text = 'The receipt includes a unique identifier.';
+    input.findings.push({ uid: 'REQ-2', finding_type: 'requires_regate' });
+    return input;
+  };
+  for (const [field, value] of [
+    ['correction_rounds', null], ['correction_rounds', '1'], ['correction_rounds', 1.5],
+    ['known_uids', null], ['known_uids', 'REQ-1'], ['residuals', null], ['residuals', {}],
+  ]) {
+    const result = evaluate({ ...mixed(), [field]: value });
+    assert.equal(result.verdict, 'VALIDATION_FAILED', `${field}=${JSON.stringify(value)}`);
+    assert.deepEqual(result.findings, [{ code: 'invalid_context' }]);
+    assert.deepEqual(result.closed_uids, []);
+    assert.deepEqual(result.regate_uids, []);
+    assert.equal(result.correction_rounds, 0);
+    assert.equal(result.receipt, null);
+  }
+  const omitted = mixed();
+  delete omitted.correction_rounds;
+  delete omitted.residuals;
+  const result = evaluate(omitted);
+  assert.equal(result.verdict, 'REQUIRES_REGATE');
+  assert.equal(result.correction_rounds, 1);
+  assert.deepEqual(result.owner_gate_residuals, []);
+});
+
 test('exact_text rejects non-verbatim text and wording-external changes', () => {
   const input = fixture();
   input.after[0].text += ' Extra.';
