@@ -64,6 +64,8 @@ Include exact paths, revisions, commands, identifiers, and unresolved failures w
 
 Do not paste information the agent can retrieve cheaply.
 
+Name each touched trust boundary with its invariant, or state "none". Examples of boundaries: caller input, operator configuration, authentication, filesystem paths, merge or publication gates.
+
 ## OBJECTIVE
 
 Define one observable outcome.
@@ -74,6 +76,8 @@ Reject unauthorized paths without changing valid-path behavior.
 ```
 
 The objective should describe the result, not vague activity such as “investigate” or “work on.”
+
+Follow it with a numbered acceptance list: each item is one observable condition the result must meet.
 
 ## AUTHORITY
 
@@ -197,6 +201,8 @@ VERIFY
 
 Verification must use observable evidence.
 
+Require evidence for every numbered acceptance item and one negative check per named boundary.
+
 Do not use statements such as:
 
 ```text
@@ -225,8 +231,11 @@ Include:
 - commands executed
 - evidence
 - remaining risks
+- acceptance-to-evidence table
 - blocker, if any
 ```
+
+Require an acceptance-to-evidence table with one row per item: item, proving test or observation, result. PASS is invalid while any row is unmet or unmapped.
 
 ## STOP
 

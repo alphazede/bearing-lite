@@ -105,10 +105,10 @@ const DEEP_COUPLING_PATTERNS = [
   INTERNAL_METADATA_COUPLING,
 ];
 
-/** DEC-BDL-042 amended 2026-09-30 (#168): prompt skill carries the fan-out section and TIME BUDGET line; metadata exemption is digest-bound. */
+/** DEC-BDL-042 amended 2026-09-30 (#168): prompt skill carries the fan-out section and TIME BUDGET line, and (#175) acceptance evidence and trust-boundary checks; metadata exemption is digest-bound. */
 const TRUSTED_PUBLIC_PROMPT_SKILL = "skills/prompt/SKILL.md";
 const TRUSTED_PUBLIC_PROMPT_SKILL_SHA256 =
-  "edf62a48e80fd414f4e515251a7b161201a5341309028783f2c9e5aa466ba8a0";
+  "78f273947aef454039833dfddd0871c21d73e511461367546ab37e6d4413c6c0";
 
 /**
  * @param {string} content

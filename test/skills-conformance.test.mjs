@@ -247,6 +247,24 @@ function listSkillDirsWithSkillMd() {
 describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)", () => {
   const skillDirs = listSkillDirsWithSkillMd();
 
+  const prompt = readFileSync(path.join(SKILLS_DIR, "prompt", "SKILL.md"), "utf8");
+
+  it("#175 RETURN maps every numbered acceptance item to evidence and rejects incomplete PASS", () => {
+    const objective = prompt.split("## OBJECTIVE\n")[1]?.split("\n## ")[0] ?? "";
+    const returned = prompt.split("## RETURN\n")[1]?.split("\n## ")[0] ?? "";
+    assert.match(objective, /numbered acceptance list/);
+    assert.match(returned, /acceptance-to-evidence table/);
+    assert.match(returned, /one row per item: item, proving test or observation, result/);
+    assert.match(returned, /PASS is invalid while any row is unmet or unmapped/);
+  });
+
+  it("#175 names touched trust boundaries and invariants or none, with negative VERIFY checks", () => {
+    const state = prompt.split("## STATE\n")[1]?.split("\n## ")[0] ?? "";
+    const verify = prompt.split("## VERIFY\n")[1]?.split("\n## ")[0] ?? "";
+    assert.match(state, /Name each touched trust boundary with its invariant, or state "none"/);
+    assert.match(verify, /one negative check per named boundary/);
+  });
+
   it("catalog requires the Lite engineering roles and does not require HQ method skills", () => {
     for (const name of REQUIRED_CATALOG) {
       assert.ok(skillDirs.includes(name), `catalog missing required skill "${name}"`);
