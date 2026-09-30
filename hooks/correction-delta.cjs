@@ -18,9 +18,11 @@ function evaluateCorrectionDelta(input) {
     return result;
   }
   const { before, after, findings, candidate_ref, lint } = input;
-  const rounds = input.correction_rounds ?? 0;
-  const known = input.known_uids ?? [];
-  const residuals = input.residuals ?? [];
+  // Default only omitted fields; explicit null or wrong types fail as invalid_context.
+  const given = (key, fallback) => input[key] === undefined ? fallback : input[key];
+  const rounds = given("correction_rounds", 0);
+  const known = given("known_uids", []);
+  const residuals = given("residuals", []);
   if (!nonempty(candidate_ref) || !Number.isInteger(rounds) || rounds < 0 || rounds > 2 ||
       !strings(known) || !strings(residuals)) fail("invalid_context");
   else {

@@ -49,7 +49,7 @@ Fresh planning node. If you are the Orchestrator, dispatch this; do not execute 
    presentation is gated by `hooks/planning-review.cjs` `evaluatePlanningReview()`, which returns
    `NEEDS_MORE_EVIDENCE` / `manifest_not_generated` without the Manifest. An owner change regenerates
    affected artifacts, then returns to this same gate; never insert a profile or route pause. Delta
-   mode: apply named findings only; check changed UIDs via `hooks/correction-delta.cjs`; re-embed digests; no fresh package.
+   mode: apply named findings only; check changed UIDs via `hooks/correction-delta.cjs`; no fresh package.
    Follow `references/correction-loop.md`; return `DELTA_APPLIED` only with its mechanical receipt.
 ## Return and recovery
 
