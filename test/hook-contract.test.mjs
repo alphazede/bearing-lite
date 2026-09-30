@@ -65,6 +65,7 @@ const EVALUATOR_MODULES = new Set([
   "git-sync.cjs", // closeout git-sync: advisory, fast-forward only, never a policy class
   "cursor-stop.cjs", // Cursor stop wire: advice is context, follow-up only on continue
   "write-set-check.cjs", // #118 write-set hygiene; CLI evaluator, no HOOK_CLASS
+  "correction-delta.cjs", // #162 correction delta scope check; no HOOK_CLASS
 ]);
 /** Additional TE class modules, allowed but not yet required by this case. */
 const TE_CLASS_FILES = Object.freeze(["te-capability.cjs", "te-host.cjs"]);

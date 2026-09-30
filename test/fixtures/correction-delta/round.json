@@ -1,0 +1,17 @@
+{
+  "candidate_ref": "candidate-162",
+  "before": [
+    {"uid": "REQ-1", "text": "The service should return a receipt.", "references": []},
+    {"uid": "REQ-2", "text": "The receipt includes an identifier.", "references": ["REQ-1"]},
+    {"uid": "AC-1", "text": "Verify the receipt identifier.", "references": ["REQ-2"]}
+  ],
+  "after": [
+    {"uid": "REQ-1", "text": "The service shall return a receipt.", "references": []},
+    {"uid": "REQ-2", "text": "The receipt includes an identifier.", "references": ["REQ-1"]},
+    {"uid": "AC-1", "text": "Verify the receipt identifier.", "references": ["REQ-2"]}
+  ],
+  "findings": [{"uid": "REQ-1", "finding_type": "exact_text", "corrected_text": "The service shall return a receipt."}],
+  "lint": {"verdict": "PASS", "candidate_ref": "candidate-162"},
+  "correction_rounds": 0,
+  "residuals": ["Owner to confirm glossary terminology."]
+}

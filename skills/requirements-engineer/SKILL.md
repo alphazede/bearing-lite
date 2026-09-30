@@ -48,12 +48,12 @@ SDoc, publishes, selects models or profiles, or writes tests.
 
 Return `PASS`, `REPAIRABLE_FAILURE`, `NEEDS_MORE_EVIDENCE`, or
 `NEEDS_OWNER_DECISION` with verdict, candidate_ref, changed_paths, per-row
-findings, and blocker. Shape the report per `references/gate-report.md`. Rerun the gate on each corrected register only inside
-Planning and Design's first two correction rounds; a third round is an
-owner-stops class C question (default: apply the specialist's exact proposed
-text, verify it mechanically, list residual at the integrated gate). Exhaustion with fixable rows returns
-`NEEDS_OWNER_DECISION` listing those rows, never silent acceptance. Missing
-`requirements-engineering` method skill is a typed capability gap.
+findings, and blocker. Shape the report per `references/gate-report.md`; each
+finding has `finding_type`: `exact_text` (verbatim wording-only) or `requires_regate`.
+Only `requires_regate` rows rerun the gate and consume the first two correction rounds;
+exact_text closes mechanically without a re-gate in any round per `../planning-and-design/references/correction-loop.md`.
+A third re-gate needs an owner-stops class C question; list residuals at the integrated gate.
+Exhaustion with fixable rows returns `NEEDS_OWNER_DECISION`; missing method skill is a typed capability gap.
 
 Never implement, model, self-certify, persist or publish SDoc, or grant
 owner-only approval.
