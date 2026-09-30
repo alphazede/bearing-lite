@@ -1,6 +1,0 @@
-name: Bearing Lite CodeQL
-
-paths:
-  - hooks
-  - test
-

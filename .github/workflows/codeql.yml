@@ -1,5 +1,10 @@
 name: CodeQL
 
+# Advanced setup, not default setup: default setup does not analyze pull
+# requests from forks, so a fork PR never gets the required
+# `Analyze (...)` checks. Job names must stay `Analyze (<language>)` to
+# match the required status checks on `main`.
+
 on:
   push:
     branches: [main]
@@ -7,6 +12,7 @@ on:
     branches: [main]
   schedule:
     - cron: '31 8 * * 1'
+  workflow_dispatch:
 
 permissions: {}
 
@@ -16,12 +22,18 @@ concurrency:
 
 jobs:
   analyze:
-    name: Analyze JavaScript and TypeScript
+    name: Analyze (${{ matrix.language }})
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
+      actions: read
       contents: read
       security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [actions, javascript-typescript, python]
 
     steps:
       - name: Checkout
@@ -32,12 +44,10 @@ jobs:
       - name: Initialize CodeQL
         uses: github/codeql-action/init@7188fc363630916deb702c7fdcf4e481b751f97a # v4
         with:
-          languages: javascript-typescript
-          queries: security-extended,security-and-quality
-          config-file: ./.github/codeql/codeql-config.yml
+          languages: ${{ matrix.language }}
+          build-mode: none
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@7188fc363630916deb702c7fdcf4e481b751f97a # v4
         with:
-          category: /language:javascript-typescript
-
+          category: /language:${{ matrix.language }}
