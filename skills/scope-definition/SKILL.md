@@ -3,7 +3,7 @@ name: scope-definition
 description: >
   Relentlessly resolve material owner decisions for a Bearing Lifecycle, one
   dependency-ordered question at a time, until shared understanding is explicit.
-  Use for Scope Definition or unresolved plan intent. Do not use for discoverable
+  Use for Scope Definition or unresolved plan intent, not for discoverable
   repository facts, design drafting, implementation, or settled decisions.
 ---
 
@@ -13,10 +13,9 @@ Fresh planning node. If you are the Orchestrator, dispatch this; do not execute 
 
 ## Match and inputs
 
-- **Match:** a material scope, behavior, authority, risk, or acceptance
-  decision is unresolved. Development strategy is not gathered here; the
-  Orchestrator records `single_implementer` or `tdd` from the profile or an
-  explicit owner choice in `implementation.json`.
+- **Match:** a material scope, behavior, authority, risk, or acceptance decision is unresolved.
+  Development strategy is not gathered here; the Orchestrator records `single_implementer`
+  or `tdd` from the profile or an explicit owner choice in `implementation.json`.
 - **Non-match:** evidence can answer it, the owner already decided it, or a work
   packet is ready.
 - **Inputs:** goal, visible plan state, repository evidence, prior decisions,
@@ -29,32 +28,33 @@ Fresh planning node. If you are the Orchestrator, dispatch this; do not execute 
    required roles and artifacts. Cells are `DISCOVERABLE`, `OPEN`, `DECIDED`,
    `DEFERRED`, `NOT_APPLICABLE`, or `BLOCKED`. Exit is falsifiable: zero
    `OPEN`; `DECIDED` cites owner decision and source; `DEFERRED` has a bounded
-   owner-approved destination or trigger; `NOT_APPLICABLE` has a reason;
-   `BLOCKED` is surfaced. Planning is a fan-out/fan-in DAG with Scribe as an
-   event side lane.
+   owner-approved destination or trigger; `NOT_APPLICABLE` has a reason; `BLOCKED`
+   is surfaced. Planning is a fan-out/fan-in DAG with Scribe as an event side lane.
 2. Select the earliest unresolved decision whose dependencies are satisfied.
 3. Ask exactly one question, relayed to the owner through the Orchestrator. Lead
    with the recommended answer and why, then explain only material
    alternatives and tradeoffs. Wait for the owner.
 4. Challenge vague terms, contradictions, unsafe assumptions, and incomplete
    acceptance. A default, probability, or silence is not approval.
-5. Follow the affected dependency branch. Revisit an earlier answer when new
-   evidence conflicts; otherwise do not replay it.
+5. Follow the affected dependency branch; revisit an earlier answer only on conflicting evidence.
 6. Buffer confirmed decisions in the active session. Do not persist, patch, or
    re-render Lifecycle state after each answer.
 7. Return one consolidated decision batch to the Orchestrator at a natural checkpoint:
    the dependency branch is complete, Planning and Design is next, handoff/context
-   loss is imminent, or the owner requests a flush.
+   loss is imminent, or the owner requests a flush. The final batch follows
+   `references/decision-batch.md`: a quantity-definitions table for every cited
+   numeric quantity, and every conditional typed `enforced_rule` or `expected_outcome`.
 8. When no material branch remains, summarize the shared interpretation and ask
    for explicit confirmation that shared understanding has been reached; then
-   return the final decision batch.
+   return the final decision batch. `SHARED_UNDERSTANDING_CONFIRMED` is blocked
+   while any cited quantity is undefined or any conditional is untyped; each
+   missing definition is an owner-stops class C question.
 
 ## Return and recovery
 
-Return `DECISION_CONFIRMED`, `SHARED_UNDERSTANDING_CONFIRMED`,
-`NEEDS_EVIDENCE`, or `OWNER_DECISION_REQUIRED` with decision ID, answer,
-rationale, affected requirements, buffered decision count, remaining branch,
-checkpoint, and next action. Stop after three evidence-changing attempts on one
-blocked decision.
+Return `DECISION_CONFIRMED`, `SHARED_UNDERSTANDING_CONFIRMED`, `NEEDS_EVIDENCE`, or
+`OWNER_DECISION_REQUIRED` with decision ID, answer, rationale, affected requirements,
+buffered decision count, remaining branch, checkpoint, and next action. Stop after
+three evidence-changing attempts on one blocked decision.
 
 Never write Lifecycle state, choose for the owner, design, or implement.

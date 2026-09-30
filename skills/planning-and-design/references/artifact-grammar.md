@@ -77,6 +77,13 @@ optional derived export and is never authority.
    implementation agreement; a passing cross-boundary test does not substitute
    for clause conformance.
 
+## Glossary
+
+Copy the Scope Definition final batch's quantity-definitions table into the
+glossary verbatim, instead of redefining any quantity. Requirement and design
+rows cite the defined names; a cited name missing from the table is an
+undefined term and fails the gate.
+
 ## SEIT rules
 
 1. `seit.json` is the canonical JSON Schema-validated tailored V&V plan.
