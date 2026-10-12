@@ -32,8 +32,9 @@ final system-level validation and integrated technical assessment.
    resource groups it competes for (`added_gate_seconds`, `resource_groups`),
    grouped so suites sharing nothing run in parallel, per
    `../test-engineer/references/shared-machine-tests.md`. A test that starts an
-   engine, server, driver, or browser without N consecutive passes and one
-   two-copy concurrent pass is not ready for assembly.
+   engine, server, driver, or browser without 5 consecutive passes (a repo or
+   plan may raise N, never lower it) and one two-copy concurrent pass is not
+   ready for assembly.
 2. The execution session starts a fresh session, rejects author
    ancestry, independently performs final system-level validation and
    integrated technical assessment against the approved user-facing

@@ -989,6 +989,8 @@ describe("shared-machine test standard", () => {
     assert.ok(existsSync(ref), "test-engineer/references/shared-machine-tests.md must ship");
     const text = readFileSync(ref, "utf8");
     for (const rule of [/free port, release it, and rebind/i, /test-owned|created and owns/i, /one bounded deadline/i,
+      /collision fixture holds the resource itself/i, /5 consecutive runs/i,
+      /a repo or plan may raise N, never lower it/i,
       /cross-process lock/i, /unique temporary root/i, /fresh state/i, /two\s+concurrent copies/i,
       /only when code or payload paths/i, /real shared resource/i, /warm engine/i,
       /error and the engine log tail/i, /slowest tests/i, /qualified gate run/i]) {
@@ -998,6 +1000,8 @@ describe("shared-machine test standard", () => {
       const body = readFileSync(path.join(SKILLS_DIR, skill, "SKILL.md"), "utf8");
       assert.match(body, /shared-machine-tests\.md/, `${skill} must require the standard`);
     }
+    const integration = readFileSync(path.join(SKILLS_DIR, "integration-engineer", "SKILL.md"), "utf8");
+    assert.match(integration.replace(/\s+/g, " "), /5 consecutive passes \(a repo or plan may raise N, never lower it\)/);
     const grammar = readFileSync(path.join(SKILLS_DIR, "planning-and-design", "references", "artifact-grammar.md"), "utf8");
     for (const field of ["resource_group", "expected_gate_seconds", "added_gate_seconds", "resource_groups"]) {
       assert.match(grammar, new RegExp(`\`${field}\``), `artifact grammar must name ${field}`);
