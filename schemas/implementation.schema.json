@@ -333,7 +333,23 @@
     "profile_freeze": { "$ref": "#/$defs/contentfulObject" },
     "waves": {
       "type": "array",
-      "items": { "type": "object", "additionalProperties": true }
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "resource_groups": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": { "type": "string", "minLength": 1 },
+            "description": "Optional. Shared test resource groups this wave's verification cases compete for on the gate machine."
+          },
+          "added_gate_seconds": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Optional. Expected wall-clock seconds this wave adds to the merge gate."
+          }
+        }
+      }
     },
     "dependencies": {
       "type": "array",

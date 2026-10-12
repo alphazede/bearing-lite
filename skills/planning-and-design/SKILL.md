@@ -32,10 +32,10 @@ Fresh planning node. If you are the Orchestrator, dispatch this; do not execute 
    quantity-definitions table into the glossary verbatim per `references/artifact-grammar.md`.
 2. Author and prospectively check, in dependency order, the testable
    technical-plan, `design.md`, and `seit.json`. Preserve IDs, do not drop
-   Lifecycle-level proof or published-standard clause coverage, and select Reverify only on applicable binary-level SEIT claims; consume `references/allocation-inputs.md` before register allocation.
+   Lifecycle-level proof or published-standard clause coverage, and select Reverify only on applicable binary-level SEIT claims; consume `references/allocation-inputs.md` before register allocation. Tests must meet `../test-engineer/references/shared-machine-tests.md`; each engine-backed SEIT case declares `resource_group` and `expected_gate_seconds`.
 3. Map the implementation graph and propose development strategy
    (`single_implementer` default or `tdd`), role states, profile, reasoning, and
-   cadence. Bind the one planning-review slot to owner-supplied
+   cadence. Concurrency covers test suites competing for one gate machine, not only agents, branches, and write sets: each wave states `added_gate_seconds` and `resource_groups`. Bind the one planning-review slot to owner-supplied
    primary and ordered fallback route references under one candidate ref,
    revision, and digest. Use supplied identities; never invent them.
 4. After stable source inputs, generate `implementation.json` with DoD Manifest input carrying content, not references; freeze: `node <plugin root>/hooks/plan-package.cjs <plan dir>`

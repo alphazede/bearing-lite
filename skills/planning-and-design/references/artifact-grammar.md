@@ -105,6 +105,11 @@ undefined term and fails the gate.
    register gate receipt.
 7. Bind a stable decision-baseline projection of confirmed decision identities
    and open-item statuses rather than the whole-file `journey.json` digest.
+8. Verification cases meet `../../test-engineer/references/shared-machine-tests.md`.
+   Each engine-backed proof case declares `resource_group` (the real shared
+   resource it competes for) and `expected_gate_seconds` (integer seconds it
+   adds to the gate). Both fields are optional in the schema; omitting them on
+   an engine-backed case is a planning finding.
 
 ## Implementation rules
 
@@ -134,6 +139,9 @@ undefined term and fails the gate.
 8. Ordered integration steps, resources, ownership, and rollback live here.
    Owner-configured reviewer count `n`, repair bound `k`, and confirmation
    count `c` are explicit fields with no assistant default integers.
+   Concurrency includes test suites competing for one gate machine: a wave
+   that adds gate time states `added_gate_seconds` and the `resource_groups`
+   it competes for.
 9. Plans may contain at most 128 slices, manifests, write paths, and commands.
    Aim for at most 500 estimated tokens per slice plus manifest; split larger
    packets when practical.

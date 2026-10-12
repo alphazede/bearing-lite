@@ -981,3 +981,26 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     );
   });
 });
+
+describe("shared-machine test standard", () => {
+  const ref = path.join(SKILLS_DIR, "test-engineer", "references", "shared-machine-tests.md");
+
+  it("ships the standard and every planning and test role links it", () => {
+    assert.ok(existsSync(ref), "test-engineer/references/shared-machine-tests.md must ship");
+    const text = readFileSync(ref, "utf8");
+    for (const rule of [/free port, release it, and rebind/i, /test-owned|created and owns/i, /one bounded deadline/i,
+      /cross-process lock/i, /unique temporary root/i, /fresh state/i, /two\s+concurrent copies/i,
+      /only when code or payload paths/i, /real shared resource/i, /warm engine/i,
+      /error and the engine log tail/i, /slowest tests/i, /qualified gate run/i]) {
+      assert.match(text.replace(/\s+/g, " "), rule);
+    }
+    for (const skill of ["planning-and-design", "test-engineer", "integration-engineer"]) {
+      const body = readFileSync(path.join(SKILLS_DIR, skill, "SKILL.md"), "utf8");
+      assert.match(body, /shared-machine-tests\.md/, `${skill} must require the standard`);
+    }
+    const grammar = readFileSync(path.join(SKILLS_DIR, "planning-and-design", "references", "artifact-grammar.md"), "utf8");
+    for (const field of ["resource_group", "expected_gate_seconds", "added_gate_seconds", "resource_groups"]) {
+      assert.match(grammar, new RegExp(`\`${field}\``), `artifact grammar must name ${field}`);
+    }
+  });
+});

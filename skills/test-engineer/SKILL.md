@@ -30,7 +30,8 @@ separate catalog roles.
    method-skill behavior. Define applicable deterministic claims; select
    Reverify only on an applicable binary-level claim.
    Lifecycle in-document verification cases are authored only against the
-   approved, planning-gated register.
+   approved, planning-gated register. Every case meets `references/shared-machine-tests.md`:
+   correct on a shared, loaded machine; engine-backed cases declare `resource_group` and `expected_gate_seconds`.
 2. Assurance Test Engineer starts a fresh session; reject author ancestry;
    evaluate the exact stable candidate at the declared cadence boundary only.
    VALIDATING is owned here. The Assurance Test Engineer independently reruns the gate-chain at the declared cadence boundary for required deterministic claims

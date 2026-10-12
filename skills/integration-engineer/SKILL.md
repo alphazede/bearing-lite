@@ -28,6 +28,12 @@ final system-level validation and integrated technical assessment.
    order, entry criteria, stubs, configuration identity, post-step V&V
    handoffs, anomaly/rollback/recovery, and the final integrated
    candidate after requirements, views, and design interfaces stabilize.
+   Per wave it states the gate time the wave adds and the shared test
+   resource groups it competes for (`added_gate_seconds`, `resource_groups`),
+   grouped so suites sharing nothing run in parallel, per
+   `../test-engineer/references/shared-machine-tests.md`. A test that starts an
+   engine, server, driver, or browser without N consecutive passes and one
+   two-copy concurrent pass is not ready for assembly.
 2. The execution session starts a fresh session, rejects author
    ancestry, independently performs final system-level validation and
    integrated technical assessment against the approved user-facing
