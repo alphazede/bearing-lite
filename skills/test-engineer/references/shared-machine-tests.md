@@ -8,6 +8,7 @@ plan adds is a cost the plan must state before landing, not discover at it.
 
 1. Never pick a free port, release it, and rebind it later. Bind port 0 and
    read back the bound port, or hand the open listener to the code under test.
+   A collision fixture holds the resource itself.
 2. Assert only on resources the test created and owns: its processes, files,
    ports, windows, and records. Never count or inspect machine-wide state.
 3. Wait for readiness with one bounded deadline sized for a loaded machine,
@@ -19,9 +20,10 @@ plan adds is a cost the plan must state before landing, not discover at it.
 5. Give every test run a unique temporary root and remove it on every path.
 6. Give every fault-injection case fresh state; never reuse an engine or store
    that an earlier fault case may have damaged.
-7. A test that starts an engine, server, driver, or browser passes N consecutive
-   runs and one run of two concurrent copies of its suite on the same machine
-   before review. The plan names N and the command.
+7. A test that starts an engine, server, driver, or browser passes 5 consecutive
+   runs (a repo or plan may raise N, never lower it) and one run of two concurrent
+   copies of its suite on the same machine before review. The plan names N and
+   the command.
 8. Failures carry the error and the engine log tail.
 
 ## B. Fast, with visible cost
