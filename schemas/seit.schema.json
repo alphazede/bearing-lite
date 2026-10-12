@@ -70,7 +70,16 @@
         "observable_evidence": { "$ref": "#/$defs/contentfulString" },
         "pass_fail_rule": { "$ref": "#/$defs/contentfulString" },
         "method_fields": { "$ref": "#/$defs/contentfulObject" },
-        "negative_or_failure_case": { "$ref": "#/$defs/contentfulString" }
+        "negative_or_failure_case": { "$ref": "#/$defs/contentfulString" },
+        "resource_group": {
+          "$ref": "#/$defs/contentfulString",
+          "description": "Optional. The real shared resource this case competes for on the gate machine (for example a display, an engine, or a port range). Cases in different groups may run in parallel. Engine-backed cases declare it."
+        },
+        "expected_gate_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Optional. Expected wall-clock seconds this case adds to the gate on its resource group. Engine-backed cases declare it."
+        }
       }
     }
   },

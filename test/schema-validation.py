@@ -1093,6 +1093,46 @@ def cases() -> list[tuple[str, str, str, object, str]]:
         ("SEIT-EMV-024", "complete_authority_document", "authority", complete_authority(), "accept"),
         ("SEIT-EMV-022", "complete_implementation_document", "implementation", complete_implementation(), "accept"),
         ("SEIT-EMV-021", "complete_seit_document", "seit", complete_seit(), "accept"),
+        # Optional gate-cost fields: present and absent both validate; bad values reject.
+        ("SEIT-EMV-021", "seit_proof_with_resource_group_and_gate_cost", "seit", complete_seit(
+            proof_cases=[complete_proof(resource_group="engine", expected_gate_seconds=45)]
+        ), "accept"),
+        ("SEIT-EMV-021", "seit_proof_empty_resource_group", "seit", complete_seit(
+            proof_cases=[complete_proof(resource_group="")]
+        ), "reject"),
+        ("SEIT-EMV-021", "seit_proof_nonstring_resource_group", "seit", complete_seit(
+            proof_cases=[complete_proof(resource_group=1)]
+        ), "reject"),
+        ("SEIT-EMV-021", "seit_proof_minimum_gate_seconds", "seit", complete_seit(
+            proof_cases=[complete_proof(expected_gate_seconds=1)]
+        ), "accept"),
+        ("SEIT-EMV-021", "seit_proof_zero_gate_seconds", "seit", complete_seit(
+            proof_cases=[complete_proof(expected_gate_seconds=0)]
+        ), "reject"),
+        ("SEIT-EMV-021", "seit_proof_string_gate_seconds", "seit", complete_seit(
+            proof_cases=[complete_proof(expected_gate_seconds="45")]
+        ), "reject"),
+        ("SEIT-EMV-022", "implementation_wave_with_gate_cost", "implementation", complete_implementation(
+            waves=[complete_implementation()["waves"][0] | {"resource_groups": ["engine", "display"], "added_gate_seconds": 120}]
+        ), "accept"),
+        ("SEIT-EMV-022", "implementation_wave_without_shared_resources_or_added_cost", "implementation", complete_implementation(
+            waves=[complete_implementation()["waves"][0] | {"resource_groups": [], "added_gate_seconds": 0}]
+        ), "accept"),
+        ("SEIT-EMV-022", "implementation_wave_negative_gate_seconds", "implementation", complete_implementation(
+            waves=[complete_implementation()["waves"][0] | {"added_gate_seconds": -1}]
+        ), "reject"),
+        ("SEIT-EMV-022", "implementation_wave_string_gate_seconds", "implementation", complete_implementation(
+            waves=[complete_implementation()["waves"][0] | {"added_gate_seconds": "120"}]
+        ), "reject"),
+        ("SEIT-EMV-022", "implementation_wave_duplicate_resource_groups", "implementation", complete_implementation(
+            waves=[complete_implementation()["waves"][0] | {"resource_groups": ["engine", "engine"]}]
+        ), "reject"),
+        ("SEIT-EMV-022", "implementation_wave_empty_resource_group", "implementation", complete_implementation(
+            waves=[complete_implementation()["waves"][0] | {"resource_groups": [""]}]
+        ), "reject"),
+        ("SEIT-EMV-022", "implementation_wave_nonarray_resource_groups", "implementation", complete_implementation(
+            waves=[complete_implementation()["waves"][0] | {"resource_groups": "engine"}]
+        ), "reject"),
         ("SEIT-EMV-022", "human_decision_null", "implementation", complete_implementation(
             slices=[complete_slice(human_decision=None)]
         ), "accept"),
