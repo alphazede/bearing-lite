@@ -12,11 +12,12 @@ import {
   mkdtempSync,
   readFileSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import {
   TEMPLATE_VERSION,
   bindingRequirement,
@@ -136,8 +137,8 @@ function writeFixture(dir, doc, files = {}) {
   return input;
 }
 
-function cli(args, cwd = ROOT) {
-  return spawnSync(process.execPath, [RENDERER, ...args], {
+function cli(args, cwd = ROOT, script = RENDERER) {
+  return spawnSync(process.execPath, [script, ...args], {
     encoding: "utf8",
     cwd,
   });
@@ -836,5 +837,67 @@ describe("S3 DoD Manifest template, schema, and renderer", () => {
       }),
     });
     assert.throws(() => renderFile(missingStillFails), (err) => err.code === "MISSING_VIEW");
+  });
+});
+
+describe("renderer invocation identity (#182)", () => {
+  function linkedRenderer() {
+    const dir = tempDir();
+    symlinkSync(ROOT, path.join(dir, "pkg"));
+    const viaFile = path.join(dir, "renderer-link.mjs");
+    symlinkSync(RENDERER, viaFile);
+    return { dir, viaDir: path.join(dir, "pkg", "tools", "render-dod-manifest.mjs"), viaFile };
+  }
+
+  function fixtureInput(dir) {
+    return writeFixture(dir, { dod_manifest: baseManifest({ models: [boundSvgModel()] }) });
+  }
+
+  it("renders identical bytes through symlinked directory and file invocations", () => {
+    const { dir, viaDir, viaFile } = linkedRenderer();
+    const input = fixtureInput(dir);
+    const scripts = [RENDERER, viaDir, viaFile];
+    const outs = ["real.html", "dir.html", "file.html"].map((name) => path.join(dir, name));
+    const digests = [];
+    for (let i = 0; i < scripts.length; i += 1) {
+      const result = cli([input, "--out", outs[i]], dir, scripts[i]);
+      assert.equal(result.status, 0, result.stderr);
+      assert.equal(result.stderr, "");
+      const digest = /digest=(sha256:[0-9a-f]{64})/.exec(result.stdout);
+      assert.ok(digest, result.stdout);
+      digests.push(digest[1]);
+    }
+    assert.equal(digests[1], digests[0]);
+    assert.equal(digests[2], digests[0]);
+    const bytes = outs.map((out) => readFileSync(out));
+    assert.equal(bytes[1].equals(bytes[0]), true);
+    assert.equal(bytes[2].equals(bytes[0]), true);
+  });
+
+  it("fails equivalently through symlinked invocations on missing and malformed args", () => {
+    const { dir, viaDir, viaFile } = linkedRenderer();
+    const input = fixtureInput(dir);
+    for (const args of [[], [input, "--out"], [path.join(dir, "nope.json")]]) {
+      const expected = cli(args, dir, RENDERER);
+      assert.notEqual(expected.status, 0);
+      for (const script of [viaDir, viaFile]) {
+        const actual = cli(args, dir, script);
+        assert.equal(actual.status, expected.status);
+        assert.equal(actual.stdout, expected.stdout);
+        assert.equal(actual.stderr, expected.stderr);
+      }
+    }
+  });
+
+  it("performs no CLI side effects when imported", () => {
+    const href = pathToFileURL(RENDERER).href;
+    const result = spawnSync(
+      process.execPath,
+      ["--input-type=module", "-e", `await import(${JSON.stringify(href)});`],
+      { encoding: "utf8", cwd: tempDir() }
+    );
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout, "");
+    assert.equal(result.stderr, "");
   });
 });
