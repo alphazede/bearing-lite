@@ -11,7 +11,7 @@
 - Standardized packaged skills on a 650-word limit while retaining the existing line limit. [#179](https://github.com/alphazede/bearing-lite/pull/179)
 - Updated pinned CI and publishing actions. [#181](https://github.com/alphazede/bearing-lite/pull/181)
 - Required shared-machine test isolation, five consecutive engine-starting runs, concurrent qualification, and explicit resource and gate-time declarations; kept schema metadata optional for existing plans. [#184](https://github.com/alphazede/bearing-lite/pull/184)
-- Aligned all seven package and host manifests to 1.1.7 and reconciled the accumulated release record ([#186](https://github.com/alphazede/bearing-lite/pull/186)).
+- Aligned all seven package and host manifests to 1.1.7 and reconciled the accumulated release record ([#187](https://github.com/alphazede/bearing-lite/pull/187)).
 
 ### Fixed
 
