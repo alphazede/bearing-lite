@@ -5,7 +5,7 @@
  * or fills absent evidence. Node.js standard library only.
  */
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -1735,7 +1735,15 @@ function main(argv = process.argv) {
   }
 }
 
-const invoked = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+// import.meta.url is the real path; argv[1] may run through a symlinked install path.
+const invoked = (() => {
+  if (!process.argv[1]) return false;
+  try {
+    return realpathSync(path.resolve(process.argv[1])) === realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return false;
+  }
+})();
 if (invoked) {
   process.exitCode = main();
 }
