@@ -27,6 +27,7 @@ const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 
 const capability = require("./te-capability.cjs");
+const { nativePatchOperations } = require("./orchestrator-write-lock.cjs");
 
 const TE_TEST_WRITE = "te_test_write";
 const TE_COMPLETION = "te_completion";
@@ -385,15 +386,20 @@ function readTargetPaths(input, root, resolvedToolInput) {
  * Codex apply_patch sends the patch body as tool_input.command. Present the
  * same text in the `patch` field the evaluator reads, keeping the raw command.
  * The evaluator ignores `*** Move to:` headers, so rename destinations are
- * appended to the `edits` it already reads; caller edits are kept.
+ * appended to the `edits` it already reads; caller edits are kept. Codex
+ * trims leading whitespace on real operation headers (not on hunk content),
+ * so the derived `patch` does too.
  */
 function normalizeToolInput(toolName, toolInput) {
   if (!toolInput || !/^apply_?patch$/i.test(toolName || "")) return toolInput;
-  const patch = typeof toolInput.patch === "string" ? toolInput.patch
+  const raw = typeof toolInput.patch === "string" ? toolInput.patch
     : typeof toolInput.command === "string" ? toolInput.command : null;
-  if (patch === null) return toolInput;
-  const out = { ...toolInput, patch };
-  const moves = [...patch.matchAll(/^\*\*\* Move to: (.+)$/gm)].map((m) => ({ file_path: m[1].trim() }));
+  if (raw === null) return toolInput;
+  const operations = nativePatchOperations(raw);
+  const lines = raw.split("\n");
+  for (const { line } of operations) lines[line] = lines[line].replace(/^[ \t]+/, "");
+  const out = { ...toolInput, patch: lines.join("\n") };
+  const moves = operations.filter((op) => /^Move/.test(op.verb)).map((op) => ({ file_path: op.path }));
   if (moves.length) out.edits = [...(Array.isArray(toolInput.edits) ? toolInput.edits : []), ...moves];
   return out;
 }
