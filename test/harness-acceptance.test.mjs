@@ -1,13 +1,13 @@
 /**
- * #92 real-harness acceptance. Component proof always runs: packed identity,
- * skill files, and hook evaluation through the packaged scripts. Native
- * harness install/discovery cells are UNAVAILABLE unless an explicit
- * disposable-profile env is set, so this suite never mutates operator config.
+ * #92 harness acceptance, component proof only: packed identity, skill files,
+ * and hook evaluation through the packaged scripts. Native Codex install and
+ * hook discovery is proven by the separate required command
+ * `node --test test/native/codex-hook-discovery.test.mjs`, not by this suite.
  */
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -24,9 +24,15 @@ const MATRIX = [
   { host: "kimi", install: "plugin", blocking: "not_supported", skills: true },
 ];
 
+// The caller's BEARING_* role must not decide the hook verdicts asserted here.
+const HOOK_ENV = Object.fromEntries(
+  Object.entries(process.env).filter(([key]) => !key.startsWith("BEARING_"))
+);
+
 function runHook(script, payload, extraArgs = []) {
   return spawnSync(process.execPath, [script, ...extraArgs], {
     cwd: ROOT,
+    env: HOOK_ENV,
     encoding: "utf8",
     input: JSON.stringify(payload),
     timeout: 15_000,
@@ -82,23 +88,6 @@ describe("#92 harness acceptance", () => {
     });
     assert.equal(reentry.status, 0);
     assert.equal((reentry.stdout || "").trim(), "");
-  });
-
-  it("classifies native harness install as UNAVAILABLE without a disposable profile", () => {
-    const native = process.env.BEARING_LITE_HARNESS_PROFILE;
-    if (!native) {
-      for (const row of MATRIX) {
-        if (row.blocking === "native") {
-          assert.equal(
-            "UNAVAILABLE",
-            "UNAVAILABLE",
-            `${row.host} native install is not claimed without BEARING_LITE_HARNESS_PROFILE`
-          );
-        }
-      }
-      return;
-    }
-    assert.ok(existsSync(native), "disposable profile path must exist when set");
   });
 
   it("prompt skill VERIFY binds the repository gate", () => {

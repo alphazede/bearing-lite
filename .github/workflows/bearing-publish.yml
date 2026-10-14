@@ -100,6 +100,10 @@ jobs:
         run: |
           pnpm install --frozen-lockfile
           node --test test/*.test.mjs
+          npm install --prefix "${RUNNER_TEMP}/bearing-codex" --ignore-scripts --no-audit --no-fund @openai/codex@0.162.1
+          export BEARING_CODEX_BIN="${RUNNER_TEMP}/bearing-codex/node_modules/.bin/codex"
+          test "$("$BEARING_CODEX_BIN" --version)" = "codex-cli 0.162.1"
+          node --test test/native/codex-hook-discovery.test.mjs
           pnpm audit --audit-level=moderate
           npm pack --dry-run --json
 

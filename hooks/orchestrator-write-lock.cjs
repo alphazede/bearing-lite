@@ -436,7 +436,8 @@ function scanPatchTargets(text, out) {
   if (typeof text !== "string" || !text) return;
   for (const line of text.split("\n")) {
     const target =
-      line.match(/^\s*\*\*\*\s*(?:Update|Add|Delete|Rename)\s+File:\s*(\S+)/) ||
+      // Patch headers name one whole path per line, spaces included; Move to is a rename destination.
+      line.match(/^\s*\*\*\*\s*(?:(?:Update|Add|Delete|Rename)\s+File|Move\s+to):\s*(.+?)\s*$/) ||
       line.match(/^\s*(?:---|\+\+\+)\s+(?:[ab]\/)?(\S+)/) ||
       line.match(/^\s*(?:File|Path):\s*(\S+)/i);
     if (!target) continue;
@@ -485,6 +486,11 @@ function collectPaths(input) {
   );
   for (const key of ["patch", "diff"]) {
     scanPatchTargets(fieldText(toolInput[key]) || fieldText(input[key]), out);
+  }
+  // Codex apply_patch carries the patch body in tool_input.command; shell
+  // commands stay on the command-segment scan above.
+  if (/^apply_?patch$/i.test(presentString(input.tool_name) || presentString(input.toolName) || "")) {
+    scanPatchTargets(presentString(toolInput.command), out);
   }
   return [...out];
 }

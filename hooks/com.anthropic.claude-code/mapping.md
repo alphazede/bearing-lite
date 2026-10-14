@@ -11,7 +11,7 @@ host has a native pre-write deny.
 | Host | Plugin install | Hooks | Coverage |
 |---|---|---|---|
 | Claude Code | `.claude-plugin/` marketplace | `hooks/hooks.json` | partial |
-| Codex | `.codex-plugin/` + `.agents/plugins/` | `hooks/hooks.json` | partial |
+| Codex | `.codex-plugin/` via the prepared marketplace from `tools/prepare-codex-plugin.mjs` | `hooks/hooks.json` | partial |
 | Grok Build | `.grok-plugin/` marketplace | `hooks/hooks.json` | partial |
 | Cursor | `.cursor-plugin/` | `hooks/com.cursor/hooks.json` (`sessionStart`, `stop`) | partial |
 | Kimi Code | `.kimi-plugin/plugin.json` | manifest `hooks` array | partial |
@@ -26,6 +26,13 @@ Codex, or Grok host manifests. Root `hooks` is outside the closed Agent Plugins
 1.0 field set. Claude, Codex, and Grok auto-load `hooks/hooks.json`; declaring
 both is a duplicate-file error. GitHub Copilot in VS Code discovers plugin hooks
 from `com.github.copilot/hooks/hooks.json`.
+
+Codex 0.162.1 registers no plugin hooks, silently, when the installed root
+`plugin.json` carries `$schema`. Codex therefore installs from the local
+marketplace that `tools/prepare-codex-plugin.mjs --out <new dir>` prepares: the
+same package bytes plus `.codex-plugin/`, with only root `$schema` omitted.
+`node --test test/native/codex-hook-discovery.test.mjs` proves registration
+(7 hooks, all skills, none when disabled), not invocation.
 
 Skill-copy into a host skills directory does **not** register plugin hooks.
 To carry the Orchestrator write-set lock, merge `hooks/skill-copy-write-lock.json`

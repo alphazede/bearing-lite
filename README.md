@@ -125,14 +125,40 @@ session-start activation and stop closeout hooks.
 claude plugin marketplace add /path/to/bearing-lite
 claude plugin install bearing-lite@bearing-lite
 
-# Codex
-codex plugin marketplace add /path/to/bearing-lite
+# Codex (prepared local marketplace; see below)
+node /path/to/bearing-lite/tools/prepare-codex-plugin.mjs --out /path/to/bearing-lite-codex
+codex plugin marketplace add /path/to/bearing-lite-codex
 codex plugin add bearing-lite@bearing-lite
 
 # Grok Build
 grok plugin marketplace add /path/to/bearing-lite
 grok plugin install bearing-lite --trust
 ```
+
+**Codex needs the prepared marketplace.** Codex 0.162.1 registers zero plugin
+hooks when the root `plugin.json` carries the Agent Plugins `$schema` key, and
+reports no warning or error. Adding the repository root as a marketplace
+(including the root `.agents/plugins/marketplace.json`, which points at the
+GitHub repository) installs the skills but no hooks. `tools/prepare-codex-plugin.mjs`
+writes a new local marketplace whose `bearing-lite/` payload is the npm package
+file set plus `.codex-plugin/`, byte for byte, except that root `plugin.json`
+omits `$schema`. The portable source is not changed.
+
+- Run it from a git checkout. The npm package omits `.codex-plugin/`, and the
+  tool stops if that metadata is missing. It also needs Node 22 and `npm` on
+  `PATH` (it reads the file set from `npm pack --dry-run`; no network).
+- `--out` must be a new directory with an existing parent, outside the
+  checkout. The tool refuses an existing path, the checkout, a path inside it,
+  an ancestor of it, or a symlink alias that resolves into it.
+- Rerun it into a fresh directory after updating the checkout, then reinstall.
+
+`node --test test/native/codex-hook-discovery.test.mjs` is the native proof: it
+installs the prepared artifact into a disposable Codex home and checks that
+Codex lists all seven `hooks/hooks.json` registrations and every packaged skill
+when enabled, and no Bearing hook when disabled. It proves registration only,
+not that a hook runs or denies anything. Release smoke must still show a
+positive hook invocation and an allowed and a denied write-lock case; the
+absence of errors is not evidence.
 
 ### UI or TUI plugin installation
 

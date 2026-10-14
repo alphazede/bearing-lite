@@ -372,7 +372,30 @@ function readTargetPaths(input, root, resolvedToolInput) {
       if (target) out.add(target);
     }
   }
+  if (typeof toolInput.patch === "string") {
+    for (const match of toolInput.patch.matchAll(/^\*\*\* (?:(?:Add|Update|Delete) File|Move to): (.+)$/gm)) {
+      const target = relativeTarget(root, match[1].trim());
+      if (target) out.add(target);
+    }
+  }
   return [...out].sort();
+}
+
+/**
+ * Codex apply_patch sends the patch body as tool_input.command. Present the
+ * same text in the `patch` field the evaluator reads, keeping the raw command.
+ * The evaluator ignores `*** Move to:` headers, so rename destinations are
+ * appended to the `edits` it already reads; caller edits are kept.
+ */
+function normalizeToolInput(toolName, toolInput) {
+  if (!toolInput || !/^apply_?patch$/i.test(toolName || "")) return toolInput;
+  const patch = typeof toolInput.patch === "string" ? toolInput.patch
+    : typeof toolInput.command === "string" ? toolInput.command : null;
+  if (patch === null) return toolInput;
+  const out = { ...toolInput, patch };
+  const moves = [...patch.matchAll(/^\*\*\* Move to: (.+)$/gm)].map((m) => ({ file_path: m[1].trim() }));
+  if (moves.length) out.edits = [...(Array.isArray(toolInput.edits) ? toolInput.edits : []), ...moves];
+  return out;
 }
 
 /**
@@ -412,11 +435,12 @@ function readArtifact(root, file) {
 function buildRequest(hookClass, event, input, root, host) {
   const plan = readTrustedPlan(root);
   const candidate = readCandidate(root, plan.diff_base, plan.assignment.write_set);
-  const toolInput = isPlainObject(input.tool_input)
+  const toolName = presentString(input.tool_name) ?? presentString(input.toolName) ?? null;
+  const toolInput = normalizeToolInput(toolName, isPlainObject(input.tool_input)
     ? input.tool_input
     : isPlainObject(input.toolInput)
       ? input.toolInput
-      : null;
+      : null);
   return {
     hook_class: hookClass,
     event: typeof event === "string" ? event.trim() : "",
@@ -426,7 +450,7 @@ function buildRequest(hookClass, event, input, root, host) {
     assignment: plan.assignment,
     revision: candidate.revision,
     diff_base: candidate.diff_base,
-    tool_name: presentString(input.tool_name) ?? presentString(input.toolName) ?? null,
+    tool_name: toolName,
     tool_input: toolInput,
     target_paths: readTargetPaths(input, root, toolInput),
     handoff: readArtifact(root, HANDOFF_FILE),
