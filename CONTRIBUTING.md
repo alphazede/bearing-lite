@@ -60,8 +60,27 @@ checkout):
 node --test test/public-boundary.test.mjs test/skills-conformance.test.mjs
 node --test test/*.test.mjs
 python3 test/schema-validation.py
+node --test test/native/codex-hook-discovery.test.mjs
 node hooks/write-set-check.cjs -- <paths the slice wrote>
 ```
+
+The native Codex gate is required in CI and before publishing. The
+`test/*.test.mjs` glob does not run it, so a passing default suite is not a
+native pass. It needs Codex CLI 0.162.1 (`codex` on `PATH`, or set
+`BEARING_CODEX_BIN`); a missing Codex fails the gate, it never skips. CI
+installs that exact version as test-only tooling into a job-local prefix:
+
+```sh
+npm install --prefix "$RUNNER_TEMP/bearing-codex" --ignore-scripts --no-audit --no-fund @openai/codex@0.162.1
+BEARING_CODEX_BIN="$RUNNER_TEMP/bearing-codex/node_modules/.bin/codex" \
+  node --test test/native/codex-hook-discovery.test.mjs
+```
+
+The test uses a disposable `HOME`/`CODEX_HOME` and makes no model call. It
+proves that Codex registers the hooks and skills of the artifact from
+`tools/prepare-codex-plugin.mjs`; it does not prove a hook runs. Release smoke
+must show a positive hook invocation plus an allowed and a denied write-lock
+case.
 
 `git diff --check` alone does not examine untracked files. `write-set-check.cjs`
 is the write-set hygiene command: it inspects each named path, including newly

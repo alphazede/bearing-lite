@@ -1,0 +1,9 @@
+{
+  "cwd": "__WORKSPACE__",
+  "hook_event_name": "PreToolUse",
+  "permission_mode": "bypassPermissions",
+  "tool_name": "apply_patch",
+  "tool_input": {
+    "command": "*** Begin Patch\n*** Update File: notes/allowed.md\n*** Move to: design.md\n@@\n-allowed\n+moved\n*** End Patch"
+  }
+}

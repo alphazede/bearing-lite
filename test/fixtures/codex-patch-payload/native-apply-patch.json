@@ -1,0 +1,9 @@
+{
+  "cwd": "__WORKSPACE__",
+  "hook_event_name": "PreToolUse",
+  "permission_mode": "bypassPermissions",
+  "tool_name": "apply_patch",
+  "tool_input": {
+    "command": "*** Begin Patch\n*** Update File: __WORKSPACE__/design.md\n@@\n-# design\n+# design probe\n*** End Patch"
+  }
+}

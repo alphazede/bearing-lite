@@ -332,7 +332,7 @@ function detectWriteLock() {
     if (!Array.isArray(pre)) return "absent";
     const wired = pre.some((entry) =>
       (entry.hooks || []).some((hook) =>
-        (hook.args || []).some((arg) => String(arg).includes("orchestrator-write-lock.cjs"))
+        [hook.command, ...(hook.args || [])].some((arg) => String(arg).includes("orchestrator-write-lock.cjs"))
       )
     );
     return wired ? "present" : "absent";
