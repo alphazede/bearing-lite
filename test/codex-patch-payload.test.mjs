@@ -135,6 +135,54 @@ describe("Codex apply_patch payload: orchestrator write lock (D4)", () => {
     assert.ok(!denied(runLock(moveEnvelope(ws), "planning_and_design")));
   });
 
+  // IR-F1: native apply_patch (codex-cli 0.162.1) trims leading whitespace on hunk headers and
+  // applied `  *** Update File: design.md` (repair-wave-evidence/native-parser.txt).
+  it("denies an indented-header apply_patch Update of design.md without a role", () => {
+    const ws = workspace("indent-lock");
+    const out = runLock(nativeEnvelope(ws, { tool_input: { command: patch("  *** Update File: design.md", "@@", "-# design", "+# d") } }));
+    assert.ok(denied(out), `IR-F1: indented apply_patch Update of design.md was not denied: ${JSON.stringify(out)}`);
+  });
+
+  // IR-F3: native apply_patch applied each of these edits to notes/*.md only
+  // (repair-wave-evidence/native-parser.txt); hunk content is not file metadata.
+  for (const [label, lines] of [
+    ["context line ' File: design.md'", [" File: design.md", "-x", "+y"]],
+    ["removed line '--- design.md'", ["--- design.md", "+y"]],
+    ["added line '+File: design.md'", ["-x", "+File: design.md"]],
+  ]) {
+    it(`does not deny an apply_patch of notes/a.md whose ${label} mentions design.md`, () => {
+      const ws = workspace("content");
+      const out = runLock(nativeEnvelope(ws, { tool_input: { command: patch("*** Update File: notes/a.md", "@@", ...lines) } }));
+      assert.ok(!denied(out), `IR-F3: hunk content treated as a write target: ${JSON.stringify(out)}`);
+    });
+  }
+
+  // IR-F3 (additional repair): native apply_patch read these space-prefixed lines as Update
+  // context and modified only notes/a.md (additional-repair/test-native-probe.json, cases A, C).
+  for (const [label, lines] of [
+    ["context line ' *** Update File: design.md'", ["-x", "+y", " *** Update File: design.md"]],
+    ["context line ' *** Move to: design.md'", [" *** Add File: test/x.test.mjs", " *** Move to: design.md", "+z"]],
+  ]) {
+    it(`does not deny an apply_patch of notes/a.md whose ${label} is content`, () => {
+      const ws = workspace("header-content");
+      const out = runLock(nativeEnvelope(ws, { tool_input: { command: patch("*** Update File: notes/a.md", "@@", ...lines) } }));
+      assert.ok(!denied(out), `IR-F3: Update context line treated as a write target: ${JSON.stringify(out)}`);
+    });
+  }
+
+  // Native apply_patch ended the Add hunk and applied this indented header to design.md (probe case D).
+  it("still denies an indented design.md header that follows an Add hunk", () => {
+    const ws = workspace("indent-after-add");
+    const command = patch("*** Add File: notes/b.md", "+b", "  *** Update File: design.md", "@@", "-# design", "+# d");
+    assert.ok(denied(runLock(nativeEnvelope(ws, { tool_input: { command } }))), "IR-F3 control: real indented header must stay denied");
+  });
+
+  it("still denies a real design.md header next to content that mentions design.md", () => {
+    const ws = workspace("content-control");
+    const command = patch("*** Update File: notes/a.md", "@@", " File: design.md", "-x", "+y", "*** Update File: design.md", "@@", "-# design", "+# d");
+    assert.ok(denied(runLock(nativeEnvelope(ws, { tool_input: { command } }))), "IR-F3 control: design.md header must stay denied");
+  });
+
   it("does not treat shell text that mentions design.md or patch markers as a write", () => {
     const ws = workspace("shell");
     for (const command of ["cat design.md", `grep -n design ${ws}/design.md`, "echo '*** Update File: design.md'"]) {
@@ -205,6 +253,46 @@ module.exports = { evaluateTestWrite: rec("evaluateTestWrite"), evaluateCompleti
     const { request } = routed(ws, moveEnvelope(ws, command, { edits: [prior] }));
     assert.ok(Array.isArray(request.tool_input.edits) && request.tool_input.edits.some((e) => e.file_path === prior.file_path),
       `existing edits entry must survive: ${JSON.stringify(request.tool_input.edits)}`);
+  });
+
+  // IR-F1: native apply_patch created test/x.test.mjs from an indented Add header
+  // (repair-wave-evidence/native-parser.txt), so routing must match the column-0 control.
+  it("routes an indented-header Add of test code like the column-0 control, keeping the raw command", () => {
+    const cws = teWorkspace("indent-control");
+    const control = routed(cws, nativeEnvelope(cws, { tool_input: { command: patch("*** Add File: test/x.test.mjs", "+x") } })).request;
+    const ws = teWorkspace("indent");
+    const command = patch("  *** Add File: test/x.test.mjs", "+x");
+    const { fn, request } = routed(ws, nativeEnvelope(ws, { tool_input: { command } }));
+    assert.equal(fn, "evaluateTestWrite");
+    assert.equal(request.tool_input.command, command, "raw command must be preserved exactly");
+    assert.deepEqual(request.target_paths, control.target_paths, "IR-F1: indented Add target must match the column-0 control");
+    assert.match(request.tool_input.patch, /^\*\*\* Add File: test\/x\.test\.mjs$/m,
+      `IR-F1: evaluator-read patch must carry the Add header the evaluator recognizes: ${JSON.stringify(request.tool_input.patch)}`);
+  });
+
+  // IR-F3 (additional repair): native apply_patch read these lines as Update context of
+  // notes/a.md and created/moved nothing else (additional-repair/test-native-probe.json, B, C).
+  for (const [label, lines] of [
+    ["' *** Add File: test/x.test.mjs'", ["-x", "+y", " *** Update File: design.md", " *** Add File: test/x.test.mjs"]],
+    ["' *** Move to: design.md'", [" *** Add File: test/x.test.mjs", " *** Move to: design.md", "+z"]],
+  ]) {
+    it(`does not turn Update context ${label} into a target or header`, () => {
+      const ws = teWorkspace("header-content");
+      const command = patch("*** Update File: notes/a.md", "@@", ...lines);
+      const { request } = routed(ws, nativeEnvelope(ws, { tool_input: { command } }));
+      assert.equal(request.tool_input.command, command, "raw command must be preserved exactly");
+      assert.deepEqual(request.target_paths, ["notes/a.md"], "IR-F3: context line became a phantom target");
+      assert.doesNotMatch(request.tool_input.patch, /^\*\*\* (?:Add File: test|Update File: design|Move to: )/m,
+        `IR-F3: normalization turned content into a header: ${JSON.stringify(request.tool_input.patch)}`);
+      assert.ok(!(request.tool_input.edits || []).length, `IR-F3: phantom Move edits: ${JSON.stringify(request.tool_input.edits)}`);
+    });
+  }
+
+  // Native apply_patch ended the first Add hunk and created test/x.test.mjs (probe case E).
+  it("keeps an indented Add header that follows an Add hunk as a target", () => {
+    const ws = teWorkspace("indent-after-add");
+    const { request } = routed(ws, nativeEnvelope(ws, { tool_input: { command: patch("*** Add File: notes/b.md", "+b", "  *** Add File: test/x.test.mjs", "+t") } }));
+    assert.deepEqual(request.target_paths, ["notes/b.md", "test/x.test.mjs"]);
   });
 
   it("names a space-containing patch target whole in target_paths", () => {

@@ -430,6 +430,35 @@ function scanCommandWriteTargets(command, out) {
   }
 }
 
+const NATIVE_PATCH_HEADER = /^\*\*\*\s*((?:Update|Add|Delete|Rename)\s+File|Move\s+to):\s*(.+?)\s*$/;
+
+/**
+ * Codex apply_patch operation headers, read with the native parser's hunk
+ * boundaries. Codex trims a line before matching a hunk header, but inside an
+ * Update hunk only a line that starts with `***` ends the hunk; a line starting
+ * with a space is context. So ` *** Update File: x` there is content, while an
+ * indented header after an Add hunk (whose content lines start with `+`) or at
+ * the start of the patch is a real operation. Shared with te-host.cjs.
+ * @param {string} text apply_patch body
+ * @returns {{ verb: string, path: string, line: number }[]} operations in order;
+ *   line indexes text.split("\n")
+ */
+function nativePatchOperations(text) {
+  const operations = [];
+  if (typeof text !== "string") return operations;
+  let hunk = null;
+  text.split("\n").forEach((line, index) => {
+    if (hunk === "Update" && !line.startsWith("***")) return;
+    if (hunk === "Add" && line.startsWith("+")) return;
+    const header = line.trim().match(NATIVE_PATCH_HEADER);
+    if (!header) return;
+    operations.push({ verb: header[1], path: header[2], line: index });
+    // Move to keeps the Update hunk open; Delete and Rename carry no content lines.
+    if (!/^Move/.test(header[1])) hunk = header[1].split(/\s/)[0];
+  });
+  return operations;
+}
+
 // Patch/diff bodies describe write operations, so only their file-target
 // lines (not prose inside added lines) name write targets.
 function scanPatchTargets(text, out) {
@@ -490,7 +519,10 @@ function collectPaths(input) {
   // Codex apply_patch carries the patch body in tool_input.command; shell
   // commands stay on the command-segment scan above.
   if (/^apply_?patch$/i.test(presentString(input.tool_name) || presentString(input.toolName) || "")) {
-    scanPatchTargets(presentString(toolInput.command), out);
+    for (const { path: target } of nativePatchOperations(presentString(toolInput.command))) {
+      const candidate = stripQuotes(target.replace(/[,:;]+$/, ""));
+      if (isLockedPath(candidate)) out.add(posix(candidate));
+    }
   }
   return [...out];
 }
@@ -713,6 +745,7 @@ module.exports = {
   toWire,
   ownerFor,
   hookVersion,
+  nativePatchOperations,
 };
 
 if (require.main === module) {

@@ -114,6 +114,20 @@ describe("Codex prepared plugin artifact", () => {
     assert.deepEqual(listFiles(src).sort(), before_);
   });
 
+  // IR-F2: a child named `..name` is inside the source, unlike the real parent `..`.
+  it("accepts a sibling reached through `..` but refuses a `..name` child of the source tree", () => {
+    const src = sandboxSource("dotdot");
+    const sibling = `${src}/../codex-out`;
+    const r = generate(src, sibling);
+    assert.equal(r.status, 0, `outside sibling must be accepted\nstdout: ${r.stdout}\nstderr: ${r.stderr}`);
+    assert.ok(existsSync(path.join(tmp, "dotdot", "codex-out", ".agents", "plugins", "marketplace.json")));
+    const before_ = listFiles(src).sort();
+    for (const out of [`${src}/..codex-out`, `${src}/hooks/..codex-out`, `${src}/..`]) {
+      assertRefused(generate(src, out), out, "dot-dot name inside source");
+    }
+    assert.deepEqual(listFiles(src).sort(), before_);
+  });
+
   it("refuses the source root and its ancestors", () => {
     const src = sandboxSource("ancestor");
     for (const out of [src, path.dirname(src)]) {
