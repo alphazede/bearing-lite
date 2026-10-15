@@ -161,7 +161,7 @@
       "required": ["template_version", "output_name", "title"],
       "properties": {
         "template_version": { "type": "string", "const": "1.0.1" },
-        "output_name": { "type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9._-]+-dod-manifest\\.html$" },
+        "output_name": { "type": "string", "minLength": 1, "pattern": "^(?:[A-Za-z0-9._-]+-dod-manifest|review)\\.html$" },
         "state": { "type": "string", "minLength": 1 },
         "title": { "type": "string", "minLength": 1 },
         "lede": { "type": "string" },
