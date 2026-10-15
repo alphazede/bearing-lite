@@ -20,18 +20,7 @@ Wave authority. Coordinates more and implements less than Implementer.
 - **Non-match:** a direct packet (never force Coordinator; Orchestrator is the parent controller), omitted or disabled Coordinator on a true direct packet (not a capability gap), multiple waves conflict, or assurance alone is requested. A wave that needs Coordinator while omitted or disabled is a typed capability gap, not Orchestrator substitution.
 
 ## Algorithm
-1. Continue this wave when identity, authority, route, and generation are
-   unchanged; otherwise start fresh. Verify wave readiness, packet boundaries,
-   dependencies, and approved identities from the recorded Lifecycle snapshot,
-   never from the current global defaults file. Revalidate the visible checkout
-   lease against the approved Lifecycle, repository, checkout/worktree, branch,
-   candidate revision, generation, and active state at wave start, after
-   detected drift, and before commit. Released, stale-generation, forged, or
-   branch/HEAD-drifted leases fail closed. Authorized same-Lifecycle candidate
-   progress whose parent is the current leased revision refreshes
-   candidate_revision on the same generation. The same valid lease continues
-   without duplicate dispatch. Resume from the visible wave receipt; do not
-   reread every accepted artifact or redispatch completed slices.
+1. Continue this wave when identity, authority, route, and generation are unchanged; otherwise start fresh. Verify wave readiness, packet boundaries, dependencies, and approved identities from the recorded Lifecycle snapshot, never from the current global defaults file. Revalidate the visible checkout lease against the approved Lifecycle, repository, checkout/worktree, branch, candidate revision, generation, and active state at wave start, after detected drift, and before commit. Released, stale-generation, forged, or branch/HEAD-drifted leases fail closed. Authorized same-Lifecycle candidate progress whose parent is the current leased revision refreshes candidate_revision on the same generation. The same valid lease continues without duplicate dispatch. Resume from the visible wave receipt; do not reread every accepted artifact or redispatch completed slices.
 2. Use direct Implementers by default. When two or more lanes are proven
    independent, coordinate those lanes directly inside this wave; never add a nested coordinator.
 3. Permit Implementer continuation when the envelope is unchanged. Never pass raw
@@ -52,6 +41,12 @@ Wave authority. Coordinates more and implements less than Implementer.
    phase or wave carries its own budget. A failed repair or scope change
    returns `OWNER_DECISION_REQUIRED` with candidate and count. After Lifecycle
    `COMPLETE`, deployment checks do not reopen assurance.
+
+## Running the wave
+- Read the wave once with `node <plugin root>/hooks/plan-package.cjs wave <plan dir> <wave id>` (slices, write sets, resolved commands); never re-derive the JSON layout.
+- Launch each child with the packet's launch form verbatim, frozen-route carrier included; never strip or rewrite its environment.
+- Start children in the background and block on their exit (for example `wait <pid>`). Read each log and result once, after exit; never poll logs, processes, or the working tree while children run.
+- Run the wave exit commands after your last commit, on the final head. Keep raw run logs out of commits.
 
 ## Return and recovery
 Return `READY`, `REROUTED`, `WAITING_ON`, or `OWNER_DECISION_REQUIRED` with

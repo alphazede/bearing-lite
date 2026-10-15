@@ -14,6 +14,8 @@
  * recorded authority.json baseline, naming offenders with file:line;
  * gate-evidence/dated-receipt paths and HISTORICAL_GATE-marked values are allow-listed.
  * CLI: node <plugin root>/hooks/plan-package.cjs <plan dir> -> JSON, exit 1 on any finding.
+ * CLI: node <plugin root>/hooks/plan-package.cjs wave <plan dir> <wave id> -> one wave's
+ * slices, write sets, and resolved commands (#190), exit 1 on any finding.
  */
 
 const fs = require("node:fs");
@@ -503,7 +505,63 @@ function freeze(dir) {
   return { outcome: findings.length ? "FAIL" : "PASS", manifest_digest: digests.manifest_digest, findings };
 }
 
+/** #190: CMD-* / PROC-* ids named in a wave's free-text exit criterion. */
+const COMMAND_ID = /\b(?:CMD|PROC)-[A-Z0-9.-]*[A-Z0-9]/g;
+
+/**
+ * #190: one wave's slices, write sets, and resolved commands, so a
+ * Coordinator never re-derives the package layout. Slices come from
+ * waves[].slice_ids (resolved against slices[]) or nested waves[].slices;
+ * exit commands from waves[].exit_command_ids, else ids named in exit.
+ */
+function waveView(dir, waveId) {
+  const implementation = readJson(path.join(dir, "implementation.json"));
+  const seit = readJson(path.join(dir, "seit.json"));
+  const procedures = new Map((seit?.procedures_and_commands || []).map((p) => [p.id, p]));
+  const findings = [];
+  const resolve = (step, ids) =>
+    ids.flatMap((id) => {
+      const p = procedures.get(id);
+      if (!p) {
+        findings.push({ code: "unknown_command_id", step, command_id: id });
+        return [];
+      }
+      return [{ id, command: p.command ?? null, pass: p.pass ?? null }];
+    });
+  const wave = (implementation?.waves || []).find((w) => w?.id === waveId);
+  if (!wave) {
+    return { outcome: "FAIL", wave: null, slices: [], exit_commands: [], findings: [{ code: "wave_not_found", wave_id: waveId }] };
+  }
+  const top = new Map((implementation.slices || []).map((s) => [s?.id, s]));
+  const members = [];
+  for (const id of wave.slice_ids || []) {
+    if (top.has(id)) members.push(top.get(id));
+    else findings.push({ code: "wave_slice_unresolved", wave_id: waveId, slice_id: id });
+  }
+  for (const item of wave.slices || []) members.push(typeof item === "string" ? top.get(item) || { id: item } : item);
+  const slices = members.map((slice) => ({
+    id: slice.id,
+    role: slice.role ?? null,
+    work_class: slice.work_class ?? null,
+    depends_on: slice.depends_on ?? null,
+    write_set: slice.write_set ?? [],
+    commands: resolve(slice.id, [...(slice.command_ids || []), ...(slice.post_step_command_ids || [])]),
+  }));
+  const exitIds = Array.isArray(wave.exit_command_ids)
+    ? wave.exit_command_ids
+    : [...new Set(String(wave.exit || "").match(COMMAND_ID) || [])];
+  const exit_commands = resolve(waveId, exitIds);
+  return {
+    outcome: findings.length ? "FAIL" : "PASS",
+    wave: { id: wave.id, name: wave.name ?? null, entry: wave.entry ?? null, exit: wave.exit ?? null },
+    slices,
+    exit_commands,
+    findings,
+  };
+}
+
 module.exports = {
+  waveView,
   checkManifestProjection,
   checkRoles,
   checkWorkClass,
@@ -516,7 +574,16 @@ module.exports = {
   freeze,
 };
 
-if (require.main === module) {
+if (require.main === module && process.argv[2] === "wave") {
+  const [dir, waveId] = process.argv.slice(3);
+  if (!dir || !waveId) {
+    process.stderr.write("usage: node hooks/plan-package.cjs wave <plan dir> <wave id>\n");
+    process.exit(2);
+  }
+  const result = waveView(dir, waveId);
+  process.stdout.write(JSON.stringify(result, null, 2) + "\n");
+  process.exit(result.outcome === "PASS" ? 0 : 1);
+} else if (require.main === module) {
   const dir = process.argv[2];
   if (!dir) {
     process.stderr.write("usage: node hooks/plan-package.cjs <plan dir>\n");
