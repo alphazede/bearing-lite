@@ -1,7 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -75,6 +75,50 @@ describe("model-neutral planning review", () => {
       core.evaluatePlanningReview(review({ dod_manifest: { output_name: "missing-dod-manifest.html" } })),
       { outcome: "NEEDS_MORE_EVIDENCE", reason: "manifest_not_generated" }
     );
+  });
+
+  it("accepts a rendered manifest the package declares as review.html (#189)", () => {
+    const dir = mkdtempSync(path.join(os.tmpdir(), "planning-review-189-"));
+    writeFileSync(path.join(dir, "review.html"), "<!doctype html><title>DoD</title>");
+    assert.deepEqual(
+      core.evaluatePlanningReview(review({ plan_dir: dir, dod_manifest: { output_name: "review.html" } })),
+      { outcome: "PASS", reason: "repair_gate_passed" }
+    );
+  });
+
+  it("lets the implementation schema declare the same manifest names the gate accepts (#189)", () => {
+    const schema = JSON.parse(readFileSync(path.join(ROOT, "schemas/implementation.schema.json"), "utf8"));
+    const pattern = new RegExp(schema.$defs.dodManifest.properties.output_name.pattern);
+    for (const name of ["review.html", "plan-dod-manifest.html"]) assert.ok(pattern.test(name), name);
+    for (const name of ["notes.html", "nested/review.html", "../review.html", "review.htm"]) {
+      assert.ok(!pattern.test(name), name);
+    }
+  });
+
+  it("still rejects escaping, missing, and undeclared sibling manifests (#189)", () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), "planning-review-189-neg-"));
+    const dir = path.join(root, "plan");
+    mkdirSync(dir);
+    writeFileSync(path.join(root, "review.html"), "<!doctype html>");
+    writeFileSync(path.join(root, "outside-dod-manifest.html"), "<!doctype html>");
+    writeFileSync(path.join(dir, "notes.html"), "<!doctype html>");
+    mkdirSync(path.join(dir, "nested"));
+    writeFileSync(path.join(dir, "nested", "review.html"), "<!doctype html>");
+    for (const name of [
+      "../review.html",
+      "../outside-dod-manifest.html",
+      path.join(root, "review.html"),
+      "nested/review.html",
+      "review.html",
+      "notes.html",
+      "review.htm",
+    ]) {
+      assert.deepEqual(
+        core.evaluatePlanningReview(review({ plan_dir: dir, dod_manifest: { output_name: name } })),
+        { outcome: "NEEDS_MORE_EVIDENCE", reason: "manifest_not_generated" },
+        name
+      );
+    }
   });
 
   it("distinguishes a pending first round from an exceeded round", () => {

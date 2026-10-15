@@ -6,7 +6,8 @@ Bearing rejects deviations with typed findings.
 The canonical Lifecycle planning artifacts are exactly
 `<lifecycle-topic>-technical-plan.md` with `type: technical-plan`, `design.md`,
 `seit.json`, `implementation.json`, and the Definition of Done Manifest
-(`<plan-name>-dod-manifest.html`). Markdown carries
+(`<plan-name>-dod-manifest.html`, or `review.html` where the repository names
+it so; `dod_manifest.output_name` declares which). Markdown carries
 technical-plan and design reasoning; the JSON files are schema-validated
 machine authorities; the DoD Manifest is their complete integrated human
 projection. There is no sixth canonical planning artifact. XLSX may be an
