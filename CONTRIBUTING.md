@@ -86,7 +86,8 @@ case.
 is the write-set hygiene command: it inspects each named path, including newly
 added ones, and fails if any path was omitted.
 
-Schema validation requires Python 3.12. `python3 test/schema-validation.py` is
+Schema validation requires Python 3.12 or 3.14, the two interpreters whose
+`rpds-py` wheels are pinned and scanned. `python3 test/schema-validation.py` is
 the required developer and CI gate (`CMD-LITE-SCHEMA-VALIDATE`). It installs the
 pinned hashes from `test/schema-validator-requirements.txt` into an isolated
 temporary directory with `pip install --isolated --require-hashes --no-deps` and
