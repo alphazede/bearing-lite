@@ -1,5 +1,7 @@
 # Isolated test-only Draft 2020-12 validator pins. Six packages, no extras.
 # Do not install globally or as a production dependency.
+# rpds-py carries its scanned cp312 and cp314 manylinux x86_64 wheel hashes
+# (SCAN-EMV-SCHEMA-VALIDATOR-001; cp314 re-scanned for alphazede/Alphazedehq#278).
 # python3 -m pip install --require-hashes --no-deps -r test/schema-validator-requirements.txt
 #
 jsonschema==4.25.1 \
@@ -11,6 +13,7 @@ jsonschema-specifications==2025.9.1 \
 referencing==0.37.0 \
     --hash=sha256:381329a9f99628c9069361716891d34ad94af76e461dcb0335825aecc7692231
 rpds-py==0.30.0 \
-    --hash=sha256:47f236970bccb2233267d89173d3ad2703cd36a0e2a6e92d0560d333871a3d23
+    --hash=sha256:47f236970bccb2233267d89173d3ad2703cd36a0e2a6e92d0560d333871a3d23 \
+    --hash=sha256:47e77dc9822d3ad616c3d5759ea5631a75e5809d5a28707744ef79d7a1bcfcad
 typing-extensions==4.15.0 \
     --hash=sha256:f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548

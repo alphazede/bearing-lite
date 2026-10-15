@@ -234,8 +234,8 @@ def die_env(message: str, code: int = 2) -> None:
 
 
 def pip_install(target: str) -> None:
-    if sys.version_info[:2] != (3, 12):
-        die_env("scanned rpds-py wheel is cp312; python3.12 is required")
+    if sys.version_info[:2] not in ((3, 12), (3, 14)):
+        die_env("scanned rpds-py wheels are cp312 and cp314; python3.12 or python3.14 is required")
     cmd = [
         sys.executable,
         "-m",
