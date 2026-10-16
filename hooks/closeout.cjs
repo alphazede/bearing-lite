@@ -13,6 +13,7 @@ const HOOK_CLASS = "closeout";
 const OUTCOMES = Object.freeze(["ADVISE", "REROUTE", "BLOCK", "UNAVAILABLE"]);
 const ENFORCEMENT = "procedural";
 const { evaluatePlanningReview } = require("./planning-review.cjs");
+const { evaluateScribeCoverage } = require("./scribe-coverage.cjs");
 
 const HANDOFF_FIELDS = Object.freeze([
   "verdict",
@@ -67,6 +68,9 @@ const RECOVERY_BLOCK_COMPLETION =
   "Do not mark COMPLETE; restore missing assurance, candidate match, or handoff fields first. Repair and owner channels remain open";
 const RECOVERY_CHANNEL =
   "Keep repair, status, owner communication, and safe rollback available; closeout does not block them";
+
+const RECOVERY_SCRIBE_HANDOFF =
+  "Do not render the handoff; dispatch the Scribe for the listed events, or report the typed Scribe capability gap, then retry";
 
 const SAFE_CHANNELS = new Set([
   "repair",
@@ -171,6 +175,19 @@ function evaluate(input) {
       }
     }
 
+    // #194: resume lists untranscribed events; handoff refuses until history is current.
+    if (input.action_kind === "scribe_coverage") {
+      const coverage = evaluateScribeCoverage(input);
+      if (input.mode === "handoff" && coverage.outcome !== "PASS") {
+        return { ...result("REROUTE", "handoff_refused:scribe_" + coverage.outcome + ":" + coverage.reason,
+          RECOVERY_SCRIBE_HANDOFF), scribe_coverage: coverage };
+      }
+      return { ...result("ADVISE", "scribe_coverage:" + coverage.outcome + ":" + coverage.reason,
+        coverage.recovery), scribe_coverage: coverage };
+    }
+
+    const scribeCoverage = isPlainObject(input.journey) ? evaluateScribeCoverage(input) : null;
+
     const mode =
       input.mode === "protected_completion" || input.protected_completion === true
         ? "protected_completion"
@@ -209,6 +226,9 @@ function evaluate(input) {
       if (planningVerdict && planningVerdict.outcome !== "PASS") {
         blockers.push("planning_review:" + planningVerdict.outcome);
       }
+      if (scribeCoverage && scribeCoverage.outcome !== "PASS") {
+        blockers.push("scribe:" + scribeCoverage.outcome + ":" + scribeCoverage.reason);
+      }
 
       if (blockers.length > 0) {
         return result(
@@ -234,6 +254,14 @@ function evaluate(input) {
         planningVerdict.outcome === "PASS"
           ? "Planning-review record is complete; continue to the integrated owner gate"
           : "Keep dispatch closed and complete, repair, or amend the planning-review record"
+      );
+    }
+
+    if (scribeCoverage && scribeCoverage.outcome !== "PASS") {
+      return result(
+        "REROUTE",
+        "scribe_coverage:" + scribeCoverage.outcome + ":" + scribeCoverage.reason,
+        scribeCoverage.recovery
       );
     }
 

@@ -22,6 +22,17 @@ Wait/status reliability varies by host and route. Host-native status checks
 are recommended when available. Missing expensive models or wrappers do not
 make a route ineligible.
 
+## History coverage
+
+Resume runs `node <plugin root>/hooks/scribe-coverage.cjs <journey.json>` and
+lists every untranscribed event it reports (owner decisions, authority
+events, landings) with its id and time. `SCRIBE_REQUIRED` dispatches the
+Scribe on the frozen route before other work; `CAPABILITY_GAP` is reported to
+the owner as a typed Scribe capability gap. The Orchestrator never
+transcribes the events itself. Handoff (`action_kind: "scribe_coverage"`,
+`mode: "handoff"`) and protected completion in `hooks/closeout.cjs` refuse
+until coverage is `PASS`.
+
 ## Continuation
 
 A resumed or fallback agent does not receive raw conversation history. It

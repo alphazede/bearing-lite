@@ -39,7 +39,9 @@ sessions; Integration Engineer has planning and execution sessions. Each
 session can be enabled or disabled. Cadence keys attach to
 `test_engineer.assurance`, `reviewer`, and `integration_engineer.execution`
 with values `slice`, `phase`, or `lifecycle`. Defaults are `phase`, `phase`,
-and `lifecycle`. The Light Implementer takes only slices whose `work_class`
+and `lifecycle`. `scribe.cadence` is `event` (default: after each owner
+decision, authority event, or landing), `phase`, or `lifecycle`; handoff and
+closeout check history coverage at every Scribe cadence. The Light Implementer takes only slices whose `work_class`
 is `light` (criteria in `skills/light-implementer`); it has its own primary
 and fallbacks, usually a lighter and cheaper route. Surveyor, Explorer,
 Crewmate, Navigator, Park Ranger, and Validator are not profile roles;

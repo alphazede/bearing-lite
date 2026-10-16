@@ -151,6 +151,41 @@
         }
       }
     },
+    "scribeCadence": {
+      "type": "string",
+      "description": "When the Orchestrator dispatches the Scribe: event (after each owner decision, authority event, or landing), phase (at each phase or wave boundary), or lifecycle (at handoff and closeout only). Omitted means event. Handoff and closeout check history coverage at every cadence.",
+      "enum": [
+        "event",
+        "phase",
+        "lifecycle"
+      ]
+    },
+    "scribeRoute": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "primary",
+        "ordered_fallbacks"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "primary": {
+          "$ref": "#/$defs/identity"
+        },
+        "ordered_fallbacks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/fallback"
+          }
+        },
+        "cadence": {
+          "$ref": "#/$defs/scribeCadence"
+        }
+      }
+    },
     "assuranceSession": {
       "type": "object",
       "additionalProperties": false,
@@ -267,7 +302,7 @@
               "$ref": "#/$defs/reviewerRoute"
             },
             "scribe": {
-              "$ref": "#/$defs/route"
+              "$ref": "#/$defs/scribeRoute"
             },
             "plan_integrator": {
               "$ref": "#/$defs/route"

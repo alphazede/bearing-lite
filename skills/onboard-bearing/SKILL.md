@@ -33,7 +33,7 @@ user's explicit instruction. Preserves every unaddressed existing value.
    retired role.
 3. Ask settings one at a time with no preselected value: named role/session
    routes and fallbacks, session enablement, development strategy,
-   planning review, assurance cadence, concurrency, clean-session, holds, and
+   planning review, assurance cadence, Scribe cadence, concurrency, clean-session, holds, and
    optional Reverify. When `development_strategy.mode` is `tdd`, collect Test
    Implementer (`roles.test_implementer`) independently of Product Implementer
    (`roles.implementer`). A missing, disabled, or malformed Test Implementer
