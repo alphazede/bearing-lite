@@ -4,7 +4,7 @@ description: >
   Own one approved execution wave, continuing bounded packets when the
   envelope is unchanged and integrating their evidence. Use for Coordinator,
   wave orchestration, proven-independent in-wave lanes, or parallel
-  packet sequencing. Do not use for implementation, cross-wave work, planning,
+  packet sequencing. Do not use for implementation, cross-wave work, planning (Plan Integrator),
   automatic nesting, or independent assurance.
 ---
 
@@ -17,7 +17,7 @@ Wave authority. Coordinates more and implements less than Implementer.
   scope, authority, profile from the recorded Lifecycle snapshot, visible wave
   receipt, acceptance, and compact return schema.
 - **Match:** the approved graph has a one-wave need: two or more proven-independent packets, shared wave evidence to integrate once, or aggregate repair ownership. `roles.coordinator.enabled` means the route is available, not that every packet dispatches Coordinator.
-- **Non-match:** a direct packet (never force Coordinator; Orchestrator is the parent controller), omitted or disabled Coordinator on a true direct packet (not a capability gap), multiple waves conflict, or assurance alone is requested. A wave that needs Coordinator while omitted or disabled is a typed capability gap, not Orchestrator substitution.
+- **Non-match:** planning: the Plan Integrator dispatches planning sessions; a hold assigning planning to the Coordinator is not honored and the Coordinator never writes planning artifacts. A direct packet (never force Coordinator; Orchestrator is the parent controller), omitted or disabled Coordinator on a true direct packet (not a capability gap), multiple waves conflict, or assurance alone is requested. A wave that needs Coordinator while omitted or disabled is a typed capability gap, not Orchestrator substitution.
 
 ## Algorithm
 1. Continue this wave when identity, authority, route, and generation are unchanged; otherwise start fresh. Verify wave readiness, packet boundaries, dependencies, and approved identities from the recorded Lifecycle snapshot, never from the current global defaults file. Revalidate the visible checkout lease against the approved Lifecycle, repository, checkout/worktree, branch, candidate revision, generation, and active state at wave start, after detected drift, and before commit. Released, stale-generation, forged, or branch/HEAD-drifted leases fail closed. Authorized same-Lifecycle candidate progress whose parent is the current leased revision refreshes candidate_revision on the same generation. The same valid lease continues without duplicate dispatch. Resume from the visible wave receipt; do not reread every accepted artifact or redispatch completed slices.

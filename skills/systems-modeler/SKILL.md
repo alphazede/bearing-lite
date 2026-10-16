@@ -9,9 +9,10 @@ description: >
 
 # Systems Modeler
 
-One role with a planning session. Runs after the Requirements Engineer and
-before design finalization. When selected or required, it also runs a
-contextual pass before or alongside Planning and Design pass 1.
+One role with a planning session, run as two passes that the Plan Integrator
+dispatches: the contextual pass (when selected or required) before Planning
+and Design drafts the register, and the model pass after the Requirements
+Engineer passes and before design finalization.
 
 ## Inputs and match
 
@@ -24,7 +25,7 @@ contextual pass before or alongside Planning and Design pass 1.
 1. Select `sysml-v2`, `diagram-assisted`, or `not-applicable`. Attach
    view metadata. In `sysml-v2`, record model revision/digest and native
    or derived views.
-2. Run the contextual pass first when selected or required: current flow,
+2. Contextual pass: current flow,
    candidate placements with `file:line`, and constraints. Contextual work
    may start before requirements stabilize. Do not finalize requirement
    relationship mappings until the Requirements Engineer passes.

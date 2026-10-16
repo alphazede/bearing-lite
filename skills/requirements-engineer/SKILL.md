@@ -41,8 +41,8 @@ SDoc, publishes, selects models or profiles, or writes tests.
    Never re-report mechanical classes covered by it; cite separate lint output
    and judge semantics. Missing or stale receipts return `NEEDS_MORE_EVIDENCE`.
 3. When a published standard is cited, verify the document and clause.
-4. Return failing rows. Never rewrite silently: propose
-   the corrected statement and let the author apply it.
+4. Return failing rows. Never rewrite silently: propose the corrected
+   statement; the Planning and Design session applies it.
 
 ## Return and recovery
 

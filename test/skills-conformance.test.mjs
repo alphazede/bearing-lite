@@ -464,8 +464,8 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     assert.match(router, /never infer identity values/i);
     assert.match(router, /planning\s+nodes return owner questions/);
     const planning = router.indexOf("Intake");
-    const map = router.indexOf("Invoke Planning and Design");
-    assert.ok(map >= 0 && map > planning, "Planning and Design must follow planning stages");
+    const map = router.indexOf("Dispatch the Plan Integrator");
+    assert.ok(map >= 0 && map > planning, "Plan Integrator dispatch must follow planning stages");
     assert.match(router, /Do not ask for profile or route\s+before it/);
     assert.match(router, /one integrated\s+approval-or-change gate/);
     assert.match(router, /Never add a staged profile or route-review gate/);
