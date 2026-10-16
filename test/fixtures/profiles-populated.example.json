@@ -60,7 +60,8 @@
             "model": "model-a",
             "reasoning": "reasoning-a"
           },
-          "ordered_fallbacks": []
+          "ordered_fallbacks": [],
+          "cadence": "event"
         },
         "plan_integrator": {
           "enabled": true,
