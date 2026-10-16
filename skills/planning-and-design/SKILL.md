@@ -9,7 +9,7 @@ description: >
 
 # Planning and Design
 
-Fresh planning node. If you are the Orchestrator, dispatch this; do not execute it.
+Fresh authoring session, dispatched only by the Plan Integrator on the frozen `plan_integrator` route (`BEARING_ROLE=planning_and_design`); never run by the Orchestrator or Coordinator, never a dispatcher.
 
 ## Match, inputs, and non-match
 
@@ -38,13 +38,13 @@ Fresh planning node. If you are the Orchestrator, dispatch this; do not execute 
    cadence. Concurrency covers test suites competing for one gate machine, not only agents, branches, and write sets: each wave states `added_gate_seconds` and `resource_groups`. Bind the one planning-review slot to owner-supplied
    primary and ordered fallback route references under one candidate ref,
    revision, and digest. Use supplied identities; never invent them.
-4. After stable source inputs, generate `implementation.json` with DoD Manifest input carrying content, not references; freeze: `node <plugin root>/hooks/plan-package.cjs <plan dir>`
-   must PASS (any finding halts), then render the DoD Manifest input together with its HTML. Each includes the proposed
+4. Return the drafts; the Plan Integrator will generate `implementation.json` with DoD Manifest input carrying content, not references; freeze: `node <plugin root>/hooks/plan-package.cjs <plan dir>`
+   must PASS (any finding halts), then it renders the DoD Manifest input together with its HTML. Each includes the proposed
    route, profile, role states, reasoning, cadence, traceability, waves,
    recovery, approval boundaries, and register references versus Lifecycle-local
    requirements. DoD Manifest states: `planning` then append-only closeout.
 5. Give every slice stable requirement/design/SEIT IDs, dependencies, exact write set, authority, role, session rule, evidence, recovery, and stop rule.
-6. Follow `../bearing-lite/references/owner-stops.md`. Open and verify the Manifest, then request
+6. Follow `../bearing-lite/references/owner-stops.md`. Through the Plan Integrator, the planning Orchestrator opens and verifies the Manifest, then requests
    exactly one integrated owner review of outcome, design, route, profile, cadence, and plan. Review
    presentation is gated by `hooks/planning-review.cjs` `evaluatePlanningReview()`, which returns
    `NEEDS_MORE_EVIDENCE` / `manifest_not_generated` without the Manifest. An owner change regenerates
