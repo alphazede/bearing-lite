@@ -120,6 +120,64 @@ function ownerFor(rel) {
   return null;
 }
 
+/**
+ * #195 bound planning authors. Each planning artifact may be written only by
+ * these roles; any other Lifecycle control or specialist role (Coordinator
+ * included) is refused. Execution roles stay under the slice write-set check.
+ */
+const PLANNING_WRITERS = Object.freeze({
+  technical_plan: ["planning_and_design"],
+  "design.md": ["planning_and_design", "systems_modeler"],
+  "seit.json": ["planning_and_design", "test_engineer"],
+  "implementation.json": ["planning_and_design", "plan_integrator", "coordinator"],
+  dod_manifest: ["planning_and_design", "plan_integrator", "coordinator"],
+});
+const BOUND_CHECKED_ROLES = new Set([
+  "coordinator",
+  "plan_integrator",
+  "planning_and_design",
+  "systems_modeler",
+  "requirements_engineer",
+  "test_engineer",
+  "integration_engineer",
+  "reviewer",
+  "scribe",
+  "intake",
+  "architectural_alignment",
+  "scope_definition",
+]);
+
+function planningArtifact(rel) {
+  const b = basename(posix(rel));
+  if (b.endsWith("-technical-plan.md")) return "technical_plan";
+  if (b.endsWith("-dod-manifest.html")) return "dod_manifest";
+  return Object.hasOwn(PLANNING_WRITERS, b) ? b : null;
+}
+
+/** Session suffixes (`test_engineer.planning`) bind to their catalog role. */
+function baseRole(role) {
+  const i = role.indexOf(".");
+  return i >= 0 ? role.slice(0, i) : role;
+}
+
+function boundAuthorDenial(role, paths) {
+  const base = baseRole(role);
+  if (!BOUND_CHECKED_ROLES.has(base)) return null;
+  for (const rel of paths) {
+    const artifact = planningArtifact(rel);
+    if (!artifact || PLANNING_WRITERS[artifact].includes(base)) continue;
+    const owner = "planning_and_design";
+    const dispatch = dispatchFor("plan_integrator");
+    return {
+      verdict: DENY_DISPATCH,
+      reason: `${base} cannot write ${basename(rel)}; bound authors are ${PLANNING_WRITERS[artifact].join(", ")}. Return the finding to the Plan Integrator for a named delta. ${dispatch} (bearing-lite v${hookVersion()})`,
+      owner,
+      dispatch,
+    };
+  }
+  return null;
+}
+
 function dispatchFor(owner) {
   return `Dispatch skills/${owner.replace(/_/g, "-")} with BEARING_ROLE=${owner}`;
 }
@@ -539,7 +597,7 @@ function evaluate(input) {
   const agentId = presentString(body.agent_id);
   const paths = collectPaths(body);
   if (!isOrchestrator(role)) {
-    return { verdict: ALLOW, reason: "role_write_allowed" };
+    return boundAuthorDenial(role, paths) || { verdict: ALLOW, reason: "role_write_allowed" };
   }
   for (const rel of paths) {
     const owner = ownerFor(rel);
@@ -737,6 +795,7 @@ function main() {
 }
 
 module.exports = {
+  PLANNING_WRITERS,
   VERDICTS,
   HOST_SUPPORT,
   DEFAULT_HOST,

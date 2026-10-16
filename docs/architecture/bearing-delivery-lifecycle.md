@@ -30,18 +30,26 @@ reviewable without becoming execution authority.
    rather than inventing architecture.
 3. **Scope Definition** resolves material owner decisions one recommended
    question at a time. Unresolved material intent blocks Planning and Design.
-4. **Planning and Design** authors the five-artifact package after intent is
-   settled: `<lifecycle-topic>-technical-plan.md`, `design.md`, `seit.json`,
-   `implementation.json`, and the Definition of Done Manifest input.
-5. The Orchestrator extracts repository facts and runs deterministic
-   structural checks. Requirements Engineer conditionally gates new or changed
-   acceptance statements. Integration Engineer planning owns compatibility,
-   assembly order, interface risk, and integration judgments.
-6. Systems Modeler and Test Engineer planning then run. After they return,
-   Integration Engineer planning finalizes anomaly handling, rollback,
-   recovery, and integration V&V handoffs; Test Engineer planning binds the
-   corresponding proof cases; Plan Integrator copies agreed outputs
-   mechanically without adding judgment.
+4. The planning Orchestrator dispatches the **Plan Integrator** once. The
+   Plan Integrator is the planning counterpart of the Coordinator: it
+   dispatches each planning session on its frozen route, sends findings back
+   to the owning session as named deltas, and never authors section content
+   or resolves a specialist conflict (that returns to the owner). The
+   Orchestrator does not relay between planning roles.
+5. The Plan Integrator dispatches, in order: the Systems Modeler contextual
+   pass when selected or required; **Planning and Design**, which authors
+   `<lifecycle-topic>-technical-plan.md`, `design.md`, the draft `seit.json`,
+   register rows, and the proposed graph in its own session on the frozen
+   `plan_integrator` route; the register pre-check and Requirements Engineer;
+   the Systems Modeler model pass; and Integration Engineer planning, which
+   owns compatibility, assembly order, interface risk, and integration
+   judgments.
+6. The Plan Integrator reconciles the five artifacts and copies Integration
+   Engineer anomaly, rollback, recovery, and V&V handoffs mechanically; Test
+   Engineer planning then finalizes `seit.json`; the Plan Integrator
+   generates `implementation.json` and the Definition of Done Manifest input
+   and runs the freeze. The write lock refuses planning artifacts written by
+   any role other than their bound author, the Coordinator included.
 7. Planning uses one initial specialist pass plus at most one targeted
    reconciliation pass. Deterministic mismatches do not consume the targeted
    pass. Remaining material conflict returns to the owner.
