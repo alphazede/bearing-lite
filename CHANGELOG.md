@@ -2,11 +2,7 @@
 
 ## [Unreleased]
 
-### Fixed
-
-- Fixed the write lock refusing a parent-accepted Reviewer repair of planning artifacts. The parent controller now records the Repair Implementer transition as `repair_transition` in the existing `.bearing-round.lock` round record, and only the Orchestrator or Coordinator may write that record. The lock checks it on every write, re-reading the frozen receipt from disk: parent acceptance of `REPAIR_REQUIRED`, the same reviewer context from the host envelope, the receipt digest, candidate, worktree, branch, generation, and one open repair round. It then allows only the paths in the receipt's `write_set`. A missing, unaccepted, stale, or closed transition is refused with the failing check named, and so is an unlisted path. A `repair_implementer` role name or flags in tool input grant nothing; before this fix, that role name bypassed the planning-artifact lock. `skills/reviewer/references/repair-transition.md` lists the record fields. Tests now drive the shipped hook through Claude Code and Codex envelopes and the CLI. [#206](https://github.com/alphazede/bearing-lite/issues/206)
-
-## [1.1.10](https://github.com/alphazede/bearing-lite/releases/tag/v1.1.10) - 2026-10-17
+## [1.1.11](https://github.com/alphazede/bearing-lite/releases/tag/v1.1.11) - 2026-10-17
 
 ### Changed
 
@@ -15,10 +11,15 @@
 
 ### Fixed
 
+- Fixed parent-accepted Reviewer repairs being refused by the planning write lock. A recorded transition now binds the frozen receipt, reviewer context, candidate lineage and repair paths; non-parent record writes, unlisted planning paths and role-label bypasses are refused. [#206](https://github.com/alphazede/bearing-lite/issues/206) ([PR #208](https://github.com/alphazede/bearing-lite/pull/208)).
+
 - Removed blocking Requirements Engineer gates from future planning: all planning sessions feed one consolidated review, one repair and deterministic closure, with valid unchanged-input evidence reused. [#205](https://github.com/alphazede/bearing-lite/issues/205) ([PR #207](https://github.com/alphazede/bearing-lite/pull/207)).
 - Limited planning to one evidence-changing correction round while preserving mechanical exact-text closure. [#204](https://github.com/alphazede/bearing-lite/issues/204) ([PR #207](https://github.com/alphazede/bearing-lite/pull/207)).
 - Enforced a single review-round declaration per planning, wave or phase unit in the package freeze, runtime budget and DoD Manifest. Final freeze requires resolving review evidence and preserves the reviewed-to-repaired candidate lineage. [#157](https://github.com/alphazede/bearing-lite/issues/157) ([PR #207](https://github.com/alphazede/bearing-lite/pull/207)).
 
+## [1.1.10](https://github.com/alphazede/bearing-lite/releases/tag/v1.1.10) - 2026-10-17
+
+Tagged but not published to npm. Its changes are included in 1.1.11; the tag remains unchanged ([PR #208](https://github.com/alphazede/bearing-lite/pull/208)).
 
 ## [1.1.9](https://github.com/alphazede/bearing-lite/releases/tag/v1.1.9) - 2026-10-17
 
