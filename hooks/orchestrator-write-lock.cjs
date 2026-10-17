@@ -276,6 +276,15 @@ function repairAuthority(body, root, paths) {
     if (!planningArtifact(rel)) continue;
     const target = insideRoot(root, rel);
     if (!target || !allowed.has(target)) return no(`outside_repair_write_set: ${basename(rel)}`);
+    // Check raw ancestors too: resolving `link/../file` first can hide a symlink.
+    for (let file = path.isAbsolute(rel) ? rel : `${root}${path.sep}${rel}`; file !== root; file = path.dirname(file)) {
+      try {
+        if (fs.lstatSync(file).isSymbolicLink()) return no(`symlinked_repair_path: ${basename(rel)}`);
+      } catch (err) {
+        if (err.code !== "ENOENT") return no(`repair_path_unresolved: ${basename(rel)}`);
+      }
+      if (path.dirname(file) === file) break;
+    }
   }
   return { ok: true };
 }
@@ -528,7 +537,7 @@ function segmentWritesLocked(segment, depth) {
   const { verb, index } = verbOf(tokens);
   const rest = tokens.slice(index + 1).join(" ");
 
-  if (WRITE_ANY_VERBS.has(verb)) {
+  if (WRITE_ANY_VERBS.has(verb) || verb === "mv") {
     return operandsOf(tokens, index + 1).some(isLockedPath);
   }
   if (WRITE_DEST_VERBS.has(verb)) {
@@ -699,16 +708,16 @@ function evaluate(input) {
   // the Orchestrator, while a role-less session without agent_id is.
   const agentId = presentString(body.agent_id);
   const paths = collectPaths(body);
+  const base = baseRole(role);
+  const parent = PARENT_ROLES.has(base) || (!role && !agentId);
+  // #206: even an unassigned child cannot mutate parent-owned control state.
+  if (!parent && paths.some(isRoundRecord)) {
+    return {
+      verdict: DENY_DISPATCH,
+      reason: `${base || "Role-less subagent"} cannot write ${ROUND_RECORD}; only the parent controller records the round and repair transition (bearing-lite v${hookVersion()})`,
+    };
+  }
   if (!isOrchestrator(role)) {
-    const base = baseRole(role);
-    // #206: the round record is parent-owned control state.
-    const record = PARENT_ROLES.has(base) ? undefined : paths.find(isRoundRecord);
-    if (record) {
-      return {
-        verdict: DENY_DISPATCH,
-        reason: `${base} cannot write ${ROUND_RECORD}; only the parent controller records the round and repair transition (bearing-lite v${hookVersion()})`,
-      };
-    }
     const denial = boundAuthorDenial(role, paths);
     if (denial && REPAIR_ROLES.has(base)) {
       const root = path.resolve(presentString(body.cwd) || process.cwd());
@@ -864,9 +873,11 @@ function handle(envelope, options) {
   const result = evaluate({
     role,
     agent_id: presentString(input.agent_id),
-    session_id: presentString(input.session_id) || presentString(input.sessionId),
+    session_id: (host === "cursor" && presentString(input.conversation_id)) ||
+      presentString(input.session_id) || presentString(input.sessionId),
     cwd: root,
     paths: envelopePaths(input, root),
+    tool_name: presentString(input.tool_name) || presentString(input.toolName),
     tool_input: isPlainObject(input.tool_input)
       ? input.tool_input
       : isPlainObject(input.toolInput)

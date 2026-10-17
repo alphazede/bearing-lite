@@ -19,7 +19,7 @@ Coordinator may write this file; the lock refuses it to every other role.
 | `candidate`, `generation` (record) | equal to the transition's `candidate_ref` and `generation` |
 | `accepted_by` | `orchestrator` or `coordinator` |
 | `parent_accepted` | `REPAIR_REQUIRED` |
-| `reviewer_context` | the writing session's host `agent_id`, else `session_id`: the same reviewer context |
+| `reviewer_context` | the writing session's host `agent_id`, else Cursor `conversation_id`, else `session_id` / `sessionId`: the same reviewer context |
 | `receipt_path`, `receipt_sha256` | a file inside the checkout whose SHA-256 matches |
 | `candidate_ref`, `candidate_revision`, `candidate_digest` | equal to the frozen receipt's |
 | `worktree`, `branch`, `generation` | the current checkout root, its checked-out branch, and the receipt's `lineage` |
@@ -36,5 +36,7 @@ the parent records its digest voids the transition.
 With `BEARING_ROLE` `reviewer` or `repair_implementer` and a valid transition,
 only planning artifacts named in the receipt's `write_set` are writable. Any
 missing, unaccepted, stale, mismatched, or closed element, or an unlisted path,
-is refused with the failing check named. Other roles' bound-author rules are
+is refused with the failing check named. Repair paths and their ancestors must
+not be symlinks; the lexical path must stay inside the checkout and match the
+receipt. Other roles' bound-author rules are
 unchanged.
