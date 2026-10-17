@@ -368,6 +368,114 @@
             }
           }
         },
+        "assurance_dispatch": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "#209 exact bound assurance launch slots; same visible task record carries atomic expenditure. No model selection or hidden runtime authority.",
+          "required": [
+            "slots"
+          ],
+          "properties": {
+            "slots": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "id",
+                  "kind",
+                  "group",
+                  "unit_id",
+                  "candidate",
+                  "scope",
+                  "tool_name",
+                  "tool_input"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "group": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "unit_id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "candidate": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "scope": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "tool_name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "subject": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "authority_id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "kind": {
+                    "enum": [
+                      "review",
+                      "repair",
+                      "deterministic",
+                      "qualification"
+                    ]
+                  },
+                  "unit_kind": {
+                    "enum": [
+                      "wave",
+                      "phase",
+                      "slice",
+                      "lifecycle",
+                      "direct"
+                    ]
+                  },
+                  "tool_input": {
+                    "type": "object"
+                  }
+                }
+              }
+            },
+            "authorities": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "id",
+                  "path",
+                  "sha256"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "path": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "sha256": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  }
+                }
+              }
+            }
+          }
+        },
         "planning_to_implementation_clean_session": { "type": "boolean" },
         "review_rounds": {
           "type": "array",

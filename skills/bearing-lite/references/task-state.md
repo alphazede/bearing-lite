@@ -73,3 +73,16 @@ Systems Modeler is a typed capability gap, never silent allocation.
 Relationship mappings consume the draft register and Requirements Engineer
 findings in the planning wave. No mapping waits on a Requirements Engineer
 PASS; corrections join the one consolidated review and aggregated repair.
+
+
+## Bound assurance launch accounting
+
+For executable bound assurance, the parent uses the root plan's
+`assurance_dispatch` binding and the same visible JSON task record described
+in [assurance-policy.md](assurance-policy.md#mandatory-bound-dispatch-209--210).
+The human-readable plan remains the authority for task transitions; the JSON
+record is its visible assurance accounting projection, never a hidden task
+controller. Only the pre-dispatch barrier reserves launches; parent result
+updates preserve reservations, original expenditure and append-only amendments.
+A missing/invalid projection denies a bound launch. A resumed session uses the
+same record and declaration. A repair or transport failure never resets it.

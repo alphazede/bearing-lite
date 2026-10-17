@@ -35,7 +35,7 @@ Scribe transcribes history, dispatched by its frozen cadence (`event` default), 
 
 Return `READY`, `WAITING_ON`, `OWNER_DECISION_REQUIRED`, `COMPLETE`.
 `max_assurance_rounds` is 1 per declared phase or wave-end, not per Lifecycle;
-Direct route checks `assurance_rounds`, never dispatch Navigator; one review may authorize
+Direct route checks `assurance_rounds`, never dispatch Navigator; bind assurance launch slots per `references/assurance-policy.md`; one review may authorize
 one repair, verified deterministically without another review.
 Failed repair/scope change returns `OWNER_DECISION_REQUIRED` naming the candidate and count.
 `COMPLETE` ends Bearing assurance; authorized deployment without reopening review.

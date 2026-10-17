@@ -35,7 +35,7 @@ Wave authority. Coordinates more and implements less than Implementer.
 5. Dispatch declared assurance automatically at wave-end, or the configured cadence
    boundary, on this wave's integrated candidate. Deterministic checks always run. Honor
    `max_assurance_rounds` of 1 per declared phase or wave from visible
-   `assurance_rounds`. If the review is repairable, spend at most one
+   `assurance_rounds`. Bind launches per `../bearing-lite/references/assurance-policy.md` before dispatch. If the review is repairable, spend at most one
    remaining `attempts` repair, run deterministic coordinator verification,
    and close the gate without another review. The next distinct declared
    phase or wave carries its own budget. A failed repair or scope change

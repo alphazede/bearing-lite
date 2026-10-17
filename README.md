@@ -223,8 +223,11 @@ stop runs the closeout advisory and the git-sync advisory, which fast-forwards
 the session checkout from origin and names anything still unpushed. GitHub Copilot also has the implemented Test
 Engineering channels `PreToolUse`, `Stop`, and `SubagentStop`. AGY,
 Pi, DeepCode, and Muse Code are **skills-only**.
-Transition-order, protected-action, planning-review, and assurance-budget
-checks stay procedural on every host. Node.js must be on `PATH` for the hook
+General transition-order, protected-action and planning-review checks stay
+procedural. The assurance budget has a mandatory bound pretool dispatch barrier
+on the common, Cursor and Copilot mappings; see the explicit host test status
+in [the mapping](hooks/com.anthropic.claude-code/mapping.md#bound-assurance-dispatch-capability)
+and the [binding contract](skills/bearing-lite/references/assurance-policy.md#mandatory-bound-dispatch-209--210). Node.js must be on `PATH` for the hook
 adapters.
 
 Planning-review constraints live only in

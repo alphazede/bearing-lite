@@ -3,8 +3,8 @@
 /**
  * Per-declared-cadence-unit assurance budget (ROUTER-EMV-CADENCE-IMPLEMENTATION-001).
  * Exact runtime mirror of `skills/bearing-lite/references/assurance-policy.md`.
- * A pure evaluator behind the existing `transition` class, like planning-review.cjs:
- * it declares no HOOK_CLASS and registers no host event.
+ * Shared evaluator behind transition and the mandatory bound pre-dispatch hook.
+ * Evaluation is read-only; assurance-dispatch.cjs reserves before launch.
  */
 
 const fs = require("node:fs");
@@ -13,9 +13,9 @@ const { ASSURANCE_BUDGET_POLICY: POLICY } = require("./policy.cjs");
 
 /** The sentinel unit when the frozen declaration names neither waves nor phases. */
 const DIRECT = "direct";
-const PENDING_RECEIPTS = new Set(["WAITING_ON", "UNAVAILABLE"]);
+const PENDING_RECEIPTS = new Set(["WAITING_ON", "UNAVAILABLE", "not_run", "NEEDS_MORE_EVIDENCE"]);
 
-const isCount = (value) => Number.isInteger(value) && value >= 0;
+const isCount = (value) => Number.isSafeInteger(value) && value >= 0;
 
 const isPlainObject = (value) =>
   value !== null && typeof value === "object" && !Array.isArray(value);
@@ -60,6 +60,16 @@ function declaredUnits(declaration, unitKind) {
   const phaseIds = idsFrom(declaration.phases, "phaseId");
   if (phaseIds.length) return phaseIds;
   return [DIRECT];
+}
+
+/** Resolve phase/wave aliases from the declaration, never from caller labels. */
+function canonicalUnit(declaration, id, requestedKind) {
+  if (requestedKind === "slice" && idsFrom(declaration.slices, "id").includes(id)) return "slice";
+  if (requestedKind === "lifecycle" && lifecycleId(declaration) === id) return "lifecycle";
+  if (idsFrom(declaration.waves, "id").includes(id)) return "wave";
+  if (!idsFrom(declaration.waves, "id").length && idsFrom(declaration.phases, "phaseId").includes(id)) return "phase";
+  if (id === DIRECT && declaredUnits(declaration, "phase")[0] === DIRECT) return "direct";
+  return null;
 }
 
 const verdict = (outcome, reason) => ({ outcome, reason });
@@ -147,7 +157,7 @@ function evaluateAssuranceBudget(input) {
       return verdict("NEEDS_MORE_EVIDENCE", "frozen_declaration_unreadable");
     }
     const record = readJson(input.task_record_path);
-    if (!record) {
+    if (!record || !Array.isArray(record.units) || typeof record.journey !== "string" || !record.journey) {
       return verdict("NEEDS_MORE_EVIDENCE", "task_record_unreadable");
     }
     // The budget key is `journey + unit_kind + unit_id`; a record from another
@@ -181,38 +191,38 @@ function evaluateAssuranceBudget(input) {
       bounds = planned.find((row) => row.unit_id === requested);
     }
 
+    const canonicalKind = canonicalUnit(declaration, requested, input.unit_kind);
+    if (!canonicalKind) return verdict("OWNER_AMENDMENT_REQUIRED", "undeclared_review_unit");
     const receipts = Array.isArray(input.receipts) ? input.receipts : [];
     if (receipts.some((receipt) => PENDING_RECEIPTS.has(receipt && receipt.verdict))) {
       return verdict("NEEDS_MORE_EVIDENCE", "assurance_transport_pending");
     }
 
-    const units = Array.isArray(record.units) ? record.units : [];
-    const spent = units.find((unit) => {
+    const matches = record.units.filter((unit) => {
       if (!isPlainObject(unit)) return false;
-      const unitId = unit.unit_id || unit.assurance_unit;
-      const id = typeof unitId === "string" && unitId ? unitId : DIRECT;
-      if (id !== requested) return false;
-      if (typeof unit.journey === "string" && unit.journey !== input.journey) return false;
-      if (
-        typeof unit.unit_kind === "string" &&
-        typeof input.unit_kind === "string" &&
-        unit.unit_kind !== input.unit_kind
-      ) {
-        return false;
-      }
-      return true;
+      const id = unit.unit_id || unit.assurance_unit || DIRECT;
+      return id === requested;
     });
-    const counter = (field) => {
-      const value = spent && spent[field];
-      return value === undefined || value === null ? 0 : value;
-    };
-    const rounds = counter("assurance_rounds");
-    const repairs = counter("assurance_repairs");
-    // A corrupt counter is not a spent-zero budget.
+    if (matches.length > 1 || record.units.some((unit) => !isPlainObject(unit))) {
+      return verdict("NEEDS_MORE_EVIDENCE", "invalid_assurance_units");
+    }
+    const spent = matches[0];
+    if (spent && ((spent.journey && spent.journey !== record.journey) ||
+        (spent.unit_kind && canonicalUnit(declaration, requested, spent.unit_kind) !== canonicalKind))) {
+      return verdict("NEEDS_MORE_EVIDENCE", "task_record_unit_mismatch");
+    }
+    const rounds = spent ? spent.assurance_rounds : 0;
+    const repairs = spent ? spent.assurance_repairs : 0;
     if (!isCount(rounds) || !isCount(repairs)) {
       return verdict("NEEDS_MORE_EVIDENCE", "invalid_assurance_counter");
     }
 
+    if (record.amendments !== undefined) {
+      const { validatedBounds } = require("./assurance-budget-store.cjs");
+      const amended = validatedBounds(record, requested, bounds, require("node:path").dirname(input.task_record_path));
+      if (!amended) return verdict("NEEDS_MORE_EVIDENCE", "invalid_assurance_amendment");
+      bounds = amended;
+    }
     if (repairs > bounds.repairs_max) {
       return verdict("HALT", "assurance_repair_limit");
     }
@@ -349,4 +359,4 @@ function evaluateGateChain(input) {
   }
 }
 
-module.exports = { POLICY, evaluateAssuranceBudget, evaluateGateChain, checkReviewRounds };
+module.exports = { canonicalUnit, POLICY, evaluateAssuranceBudget, evaluateGateChain, checkReviewRounds };

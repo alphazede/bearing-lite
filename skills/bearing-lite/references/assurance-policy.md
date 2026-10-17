@@ -42,7 +42,7 @@ runtime mirror of the block below; the block is authoritative.
 ## Unit identity
 
 Budget identity is `lifecycle + unit_kind + unit_id`. The unit id is resolved
-from the frozen declaration according to the requested cadence unit kind:
+from the frozen declaration from its declared identity (phase aliases for a wave resolve to that same wave):
 `slices[].id` for slice, `waves[].id` else `phases[].phaseId` for phase or
 wave, `journey_settings.lifecycle_id` for lifecycle, else the single `direct`
 sentinel when neither waves nor phases are declared. A unit id absent from the
@@ -82,8 +82,10 @@ under the same `unit_kind` + `unit_id` key.
   `deterministic_post_repair_gate_required`.
 - The repaired unit is never reviewed again. `automatic_rereview_requested` and
   `review_after_repair` both require an owner amendment.
-- A transport receipt of `WAITING_ON` or `UNAVAILABLE` is not a spent round; it
-  returns `NEEDS_MORE_EVIDENCE`.
+- Before reservation, a transport receipt of `WAITING_ON`, `UNAVAILABLE`, or
+  `not_run` returns `NEEDS_MORE_EVIDENCE`. Once a native launch is reserved,
+  failure or missing transport evidence never refunds the allowance. A reserved
+  slot is not a passing assurance result.
 - The next distinct declared phase or wave carries its own budget. Declared
   slice and lifecycle units likewise retain their spent counts.
 
@@ -93,3 +95,106 @@ Planning review is a separate pre-dispatch gate with its own 1/1 allowance in
 `references/review-policy.md`. It never consumes implementation
 `required_assurance`, `assurance_rounds`, or `max_assurance_rounds`, and this
 budget never consumes the planning gate.
+
+
+## Mandatory bound dispatch (#209 / #210)
+
+The parent controller binds the supported assurance flow before any provider
+launch. This is a dispatch contract, not a new planning stage or owner gate.
+In a root-level visible Markdown plan, record one line (paths relative to that
+plan directory; substitute the actual frozen declaration hash):
+
+```text
+- assurance_dispatch: {"journey":"J","declaration_path":"implementation.json","declaration_sha256":"<sha256 of frozen declaration>","task_record_path":"task-record.json"}
+```
+
+The declaration's `journey_settings.lifecycle_id` must match `journey`.
+`journey_settings.assurance_dispatch.slots` lists the exact native tool name
+and full `tool_input` object for each authorized launch, plus `id`, `kind`,
+`group`, `unit_id`, `candidate`, and `scope`. Kinds are `review` (all declared
+sessions within the assurance round), `repair`, `deterministic`, and
+`qualification`. Freeze the existing routes and capabilities, including
+`review.coverage_assist` and `deterministic_verification.reverify`, as usual;
+this barrier neither chooses routes nor replaces their qualification.
+
+Slots in one explicitly approved parallel `review` group share the same unit,
+candidate and scope. They consume one round and each slot can launch once.
+One slot may itself be the authorized complete bounded child invocation;
+never place an unbounded loop, automatic retry, or additional provider sampling
+inside it. The barrier accounts for tool launches, not arbitrary subprocesses
+inside an approved command. A command must have a bounded launch contract.
+Parent controllers must not delegate unrestricted provider access inside a slot.
+
+Initialize the existing visible task record explicitly, preserving any prior
+counts. Every dispatched unit must already have both nonnegative integer
+`assurance_rounds` and `assurance_repairs`. The record carries `journey`,
+`units`, `dispatch_log: []`, and `amendments: []`. Each unit's `receipts` holds
+the latest actual gate-chain evidence; Reviewer consumes its most recent
+`gate_chain` `PASS` as before. Missing units, missing counters, `{}`, malformed
+JSON, changed frozen bytes and invalid record identities refuse dispatch.
+Legacy evaluator inspection still permits an explicitly empty `units` list
+for the next unspent unit; native dispatch requires explicit initialization.
+No in-progress plan is migrated automatically.
+
+`hooks/assurance-dispatch.cjs` is registered without a tool matcher on the
+common, Cursor and Copilot pretool paths. Bound shell/agent/unknown launches
+must match a frozen slot; changing tool metadata, packet names, model, harness,
+session, activity or candidate cannot authorize a second launch. Read, edit,
+and owner communication tools remain available; other executable status or
+rollback commands need their own bounded frozen slot. An explicit root task in `EVIDENCE_READY`, `VALIDATING`, `REVIEWING` or
+`ACCEPTANCE` with nonempty required assurance refuses executable dispatch if
+the binding is missing. Read/edit/owner tools stay available to recover.
+Without a binding or such a task, ordinary work remains outside this contract. The plan, declaration, authority
+and task record are parent-controlled inputs, not adversarial tamper-proof
+storage; removal of the binding or direct rewriting of history violates that
+same authority boundary. Host plugin disablement and failure to run a hook
+cannot be enforced by a package hook.
+
+The hook atomically takes an adjacent task-record lock, evaluates the shared
+budget, reserves and increments before returning allow. It fsyncs a temporary
+file, renames it over the same visible record, then fsyncs the directory.
+`dispatch_baseline` preserves original expenditure; `dispatch_log` appends slot,
+unit, group, candidate, scope, launch hash, time and result `RESERVED`.
+`dispatch_declaration_sha256` binds further claims to the same declaration.
+No hidden ledger, service or process survives the invocation. Concurrent
+claims serialize; unavailable locks are typed gaps and deny the launch.
+A crash-held lock is not auto-stolen: the parent confirms no writer remains,
+inspects the visible record and removes only that stale lock. Ambiguous
+launch outcomes stay reserved; never retry a claimed slot automatically.
+
+The parent appends actual role results to each reserved log entry without
+replacing the reservation. `not_run`, `WAITING_ON`, `UNAVAILABLE`, `RESERVED`
+or absent results never pass. Repair requires all approved slots in the
+opened group to return closed results with a `REPAIR_REQUIRED` result, then
+consumes the one repair before launch. Deterministic closure requires the
+repair's `PASS`, then records its own actual `PASS` and the unit's
+`deterministic_gate: "PASS"`. This does not dispatch another general review.
+All previously required verification and independent acceptance remain.
+
+## Explicit bounded amendment and qualification
+
+`node <plugin root>/hooks/assurance-dispatch.cjs --amend` reads a proposed
+amendment from stdin in the project root. It does not ask for or create owner
+authority. Required fields are `id`, `unit_id`, `scope`, `candidate`,
+`additional_rounds`, `additional_repairs`, `slot_ids`, and `authority_path`.
+The slots must already exist in the frozen declaration; unlisted slots and
+scope changes need a new explicit authority decision, never an automatic reset.
+The referenced existing visible authority envelope must be active/effective,
+name the owner decision in `granting_owner_decisions`, carry an owner
+`approval_receipt` with matching `decision_id`, and allow the exact action and
+scope without prohibiting it. Its `subject` binds `journey`, `unit_id`,
+`candidate`, and `assurance_budget_amendment` containing the exact additional
+counts and slot IDs. An event's `owner_approved` flag grants nothing.
+The hook appends the amendment with the authority hash and timestamp and
+preserves every original counter, reservation and baseline. Duplicate IDs,
+reused slots, changed authority bytes and excessive allowances refuse.
+
+Qualification is single-use and requires a frozen `qualification` slot with
+`subject` and `authority_id`. The declaration's `assurance_dispatch.authorities`
+entry binds that ID to a local authority path and hash. The envelope must
+allow `assurance_qualification`; its subject's `assurance_qualification` binds
+the exact qualification subject and `launch_sha256` (SHA-256 of the sorted-key
+JSON object `{tool_name,tool_input}`). The parent checks the genuinely bounded
+qualification purpose before freezing; renaming a review in a tool payload
+cannot change a slot's kind. Qualification creates a reservation, consumes no
+review/repair allowance, and never establishes independent assurance PASS.

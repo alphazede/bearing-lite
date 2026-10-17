@@ -104,8 +104,8 @@ describe("#157 the runtime budget consumes the same declaration", () => {
   it("allows the declared round and halts a second round or repair on the same unit", () => {
     const ask = fixture();
     assert.match(ask("W1").reason, /assurance_budget:PASS/);
-    assert.match(ask("W1", [{ unit_id: "W1", assurance_rounds: 1 }]).reason, /assurance_round_limit/);
-    assert.match(ask("W1", [{ unit_id: "W1", assurance_repairs: 2 }]).reason, /assurance_repair_limit/);
+    assert.match(ask("W1", [{ unit_id: "W1", assurance_rounds: 1, assurance_repairs: 0 }]).reason, /assurance_round_limit/);
+    assert.match(ask("W1", [{ unit_id: "W1", assurance_rounds: 1, assurance_repairs: 2 }]).reason, /assurance_repair_limit/);
   });
   it("never spends implementation budget on the planning unit", () => {
     assert.match(fixture()("planning").reason, /undeclared_review_unit/);
