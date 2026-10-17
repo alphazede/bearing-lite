@@ -28,6 +28,8 @@ const COVERAGE = Object.freeze({
   transition: Object.freeze({ executable: false, procedural: true }),
   protected_action: Object.freeze({ executable: false, procedural: true }),
 });
+// Bound assurance is the executable subset of transition; other transition checks stay procedural.
+const ASSURANCE_DISPATCH_COVERAGE = require("../assurance-dispatch.cjs").HOST_SUPPORT;
 
 const MAX_FILES = 20;
 const MAX_BYTES = 256 * 1024;
@@ -285,7 +287,7 @@ function formatAdvice(verdict) {
     verdict.reason ? "reason: " + verdict.reason : "",
     verdict.recovery ? "recovery: " + verdict.recovery : "",
     verdict.write_lock ? "write_lock: " + verdict.write_lock : "",
-    "Coverage: this host mapping is partial. activation and closeout are executable; transition and protected_action remain procedural.",
+    "Coverage: this host mapping is partial. activation and closeout are executable; bound assurance dispatch has its own pretool barrier; other transitions and protected_action remain procedural.",
   ].filter(Boolean);
   return lines.join("\n").slice(0, 4000);
 }
@@ -442,6 +444,7 @@ function main() {
 module.exports = {
   HOST,
   COVERAGE,
+  ASSURANCE_DISPATCH_COVERAGE,
   canonicalizeEvent,
   classForEvent,
   deriveContext,

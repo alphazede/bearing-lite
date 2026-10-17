@@ -1,5 +1,5 @@
 {
-  "description": "Bearing Lite GitHub Copilot / VS Code mapping. Partial coverage: SessionStart activation, Stop closeout, te_test_write on PreToolUse, and te_completion on Stop and SubagentStop. Transition-order and protected-action remain procedural on this host.",
+  "description": "Bearing Lite GitHub Copilot / VS Code mapping. Partial coverage: SessionStart activation, Stop closeout, te_test_write on PreToolUse, and te_completion on Stop and SubagentStop. Transition-order and protected-action remain procedural on this host. Bound assurance dispatch is checked on every pretool event; other transitions remain procedural.",
   "hooks": {
     "SessionStart": [
       {
@@ -8,6 +8,10 @@
       }
     ],
     "PreToolUse": [
+      {
+        "type": "command",
+        "command": "node \"${PLUGIN_ROOT}/hooks/assurance-dispatch.cjs\" --host=copilot"
+      },
       {
         "type": "command",
         "command": "node \"${PLUGIN_ROOT}/hooks/te-host.cjs\" --host=copilot"

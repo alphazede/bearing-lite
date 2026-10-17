@@ -171,7 +171,7 @@ describe("verified host mapping", () => {
     // Stop-only registration is not child enforcement; SubagentStop is its own
     // handler, not an alias of Stop.
     assert.notEqual(manifest.hooks.SubagentStop, manifest.hooks.Stop);
-    const preToolUse = manifest.hooks.PreToolUse[0];
+    const preToolUse = manifest.hooks.PreToolUse.find(entry => entry.hooks.some(h => h.command.includes("te-host.cjs")));
     assert.match(
       String(preToolUse.matcher),
       /Write|Edit|MultiEdit|apply_patch|Bash/,
@@ -243,7 +243,7 @@ describe("verified host mapping", () => {
         cursorHooks.hooks[event],
         `Cursor must register ${event} for te_test_write (ROUTER-EMV-003-001)`
       );
-      assert.match(cursorHooks.hooks[event][0].command, /te-host\.cjs/, event);
+      assert.ok(cursorHooks.hooks[event].some(entry => /te-host\.cjs/.test(entry.command)), event);
     }
     // Cursor write-time deny may exist. Cursor `stop` `followup_message` is not
     // a hard completion block, and Cursor child stop is not a hard deny; the
@@ -289,9 +289,11 @@ describe("verified host mapping", () => {
     assert.doesNotMatch(session[0], /te-host\.cjs/);
 
     const preToolUse = copilotCommands(copilotHooks, "PreToolUse");
-    assert.equal(preToolUse.length, 1, "Copilot PreToolUse must route to te-host.cjs");
-    assert.match(preToolUse[0], /"\$\{PLUGIN_ROOT\}\/hooks\/te-host\.cjs"/);
-    assert.match(preToolUse[0], /--host=copilot/);
+    assert.equal(preToolUse.length, 2, "Copilot PreToolUse must keep TE and bound assurance dispatch");
+    const tePre = preToolUse.find(command => command.includes('te-host.cjs'));
+    assert.match(tePre, /"\$\{PLUGIN_ROOT\}\/hooks\/te-host\.cjs"/);
+    assert.match(tePre, /--host=copilot/);
+    assert.ok(preToolUse.some(command => command.includes('assurance-dispatch.cjs')));
 
     const stop = copilotCommands(copilotHooks, "Stop");
     assert.ok(

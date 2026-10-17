@@ -52,6 +52,8 @@ const ORIGINAL_CLASS_FILES = Object.freeze([
 const EVALUATOR_MODULES = new Set([
   "planning-review.cjs",
   "assurance-budget.cjs",
+  "assurance-dispatch.cjs", // #209 bound PreToolUse budget barrier
+  "assurance-budget-store.cjs", // #209 visible atomic claims, no service or authority store
   "policy.cjs", // #63 shared policy source
   "plan-package.cjs", // #70/#73 Map the Route freeze checks
   "reconcile.cjs", // #64 deterministic evidence reconciliation
@@ -537,15 +539,9 @@ describe("CMD-HOOK-01 hook-contract (SEIT-HOOK-CLASS-01, SEIT-HOOK-COVERAGE-01)"
     for (const host of ["Grok Build", "Kimi Code", "Qwen Code"]) {
       assert.match(mapping, new RegExp(`\\| ${host} \\|[^\n]*\\| unsupported \\|`));
     }
-    assert.doesNotMatch(
-      mapping,
-      /native[^.\n]*assurance (budget|enforcement|record)/i,
-      "no host may claim native assurance enforcement"
-    );
-    assert.match(
-      mapping,
-      /assurance[\s\S]{0,400}procedural/i,
-      "the per-unit assurance record stays procedural on every mapped host"
-    );
+    assert.match(mapping, /assurance-dispatch\.cjs/);
+    assert.match(mapping, /component.replay/i);
+    assert.match(mapping, /skills-only[\s\S]*procedural/i);
+
   });
 });

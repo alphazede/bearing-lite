@@ -65,6 +65,7 @@ node --test test/public-boundary.test.mjs test/skills-conformance.test.mjs
 node --test test/*.test.mjs
 python3 test/schema-validation.py
 node --test test/native/codex-hook-discovery.test.mjs
+node --test test/native/assurance-dispatch.test.mjs
 node hooks/write-set-check.cjs -- <paths the slice wrote>
 ```
 
@@ -131,3 +132,14 @@ spill, provider neutrality, hook fail-open versus integrity fail-closed
 behavior, or skill activation contracts. Those are the product rather than
 details of it, so expect questions and expect evidence that the change stays
 inside the approved Lite surface.
+
+
+The bound assurance native test installs the candidate in disposable config and
+uses an owned loopback Responses driver plus harmless local launch sentinels.
+It never uses credentials or a paid provider. Run it separately from the default
+glob, with the release-pinned client where available; record a different version
+as compatibility evidence, not pinned qualification. One owned bind(0) listener
+is reused within the binary; expected cost is under 10 seconds, total deadline
+90 seconds. Changed native tests require five consecutive runs and two
+concurrent copies with no shared resources. Component replay is never native
+host proof for Claude, Cursor or Copilot.

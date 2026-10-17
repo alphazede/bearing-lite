@@ -36,7 +36,7 @@ Codex 0.162.1 registers no plugin hooks, silently, when the installed root
 marketplace that `tools/prepare-codex-plugin.mjs --out <new dir>` prepares: the
 same package bytes plus `.codex-plugin/`, with only root `$schema` omitted.
 `node --test test/native/codex-hook-discovery.test.mjs` proves registration
-(7 hooks, all skills, none when disabled), not invocation.
+(8 hooks, all skills, none when disabled), not invocation.
 
 Skill-copy into a host skills directory does **not** register plugin hooks.
 To carry the Orchestrator write-set lock, merge `hooks/skill-copy-write-lock.json`
@@ -73,17 +73,10 @@ procedural there. AGY, Pi, and DeepCode remain skills-only. Do not
 claim full planning-review enforcement for any of these hosts until a native
 event supplies the complete record.
 
-The per-declared-phase-or-wave assurance record
-(`skills/bearing-lite/references/assurance-policy.md`) is evaluated by the same
-`transition` class through the `assurance_transition` action_kind. No mapped
-host exposes a hook event that carries the frozen declaration and the visible
-task record, so the assurance budget is procedural on every mapped host:
-Claude Code, Codex, Cursor, and GitHub Copilot stay
-partial, and AGY, Pi, and DeepCode stay skills-only. No host may
-advertise an enforcement of the assurance budget it cannot perform.
-
-The adapter accepts snake_case and camelCase (`hook_event_name` /
-`hookEventName`, `cwd` / `workspaceRoot`).
+The per-declared-phase-or-wave assurance record still supports read-only
+`transition` evaluation through `assurance_transition`. The bound pre-dispatch
+barrier below consumes that same evaluator and visible task record before
+launch. Unbound legacy flows remain procedural; they are not native proof.
 
 ## Test Engineering classes
 
@@ -152,7 +145,7 @@ through `hookSpecificOutput.permissionDecision`. Copilot `Stop` denies through
 `reason`. Copilot `SubagentStop` denies through a top-level `decision` block
 and `reason`. `Stop` and `SubagentStop` carry `stop_hook_active`; a true
 re-entry terminates as quiet success so a deny cannot loop. Transition-order,
-protected-action, planning-review, and assurance-budget stay procedural.
+protected-action and planning-review stay procedural; bound assurance dispatch is registered separately below.
 This Copilot mapping does not yet register the Orchestrator write-set lock;
 use the documented fallback until that host file is wired.
 
@@ -226,3 +219,39 @@ A discoverable Journey is a visible plan with a `task_id`, `assigned_role`,
 non-placeholder journey marker, or `checkout_lease` block. Empty cwd and
 `stop_hook_active` re-entry stay quiet. Never map policy or infrastructure to
 a non-zero exit.
+
+
+## Bound assurance dispatch capability
+
+`hooks/assurance-dispatch.cjs` makes the existing assurance evaluator a
+mandatory barrier for the explicitly bound flow in
+[assurance-policy.md](../../skills/bearing-lite/references/assurance-policy.md#mandatory-bound-dispatch-209--210).
+General transition-order and protected-action remain procedural. Missing or
+invalid bound state is a typed evidence gap and denies launch; ordinary work
+without a binding stays open. Hook infrastructure that never invokes the
+adapter is a host gap, not a passing budget check.
+
+| Host | Barrier wire / registration | Test status |
+|---|---|---|
+| Codex | common `PreToolUse`, native `permissionDecision: deny` | installed-plugin native sentinel on 0.163.0; discovery separately; release target 0.162.1 requires its own run |
+| Claude Code | common `PreToolUse`, nested `permissionDecision: deny` | component replay; native qualification not run |
+| Cursor | `preToolUse` for agent/MCP launches; `beforeShellExecution` for shell | component replay; native qualification not run |
+| GitHub Copilot | `PreToolUse`, nested `permissionDecision: deny` | component replay; native qualification not run / client unavailable locally |
+| AGY, Pi, DeepCode, skill-copy | no registered barrier | skills-only / procedural |
+| Qwen Code, Kimi Code, Grok Build | no maintained barrier | unsupported; excluded from native tests |
+
+Cursor's generic `preToolUse` shell event defers to `beforeShellExecution`,
+so one shell launch consumes once. The shell hook reads the documented
+`command`/`cwd` envelope and returns native `permission: deny`; generic agent
+launches read `tool_name` and `tool_input`. All registrations cover the full
+relevant event, independent of prompt wording. Shell wrappers or scripts
+inside a frozen slot must themselves have the authorized bounded invocation
+contract; no hook inspects or claims to meter arbitrary subprocess internals.
+
+`test/assurance-dispatch.test.mjs` is real module/CLI/filesystem component
+replay, not native host evidence. `test/native/assurance-dispatch.test.mjs`
+installs the candidate into isolated Codex config and drives its real tool
+loop with an owned loopback protocol driver. The allowed sentinel starts;
+excess launches do not; repair closes deterministically. It makes no real
+provider call. An absent native tool, missing trust or wrong release pin is a
+typed qualification gap, never an inferred native pass for another host.
