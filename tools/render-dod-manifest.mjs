@@ -1436,7 +1436,33 @@ export function renderDodManifest(doc, opts = {}) {
           ],
         }))
       );
-  const s6 = [heading(6, SECTIONS[5]), metaBlock(cadenceEntries(doc, man)), vvTable].join("\n");
+  // #157: the frozen per-unit review-round plan, shown at the owner gate.
+  const roundRows = Array.isArray(doc?.journey_settings?.review_rounds)
+    ? doc.journey_settings.review_rounds.filter((row) => row && typeof row === "object")
+    : [];
+  const roundTable = roundRows.length
+    ? [
+        "          <h3>Review rounds per declared unit</h3>",
+        renderTable(
+          "cap-review-rounds",
+          "One Reviewer round, at most one aggregated repair, deterministic closure",
+          ["Unit", "Kind", "Reviewer rounds", "Repairs (max)", "Closure"],
+          roundRows.map((row) => ({
+            kind: "plan",
+            cells: [
+              esc(row.unit_id),
+              cellText(row.unit_kind),
+              cellText(row.reviewer_rounds),
+              cellText(row.repairs_max),
+              cellText(row.closure),
+            ],
+          }))
+        ),
+      ].join("\n")
+    : "";
+  const s6 = [heading(6, SECTIONS[5]), metaBlock(cadenceEntries(doc, man)), roundTable, vvTable]
+    .filter(Boolean)
+    .join("\n");
 
   const docParsed = asRows(man.documentation);
   const docTable = docParsed.na

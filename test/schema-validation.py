@@ -520,6 +520,30 @@ def complete_implementation(slices: list[dict] | None = None, **overrides: objec
     return doc
 
 
+def planning_contract_implementation(
+    rounds: dict | None = None, wave: dict | None = None, boundary: dict | None = None
+) -> dict:
+    """complete_implementation plus review_rounds, planning_wave, and boundary_contract."""
+    doc = complete_implementation()
+    row = {"reviewer_rounds": 1, "repairs_max": 1, "closure": "deterministic_PASS"}
+    doc["journey_settings"]["review_rounds"] = [
+        {"unit_id": "planning", "unit_kind": "planning", **row},
+        {"unit_id": SYN_WAVE, "unit_kind": "wave", **row, **(rounds or {})},
+    ]
+    sessions = ["planning_and_design", "integration_engineer", "test_engineer"]
+    doc["journey_settings"]["planning_wave"] = {
+        "required_sessions": sessions,
+        "sessions": [{"session": name, "candidate_ref": "plan", "verdict": "READY"} for name in sessions],
+        "reviews": 1,
+        "repairs": 0,
+        "closure": "deterministic_PASS",
+        "candidate_digest": SYN_DIGEST,
+        **(wave or {}),
+    }
+    doc["boundary_contract"] = boundary or {"not_applicable": True, "reason": "No material boundary."}
+    return doc
+
+
 def complete_proof(**overrides: object) -> dict:
     proof = {
         "id": SYN_PROOF,
@@ -1111,6 +1135,29 @@ def cases() -> list[tuple[str, str, str, object, str]]:
         ), "reject"),
         ("SEIT-EMV-021", "seit_proof_string_gate_seconds", "seit", complete_seit(
             proof_cases=[complete_proof(expected_gate_seconds="45")]
+        ), "reject"),
+        # #157/#205/#155 future-planning contract: shape only; plan-package.cjs owns completeness.
+        ("SEIT-EMV-022", "implementation_planning_contract_complete", "implementation", planning_contract_implementation(), "accept"),
+        ("SEIT-EMV-022", "implementation_review_round_second_round", "implementation", planning_contract_implementation(
+            rounds={"reviewer_rounds": 2}
+        ), "reject"),
+        ("SEIT-EMV-022", "implementation_review_round_second_repair", "implementation", planning_contract_implementation(
+            rounds={"repairs_max": 2}
+        ), "reject"),
+        ("SEIT-EMV-022", "implementation_review_round_rereview_closure", "implementation", planning_contract_implementation(
+            rounds={"closure": "rereview"}
+        ), "reject"),
+        ("SEIT-EMV-022", "implementation_planning_wave_second_review", "implementation", planning_contract_implementation(
+            wave={"reviews": 2}
+        ), "reject"),
+        ("SEIT-EMV-022", "implementation_planning_wave_second_repair", "implementation", planning_contract_implementation(
+            wave={"repairs": 2}
+        ), "reject"),
+        ("SEIT-EMV-022", "implementation_planning_wave_unknown_session", "implementation", planning_contract_implementation(
+            wave={"required_sessions": ["planning_and_design", "integration_engineer", "test_engineer", "scribe"]}
+        ), "reject"),
+        ("SEIT-EMV-022", "implementation_boundary_contract_flow_without_sink", "implementation", planning_contract_implementation(
+            boundary={"flows": [{"id": "FLOW-1", "source": {"component": "a", "owner": "b"}}]}
         ), "reject"),
         ("SEIT-EMV-022", "implementation_wave_with_gate_cost", "implementation", complete_implementation(
             waves=[complete_implementation()["waves"][0] | {"resource_groups": ["engine", "display"], "added_gate_seconds": 120}]

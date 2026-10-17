@@ -19,9 +19,23 @@ harness, account, or agent identity.
   "post_repair_gate": "deterministic_PASS",
   "automatic_rereview": "prohibited",
   "slot_exhaustion_outcome": "FAIL_ROUND",
-  "terminal_outcomes": ["HALT", "OWNER_AMENDMENT_REQUIRED"]
+  "terminal_outcomes": ["HALT", "OWNER_AMENDMENT_REQUIRED"],
+  "planning_unit_id": "planning",
+  "planning_sessions_required": ["planning_and_design", "integration_engineer", "test_engineer"],
+  "planning_sessions_optional": ["requirements_engineer", "systems_modeler"],
+  "planning_session_pending_verdicts": ["WAITING_ON", "UNAVAILABLE", "RUNNING"],
+  "requires_regate_rounds_max": 1
 }
 ```
+
+Planning is one wave with unit id `planning` and the same 1/1 budget as an
+implementation wave. Every declared planning session (the required three plus
+any selected or required optional session) returns before the one review opens;
+a session verdict, including a Requirements Engineer failure, is a review
+input, never a gate between sessions. `requires_regate_rounds_max` bounds the
+named correction loop to that one aggregated repair; a further `requires_regate`
+finding returns `NEEDS_OWNER_DECISION`. Details:
+`../../plan-integrator/references/planning-wave.md`.
 
 Planning and Design writes the separate Lifecycle binding in the approved profile
 snapshot. It lists unique abstract `slot_id` values, each slot's owner-selected

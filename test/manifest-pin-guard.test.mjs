@@ -6,6 +6,7 @@ import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { planningContract, planningSessions } from "./planning-contract-fixture.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(import.meta.url);
@@ -24,6 +25,7 @@ function passingReview(planDir) {
   return {
     plan_dir: planDir,
     candidate,
+    planning_wave: planningSessions("plan"),
     reviewer_slots: [{ slot_id: "slot-a", primary_route_ref: "route-a", fallback_route_refs: [] }],
     round_number: 1,
     completed_rounds: 1,
@@ -100,11 +102,14 @@ function packageFixture(t, writeSet) {
   };
   put("docs/plans/x/seit.json", JSON.stringify(seit));
   const manifestDigest = sha([sha(plan), sha(JSON.stringify(seit))].join("\n"));
+  const contract = planningContract(manifestDigest);
   put("docs/plans/x/implementation.json", JSON.stringify({
+    boundary_contract: contract.boundary_contract,
     journey_settings: {
       journey_type: "specification",
       requirement_register: registerPath,
       planning_review: { candidate_digest: manifestDigest },
+      ...contract.journey_settings,
     },
     waves: [{ slices: [{ id: "S1", role: "Product Implementer", write_set: writeSet }] }],
   }));
@@ -206,6 +211,10 @@ test("W2-F9 missing or invalid authority digest produces a finding", (t) => {
   }
 });
 
+// These packages predate the future-planning contract (#205/#157/#155) and stay
+// historical and unmigrated; the freeze reports only the absent new sections.
+const HISTORICAL_FORMAT_CODES = ["review_rounds_missing", "planning_wave_missing", "boundary_contract_missing"];
+
 test("IE-F1 real package without register has only manifest content findings", (t) => {
   const rel = "docs/plans/2026-09-22-assurance-gate-and-review-flow";
   const root = temporary(t);
@@ -224,6 +233,7 @@ test("IE-F1 real package without register has only manifest content findings", (
     "manifest_requirement_statement_missing", "manifest_architecture_summary_missing",
     "manifest_slice_task_missing", "manifest_task_field_missing",
     "manifest_documentation_unspecified", "manifest_model_view_missing",
+    ...HISTORICAL_FORMAT_CODES,
   ];
   assert.ok(result.findings.every((finding) => contentCodes.includes(finding.code)), JSON.stringify(result.findings));
   assert.equal(result.outcome, result.findings.length ? "FAIL" : "PASS");
@@ -245,6 +255,7 @@ test("IE-F1 real repository packages freeze", () => {
     "manifest_requirement_statement_missing", "manifest_architecture_summary_missing",
     "manifest_slice_task_missing", "manifest_task_field_missing",
     "manifest_documentation_unspecified", "manifest_model_view_missing",
+    ...HISTORICAL_FORMAT_CODES,
   ];
   for (const { exit, outcome, findings } of actual) {
     assert.ok(!findings.some((finding) => finding.code === "missing_register_baseline"));

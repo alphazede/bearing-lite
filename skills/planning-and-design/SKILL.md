@@ -38,8 +38,8 @@ Fresh authoring session, dispatched only by the Plan Integrator on the frozen `p
    cadence. Concurrency covers test suites competing for one gate machine, not only agents, branches, and write sets: each wave states `added_gate_seconds` and `resource_groups`. Bind the one planning-review slot to owner-supplied
    primary and ordered fallback route references under one candidate ref,
    revision, and digest. Use supplied identities; never invent them.
-4. Return the drafts; the Plan Integrator will generate `implementation.json` with DoD Manifest input carrying content, not references; freeze: `node <plugin root>/hooks/plan-package.cjs <plan dir>`
-   must PASS (any finding halts), then it renders the DoD Manifest input together with its HTML. Each includes the proposed
+4. Return the drafts; the Plan Integrator will generate `implementation.json` with DoD Manifest input carrying content, not references, plus per-unit `review_rounds`, one Reviewer round and at most one repair only at declared wave or phase boundaries, planning included, never at an owner-only step; draft freeze `node <plugin root>/hooks/plan-package.cjs draft <plan dir>`
+   must PASS (any finding halts), then it renders the DoD Manifest input together with its HTML; the final freeze follows the planning-wave receipt. Each includes the proposed
    route, profile, role states, reasoning, cadence, traceability, waves,
    recovery, approval boundaries, and register references versus Lifecycle-local
    requirements. DoD Manifest states: `planning` then append-only closeout.
@@ -55,6 +55,6 @@ Fresh authoring session, dispatched only by the Plan Integrator on the frozen `p
 
 Return `PLAN_REVIEW_READY`, `REROUTE_SCOPE_DEFINITION`, `DELTA_APPLIED`,
 `NEEDS_OWNER_DECISION`, or `VALIDATION_FAILED` with paths, evidence, blocker,
-and next action. Owner-decision pauses do not consume correction rounds. At most
-two evidence-changing correction rounds for `requires_regate`; exact_text closes mechanically in any round.
-Never implement or invent approval; a third re-gate needs an owner-stops class C question.
+and next action. Owner-decision pauses do not consume correction rounds. One
+`requires_regate` round, the planning wave's one aggregated repair; exact_text closes mechanically in any round.
+Never implement or invent approval; a further `requires_regate` round needs an owner-stops class C question.

@@ -14,6 +14,8 @@
  * recorded authority.json baseline, naming offenders with file:line;
  * gate-evidence/dated-receipt paths and HISTORICAL_GATE-marked values are allow-listed.
  * CLI: node <plugin root>/hooks/plan-package.cjs <plan dir> -> JSON, exit 1 on any finding.
+ * CLI: node <plugin root>/hooks/plan-package.cjs draft <plan dir> -> the pre-review freeze
+ * (#205): every check except the completed planning-wave receipt.
  * CLI: node <plugin root>/hooks/plan-package.cjs wave <plan dir> <wave id> -> one wave's
  * slices, write sets, and resolved commands (#190), exit 1 on any finding.
  */
@@ -21,6 +23,9 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const crypto = require("node:crypto");
+
+const { checkReviewRounds } = require("./assurance-budget.cjs");
+const { POLICY: REVIEW_POLICY, planningSessionsVerdict } = require("./planning-review.cjs");
 
 const sha256 = (data) => crypto.createHash("sha256").update(data).digest("hex");
 
@@ -486,11 +491,129 @@ function checkManifestProjection(implementation) {
   return findings;
 }
 
-function freeze(dir) {
+/**
+ * #205: the one planning wave. A draft freeze (before the review) needs the
+ * declared sessions; the final freeze that precedes implementation dispatch
+ * also needs the completed wave receipt: every declared session returned,
+ * exactly one review, at most one repair, deterministic closure, and the
+ * closing candidate equal to the frozen manifest digest.
+ */
+function checkPlanningWave(implementation, manifestDigest, stage = "final") {
+  const wave = implementation?.journey_settings?.planning_wave;
+  if (!wave || typeof wave !== "object") return [{ code: "planning_wave_missing" }];
+  const sessions = planningSessionsVerdict({ required_sessions: wave.required_sessions, sessions: [] });
+  if (sessions?.reason === "planning_sessions_invalid") return [{ code: "planning_sessions_invalid" }];
+  if (stage === "draft") return [];
+  const findings = [];
+  if (!Array.isArray(wave.sessions) || planningSessionsVerdict(wave)) {
+    findings.push({ code: "planning_wave_sessions_incomplete" });
+  }
+  if (wave.reviews !== REVIEW_POLICY.review_rounds) {
+    findings.push({ code: "planning_wave_review_count", recorded: wave.reviews ?? null });
+  }
+  if (!Number.isInteger(wave.repairs) || wave.repairs < 0 || wave.repairs > REVIEW_POLICY.aggregated_repairs_max) {
+    findings.push({ code: "planning_wave_repair_limit", recorded: wave.repairs ?? null });
+  }
+  if (wave.closure !== REVIEW_POLICY.post_repair_gate) {
+    findings.push({ code: "planning_wave_closure_missing", recorded: wave.closure ?? null });
+  }
+  if (!manifestDigest || wave.candidate_digest !== manifestDigest) {
+    findings.push({ code: "planning_wave_candidate_mismatch", recorded: wave.candidate_digest ?? null, actual: manifestDigest });
+  }
+  return findings;
+}
+
+/**
+ * #155: the Planning Integration Engineer's Boundary/Data-Flow Contract,
+ * copied into implementation.json from design.md and the System Catalog (no
+ * sixth artifact). Either a not-applicable rationale, or flows with owned
+ * source and sink, path, transformations, side effects, contract authority,
+ * evidence basis, and failure/recovery; state machines with transitions,
+ * illegal transitions, and a model binding; trust boundaries with their
+ * enforcement point. Each names resolving SEIT rows. An unresolved gap blocks.
+ */
+function checkBoundaryContract(implementation, seit) {
+  const contract = implementation?.boundary_contract;
+  const text = (value) => typeof value === "string" && value.trim().length > 0;
+  const list = (value) => Array.isArray(value) && value.every(text);
+  const filled = (value) => list(value) && value.length > 0;
+  if (!contract || typeof contract !== "object" || Array.isArray(contract)) {
+    return [{ code: "boundary_contract_missing" }];
+  }
+  const groups = ["flows", "state_machines", "trust_boundaries"];
+  if (contract.not_applicable === true) {
+    if (!text(contract.reason)) return [{ code: "boundary_na_reason_missing" }];
+    return groups.some((key) => Array.isArray(contract[key]) && contract[key].length)
+      ? [{ code: "boundary_na_with_content" }] : [];
+  }
+  const findings = [];
+  if (!groups.some((key) => Array.isArray(contract[key]) && contract[key].length)) {
+    findings.push({ code: "boundary_contract_empty" });
+  }
+  const seitIds = new Set();
+  walk(seit, (node) => {
+    if (typeof node.id === "string") seitIds.add(node.id);
+  });
+  const rows = (key) => (Array.isArray(contract[key]) ? contract[key] : []);
+  const verified = (row, id) => {
+    if (!filled(row.seit_rows)) findings.push({ code: "boundary_unverified", id });
+    else for (const ref of row.seit_rows) {
+      if (!seitIds.has(ref)) findings.push({ code: "boundary_seit_row_unresolved", id, seit_row: ref });
+    }
+  };
+  for (const flow of rows("flows")) {
+    const id = flow?.id ?? null;
+    for (const end of ["source", "sink"]) {
+      if (!text(flow?.[end]?.component) || !text(flow?.[end]?.owner)) {
+        findings.push({ code: "boundary_flow_endpoint_missing", id, end });
+      }
+    }
+    for (const field of ["path", "transformations", "side_effects"]) {
+      if (!list(flow?.[field])) findings.push({ code: "boundary_flow_field_missing", id, field });
+    }
+    if (!filled(flow?.failure_recovery)) findings.push({ code: "boundary_flow_failure_missing", id });
+    if (!text(flow?.authority)) findings.push({ code: "boundary_flow_authority_missing", id });
+    if (!["observed", "proposed"].includes(flow?.evidence)) findings.push({ code: "boundary_flow_evidence_invalid", id });
+    verified(flow || {}, id);
+  }
+  for (const machine of rows("state_machines")) {
+    const id = machine?.id ?? null;
+    const transitions = Array.isArray(machine?.transitions) ? machine.transitions : [];
+    if (!transitions.length || !transitions.every((t) => ["from", "event", "to"].every((key) => text(t?.[key])))) {
+      findings.push({ code: "boundary_state_transitions_missing", id });
+    }
+    const illegal = Array.isArray(machine?.illegal_transitions) ? machine.illegal_transitions : [];
+    if (!illegal.length || !illegal.every((t) => ["from", "event", "handling"].every((key) => text(t?.[key])))) {
+      findings.push({ code: "boundary_state_illegal_missing", id });
+    }
+    if (!text(machine?.model) && !text(machine?.model_na_reason)) {
+      findings.push({ code: "boundary_state_model_unbound", id });
+    }
+    verified(machine || {}, id);
+  }
+  for (const boundary of rows("trust_boundaries")) {
+    const id = boundary?.id ?? null;
+    if (!text(boundary?.crossing) || !text(boundary?.enforcement)) {
+      findings.push({ code: "boundary_trust_enforcement_missing", id });
+    }
+    verified(boundary || {}, id);
+  }
+  for (const gap of Array.isArray(contract.gaps) ? contract.gaps : []) {
+    if (gap?.status !== "resolved") findings.push({ code: "boundary_gap_unresolved", id: gap?.id ?? null });
+  }
+  return findings;
+}
+
+function freeze(dir, { stage = "final" } = {}) {
   const digests = verifyDigests(dir);
   const seit = readJson(path.join(dir, "seit.json"));
   const implementation = readJson(path.join(dir, "implementation.json"));
   const findings = [
+    ...(implementation ? [
+      ...checkReviewRounds(implementation),
+      ...checkPlanningWave(implementation, digests.manifest_digest, stage),
+      ...checkBoundaryContract(implementation, seit),
+    ] : []),
     ...checkManifestProjection(implementation),
     ...checkRoles(seit, implementation),
     ...checkWorkClass(implementation),
@@ -502,7 +625,7 @@ function freeze(dir) {
     ...checkLivePins(dir),
     ...digests.findings,
   ];
-  return { outcome: findings.length ? "FAIL" : "PASS", manifest_digest: digests.manifest_digest, findings };
+  return { outcome: findings.length ? "FAIL" : "PASS", stage, manifest_digest: digests.manifest_digest, findings };
 }
 
 /** #190: CMD-* / PROC-* ids named in a wave's free-text exit criterion. */
@@ -563,6 +686,9 @@ function waveView(dir, waveId) {
 module.exports = {
   waveView,
   checkManifestProjection,
+  checkReviewRounds,
+  checkPlanningWave,
+  checkBoundaryContract,
   checkRoles,
   checkWorkClass,
   checkPlanningRoles,
@@ -584,12 +710,13 @@ if (require.main === module && process.argv[2] === "wave") {
   process.stdout.write(JSON.stringify(result, null, 2) + "\n");
   process.exit(result.outcome === "PASS" ? 0 : 1);
 } else if (require.main === module) {
-  const dir = process.argv[2];
+  const draft = process.argv[2] === "draft";
+  const dir = process.argv[draft ? 3 : 2];
   if (!dir) {
-    process.stderr.write("usage: node hooks/plan-package.cjs <plan dir>\n");
+    process.stderr.write("usage: node hooks/plan-package.cjs [draft] <plan dir>\n");
     process.exit(2);
   }
-  const result = freeze(dir);
+  const result = freeze(dir, { stage: draft ? "draft" : "final" });
   process.stdout.write(JSON.stringify(result, null, 2) + "\n");
   process.exit(result.outcome === "PASS" ? 0 : 1);
 }

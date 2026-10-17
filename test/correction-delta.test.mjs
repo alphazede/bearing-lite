@@ -17,7 +17,7 @@ test('delta with an unrequested change fails and lists extra UIDs', () => {
 });
 
 test('exact_text-only round closes without re-gating in any round', () => {
-  for (const correction_rounds of [0, 1, 2]) {
+  for (const correction_rounds of [0, 1]) {
     const result = evaluate({ ...fixture(), correction_rounds });
     assert.equal(result.verdict, 'DELTA_APPLIED');
     assert.deepEqual(result.closed_uids, ['REQ-1']);
@@ -40,9 +40,9 @@ test('mixed round re-gates only requires_regate rows and spends one round', () =
   assert.deepEqual(result.closed_uids, ['REQ-1']);
   assert.deepEqual(result.regate_uids, ['REQ-2']);
   assert.equal(result.correction_rounds, 1);
-  input.correction_rounds = 2;
+  input.correction_rounds = 1;
   assert.equal(evaluate(input).verdict, 'NEEDS_OWNER_DECISION');
-  assert.equal(evaluate(input).correction_rounds, 2);
+  assert.equal(evaluate(input).correction_rounds, 1);
 });
 
 test('explicit null or wrong-typed context fails before closing or reserving a round', () => {
@@ -107,6 +107,7 @@ test('delta requires changed UID equality and typed unique rows and findings', (
     x => { x.findings.push(x.findings[0]); },
     x => { delete x.after[0].references; },
     x => { x.correction_rounds = -1; },
+    x => { x.correction_rounds = 2; },
   ]) {
     const invalid = fixture();
     change(invalid);

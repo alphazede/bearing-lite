@@ -24,9 +24,10 @@ separate catalog roles.
 
 ## Algorithm
 
-1. Planning Test Engineer finalizes `seit.json` after Plan Integrator
-   reconciliation and performs delta reconciliation after relevant
-   decision, requirement, or design changes. Do not invent missing
+1. Planning Test Engineer finalizes `seit.json` in the planning wave from the drafts and
+   the Integration Engineer Boundary/Data-Flow Contract (every flow, state transition,
+   illegal transition, trust boundary, and failure path names its `seit_rows`), and
+   reconciles deltas in the wave's one aggregated repair. Do not invent missing
    method-skill behavior. Define applicable deterministic claims; select
    Reverify only on an applicable binary-level claim.
    Lifecycle in-document verification cases are authored only against the

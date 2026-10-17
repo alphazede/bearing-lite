@@ -31,6 +31,48 @@ function manifestGenerated(input) {
   }
 }
 
+const nonempty = (value) => typeof value === "string" && value.trim().length > 0;
+
+/**
+ * #205: the declared planning sessions of the one planning wave. Every
+ * declared session must have returned for one candidate ref before the
+ * single review opens; a session verdict (a Requirements Engineer failure
+ * included) is review input, never a gate between sessions. Returns null when
+ * complete, else a typed { outcome, reason }. Shared with plan-package.cjs.
+ */
+function planningSessionsVerdict(wave, candidateRef) {
+  if (!wave || typeof wave !== "object") {
+    return { outcome: "NEEDS_MORE_EVIDENCE", reason: "planning_sessions_incomplete" };
+  }
+  const declared = wave?.required_sessions;
+  const known = [...POLICY.planning_sessions_required, ...POLICY.planning_sessions_optional];
+  if (
+    !Array.isArray(declared) ||
+    new Set(declared).size !== declared.length ||
+    declared.some((name) => !known.includes(name)) ||
+    POLICY.planning_sessions_required.some((name) => !declared.includes(name))
+  ) {
+    return { outcome: "OWNER_AMENDMENT_REQUIRED", reason: "planning_sessions_invalid" };
+  }
+  const sessions = Array.isArray(wave.sessions) ? wave.sessions : [];
+  const names = sessions.map((session) => session?.session);
+  if (new Set(names).size !== names.length || names.some((name) => !declared.includes(name))) {
+    return { outcome: "OWNER_AMENDMENT_REQUIRED", reason: "planning_sessions_invalid" };
+  }
+  const refs = new Set(sessions.map((session) => session?.candidate_ref));
+  const returned = declared.every((name) => {
+    const session = sessions.find((item) => item?.session === name);
+    return (
+      session &&
+      nonempty(session.verdict) &&
+      !POLICY.planning_session_pending_verdicts.includes(session.verdict) &&
+      nonempty(session.candidate_ref) &&
+      (candidateRef === undefined ? refs.size === 1 : session.candidate_ref === candidateRef)
+    );
+  });
+  return returned ? null : { outcome: "NEEDS_MORE_EVIDENCE", reason: "planning_sessions_incomplete" };
+}
+
 function evaluatePlanningReview(input) {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     return { outcome: "NEEDS_MORE_EVIDENCE", reason: "planning_review_missing" };
@@ -48,6 +90,9 @@ function evaluatePlanningReview(input) {
   ) {
     return { outcome: "NEEDS_MORE_EVIDENCE", reason: "missing_requirement_register" };
   }
+  // #205: the review never opens while a declared planning session is out.
+  const sessions = planningSessionsVerdict(input.planning_wave, input.candidate?.candidate_ref ?? null);
+  if (sessions) return sessions;
   const slots = Array.isArray(input.reviewer_slots) ? input.reviewer_slots : [];
   const ids = slots.map((slot) => slot?.slot_id);
   const primaryRoutes = slots.map((slot) => slot?.primary_route_ref);
@@ -120,4 +165,4 @@ function evaluatePlanningReview(input) {
   return { outcome: "PASS", reason: repairs ? "repair_gate_passed" : "review_aggregated" };
 }
 
-module.exports = { POLICY, evaluatePlanningReview };
+module.exports = { POLICY, evaluatePlanningReview, planningSessionsVerdict };

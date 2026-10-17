@@ -31,5 +31,7 @@ The Orchestrator consumes these rows per
 `../../planning-and-design/references/correction-loop.md`: exact-text closure
 needs a changed-UID-set check, verbatim/non-text preservation, candidate-bound
 workspace lint, and resolving cross-references. No gate round is spent on
-exact_text in any round; only requires_regate rows return to this specialist.
-Record mechanical receipts and residuals at the integrated owner gate.
+exact_text in any round; requires_regate rows spend the planning wave's one
+repair round and never return to this specialist for another review; a further
+requires_regate finding returns `NEEDS_OWNER_DECISION`. Record mechanical
+receipts and residuals at the integrated owner gate.
