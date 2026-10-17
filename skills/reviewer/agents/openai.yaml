@@ -1,0 +1,4 @@
+interface:
+  display_name: "Reviewer"
+  short_description: "Review stable candidates and bound accepted repairs"
+  default_prompt: "Use $reviewer for independent defect review at the declared cadence boundary; transition to Repair Implementer only after parent acceptance under the same open repair rules."
