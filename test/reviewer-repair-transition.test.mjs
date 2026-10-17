@@ -125,6 +125,10 @@ function evaluateRepairTransition(ev) {
     if (ev.failed || ev.scope_expansion || ev.new_design_issue) {
       return deny("owner_authority");
     }
+    const late = ev.addendum ? lateFindingCheck(ev, receipt || {}, { closing: true }) : null;
+    if (late) {
+      return late;
+    }
     const frozen = new Set([...((receipt && receipt.finding_ids) || []), ...admittedIds(ev)]);
     if ((ev.new_defects || []).some((id) => !frozen.has(id))) {
       return deny("owner_authority");
@@ -147,7 +151,7 @@ function admittedIds(ev) {
  * #201 local model: a late finding joins the SAME open repair round only as a
  * frozen addendum the parent admitted. Not a hook; no runtime claim.
  */
-function lateFindingCheck(ev, receipt) {
+function lateFindingCheck(ev, receipt, { closing = false } = {}) {
   const a = ev.addendum;
   const round = ev.round;
   if (ev.second_review || ev.budget_reset) {
@@ -182,7 +186,8 @@ function lateFindingCheck(ev, receipt) {
   if (!allowance || typeof allowance.limit !== "number" || typeof allowance.used !== "number") {
     return deny("correction_allowance_missing");
   }
-  if (allowance.used >= Math.min(MAX_CORRECTIONS, allowance.limit)) {
+  // Exhaustion stops a new correction, not closure after the last one.
+  if (!closing && allowance.used >= Math.min(MAX_CORRECTIONS, allowance.limit)) {
     return deny("correction_allowance_exhausted");
   }
   return null;
@@ -443,6 +448,23 @@ describe("#116 Reviewer to Repair Implementer transition", () => {
       assert.equal(code({ ...close, unfixed_accepted: ["F2"], left_open_reason: "baseline_age" }), "accepted_fixable_finding_remaining");
       assert.equal(code({ ...close, close_by: "self_review" }), "no_self_certification");
       assert.equal(code({ ...close, new_defects: ["F3"] }), "owner_authority");
+    });
+
+    it("close: an addendum that fails admission cannot close the round", () => {
+      const close = { ...late, mutate: false, close: true, close_by: "deterministic_PASS", new_defects: ["F2"] };
+      const bad = (extra) => code({ ...close, addendum: { ...addendum, ...extra } });
+      assert.equal(bad({ frozen: false }), "addendum_not_frozen");
+      assert.equal(bad({ reproduced: false }), "addendum_reproduction_required");
+      assert.equal(bad({ parent_admitted: false }), "parent_admission_required");
+      assert.equal(bad({ paths: ["src/b.js"] }), "addendum_out_of_scope");
+      assert.equal(bad({ contract_changed: true }), "contract_or_protected_change");
+      assert.equal(bad({ protected_action: true }), "contract_or_protected_change");
+      assert.equal(bad({ edits_original_receipt: true }), "original_receipt_immutable");
+      assert.equal(code({ ...close, round: { ...openRound, open: false } }), "repair_round_closed");
+      assert.equal(code({ ...close, round: { ...openRound, correction_allowance: undefined } }), "correction_allowance_missing");
+      assert.equal(code({ ...close, session: "rev-s2" }), "session_mismatch");
+      // Closing after the last allowed correction is valid; exhaustion only stops new corrections.
+      assert.equal(code({ ...close, round: { ...openRound, correction_allowance: { limit: 3, used: 3 } } }), "allow");
     });
   });
 });
