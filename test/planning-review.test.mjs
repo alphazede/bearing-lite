@@ -169,20 +169,21 @@ describe("model-neutral planning review", () => {
     assert.equal(reviewer.outcome, "REROUTE");
   });
 
-  it("records honest positive and negative coverage for every supported harness", () => {
+  it("records current coverage and retired native clients honestly", () => {
     const mapping = readFileSync(path.join(ROOT, "hooks/com.anthropic.claude-code/mapping.md"), "utf8");
     const partial = [
       ["Claude Code", "SessionStart", "Stop"],
       ["Codex", "session_start", "session_end"],
-      ["Grok Build", "UserPromptSubmit", "SubagentStop"],
       ["Cursor", "sessionStart", "stop"],
-      ["Kimi Code", "user_prompt_submit", "sessionEnd"],
     ];
     for (const [name, start, stop] of partial) {
       assert.match(mapping, new RegExp(`\\| ${name.replace(" ", "\\s") } \\|[^\\n]+\\| partial \\|`));
       assert.equal(host.classForEvent(start), "activation", name);
       assert.equal(host.classForEvent(stop), "closeout", name);
       assert.equal(host.classForEvent("planningReview"), null);
+    }
+    for (const name of ["Grok Build", "Kimi Code", "Qwen Code"]) {
+      assert.match(mapping, new RegExp(`\\| ${name} \\|[^\\n]+\\| unsupported \\|`));
     }
     for (const name of ["AGY", "Pi", "DeepCode"]) {
       assert.match(mapping, new RegExp(`\\| ${name} \\|[^\\n]+\\| skills-only \\|`));

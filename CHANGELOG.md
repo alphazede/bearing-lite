@@ -2,14 +2,18 @@
 
 ## [Unreleased]
 
-These changes apply to future planning only. Packages frozen before them stay historical and are not migrated; their records and receipts are unchanged.
+## [1.1.10](https://github.com/alphazede/bearing-lite/releases/tag/v1.1.10) - 2026-10-17
 
 ### Changed
 
-- Changed planning to run as one planning wave (unit `planning`, reviewer `cadence: phase`, `max_assurance_rounds` 1 per wave, the same budget as an implementation wave). The Plan Integrator runs the sessions in input order with no Requirements Engineer gate between them: the register precheck and Requirements Engineer findings go into the one consolidated review, and one aggregated repair and deterministic closure follow. `hooks/planning-review.cjs` will not open the review until every declared planning session has returned for the candidate (`planning_sessions_incomplete`), and still refuses a second review or repair. `hooks/plan-package.cjs draft <plan dir>` checks the package before review. The final freeze, which gates implementation dispatch, also requires a completed `journey_settings.planning_wave` receipt: every session returned, one review, at most one repair, deterministic closure, and the closing candidate digest. Deterministic receipts are reused only while their bound inputs are unchanged. [#205](https://github.com/alphazede/bearing-lite/issues/205)
-- Changed the planning correction budget from two `requires_regate` rounds to one, which is the planning wave's one aggregated repair. `hooks/correction-delta.cjs` bounds `correction_rounds` to 0–1 and returns `NEEDS_OWNER_DECISION` for a further `requires_regate` finding. `exact_text` findings still close mechanically in any round. [#204](https://github.com/alphazede/bearing-lite/issues/204)
-- Added `journey_settings.review_rounds` to `implementation.json`: one row per declared wave or phase plus `planning`, each with one Reviewer round, at most one repair, and `deterministic_PASS` closure. The freeze rejects a second round, a second repair, a round at no declared boundary, and a unit with no round, each with a typed finding. `hooks/assurance-budget.cjs` reads the same rows for wave and phase units, and the DoD Manifest shows the round plan. [#157](https://github.com/alphazede/bearing-lite/issues/157)
-- Made the Planning Integration Engineer responsible for interface, boundary, and data-flow completeness before design is finalized. It records owned sources and sinks, paths, transformations, side effects, state and protocol transitions including illegal ones, trust enforcement, and failure and recovery, and it treats existing formal contracts as authority. The Boundary/Data-Flow Contract lives in the existing artifacts and is copied into `implementation.json` `boundary_contract`, with a justified not-applicable allowed; there is no sixth artifact. Systems Modeler binding and SEIT rows are required, and an unresolved gap blocks the freeze and therefore implementation dispatch. The execution Integration Engineer is unchanged. [#155](https://github.com/alphazede/bearing-lite/issues/155)
+- Ended native-client support for Qwen Code, Kimi Code, and Grok Build. Retained metadata is legacy-only and excluded from release qualification.
+- Assigned early interface, data-flow, protocol, trust-boundary and recovery analysis to the Planning Integration Engineer, with resolving SEIT proof cases in existing artifacts. [#155](https://github.com/alphazede/bearing-lite/issues/155)
+
+### Fixed
+
+- Removed blocking Requirements Engineer gates from future planning: all planning sessions feed one consolidated review, one repair and deterministic closure, with valid unchanged-input evidence reused. [#205](https://github.com/alphazede/bearing-lite/issues/205)
+- Limited planning to one evidence-changing correction round while preserving mechanical exact-text closure. [#204](https://github.com/alphazede/bearing-lite/issues/204)
+- Enforced a single review-round declaration per planning, wave or phase unit in the package freeze, runtime budget and DoD Manifest. Final freeze requires resolving review evidence and preserves the reviewed-to-repaired candidate lineage. [#157](https://github.com/alphazede/bearing-lite/issues/157)
 
 ## [1.1.9](https://github.com/alphazede/bearing-lite/releases/tag/v1.1.9) - 2026-10-17
 

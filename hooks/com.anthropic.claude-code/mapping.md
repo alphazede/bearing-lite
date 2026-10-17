@@ -8,17 +8,21 @@ host has a native pre-write deny.
 
 ## Hosts
 
+Qwen Code, Kimi Code, and Grok Build are no longer supported. Their entries
+below describe retained legacy formats, not maintained or release-qualified
+integrations.
+
 | Host | Plugin install | Hooks | Coverage |
 |---|---|---|---|
 | Claude Code | `.claude-plugin/` marketplace | `hooks/hooks.json` | partial |
 | Codex | `.codex-plugin/` via the prepared marketplace from `tools/prepare-codex-plugin.mjs` | `hooks/hooks.json` | partial |
-| Grok Build | `.grok-plugin/` marketplace | `hooks/hooks.json` | partial |
+| Grok Build | legacy `.grok-plugin/` metadata | `hooks/hooks.json` | unsupported |
 | Cursor | `.cursor-plugin/` | `hooks/com.cursor/hooks.json` (`sessionStart`, `stop`) | partial |
-| Kimi Code | `.kimi-plugin/plugin.json` | manifest `hooks` array | partial |
+| Kimi Code | legacy `.kimi-plugin/plugin.json` | manifest `hooks` array | unsupported |
 | AGY | `.agy/` (strict `plugin.json`) | none | skills-only |
 | Pi | `package.json` `"pi"` + `pi-package` | none (TypeScript extensions, not command hooks) | skills-only |
 | DeepCode | `.deepcode/skills` or interoperable `.agents/skills` discovery | none | skills-only |
-| Qwen Code | Agent Plugins 1.0 `plugin.json` | none (no Qwen-specific hook namespace) | skills-only |
+| Qwen Code | legacy Agent Plugins 1.0 metadata | none | unsupported |
 | GitHub Copilot | Agent Plugins 1.0 `plugin.json` + `com.github.copilot/` | `com.github.copilot/hooks/hooks.json` (`SessionStart`, `PreToolUse`, `Stop`, `SubagentStop`) | partial |
 
 Do **not** set `hooks` on the root Agent Plugins 1.0 `plugin.json`, or on Claude,
@@ -64,8 +68,8 @@ reaches activation/closeout and TE completion.
 The shared planning-review evaluator is used by transition and closeout when a
 client supplies a structured `planning_review` record. Current session-start /
 stop mappings cannot derive that nested record safely, so Claude Code, Codex,
-Grok Build, Cursor, Kimi, and GitHub Copilot remain partial and the check is
-procedural there. AGY, Pi, DeepCode, and Qwen Code remain skills-only. Do not
+Cursor, and GitHub Copilot remain partial and the check is
+procedural there. AGY, Pi, and DeepCode remain skills-only. Do not
 claim full planning-review enforcement for any of these hosts until a native
 event supplies the complete record.
 
@@ -74,8 +78,8 @@ The per-declared-phase-or-wave assurance record
 `transition` class through the `assurance_transition` action_kind. No mapped
 host exposes a hook event that carries the frozen declaration and the visible
 task record, so the assurance budget is procedural on every mapped host:
-Claude Code, Codex, Grok Build, Cursor, Kimi Code, and GitHub Copilot stay
-partial, and AGY, Pi, DeepCode, and Qwen Code stay skills-only. No host may
+Claude Code, Codex, Cursor, and GitHub Copilot stay
+partial, and AGY, Pi, and DeepCode stay skills-only. No host may
 advertise an enforcement of the assurance budget it cannot perform.
 
 The adapter accepts snake_case and camelCase (`hook_event_name` /
