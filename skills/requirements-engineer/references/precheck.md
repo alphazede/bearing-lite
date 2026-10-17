@@ -56,7 +56,8 @@ Locations identify field starts; document findings use `<register>` or `<plan>`.
 - `citation`: repository-relative `file.ext:line` names a missing file,
   line zero, or a line beyond EOF. A final newline is not an extra line.
 
-The Requirements Engineer consumes a passing receipt and never re-reports
+The Requirements Engineer consumes the candidate-bound receipt, including failing
+findings, for the consolidated review and never re-reports
 these covered mechanical classes. Judge semantics and uncovered checks.
 Workspace `lint-sdoc.py --profile library` output remains a separate input;
 this self-contained plugin check neither requires nor shells out to it.

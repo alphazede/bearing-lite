@@ -1,0 +1,302 @@
+{
+  "implementation": {
+    "schema_version": "1",
+    "artifact": {
+      "id": "SYN-IMPL-001",
+      "type": "implementation.json",
+      "status": "draft"
+    },
+    "source_baseline": {
+      "planning_repository": "example/bearing-lite",
+      "branch": "synthetic-branch",
+      "candidate_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    "journey_settings": {
+      "review_cardinality": {
+        "n": 3,
+        "k": 2,
+        "c": 1
+      },
+      "review_rounds": [
+        {
+          "unit_id": "planning",
+          "unit_kind": "planning",
+          "reviewer_rounds": 1,
+          "repairs_max": 1,
+          "closure": "deterministic_PASS"
+        },
+        {
+          "unit_id": "SYN-W1",
+          "unit_kind": "wave",
+          "reviewer_rounds": 1,
+          "repairs_max": 1,
+          "closure": "deterministic_PASS"
+        }
+      ],
+      "planning_wave": {
+        "required_sessions": [
+          "planning_and_design",
+          "integration_engineer",
+          "test_engineer"
+        ],
+        "sessions": [
+          {
+            "session": "planning_and_design",
+            "candidate_ref": "plan",
+            "verdict": "READY",
+            "candidate_revision": "r1",
+            "candidate_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          },
+          {
+            "session": "integration_engineer",
+            "candidate_ref": "plan",
+            "verdict": "READY",
+            "candidate_revision": "r1",
+            "candidate_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          },
+          {
+            "session": "test_engineer",
+            "candidate_ref": "plan",
+            "verdict": "READY",
+            "candidate_revision": "r1",
+            "candidate_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          }
+        ],
+        "reviews": 1,
+        "repairs": 0,
+        "closure": "deterministic_PASS",
+        "candidate_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "closing_candidate": {
+          "candidate_ref": "plan",
+          "candidate_revision": "r1",
+          "candidate_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        },
+        "review_receipt": {
+          "path": "gate-evidence/planning-review.json",
+          "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        }
+      }
+    },
+    "profile_freeze": {
+      "state": "frozen",
+      "selection_is_authority_grant": false
+    },
+    "waves": [
+      {
+        "id": "SYN-W1",
+        "name": "synthetic-schema-wave",
+        "slice_ids": [
+          "SYN-S1"
+        ],
+        "execution_authorized": true,
+        "entry": "Synthetic artifacts are complete before the wave starts.",
+        "exit": "Synthetic schema-contract evidence is recorded."
+      }
+    ],
+    "dependencies": [
+      {
+        "from": "SYN-W1",
+        "to": "SYN-S1"
+      }
+    ],
+    "slices": [
+      {
+        "id": "SYN-S1",
+        "role": "Implementer",
+        "goal": "Validate portable Lite artifact schemas with synthetic fixtures.",
+        "type": "test-first",
+        "requirement_ids": [
+          "AC-SYN-001"
+        ],
+        "design_ids": [
+          "CONTRACT-SYN-008"
+        ],
+        "seit_proof_rows": [
+          "SEIT-SYN-001"
+        ],
+        "design_lenses": [
+          "synthetic-portable-lens"
+        ],
+        "model_route": {
+          "status": "owner-selected"
+        },
+        "reasoning_level": {
+          "status": "owner-selected",
+          "value": "synthetic"
+        },
+        "review_path": {
+          "status": "owner-selected"
+        },
+        "write_set": [
+          "test/schema-validation.py"
+        ],
+        "command_ids": [
+          "CMD-LITE-SCHEMA-VALIDATE"
+        ],
+        "stop_condition": "Stop after schema contract cases.",
+        "human_decision": "none",
+        "authority_id": "AUTH-SYN-001",
+        "dispatchable": true
+      }
+    ],
+    "traceability": {
+      "requirements": [
+        {
+          "id": "AC-SYN-001"
+        }
+      ],
+      "contracts": [
+        {
+          "id": "CONTRACT-SYN-008"
+        }
+      ],
+      "seit_proof_rows": [
+        {
+          "id": "SEIT-SYN-001"
+        }
+      ]
+    },
+    "boundary_contract": {
+      "not_applicable": true,
+      "reason": "No material boundary."
+    }
+  },
+  "seit": {
+    "schema_version": "1",
+    "source_baseline": {
+      "planning_repository": "example/bearing-lite",
+      "branch": "synthetic-branch",
+      "candidate_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    "decision_baseline": {
+      "kind": "stable-identities-and-statuses",
+      "not_whole_file_journey_digest": true,
+      "confirmed_decisions": {
+        "first_id": "DEC-SYN-001",
+        "last_id": "DEC-SYN-001",
+        "count": 1,
+        "status": "confirmed"
+      },
+      "open_items": []
+    },
+    "responsibility_and_change_authority": {
+      "author": "Planning Test Engineer",
+      "change_authority": "owner-approved planning artifacts",
+      "publication_not_implied": true
+    },
+    "applicable_documents_and_precedence": {
+      "order": [
+        "synthetic-technical-plan",
+        "synthetic-design",
+        "synthetic-seit"
+      ],
+      "tailoring": "Always-on V&V sections stay required for portable Lite artifacts."
+    },
+    "system_description_and_requirements_flowdown": {
+      "system": "synthetic portable planning engine",
+      "flowdown": "Acceptance rows allocate to named V&V sections and proof cases.",
+      "architecture_context": "Public schema tests use synthetic fixtures only."
+    },
+    "vv_methods": {
+      "analysis": {
+        "use": "structure and allocation checks"
+      },
+      "inspection": {
+        "use": "artifact field inspection"
+      },
+      "demonstration": {
+        "use": "command output observation"
+      },
+      "test": {
+        "use": "executable schema regressions"
+      },
+      "evaluation": {
+        "use": "independent assurance later"
+      }
+    },
+    "levels": [
+      {
+        "id": "SYN-L1",
+        "description": "Synthetic artifact completeness"
+      },
+      {
+        "id": "SYN-L2",
+        "description": "Synthetic integration of the four documents"
+      }
+    ],
+    "environments_fixtures_data_simulations_support": {
+      "environments": [
+        {
+          "id": "SYN-ENV-LOCAL",
+          "kind": "isolated-python"
+        }
+      ],
+      "fixtures": [
+        {
+          "id": "SYN-FIX-SCHEMA",
+          "kind": "public-safe-json"
+        }
+      ],
+      "datasets": [
+        "synthetic-schema-records"
+      ],
+      "simulations": "none",
+      "support": [
+        "python3.12",
+        "isolated-jsonschema"
+      ]
+    },
+    "procedures_and_commands": [
+      {
+        "id": "CMD-LITE-SCHEMA-VALIDATE",
+        "type": "existing-command",
+        "command": "python3 test/schema-validation.py",
+        "source": "alphazede/bearing-lite"
+      }
+    ],
+    "evidence_and_pass_fail": {
+      "rules": [
+        "Complete synthetic records of the approved structures must be accepted.",
+        "Labels-only sections and four-field proof stubs must be rejected."
+      ]
+    },
+    "anomaly_corrective_closure": {
+      "on_anomaly": "Record the schema mismatch and stop.",
+      "rollback": "Do not edit product schemas from this test packet.",
+      "closure": "Close after a later product repair makes complete synthetics pass."
+    },
+    "integration_vv_sequence": [
+      {
+        "step": 1,
+        "name": "validate-synthetic-seit",
+        "post_step_proof_ids": [
+          "SEIT-SYN-001"
+        ]
+      }
+    ],
+    "proof_cases": [
+      {
+        "id": "SEIT-SYN-001",
+        "kind": "verification",
+        "requirement_id": "AC-SYN-001",
+        "design_id": "CONTRACT-SYN-007",
+        "command_id": "CMD-LITE-SCHEMA-VALIDATE",
+        "method": "inspection",
+        "preconditions": [
+          "Synthetic portable schema documents exist.",
+          "CMD-LITE-SCHEMA-VALIDATE uses isolated Draft 2020-12 validation."
+        ],
+        "stimulus_or_procedure": "Validate the synthetic SEIT record, including named always-on sections and the complete proof-case field set.",
+        "expected_result": "Draft 2020-12 accepts a complete synthetic SEIT and rejects labels-only sections and four-field proof stubs.",
+        "observable_evidence": "CMD-LITE-SCHEMA-VALIDATE pass/fail lines for synthetic SEIT fixtures.",
+        "pass_fail_rule": "PASS if named sections and complete proof fields are present and incomplete records are rejected; FAIL otherwise.",
+        "method_fields": {
+          "inspection_article": "synthetic seit.json",
+          "inspection_criteria": "named always-on sections with content and complete proof-case fields",
+          "inspection_record": "CMD-LITE-SCHEMA-VALIDATE output"
+        },
+        "negative_or_failure_case": "Reject always_on_sections labels and method/evidence/pass_fail stubs."
+      }
+    ]
+  }
+}

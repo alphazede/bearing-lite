@@ -25,7 +25,7 @@ function passingReview(planDir) {
   return {
     plan_dir: planDir,
     candidate,
-    planning_wave: planningSessions("plan"),
+    planning_wave: planningSessions(candidate),
     reviewer_slots: [{ slot_id: "slot-a", primary_route_ref: "route-a", fallback_route_refs: [] }],
     round_number: 1,
     completed_rounds: 1,
@@ -102,7 +102,7 @@ function packageFixture(t, writeSet) {
   };
   put("docs/plans/x/seit.json", JSON.stringify(seit));
   const manifestDigest = sha([sha(plan), sha(JSON.stringify(seit))].join("\n"));
-  const contract = planningContract(manifestDigest);
+  const contract = planningContract(manifestDigest, { dir: path.join(root, "docs/plans/x") });
   put("docs/plans/x/implementation.json", JSON.stringify({
     boundary_contract: contract.boundary_contract,
     journey_settings: {

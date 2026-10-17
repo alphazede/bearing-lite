@@ -23,9 +23,10 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const crypto = require("node:crypto");
+const { isDeepStrictEqual } = require("node:util");
 
 const { checkReviewRounds } = require("./assurance-budget.cjs");
-const { POLICY: REVIEW_POLICY, planningSessionsVerdict } = require("./planning-review.cjs");
+const { POLICY: REVIEW_POLICY, planningSessionsVerdict, evaluatePlanningReview, sameCandidate } = require("./planning-review.cjs");
 
 const sha256 = (data) => crypto.createHash("sha256").update(data).digest("hex");
 
@@ -496,16 +497,18 @@ function checkManifestProjection(implementation) {
  * declared sessions; the final freeze that precedes implementation dispatch
  * also needs the completed wave receipt: every declared session returned,
  * exactly one review, at most one repair, deterministic closure, and the
- * closing candidate equal to the frozen manifest digest.
+ * closing candidate equal to the frozen manifest digest. The original pinned
+ * review record is evaluated without replacing its sessions or reviewer
+ * identities; one explicit repair links that reviewed candidate to closure.
  */
-function checkPlanningWave(implementation, manifestDigest, stage = "final") {
+function checkPlanningWave(implementation, manifestDigest, stage = "final", dir) {
   const wave = implementation?.journey_settings?.planning_wave;
   if (!wave || typeof wave !== "object") return [{ code: "planning_wave_missing" }];
   const sessions = planningSessionsVerdict({ required_sessions: wave.required_sessions, sessions: [] });
   if (sessions?.reason === "planning_sessions_invalid") return [{ code: "planning_sessions_invalid" }];
   if (stage === "draft") return [];
   const findings = [];
-  if (!Array.isArray(wave.sessions) || planningSessionsVerdict(wave)) {
+  if (!Array.isArray(wave.sessions) || !wave.sessions.length) {
     findings.push({ code: "planning_wave_sessions_incomplete" });
   }
   if (wave.reviews !== REVIEW_POLICY.review_rounds) {
@@ -519,6 +522,60 @@ function checkPlanningWave(implementation, manifestDigest, stage = "final") {
   }
   if (!manifestDigest || wave.candidate_digest !== manifestDigest) {
     findings.push({ code: "planning_wave_candidate_mismatch", recorded: wave.candidate_digest ?? null, actual: manifestDigest });
+  }
+  const invalidReview = (reason) => findings.push({ code: "planning_wave_review_invalid", reason });
+  const ref = wave.review_receipt;
+  let review;
+  if (!ref || typeof ref.path !== "string" || !ref.path || !/^[0-9a-f]{64}$/.test(ref.sha256)) {
+    invalidReview("receipt_missing");
+  } else {
+    try {
+      const root = fs.realpathSync(dir);
+      const file = fs.realpathSync(path.resolve(root, ref.path));
+      if (path.isAbsolute(ref.path) || !file.startsWith(root + path.sep)) {
+        invalidReview("receipt_path_invalid");
+      } else {
+        const bytes = fs.readFileSync(file);
+        if (sha256(bytes) !== ref.sha256) invalidReview("receipt_digest_mismatch");
+        else review = JSON.parse(bytes);
+      }
+    } catch {
+      invalidReview("receipt_unreadable");
+    }
+  }
+  if (review) {
+    let result;
+    try {
+      result = evaluatePlanningReview({ ...review, plan_dir: dir });
+    } catch {
+      result = { outcome: "FAIL", reason: "receipt_invalid" };
+    }
+    if (result.outcome !== "PASS") invalidReview(result.reason);
+    else if (!review.receipts.every((receipt) => ["ACCEPT", "PASS", "REPAIR_REQUIRED"].includes(receipt.verdict))) {
+      invalidReview("reviewer_receipt_pending");
+    }
+    // Keep the original review and specialist provenance, even after repair.
+    if (!isDeepStrictEqual(wave.required_sessions, review.planning_wave?.required_sessions) ||
+        !isDeepStrictEqual(wave.sessions, review.planning_wave?.sessions)) {
+      findings.push({ code: "planning_wave_session_provenance_mismatch" });
+    }
+    if (planningSessionsVerdict(wave, review.candidate, review.input_digests)) {
+      findings.push({ code: "planning_wave_sessions_incomplete" });
+    }
+    const closing = wave.closing_candidate;
+    if (!sameCandidate(closing, closing) || closing.candidate_digest !== wave.candidate_digest) {
+      findings.push({ code: "planning_wave_candidate_mismatch", recorded: closing ?? null, actual: manifestDigest });
+    }
+    const repair = wave.repair;
+    if (Number(review.aggregated_repairs || 0) !== 0 ||
+        (Array.isArray(review.receipts) && review.receipts.some((receipt) => receipt?.verdict === "REPAIR_REQUIRED") && wave.repairs !== 1) ||
+        (wave.repairs === 0 ? !sameCandidate(closing, review.candidate) || repair !== undefined :
+          !sameCandidate(repair?.from_candidate, review.candidate) ||
+          !sameCandidate(repair?.to_candidate, closing) || repair?.deterministic_gate !== "PASS")) {
+      findings.push({ code: "planning_wave_repair_lineage_invalid" });
+    }
+  } else if (review !== undefined) {
+    invalidReview("receipt_invalid");
   }
   return findings;
 }
@@ -541,19 +598,19 @@ function checkBoundaryContract(implementation, seit) {
     return [{ code: "boundary_contract_missing" }];
   }
   const groups = ["flows", "state_machines", "trust_boundaries"];
-  if (contract.not_applicable === true) {
-    if (!text(contract.reason)) return [{ code: "boundary_na_reason_missing" }];
-    return groups.some((key) => Array.isArray(contract[key]) && contract[key].length)
-      ? [{ code: "boundary_na_with_content" }] : [];
-  }
   const findings = [];
+  for (const gap of Array.isArray(contract.gaps) ? contract.gaps : []) {
+    if (gap?.status !== "resolved") findings.push({ code: "boundary_gap_unresolved", id: gap?.id ?? null });
+  }
+  if (contract.not_applicable === true) {
+    if (!text(contract.reason)) findings.push({ code: "boundary_na_reason_missing" });
+    if (groups.some((key) => Array.isArray(contract[key]) && contract[key].length)) findings.push({ code: "boundary_na_with_content" });
+    return findings;
+  }
   if (!groups.some((key) => Array.isArray(contract[key]) && contract[key].length)) {
     findings.push({ code: "boundary_contract_empty" });
   }
-  const seitIds = new Set();
-  walk(seit, (node) => {
-    if (typeof node.id === "string") seitIds.add(node.id);
-  });
+  const seitIds = new Set((Array.isArray(seit?.proof_cases) ? seit.proof_cases : []).map((row) => row?.id));
   const rows = (key) => (Array.isArray(contract[key]) ? contract[key] : []);
   const verified = (row, id) => {
     if (!filled(row.seit_rows)) findings.push({ code: "boundary_unverified", id });
@@ -598,9 +655,6 @@ function checkBoundaryContract(implementation, seit) {
     }
     verified(boundary || {}, id);
   }
-  for (const gap of Array.isArray(contract.gaps) ? contract.gaps : []) {
-    if (gap?.status !== "resolved") findings.push({ code: "boundary_gap_unresolved", id: gap?.id ?? null });
-  }
   return findings;
 }
 
@@ -611,7 +665,7 @@ function freeze(dir, { stage = "final" } = {}) {
   const findings = [
     ...(implementation ? [
       ...checkReviewRounds(implementation),
-      ...checkPlanningWave(implementation, digests.manifest_digest, stage),
+      ...checkPlanningWave(implementation, digests.manifest_digest, stage, dir),
       ...checkBoundaryContract(implementation, seit),
     ] : []),
     ...checkManifestProjection(implementation),

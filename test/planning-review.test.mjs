@@ -22,7 +22,7 @@ const review = (extra = {}) => ({
   candidate,
   plan_dir: MANIFEST_DIR,
   dod_manifest: { output_name: MANIFEST_NAME },
-  planning_wave: planningSessions("plan"),
+  planning_wave: planningSessions(candidate),
   reviewer_slots: [
     { slot_id: "slot-a", primary_route_ref: "route-a", fallback_route_refs: ["route-a2"] },
   ],

@@ -126,7 +126,7 @@ describe("plan-package (#70 embedded digest freeze)", () => {
   const seitBytes = readFileSync(path.join(dir, "seit.json"));
   const expectedManifest = sha([sha(plan), sha(design), sha(seitBytes)].join("\n"));
   const impl = (candidate_digest, extra = {}) => {
-    const contract = planningContract(candidate_digest ?? expectedManifest);
+    const contract = planningContract(candidate_digest ?? expectedManifest, { dir });
     writeFileSync(
       path.join(dir, "implementation.json"),
       JSON.stringify({
@@ -258,7 +258,7 @@ describe("plan-package (#153 complete manifest projection)", () => {
     ] } });
     writeFileSync(path.join(dir, "seit.json"), seit);
     const candidate_digest = sha([sha("# Stable source\n"), sha(seit)].join("\n"));
-    const contract = planningContract(candidate_digest);
+    const contract = planningContract(candidate_digest, { dir });
     doc.journey_settings = { planning_review: { candidate_digest }, ...contract.journey_settings };
     doc.boundary_contract ??= contract.boundary_contract;
     writeFileSync(path.join(dir, "implementation.json"), JSON.stringify(doc));

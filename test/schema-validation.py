@@ -533,7 +533,9 @@ def planning_contract_implementation(
     sessions = ["planning_and_design", "integration_engineer", "test_engineer"]
     doc["journey_settings"]["planning_wave"] = {
         "required_sessions": sessions,
-        "sessions": [{"session": name, "candidate_ref": "plan", "verdict": "READY"} for name in sessions],
+        "sessions": [{"session": name, "candidate_ref": "plan", "candidate_revision": SYN_REV, "candidate_digest": SYN_DIGEST, "verdict": "READY"} for name in sessions],
+        "closing_candidate": {"candidate_ref": "plan", "candidate_revision": SYN_REV, "candidate_digest": SYN_DIGEST},
+        "review_receipt": {"path": "gate-evidence/planning-review.json", "sha256": SYN_DIGEST},
         "reviews": 1,
         "repairs": 0,
         "closure": "deterministic_PASS",
@@ -1135,6 +1137,35 @@ def cases() -> list[tuple[str, str, str, object, str]]:
         ), "reject"),
         ("SEIT-EMV-021", "seit_proof_string_gate_seconds", "seit", complete_seit(
             proof_cases=[complete_proof(expected_gate_seconds="45")]
+        ), "reject"),
+        ("SEIT-EMV-021", "planning_repair_complete_seit_corpus", "seit", json.loads(
+            (ROOT / "test/fixtures/planning-repair-package.json").read_text()
+        )["seit"], "accept"),
+        ("SEIT-EMV-022", "planning_repair_complete_implementation_corpus", "implementation", json.loads(
+            (ROOT / "test/fixtures/planning-repair-package.json").read_text()
+        )["implementation"], "accept"),
+        # F1/F2 receipt identities are shaped here; real file/lineage rejection runs in Node.
+        ("SEIT-EMV-022", "planning_session_without_revision", "implementation", omit_nested(
+            planning_contract_implementation(), "journey_settings", "planning_wave", "sessions", "0", "candidate_revision"
+        ), "reject"),
+        ("SEIT-EMV-022", "planning_session_without_digest", "implementation", omit_nested(
+            planning_contract_implementation(), "journey_settings", "planning_wave", "sessions", "0", "candidate_digest"
+        ), "reject"),
+        ("SEIT-EMV-022", "planning_review_reference_bad_digest", "implementation", planning_contract_implementation(
+            wave={"review_receipt": {"path": "gate-evidence/review.json", "sha256": "bad"}}
+        ), "reject"),
+        ("SEIT-EMV-022", "planning_closing_candidate_incomplete", "implementation", planning_contract_implementation(
+            wave={"closing_candidate": {"candidate_ref": "plan"}}
+        ), "reject"),
+        ("SEIT-EMV-022", "planning_repair_lineage_complete", "implementation", planning_contract_implementation(
+            wave={"repairs": 1, "repair": {
+                "from_candidate": {"candidate_ref": "plan", "candidate_revision": "before", "candidate_digest": SYN_DIGEST},
+                "to_candidate": {"candidate_ref": "plan", "candidate_revision": "after", "candidate_digest": SYN_DIGEST},
+                "deterministic_gate": "PASS"
+            }}
+        ), "accept"),
+        ("SEIT-EMV-022", "planning_repair_lineage_missing_target", "implementation", planning_contract_implementation(
+            wave={"repair": {"from_candidate": {"candidate_ref": "plan", "candidate_revision": SYN_REV, "candidate_digest": SYN_DIGEST}, "deterministic_gate": "PASS"}}
         ), "reject"),
         # #157/#205/#155 future-planning contract: shape only; plan-package.cjs owns completeness.
         ("SEIT-EMV-022", "implementation_planning_contract_complete", "implementation", planning_contract_implementation(), "accept"),

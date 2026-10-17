@@ -2,6 +2,7 @@
 
 const fs = require("node:fs");
 const path = require("node:path");
+const crypto = require("node:crypto");
 
 const { PLANNING_REVIEW_POLICY: POLICY } = require("./policy.cjs");
 
@@ -35,12 +36,12 @@ const nonempty = (value) => typeof value === "string" && value.trim().length > 0
 
 /**
  * #205: the declared planning sessions of the one planning wave. Every
- * declared session must have returned for one candidate ref before the
+ * declared session must have returned for the candidate identity before the
  * single review opens; a session verdict (a Requirements Engineer failure
  * included) is review input, never a gate between sessions. Returns null when
  * complete, else a typed { outcome, reason }. Shared with plan-package.cjs.
  */
-function planningSessionsVerdict(wave, candidateRef) {
+function planningSessionsVerdict(wave, candidate, inputDigests) {
   if (!wave || typeof wave !== "object") {
     return { outcome: "NEEDS_MORE_EVIDENCE", reason: "planning_sessions_incomplete" };
   }
@@ -59,15 +60,23 @@ function planningSessionsVerdict(wave, candidateRef) {
   if (new Set(names).size !== names.length || names.some((name) => !declared.includes(name))) {
     return { outcome: "OWNER_AMENDMENT_REQUIRED", reason: "planning_sessions_invalid" };
   }
-  const refs = new Set(sessions.map((session) => session?.candidate_ref));
+  // An adoption preserves the source return; its consumed inputs must resolve
+  // unchanged in the snapshot bound to the target candidate's manifest digest.
+  const snapshotBound = Array.isArray(inputDigests) && inputDigests.length > 0 &&
+    inputDigests.every((row) => nonempty(row?.path) && /^[0-9a-f]{64}$/.test(row?.sha256)) &&
+    new Set(inputDigests.map((row) => row.path)).size === inputDigests.length &&
+    crypto.createHash("sha256").update(inputDigests.map((row) => row.sha256).join("\n")).digest("hex") === candidate?.candidate_digest;
+  const adopted = (session) => snapshotBound && sameCandidate(session, session) &&
+    sameCandidate(session.adopted_to, candidate) && Array.isArray(session.inputs) &&
+    session.inputs.length > 0 && session.inputs.every((input) =>
+      inputDigests.some((row) => row.path === input?.path && row.sha256 === input?.sha256));
   const returned = declared.every((name) => {
     const session = sessions.find((item) => item?.session === name);
     return (
       session &&
       nonempty(session.verdict) &&
       !POLICY.planning_session_pending_verdicts.includes(session.verdict) &&
-      nonempty(session.candidate_ref) &&
-      (candidateRef === undefined ? refs.size === 1 : session.candidate_ref === candidateRef)
+      (sameCandidate(session, candidate) || adopted(session))
     );
   });
   return returned ? null : { outcome: "NEEDS_MORE_EVIDENCE", reason: "planning_sessions_incomplete" };
@@ -91,7 +100,7 @@ function evaluatePlanningReview(input) {
     return { outcome: "NEEDS_MORE_EVIDENCE", reason: "missing_requirement_register" };
   }
   // #205: the review never opens while a declared planning session is out.
-  const sessions = planningSessionsVerdict(input.planning_wave, input.candidate?.candidate_ref ?? null);
+  const sessions = planningSessionsVerdict(input.planning_wave, input.candidate, input.input_digests);
   if (sessions) return sessions;
   const slots = Array.isArray(input.reviewer_slots) ? input.reviewer_slots : [];
   const ids = slots.map((slot) => slot?.slot_id);
@@ -165,4 +174,4 @@ function evaluatePlanningReview(input) {
   return { outcome: "PASS", reason: repairs ? "repair_gate_passed" : "review_aggregated" };
 }
 
-module.exports = { POLICY, evaluatePlanningReview, planningSessionsVerdict };
+module.exports = { POLICY, evaluatePlanningReview, planningSessionsVerdict, sameCandidate };

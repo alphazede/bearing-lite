@@ -42,19 +42,21 @@ function planPackage(mutate = () => {}) {
   const plan = "# Plan\n";
   writeFileSync(path.join(dir, "plan.md"), plan);
   const seit = JSON.stringify({
+    ...JSON.parse(read("test/fixtures/planning-repair-package.json")).seit,
     source_baseline: { planning_inputs: [{ path: "plan.md", sha256: sha(plan) }] },
-    procedures_and_commands: [],
-    proof_cases: [{ id: "SEIT-FLOW-1" }, { id: "SEIT-STATE-1" }, { id: "SEIT-TRUST-1" }],
+    proof_cases: ["SEIT-FLOW-1", "SEIT-STATE-1", "SEIT-TRUST-1"].map((id) => ({
+      ...JSON.parse(read("test/fixtures/planning-repair-package.json")).seit.proof_cases[0], id,
+    })),
   });
   writeFileSync(path.join(dir, "seit.json"), seit);
   const digest = sha([sha(plan), sha(seit)].join("\n"));
-  const contract = planningContract(digest, { units: ["W1", "W2"], kind: "wave" });
+  const contract = planningContract(digest, { units: ["W1", "W2"], kind: "wave", dir });
   const doc = {
     journey_settings: { planning_review: { candidate_digest: digest }, ...contract.journey_settings },
     boundary_contract: contract.boundary_contract,
     waves: [{ id: "W1" }, { id: "W2" }],
   };
-  mutate(doc, digest);
+  mutate(doc, digest, dir);
   writeFileSync(path.join(dir, "implementation.json"), JSON.stringify(doc));
   return { dir, digest };
 }
@@ -122,7 +124,7 @@ describe("#205 one planning wave, one consolidated review", () => {
     candidate,
     plan_dir: MANIFEST,
     dod_manifest: { output_name: "plan-dod-manifest.html" },
-    planning_wave: planningSessions("plan", ["planning_and_design", "requirements_engineer", "integration_engineer", "test_engineer"]),
+    planning_wave: planningSessions(candidate, ["planning_and_design", "requirements_engineer", "integration_engineer", "test_engineer"]),
     reviewer_slots: [{ slot_id: "slot-a", primary_route_ref: "route-a", fallback_route_refs: [] }],
     round_number: 1,
     completed_rounds: 1,
@@ -161,7 +163,7 @@ describe("#205 one planning wave, one consolidated review", () => {
     assert.match(viaTransition.reason, /planning_sessions_incomplete/);
   });
   it("rejects an unknown, duplicate, or incomplete session declaration", () => {
-    const declared = (names) => ({ ...planningSessions("plan", names) });
+    const declared = (names) => ({ ...planningSessions(candidate, names) });
     for (const planning_wave of [
       declared(["planning_and_design", "integration_engineer", "test_engineer", "scribe"]),
       declared(["planning_and_design", "integration_engineer"]),
@@ -214,8 +216,8 @@ describe("#205 one planning wave, one consolidated review", () => {
     });
   }
   it("final freeze accepts one review with one repair bound to the repaired candidate", () => {
-    const { dir } = planPackage((doc, digest) => {
-      doc.journey_settings.planning_wave = planningWave(digest, { repairs: 1 });
+    const { dir } = planPackage((doc, digest, dir) => {
+      doc.journey_settings.planning_wave = planningWave(digest, { repairs: 1 }, dir);
     });
     assert.deepEqual(freeze(dir).findings, []);
   });
