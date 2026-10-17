@@ -3,6 +3,7 @@
  * Skill-text contract plus a local evaluator (no hook): frozen receipt
  * before mutation, lineage/write-set limits, no self-certification,
  * one-repair budget, dispatch fallback.
+ * #201 parent-admitted late findings inside the same open repair round.
  */
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
@@ -85,7 +86,12 @@ function evaluateRepairTransition(ev) {
     if (ev.preserve_session !== true) {
       return deny("dispatch_fallback");
     }
-    if ((ev.repairs_used || 0) >= 1) {
+    const late = ev.addendum ? lateFindingCheck(ev, receipt) : null;
+    if (late) {
+      return late;
+    }
+    // An admitted addendum continues the open round; it is not a new repair.
+    if (!ev.addendum && (ev.repairs_used || 0) >= 1) {
       return deny("one_repair_limit");
     }
     const lineage = receipt.lineage;
@@ -103,7 +109,7 @@ function evaluateRepairTransition(ev) {
     if (writes.some((p) => !allowed.has(p))) {
       return deny("write_set_exceeded");
     }
-    const frozen = new Set(receipt.finding_ids);
+    const frozen = new Set([...receipt.finding_ids, ...admittedIds(ev)]);
     const findings = ev.findings || [];
     if (findings.some((id) => !frozen.has(id))) {
       return deny("finding_outside_receipt");
@@ -119,12 +125,67 @@ function evaluateRepairTransition(ev) {
     if (ev.failed || ev.scope_expansion || ev.new_design_issue) {
       return deny("owner_authority");
     }
-    const frozen = new Set((receipt && receipt.finding_ids) || []);
+    const frozen = new Set([...((receipt && receipt.finding_ids) || []), ...admittedIds(ev)]);
     if ((ev.new_defects || []).some((id) => !frozen.has(id))) {
       return deny("owner_authority");
     }
+    if ((ev.unfixed_accepted || []).length > 0) {
+      return deny("accepted_fixable_finding_remaining");
+    }
   }
   return { ok: true, code: "allow" };
+}
+
+const MAX_CORRECTIONS = 3;
+
+function admittedIds(ev) {
+  const a = ev.addendum;
+  return a && a.parent_admitted === true && a.reproduced === true ? a.finding_ids : [];
+}
+
+/**
+ * #201 local model: a late finding joins the SAME open repair round only as a
+ * frozen addendum the parent admitted. Not a hook; no runtime claim.
+ */
+function lateFindingCheck(ev, receipt) {
+  const a = ev.addendum;
+  const round = ev.round;
+  if (ev.second_review || ev.budget_reset) {
+    return deny("no_second_review_or_reset");
+  }
+  if (!round || round.open !== true) {
+    return deny("repair_round_closed");
+  }
+  if (ev.original_receipt_digest !== receipt.candidate_digest || a.edits_original_receipt) {
+    return deny("original_receipt_immutable");
+  }
+  if (a.frozen !== true) {
+    return deny("addendum_not_frozen");
+  }
+  if (a.reproduced !== true) {
+    return deny("addendum_reproduction_required");
+  }
+  if (a.parent_admitted !== true) {
+    return deny("parent_admission_required");
+  }
+  const allowed = new Set(receipt.write_set);
+  if ((a.paths || []).some((p) => !allowed.has(p))) {
+    return deny("addendum_out_of_scope");
+  }
+  if (a.contract_changed || a.protected_action) {
+    return deny("contract_or_protected_change");
+  }
+  if (ev.session !== round.session) {
+    return deny("session_mismatch");
+  }
+  const allowance = round.correction_allowance;
+  if (!allowance || typeof allowance.limit !== "number" || typeof allowance.used !== "number") {
+    return deny("correction_allowance_missing");
+  }
+  if (allowance.used >= Math.min(MAX_CORRECTIONS, allowance.limit)) {
+    return deny("correction_allowance_exhausted");
+  }
+  return null;
 }
 
 const allowedRepair = {
@@ -279,5 +340,109 @@ describe("#116 Reviewer to Repair Implementer transition", () => {
       }).code,
       "owner_authority"
     );
+  });
+
+  describe("#201 parent-admitted late findings in the same open repair", () => {
+    const openRound = {
+      open: true,
+      session: "rev-s1",
+      correction_allowance: { limit: 3, used: 1 },
+    };
+    const addendum = {
+      finding_ids: ["F2"],
+      frozen: true,
+      reproduced: true,
+      parent_admitted: true,
+      paths: ["src/a.js"],
+    };
+    const late = {
+      ...allowedRepair,
+      repairs_used: 1,
+      round: openRound,
+      session: "rev-s1",
+      original_receipt_digest: "d1",
+      addendum,
+      findings: ["F1", "F2"],
+    };
+    const code = (ev) => evaluateRepairTransition(ev).code;
+
+    it("skill text: open round, frozen addendum, parent admission and allowance", () => {
+      assert.match(REVIEWER, /repair round open through final\s+deterministic verification/i);
+      assert.match(REVIEWER, /freeze an addendum/i);
+      assert.match(REVIEWER, /do not silently edit the receipt/i);
+      assert.match(REVIEWER, /same round only after reproducing/i);
+      assert.match(REVIEWER, /approved paths/i);
+      assert.match(REVIEWER, /unchanged contract and protected boundaries/i);
+      assert.match(REVIEWER, /remaining\s+recorded correction allowance/i);
+      assert.match(REVIEWER, /at most three/i);
+      assert.match(REVIEWER, /stricter existing limit/i);
+      assert.match(REVIEWER, /age alone does not justify/i);
+      assert.match(REVIEWER, /same reviewer session repairs only accepted finding IDs/i);
+      assert.match(REVIEWER, /red\/green regression evidence/i);
+      assert.match(REVIEWER, /No second review/);
+      assert.match(REVIEWER, /no accepted\s+fixable finding remains/i);
+      assert.match(REVIEWER, /exhausted allowance/i);
+      assert.match(REVIEWER, /reopen a closed round/i);
+      assert.match(REVIEWER, /Never reset\s+budgets/i);
+    });
+
+    it("valid parent-admitted addendum continues the open round", () => {
+      assert.equal(code(late), "allow");
+      assert.equal(code({ ...late, findings: ["F2"] }), "allow");
+    });
+
+    it("original accepted finding stays compatible; new repair still limited", () => {
+      assert.equal(code(allowedRepair), "allow");
+      assert.equal(code({ ...allowedRepair, repairs_used: 1 }), "one_repair_limit");
+      assert.equal(
+        code({ ...allowedRepair, findings: ["F1", "F2"] }),
+        "finding_outside_receipt"
+      );
+    });
+
+    it("missing reproduction, freeze or parent admission is denied", () => {
+      assert.equal(code({ ...late, addendum: { ...addendum, reproduced: false } }), "addendum_reproduction_required");
+      assert.equal(code({ ...late, addendum: { ...addendum, frozen: false } }), "addendum_not_frozen");
+      assert.equal(code({ ...late, addendum: { ...addendum, parent_admitted: false } }), "parent_admission_required");
+    });
+
+    it("out-of-scope paths, contract change or protected action are denied", () => {
+      assert.equal(code({ ...late, addendum: { ...addendum, paths: ["src/b.js"] } }), "addendum_out_of_scope");
+      assert.equal(code({ ...late, addendum: { ...addendum, contract_changed: true } }), "contract_or_protected_change");
+      assert.equal(code({ ...late, addendum: { ...addendum, protected_action: true } }), "contract_or_protected_change");
+    });
+
+    it("missing or exhausted allowance is not granted; cap is three or stricter", () => {
+      assert.equal(code({ ...late, round: { ...openRound, correction_allowance: undefined } }), "correction_allowance_missing");
+      assert.equal(code({ ...late, round: { ...openRound, correction_allowance: { used: 0 } } }), "correction_allowance_missing");
+      assert.equal(code({ ...late, round: { ...openRound, correction_allowance: { limit: 3, used: 3 } } }), "correction_allowance_exhausted");
+      assert.equal(code({ ...late, round: { ...openRound, correction_allowance: { limit: 9, used: 3 } } }), "correction_allowance_exhausted");
+      assert.equal(code({ ...late, round: { ...openRound, correction_allowance: { limit: 1, used: 1 } } }), "correction_allowance_exhausted");
+    });
+
+    it("closed round, second review, budget reset, other session or lineage are denied", () => {
+      assert.equal(code({ ...late, round: { ...openRound, open: false } }), "repair_round_closed");
+      assert.equal(code({ ...late, round: undefined }), "repair_round_closed");
+      assert.equal(code({ ...late, second_review: true }), "no_second_review_or_reset");
+      assert.equal(code({ ...late, budget_reset: true }), "no_second_review_or_reset");
+      assert.equal(code({ ...late, session: "rev-s2" }), "session_mismatch");
+      assert.equal(
+        code({ ...late, lineage: { worktree: "wt", branch: "main", generation: 2 } }),
+        "lineage_mismatch"
+      );
+    });
+
+    it("original receipt is immutable", () => {
+      assert.equal(code({ ...late, original_receipt_digest: "d0" }), "original_receipt_immutable");
+      assert.equal(code({ ...late, addendum: { ...addendum, edits_original_receipt: true } }), "original_receipt_immutable");
+    });
+
+    it("close: deterministic only; age is no exemption for an accepted fixable finding", () => {
+      const close = { ...late, mutate: false, close: true, close_by: "deterministic_PASS" };
+      assert.equal(code({ ...close, new_defects: ["F2"] }), "allow");
+      assert.equal(code({ ...close, unfixed_accepted: ["F2"], left_open_reason: "baseline_age" }), "accepted_fixable_finding_remaining");
+      assert.equal(code({ ...close, close_by: "self_review" }), "no_self_certification");
+      assert.equal(code({ ...close, new_defects: ["F3"] }), "owner_authority");
+    });
   });
 });
