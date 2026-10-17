@@ -9,7 +9,7 @@ import { after, describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
@@ -69,6 +69,120 @@ const denied = (out, pattern) => {
   assert.equal(out.verdict, "DENY_DISPATCH", JSON.stringify(out));
   if (pattern) assert.match(out.reason, pattern);
 };
+
+function cliVerdict(root, envelope, role = "reviewer", host = "claude-code") {
+  const env = { ...process.env };
+  if (role === null) delete env.BEARING_ROLE;
+  else env.BEARING_ROLE = role;
+  const run = spawnSync(process.execPath, [HOOK, `--host=${host}`], {
+    cwd: root, env, input: JSON.stringify(envelope), encoding: "utf8", timeout: 10_000,
+  });
+  assert.equal(run.status, 0, run.stderr);
+  return JSON.parse(run.stderr).hookSpecificOutput;
+}
+
+// I206-R1..R4: frozen review proofs exercise real disk paths and native envelopes.
+// Resource group: none; each case owns its temporary checkout and files.
+describe("#206 accepted review finding regressions", () => {
+  for (const alias of ["unlisted artifact", "parent record", "outside ancestor"]) {
+    it(`I206-R1 refuses a listed repair through a symlink to ${alias}`, () => {
+      const root = checkout();
+      let target;
+      if (alias === "outside ancestor") {
+        const outside = mkdtempSync(path.join(os.tmpdir(), "repair-outside-"));
+        temps.push(outside);
+        target = path.join(outside, "design.md");
+        writeFileSync(target, "outside original");
+        rmSync(path.join(root, PLAN), { recursive: true });
+        symlinkSync(outside, path.join(root, PLAN), "dir");
+      } else {
+        target = path.join(root, alias === "parent record" ? ".bearing-round.lock" : UNLISTED);
+        if (alias === "unlisted artifact") writeFileSync(target, "unlisted original");
+        symlinkSync(target, path.join(root, LISTED[0]));
+      }
+      const original = readFileSync(target, "utf8");
+      denied(verdict(claudeEdit(root, LISTED[0])));
+      denied(verdict(codexPatch(root, LISTED[0]), "reviewer", "codex"));
+      denied(cliVerdict(root, claudeEdit(root, LISTED[0])));
+      assert.equal(readFileSync(target, "utf8"), original);
+    });
+  }
+
+  it("I206-R1 prevents the exact Bash write from changing an unlisted symlink target", () => {
+    const root = checkout();
+    writeFileSync(path.join(root, UNLISTED), "unlisted original");
+    symlinkSync(path.join(root, UNLISTED), path.join(root, LISTED[0]));
+    const command = `printf modified > ${LISTED[0]}`;
+    const out = cliVerdict(root, claudeEdit(root, LISTED[0], { tool_name: "Bash", tool_input: { command } }));
+    if (out.verdict === "ALLOW") {
+      assert.equal(spawnSync("sh", ["-c", command], { cwd: root, timeout: 10_000 }).status, 0);
+    }
+    assert.equal(readFileSync(path.join(root, UNLISTED), "utf8"), "unlisted original");
+    denied(out);
+  });
+
+  it("I206-R1 checks raw ancestors before normalizing symlink traversal", () => {
+    const root = checkout();
+    const outside = mkdtempSync(path.join(os.tmpdir(), "repair-traversal-"));
+    temps.push(outside);
+    mkdirSync(path.join(outside, "nested"));
+    mkdirSync(path.join(outside, PLAN), { recursive: true });
+    writeFileSync(path.join(outside, LISTED[0]), "outside original");
+    symlinkSync(path.join(outside, "nested"), path.join(root, "alias"), "dir");
+    const raw = `${root}/alias/../${LISTED[0]}`;
+    const edit = claudeEdit(root, LISTED[0]);
+    edit.tool_input.file_path = raw;
+    denied(verdict(edit));
+    denied(verdict(codexPatch(root, raw), "reviewer", "codex"));
+    denied(cliVerdict(root, claudeEdit(root, LISTED[0], {
+      tool_name: "Bash", tool_input: { command: `printf modified > ${raw}` },
+    })));
+    assert.equal(readFileSync(path.join(outside, LISTED[0]), "utf8"), "outside original");
+  });
+
+  it("I206-R2 denies roleless children the parent record while preserving legitimate parents", () => {
+    const root = checkout();
+    const input = claudeEdit(root, ".bearing-round.lock");
+    for (const role of [null, "orchestrator", "coordinator"]) {
+      assert.equal(cliVerdict(root, input, role).verdict, "ALLOW");
+    }
+    denied(cliVerdict(root, { ...input, agent_id: "unassigned-child" }, null), /only the parent controller/);
+  });
+
+  it("I206-R3 refuses a shell move of the record source while allowing copies and reads", () => {
+    const root = checkout();
+    const input = (command) => claudeEdit(root, ".bearing-round.lock", { tool_name: "Bash", tool_input: { command } });
+    for (const command of ["cp .bearing-round.lock copied-record.json", "cat .bearing-round.lock"]) {
+      assert.equal(cliVerdict(root, input(command)).verdict, "ALLOW", command);
+    }
+    const command = "mv .bearing-round.lock moved-record.json";
+    const out = cliVerdict(root, input(command));
+    if (out.verdict === "ALLOW") {
+      assert.equal(spawnSync("sh", ["-c", command], { cwd: root, timeout: 10_000 }).status, 0);
+    }
+    assert.equal(existsSync(path.join(root, ".bearing-round.lock")), true, "parent record must remain in place");
+    denied(out, /only the parent controller/);
+  });
+
+  it("I206-R4 accepts a native Cursor conversation_id for the same reviewer", () => {
+    const root = checkout();
+    const input = {
+      conversation_id: REVIEWER, generation_id: "cursor-generation", hook_event_name: "preToolUse",
+      workspace_roots: [root], cwd: root, tool_name: "Shell", tool_use_id: "repair-write",
+      tool_input: { command: `printf repaired > ${LISTED[0]}`, working_directory: root },
+    };
+    assert.equal(cliVerdict(root, input, "reviewer", "cursor").verdict, "ALLOW");
+    denied(cliVerdict(root, { ...input, conversation_id: "other-conversation" }, "reviewer", "cursor"), /reviewer_context_mismatch/);
+  });
+
+  it("I206-R4 keeps agent_id ahead of the Cursor conversation identity", () => {
+    const root = checkout();
+    const input = { ...claudeEdit(root, LISTED[0]), conversation_id: REVIEWER, agent_id: "other-agent", assigned_role: "reviewer" };
+    delete input.session_id;
+    denied(cliVerdict(root, input, "orchestrator", "cursor"), /reviewer_context_mismatch/);
+    assert.equal(cliVerdict(root, { ...input, agent_id: REVIEWER, conversation_id: "other-conversation" }, "orchestrator", "cursor").verdict, "ALLOW");
+  });
+});
 
 describe("#206 accepted repair transition opens only the frozen write set", () => {
   it("allows every listed planning artifact through handle() on Claude Code and Codex envelopes", () => {
