@@ -6,14 +6,15 @@
 
 ### Changed
 
-- Ended native-client support for Qwen Code, Kimi Code, and Grok Build. Retained metadata is legacy-only and excluded from release qualification.
-- Assigned early interface, data-flow, protocol, trust-boundary and recovery analysis to the Planning Integration Engineer, with resolving SEIT proof cases in existing artifacts. [#155](https://github.com/alphazede/bearing-lite/issues/155)
+- Ended native-client support for Qwen Code, Kimi Code, and Grok Build. Retained metadata is legacy-only and excluded from release qualification ([PR #207](https://github.com/alphazede/bearing-lite/pull/207)).
+- Assigned early interface, data-flow, protocol, trust-boundary and recovery analysis to the Planning Integration Engineer, with resolving SEIT proof cases in existing artifacts. [#155](https://github.com/alphazede/bearing-lite/issues/155) ([PR #207](https://github.com/alphazede/bearing-lite/pull/207)).
 
 ### Fixed
 
-- Removed blocking Requirements Engineer gates from future planning: all planning sessions feed one consolidated review, one repair and deterministic closure, with valid unchanged-input evidence reused. [#205](https://github.com/alphazede/bearing-lite/issues/205)
-- Limited planning to one evidence-changing correction round while preserving mechanical exact-text closure. [#204](https://github.com/alphazede/bearing-lite/issues/204)
-- Enforced a single review-round declaration per planning, wave or phase unit in the package freeze, runtime budget and DoD Manifest. Final freeze requires resolving review evidence and preserves the reviewed-to-repaired candidate lineage. [#157](https://github.com/alphazede/bearing-lite/issues/157)
+- Removed blocking Requirements Engineer gates from future planning: all planning sessions feed one consolidated review, one repair and deterministic closure, with valid unchanged-input evidence reused. [#205](https://github.com/alphazede/bearing-lite/issues/205) ([PR #207](https://github.com/alphazede/bearing-lite/pull/207)).
+- Limited planning to one evidence-changing correction round while preserving mechanical exact-text closure. [#204](https://github.com/alphazede/bearing-lite/issues/204) ([PR #207](https://github.com/alphazede/bearing-lite/pull/207)).
+- Enforced a single review-round declaration per planning, wave or phase unit in the package freeze, runtime budget and DoD Manifest. Final freeze requires resolving review evidence and preserves the reviewed-to-repaired candidate lineage. [#157](https://github.com/alphazede/bearing-lite/issues/157) ([PR #207](https://github.com/alphazede/bearing-lite/pull/207)).
+
 
 ## [1.1.9](https://github.com/alphazede/bearing-lite/releases/tag/v1.1.9) - 2026-10-17
 
