@@ -36,7 +36,7 @@ Intake handles input and repository selection.
 
 Return `FIT_PROPOSED`, `FIT_CONFIRMED`, `FIT_UNAVAILABLE`, `FIT_MALFORMED`, or
 `FIT_UNDECIDABLE` with root, plan directory, evidence, blocker, and next action.
-Retry only from new evidence, at most three attempts.
+Retry only from new evidence.
 
 Never write files, walk unapproved parents, rank endless alternatives, or
 advance the Lifecycle itself.

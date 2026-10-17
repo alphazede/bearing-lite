@@ -25,7 +25,7 @@ The project's human-readable plan is the only task-state record. Diagrams explai
 - `WAITING_ON` → `READY` when the prerequisite is repaired or replaced; → `EVIDENCE_READY` when fresh assurance becomes available; → `CANCELLED` on owner scope reduction.
 - `READY` → `IN_PROGRESS` when the assigned role starts; → `OWNER_DECISION_REQUIRED` on authority or integrity guard.
 - `IN_PROGRESS` → `EVIDENCE_READY` with candidate and handoff; → `CORRECTION_REQUIRED` on correctable failure; → `OWNER_DECISION_REQUIRED` on security, authority, or integrity guard.
-- `CORRECTION_REQUIRED` → `READY` on attempt 1 or 2 with a new hypothesis and evidence; → `OWNER_DECISION_REQUIRED` on the third failed correction or out-of-contract amendment.
+- `CORRECTION_REQUIRED` → `READY` with a new hypothesis and evidence; → `OWNER_DECISION_REQUIRED` on an out-of-contract amendment.
 - `EVIDENCE_READY` → `VALIDATING` | `REVIEWING` | `ACCEPTANCE` for the next missing required role; → `WAITING_ON` if assurance dispatch is unavailable.
 - During the single assurance round, an accepted Assurance Test Engineer or Reviewer handoff returns to `EVIDENCE_READY` to select the next missing assurance role in declared order.
 - `VALIDATING` → `CORRECTION_REQUIRED` when more evidence or repair is needed; otherwise back through `EVIDENCE_READY` for remaining assurance.
@@ -39,7 +39,7 @@ The project's human-readable plan is the only task-state record. Diagrams explai
 - Orchestrator alone writes cross-wave dependencies and Lifecycle-wide sequencing. Direct packets never dispatch Coordinator. `roles.coordinator.enabled` means the route is available, not that every packet gets a Coordinator. A wave that needs Coordinator while the route is omitted or disabled is a typed capability gap, not silent Orchestrator substitution.
 - Workers and assurance roles return handoffs; they do not race plan edits.
 - Candidate authors never provide their own Assurance Test Engineer, Reviewer, or Integration Engineer execution verdict. Implementer must not self-certify.
-- Waiting on a prerequisite consumes no correction attempt. Each task has its own three-attempt correction counter; identical retries without new evidence are invalid.
+- Waiting on a prerequisite consumes no correction attempt. Each task keeps its own correction counter as a record, not a limit; identical retries without new evidence are invalid.
 - Each declared phase or wave receives at most one assurance round and one review-directed repair. Replacement candidates do not reset the count within that declared unit; the next distinct declared phase or wave carries its own 1/1 budget. The parent controller records `assurance_rounds`, routes bounded repair, and verifies that repair deterministically without dispatching assurance again.
 - `COMPLETE` is terminal for Bearing assurance. An already authorized deployment keeps operational verification and rollback readiness but does not reopen review; candidate-changing deployment work requires separate scope.
 

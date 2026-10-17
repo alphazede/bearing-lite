@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Removed hard-coded attempt and correction caps ("at most three attempts", `MAX_CORRECTIONS = 3`, "third failed correction") from role skills, task-state references and contract-test models; a recorded correction allowance is now the only cap. Refs [#211](https://github.com/alphazede/bearing-lite/issues/211).
+
 ## [1.1.11](https://github.com/alphazede/bearing-lite/releases/tag/v1.1.11) - 2026-10-17
 
 ### Changed

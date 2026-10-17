@@ -143,7 +143,6 @@ function evaluateRepairTransition(ev) {
   return { ok: true, code: "allow" };
 }
 
-const MAX_CORRECTIONS = 3;
 
 function admittedIds(ev) {
   const a = ev.addendum;
@@ -190,7 +189,7 @@ function lateFindingCheck(ev, receipt, { closing = false } = {}) {
     return deny("correction_allowance_missing");
   }
   // Exhaustion stops a new correction, not closure after the last one.
-  if (!closing && allowance.used >= Math.min(MAX_CORRECTIONS, allowance.limit)) {
+  if (!closing && allowance.used >= allowance.limit) {
     return deny("correction_allowance_exhausted");
   }
   return null;
@@ -382,8 +381,7 @@ describe("#116 Reviewer to Repair Implementer transition", () => {
       assert.match(REVIEWER, /approved paths/i);
       assert.match(REVIEWER, /unchanged contract and protected boundaries/i);
       assert.match(REVIEWER, /remaining\s+recorded correction allowance/i);
-      assert.match(REVIEWER, /at most three/i);
-      assert.match(REVIEWER, /stricter existing limit/i);
+      assert.doesNotMatch(REVIEWER, /at most three/i);
       assert.match(REVIEWER, /age alone does not justify/i);
       assert.match(REVIEWER, /same reviewer session repairs only accepted finding IDs/i);
       assert.match(REVIEWER, /red\/green regression evidence/i);
@@ -420,11 +418,11 @@ describe("#116 Reviewer to Repair Implementer transition", () => {
       assert.equal(code({ ...late, addendum: { ...addendum, protected_action: true } }), "contract_or_protected_change");
     });
 
-    it("missing or exhausted allowance is not granted; cap is three or stricter", () => {
+    it("missing or exhausted allowance is not granted; the recorded limit is the only cap", () => {
       assert.equal(code({ ...late, round: { ...openRound, correction_allowance: undefined } }), "correction_allowance_missing");
       assert.equal(code({ ...late, round: { ...openRound, correction_allowance: { used: 0 } } }), "correction_allowance_missing");
       assert.equal(code({ ...late, round: { ...openRound, correction_allowance: { limit: 3, used: 3 } } }), "correction_allowance_exhausted");
-      assert.equal(code({ ...late, round: { ...openRound, correction_allowance: { limit: 9, used: 3 } } }), "correction_allowance_exhausted");
+      assert.notEqual(code({ ...late, round: { ...openRound, correction_allowance: { limit: 9, used: 3 } } }), "correction_allowance_exhausted");
       assert.equal(code({ ...late, round: { ...openRound, correction_allowance: { limit: 1, used: 1 } } }), "correction_allowance_exhausted");
     });
 

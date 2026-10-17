@@ -47,7 +47,7 @@ The Orchestrator announces `Aligning architecture in <repo>.`
 
 Return `WORKSPACE_READY`, `WORKSPACE_RESUMED`, `NEEDS_EVIDENCE`, or `BLOCKED`
 with paths, map freshness, evidence, blocker, and next planning stage. Retry only
-from corrected evidence, at most three attempts.
+from corrected evidence.
 
 Never ask planning questions, write risk choices, design, implement, create
 hidden runtime state, or delete plan content.
