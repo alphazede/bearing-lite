@@ -70,5 +70,6 @@ Systems Modeler contextual pass (current flow, candidate placements with
 Planning and Design allocates against that placement receipt (see
 `../../planning-and-design/references/allocation-inputs.md`); an unavailable
 Systems Modeler is a typed capability gap, never silent allocation.
-Relationship mappings are still finalized only after the Requirements
-Engineer passes.
+Relationship mappings consume the draft register and Requirements Engineer
+findings in the planning wave. No mapping waits on a Requirements Engineer
+PASS; corrections join the one consolidated review and aggregated repair.

@@ -26,6 +26,47 @@
       "type": "array",
       "items": { "type": "string" }
     },
+    "planningCandidate": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "candidate_ref",
+        "candidate_revision",
+        "candidate_digest"
+      ],
+      "properties": {
+        "candidate_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "candidate_revision": {
+          "type": "string",
+          "minLength": 1
+        },
+        "candidate_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "planningInputDigest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
     "slice": {
       "type": "object",
       "additionalProperties": true,
@@ -347,8 +388,10 @@
         "planning_wave": {
           "type": "object",
           "additionalProperties": true,
-          "description": "#205: the one planning wave. required_sessions before review; the completed receipt (sessions, reviews, repairs, closure, closing candidate_digest) before the final freeze and implementation dispatch.",
-          "required": ["required_sessions"],
+          "description": "The planning wave: declared sessions before review; original digest-pinned planning-review input record plus preserved sessions, closing identity and optional one-repair lineage at final freeze. No second review.",
+          "required": [
+            "required_sessions"
+          ],
           "properties": {
             "required_sessions": {
               "type": "array",
@@ -356,7 +399,13 @@
               "minItems": 3,
               "items": {
                 "type": "string",
-                "enum": ["planning_and_design", "requirements_engineer", "systems_modeler", "integration_engineer", "test_engineer"]
+                "enum": [
+                  "planning_and_design",
+                  "requirements_engineer",
+                  "systems_modeler",
+                  "integration_engineer",
+                  "test_engineer"
+                ]
               }
             },
             "sessions": {
@@ -364,18 +413,89 @@
               "items": {
                 "type": "object",
                 "additionalProperties": true,
-                "required": ["session", "candidate_ref", "verdict"],
+                "required": [
+                  "session",
+                  "candidate_ref",
+                  "candidate_revision",
+                  "candidate_digest",
+                  "verdict"
+                ],
                 "properties": {
-                  "session": { "type": "string", "minLength": 1 },
-                  "candidate_ref": { "type": "string", "minLength": 1 },
-                  "verdict": { "type": "string", "minLength": 1 }
+                  "session": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "candidate_ref": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "verdict": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "candidate_revision": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "candidate_digest": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "inputs": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "$ref": "#/$defs/planningInputDigest"
+                    }
+                  },
+                  "adopted_to": {
+                    "$ref": "#/$defs/planningCandidate"
+                  }
                 }
               }
             },
-            "reviews": { "const": 1 },
-            "repairs": { "type": "integer", "minimum": 0, "maximum": 1 },
-            "closure": { "const": "deterministic_PASS" },
-            "candidate_digest": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+            "reviews": {
+              "const": 1
+            },
+            "repairs": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "closure": {
+              "const": "deterministic_PASS"
+            },
+            "candidate_digest": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "review_receipt": {
+              "$ref": "#/$defs/planningInputDigest",
+              "description": "Plan-directory-relative path and SHA-256 of the immutable completed planning-review input JSON, including independent Reviewer returns."
+            },
+            "closing_candidate": {
+              "$ref": "#/$defs/planningCandidate"
+            },
+            "repair": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "from_candidate",
+                "to_candidate",
+                "deterministic_gate"
+              ],
+              "properties": {
+                "from_candidate": {
+                  "$ref": "#/$defs/planningCandidate"
+                },
+                "to_candidate": {
+                  "$ref": "#/$defs/planningCandidate"
+                },
+                "deterministic_gate": {
+                  "const": "PASS"
+                }
+              }
+            }
           }
         }
       }
