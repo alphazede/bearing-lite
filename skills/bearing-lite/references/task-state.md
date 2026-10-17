@@ -41,6 +41,7 @@ The project's human-readable plan is the only task-state record. Diagrams explai
 - Candidate authors never provide their own Assurance Test Engineer, Reviewer, or Integration Engineer execution verdict. Implementer must not self-certify.
 - Waiting on a prerequisite consumes no correction attempt. Each task has its own three-attempt correction counter; identical retries without new evidence are invalid.
 - Each declared phase or wave receives at most one assurance round and one review-directed repair. Replacement candidates do not reset the count within that declared unit; the next distinct declared phase or wave carries its own 1/1 budget. The parent controller records `assurance_rounds`, routes bounded repair, and verifies that repair deterministically without dispatching assurance again.
+- Before dispatching assurance, the parent controller records the round's `candidate`, `assurance_unit`, and `assurance_slots` in `.bearing-round.lock` and keeps `.bearing-assurance.json`; where `hooks/assurance-dispatch.cjs` is registered it reserves each launch there before the provider starts (`assurance-policy.md`, Pre-dispatch barrier). The task block `assurance_rounds` mirrors that ledger's `units[]`.
 - `COMPLETE` is terminal for Bearing assurance. An already authorized deployment keeps operational verification and rollback readiness but does not reopen review; candidate-changing deployment work requires separate scope.
 
 ## Checkout lease

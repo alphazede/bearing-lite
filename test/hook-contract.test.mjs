@@ -67,6 +67,7 @@ const EVALUATOR_MODULES = new Set([
   "write-set-check.cjs", // #118 write-set hygiene; CLI evaluator, no HOOK_CLASS
   "correction-delta.cjs", // #162 correction delta scope check; no HOOK_CLASS
   "scribe-coverage.cjs", // #194 Scribe coverage; consumed by closeout, no HOOK_CLASS
+  "assurance-dispatch.cjs", // #209 pre-launch assurance budget barrier over assurance-budget; no HOOK_CLASS
 ]);
 /** Additional TE class modules, allowed but not yet required by this case. */
 const TE_CLASS_FILES = Object.freeze(["te-capability.cjs", "te-host.cjs"]);

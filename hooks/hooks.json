@@ -1,5 +1,5 @@
 {
-  "description": "Bearing Lite verified Claude Code and Codex mapping. Partial coverage: activation on SessionStart, closeout and the advisory git-sync on Stop, and the Test Engineering classes te_test_write on PreToolUse and te_completion on Stop and SubagentStop. Transition-order and protected-action remain procedural.",
+  "description": "Bearing Lite verified Claude Code and Codex mapping. Partial coverage: activation on SessionStart, closeout and the advisory git-sync on Stop, and the Test Engineering classes te_test_write on PreToolUse and te_completion on Stop and SubagentStop. The assurance_dispatch budget barrier runs on PreToolUse before a bound assurance launch (Bash, Task, or Agent) and denies an exhausted, unrecorded, or invalid allowance. Other transition-order checks and protected-action remain procedural.",
   "hooks": {
     "SessionStart": [
       {
@@ -33,6 +33,17 @@
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/orchestrator-write-lock.cjs\"",
             "timeout": 15,
             "statusMessage": "Bearing Lite orchestrator write-set lock"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash|Task|Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/assurance-dispatch.cjs\"",
+            "timeout": 15,
+            "statusMessage": "Bearing Lite assurance budget barrier"
           }
         ]
       }

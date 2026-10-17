@@ -87,6 +87,27 @@ under the same `unit_kind` + `unit_id` key.
 - The next distinct declared phase or wave carries its own budget. Declared
   slice and lifecycle units likewise retain their spent counts.
 
+## Pre-dispatch barrier
+
+On hosts that register `hooks/assurance-dispatch.cjs` (Claude Code, Codex,
+Cursor, GitHub Copilot; see `hooks/com.anthropic.claude-code/mapping.md`) the
+budget is enforced before the provider starts. Before dispatching assurance
+the parent controller (Orchestrator on a direct packet, Coordinator on a
+coordinator wave) records in `.bearing-round.lock` the `candidate`,
+`assurance_unit`, and the round's approved `assurance_slots`, and keeps the
+assurance ledger `.bearing-assurance.json` (`journey`, frozen
+`declaration_path`, `units[]`, `events[]`, optional owner `amendments[]` and
+`qualifications[]`). Each assurance launch carries its role in the leading
+`BEARING_ROLE=` environment (plus `BEARING_REVIEW_SLOT` for one slot of an
+authorized parallel group). The barrier reserves the round atomically with
+this evaluator, appends a hash-chained event, and keeps `units[]` equal to
+the chain. A spent round or repair, an unapproved or already launched slot,
+or missing, corrupt, or rewritten state denies the launch. It never resets a
+budget or writes an amendment; only the parent edits the ledger, and the
+write lock refuses it to every other role. The deterministic post-repair gate
+is ordinary work and needs no launch. A launch without the carrier is outside
+the bound flow and stays procedural.
+
 ## Planning review stays separate
 
 Planning review is a separate pre-dispatch gate with its own 1/1 allowance in

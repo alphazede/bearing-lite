@@ -194,8 +194,11 @@ const REPAIR_ROLES = new Set(["reviewer", "repair_implementer"]);
 const PARENT_ROLES = new Set(["orchestrator", "coordinator"]);
 const CANDIDATE_FIELDS = ["candidate_ref", "candidate_revision", "candidate_digest"];
 
+// #209: the assurance ledger is parent-owned control state like the round record.
+const CONTROL_RECORDS = new Set([ROUND_RECORD, ".bearing-assurance.json", ".bearing-assurance.json.lock"]);
+
 function isRoundRecord(rel) {
-  return basename(posix(stripQuotes(rel))) === ROUND_RECORD;
+  return CONTROL_RECORDS.has(basename(posix(stripQuotes(rel))));
 }
 
 function insideRoot(root, rel) {
@@ -294,7 +297,7 @@ function dispatchFor(owner) {
 }
 
 const LOCKED_TOKEN_RE =
-  /(?:^|[^\w./-])((?:[\w./-]*\/)?(?:design\.md|workspace\.md|seit\.json|implementation\.json|repository-map\.md|[\w.-]*-technical-plan\.md|[\w.-]*-dod-manifest\.html|\.bearing-round\.lock|docs\/coe(?:\/[\w./-]*)?))(?:[^\w./-]|$)/g;
+  /(?:^|[^\w./-])((?:[\w./-]*\/)?(?:design\.md|workspace\.md|seit\.json|implementation\.json|repository-map\.md|[\w.-]*-technical-plan\.md|[\w.-]*-dod-manifest\.html|\.bearing-round\.lock|\.bearing-assurance\.json(?:\.lock)?|docs\/coe(?:\/[\w./-]*)?))(?:[^\w./-]|$)/g;
 
 function fieldText(value) {
   if (typeof value === "string") return value;
@@ -714,7 +717,7 @@ function evaluate(input) {
   if (!parent && paths.some(isRoundRecord)) {
     return {
       verdict: DENY_DISPATCH,
-      reason: `${base || "Role-less subagent"} cannot write ${ROUND_RECORD}; only the parent controller records the round and repair transition (bearing-lite v${hookVersion()})`,
+      reason: `${base || "Role-less subagent"} cannot write ${basename(paths.find(isRoundRecord))}; only the parent controller records the round, repair transition, and assurance ledger (bearing-lite v${hookVersion()})`,
     };
   }
   if (!isOrchestrator(role)) {

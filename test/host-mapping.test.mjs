@@ -289,9 +289,10 @@ describe("verified host mapping", () => {
     assert.doesNotMatch(session[0], /te-host\.cjs/);
 
     const preToolUse = copilotCommands(copilotHooks, "PreToolUse");
-    assert.equal(preToolUse.length, 1, "Copilot PreToolUse must route to te-host.cjs");
+    assert.equal(preToolUse.length, 2, "Copilot PreToolUse routes to te-host.cjs and the #209 assurance barrier");
     assert.match(preToolUse[0], /"\$\{PLUGIN_ROOT\}\/hooks\/te-host\.cjs"/);
-    assert.match(preToolUse[0], /--host=copilot/);
+    assert.match(preToolUse[1], /"\$\{PLUGIN_ROOT\}\/hooks\/assurance-dispatch\.cjs" --host=copilot/);
+    for (const command of preToolUse) assert.match(command, /--host=copilot/);
 
     const stop = copilotCommands(copilotHooks, "Stop");
     assert.ok(

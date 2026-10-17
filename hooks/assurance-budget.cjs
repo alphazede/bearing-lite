@@ -64,6 +64,41 @@ function declaredUnits(declaration, unitKind) {
 
 const verdict = (outcome, reason) => ({ outcome, reason });
 
+const kindFamily = (kind) => (kind === "slice" || kind === "lifecycle" ? kind : "wave_or_phase");
+
+const nonempty = (value) => typeof value === "string" && value.trim().length > 0;
+
+/**
+ * #209: bounded owner amendments, append-only in the durable task record
+ * (`amendments[]`), never from the request. Each names its unit, exact scope,
+ * the owner decision, and a non-negative additional allowance; original spent
+ * counts stay as recorded. Returns the unit's added allowance, or null when an
+ * amendment for the unit is malformed (which grants nothing).
+ */
+function amendmentAllowance(record, unitId) {
+  const list = record.amendments === undefined ? [] : record.amendments;
+  if (!Array.isArray(list)) return null;
+  const extra = { rounds: 0, repairs: 0 };
+  for (const entry of list) {
+    if (!isPlainObject(entry) || entry.unit_id !== unitId) continue;
+    const rounds = entry.additional_rounds === undefined ? 0 : entry.additional_rounds;
+    const repairs = entry.additional_repairs === undefined ? 0 : entry.additional_repairs;
+    if (
+      entry.authorized_by !== "owner" ||
+      !nonempty(entry.decision_ref) ||
+      !nonempty(entry.scope) ||
+      !isCount(rounds) ||
+      !isCount(repairs) ||
+      rounds + repairs < 1
+    ) {
+      return null;
+    }
+    extra.rounds += rounds;
+    extra.repairs += repairs;
+  }
+  return extra;
+}
+
 const { planning_unit_id: PLANNING_UNIT } = require("./policy.cjs").PLANNING_REVIEW_POLICY;
 
 /**
@@ -186,8 +221,13 @@ function evaluateAssuranceBudget(input) {
       return verdict("NEEDS_MORE_EVIDENCE", "assurance_transport_pending");
     }
 
-    const units = Array.isArray(record.units) ? record.units : [];
-    const spent = units.find((unit) => {
+    // #209: a record without its units list is not a spent-zero budget.
+    if (!Array.isArray(record.units)) {
+      return verdict("NEEDS_MORE_EVIDENCE", "task_record_invalid");
+    }
+    // #209: `wave` and `phase` name one canonical kind resolved from the frozen
+    // declaration, so relabeling the request never misses a spent unit.
+    const matches = record.units.filter((unit) => {
       if (!isPlainObject(unit)) return false;
       const unitId = unit.unit_id || unit.assurance_unit;
       const id = typeof unitId === "string" && unitId ? unitId : DIRECT;
@@ -196,12 +236,24 @@ function evaluateAssuranceBudget(input) {
       if (
         typeof unit.unit_kind === "string" &&
         typeof input.unit_kind === "string" &&
-        unit.unit_kind !== input.unit_kind
+        kindFamily(unit.unit_kind) !== kindFamily(input.unit_kind)
       ) {
         return false;
       }
       return true;
     });
+    if (matches.length > 1) {
+      return verdict("NEEDS_MORE_EVIDENCE", "task_record_duplicate_unit");
+    }
+    const spent = matches[0];
+    const extra = amendmentAllowance(record, requested);
+    if (!extra) {
+      return verdict("NEEDS_MORE_EVIDENCE", "amendment_invalid");
+    }
+    bounds = {
+      reviewer_rounds: bounds.reviewer_rounds + extra.rounds,
+      repairs_max: bounds.repairs_max + extra.repairs,
+    };
     const counter = (field) => {
       const value = spent && spent[field];
       return value === undefined || value === null ? 0 : value;

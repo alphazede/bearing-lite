@@ -36,7 +36,7 @@ Codex 0.162.1 registers no plugin hooks, silently, when the installed root
 marketplace that `tools/prepare-codex-plugin.mjs --out <new dir>` prepares: the
 same package bytes plus `.codex-plugin/`, with only root `$schema` omitted.
 `node --test test/native/codex-hook-discovery.test.mjs` proves registration
-(7 hooks, all skills, none when disabled), not invocation.
+(8 hooks, all skills, none when disabled), not invocation.
 
 Skill-copy into a host skills directory does **not** register plugin hooks.
 To carry the Orchestrator write-set lock, merge `hooks/skill-copy-write-lock.json`
@@ -54,6 +54,7 @@ sessions. Bearing Lite never copies adapters into global hook configuration.
 | `Stop`, `stop` | closeout | yes, advisory only |
 | `Stop`, `stop` | git-sync (`hooks/git-sync.cjs`) | yes, advisory only: fast-forwards the session checkout from origin, moves an unchecked-out `main` ref, and names unpushed, diverged, or upstream-less branches; never merges, pushes, or blocks |
 | `PreToolUse`, `preToolUse`, `beforeShellExecution`, `apply_patch` | te_test_write | only where the host has a native write-time deny |
+| `PreToolUse` (`Bash`, `Task`, `Agent`), `preToolUse`, `beforeShellExecution` | assurance_dispatch budget barrier (`hooks/assurance-dispatch.cjs`) | only on the native hosts in [Assurance dispatch barrier](#assurance-dispatch-barrier) |
 | `PreToolUse`, `preToolUse`, `beforeShellExecution`, `apply_patch` | orchestrator write-set lock | only where the host has a native write-time deny; otherwise documented fallback |
 | `Stop`, `stop`, `SubagentStop`, `subagentStop` | te_completion | only where the host has a native completion or child-stop deny |
 | any other host event | none | unmapped; fail open as `UNAVAILABLE` |
@@ -74,13 +75,12 @@ claim full planning-review enforcement for any of these hosts until a native
 event supplies the complete record.
 
 The per-declared-phase-or-wave assurance record
-(`skills/bearing-lite/references/assurance-policy.md`) is evaluated by the same
-`transition` class through the `assurance_transition` action_kind. No mapped
-host exposes a hook event that carries the frozen declaration and the visible
-task record, so the assurance budget is procedural on every mapped host:
-Claude Code, Codex, Cursor, and GitHub Copilot stay
-partial, and AGY, Pi, and DeepCode stay skills-only. No host may
-advertise an enforcement of the assurance budget it cannot perform.
+(`skills/bearing-lite/references/assurance-policy.md`) is still evaluated by the
+`transition` class through the `assurance_transition` action_kind. Since #209 the
+same evaluator also runs as a pre-launch barrier on the hosts below; see
+[Assurance dispatch barrier](#assurance-dispatch-barrier). Other
+transition-order checks stay procedural. No host may advertise an enforcement
+of the assurance budget it cannot perform.
 
 The adapter accepts snake_case and camelCase (`hook_event_name` /
 `hookEventName`, `cwd` / `workspaceRoot`).
@@ -151,10 +151,60 @@ through `hookSpecificOutput.permissionDecision`. Copilot `Stop` denies through
 `hookSpecificOutput` with `hookEventName` `Stop`, `decision` `block`, and
 `reason`. Copilot `SubagentStop` denies through a top-level `decision` block
 and `reason`. `Stop` and `SubagentStop` carry `stop_hook_active`; a true
-re-entry terminates as quiet success so a deny cannot loop. Transition-order,
-protected-action, planning-review, and assurance-budget stay procedural.
+re-entry terminates as quiet success so a deny cannot loop. The #209 assurance
+barrier runs on `PreToolUse`; other transition-order checks, protected-action,
+and planning-review stay procedural.
 This Copilot mapping does not yet register the Orchestrator write-set lock;
 use the documented fallback until that host file is wired.
+
+## Assurance dispatch barrier
+
+`hooks/assurance-dispatch.cjs` runs before a bound assurance session starts. A
+bound launch is structural: the leading environment of a shell command sets
+`BEARING_ROLE` to `reviewer`, `test_engineer.assurance`,
+`integration_engineer.execution`, or `repair_implementer`, or a `Task` /
+`Agent` tool names one as `subagent_type`. Anything else is ordinary work and
+passes untouched; a launch without the carrier is outside the bound flow and
+the budget stays procedural for it.
+
+Authority is read only from parent-owned files at the checkout root, never from
+tool input, prompt text, or role names:
+
+- `.bearing-round.lock`: `candidate`, `assurance_unit`, and `assurance_slots`
+  (the approved slots of the one round, for example several reviewer slots of
+  an authorized parallel review group; a launch names its slot with
+  `BEARING_REVIEW_SLOT`, defaulting to its role).
+- `.bearing-assurance.json`, the assurance ledger: `journey`,
+  `declaration_path` (the frozen declaration, which fixes the canonical unit
+  kind and ids), `units[]` (the task record the evaluator reads), optional
+  `amendments[]` and `qualifications[]`, and hash-chained `events[]` that only
+  the hook appends.
+
+The adapter takes an exclusive lock on the ledger, verifies the chain, and asks
+`evaluateAssuranceBudget` before opening a round; joining the open round needs
+the same candidate, an approved slot not yet launched, and no repair since it
+opened. A `repair_implementer` launch spends the one repair. Missing, corrupt,
+or rewritten state, a busy lock, an undeclared unit, a spent round or repair,
+or an unapproved slot denies before the provider starts. Candidate, model,
+harness, session, packet, or activity names are never budget keys. An owner
+amendment (`authorized_by: "owner"`, `decision_ref`, `scope`,
+`additional_rounds` / `additional_repairs`) adds exact allowance while the
+original events stay; a qualification launch needs an owner `qualifications[]`
+grant with `max_launches`. The write lock refuses both files to every role
+except the parent controller.
+
+| Host | assurance_dispatch | Evidence in this package |
+|---|---|---|
+| Claude Code | native `PreToolUse` deny (`Bash`, `Task`, `Agent`) | component replay of the registered chain (`test/assurance-dispatch.test.mjs`); no native invocation run |
+| Codex | native `PreToolUse` deny (`Bash`, `Task`, `Agent`) | registration by `test/native/codex-hook-discovery.test.mjs`, plus component replay; no native invocation run |
+| Cursor | native `beforeShellExecution` and `preToolUse` deny | component replay; no native invocation run |
+| GitHub Copilot | native `PreToolUse` deny | component replay; no native invocation run |
+| AGY, Pi, DeepCode | skills-only | the budget is procedural; `UNAVAILABLE` |
+
+Component replay runs every registered pre-launch command with a native-shaped
+envelope and starts a harmless local sentinel only when none denies; it is not
+a host end-to-end run. Qwen Code, Kimi Code, and Grok Build are unsupported and
+untested.
 
 ## Orchestrator write-set lock
 

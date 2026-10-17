@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed the per-unit assurance budget being enforced only when the evaluator was called explicitly, which let an extra review start after the unit's one review was spent. The new `hooks/assurance-dispatch.cjs` hook runs before a bound assurance launch on Claude Code, Codex, Cursor, and GitHub Copilot. A launch counts as bound when its leading environment sets `BEARING_ROLE` to a reviewer, assurance Test Engineer, execution Integration Engineer, or Repair Implementer, or a `Task`/`Agent` tool names one as `subagent_type`.
+  - **What it reads:** only parent-owned files, never tool input or role names. `.bearing-round.lock` gives the candidate, the declared unit, and the round's approved slots. The new `.bearing-assurance.json` ledger points to the frozen declaration and records spent counts.
+  - **What it denies before the provider starts:** a spent review or repair, an extra or repeated slot, an undeclared unit, or missing, corrupt, or edited state.
+  - **Accounting:** the round is reserved atomically under an exclusive lock and recorded in a hash-chained event log, so simultaneous launches cannot share one remaining allowance. An authorized parallel review group counts as one round. Renaming the candidate, model, harness, session, packet, or activity does not reset the count.
+  - **Owner authority:** an owner amendment adds an exact allowance and keeps the original spending visible. A qualification launch needs an owner grant with a launch limit. The hook never resets a budget or writes an amendment, and the write lock refuses the ledger to every role except the parent.
+  - **Evaluator fixes:** a record without `units`, a duplicate unit entry, or a `wave`/`phase` relabel no longer reads as unspent.
+  - **Coverage:** AGY, Pi, and DeepCode stay procedural. Tests replay the registered hook chains with a harmless launch sentinel; no native host end-to-end run is claimed. [#209](https://github.com/alphazede/bearing-lite/issues/209), [#210](https://github.com/alphazede/bearing-lite/issues/210)
+
 ## [1.1.11](https://github.com/alphazede/bearing-lite/releases/tag/v1.1.11) - 2026-10-17
 
 ### Changed
