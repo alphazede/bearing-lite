@@ -8,6 +8,7 @@
  * other hosts fail open as UNAVAILABLE. Always exit 0.
  */
 
+const crypto = require("node:crypto");
 const fs = require("node:fs");
 const path = require("node:path");
 
@@ -141,6 +142,7 @@ const BOUND_CHECKED_ROLES = new Set([
   "test_engineer",
   "integration_engineer",
   "reviewer",
+  "repair_implementer",
   "scribe",
   "intake",
   "architectural_alignment",
@@ -178,12 +180,112 @@ function boundAuthorDenial(role, paths) {
   return null;
 }
 
+/**
+ * #206 parent-accepted Reviewer -> Repair Implementer transition. The parent
+ * controller (Orchestrator or Coordinator) records it in the round record
+ * `.bearing-round.lock` as `repair_transition`; only a parent may write that
+ * record. The lock trusts nothing from tool input: it re-reads the record and
+ * the frozen receipt from disk, checks the receipt digest, candidate, lineage
+ * (worktree, branch, generation), the same reviewer context from the host
+ * envelope, and one open repair round, then allows only receipt write-set paths.
+ */
+const ROUND_RECORD = ".bearing-round.lock";
+const REPAIR_ROLES = new Set(["reviewer", "repair_implementer"]);
+const PARENT_ROLES = new Set(["orchestrator", "coordinator"]);
+const CANDIDATE_FIELDS = ["candidate_ref", "candidate_revision", "candidate_digest"];
+
+function isRoundRecord(rel) {
+  return basename(posix(stripQuotes(rel))) === ROUND_RECORD;
+}
+
+function insideRoot(root, rel) {
+  const abs = path.resolve(root, rel);
+  const back = path.relative(root, abs);
+  return back && !back.startsWith("..") && !path.isAbsolute(back) ? posix(back) : null;
+}
+
+function currentBranch(root) {
+  try {
+    let gitDir = path.join(root, ".git");
+    if (fs.statSync(gitDir).isFile()) {
+      const pointer = fs.readFileSync(gitDir, "utf8").match(/^gitdir:\s*(.+)$/m);
+      if (!pointer) return undefined;
+      gitDir = path.resolve(root, pointer[1].trim());
+    }
+    const head = fs.readFileSync(path.join(gitDir, "HEAD"), "utf8").match(/^ref:\s*refs\/heads\/(.+)$/m);
+    return head ? head[1].trim() : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** @returns {{ ok: true } | { ok: false, reason: string }} */
+function repairAuthority(body, root, paths) {
+  const no = (reason) => ({ ok: false, reason });
+  const round = loadRoundLock(root);
+  if (!round) return no("repair_transition_missing: no round record");
+  const t = round.repair_transition;
+  if (!isPlainObject(t)) return no("repair_transition_missing: round record has no repair_transition");
+  if (!PARENT_ROLES.has(normalizeRole(t.accepted_by)) || t.parent_accepted !== "REPAIR_REQUIRED") {
+    return no("repair_transition_not_accepted: parent acceptance of REPAIR_REQUIRED is not recorded");
+  }
+  if (t.repair_round !== "open") return no("repair_round_closed");
+  const context = presentString(body.agent_id) || presentString(body.session_id);
+  if (!context || context !== presentString(t.reviewer_context)) {
+    return no("reviewer_context_mismatch: not the same reviewer context");
+  }
+  if (presentString(round.candidate) !== presentString(t.candidate_ref) ||
+      !Number.isInteger(round.generation) || t.generation !== round.generation) {
+    return no("stale_lineage: candidate or generation differs from the round record");
+  }
+  const worktree = presentString(t.worktree);
+  if (!worktree || path.resolve(root, worktree) !== root) return no("stale_lineage: worktree differs");
+  const branch = currentBranch(root);
+  if (!branch || branch !== presentString(t.branch)) return no("stale_lineage: branch differs");
+  const receiptRel = presentString(t.receipt_path) && insideRoot(root, t.receipt_path);
+  let bytes;
+  try {
+    bytes = receiptRel ? fs.readFileSync(path.join(root, receiptRel)) : null;
+  } catch {
+    bytes = null;
+  }
+  if (!bytes) return no("frozen_receipt_unresolved");
+  if (crypto.createHash("sha256").update(bytes).digest("hex") !== t.receipt_sha256) {
+    return no("frozen_receipt_digest_mismatch");
+  }
+  let receipt;
+  try {
+    receipt = JSON.parse(bytes.toString("utf8"));
+  } catch {
+    receipt = null;
+  }
+  const lineage = isPlainObject(receipt) && isPlainObject(receipt.lineage) ? receipt.lineage : {};
+  if (
+    !isPlainObject(receipt) ||
+    receipt.verdict !== "REPAIR_REQUIRED" ||
+    !Array.isArray(receipt.finding_ids) || !receipt.finding_ids.length ||
+    !Array.isArray(receipt.write_set) ||
+    CANDIDATE_FIELDS.some((key) => !presentString(receipt[key]) || receipt[key] !== t[key]) ||
+    lineage.branch !== t.branch || lineage.generation !== t.generation ||
+    !presentString(lineage.worktree) || path.resolve(root, lineage.worktree) !== root
+  ) {
+    return no("frozen_receipt_invalid: receipt does not match the recorded transition");
+  }
+  const allowed = new Set(receipt.write_set.map((rel) => (presentString(rel) ? insideRoot(root, rel) : null)));
+  for (const rel of paths) {
+    if (!planningArtifact(rel)) continue;
+    const target = insideRoot(root, rel);
+    if (!target || !allowed.has(target)) return no(`outside_repair_write_set: ${basename(rel)}`);
+  }
+  return { ok: true };
+}
+
 function dispatchFor(owner) {
   return `Dispatch skills/${owner.replace(/_/g, "-")} with BEARING_ROLE=${owner}`;
 }
 
 const LOCKED_TOKEN_RE =
-  /(?:^|[^\w./-])((?:[\w./-]*\/)?(?:design\.md|workspace\.md|seit\.json|implementation\.json|repository-map\.md|[\w.-]*-technical-plan\.md|[\w.-]*-dod-manifest\.html|docs\/coe(?:\/[\w./-]*)?))(?:[^\w./-]|$)/g;
+  /(?:^|[^\w./-])((?:[\w./-]*\/)?(?:design\.md|workspace\.md|seit\.json|implementation\.json|repository-map\.md|[\w.-]*-technical-plan\.md|[\w.-]*-dod-manifest\.html|\.bearing-round\.lock|docs\/coe(?:\/[\w./-]*)?))(?:[^\w./-]|$)/g;
 
 function fieldText(value) {
   if (typeof value === "string") return value;
@@ -212,7 +314,8 @@ function stripQuotes(value) {
 function isLockedPath(value) {
   const target = presentString(value);
   if (!target) return false;
-  return ownerFor(posix(stripQuotes(target))) !== null;
+  const rel = posix(stripQuotes(target));
+  return ownerFor(rel) !== null || isRoundRecord(rel);
 }
 
 function loadRoundLock(root) {
@@ -482,7 +585,7 @@ function scanCommandWriteTargets(command, out) {
     while ((hit = LOCKED_TOKEN_RE.exec(segment)) !== null && guard.count < 25) {
       guard.count += 1;
       const token = String(hit[1] || "").replace(/^[^\w./-]+|[^\w./-]+$/g, "");
-      if (token && ownerFor(posix(token)) !== null) out.add(posix(token));
+      if (token && (ownerFor(posix(token)) !== null || isRoundRecord(token))) out.add(posix(token));
     }
     LOCKED_TOKEN_RE.lastIndex = 0;
   }
@@ -597,7 +700,23 @@ function evaluate(input) {
   const agentId = presentString(body.agent_id);
   const paths = collectPaths(body);
   if (!isOrchestrator(role)) {
-    return boundAuthorDenial(role, paths) || { verdict: ALLOW, reason: "role_write_allowed" };
+    const base = baseRole(role);
+    // #206: the round record is parent-owned control state.
+    const record = PARENT_ROLES.has(base) ? undefined : paths.find(isRoundRecord);
+    if (record) {
+      return {
+        verdict: DENY_DISPATCH,
+        reason: `${base} cannot write ${ROUND_RECORD}; only the parent controller records the round and repair transition (bearing-lite v${hookVersion()})`,
+      };
+    }
+    const denial = boundAuthorDenial(role, paths);
+    if (denial && REPAIR_ROLES.has(base)) {
+      const root = path.resolve(presentString(body.cwd) || process.cwd());
+      const repair = repairAuthority(body, root, paths);
+      if (repair.ok) return { verdict: ALLOW, reason: "repair_transition_write_allowed" };
+      return { ...denial, reason: `${repair.reason}. ${denial.reason}` };
+    }
+    return denial || { verdict: ALLOW, reason: "role_write_allowed" };
   }
   for (const rel of paths) {
     const owner = ownerFor(rel);
@@ -745,6 +864,7 @@ function handle(envelope, options) {
   const result = evaluate({
     role,
     agent_id: presentString(input.agent_id),
+    session_id: presentString(input.session_id) || presentString(input.sessionId),
     cwd: root,
     paths: envelopePaths(input, root),
     tool_input: isPlainObject(input.tool_input)

@@ -1,0 +1,191 @@
+/**
+ * #206 the real write lock honors a parent-accepted Reviewer -> Repair
+ * Implementer transition recorded in `.bearing-round.lock`, and only for the
+ * frozen receipt's repair write set. Every case drives the shipped hook
+ * (`handle()` and the CLI) with native host envelopes against a fresh git
+ * checkout and on-disk records; nothing here models the lock.
+ */
+import { after, describe, it } from "node:test";
+import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
+import { spawnSync } from "node:child_process";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import os from "node:os";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const HOOK = path.join(ROOT, "hooks/orchestrator-write-lock.cjs");
+const require = createRequire(import.meta.url);
+const lock = require(HOOK);
+
+const PLAN = "docs/plans/x";
+const LISTED = [`${PLAN}/design.md`, `${PLAN}/seit.json`, `${PLAN}/implementation.json`, `${PLAN}/x-technical-plan.md`];
+const UNLISTED = `${PLAN}/x-dod-manifest.html`;
+const REVIEWER = "reviewer-session-1";
+const temps = [];
+after(() => temps.forEach((dir) => rmSync(dir, { recursive: true, force: true })));
+
+/** A fresh checkout with a frozen receipt and, unless omitted, the parent's transition. */
+function checkout({ receipt: patchReceipt = {}, transition: patchTransition = {}, round: patchRound = {}, omit = [] } = {}) {
+  const root = mkdtempSync(path.join(os.tmpdir(), "repair-lock-"));
+  temps.push(root);
+  const git = spawnSync("git", ["init", "-q", "-b", "repair-branch", root], { encoding: "utf8" });
+  assert.equal(git.status, 0, git.stderr);
+  const candidate = { candidate_ref: "plan-c1", candidate_revision: "r7", candidate_digest: "d".repeat(64) };
+  const lineage = { worktree: ".", branch: "repair-branch", generation: 3 };
+  const receipt = {
+    ...candidate, verdict: "REPAIR_REQUIRED", finding_ids: ["F1"], severity: { F1: "P1" },
+    locations: { F1: `${PLAN}/design.md:4` }, reachability: { F1: "reachable" },
+    reproducer: { F1: "node --test test/x.test.mjs" }, seit_refs: { F1: "SEIT-1" },
+    repair_target: `${PLAN}/design.md`, write_set: LISTED, lineage, ...patchReceipt,
+  };
+  const bytes = JSON.stringify(receipt);
+  mkdirSync(path.join(root, ".bearing/review"), { recursive: true });
+  mkdirSync(path.join(root, PLAN), { recursive: true });
+  writeFileSync(path.join(root, ".bearing/review/receipt.json"), bytes);
+  const transition = {
+    accepted_by: "orchestrator", parent_accepted: "REPAIR_REQUIRED", reviewer_context: REVIEWER,
+    receipt_path: ".bearing/review/receipt.json", receipt_sha256: createHash("sha256").update(bytes).digest("hex"),
+    ...candidate, ...lineage, repair_round: "open", ...patchTransition,
+  };
+  const round = { candidate: candidate.candidate_ref, plan_dir: PLAN, generation: 3, repair_transition: transition, ...patchRound };
+  for (const key of omit) delete round[key];
+  if (!omit.includes("record")) writeFileSync(path.join(root, ".bearing-round.lock"), JSON.stringify(round));
+  return root;
+}
+
+const claudeEdit = (root, file, extra = {}) => ({
+  hook_event_name: "PreToolUse", session_id: REVIEWER, cwd: root,
+  tool_name: "Edit", tool_input: { file_path: path.join(root, file), old_string: "a", new_string: "b" }, ...extra,
+});
+const codexPatch = (root, file) => ({
+  hook_event_name: "PreToolUse", session_id: REVIEWER, cwd: root, tool_name: "apply_patch",
+  tool_input: { command: `*** Begin Patch\n*** Update File: ${file}\n@@\n-a\n+b\n*** End Patch\n` },
+});
+const verdict = (envelope, role = "reviewer", host = "claude-code") => lock.handle(envelope, { role, host }).hookSpecificOutput;
+const denied = (out, pattern) => {
+  assert.equal(out.verdict, "DENY_DISPATCH", JSON.stringify(out));
+  if (pattern) assert.match(out.reason, pattern);
+};
+
+describe("#206 accepted repair transition opens only the frozen write set", () => {
+  it("allows every listed planning artifact through handle() on Claude Code and Codex envelopes", () => {
+    const root = checkout();
+    for (const file of LISTED) {
+      assert.equal(verdict(claudeEdit(root, file)).verdict, "ALLOW", file);
+      assert.equal(verdict(codexPatch(root, file), "reviewer", "codex").verdict, "ALLOW", file);
+    }
+    assert.equal(verdict(claudeEdit(root, LISTED[0]), "repair_implementer").verdict, "ALLOW");
+  });
+
+  it("allows through the real CLI with BEARING_ROLE from the environment", () => {
+    const root = checkout();
+    const run = (file) => spawnSync(process.execPath, [HOOK, "--host=claude-code"], {
+      input: JSON.stringify(claudeEdit(root, file)), encoding: "utf8",
+      env: { ...process.env, BEARING_ROLE: "reviewer" },
+    });
+    const allowed = run(LISTED[0]);
+    assert.equal(allowed.status, 0);
+    assert.deepEqual(JSON.parse(allowed.stdout), {});
+    assert.equal(JSON.parse(allowed.stderr).hookSpecificOutput.reason, "repair_transition_write_allowed");
+    const refused = run(UNLISTED);
+    assert.equal(JSON.parse(refused.stdout).hookSpecificOutput.permissionDecision, "deny");
+  });
+
+  it("refuses an unlisted planning artifact even with a valid transition", () => {
+    denied(verdict(claudeEdit(checkout(), UNLISTED)), /outside_repair_write_set/);
+    denied(verdict(codexPatch(checkout(), UNLISTED), "reviewer", "codex"), /outside_repair_write_set/);
+  });
+});
+
+describe("#206 no valid recorded transition, no repair authority", () => {
+  const cases = [
+    ["no round record", { omit: ["record"] }, /repair_transition_missing/],
+    ["no transition in the record", { omit: ["repair_transition"] }, /repair_transition_missing/],
+    ["no parent acceptance", { transition: { parent_accepted: "PENDING" } }, /not_accepted/],
+    ["acceptance by a non-parent", { transition: { accepted_by: "reviewer" } }, /not_accepted/],
+    ["a closed repair round", { transition: { repair_round: "closed" } }, /repair_round_closed/],
+    ["another reviewer context", { transition: { reviewer_context: "other-session" } }, /reviewer_context_mismatch/],
+    ["a stale generation", { round: { generation: 4 } }, /stale_lineage/],
+    ["a stale candidate", { round: { candidate: "plan-c0" } }, /stale_lineage/],
+    ["another branch", { transition: { branch: "main" } }, /stale_lineage: branch/],
+    ["another worktree", { transition: { worktree: "../elsewhere" } }, /stale_lineage: worktree/],
+    ["an unresolved receipt", { transition: { receipt_path: ".bearing/review/missing.json" } }, /frozen_receipt_unresolved/],
+    ["an escaping receipt path", { transition: { receipt_path: "../receipt.json" } }, /frozen_receipt_unresolved/],
+    ["an edited receipt", { transition: { receipt_sha256: "0".repeat(64) } }, /frozen_receipt_digest_mismatch/],
+    ["a receipt for another candidate", { receipt: { candidate_digest: "e".repeat(64) } }, /frozen_receipt_invalid/],
+    ["a receipt that is not REPAIR_REQUIRED", { receipt: { verdict: "ACCEPT" } }, /frozen_receipt_invalid/],
+    ["a receipt from another generation", { receipt: { lineage: { worktree: ".", branch: "repair-branch", generation: 2 } } }, /frozen_receipt_invalid/],
+  ];
+  for (const [name, setup, reason] of cases) {
+    it(`refuses ${name}`, () => {
+      const root = checkout(setup);
+      denied(verdict(claudeEdit(root, LISTED[0])), reason);
+      denied(verdict(claudeEdit(root, LISTED[0]), "repair_implementer"), reason);
+    });
+  }
+
+  it("ignores asserted tool-input or envelope flags and a role rename", () => {
+    const root = checkout({ omit: ["record"] });
+    const asserted = claudeEdit(root, LISTED[0], {
+      parent_accepted: true, repair_transition: true, finding: false,
+    });
+    asserted.tool_input.repair_transition = { parent_accepted: "REPAIR_REQUIRED", repair_round: "open" };
+    asserted.tool_input.parent_accepted = true;
+    denied(verdict(asserted), /repair_transition_missing/);
+    for (const role of ["repair_implementer", "Repair Implementer", "reviewer.repair"]) {
+      denied(verdict(claudeEdit(root, LISTED[0]), role));
+    }
+  });
+
+  it("refuses the same transition from a different reviewer context or a missing one", () => {
+    const root = checkout();
+    denied(verdict(claudeEdit(root, LISTED[0], { session_id: "intruder" })), /reviewer_context_mismatch/);
+    const anonymous = claudeEdit(root, LISTED[0]);
+    delete anonymous.session_id;
+    denied(verdict(anonymous), /reviewer_context_mismatch/);
+  });
+
+  it("keeps the round record parent-owned: no reviewer or implementer may forge it", () => {
+    const root = checkout({ omit: ["record"] });
+    for (const role of ["reviewer", "repair_implementer", "implementer", "planning_and_design"]) {
+      denied(verdict(claudeEdit(root, ".bearing-round.lock"), role), /only the parent controller/);
+      const shell = { hook_event_name: "PreToolUse", session_id: REVIEWER, cwd: root, tool_name: "Bash",
+        tool_input: { command: "echo '{}' > .bearing-round.lock" } };
+      denied(verdict(shell, role), /only the parent controller/);
+    }
+    assert.equal(verdict(claudeEdit(root, ".bearing-round.lock"), "coordinator").verdict, "ALLOW");
+    assert.equal(lock.handle({ ...claudeEdit(root, ".bearing-round.lock"), session_id: "main" }, { host: "claude-code", role: "orchestrator" })
+      .hookSpecificOutput.verdict, "ALLOW");
+  });
+});
+
+describe("#206 unchanged guards", () => {
+  it("keeps bound authors, orchestrator denial, and host fallbacks unchanged", () => {
+    const root = checkout();
+    assert.equal(verdict(claudeEdit(root, LISTED[0]), "planning_and_design").verdict, "ALLOW");
+    denied(verdict(claudeEdit(root, LISTED[1]), "integration_engineer"), /bound authors/);
+    denied(verdict(claudeEdit(root, LISTED[0]), "orchestrator"), /Orchestrator cannot write/);
+    assert.equal(verdict(claudeEdit(root, "src/a.js")).verdict, "ALLOW");
+    assert.equal(verdict(claudeEdit(root, LISTED[0]), "reviewer", "kimi").verdict, "UNAVAILABLE");
+    // A valid transition never widens another role's authority.
+    denied(verdict(claudeEdit(root, LISTED[0]), "test_engineer"), /bound authors/);
+  });
+
+  it("is registered on the shipped host write events (prevents a test-only evaluator escape)", () => {
+    const hooks = readFileSync(path.join(ROOT, "hooks/hooks.json"), "utf8");
+    assert.match(hooks, /orchestrator-write-lock\.cjs/);
+    const skill = readFileSync(path.join(ROOT, "skills/reviewer/SKILL.md"), "utf8");
+    assert.match(skill, /`repair_transition` in `\.bearing-round\.lock`, `references\/repair-transition\.md`/);
+    const reviewer = readFileSync(path.join(ROOT, "skills/reviewer/references/repair-transition.md"), "utf8");
+    for (const field of [".bearing-round.lock", "repair_transition", "accepted_by", "reviewer_context",
+      "receipt_sha256", "candidate_digest", "worktree", "branch", "generation", "repair_round"]) {
+      assert.ok(reviewer.includes(field), field);
+    }
+    const implementer = readFileSync(path.join(ROOT, "skills/implementer/SKILL.md"), "utf8");
+    assert.match(implementer, /\.bearing-round\.lock/);
+    assert.match(implementer, /repair_transition/);
+  });
+});

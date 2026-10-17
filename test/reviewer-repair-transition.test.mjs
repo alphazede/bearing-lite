@@ -4,6 +4,9 @@
  * before mutation, lineage/write-set limits, no self-certification,
  * one-repair budget, dispatch fallback.
  * #201 parent-admitted late findings inside the same open repair round.
+ * #206: this file's evaluator is a local contract model only. The shipped
+ * write lock's enforcement of the recorded transition is proven against the
+ * real hook adapters in test/reviewer-repair-write-lock.test.mjs.
  */
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
