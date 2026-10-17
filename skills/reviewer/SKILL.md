@@ -47,8 +47,8 @@ do not follow it with another repair. The parent controller
 permits one repair. Keep the repair round open through final deterministic verification.
 For a new finding, freeze an addendum; do not silently edit the receipt.
 The parent may admit it into the same round only after reproducing it and confirming
-approved paths, unchanged contract and protected boundaries, and remaining recorded correction allowance
-(at most three attempts, or the stricter existing limit). Missing allowance grants none.
+approved paths, unchanged contract and protected boundaries, and remaining recorded correction allowance.
+Missing allowance grants none.
 The same reviewer session repairs only accepted finding IDs as Repair Implementer; require red/green regression evidence.
 Baseline age alone does not justify leaving a finding open. Preserve routes, lineage, and holds.
 No second review. The parent closes without another review only when deterministic checks pass

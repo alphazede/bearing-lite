@@ -37,7 +37,7 @@ The Orchestrator owns dispatch and receipts; Planning and Design applies changes
    do not relabel an extra change as a finding. Exact text must match verbatim
    with every non-text field unchanged. All after-snapshot references must resolve.
    A failed delta closes nothing: undo only this delta, report findings, and retry
-   only with a new hypothesis, at most three mechanical application attempts.
+   only with a new hypothesis.
 5. Record the JSON mechanical verification receipt, including candidate identity,
    changed/named UID sets, cross-reference PASS, and external lint evidence.
    Close `closed_uids` without another Requirements Engineer gate in any round.

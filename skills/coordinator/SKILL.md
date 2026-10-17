@@ -50,6 +50,6 @@ Wave authority. Coordinates more and implements less than Implementer.
 
 ## Return and recovery
 Return `READY`, `REROUTED`, `WAITING_ON`, or `OWNER_DECISION_REQUIRED` with
-verdict, candidate_ref, changed_paths, tests, findings, and blocker. Reroute only from new evidence; three attempts per packet.
+verdict, candidate_ref, changed_paths, tests, findings, and blocker. Reroute only from new evidence.
 
 Never implement, self-assure, select models, or expand the wave.
