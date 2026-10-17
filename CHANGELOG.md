@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed the write lock refusing a parent-accepted Reviewer repair of planning artifacts. The parent controller now records the Repair Implementer transition as `repair_transition` in the existing `.bearing-round.lock` round record, and only the Orchestrator or Coordinator may write that record. The lock checks it on every write, re-reading the frozen receipt from disk: parent acceptance of `REPAIR_REQUIRED`, the same reviewer context from the host envelope, the receipt digest, candidate, worktree, branch, generation, and one open repair round. It then allows only the paths in the receipt's `write_set`. A missing, unaccepted, stale, or closed transition is refused with the failing check named, and so is an unlisted path. A `repair_implementer` role name or flags in tool input grant nothing; before this fix, that role name bypassed the planning-artifact lock. `skills/reviewer/references/repair-transition.md` lists the record fields. Tests now drive the shipped hook through Claude Code and Codex envelopes and the CLI. [#206](https://github.com/alphazede/bearing-lite/issues/206)
+
 ## [1.1.10](https://github.com/alphazede/bearing-lite/releases/tag/v1.1.10) - 2026-10-17
 
 ### Changed
