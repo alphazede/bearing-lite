@@ -3,6 +3,8 @@
 // Pure correction-loop evaluator. CLI: node <file> <input.json> -> JSON receipt.
 const { isDeepStrictEqual } = require("node:util");
 const fs = require("node:fs");
+// #204: one requires_regate round, the planning wave's one aggregated repair.
+const { requires_regate_rounds_max: MAX_ROUNDS } = require("./policy.cjs").PLANNING_REVIEW_POLICY;
 const nonempty = value => typeof value === "string" && value.trim().length > 0;
 const strings = value => Array.isArray(value) && value.every(nonempty);
 
@@ -23,7 +25,7 @@ function evaluateCorrectionDelta(input) {
   const rounds = given("correction_rounds", 0);
   const known = given("known_uids", []);
   const residuals = given("residuals", []);
-  if (!nonempty(candidate_ref) || !Number.isInteger(rounds) || rounds < 0 || rounds > 2 ||
+  if (!nonempty(candidate_ref) || !Number.isInteger(rounds) || rounds < 0 || rounds > MAX_ROUNDS ||
       !strings(known) || !strings(residuals)) fail("invalid_context");
   else {
     result.correction_rounds = rounds;
@@ -95,8 +97,8 @@ function evaluateCorrectionDelta(input) {
   };
   result.verdict = "DELTA_APPLIED";
   if (result.regate_uids.length) {
-    result.verdict = rounds === 2 ? "NEEDS_OWNER_DECISION" : "REQUIRES_REGATE";
-    if (rounds < 2) result.correction_rounds++;
+    result.verdict = rounds === MAX_ROUNDS ? "NEEDS_OWNER_DECISION" : "REQUIRES_REGATE";
+    if (rounds < MAX_ROUNDS) result.correction_rounds++;
   }
   return result;
 }

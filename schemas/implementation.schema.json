@@ -327,7 +327,57 @@
             }
           }
         },
-        "planning_to_implementation_clean_session": { "type": "boolean" }
+        "planning_to_implementation_clean_session": { "type": "boolean" },
+        "review_rounds": {
+          "type": "array",
+          "description": "#157: per declared wave or phase plus the planning unit, one Reviewer round, at most one aggregated repair, deterministic closure. hooks/plan-package.cjs requires one row per declared unit and no other; hooks/assurance-budget.cjs consumes the same rows.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["unit_id", "unit_kind", "reviewer_rounds", "repairs_max", "closure"],
+            "properties": {
+              "unit_id": { "type": "string", "minLength": 1 },
+              "unit_kind": { "type": "string", "enum": ["planning", "wave", "phase"] },
+              "reviewer_rounds": { "const": 1 },
+              "repairs_max": { "const": 1 },
+              "closure": { "const": "deterministic_PASS" }
+            }
+          }
+        },
+        "planning_wave": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "#205: the one planning wave. required_sessions before review; the completed receipt (sessions, reviews, repairs, closure, closing candidate_digest) before the final freeze and implementation dispatch.",
+          "required": ["required_sessions"],
+          "properties": {
+            "required_sessions": {
+              "type": "array",
+              "uniqueItems": true,
+              "minItems": 3,
+              "items": {
+                "type": "string",
+                "enum": ["planning_and_design", "requirements_engineer", "systems_modeler", "integration_engineer", "test_engineer"]
+              }
+            },
+            "sessions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true,
+                "required": ["session", "candidate_ref", "verdict"],
+                "properties": {
+                  "session": { "type": "string", "minLength": 1 },
+                  "candidate_ref": { "type": "string", "minLength": 1 },
+                  "verdict": { "type": "string", "minLength": 1 }
+                }
+              }
+            },
+            "reviews": { "const": 1 },
+            "repairs": { "type": "integer", "minimum": 0, "maximum": 1 },
+            "closure": { "const": "deterministic_PASS" },
+            "candidate_digest": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+          }
+        }
       }
     },
     "profile_freeze": { "$ref": "#/$defs/contentfulObject" },
@@ -360,6 +410,19 @@
       "items": { "$ref": "#/$defs/slice" }
     },
     "traceability": { "$ref": "#/$defs/contentfulObject" },
+    "boundary_contract": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "#155: Planning Integration Engineer Boundary/Data-Flow Contract copied from design.md and the System Catalog (no sixth artifact): not_applicable with a reason, or flows, state_machines, trust_boundaries, and gaps. hooks/plan-package.cjs checks completeness and blocks on an unresolved gap.",
+      "properties": {
+        "not_applicable": { "type": "boolean" },
+        "reason": { "type": "string", "minLength": 1 },
+        "flows": { "type": "array", "items": { "type": "object", "required": ["id", "source", "sink"], "additionalProperties": true } },
+        "state_machines": { "type": "array", "items": { "type": "object", "required": ["id", "transitions", "illegal_transitions"], "additionalProperties": true } },
+        "trust_boundaries": { "type": "array", "items": { "type": "object", "required": ["id", "crossing", "enforcement"], "additionalProperties": true } },
+        "gaps": { "type": "array", "items": { "type": "object", "required": ["id", "status"], "additionalProperties": true } }
+      }
+    },
     "dod_manifest": { "$ref": "#/$defs/dodManifest" }
   }
 }

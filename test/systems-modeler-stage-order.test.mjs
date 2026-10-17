@@ -59,15 +59,12 @@ describe("CMD-STAGE-ORDER-01 systems-modeler contextual pass (SEIT-STAGE-ORDER-0
     );
   });
 
-  it("systems modeler covers flow, placements, and constraints, and finalizes mappings only after the Requirements Engineer passes", () => {
+  it("systems modeler covers flow, placements, and constraints, and takes register findings through the one wave repair (#205)", () => {
     assert.match(modeler, /contextual pass/);
     assert.match(modeler, /current flow/);
     assert.match(modeler, /candidate placements with `file:line`/);
     assert.match(modeler, /constraints/);
-    assert.match(
-      modeler,
-      /Do not finalize requirement\s+relationship mappings until the Requirements Engineer passes/
-    );
+    assert.match(modeler, /register findings reach mappings through the\s+wave's one aggregated repair, never a mid-wave gate/);
   });
 
   it("planning-and-design allocation consumes the placement receipt, cites it in pass 1, and gaps when unavailable", () => {

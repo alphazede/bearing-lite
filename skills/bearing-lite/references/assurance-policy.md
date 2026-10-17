@@ -49,6 +49,14 @@ sentinel when neither waves nor phases are declared. A unit id absent from the
 frozen declaration fails closed as `undeclared_review_unit`; renaming a
 declared unit's display name never mints a fresh budget.
 
+When the frozen declaration carries `journey_settings.review_rounds` (every
+package frozen under the planning-wave contract), that per-unit declaration is
+the budget source for wave and phase units: one row per declared unit plus
+`planning`, each one Reviewer round, at most one repair, deterministic closure.
+An invalid declaration returns `review_round_declaration_invalid`; the
+`planning` unit never answers an implementation request. `hooks/plan-package.cjs`
+freezes the same rows, so there is no second source of truth.
+
 Slice-scope review is allowed only when the frozen cadence for that session
 is `slice`. Default `phase` cadence rejects automatic per-slice review.
 Lifecycle-end wording where `phase` cadence applies is a contract failure.

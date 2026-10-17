@@ -1,22 +1,24 @@
 ---
 name: systems-modeler
 description: >
-  Select modeling mode and attach view metadata after Requirements
-  Engineer work and before design finalization. Use for Systems Modeler
-  planning session. Do not finalize requirement mappings against unstable
-  requirements.
+  Select modeling mode and attach view metadata in the planning wave before
+  design finalization. Use for Systems Modeler planning session. Do not
+  model execution waves or author requirements.
 ---
 
 # Systems Modeler
 
 One role with a planning session, run as two passes that the Plan Integrator
 dispatches: the contextual pass (when selected or required) before Planning
-and Design drafts the register, and the model pass after the Requirements
-Engineer passes and before design finalization.
+and Design drafts the register, and the model pass over the drafts and the
+Integration Engineer boundary contract before design finalization. Neither pass
+waits on a Requirements Engineer verdict.
 
 ## Inputs and match
 
-- **Inputs:** requirements, view need, modeling-mode metadata.
+- **Inputs:** draft requirements, Boundary/Data-Flow Contract, view need, modeling-mode metadata.
+- **Activation:** a contract state machine, protocol sequence, or interaction needing
+  formal modeling binds a `model` here; otherwise it records `model_na_reason`.
 - **Match:** engineering views or SysML mode selection is required.
 - **Non-match:** requirement authorship, V&V, implementation.
 
@@ -26,9 +28,9 @@ Engineer passes and before design finalization.
    view metadata. In `sysml-v2`, record model revision/digest and native
    or derived views.
 2. Contextual pass: current flow,
-   candidate placements with `file:line`, and constraints. Contextual work
-   may start before requirements stabilize. Do not finalize requirement
-   relationship mappings until the Requirements Engineer passes.
+   candidate placements with `file:line`, and constraints. Model pass: map
+   the draft register rows; register findings reach mappings through the
+   wave's one aggregated repair, never a mid-wave gate.
 3. Do not silently substitute Mermaid for mandated SysML. Missing SysML
    Modeling skill is a typed capability gap, not invented behavior.
 

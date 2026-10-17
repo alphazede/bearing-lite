@@ -11,7 +11,7 @@ authority differs.
 | Intake | Repository and plan-directory confirmation |
 | Architectural Alignment | Workspace map and architecture extract |
 | Scope Definition | One owner question at a time until shared understanding |
-| Requirements Engineer | Requirement quality gate when a register applies |
+| Requirements Engineer | Requirement quality findings for the one planning review when a register applies |
 | Systems Modeler | Modeling mode and prepared views |
 | Integration Engineer (planning) | Compatibility, assembly order, rollback, V&V handoffs |
 | Test Engineer (planning) | SEIT and proof cases |

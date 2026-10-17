@@ -308,7 +308,7 @@ explain orientation; they never authorize a transition.
 | **Architectural Alignment** | planning | Workspace map and architecture extract |
 | **Scope Definition** | planning | One owner question at a time |
 | **Planning and Design** | planning | Five-artifact package |
-| **Requirements Engineer** | planning | Quality gate when a register applies |
+| **Requirements Engineer** | planning | Register quality findings for the one planning review when a register applies |
 | **Systems Modeler** | planning | After requirements; before design finalization |
 | **Plan Integrator** | planning | Mechanical assembly; no new judgment |
 | **Coordinator** | implementation | Optional one-wave controller; proven-independent lanes. Not dispatched on a direct packet |

@@ -11,4 +11,6 @@ receipt is an input to allocation.
 2. If the Systems Modeler is unavailable, record a typed gap
    (`NEEDS_OWNER_DECISION` naming the missing placement receipt) instead
    of allocating silently.
-3. Relationship mappings are still finalized only after the Requirements Engineer passes.
+3. Relationship mappings are finalized in the planning wave's one aggregated
+   repair when Requirements Engineer findings change rows; no session waits on a
+   Requirements Engineer pass (`../../plan-integrator/references/planning-wave.md`).

@@ -1,7 +1,9 @@
 # Named correction loop
 
-This is the Requirements Engineer correction loop, separate from the single
-independent planning-review slot and implementation assurance budgets.
+This is the correction loop of the planning wave's one aggregated repair
+(`../../plan-integrator/references/planning-wave.md`): Requirements Engineer
+findings arrive through the one consolidated review, and implementation
+assurance budgets stay separate.
 The Orchestrator owns dispatch and receipts; Planning and Design applies changes.
 
 1. Freeze the complete before snapshot and candidate identity. Aggregate named
@@ -28,7 +30,7 @@ The Orchestrator owns dispatch and receipts; Planning and Design applies changes
      over this corrected candidate; retain its command/output evidence. The plugin
      neither requires nor installs a lint tool. Missing, stale, or not-run lint
      prevents exact-text closure with `NEEDS_MORE_EVIDENCE`.
-   - `correction_rounds`: spent requires_regate rounds, integer 0–2, default 0.
+   - `correction_rounds`: spent requires_regate rounds, integer 0–1, default 0.
    - `residuals`: optional strings for the integrated owner gate.
 4. Require changed UIDs to equal named UIDs (including additions/deletions).
    Any extra or unchanged named UID FAILS with `extra_uids` / `missing_uids`;
@@ -40,12 +42,13 @@ The Orchestrator owns dispatch and receipts; Planning and Design applies changes
    changed/named UID sets, cross-reference PASS, and external lint evidence.
    Close `closed_uids` without another Requirements Engineer gate in any round.
    `DELTA_APPLIED` means mechanical closure, never independent assurance or approval.
-   Dispatch a re-gate only for `regate_uids` (`requires_regate`). A mixed delta
-   closes exact-text rows first and spends one round for the remaining rows.
-   `REQUIRES_REGATE` reserves that round; persist the returned count once, never
-   increment again on gate return. Recheck dependent references mechanically;
-   new semantic defects require new typed findings rather than silent corrections.
-6. At two spent re-gate rounds, `NEEDS_OWNER_DECISION` preserves exact-text closures
+   `regate_uids` (`requires_regate`) are applied in the one repair and close by
+   deterministic closure, never by another Requirements Engineer review inside the
+   wave. A mixed delta closes exact-text rows first and spends the one round for
+   the remaining rows. `REQUIRES_REGATE` reserves that round; persist the returned
+   count once. Recheck dependent references mechanically; new semantic defects
+   require new typed findings rather than silent corrections.
+6. At the one spent round, `NEEDS_OWNER_DECISION` preserves exact-text closures
    and names remaining regate_uids; follow owner-stops class C. Exact-text-only
    deltas still close mechanically. Preserve reported residuals (including any
    application failures) for the one integrated owner gate; never accept them silently.

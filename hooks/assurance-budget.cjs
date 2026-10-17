@@ -64,6 +64,59 @@ function declaredUnits(declaration, unitKind) {
 
 const verdict = (outcome, reason) => ({ outcome, reason });
 
+const { planning_unit_id: PLANNING_UNIT } = require("./policy.cjs").PLANNING_REVIEW_POLICY;
+
+/**
+ * #157: `journey_settings.review_rounds` declares, per declared wave or phase
+ * and the planning unit, one Reviewer round, at most one aggregated repair,
+ * and deterministic closure. plan-package.cjs freezes it and this runtime
+ * budget consumes the same declaration. Returns typed findings ([] when valid).
+ */
+function checkReviewRounds(declaration) {
+  const rows = declaration?.journey_settings?.review_rounds;
+  if (!Array.isArray(rows)) return [{ code: "review_rounds_missing" }];
+  const units = declaredUnits(declaration, "phase");
+  const kind = idsFrom(declaration.waves, "id").length ? "wave" : "phase";
+  const findings = units.includes(PLANNING_UNIT) ? [{ code: "review_round_unit_collision", unit_id: PLANNING_UNIT }] : [];
+  const seen = new Set();
+  for (const row of rows) {
+    const unit = isPlainObject(row) && typeof row.unit_id === "string" && row.unit_id ? row.unit_id : null;
+    if (!unit) {
+      findings.push({ code: "review_round_invalid" });
+      continue;
+    }
+    if (seen.has(unit)) findings.push({ code: "review_round_extra", unit_id: unit });
+    seen.add(unit);
+    const planning = unit === PLANNING_UNIT;
+    if (!planning && !units.includes(unit)) {
+      findings.push({ code: "review_round_unit_undeclared", unit_id: unit });
+    } else if (row.unit_kind !== (planning ? "planning" : kind)) {
+      findings.push({ code: "review_round_invalid", unit_id: unit, field: "unit_kind" });
+    }
+    if (row.reviewer_rounds !== POLICY.review_rounds) {
+      findings.push({
+        code: isCount(row.reviewer_rounds) && row.reviewer_rounds > POLICY.review_rounds
+          ? "review_round_extra" : "review_round_invalid",
+        unit_id: unit,
+      });
+    }
+    if (row.repairs_max !== POLICY.aggregated_repairs_max) {
+      findings.push({
+        code: isCount(row.repairs_max) && row.repairs_max > POLICY.aggregated_repairs_max
+          ? "review_repair_extra" : "review_round_invalid",
+        unit_id: unit,
+      });
+    }
+    if (row.closure !== POLICY.post_repair_gate) {
+      findings.push({ code: "review_round_invalid", unit_id: unit, field: "closure" });
+    }
+  }
+  for (const unit of [PLANNING_UNIT, ...units]) {
+    if (!seen.has(unit)) findings.push({ code: "review_round_unit_missing", unit_id: unit });
+  }
+  return findings;
+}
+
 /**
  * @param {unknown} input assurance request
  * @returns {{ outcome: string, reason: string }}
@@ -117,6 +170,16 @@ function evaluateAssuranceBudget(input) {
     if (!requested || !declared.includes(requested)) {
       return verdict("OWNER_AMENDMENT_REQUIRED", "undeclared_review_unit");
     }
+    // #157: a frozen per-unit round declaration is the budget source for
+    // wave/phase units; the planning unit is never an implementation unit.
+    let bounds = { reviewer_rounds: POLICY.review_rounds, repairs_max: POLICY.aggregated_repairs_max };
+    const planned = declaration.journey_settings?.review_rounds;
+    if (planned !== undefined && input.unit_kind !== "slice" && input.unit_kind !== "lifecycle") {
+      if (checkReviewRounds(declaration).length) {
+        return verdict("OWNER_AMENDMENT_REQUIRED", "review_round_declaration_invalid");
+      }
+      bounds = planned.find((row) => row.unit_id === requested);
+    }
 
     const receipts = Array.isArray(input.receipts) ? input.receipts : [];
     if (receipts.some((receipt) => PENDING_RECEIPTS.has(receipt && receipt.verdict))) {
@@ -150,16 +213,16 @@ function evaluateAssuranceBudget(input) {
       return verdict("NEEDS_MORE_EVIDENCE", "invalid_assurance_counter");
     }
 
-    if (repairs > POLICY.aggregated_repairs_max) {
+    if (repairs > bounds.repairs_max) {
       return verdict("HALT", "assurance_repair_limit");
     }
     if (
-      repairs === POLICY.aggregated_repairs_max &&
+      repairs === bounds.repairs_max &&
       (spent && spent.deterministic_gate) !== POLICY.post_repair_gate.split("_")[1]
     ) {
       return verdict("HALT", "deterministic_post_repair_gate_required");
     }
-    if (rounds >= POLICY.review_rounds) {
+    if (rounds >= bounds.reviewer_rounds) {
       return verdict("HALT", "assurance_round_limit");
     }
     if (input.role === "reviewer") {
@@ -286,4 +349,4 @@ function evaluateGateChain(input) {
   }
 }
 
-module.exports = { POLICY, evaluateAssuranceBudget, evaluateGateChain };
+module.exports = { POLICY, evaluateAssuranceBudget, evaluateGateChain, checkReviewRounds };

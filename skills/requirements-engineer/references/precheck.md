@@ -1,14 +1,17 @@
 # Register pre-check
 
-Before every Requirements Engineer dispatch, including corrected candidates, run:
+In the planning wave, run once on the draft register before the Requirements
+Engineer session, and again on the repaired candidate only when the repair changed
+an input (`../../plan-integrator/references/planning-wave.md`):
 
 ```sh
 node hooks/register-precheck.cjs <draft.sdoc> <technical-plan.md> <repository-root>
 ```
 
-Exit 0 and `outcome: PASS` are both required. Exit 1 blocks dispatch; exit 2
-is invalid invocation. Return findings to Planning and Design without spending
-any Requirements Engineer correction round. Missing inputs fail closed.
+Exit 0 with `outcome: PASS` is a clean receipt. Exit 1 is a failing receipt: its
+findings join the one consolidated planning review without spending a correction
+round and without blocking any session. Exit 2 is invalid invocation. Missing
+inputs fail closed, and the post-repair deterministic closure needs a PASS.
 Attach stdout to the dispatch packet and name the unchanged register and plan
 candidate revision. Rerun after either input or any cited file changes; a
 path-only receipt is not proof of unchanged content. Do not copy register

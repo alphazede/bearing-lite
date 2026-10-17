@@ -43,12 +43,16 @@ test('CLI emits JSON and exits nonzero on failing candidate', () => {
   assert.equal(run.status, 1);
   assert.equal(JSON.parse(run.stdout).outcome, 'FAIL');
 });
-test('dispatch contract blocks failed prechecks without correction rounds', () => {
+test('failed prechecks feed the one planning review without correction rounds or a mid-wave gate (#205)', () => {
   const router = readFileSync(new URL('../skills/bearing-lite/SKILL.md', import.meta.url), 'utf8');
   const skill = readFileSync(new URL('../skills/requirements-engineer/SKILL.md', import.meta.url), 'utf8');
   assert.match(router, /register-precheck/);
   assert.match(router, /without.*correction round/);
-  assert.match(skill, /passing.*pre-check receipt/);
+  assert.match(skill, /pre-check receipt/);
+  assert.match(skill, /passing or failing, join the review/);
+  const precheck = readFileSync(new URL('../skills/requirements-engineer/references/precheck.md', import.meta.url), 'utf8');
+  assert.doesNotMatch(precheck, /blocks dispatch|Before every Requirements Engineer dispatch/);
+  assert.match(precheck, /without blocking any session/);
   assert.match(skill, /Never re-report.*covered/);
 });
 test('Requirements Engineer matching and non-matching request retain activation boundaries', () => {

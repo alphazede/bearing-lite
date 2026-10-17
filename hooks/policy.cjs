@@ -20,6 +20,11 @@ const PLANNING_REVIEW_POLICY = Object.freeze({
   automatic_rereview: "prohibited",
   slot_exhaustion_outcome: "FAIL_ROUND",
   terminal_outcomes: ["HALT", "OWNER_AMENDMENT_REQUIRED"],
+  planning_unit_id: "planning",
+  planning_sessions_required: ["planning_and_design", "integration_engineer", "test_engineer"],
+  planning_sessions_optional: ["requirements_engineer", "systems_modeler"],
+  planning_session_pending_verdicts: ["WAITING_ON", "UNAVAILABLE", "RUNNING"],
+  requires_regate_rounds_max: 1,
 });
 
 const ASSURANCE_BUDGET_POLICY = Object.freeze({

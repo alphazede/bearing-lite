@@ -5,6 +5,7 @@ import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { planningSessions } from "./planning-contract-fixture.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(import.meta.url);
@@ -21,6 +22,7 @@ const review = (extra = {}) => ({
   candidate,
   plan_dir: MANIFEST_DIR,
   dod_manifest: { output_name: MANIFEST_NAME },
+  planning_wave: planningSessions("plan"),
   reviewer_slots: [
     { slot_id: "slot-a", primary_route_ref: "route-a", fallback_route_refs: ["route-a2"] },
   ],

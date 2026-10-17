@@ -7,6 +7,7 @@ import { createHash } from "node:crypto";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { planningContract } from "./planning-contract-fixture.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(import.meta.url);
@@ -124,11 +125,16 @@ describe("plan-package (#70 embedded digest freeze)", () => {
   );
   const seitBytes = readFileSync(path.join(dir, "seit.json"));
   const expectedManifest = sha([sha(plan), sha(design), sha(seitBytes)].join("\n"));
-  const impl = (candidate_digest, extra = {}) =>
+  const impl = (candidate_digest, extra = {}) => {
+    const contract = planningContract(candidate_digest ?? expectedManifest);
     writeFileSync(
       path.join(dir, "implementation.json"),
-      JSON.stringify({ journey_settings: { planning_review: { candidate_digest }, ...extra } })
+      JSON.stringify({
+        boundary_contract: contract.boundary_contract,
+        journey_settings: { planning_review: { candidate_digest }, ...contract.journey_settings, ...extra },
+      })
     );
+  };
 
   it("fails closed on a missing artifact or candidate digest", () => {
     assert.deepEqual(freeze(path.join(repo, "nowhere")).findings.map((f) => f.code), [
@@ -155,10 +161,13 @@ describe("plan-package (#70 embedded digest freeze)", () => {
   it("fails on an edited seit.json, then on an edited input", () => {
     impl(expectedManifest);
     writeFileSync(path.join(dir, "seit.json"), seitBytes.toString() + "\n");
-    assert.deepEqual(freeze(dir).findings.map((f) => f.code), ["candidate_digest_mismatch"]);
+    // The completed wave receipt is bound to the frozen candidate too (#205).
+    assert.deepEqual(freeze(dir).findings.map((f) => f.code), ["planning_wave_candidate_mismatch", "candidate_digest_mismatch"]);
     writeFileSync(path.join(dir, "seit.json"), seitBytes);
     writeFileSync(path.join(dir, "plan.md"), plan + "edited\n");
-    assert.deepEqual(freeze(dir).findings.map((f) => f.code), ["digest_mismatch", "candidate_digest_mismatch"]);
+    assert.deepEqual(freeze(dir).findings.map((f) => f.code), [
+      "planning_wave_candidate_mismatch", "digest_mismatch", "candidate_digest_mismatch",
+    ]);
     assert.equal(freeze(dir).outcome, "FAIL");
   });
 });
@@ -248,9 +257,10 @@ describe("plan-package (#153 complete manifest projection)", () => {
       { path: "plan.md", sha256: sha("# Stable source\n") },
     ] } });
     writeFileSync(path.join(dir, "seit.json"), seit);
-    doc.journey_settings = { planning_review: {
-      candidate_digest: sha([sha("# Stable source\n"), sha(seit)].join("\n")),
-    } };
+    const candidate_digest = sha([sha("# Stable source\n"), sha(seit)].join("\n"));
+    const contract = planningContract(candidate_digest);
+    doc.journey_settings = { planning_review: { candidate_digest }, ...contract.journey_settings };
+    doc.boundary_contract ??= contract.boundary_contract;
     writeFileSync(path.join(dir, "implementation.json"), JSON.stringify(doc));
     return freeze(dir);
   };

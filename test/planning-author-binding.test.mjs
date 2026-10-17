@@ -98,17 +98,20 @@ describe("#195 planning dispatch (skills)", () => {
     assert.match(integrator, /dispatches it\s+once/);
   });
 
-  it("the Plan Integrator dispatches planning sessions in one stated order", () => {
+  it("the Plan Integrator dispatches planning sessions in one stated input order (#205, #155)", () => {
     const order = [
       "Systems Modeler contextual pass",
       "Planning and Design (`BEARING_ROLE=planning_and_design`",
       "hooks/register-precheck.cjs`, then Requirements Engineer",
-      "Systems Modeler model pass",
       "Integration Engineer planning session",
+      "Systems Modeler model pass",
       "Planning Test Engineer finalizes `seit.json`",
     ].map((step) => integrator.indexOf(step));
     assert.ok(order.every((i) => i >= 0), String(order));
     assert.deepEqual([...order].sort((a, b) => a - b), order);
+    // The order is of inputs, never a verdict gate between sessions.
+    assert.match(integrator, /never verdicts: none waits on a Requirements Engineer pass/);
+    assert.doesNotMatch(integrator, /after the Requirements Engineer passes/);
   });
 
   it("the Plan Integrator never authors sections or resolves conflicts", () => {
@@ -130,7 +133,8 @@ describe("#195 planning dispatch (skills)", () => {
 
   it("the Systems Modeler order is stated once", () => {
     assert.match(modeler, /contextual pass \(when selected or required\) before Planning\s+and Design drafts the register/);
-    assert.match(modeler, /model pass after the Requirements\s+Engineer passes/);
+    assert.match(modeler, /model pass over the drafts and the\s+Integration Engineer boundary contract/);
+    assert.match(modeler, /Neither pass\s+waits on a Requirements Engineer verdict/);
     assert.doesNotMatch(modeler, /before or alongside Planning and Design pass 1/);
   });
 
