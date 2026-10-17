@@ -115,9 +115,13 @@ Install as a host plugin. The portable identity is always `bearing-lite` /
 host-config mutation is required. Host-specific plugin manifests and
 discovery remain host contracts; this README does not replace them.
 
+Qwen Code, Kimi Code, and Grok Build are no longer supported.
+Their retained metadata describes legacy integrations only; they are excluded
+from release qualification.
+
 ### Plugin with hooks
 
-Claude Code, Codex, and Grok Build install from a local checkout and load
+Claude Code and Codex install from a local checkout and load
 session-start activation and stop closeout hooks.
 
 ```sh
@@ -130,9 +134,6 @@ node /path/to/bearing-lite/tools/prepare-codex-plugin.mjs --out /path/to/bearing
 codex plugin marketplace add /path/to/bearing-lite-codex
 codex plugin add bearing-lite@bearing-lite
 
-# Grok Build
-grok plugin marketplace add /path/to/bearing-lite
-grok plugin install bearing-lite --trust
 ```
 
 **Codex needs the prepared marketplace.** Codex 0.162.1 registers zero plugin
@@ -176,9 +177,6 @@ mkdir -p ~/.cursor/plugins/local
 ln -s /path/to/bearing-lite ~/.cursor/plugins/local/bearing-lite
 ```
 
-**Kimi Code.** In the TUI, run `/plugins install /path/to/bearing-lite`.
-Kimi Code has no `kimi plugin` CLI.
-
 **GitHub Copilot in VS Code.** Run **Chat: Install Plugin From Source** from
 the Command Palette and enter a Git repository URL such as
 `https://github.com/alphazede/bearing-lite`. See [Agent plugins in VS
@@ -189,8 +187,7 @@ by GitHub Copilot CLI after a new window or reload.
 
 ### CLI plugin installation
 
-GitHub Copilot CLI requires Node.js 22 or later. Qwen Code accepts the
-published Agent Plugins package directly.
+GitHub Copilot CLI requires Node.js 22 or later.
 
 ```sh
 # GitHub Copilot CLI
@@ -198,8 +195,6 @@ npm install -g @github/copilot
 copilot plugin marketplace add alphazede/bearing-lite
 copilot plugin install bearing-lite@bearing-lite
 
-# Qwen Code
-qwen extensions install @alphazede/bearing-lite
 ```
 
 ### Skills-only installation
@@ -222,14 +217,12 @@ done
 **DeepCode** has no plugin-install or command-hook surface. Copy `skills/`
 into `~/.deepcode/skills` or `~/.agents/skills`.
 
-Claude Code, Codex, Grok Build, Cursor, Kimi Code, and GitHub Copilot clients
+Claude Code, Codex, Cursor, and GitHub Copilot clients
 are **partial** hook clients: session start runs the activation advisory and
 stop runs the closeout advisory and the git-sync advisory, which fast-forwards
 the session checkout from origin and names anything still unpushed. GitHub Copilot also has the implemented Test
-Engineering channels `PreToolUse`, `Stop`, and `SubagentStop`. Qwen Code, AGY,
-Pi, DeepCode, and Muse Code are **skills-only**. Qwen installs the root Agent
-Plugins 1.0 package and loads its skills; Bearing ships no Qwen-specific hook
-namespace.
+Engineering channels `PreToolUse`, `Stop`, and `SubagentStop`. AGY,
+Pi, DeepCode, and Muse Code are **skills-only**.
 Transition-order, protected-action, planning-review, and assurance-budget
 checks stay procedural on every host. Node.js must be on `PATH` for the hook
 adapters.

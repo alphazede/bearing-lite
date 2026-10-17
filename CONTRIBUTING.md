@@ -10,6 +10,10 @@ agents to those requirements. Client names may appear only to document a
 client-specific compatibility surface, never as a required implementation,
 coordination, fallback, or assurance route.
 
+Qwen Code, Kimi Code, and Grok Build are no longer supported native clients.
+Retained integration metadata is legacy-only and does not require release
+smoke tests. Report untested clients as untested; never count absence as PASS.
+
 Thanks for the interest. This page covers how the project works and what helps
 most.
 

@@ -529,16 +529,13 @@ describe("CMD-PUBLIC-01 public-boundary (SEIT-PUBLIC-01, SEIT-MODEL-01, SEIT-IND
     for (const client of [
       "Claude Code",
       "Codex",
-      "Grok Build",
       "Cursor",
-      "Kimi Code",
       "AGY",
       "Pi",
       "DeepCode",
       "Muse Code",
       "GitHub Copilot in VS Code",
       "GitHub Copilot CLI",
-      "Qwen Code",
     ]) {
       assert.match(install, new RegExp(client.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")), client);
     }
@@ -547,9 +544,9 @@ describe("CMD-PUBLIC-01 public-boundary (SEIT-PUBLIC-01, SEIT-MODEL-01, SEIT-IND
     assert.match(install, /claude plugin install bearing-lite@bearing-lite/);
     assert.match(install, /codex plugin marketplace add \/path\/to\/bearing-lite/);
     assert.match(install, /codex plugin add bearing-lite@bearing-lite/);
-    assert.match(install, /grok plugin marketplace add \/path\/to\/bearing-lite/);
-    assert.match(install, /grok plugin install bearing-lite --trust/);
-    assert.match(install, /\/plugins install \/path\/to\/bearing-lite/);
+    assert.match(install, /Qwen Code, Kimi Code, and Grok Build are no longer supported/);
+    assert.doesNotMatch(install, /grok plugin (?:marketplace|install)/);
+    assert.doesNotMatch(install, /\/plugins install/);
     assert.match(install, /agy plugin install \/path\/to\/bearing-lite\/\.agy/);
     assert.match(install, /pi install npm:@alphazede\/bearing-lite/);
     assert.match(install, /~\/\.deepcode\/skills/);
@@ -557,7 +554,7 @@ describe("CMD-PUBLIC-01 public-boundary (SEIT-PUBLIC-01, SEIT-MODEL-01, SEIT-IND
     assert.match(install, /Git repository URL/i);
     assert.match(install, /copilot plugin marketplace add alphazede\/bearing-lite/);
     assert.match(install, /copilot plugin install bearing-lite@bearing-lite/);
-    assert.match(install, /qwen extensions install @alphazede\/bearing-lite/);
+    assert.doesNotMatch(install, /qwen extensions install/);
     assert.match(install, /muse skills install/);
     assert.match(install, /skills\/\*\/SKILL\.md/);
     assert.match(install, /skills-only/i);
