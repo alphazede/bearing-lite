@@ -23,7 +23,7 @@ Lowest mutation authority and highest hands-on work in the Bearing ladder.
   assurance, or owner-only action.
 - **Split:** `tdd` orders Test Implementer before Product Implementer from the frozen snapshot. Test Implementer may change only tests and approved fixtures. Product Implementer write set excludes tests and must not weaken independently authored tests. Same-feature parallel is prohibited. `single_implementer` writes product plus tests. Neither self-certifies.
 - **Repair:** consume the frozen review receipt after parent-accepted `REPAIR_REQUIRED`:
-  candidate ref/revision/digest, finding IDs, write set, same worktree/branch/generation.
+  candidate ref/revision/digest, finding IDs, write set, same worktree/branch/generation. Consume parent-approved frozen addenda only under Reviewer’s same-open-round admission rules; they grant no new allowance.
 
 ## Algorithm
 
