@@ -6,7 +6,7 @@
 
 ### Fixed
 
-- Enforced bound assurance budgets before dispatch with atomic reservations, fixed parallel groups, exact owner amendments and deterministic repair closure. Preserved ordinary unbound work and explicit native versus component qualification ([#209](https://github.com/alphazede/bearing-lite/issues/209), duplicate [#210](https://github.com/alphazede/bearing-lite/issues/210); [PR #215](https://github.com/alphazede/bearing-lite/pull/215)).
+- Enforced bound assurance budgets before dispatch with atomic reservations, fixed parallel groups, exact owner amendments and deterministic repair closure. Preserved ordinary unbound work and explicit native versus component qualification ([#209](https://github.com/alphazede/bearing-lite/issues/209), duplicate [#210](https://github.com/alphazede/bearing-lite/issues/210); [PR #215](https://github.com/alphazede/bearing-lite/pull/215); release [PR #216](https://github.com/alphazede/bearing-lite/pull/216)).
 
 ## [1.1.11](https://github.com/alphazede/bearing-lite/releases/tag/v1.1.11) - 2026-10-17
 
