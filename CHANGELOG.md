@@ -2,7 +2,25 @@
 
 ## [Unreleased]
 
-## [1.1.12](https://github.com/alphazede/bearing-lite/releases/tag/v1.1.12) - 2026-10-17
+- Prepared the 2.0.0 lifecycle and hook migration ([PR #217](https://github.com/alphazede/bearing-lite/pull/217)).
+
+## [2.0.0](https://github.com/alphazede/bearing-lite/releases/tag/v2.0.0) - 2026-10-18
+
+### Changed
+
+- Combined Architectural Alignment and Scope in the controller session; moved final plan/design, assembly and handoff to the Orchestrator. Removed the Plan Integrator skill and retired `plan_integrator` / `planning_and_design` profile routes. Existing configurations must remove those roles and use the Orchestrator ([PR #217](https://github.com/alphazede/bearing-lite/pull/217)).
+- Made specialist roles profile-configured and independent review owner-requested. Requirements authors check their own work before test planning; prompts preserve role loops and one assignment per agent. Coordination waits for response events, and arbitrary three-attempt limits are removed ([PR #217](https://github.com/alphazede/bearing-lite/pull/217)).
+- Added concise onboarding, role explanations, explicit resume/handoff guidance, and optional OpenCodeReview, Reverify and additional verification tools with frozen capability preservation ([PR #217](https://github.com/alphazede/bearing-lite/pull/217)).
+
+### Fixed
+
+- Required explicit owner-requested current native session/task binding before general hooks advise, enforce ownership or synchronize Git. Ordinary, stale and cross-session work stays quiet and never fetches or fast-forwards. Existing plans opt in through the visible `bearing_session` field; standalone selected Test Engineering and explicit assurance bindings retain their own boundaries ([PR #217](https://github.com/alphazede/bearing-lite/pull/217)).
+- Rejected unresolved final requirement/test-case bindings and verified the actual unchanged-input snapshot when adopting planning evidence ([PR #217](https://github.com/alphazede/bearing-lite/pull/217)).
+- Included the previously prepared assurance-budget fix: atomic reservations, fixed parallel groups, exact owner amendments and deterministic repair closure, preserving ordinary unbound work and explicit native versus component qualification ([PR #215](https://github.com/alphazede/bearing-lite/pull/215), preparation [PR #216](https://github.com/alphazede/bearing-lite/pull/216)).
+
+## 1.1.12 - 2026-10-17
+
+Prepared but not tagged or published. Its changes are included in 2.0.0.
 
 ### Fixed
 
