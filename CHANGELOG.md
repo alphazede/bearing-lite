@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Preserve frozen decision holds and clarify Coordinator escalation after two evidence-based routine-resolution attempts, with optional scoped Orchestrator delegation disabled by default ([PR #218](https://github.com/alphazede/bearing-lite/pull/218)).
+
 - Prepared the 2.0.0 lifecycle and hook migration ([PR #217](https://github.com/alphazede/bearing-lite/pull/217)).
 
 ## [2.0.0](https://github.com/alphazede/bearing-lite/releases/tag/v2.0.0) - 2026-10-18
