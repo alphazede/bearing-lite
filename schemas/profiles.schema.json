@@ -304,9 +304,6 @@
             "scribe": {
               "$ref": "#/$defs/scribeRoute"
             },
-            "plan_integrator": {
-              "$ref": "#/$defs/route"
-            },
             "systems_modeler": {
               "$ref": "#/$defs/sessionedRole"
             },
@@ -377,6 +374,24 @@
           "type": "object",
           "additionalProperties": false,
           "properties": {
+            "additional_tools": {
+              "type": "array",
+              "description": "Optional owner-chosen repository testing tools. Enabled entries are planning inputs, not automatic execution or installation authority; applicable commands and evidence are bound in SEIT.",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["name", "enabled"],
+                "if": { "properties": { "enabled": { "const": true } }, "required": ["enabled"] },
+                "then": { "required": ["command", "pass", "evidence"] },
+                "properties": {
+                  "name": { "type": "string", "minLength": 1, "pattern": "\\S" },
+                  "enabled": { "type": "boolean" },
+                  "command": { "type": "string", "minLength": 1, "pattern": "\\S" },
+                  "pass": { "type": "string", "minLength": 1, "pattern": "\\S" },
+                  "evidence": { "type": "string", "minLength": 1, "pattern": "\\S" }
+                }
+              }
+            },
             "reverify": {
               "type": "object",
               "additionalProperties": false,

@@ -3,8 +3,9 @@
 
 /**
  * Orchestrator write-set lock (#112). Pure evaluator plus PreToolUse adapter.
- * Denies Orchestrator (no / empty / orchestrator BEARING_ROLE) writes to
- * planning and requirement-library artifacts. Native write-time deny only;
+ * Denies Orchestrator writes to specialist-owned content (requirements
+ * library, SEIT) while allowing its own final plan/design, assembly, and
+ * planning handoff. Native write-time deny only;
  * other hosts fail open as UNAVAILABLE. Always exit 0.
  */
 
@@ -95,7 +96,7 @@ function isOrchestrator(role) {
   return !role || role === "orchestrator";
 }
 
-function ownerFor(rel) {
+function ownerFor(rel, root) {
   const n = posix(rel);
   const b = basename(n);
   if (b === "workspace.md" || b === "repository-map.md") {
@@ -109,34 +110,38 @@ function ownerFor(rel) {
   ) {
     return "requirements_engineer";
   }
-  if (
-    b === "design.md" ||
-    b === "seit.json" ||
-    b === "implementation.json" ||
-    b.endsWith("-technical-plan.md") ||
-    b.endsWith("-dod-manifest.html")
-  ) {
-    return "planning_and_design";
-  }
-  return null;
+  const artifact = planningArtifact(n, root);
+  return artifact ? PLANNING_WRITERS[artifact][0] : null;
 }
 
 /**
  * #195 bound planning authors. Each planning artifact may be written only by
  * these roles; any other Lifecycle control or specialist role (Coordinator
  * included) is refused. Execution roles stay under the slice write-set check.
+ * Final Planning and Design is the Planning Orchestrator's own procedure, so
+ * the controller (role `orchestrator`, or a role-less non-subagent session)
+ * authors the technical plan and design.md; the Systems Modeler may write its
+ * design views. SEIT stays Test Engineer content and the requirements library
+ * stays Requirements Engineer content.
  */
 const PLANNING_WRITERS = Object.freeze({
-  technical_plan: ["planning_and_design"],
-  "design.md": ["planning_and_design", "systems_modeler"],
-  "seit.json": ["planning_and_design", "test_engineer"],
-  "implementation.json": ["planning_and_design", "plan_integrator", "coordinator"],
-  dod_manifest: ["planning_and_design", "plan_integrator", "coordinator"],
+  technical_plan: ["orchestrator"],
+  "design.md": ["orchestrator", "systems_modeler"],
+  "seit.json": ["test_engineer"],
+  "implementation.json": ["orchestrator", "coordinator"],
+  dod_manifest: ["orchestrator", "coordinator"],
+  "handoff.md": ["orchestrator"],
 });
+/**
+ * Retired planning identities: Plan Integrator and the former separate
+ * Planning and Design author. Neither may fall through the execution-role
+ * allowance; their work belongs to the existing Planning Orchestrator.
+ */
+const RETIRED_PLANNING_ROLES = new Set(["plan_integrator", "planning_and_design"]);
+const ORCHESTRATOR_RETURN =
+  "Return the result to the existing Planning Orchestrator; do not launch another controller or author.";
 const BOUND_CHECKED_ROLES = new Set([
   "coordinator",
-  "plan_integrator",
-  "planning_and_design",
   "systems_modeler",
   "requirements_engineer",
   "test_engineer",
@@ -149,10 +154,32 @@ const BOUND_CHECKED_ROLES = new Set([
   "scope_definition",
 ]);
 
-function planningArtifact(rel) {
+/**
+ * The lifecycle handoff is protected only at a planning path: under a
+ * `docs/plans/` directory, or (when a checkout root is known) beside planning
+ * artifacts in the same directory. Any other product file that happens to be
+ * named handoff.md stays under its slice write-set authority.
+ */
+const PLAN_SIBLINGS = ["workspace.md", "implementation.json", "seit.json", "journey.json"];
+function isPlanningHandoff(rel, root) {
+  const n = posix(rel);
+  if (basename(n) !== "handoff.md") return false;
+  if (/(?:^|\/)docs\/plans\/(?:[^/]+\/)*handoff\.md$/.test(n)) return true;
+  if (!root) return false;
+  try {
+    const dir = path.dirname(path.isAbsolute(n) ? n : path.resolve(root, n));
+    const names = fs.readdirSync(dir);
+    return names.some((name) => PLAN_SIBLINGS.includes(name) || name.endsWith("-technical-plan.md"));
+  } catch {
+    return false;
+  }
+}
+
+function planningArtifact(rel, root) {
   const b = basename(posix(rel));
   if (b.endsWith("-technical-plan.md")) return "technical_plan";
   if (b.endsWith("-dod-manifest.html")) return "dod_manifest";
+  if (b === "handoff.md") return isPlanningHandoff(rel, root) ? b : null;
   return Object.hasOwn(PLANNING_WRITERS, b) ? b : null;
 }
 
@@ -162,17 +189,17 @@ function baseRole(role) {
   return i >= 0 ? role.slice(0, i) : role;
 }
 
-function boundAuthorDenial(role, paths) {
+function boundAuthorDenial(role, paths, root) {
   const base = baseRole(role);
   if (!BOUND_CHECKED_ROLES.has(base)) return null;
   for (const rel of paths) {
-    const artifact = planningArtifact(rel);
+    const artifact = planningArtifact(rel, root);
     if (!artifact || PLANNING_WRITERS[artifact].includes(base)) continue;
-    const owner = "planning_and_design";
-    const dispatch = dispatchFor("plan_integrator");
+    const owner = PLANNING_WRITERS[artifact][0];
+    const dispatch = dispatchFor(owner);
     return {
       verdict: DENY_DISPATCH,
-      reason: `${base} cannot write ${basename(rel)}; bound authors are ${PLANNING_WRITERS[artifact].join(", ")}. Return the finding to the Plan Integrator for a named delta. ${dispatch} (bearing-lite v${hookVersion()})`,
+      reason: `${base} cannot write ${basename(rel)}; bound authors are ${PLANNING_WRITERS[artifact].join(", ")}. Return the finding to the Planning Orchestrator. ${dispatch} (bearing-lite v${hookVersion()})`,
       owner,
       dispatch,
     };
@@ -273,7 +300,7 @@ function repairAuthority(body, root, paths) {
   }
   const allowed = new Set(receipt.write_set.map((rel) => (presentString(rel) ? insideRoot(root, rel) : null)));
   for (const rel of paths) {
-    if (!planningArtifact(rel)) continue;
+    if (!planningArtifact(rel, root)) continue;
     const target = insideRoot(root, rel);
     if (!target || !allowed.has(target)) return no(`outside_repair_write_set: ${basename(rel)}`);
     // Check raw ancestors too: resolving `link/../file` first can hide a symlink.
@@ -290,11 +317,12 @@ function repairAuthority(body, root, paths) {
 }
 
 function dispatchFor(owner) {
+  if (owner === "orchestrator") return ORCHESTRATOR_RETURN;
   return `Dispatch skills/${owner.replace(/_/g, "-")} with BEARING_ROLE=${owner}`;
 }
 
 const LOCKED_TOKEN_RE =
-  /(?:^|[^\w./-])((?:[\w./-]*\/)?(?:design\.md|workspace\.md|seit\.json|implementation\.json|repository-map\.md|[\w.-]*-technical-plan\.md|[\w.-]*-dod-manifest\.html|\.bearing-round\.lock|docs\/coe(?:\/[\w./-]*)?))(?:[^\w./-]|$)/g;
+  /(?:^|[^\w./-])((?:[\w./-]*\/)?(?:design\.md|workspace\.md|handoff\.md|seit\.json|implementation\.json|repository-map\.md|[\w.-]*-technical-plan\.md|[\w.-]*-dod-manifest\.html|\.bearing-round\.lock|docs\/coe(?:\/[\w./-]*)?))(?:[^\w./-]|$)/g;
 
 function fieldText(value) {
   if (typeof value === "string") return value;
@@ -703,6 +731,7 @@ function collectPaths(input) {
  */
 function evaluate(input) {
   const body = isPlainObject(input) ? input : {};
+  if (!require("./task-binding.cjs").binding(body)) return { verdict: ALLOW, reason: "ordinary_unbound_work" };
   const role = normalizeRole(body.role || body.BEARING_ROLE);
   // An in-process subagent carries agent_id; a role-less subagent is never
   // the Orchestrator, while a role-less session without agent_id is.
@@ -710,6 +739,26 @@ function evaluate(input) {
   const paths = collectPaths(body);
   const base = baseRole(role);
   const parent = PARENT_ROLES.has(base) || (!role && !agentId);
+  const root = path.resolve(presentString(body.cwd) || process.cwd());
+  // Retired identities must not fall through the execution-role allowance.
+  if (RETIRED_PLANNING_ROLES.has(base)) {
+    return {
+      verdict: DENY_DISPATCH,
+      reason: `retired_role:${base}: final planning/design is the Planning Orchestrator's own procedure. ${ORCHESTRATOR_RETURN} (bearing-lite v${hookVersion()})`,
+      owner: "orchestrator",
+      dispatch: ORCHESTRATOR_RETURN,
+    };
+  }
+  // The planning handoff is controller-owned, ahead of any repair allowance.
+  const isController = isOrchestrator(role) && (role === "orchestrator" || !agentId);
+  if (!isController && paths.some((rel) => isPlanningHandoff(rel, root))) {
+    return {
+      verdict: DENY_DISPATCH,
+      reason: `${base || "Role-less subagent"} cannot write the planning handoff.md; it belongs to the Planning Orchestrator controller. ${ORCHESTRATOR_RETURN} (bearing-lite v${hookVersion()})`,
+      owner: "orchestrator",
+      dispatch: ORCHESTRATOR_RETURN,
+    };
+  }
   // #206: even an unassigned child cannot mutate parent-owned control state.
   if (!parent && paths.some(isRoundRecord)) {
     return {
@@ -718,9 +767,8 @@ function evaluate(input) {
     };
   }
   if (!isOrchestrator(role)) {
-    const denial = boundAuthorDenial(role, paths);
+    const denial = boundAuthorDenial(role, paths, root);
     if (denial && REPAIR_ROLES.has(base)) {
-      const root = path.resolve(presentString(body.cwd) || process.cwd());
       const repair = repairAuthority(body, root, paths);
       if (repair.ok) return { verdict: ALLOW, reason: "repair_transition_write_allowed" };
       return { ...denial, reason: `${repair.reason}. ${denial.reason}` };
@@ -728,21 +776,23 @@ function evaluate(input) {
     return denial || { verdict: ALLOW, reason: "role_write_allowed" };
   }
   for (const rel of paths) {
-    const owner = ownerFor(rel);
+    const owner = ownerFor(rel, root);
     if (!owner) continue;
     // DES-146.01: workspace.md / repository-map.md are Orchestrator-owned.
     // Only the Orchestrator itself skips the deny: an explicit orchestrator
     // role, or a role-less session that is not an in-process subagent.
     if (owner === "architectural_alignment" && (role === "orchestrator" || !agentId)) continue;
+    if (owner === "orchestrator" && (role === "orchestrator" || !agentId)) continue;
     const dispatch = dispatchFor(owner);
     const delta =
-      body.finding === true || owner === "planning_and_design"
-        ? " Dispatch a planning delta; do not edit the artifact."
+      body.finding === true || owner === "orchestrator"
+        ? " Return a planning delta to the owner; do not edit the artifact."
         : "";
     // A role-less session is never silently treated as the Orchestrator:
     // name the separate-process BEARING_ROLE fallback instead.
-    const reason =
-      role === "orchestrator"
+    const reason = owner === "orchestrator"
+      ? `Role-less subagent cannot write ${basename(rel)}; it belongs to the Planning Orchestrator controller.${delta} ${dispatch} (bearing-lite v${hookVersion()})`
+      : role === "orchestrator"
         ? `Orchestrator cannot write ${basename(rel)}; owning role is ${owner}.${delta} ${dispatch} (bearing-lite v${hookVersion()})`
         : `Session without a role cannot write ${basename(rel)}; owning role is ${owner}. Run it as a separate process with BEARING_ROLE=${owner}.${delta} ${dispatch} (bearing-lite v${hookVersion()})`;
     return {
@@ -752,16 +802,15 @@ function evaluate(input) {
       dispatch,
     };
   }
-  const root = presentString(body.cwd) || process.cwd();
   const round = loadRoundLock(root);
   if (round && isOrchestrator(role)) {
     for (const rel of paths) {
       if (!isUnder(root, round.plan_dir, rel)) continue;
       return {
         verdict: DENY_DISPATCH,
-        reason: `frozen_candidate: review is bound to ${presentString(round.candidate) || "the frozen candidate"}; Orchestrator plan-dir writes are deferred (bearing-lite v${hookVersion()})`,
-        owner: "planning_and_design",
-        dispatch: dispatchFor("planning_and_design"),
+        reason: `frozen_candidate: review is bound to ${presentString(round.candidate) || "the frozen candidate"}; Orchestrator plan-dir writes are deferred until the review returns (bearing-lite v${hookVersion()})`,
+        owner: "orchestrator",
+        dispatch: ORCHESTRATOR_RETURN,
       };
     }
   }

@@ -14,9 +14,16 @@ acceptance, release, or deployment authority.
 A user can start with a Feature Story, Defect, Technical Task, or Change
 Request and follow one path:
 
-Intake → Architectural Alignment → Scope Definition → Planning and Design →
-owner authorization → bounded implementation → Test Engineer assurance →
-Reviewer → Integration Engineer execution assessment → completion evidence.
+Intake → Architectural Alignment and Scope → Requirements Engineer → Systems
+Modeler → Integration Engineer planning → Planning Test Engineer → Orchestrator
+final Planning and Design and assembly → requested planning review → owner
+confirmation → written handoff → bounded implementation → requested assurance
+and review → completion evidence.
+
+Only profile-enabled specialists the task needs run. These arrows express input
+dependencies; independent ready work runs concurrently. Existing authoritative
+artifacts may supply inactive roles' inputs. Missing required deliverables remain
+typed gaps, never invented sessions or silent substitutions.
 
 The generated `<plan-name>-dod-manifest.html` makes planned and actual work
 reviewable without becoming execution authority.
@@ -24,43 +31,42 @@ reviewable without becoming execution authority.
 ## Planning order
 
 1. **Intake** confirms one target repository and plan directory.
-2. **Architectural Alignment** creates or resumes `workspace.md` and extracts
-   existing architecture covering the affected scope. If none exists or
-   evidence does not cover it, record that gap and activate Systems Modeler
-   rather than inventing architecture.
-3. **Scope Definition** resolves material owner decisions one recommended
-   question at a time. Unresolved material intent blocks Planning and Design.
-4. The planning Orchestrator dispatches the **Plan Integrator** once. The
-   Plan Integrator is the planning counterpart of the Coordinator: it
-   dispatches each planning session on its frozen route, sends findings back
-   to the owning session as named deltas, and never authors section content
-   or resolves a specialist conflict (that returns to the owner). The
-   Orchestrator does not relay between planning roles.
-5. The Plan Integrator dispatches, in order: the Systems Modeler contextual
-   pass when selected or required; **Planning and Design**, which authors
-   `<lifecycle-topic>-technical-plan.md`, `design.md`, the draft `seit.json`,
-   register rows, and the proposed graph in its own session on the frozen
-   `plan_integrator` route; the register pre-check and Requirements Engineer;
-   the Systems Modeler model pass; and Integration Engineer planning, which
-   owns compatibility, assembly order, interface risk, and integration
-   judgments.
-6. The Plan Integrator reconciles the five artifacts and copies Integration
-   Engineer anomaly, rollback, recovery, and V&V handoffs mechanically; Test
-   Engineer planning then finalizes `seit.json`; the Plan Integrator
-   generates `implementation.json` and the Definition of Done Manifest input
-   and runs the freeze. The write lock refuses planning artifacts written by
-   any role other than their bound author, the Coordinator included.
-7. Planning uses one initial specialist pass plus at most one targeted
-   reconciliation pass. Deterministic mismatches do not consume the targeted
-   pass. Remaining material conflict returns to the owner.
-8. Planning review is one independent review, at most one aggregated repair,
-   deterministic closure, and no automatic rereview. The Orchestrator
-   coordinates the transition and never becomes the reviewer.
-9. Dispatch starts only after owner authorization of the exact package.
+2. **Architectural Alignment and Scope** runs in the Planning Orchestrator's
+   session. It creates or resumes `workspace.md`, maps existing architecture,
+   and resolves material owner decisions one question at a time. The legacy
+   Scope Definition name forwards here; it is no separate stage or agent.
+3. **Requirements Engineer**, when enabled and needed, authors requirements
+   and acceptance criteria from confirmed context and source contracts, checks
+   their quality, repairs them, and reruns `register-precheck.cjs --stage
+   requirements`. Later SEIT case IDs and placement evidence are owned pending
+   bindings, not requirements-stage prerequisites.
+4. **Systems Modeler**, when enabled and needed, consumes those requirements
+   and existing architecture to return model views and placement evidence.
+   Missing architecture is a visible gap; it never authorizes another agent.
+5. **Integration Engineer planning**, when enabled and needed, authors the
+   boundary contract, compatibility and assembly strategy, rollback, recovery,
+   and validation steps from requirements, architecture, and proposed interfaces.
+6. **Planning Test Engineer**, when enabled and needed, authors `seit.json`
+   and proof cases bound to existing requirement IDs using the interface and
+   boundary inputs. It completes pending case bindings; it writes no product tests.
+7. **Final Planning and Design** is the existing Planning Orchestrator's own
+   procedure. It authors the technical plan and `design.md` from completed
+   inputs, checks allocations and every case binding with the final-stage
+   register precheck and SEIT, then assembles `implementation.json` and the
+   Definition of Done Manifest. Requirements and SEIT remain specialist-owned.
+8. **Planning review** runs only when the owner requested that boundary and the
+   selected Reviewer is enabled. It allows one independent review, at most one
+   aggregated repair, deterministic closure, and no automatic rereview. Otherwise
+   record `review_requested: false`, zero reviews, and no review receipt.
+9. **Owner confirmation and handoff** binds the exact package and execution
+   authority. The Orchestrator checks Scribe coverage with `hooks/closeout.cjs`
+   and `journey` before writing `handoff.md`, then recommends a new Implementation
+   Orchestrator session. It does not launch that session automatically.
 
-The Orchestrator checks completeness, IDs, dependencies, authority, and
-evidence presence only. It does not judge technical quality or
-implementation-evidence sufficiency.
+Each selected author checks and repairs its output in one assignment. Named
+specialist deltas return to that author; additional invocations need their
+existing authority. Controllers wait on native completion events and consume
+each return once; they never poll logs, processes, status, or worktrees.
 
 ## Implementation
 
@@ -93,10 +99,11 @@ Profiles nest sessions beneath stable role identities.
 | Reviewer | implementation review | `phase` |
 | Systems Modeler | planning | not cadence-gated |
 
-Cadence values are `slice`, `phase`, or `lifecycle`. A declared boundary runs
-each enabled session once, allows one aggregated repair, then uses
-deterministic closure without automatic rereview. Planning review remains a
-separate pre-dispatch gate.
+Cadence values are `slice`, `phase`, or `lifecycle`. Independent review and
+assurance run only when the owner requested their scope and cadence; profile
+configuration alone never requests them. An authorized boundary runs each
+enabled session once, allows one aggregated repair, then uses deterministic
+closure without automatic rereview. Planning review has a separate budget.
 
 Integration Engineer execution independently performs final system-level
 validation and integrated technical assessment against the approved
@@ -114,10 +121,13 @@ planning-to-implementation clean-session boolean, with no preselected value.
 Declining Reverify persists `reverify.enabled: false`. A leftover
 `lineups.json` returns `MIGRATION_REQUIRED` and is never live data.
 
-When clean-session is enabled, the planning Orchestrator uses the packaged
-agnostic prompt skill to render a fresh Orchestrator implementation-start
-handoff after exact package approval. When disabled, the existing
-Orchestrator continues from the same durable artifacts.
+After exact package approval, the Planning Orchestrator writes the handoff and
+recommends a fresh Implementation Orchestrator session. The clean-session
+setting preserves the owner's session choice; it never authorizes an automatic
+launch. Continuing in the current session is an owner choice using the same
+durable artifacts. Retired `plan_integrator` and `planning_and_design` routes
+return `MIGRATION_REQUIRED`; explicit onboarding removes only the retired key
+and preserves every other route and capability without copying its identity.
 
 ## Resume
 

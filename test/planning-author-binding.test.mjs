@@ -1,144 +1,190 @@
+import { boundHook, withTask } from "./task-opt-in-fixture.mjs";
 /**
- * #195 Planning artifacts have bound authors. The planning Orchestrator
- * dispatches the Plan Integrator once; the Plan Integrator dispatches the
- * planning sessions; Planning and Design authors on the frozen
- * plan_integrator route; the Coordinator never authors planning artifacts.
+ * Planning authorship (F1/F5/F7 repair): specialists own their content, the
+ * Planning Orchestrator controller authors final plan/design, assembly, and the
+ * planning handoff in its own session, and no separate design author exists.
  */
-import { describe, it } from "node:test";
+import { describe, it, after } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const require = createRequire(import.meta.url);
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const read = (rel) => readFileSync(path.join(ROOT, rel), "utf8");
-const lock = require("../hooks/orchestrator-write-lock.cjs");
-
-const PLAN = "docs/plans/2026-10-16-example";
+const lock = boundHook(require("../hooks/orchestrator-write-lock.cjs"));
+const PLAN = "docs/plans/example";
 const ARTIFACTS = {
   technical_plan: `${PLAN}/example-technical-plan.md`,
   design: `${PLAN}/design.md`,
   seit: `${PLAN}/seit.json`,
   implementation: `${PLAN}/implementation.json`,
   manifest: `${PLAN}/example-dod-manifest.html`,
+  handoff: `${PLAN}/handoff.md`,
 };
-const write = (role, file) => lock.evaluate({ role, agent_id: "a1", paths: [file] });
+const write = (role, file, extra = {}) => lock.evaluate({ role, paths: [file], ...extra });
+const temps = [];
+after(() => temps.forEach((dir) => rmSync(dir, { recursive: true, force: true })));
 
-describe("#195 bound planning authors (write lock)", () => {
-  it("Coordinator cannot author the technical plan, design, or SEIT", () => {
-    for (const file of [ARTIFACTS.technical_plan, ARTIFACTS.design, ARTIFACTS.seit]) {
-      const result = write("coordinator", file);
-      assert.equal(result.verdict, "DENY_DISPATCH", file);
-      assert.match(result.reason, /^coordinator cannot write/);
-      assert.match(result.dispatch, /BEARING_ROLE=plan_integrator/);
+describe("F1: the Planning Orchestrator authors final plan/design in its own session", () => {
+  it("the controller writes the technical plan, design, assembly, and handoff", () => {
+    for (const file of [ARTIFACTS.technical_plan, ARTIFACTS.design, ARTIFACTS.implementation, ARTIFACTS.manifest, ARTIFACTS.handoff]) {
+      assert.equal(write("orchestrator", file).verdict, "ALLOW", `orchestrator: ${file}`);
+      assert.equal(write("", file).verdict, "ALLOW", `role-less controller: ${file}`);
     }
   });
 
-  it("Coordinator keeps its once-per-wave implementation.json and Manifest updates", () => {
-    assert.equal(write("coordinator", ARTIFACTS.implementation).verdict, "ALLOW");
-    assert.equal(write("coordinator", ARTIFACTS.manifest).verdict, "ALLOW");
-  });
-
-  it("a shell write by the Coordinator is refused too", () => {
-    const result = lock.evaluate({
-      role: "coordinator",
-      tool_input: { command: `cat > ${ARTIFACTS.design} <<'EOF'\nx\nEOF` },
-    });
-    assert.equal(result.verdict, "DENY_DISPATCH");
-  });
-
-  it("Planning and Design authors every planning artifact", () => {
+  it("a role-less subagent is never treated as the controller", () => {
     for (const file of Object.values(ARTIFACTS)) {
-      assert.equal(write("planning_and_design", file).verdict, "ALLOW", file);
+      const result = write("", file, { agent_id: "unassigned-child" });
+      assert.equal(result.verdict, "DENY_DISPATCH", file);
+      assert.doesNotMatch(String(result.reason), /Dispatch skills\/planning-and-design/);
     }
   });
 
-  it("Plan Integrator generates but never authors sections", () => {
-    assert.equal(write("plan_integrator", ARTIFACTS.implementation).verdict, "ALLOW");
-    assert.equal(write("plan_integrator", ARTIFACTS.manifest).verdict, "ALLOW");
-    for (const file of [ARTIFACTS.technical_plan, ARTIFACTS.design, ARTIFACTS.seit]) {
-      assert.equal(write("plan_integrator", file).verdict, "DENY_DISPATCH", file);
-    }
+  it("the controller still cannot author specialist-owned requirements or SEIT", () => {
+    const seit = write("orchestrator", ARTIFACTS.seit);
+    assert.equal(seit.verdict, "DENY_DISPATCH");
+    assert.equal(seit.owner, "test_engineer");
+    const register = write("orchestrator", "docs/coe/register.sdoc");
+    assert.equal(register.verdict, "DENY_DISPATCH");
+    assert.equal(register.owner, "requirements_engineer");
   });
 
-  it("specialists write only their own outputs", () => {
+  it("no deny path dispatches a separate Planning and Design author", () => {
+    const denials = [
+      write("", ARTIFACTS.design, { agent_id: "child" }),
+      write("coordinator", ARTIFACTS.technical_plan),
+      write("requirements_engineer", ARTIFACTS.design),
+      write("planning_and_design", ARTIFACTS.design),
+    ];
+    for (const result of denials) {
+      assert.equal(result.verdict, "DENY_DISPATCH");
+      assert.doesNotMatch(`${result.reason} ${result.dispatch}`, /BEARING_ROLE=planning_and_design|skills\/planning-and-design/);
+    }
+  });
+});
+
+describe("specialist ownership is preserved", () => {
+  it("requirements, test, and modeler authors keep only their own outputs", () => {
+    assert.equal(write("requirements_engineer", "docs/coe/register.sdoc").verdict, "ALLOW");
+    assert.equal(write("requirements_engineer", ARTIFACTS.design).verdict, "DENY_DISPATCH");
     assert.equal(write("test_engineer.planning", ARTIFACTS.seit).verdict, "ALLOW");
     assert.equal(write("test_engineer.planning", ARTIFACTS.design).verdict, "DENY_DISPATCH");
     assert.equal(write("systems_modeler", ARTIFACTS.design).verdict, "ALLOW");
     assert.equal(write("systems_modeler", ARTIFACTS.technical_plan).verdict, "DENY_DISPATCH");
-    assert.equal(write("requirements_engineer", ARTIFACTS.technical_plan).verdict, "DENY_DISPATCH");
-    assert.equal(write("integration_engineer.planning", ARTIFACTS.implementation).verdict, "DENY_DISPATCH");
-    assert.equal(write("scribe", ARTIFACTS.design).verdict, "DENY_DISPATCH");
+    assert.equal(write("integration_engineer.planning", ARTIFACTS.design).verdict, "DENY_DISPATCH");
   });
 
-  it("the Orchestrator stays refused, and non-planning paths stay open", () => {
-    assert.equal(lock.evaluate({ role: "orchestrator", paths: [ARTIFACTS.design] }).verdict, "DENY_DISPATCH");
-    assert.equal(write("coordinator", "src/app.js").verdict, "ALLOW");
-    assert.equal(write("scribe", `${PLAN}/journey.json`).verdict, "ALLOW");
+  it("Coordinator keeps wave assembly but cannot author specialist content or the handoff", () => {
+    for (const file of [ARTIFACTS.implementation, ARTIFACTS.manifest]) {
+      assert.equal(write("coordinator", file).verdict, "ALLOW", file);
+    }
+    for (const file of [ARTIFACTS.technical_plan, ARTIFACTS.design, ARTIFACTS.seit, ARTIFACTS.handoff]) {
+      assert.equal(write("coordinator", file).verdict, "DENY_DISPATCH", file);
+    }
   });
 
-  it("execution roles remain under the slice write-set check", () => {
-    assert.equal(write("implementer", "docs/product/design.md").verdict, "ALLOW");
+  it("shell writes have the same ownership boundary", () => {
+    assert.equal(lock.evaluate({ role: "coordinator", tool_input: { command: `cat > ${ARTIFACTS.design}` } }).verdict, "DENY_DISPATCH");
+    assert.equal(lock.evaluate({ role: "implementer", tool_input: { command: `echo x > ${ARTIFACTS.handoff}` } }).verdict, "DENY_DISPATCH");
+    assert.equal(lock.evaluate({ tool_input: { command: `echo x > ${ARTIFACTS.seit}` } }).verdict, "DENY_DISPATCH");
+  });
+
+  it("retired planning identities cannot exploit the unknown-role fallback", () => {
+    for (const role of ["plan_integrator", "Plan Integrator", "plan_integrator.planning", "planning_and_design", "Planning and Design"]) {
+      for (const file of [...Object.values(ARTIFACTS), "src/index.js"]) {
+        const result = write(role, file);
+        assert.equal(result.verdict, "DENY_DISPATCH", `${role}: ${file}`);
+        assert.match(String(result.reason), /retired_role/);
+      }
+    }
   });
 });
 
-describe("#195 planning dispatch (skills)", () => {
-  const router = read("skills/bearing-lite/SKILL.md");
-  const integrator = read("skills/plan-integrator/SKILL.md");
-  const planning = read("skills/planning-and-design/SKILL.md");
-  const coordinator = read("skills/coordinator/SKILL.md");
-  const modeler = read("skills/systems-modeler/SKILL.md");
-  const requirements = read("skills/requirements-engineer/SKILL.md");
-
-  it("the planning Orchestrator dispatches the Plan Integrator once and never relays", () => {
-    assert.match(router, /Dispatch the Plan Integrator once settled \(`BEARING_ROLE=plan_integrator`\)/);
-    assert.match(router, /never relays between them/);
-    assert.match(integrator, /dispatches it\s+once/);
+describe("F5: handoff.md is protected only at the planning path", () => {
+  it("execution roles cannot write the lifecycle handoff", () => {
+    for (const role of ["implementer", "light_implementer", "test_implementer", "repair_implementer", "reviewer", "test_engineer", "scribe"]) {
+      assert.equal(write(role, ARTIFACTS.handoff).verdict, "DENY_DISPATCH", role);
+      assert.equal(write(role, `/abs/repo/${ARTIFACTS.handoff}`).verdict, "DENY_DISPATCH", `${role} absolute`);
+    }
   });
 
-  it("the Plan Integrator dispatches planning sessions in one stated input order (#205, #155)", () => {
-    const order = [
-      "Systems Modeler contextual pass",
-      "Planning and Design (`BEARING_ROLE=planning_and_design`",
-      "hooks/register-precheck.cjs`, then Requirements Engineer",
-      "Integration Engineer planning session",
-      "Systems Modeler model pass",
-      "Planning Test Engineer finalizes `seit.json`",
-    ].map((step) => integrator.indexOf(step));
-    assert.ok(order.every((i) => i >= 0), String(order));
-    assert.deepEqual([...order].sort((a, b) => a - b), order);
-    // The order is of inputs, never a verdict gate between sessions.
-    assert.match(integrator, /never verdicts: none waits on a Requirements Engineer pass/);
-    assert.doesNotMatch(integrator, /after the Requirements Engineer passes/);
+  it("unrelated product files named handoff.md stay under the slice write set", () => {
+    for (const [role, file] of [
+      ["implementer", "src/docs/handoff.md"],
+      ["light_implementer", "packages/x/handoff.md"],
+      ["implementer", "handoff.md"],
+      ["test_implementer", "test/fixtures/handoff.md"],
+    ]) {
+      const result = write(role, file);
+      assert.equal(result.verdict, "ALLOW", `${role}: ${file}`);
+      assert.equal(result.reason, "role_write_allowed");
+    }
+    // The Orchestrator writing a product handoff.md is not a planning write either.
+    assert.equal(write("orchestrator", "src/docs/handoff.md").reason, "path_not_locked");
   });
 
-  it("the Plan Integrator never authors sections or resolves conflicts", () => {
-    assert.match(integrator, /never write section\s+content/);
-    assert.match(integrator, /Conflicts return `NEEDS_OWNER_DECISION`/);
+  it("a handoff beside planning artifacts outside docs/plans stays protected", () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), "bl-handoff-"));
+    temps.push(root);
+    mkdirSync(path.join(root, "planning/topic"), { recursive: true });
+    writeFileSync(path.join(root, "planning/topic/implementation.json"), "{}");
+    mkdirSync(path.join(root, "src"), { recursive: true });
+    assert.equal(write("implementer", "planning/topic/handoff.md", { cwd: root }).verdict, "DENY_DISPATCH");
+    assert.equal(write("orchestrator", "planning/topic/handoff.md", { cwd: root }).verdict, "ALLOW");
+    assert.equal(write("implementer", "src/handoff.md", { cwd: root }).verdict, "ALLOW");
   });
 
-  it("Planning and Design is the bound author on the frozen plan_integrator route", () => {
-    assert.match(planning, /dispatched only by the Plan Integrator on the frozen `plan_integrator` route/);
-    assert.match(planning, /never run by the Orchestrator or Coordinator/);
-    assert.match(integrator, /frozen\s+`plan_integrator` route, never this session/);
+  it("execution paths remain governed by the existing slice write set", () => {
+    assert.equal(write("implementer", "docs/product/design.md").verdict, "ALLOW");
+    assert.equal(write("scribe", `${PLAN}/journey.json`).verdict, "ALLOW");
+  });
+});
+
+describe("F7: planning route discovery", () => {
+  const schema = JSON.parse(readFileSync(path.join(ROOT, "schemas/profiles.schema.json"), "utf8"));
+  const roleSets = [];
+  (function walk(value) {
+    if (!value || typeof value !== "object") return;
+    if (value.properties && (value.properties.implementer || value.properties.reviewer)) roleSets.push(value.properties);
+    for (const item of Object.values(value)) walk(item);
+  })(schema);
+
+  it("retired planning routes return a migration receipt without mutating or copying catalog data", () => {
+    const { evaluateCatalogState } = require("../hooks/profiles.cjs");
+    for (const key of ["plan_integrator", "planning_and_design"]) {
+      const home = mkdtempSync(path.join(os.tmpdir(), "bl-profile-migration-"));
+      temps.push(home);
+      const dir = path.join(home, ".agents/bearing-lite");
+      mkdirSync(dir, { recursive: true });
+      const catalog = JSON.parse(readFileSync(path.join(ROOT, "test/fixtures/profiles-populated.example.json"), "utf8"));
+      const profile = Object.keys(catalog.profiles)[0];
+      catalog.profiles[profile].roles[key] = structuredClone(catalog.profiles[profile].roles.implementer);
+      const bytes = JSON.stringify(catalog);
+      const file = path.join(dir, "profiles.json");
+      writeFileSync(file, bytes);
+      const result = evaluateCatalogState({ env: { HOME: home } });
+      assert.equal(result.outcome, "MIGRATION_REQUIRED", key);
+      assert.equal(result.reason, `retired_role:${key}`);
+      assert.equal(result.profile, profile);
+      assert.match(result.migration, /preserve all other roles.*capability sections; never copy/);
+      assert.equal(readFileSync(file, "utf8"), bytes, "classification must leave every route and capability untouched");
+      delete catalog.profiles[profile].roles[key];
+      writeFileSync(file, JSON.stringify(catalog));
+      assert.equal(evaluateCatalogState({ env: { HOME: home } }).outcome, "READY");
+    }
   });
 
-  it("a Coordinator under a planning hold dispatches nothing and authors nothing", () => {
-    assert.match(coordinator, /planning \(Plan Integrator\)/);
-    assert.match(coordinator, /a hold assigning planning to the Coordinator is not honored/);
-    assert.match(coordinator, /never writes planning artifacts/);
-  });
-
-  it("the Systems Modeler order is stated once", () => {
-    assert.match(modeler, /contextual pass \(when selected or required\) before Planning\s+and Design drafts the register/);
-    assert.match(modeler, /model pass over the drafts and the\s+Integration Engineer boundary contract/);
-    assert.match(modeler, /Neither pass\s+waits on a Requirements Engineer verdict/);
-    assert.doesNotMatch(modeler, /before or alongside Planning and Design pass 1/);
-  });
-
-  it("Requirements Engineer fixes are applied by the bound author", () => {
-    assert.match(requirements, /the Planning and Design session applies it/);
+  it("the removed skills and routes are absent", () => {
+    assert.equal(existsSync(path.join(ROOT, "skills/plan-integrator")), false);
+    assert.ok(roleSets.length > 0, "profile role properties must be discoverable");
+    for (const roles of roleSets) {
+      assert.equal(Object.hasOwn(roles, "plan_integrator"), false);
+      assert.equal(Object.hasOwn(roles, "planning_and_design"), false, "no dead Planning and Design route");
+      assert.equal(Object.hasOwn(roles, "orchestrator"), false, "the Orchestrator is observed, not selected");
+    }
   });
 });

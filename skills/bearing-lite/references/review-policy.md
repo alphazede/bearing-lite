@@ -21,24 +21,36 @@ harness, account, or agent identity.
   "slot_exhaustion_outcome": "FAIL_ROUND",
   "terminal_outcomes": ["HALT", "OWNER_AMENDMENT_REQUIRED"],
   "planning_unit_id": "planning",
-  "planning_sessions_required": ["planning_and_design", "integration_engineer", "test_engineer"],
-  "planning_sessions_optional": ["requirements_engineer", "systems_modeler"],
-  "planning_session_pending_verdicts": ["WAITING_ON", "UNAVAILABLE", "RUNNING"],
+  "planning_sessions_required": [],
+  "planning_sessions_optional": ["requirements_engineer", "systems_modeler", "integration_engineer", "test_engineer"],
+  "planning_session_ready_verdicts": ["READY", "CANDIDATE_READY"],
+  "planning_review": "owner_requested_only",
   "requires_regate_rounds_max": 1
 }
 ```
 
 Planning is one wave with unit id `planning` and the same 1/1 budget as an
-implementation wave. Every declared planning session (the required three plus
-any selected or required optional session) returns before the one review opens;
-a session verdict, including a Requirements Engineer failure, is a review
-input, never a gate between sessions. `requires_regate_rounds_max` bounds the
-named correction loop to that one aggregated repair; a further `requires_regate`
-finding returns `NEEDS_OWNER_DECISION`. Details:
-`../../plan-integrator/references/planning-wave.md`.
+implementation wave. No specialist session is unconditionally required: the
+wave declares in `required_sessions` exactly the profile-enabled specialist
+sessions this task needs (possibly none). Final Planning and Design is the
+Planning Orchestrator's own procedure, never a session. Every declared session
+must return `READY` (`CANDIDATE_READY` for Integration Engineer planning) for
+the planning candidate before review or the final freeze; a pending or
+incomplete return, including an unrepaired Requirements Engineer self-check,
+stays a typed gap. Required artifacts are still checked by the freeze.
 
-Planning and Design writes the separate Lifecycle binding in the approved profile
-snapshot. It lists unique abstract `slot_id` values, each slot's owner-selected
+Planning review runs only when the owner requested it at this boundary
+(`planning_review: owner_requested_only`). The wave records `review_requested`:
+`true` requires the one digest-bound review receipt below; `false` records
+`reviews: 0`, `repairs: 0`, no receipt, and deterministic closure. An omitted
+field is treated as requested, so the receipt stays required unless the owner's
+choice not to review is recorded. Never forge a receipt or add a reviewer.
+`requires_regate_rounds_max` bounds the named correction loop to that one
+aggregated repair; a further `requires_regate` finding returns
+`NEEDS_OWNER_DECISION`. Details: `planning-assembly.md`.
+
+When review is requested, the Planning Orchestrator writes the separate
+Lifecycle binding in the approved profile snapshot. It lists unique abstract `slot_id` values, each slot's owner-selected
 `primary_route_ref`, and ordered `fallback_route_refs`. Each receipt records a
 distinct selected route from its slot. All receipts bind to the same non-empty
 candidate ref, revision, and digest. Exhausting any slot

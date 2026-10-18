@@ -16,6 +16,7 @@ const ROUTER = read("skills/bearing-lite/SKILL.md");
 const OWNER_STOPS = read("skills/bearing-lite/references/owner-stops.md");
 const ASSURANCE = read("skills/bearing-lite/references/assurance-policy.md");
 const MAPPING = read("hooks/com.anthropic.claude-code/mapping.md");
+const ASSEMBLY = read("skills/bearing-lite/references/planning-assembly.md");
 
 describe("#113 Orchestrator, Scribe, and non-resettable budgets", () => {
   it("unchanged maps: completed Alignment is not repeated unless the source map is invalid", () => {
@@ -27,8 +28,6 @@ describe("#113 Orchestrator, Scribe, and non-resettable budgets", () => {
   it("missing architecture: Alignment maps and hands off; it does not design", () => {
     assert.match(ALIGNMENT, /hand off/i);
     assert.match(ALIGNMENT, /does not design missing architecture|do not design missing architecture/i);
-    assert.match(ALIGNMENT, /activate Systems\s+Modeler/);
-    assert.match(ALIGNMENT, /Never ask planning questions, write risk choices, design/);
   });
 
   it("renamed repairs after exhaustion: labels cannot renew a spent allowance", () => {
@@ -40,16 +39,16 @@ describe("#113 Orchestrator, Scribe, and non-resettable budgets", () => {
     assert.match(ASSURANCE, /budget_reset_on_alias_or_rename": false/);
     assert.match(ASSURANCE, /budget_reset_on_role_change": false/);
     assert.match(ASSURANCE, /budget_reset_on_session_change": false/);
-    assert.match(ROUTER, /Plan-artifact findings dispatch a delta/);
+    assert.match(ASSEMBLY, /return to that author as a named delta/);
   });
 
   it("Scribe owns transcription; unavailable Scribe is a gap, not Orchestrator substitution", () => {
-    assert.match(ROUTER, /Scribe transcribes|does not transcribe/i);
+    assert.match(ROUTER, /never relaunch it per event or transcribe history yourself/);
     assert.match(OWNER_STOPS, /Scribe transcribes/);
     assert.match(OWNER_STOPS, /Orchestrator does not transcribe/i);
     assert.match(
       ROUTER,
-      /author specialist artifacts|never specialist artifacts/i
+      /author delegated artifacts|author specialist artifacts|never specialist artifacts/i
     );
     assert.match(
       `${ROUTER}\n${OWNER_STOPS}`,
@@ -62,7 +61,7 @@ describe("#113 Orchestrator, Scribe, and non-resettable budgets", () => {
   });
 
   it("ordinary non-Lifecycle work stays outside these Lifecycle continuation rules", () => {
-    assert.match(ROUTER, /Not for ordinary work/);
+    assert.match(ROUTER, /Do not activate for\s+ordinary work/);
     assert.match(
       OWNER_STOPS,
       /Routine specialist handoffs continue to the agreed owner-review checkpoint/i

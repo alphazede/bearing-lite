@@ -219,6 +219,8 @@ PROFILES_INVALID_NAMES = (
     ("profile_name_empty", ""),
 )
 RETIRED_ROLE_KEYS = (
+    "plan_integrator",
+    "planning_and_design",
     "surveyor",
     "explorer",
     "crewmate",
@@ -530,7 +532,7 @@ def planning_contract_implementation(
         {"unit_id": "planning", "unit_kind": "planning", **row},
         {"unit_id": SYN_WAVE, "unit_kind": "wave", **row, **(rounds or {})},
     ]
-    sessions = ["planning_and_design", "integration_engineer", "test_engineer"]
+    sessions = ["requirements_engineer", "integration_engineer", "test_engineer"]
     doc["journey_settings"]["planning_wave"] = {
         "required_sessions": sessions,
         "sessions": [{"session": name, "candidate_ref": "plan", "candidate_revision": SYN_REV, "candidate_digest": SYN_DIGEST, "verdict": "READY"} for name in sessions],
@@ -543,6 +545,23 @@ def planning_contract_implementation(
         **(wave or {}),
     }
     doc["boundary_contract"] = boundary or {"not_applicable": True, "reason": "No material boundary."}
+    return doc
+
+
+def unreviewed_planning_implementation(sessions: list[str], extra: dict | None = None) -> dict:
+    """Planning contract whose owner did not request planning review (F2 repair)."""
+    doc = planning_contract_implementation()
+    wave = doc["journey_settings"]["planning_wave"]
+    for key in ("review_receipt",):
+        wave.pop(key, None)
+    wave.update({
+        "required_sessions": sessions,
+        "sessions": [{"session": name, "candidate_ref": "plan", "candidate_revision": SYN_REV, "candidate_digest": SYN_DIGEST, "verdict": "READY"} for name in sessions],
+        "review_requested": False,
+        "reviews": 0,
+        "repairs": 0,
+        **(extra or {}),
+    })
     return doc
 
 
@@ -1185,8 +1204,19 @@ def cases() -> list[tuple[str, str, str, object, str]]:
             wave={"repairs": 2}
         ), "reject"),
         ("SEIT-EMV-022", "implementation_planning_wave_unknown_session", "implementation", planning_contract_implementation(
-            wave={"required_sessions": ["planning_and_design", "integration_engineer", "test_engineer", "scribe"]}
+            wave={"required_sessions": ["requirements_engineer", "integration_engineer", "test_engineer", "scribe"]}
         ), "reject"),
+        # F2 repair: optional specialists and owner-requested-only planning review.
+        ("SEIT-EMV-022", "implementation_planning_wave_retired_design_session", "implementation", planning_contract_implementation(
+            wave={"required_sessions": ["planning_and_design", "integration_engineer", "test_engineer"]}
+        ), "reject"),
+        ("SEIT-EMV-022", "implementation_planning_wave_no_specialists_unreviewed", "implementation", unreviewed_planning_implementation([]), "accept"),
+        ("SEIT-EMV-022", "implementation_planning_wave_unreviewed_with_receipt", "implementation",
+            unreviewed_planning_implementation(["test_engineer"], {"review_receipt": {"path": "gate-evidence/planning-review.json", "sha256": SYN_DIGEST}}), "reject"),
+        ("SEIT-EMV-022", "implementation_planning_wave_unreviewed_with_review_count", "implementation",
+            unreviewed_planning_implementation(["test_engineer"], {"reviews": 1}), "reject"),
+        ("SEIT-EMV-022", "implementation_planning_wave_review_request_not_boolean", "implementation",
+            planning_contract_implementation(wave={"review_requested": "no"}), "reject"),
         ("SEIT-EMV-022", "implementation_boundary_contract_flow_without_sink", "implementation", planning_contract_implementation(
             boundary={"flows": [{"id": "FLOW-1", "source": {"component": "a", "owner": "b"}}]}
         ), "reject"),
@@ -1268,6 +1298,10 @@ def profiles_cases() -> list[tuple[str, str, object, str, str | None]]:
         "primary": {"harness": "harness-a", "model": "model-a", "reasoning": "reasoning-a"},
         "ordered_fallbacks": [],
     }
+    retired_planning = {}
+    for key in ("plan_integrator", "planning_and_design"):
+        retired_planning[key] = complete_user_catalog()
+        retired_planning[key]["profiles"]["fixture-alpha"]["roles"][key] = profile_session_route()
     bad_cadence = complete_user_catalog()
     bad_cadence["profiles"]["fixture-alpha"]["roles"]["reviewer"]["cadence"] = "wave"
     missing_roles = omit_nested(complete_user_catalog(), "profiles", "fixture-alpha", "roles")
@@ -1312,10 +1346,40 @@ def profiles_cases() -> list[tuple[str, str, object, str, str | None]]:
             defaults={"planning": "fixture-alpha", "implementation": "missing-profile"}
         ), "reject", None),
         ("SEIT-BDL-002", "retired_surveyor_role_rejected", retired, "reject", None),
+        ("SEIT-BDL-002", "retired_plan_integrator_route_rejected", retired_planning["plan_integrator"], "reject", None),
+        ("SEIT-BDL-002", "retired_planning_and_design_route_rejected", retired_planning["planning_and_design"], "reject", None),
         ("SEIT-BDL-002", "invalid_cadence_rejected", bad_cadence, "reject", None),
         ("SEIT-BDL-002", "profile_missing_roles", missing_roles, "reject", None),
         ("SEIT-BDL-002", "legacy_lineups_root_rejected", complete_user_catalog() | {"lineups": {}}, "reject", None),
     ]
+
+    def with_additional_tools(tools: object) -> dict:
+        catalog = complete_user_catalog()
+        profile = catalog["profiles"]["fixture-alpha"]
+        profile.setdefault("deterministic_verification", {})["additional_tools"] = tools
+        return catalog
+
+    tool = {"name": "Repository tests", "enabled": True,
+            "command": "node --test test/*.test.mjs", "pass": "Exit 0", "evidence": "Test summary"}
+    out.extend([
+        ("SEIT-BDL-002", "additional_testing_tools_configured", with_additional_tools([tool]), "accept", None),
+        ("SEIT-BDL-002", "additional_testing_tools_empty", with_additional_tools([]), "accept", None),
+        ("SEIT-BDL-002", "additional_testing_tool_disabled_needs_no_command", with_additional_tools([
+            {"name": "Coverage", "enabled": False}]), "accept", None),
+        ("SEIT-BDL-002", "additional_testing_tools_not_array", with_additional_tools({}), "reject", None),
+        ("SEIT-BDL-002", "additional_testing_tool_enabled_missing_command", with_additional_tools([
+            {key: value for key, value in tool.items() if key != "command"}]), "reject", None),
+        ("SEIT-BDL-002", "additional_testing_tool_whitespace_command", with_additional_tools([
+            tool | {"command": " "}]), "reject", None),
+        ("SEIT-BDL-002", "additional_testing_tool_missing_pass_rule", with_additional_tools([
+            {key: value for key, value in tool.items() if key != "pass"}]), "reject", None),
+        ("SEIT-BDL-002", "additional_testing_tool_missing_evidence", with_additional_tools([
+            {key: value for key, value in tool.items() if key != "evidence"}]), "reject", None),
+        ("SEIT-BDL-002", "additional_testing_tool_enabled_not_boolean", with_additional_tools([
+            tool | {"enabled": "yes"}]), "reject", None),
+        ("SEIT-BDL-002", "additional_testing_tool_no_credential_fields", with_additional_tools([
+            tool | {"credentials": "not-a-secret"}]), "reject", None),
+    ])
 
     if PROFILES_SHIPPED_PATH.is_file():
         out.insert(0, (

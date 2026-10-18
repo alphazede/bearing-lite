@@ -41,6 +41,21 @@ function baseProfile() {
 }
 
 describe("freezeSelectedRoutes capability preservation (#114)", () => {
+  it("preserves additional testing tools and binds command, enabled, pass, and evidence changes", () => {
+    const profile = baseProfile();
+    const tool = { name: "Repository tests", enabled: true, command: "node --test test/*.test.mjs", pass: "Exit 0", evidence: "Test summary" };
+    profile.deterministic_verification = { additional_tools: [clone(tool)] };
+    const frozen = profilesHook.freezeSelectedRoutes({ profile });
+    assert.deepEqual(frozen.snapshot.deterministic_verification.additional_tools, [tool]);
+    for (const [field, value] of Object.entries({ enabled: false, command: "node --test test/profiles-empty.test.mjs", pass: "Exit 0 and no skipped cases", evidence: "Bound test summary and exit code" })) {
+      const changed = clone(profile);
+      changed.deterministic_verification.additional_tools[0][field] = value;
+      assert.notEqual(profilesHook.freezeSelectedRoutes({ profile: changed }).digest, frozen.digest, field);
+    }
+    profile.deterministic_verification.additional_tools[0].command = "changed after freeze";
+    assert.equal(frozen.snapshot.deterministic_verification.additional_tools[0].command, tool.command);
+  });
+
   it("deep-copies review capability into snapshot and isolates from subsequent mutation", () => {
     const profile = baseProfile();
     profile.review = {

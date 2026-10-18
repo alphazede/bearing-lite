@@ -2,6 +2,27 @@
 
 Use one compact Markdown block per task in the project's existing plan or progress document. Omit unused conditional fields. Prefer the project's format; add only missing fields. Do not create a Bearing-owned state file or hidden ledger.
 
+## Current-task hook opt-in
+
+Only after the owner explicitly requests Bearing for this task, record one
+`bearing_session` line in the existing visible project plan at the checkout
+root (or its existing ancestor plan), alongside that task's block:
+
+```markdown
+- bearing_session: {"owner_requested":true,"session_id":"<native session id>","task_id":"<current task id>"}
+```
+
+The task must have a nonterminal status. Use the native `session_id`, `sessionId`,
+or Cursor `conversation_id`; bind each separately launched session explicitly.
+Replace/release the binding when the task changes or completes; never carry an
+old request into another task. Installation, role names, profiles, and old plans
+or leases do not opt in. Missing, stale, cross-session, or ambiguous bindings
+leave ordinary hooks quiet and git-sync inert. This is a field in the existing
+project record, not a new file, hidden ledger, daemon, or global switch.
+Legacy plans migrate only when the owner requests Bearing for the current task.
+Standalone selected/required Test Engineering and explicit `assurance_dispatch`
+bindings keep their own capability/authority boundaries and budget enforcement.
+
 ## Lifecycle settings
 
 Planning and Design records these plan-level proposals above the task blocks in the
@@ -166,8 +187,8 @@ required assurance against Bearing Lite `max_assurance_rounds`. A repair or
 replacement candidate does not reset it; the next distinct declared phase or
 wave carries its own budget. The parent
 controller writes the count before dispatch: Orchestrator on a direct packet,
-Coordinator on a coordinator wave. If the review permits correction, spend at
-most one remaining `attempts` repair, run deterministic parent-controller
+Coordinator on a coordinator wave. If the review permits correction, use at
+most the one authorized review-directed repair, run deterministic parent-controller
 verification, and close the gate without another review. A failed repair or
 scope change returns `OWNER_DECISION_REQUIRED`.
 
@@ -175,10 +196,10 @@ scope change returns `OWNER_DECISION_REQUIRED`.
 
 ```markdown
 - blocker: <WAITING_ON:<task-id> | typed reason | none on success>
-- attempts: <0-3 correction attempts for this task or protected action>
+- attempts: <observed correction count; no inferred limit>
 ```
 
-Omit `blocker` and `attempts` when the task is not waiting or correcting. Waiting does not consume correction attempts.
+Omit `blocker` and `attempts` when the task is not waiting or correcting. Waiting does not consume correction attempts. Preserve any owner-supplied allowance; no fixed numeric cap is inferred.
 
 `COMPLETE` ends Bearing assurance. An already authorized deployment keeps its
 own operational checks and rollback evidence but does not reopen independent

@@ -40,8 +40,18 @@ continues the same pass and budget from durable artifacts. Confirmed owner
 decisions stay confirmed. A changed envelope, conflicting writer, new
 authority, or explicit owner choice starts fresh.
 
-Router-drafted planning artifacts are a historical exception, not a pattern.
-New Lifecycles fail closed on them: dispatch Planning and Design (or a
-planning delta) instead of authoring `*-technical-plan.md`, `design.md`,
-`workspace.md`, `seit.json`, or `implementation.json` in the Orchestrator
-session.
+On resume the Planning Orchestrator continues its own final Planning and Design
+in the controller session from durable artifacts; it does not dispatch a separate
+design author. Specialist-owned content stays with its author: requirements with
+the Requirements Engineer and `seit.json` with the Planning Test Engineer. A
+missing specialist deliverable is returned to its enabled owner as a named delta
+or surfaced as a typed gap, never drafted by the Orchestrator.
+
+## Scribe cadence
+
+When the Scribe is enabled, the Orchestrator dispatches it by the frozen
+`roles.scribe.cadence`: `event` (default) starts one assignment that consumes
+each owner decision, authority event, or landing in-run; `phase` and `lifecycle`
+hand over the batch at that checkpoint. Never relaunch it per event, poll it, or
+invent a Scribe when the role is disabled; a needed but disabled Scribe is the
+typed `CAPABILITY_GAP` above.

@@ -1,6 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import { createRequire } from 'node:module';
 import { spawnSync } from 'node:child_process';
 const require = createRequire(import.meta.url);
@@ -43,20 +45,76 @@ test('CLI emits JSON and exits nonzero on failing candidate', () => {
   assert.equal(run.status, 1);
   assert.equal(JSON.parse(run.stdout).outcome, 'FAIL');
 });
-test('failed prechecks feed the one planning review without correction rounds or a mid-wave gate (#205)', () => {
-  const router = readFileSync(new URL('../skills/bearing-lite/SKILL.md', import.meta.url), 'utf8');
-  const skill = readFileSync(new URL('../skills/requirements-engineer/SKILL.md', import.meta.url), 'utf8');
-  assert.match(router, /register-precheck/);
-  assert.match(router, /without.*correction round/);
-  assert.match(skill, /pre-check receipt/);
-  assert.match(skill, /passing or failing, join the review/);
-  const precheck = readFileSync(new URL('../skills/requirements-engineer/references/precheck.md', import.meta.url), 'utf8');
-  assert.doesNotMatch(precheck, /blocks dispatch|Before every Requirements Engineer dispatch/);
-  assert.match(precheck, /without blocking any session/);
-  assert.match(skill, /Never re-report.*covered/);
+
+// F4 repair: stage-aware precheck. The Requirements Engineer runs the
+// requirements stage against the confirmed Alignment/Scope context before SEIT
+// exists; final assembly still requires every case binding.
+const { checkRegister, seitCaseIdsOf } = require('../hooks/register-precheck.cjs');
+const unbound = () => read('valid.sdoc').replace('VERIFICATION_CASE: SEIT-1\n', '');
+const workspaceContext = [
+  '# Workspace Environment: example',
+  '## Confirmed Scope and Decisions',
+  '| ID | Decision | Type |',
+  '| --- | --- | --- |',
+  '| DEC-1 | Report results. | expected_outcome |',
+  '### Quantity definitions',
+  '| Name | Formula | Population | Units | Source |',
+  '| --- | --- | --- | --- | --- |',
+  '| `tier_probability` | wins / outcomes | decided outcomes | share | contract |',
+  '',
+].join('\n');
+const stageCheck = (stage, register = unbound(), extra = {}) => checkRegister({
+  register, technicalPlan: workspaceContext, registerPath: 'draft.sdoc', planPath: 'workspace.md',
+  files: { 'evidence.txt': read('evidence.txt') }, stage, ...extra,
 });
-test('Requirements Engineer matching and non-matching request retain activation boundaries', () => {
-  const skill = readFileSync(new URL('../skills/requirements-engineer/SKILL.md', import.meta.url), 'utf8');
-  assert.match(skill, /quality-gate verdict before the integrated owner review/); // gate this draft register
-  assert.match(skill, /Non-match:.*implementation wave/); // implement a runtime change
+test('requirements stage records a Test Engineer-owned pending case binding instead of requiring an invented ID', () => {
+  const receipt = stageCheck('requirements');
+  assert.equal(receipt.outcome, 'PASS', JSON.stringify(receipt.findings));
+  assert.equal(receipt.stage, 'requirements');
+  assert.deepEqual(receipt.pending_bindings.map(p => [p.uid, p.binding, p.owner, p.blocks]), [['REG-1', 'verification_case', 'test_engineer', 'final_assembly']]);
+});
+test('requirements stage still requires a verification method and every other quality class', () => {
+  const noMethod = stageCheck('requirements', unbound().replace('VERIFICATION_METHOD: test', 'VERIFICATION_METHOD:'));
+  assert.ok(noMethod.findings.some(f => f.class === 'verification' && f.uid === 'REG-1'));
+  assert.equal(noMethod.outcome, 'FAIL');
+  const noEars = stageCheck('requirements', unbound().replace('When requested, the system shall report', 'Report'));
+  assert.ok(noEars.findings.some(f => f.class === 'ears'));
+  const noDecision = checkRegister({ register: unbound(), technicalPlan: workspaceContext.replace('| DEC-1 |', '| NOTE |'), files: { 'evidence.txt': read('evidence.txt') }, stage: 'requirements' });
+  assert.ok(noDecision.findings.some(f => f.class === 'decision'));
+  const noGlossary = checkRegister({ register: unbound(), technicalPlan: workspaceContext.split('### Quantity definitions')[0], files: { 'evidence.txt': read('evidence.txt') }, stage: 'requirements' });
+  assert.ok(noGlossary.findings.some(f => f.class === 'glossary'));
+});
+test('the confirmed Alignment/Scope quantity table satisfies the early glossary without a draft technical plan', () => {
+  assert.deepEqual(stageCheck('requirements', read('valid.sdoc')).findings, []);
+});
+test('final assembly blocks on a pending binding and resolves case IDs against SEIT', () => {
+  const final = stageCheck('final');
+  assert.equal(final.outcome, 'FAIL');
+  assert.ok(final.findings.some(f => f.class === 'verification' && f.uid === 'REG-1'));
+  assert.deepEqual(stageCheck('final', unbound(), {}).pending_bindings, []);
+  const seit = { proof_cases: [{ id: 'SEIT-1' }, { id: 'SEIT-2' }] };
+  assert.equal(stageCheck('final', read('valid.sdoc'), { seitCaseIds: seitCaseIdsOf(seit) }).outcome, 'PASS');
+  const missing = stageCheck('final', read('valid.sdoc'), { seitCaseIds: ['SEIT-1'] });
+  assert.ok(missing.findings.some(f => f.class === 'verification' && /SEIT-2/.test(f.message)));
+  // Default stage is final: the strict gate is never weakened by omission.
+  assert.equal(checkRegister({ register: unbound(), technicalPlan: workspaceContext, files: { 'evidence.txt': read('evidence.txt') } }).outcome, 'FAIL');
+});
+test('CLI stage flags: requirements exits 0 with pending bindings; invalid use exits 2', () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'precheck-stage-'));
+  try {
+    writeFileSync(path.join(dir, 'draft.sdoc'), unbound());
+    writeFileSync(path.join(dir, 'workspace.md'), workspaceContext);
+    writeFileSync(path.join(dir, 'evidence.txt'), read('evidence.txt'));
+    writeFileSync(path.join(dir, 'seit.json'), JSON.stringify({ proof_cases: [{ id: 'SEIT-2' }] }));
+    const cli = (...args) => spawnSync(process.execPath, ['hooks/register-precheck.cjs', ...args], { encoding: 'utf8' });
+    const early = cli('--stage', 'requirements', path.join(dir, 'draft.sdoc'), path.join(dir, 'workspace.md'), dir);
+    assert.equal(early.status, 0, early.stdout);
+    assert.equal(JSON.parse(early.stdout).pending_bindings.length, 1);
+    const final = cli('--seit', path.join(dir, 'seit.json'), path.join(dir, 'draft.sdoc'), path.join(dir, 'workspace.md'), dir);
+    assert.equal(final.status, 1);
+    assert.equal(cli('--stage', 'draft', path.join(dir, 'draft.sdoc'), path.join(dir, 'workspace.md')).status, 2);
+    assert.equal(cli('--stage', 'requirements', '--seit', path.join(dir, 'seit.json'), path.join(dir, 'draft.sdoc'), path.join(dir, 'workspace.md')).status, 2);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });

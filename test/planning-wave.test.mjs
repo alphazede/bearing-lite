@@ -9,13 +9,13 @@ import { after, describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { renderDodManifest, TEMPLATE_VERSION } from "../tools/render-dod-manifest.mjs";
-import { planningContract, planningSessions, planningWave, reviewRounds } from "./planning-contract-fixture.mjs";
+import { planningContract, planningSessions, planningWave, reviewRounds, unreviewedPlanningWave } from "./planning-contract-fixture.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(import.meta.url);
@@ -124,7 +124,7 @@ describe("#205 one planning wave, one consolidated review", () => {
     candidate,
     plan_dir: MANIFEST,
     dod_manifest: { output_name: "plan-dod-manifest.html" },
-    planning_wave: planningSessions(candidate, ["planning_and_design", "requirements_engineer", "integration_engineer", "test_engineer"]),
+    planning_wave: planningSessions(candidate, ["requirements_engineer", "systems_modeler", "integration_engineer", "test_engineer"]),
     reviewer_slots: [{ slot_id: "slot-a", primary_route_ref: "route-a", fallback_route_refs: [] }],
     round_number: 1,
     completed_rounds: 1,
@@ -135,10 +135,17 @@ describe("#205 one planning wave, one consolidated review", () => {
     ...extra,
   });
 
-  it("opens the review on a Requirements Engineer failure: its findings are review input, not a gate", () => {
-    const wave = review().planning_wave;
-    wave.sessions[1].verdict = "REPAIRABLE_FAILURE";
-    assert.deepEqual(evaluatePlanningReview(review({ planning_wave: wave, completed_rounds: 0 })), {
+  it("keeps an unrepaired Requirements Engineer return a gap: the author self-repairs before READY (F4)", () => {
+    for (const verdict of ["REPAIRABLE_FAILURE", "NEEDS_MORE_EVIDENCE", "OWNER_DECISION_REQUIRED"]) {
+      const wave = review().planning_wave;
+      wave.sessions[0].verdict = verdict;
+      assert.deepEqual(evaluatePlanningReview(review({ planning_wave: wave, completed_rounds: 0 })), {
+        outcome: "NEEDS_MORE_EVIDENCE", reason: "planning_sessions_incomplete",
+      }, verdict);
+    }
+    const ready = review().planning_wave;
+    ready.sessions[2].verdict = "CANDIDATE_READY"; // Integration Engineer planning vocabulary
+    assert.deepEqual(evaluatePlanningReview(review({ planning_wave: ready, completed_rounds: 0 })), {
       outcome: "NEEDS_MORE_EVIDENCE", reason: "review_round_pending",
     });
   });
@@ -165,10 +172,11 @@ describe("#205 one planning wave, one consolidated review", () => {
   it("rejects an unknown, duplicate, or incomplete session declaration", () => {
     const declared = (names) => ({ ...planningSessions(candidate, names) });
     for (const planning_wave of [
-      declared(["planning_and_design", "integration_engineer", "test_engineer", "scribe"]),
-      declared(["planning_and_design", "integration_engineer"]),
-      { ...declared(["planning_and_design", "integration_engineer", "test_engineer"]),
-        required_sessions: ["planning_and_design", "integration_engineer", "test_engineer", "test_engineer"] },
+      declared(["integration_engineer", "test_engineer", "scribe"]),
+      declared(["planning_and_design", "integration_engineer"]), // retired: the controller's own procedure
+      declared(["plan_integrator"]),
+      { ...declared(["integration_engineer", "test_engineer"]),
+        required_sessions: ["integration_engineer", "test_engineer", "test_engineer"] },
     ]) {
       assert.deepEqual(evaluatePlanningReview(review({ planning_wave })), {
         outcome: "OWNER_AMENDMENT_REQUIRED", reason: "planning_sessions_invalid",
@@ -220,6 +228,76 @@ describe("#205 one planning wave, one consolidated review", () => {
       doc.journey_settings.planning_wave = planningWave(digest, { repairs: 1 }, dir);
     });
     assert.deepEqual(freeze(dir).findings, []);
+  });
+});
+
+describe("F2: optional specialists and owner-requested planning review", () => {
+  const unreviewed = (names, extra) => (doc, digest) => {
+    doc.journey_settings.planning_wave = unreviewedPlanningWave(digest, names, extra);
+  };
+
+  it("accepts any subset of enabled specialists, including none, without a review the owner did not request", () => {
+    for (const names of [[], ["test_engineer"], ["requirements_engineer", "systems_modeler"], ["integration_engineer", "test_engineer"]]) {
+      const result = freeze(planPackage(unreviewed(names)).dir);
+      assert.deepEqual(result.findings, [], JSON.stringify(names));
+    }
+  });
+
+  it("opens a requested review with only the declared optional sessions", () => {
+    const MANIFEST = temp("planning-wave-optional-");
+    writeFileSync(path.join(MANIFEST, "plan-dod-manifest.html"), "<!doctype html><title>DoD</title>");
+    const candidate = { candidate_ref: "plan", candidate_revision: "r1", candidate_digest: "d1" };
+    for (const names of [[], ["requirements_engineer"]]) {
+      const result = evaluatePlanningReview({
+        candidate, plan_dir: MANIFEST, dod_manifest: { output_name: "plan-dod-manifest.html" },
+        planning_wave: planningSessions(candidate, names),
+        reviewer_slots: [{ slot_id: "a", primary_route_ref: "r", fallback_route_refs: [] }],
+        round_number: 1, completed_rounds: 0,
+      });
+      assert.deepEqual(result, { outcome: "NEEDS_MORE_EVIDENCE", reason: "review_round_pending" }, JSON.stringify(names));
+    }
+  });
+
+  const failClosed = [
+    ["a declared session that did not return", unreviewed(["requirements_engineer", "test_engineer"], { sessions: [] }), "planning_wave_sessions_incomplete"],
+    ["a declared session still pending", (doc, digest) => {
+      unreviewed(["test_engineer"])(doc, digest);
+      doc.journey_settings.planning_wave.sessions[0].verdict = "WAITING_ON";
+    }, "planning_wave_sessions_incomplete"],
+    ["a session bound to a stale candidate", (doc, digest) => {
+      unreviewed(["test_engineer"])(doc, digest);
+      doc.journey_settings.planning_wave.sessions[0].candidate_revision = "older";
+    }, "planning_wave_sessions_incomplete"],
+    ["a forged review count", unreviewed([], { reviews: 1 }), "planning_wave_review_count"],
+    ["a forged review receipt", unreviewed([], { review_receipt: { path: "gate-evidence/planning-review.json", sha256: "0".repeat(64) } }), "planning_wave_review_invalid"],
+    ["a repair without a review", unreviewed([], { repairs: 1 }), "planning_wave_repair_limit"],
+    ["no deterministic closure", unreviewed([], { closure: undefined }), "planning_wave_closure_missing"],
+    ["a stale closing candidate", unreviewed([], { candidate_digest: "0".repeat(64) }), "planning_wave_candidate_mismatch"],
+    ["a non-boolean review choice", unreviewed([], { review_requested: "no" }), "planning_wave_review_request_invalid"],
+    ["a retired design session", unreviewed(["planning_and_design"]), "planning_sessions_invalid"],
+    ["requested review without its receipt", (doc, digest) => {
+      unreviewed([])(doc, digest);
+      doc.journey_settings.planning_wave.review_requested = true;
+    }, "planning_wave_review_invalid"],
+    ["an unrecorded review choice without a receipt", (doc, digest) => {
+      unreviewed([])(doc, digest);
+      delete doc.journey_settings.planning_wave.review_requested;
+    }, "planning_wave_review_invalid"],
+  ];
+  for (const [name, mutate, code] of failClosed) {
+    it(`final freeze still fails closed on ${name}`, () => {
+      const result = freeze(planPackage(mutate).dir);
+      assert.equal(result.outcome, "FAIL");
+      assert.ok(codes(result).includes(code), JSON.stringify(result.findings));
+    });
+  }
+
+  it("missing required artifacts still fail the unreviewed freeze", () => {
+    const { dir } = planPackage(unreviewed([]));
+    rmSync(path.join(dir, "seit.json"));
+    assert.equal(freeze(dir).outcome, "FAIL");
+    const boundary = planPackage((doc, digest) => { unreviewed([])(doc, digest); delete doc.boundary_contract; });
+    assert.ok(codes(freeze(boundary.dir)).includes("boundary_contract_missing"));
   });
 });
 
@@ -336,19 +414,19 @@ describe("#157 DoD Manifest shows the per-unit round plan", () => {
 });
 
 describe("skills declare the planning wave without a mid-wave Requirements Engineer gate", () => {
-  const integrator = read("skills/plan-integrator/SKILL.md");
   const router = read("skills/bearing-lite/SKILL.md");
   const engineer = read("skills/requirements-engineer/SKILL.md");
   const modeler = read("skills/systems-modeler/SKILL.md");
   const allocation = read("skills/planning-and-design/references/allocation-inputs.md");
   const planning = read("skills/planning-and-design/SKILL.md");
   const loop = read("skills/planning-and-design/references/correction-loop.md");
-  const wave = read("skills/plan-integrator/references/planning-wave.md");
+  const wave = read("skills/bearing-lite/references/planning-assembly.md");
   const ie = read("skills/integration-engineer/SKILL.md");
   const boundary = read("skills/integration-engineer/references/boundary-contract.md");
 
   it("removes the mid-wave gate wording and ordering", () => {
-    assert.doesNotMatch(integrator, /after the Requirements Engineer passes/);
+    assert.equal(existsSync(path.join(ROOT, "skills/plan-integrator")), false, "Plan Integrator is retired");
+    assert.doesNotMatch(wave, /after the Requirements Engineer passes/);
     assert.doesNotMatch(router, /before every Requirements Engineer dispatch/);
     assert.doesNotMatch(engineer, /quality gate after Scope Definition|before the Systems Modeler finalizes/);
     assert.doesNotMatch(modeler, /until the Requirements Engineer passes|after the Requirements Engineer passes/);
@@ -357,11 +435,9 @@ describe("skills declare the planning wave without a mid-wave Requirements Engin
     assert.doesNotMatch(engineer, /first two correction rounds|third re-gate/);
   });
   it("declares planning as a wave with the implementation-wave budget", () => {
-    for (const text of [integrator, wave]) {
-      assert.match(text, /planning wave/i);
-      assert.match(text, /cadence: phase/);
-      assert.match(text, /max_assurance_rounds/);
-    }
+    assert.match(wave, /planning wave/i);
+    assert.match(wave, /cadence: phase/);
+    assert.match(wave, /max_assurance_rounds/);
     assert.match(wave, /plan-package\.cjs draft/);
     assert.match(wave, /register-precheck\.cjs/);
     assert.match(wave, /coverage_assist/);

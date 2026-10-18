@@ -129,9 +129,11 @@ test('matching named delta uses bounded correction procedure; unresolved intent 
   assert.match(planning, /named findings only/);
   assert.match(planning, /references\/correction-loop\.md/);
   assert.match(planning, /unresolved material scope[\s\S]*REROUTE_SCOPE_DEFINITION/); // Non-match: decide unresolved scope.
-  const router = readFileSync(new URL('../skills/bearing-lite/SKILL.md', import.meta.url), 'utf8');
-  assert.match(router, /exact_text[\s\S]*without a re-gate/);
-  assert.match(router, /mechanical verification receipt/);
+  // The exact-text / re-gate closure rules live in the correction loop the
+  // Planning Orchestrator's final planning procedure links.
+  const loop = readFileSync(new URL('../skills/planning-and-design/references/correction-loop.md', import.meta.url), 'utf8');
+  assert.match(loop, /exact_text[\s\S]*without another Requirements Engineer gate/);
+  assert.match(loop, /mechanical verification receipt/);
   const report = readFileSync(new URL('../skills/requirements-engineer/references/gate-report.md', import.meta.url), 'utf8');
   assert.match(report, /finding_type/);
   assert.match(report, /exact_text/);

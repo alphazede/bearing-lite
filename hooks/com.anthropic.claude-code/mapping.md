@@ -149,17 +149,36 @@ protected-action and planning-review stay procedural; bound assurance dispatch i
 This Copilot mapping does not yet register the Orchestrator write-set lock;
 use the documented fallback until that host file is wired.
 
+## Current-task activation boundary
+
+All four general hooks use `hooks/task-binding.cjs`, a read-only resolver of the
+existing visible project plan. On an explicit owner request for this current task,
+record `- bearing_session: {"owner_requested":true,"session_id":"<native session id>","task_id":"<current task id>"}`
+in that plan, beside the nonterminal `### task_id:` block. The resolver checks
+root Markdown plans and ancestors up to the checkout boundary; it never scans
+historical plan subdirectories, global profiles, transcripts, or role names for
+activation authority. Native `session_id`/`sessionId` and Cursor `conversation_id`
+identify the session. Missing, ambiguous, completed/cancelled, and cross-session
+bindings stay inactive. An old journey marker or checkout_lease is context only.
+Rebind explicitly for a new task or separately launched session; remove/release
+on completion. Legacy plan presence is never automatic migration authority.
+No new state file, service, global switch, or activation daemon is introduced.
+
+Ordinary SessionStart/Stop stays quiet, the write lock allows ordinary writes,
+and Stop git-sync performs no Git operation. Active tasks retain ownership
+refusals and closeout. Stop re-entry (`stop_hook_active`) still terminates quietly.
+Standalone explicitly selected/required TE is independent. Explicit bound
+`assurance_dispatch` still enforces reservations/budgets even without a general
+Bearing session binding; missing dispatch declarations block only the current
+explicitly bound task that requires assurance, never an unrelated old label.
+
 ## Orchestrator write-set lock
 
-`hooks/orchestrator-write-lock.cjs` denies Orchestrator sessions (no
-`BEARING_ROLE`, empty, or `orchestrator`) writing `*-technical-plan.md`,
-`design.md`, `workspace.md`, `seit.json`, `implementation.json`,
-`*-dod-manifest.html`, `repository-map.md`, or `docs/coe/**`. Refusal names
-the owning role and the dispatch command (`BEARING_ROLE=<role>`). A session
-with a non-Orchestrator `BEARING_ROLE` is allowed. Dispatch every specialist
-and stage session as a separate process with `BEARING_ROLE` set. Locked
-basenames match at any path (`/tmp/workspace.md`, nested `x/docs/coe/y.md`);
-that breadth is intentional, not a repo-root-only check.
+For an explicitly bound current task, `hooks/orchestrator-write-lock.cjs`
+keeps specialist requirements and SEIT owned by their authors; the existing
+Planning Orchestrator owns final plan/design, assembly and handoff. Native
+role metadata chooses the author inside that active task, never activates it.
+The frozen review/repair transition and parent-record guards remain enforced.
 
 | Host | write-set lock |
 |---|---|
@@ -184,8 +203,8 @@ trees) and sets only:
 | closeout handoff fields | matching task-record keys when present. Receipt `verdict` is a closed role-return token; task `outcome` is approved intent and is not mapped into the receipt |
 
 `assigned_role` and `router_invoked` are **not** inferred from the tool-call
-payload. Missing values stay missing, so activation advises the router instead
-of inventing context.
+payload. Missing values stay missing. Only after current-task opt-in does activation
+advise on missing context; it never invokes Bearing for ordinary work.
 
 The Orchestrator writes the visible `checkout_lease` before any planning write
 or dispatch; its nested non-placeholder Lifecycle identity is the
@@ -196,10 +215,10 @@ recorded later at the integrated owner review.
 
 | Outcome | Host JSON | Process exit |
 |---|---|---|
-| `ADVISE`, `REROUTE`, `UNAVAILABLE` on activation or a discoverable-Journey first-pass Stop | `hookSpecificOutput.additionalContext` | always `0` |
+| `ADVISE`, `REROUTE`, `UNAVAILABLE` on activation or an explicitly bound current-task first-pass Stop | `hookSpecificOutput.additionalContext` | always `0` |
 | Stop/SubagentStop re-entry (`stop_hook_active`) | quiet success (empty JSON; no `additionalContext`) | always `0` |
-| Stop/SubagentStop with no discoverable Journey | quiet success (empty JSON; no `additionalContext`) | always `0` |
-| first-pass Stop/SubagentStop with a discoverable Journey | `hookSpecificOutput.additionalContext` | always `0` |
+| Stop/SubagentStop with no current task binding | quiet success (empty JSON; no `additionalContext`) | always `0` |
+| first-pass Stop/SubagentStop with an explicitly bound current task | `hookSpecificOutput.additionalContext` | always `0` |
 | `BLOCK` | JSON `decision: "block"` only; this mapping never requests protected completion | always `0` |
 | Copilot `PreToolUse` deny | `hookSpecificOutput.permissionDecision` `"deny"` | always `0` |
 | Copilot `Stop` deny | `hookSpecificOutput` `{ hookEventName: "Stop", decision: "block", reason }` | always `0` |
@@ -215,9 +234,10 @@ GitHub Copilot run this same adapter. Those wires omit advisory Stop context.
 is sent only for `decision: "block"` and is not a completion deny. Pi, AGY,
 DeepCode, and Qwen Code register no stop hook.
 
-A discoverable Journey is a visible plan with a `task_id`, `assigned_role`,
-non-placeholder journey marker, or `checkout_lease` block. Empty cwd and
-`stop_hook_active` re-entry stay quiet. Never map policy or infrastructure to
+A discoverable Journey supplies context only: `task_id`, `assigned_role`, a
+non-placeholder journey marker, or `checkout_lease` never substitutes for the
+current-task binding. No discoverable Journey or no current binding means quiet
+success. Empty cwd and `stop_hook_active` re-entry stay quiet. Never map policy or infrastructure to
 a non-zero exit.
 
 
@@ -233,7 +253,7 @@ adapter is a host gap, not a passing budget check.
 
 | Host | Barrier wire / registration | Test status |
 |---|---|---|
-| Codex | common `PreToolUse`, native `permissionDecision: deny` | installed-plugin native sentinel on 0.163.0; discovery separately; release target 0.162.1 requires its own run |
+| Codex | common `PreToolUse`, native `permissionDecision: deny` | installed-plugin native sentinel and hook discovery on 0.162.1; credential-free local driver, no paid provider calls |
 | Claude Code | common `PreToolUse`, nested `permissionDecision: deny` | component replay; native qualification not run |
 | Cursor | `preToolUse` for agent/MCP launches; `beforeShellExecution` for shell | component replay; native qualification not run |
 | GitHub Copilot | `PreToolUse`, nested `permissionDecision: deny` | component replay; native qualification not run / client unavailable locally |

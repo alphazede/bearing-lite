@@ -176,7 +176,7 @@ function handle(input, host = 'claude-code') {
     const tool_name = input.tool_name || input.toolName || (event === 'beforeshellexecution' ? 'Bash' : '');
     const tool_input = input.tool_input || input.toolInput || (event === 'beforeshellexecution' ? { command: input.command } : {});
     if (SAFE_TOOLS.has(tool_name)) return result('INACTIVE', 'read_or_owner_channel');
-    const b = store.binding(input.cwd || input.workspaceRoot || process.cwd());
+    const b = store.binding(input.cwd || input.workspaceRoot || process.cwd(), input);
     if (!b) return result('INACTIVE', 'ordinary_unbound_work');
     if (!HOST_SUPPORT[host]?.executable) return gap('host_enforcement_unavailable');
     if (host === 'cursor' && event === 'pretooluse' && ['Bash', 'Shell'].includes(tool_name)) return result('INACTIVE', 'cursor_shell_checked_before_execution');

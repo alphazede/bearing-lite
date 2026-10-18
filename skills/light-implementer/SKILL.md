@@ -9,8 +9,10 @@ description: >
 
 # Light Implementer
 
-The cheapest route in the ladder. Inputs fully determine the output, a
+Use only when enabled in the selected profile and assigned the mechanical slice.
+Inputs fully determine the output, a
 command decides pass or fail, and nothing is decided in-session.
+Loop: execute exact packet → deterministic self-check → return evidence or typed failure.
 
 ## Inputs and match
 

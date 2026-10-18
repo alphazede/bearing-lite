@@ -24,8 +24,10 @@ test('209 native Codex installed plugin denies excess before harmless provider-l
   const home = path.join(tmp, 'home'), codexHome = path.join(tmp, 'codex-home'), repo = path.join(tmp, 'repo');
   for (const d of [home, codexHome, repo]) mkdirSync(d);
   const env = { PATH: process.env.PATH || '', HOME: home, CODEX_HOME: codexHome, LANG: 'C.UTF-8', TMPDIR: tmp };
+  const groups = new Set();
   const run = (cmd, args) => {
-    const p = spawnSync(cmd, args, { cwd: repo, env, stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8', timeout: Math.max(1, deadline - Date.now()) });
+    const p = spawnSync(cmd, args, { cwd: repo, env, detached: process.platform !== 'win32', stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8', timeout: Math.max(1, deadline - Date.now()) });
+    if (p.pid && process.platform !== 'win32') groups.add(p.pid);
     assert.equal(p.error, undefined, `ENVIRONMENT_FAILURE: ${p.error?.message}`);
     assert.equal(p.status, 0, `ENVIRONMENT_FAILURE: ${p.stderr?.slice(-3000)}`);
     return p.stdout;
@@ -112,7 +114,8 @@ test('209 native Codex installed plugin denies excess before harmless provider-l
       '-c', 'model_providers.sentinel.stream_max_retries=0', '-c', 'features.shell_snapshot=false', 'Execute only the fixed local sentinel sequence.'];
     const exit = await new Promise((resolve, reject) => {
       // stdin ignored is /dev/null, per the native exec EOF contract.
-      child = spawn(CODEX, args, { cwd: repo, env, stdio: ['ignore', 'pipe', 'pipe'] });
+      child = spawn(CODEX, args, { cwd: repo, env, detached: process.platform !== 'win32', stdio: ['ignore', 'pipe', 'pipe'] });
+      if (child.pid && process.platform !== 'win32') groups.add(child.pid);
       const timer = setTimeout(() => { child.kill('SIGKILL'); reject(Error(`ENVIRONMENT_FAILURE: native deadline; stderr tail ${stderr.slice(-3000)}; events ${stdout.slice(-3000)}`)); }, Math.max(1, deadline - Date.now()));
       child.stdout.on('data', d => stdout += d); child.stderr.on('data', d => stderr += d);
       child.on('error', e => { clearTimeout(timer); reject(e); });
@@ -128,6 +131,11 @@ test('209 native Codex installed plugin denies excess before harmless provider-l
   } finally {
     if (child && child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
     if (server) await new Promise(resolve => { server.closeAllConnections(); server.close(resolve); });
-    rmSync(tmp, { recursive: true, force: true });
+    // Native CLI descendants may outlive exec; stop only groups this fixture started.
+    for (const pid of groups) {
+      try { process.kill(-pid, 'SIGKILL'); } catch (error) { if (error.code !== 'ESRCH') throw error; }
+    }
+    // Temporary plugin-clone writes can finish just after the CLI exits.
+    rmSync(tmp, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }
 });

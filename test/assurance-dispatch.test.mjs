@@ -1,3 +1,4 @@
+import { bindPlan } from "./task-opt-in-fixture.mjs";
 /** #209/#210: real hook CLI/filesystem claims; provider substitute is an owner-requested local sentinel.
  * Resource group: none; unique owned temp roots, no ports/services or provider calls.
  */
@@ -39,7 +40,7 @@ function fixture(t, { parallel = false, qualification = false } = {}) {
 }
 function envelope(f, id, extra = {}) {
   const slot = f.slots.find(s => s.id === id);
-  return { hook_event_name: 'PreToolUse', cwd: f.dir, ...slot, ...extra };
+  return { hook_event_name: 'PreToolUse', session_id: 'assurance-test', cwd: f.dir, ...slot, ...extra };
 }
 function run(f, input, host = 'claude-code') {
   if (host === 'cursor' && input.tool_name === 'Bash') input = { ...input, hook_event_name: 'beforeShellExecution' };
@@ -238,6 +239,7 @@ test('209 adoption preserves previous expenditure through an exact amendment', t
 test('209 required visible assurance state without binding refuses executable dispatch but keeps recovery tools open', t => {
   const f = fixture(t);
   writeFileSync(path.join(f.dir, 'plan.md'), '# Visible task plan\n### task_id: assurance\n- status: EVIDENCE_READY\n- required_assurance: Reviewer\n');
+  bindPlan(envelope(f, 'review-a'));
   assert.equal(denied(run(f, envelope(f, 'review-a'))), true);
   for (const tool_name of ['Read', 'Edit', 'request_user_input']) assert.equal(denied(run(f, envelope(f, 'review-a', { tool_name }))), false);
 });
@@ -273,6 +275,7 @@ test('209 repair F02 large required task without binding denies while large ordi
     const f = fixture(t);
     const plan = required ? '### task_id: assurance\n- status: EVIDENCE_READY\n- required_assurance: Reviewer\n' : '# Ordinary work\n';
     writeFileSync(path.join(f.dir, 'plan.md'), plan + '\n'.repeat(288240));
+    if (required) bindPlan(envelope(f, 'review-a'));
     const r = launch(f, 'review-a');
     assert.equal(denied(r), required);
     assert.equal(existsSync(path.join(f.dir, 'review-a.marker')), !required);

@@ -1,7 +1,8 @@
 /**
- * Issue #161: a Scope Definition final decision batch must define every
- * numeric quantity its decisions cite and must type every conditional
- * decision, or SHARED_UNDERSTANDING_CONFIRMED stays blocked.
+ * Issue #161: the combined Architectural Alignment and Scope final decision
+ * batch must define every numeric quantity its decisions cite and must type
+ * every conditional decision, or the stage cannot return WORKSPACE_READY
+ * (shared understanding confirmed) and stays OWNER_DECISION_REQUIRED.
  *
  * validateDecisionBatch is a test-local reference model of that rule. It is
  * not shipped consumer proof. The shipped SKILL.md / references assertions
@@ -14,11 +15,13 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const SCOPE_SKILL = path.join(ROOT, "skills/scope-definition/SKILL.md");
+const SCOPE_SKILL = path.join(ROOT, "skills/architectural-alignment/SKILL.md");
 const BATCH_REF = path.join(
   ROOT,
-  "skills/scope-definition/references/decision-batch.md"
+  "skills/architectural-alignment/references/decision-batch.md"
 );
+const LEGACY_SCOPE_SKILL = path.join(ROOT, "skills/scope-definition/SKILL.md");
+const LEGACY_BATCH_REF = path.join(ROOT, "skills/scope-definition/references/decision-batch.md");
 const GRAMMAR = path.join(
   ROOT,
   "skills/planning-and-design/references/artifact-grammar.md"
@@ -100,22 +103,47 @@ describe("scope-definition quantity table and conditional typing", () => {
     assert.deepEqual(verdict.untypedConditionals, ["DEC-4"]);
   });
 
-  it("Scope Definition requires the table and typing in its final batch", () => {
+  it("combined Alignment/Scope requires the table and typing in its final batch", () => {
     const scope = readFileSync(SCOPE_SKILL, "utf8");
     const ref = readFileSync(BATCH_REF, "utf8");
     assert.match(scope, /references\/decision-batch\.md/);
     assert.match(scope, /quantity-definitions table/);
     assert.match(scope, /enforced_rule/);
     assert.match(scope, /expected_outcome/);
-    assert.match(scope, /SHARED_UNDERSTANDING_CONFIRMED/);
-    assert.match(scope, /blocked/);
+    assert.match(scope, /blocks `WORKSPACE_READY`/);
     assert.match(scope, /class C/);
+    assert.match(ref, /cannot return `WORKSPACE_READY`/);
+    assert.match(ref, /`OWNER_DECISION_REQUIRED`/);
+    assert.match(ref, /class C/);
+    // The legacy name forwards to the same contract; it adds no stage.
+    assert.match(readFileSync(LEGACY_SCOPE_SKILL, "utf8"), /\.\.\/architectural-alignment\/SKILL\.md/);
+    assert.match(readFileSync(LEGACY_BATCH_REF, "utf8"), /architectural-alignment\/references\/decision-batch\.md/);
     assert.match(ref, /name/);
     assert.match(ref, /formula/);
     assert.match(ref, /denominator/);
     assert.match(ref, /ties|pushes|voids/);
     assert.match(ref, /units/);
     assert.match(ref, /source field or contract/);
+  });
+
+  it("F11: every outcome the decision batch names is in the combined stage's return set", () => {
+    const scope = readFileSync(SCOPE_SKILL, "utf8");
+    const ref = readFileSync(BATCH_REF, "utf8");
+    const returns = scope.slice(scope.indexOf("\nReturn "));
+    const named = [...ref.matchAll(/`([A-Z][A-Z_]{3,})`/g)].map((m) => m[1]);
+    assert.ok(named.length >= 2, "batch must name its outcomes");
+    for (const outcome of named) assert.ok(returns.includes(`\`${outcome}\``), `${outcome} is not a supported return`);
+    assert.doesNotMatch(ref, /SHARED_UNDERSTANDING_CONFIRMED/);
+  });
+
+  it("Requirements Engineer precheck context uses the same table before any plan exists (F4)", () => {
+    const template = readFileSync(path.join(ROOT, "skills/architectural-alignment/templates/workspace.md"), "utf8");
+    assert.match(template, /### Quantity definitions/);
+    assert.match(template, /`DEC-<id>`/);
+    const precheck = readFileSync(path.join(ROOT, "skills/requirements-engineer/references/precheck.md"), "utf8");
+    assert.match(precheck, /--stage requirements/);
+    assert.match(precheck, /### Quantity definitions/);
+    assert.doesNotMatch(precheck, /Copy the Scope\s+Definition quantity-definitions table/);
   });
 
   it("Planning and Design copies the table into the glossary instead of redefining it", () => {

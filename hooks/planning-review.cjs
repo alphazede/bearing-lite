@@ -35,11 +35,14 @@ function manifestGenerated(input) {
 const nonempty = (value) => typeof value === "string" && value.trim().length > 0;
 
 /**
- * #205: the declared planning sessions of the one planning wave. Every
- * declared session must have returned for the candidate identity before the
- * single review opens; a session verdict (a Requirements Engineer failure
- * included) is review input, never a gate between sessions. Returns null when
- * complete, else a typed { outcome, reason }. Shared with plan-package.cjs.
+ * #205: the declared planning sessions of the one planning wave. The wave
+ * declares exactly the profile-enabled specialist sessions the task needs
+ * (possibly none); no session is unconditionally required and final Planning
+ * and Design is the Planning Orchestrator's own procedure, not a session.
+ * Every declared session must have returned a ready verdict for the candidate
+ * identity before review opens or the final freeze passes; a pending or
+ * incomplete return stays a gap. Returns null when complete, else a typed
+ * { outcome, reason }. Shared with plan-package.cjs.
  */
 function planningSessionsVerdict(wave, candidate, inputDigests) {
   if (!wave || typeof wave !== "object") {
@@ -75,7 +78,7 @@ function planningSessionsVerdict(wave, candidate, inputDigests) {
     return (
       session &&
       nonempty(session.verdict) &&
-      !POLICY.planning_session_pending_verdicts.includes(session.verdict) &&
+      POLICY.planning_session_ready_verdicts.includes(session.verdict) &&
       (sameCandidate(session, candidate) || adopted(session))
     );
   });

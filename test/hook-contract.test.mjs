@@ -1,3 +1,4 @@
+import { boundHook } from "./task-opt-in-fixture.mjs";
 /**
  * CMD-HOOK-01 / SEIT-HOOK-CLASS-01, SEIT-HOOK-COVERAGE-01
  * The four original hook classes; outcomes ADVISE|REROUTE|BLOCK|UNAVAILABLE;
@@ -54,6 +55,7 @@ const EVALUATOR_MODULES = new Set([
   "assurance-budget.cjs",
   "assurance-dispatch.cjs", // #209 bound PreToolUse budget barrier
   "assurance-budget-store.cjs", // #209 visible atomic claims, no service or authority store
+  "task-binding.cjs", // current-session reader, no hook class or state store
   "policy.cjs", // #63 shared policy source
   "plan-package.cjs", // #70/#73 Map the Route freeze checks
   "reconcile.cjs", // #64 deterministic evidence reconciliation
@@ -75,7 +77,7 @@ const TE_CLASS_FILES = Object.freeze(["te-capability.cjs", "te-host.cjs"]);
 const TE_CLASSES = Object.freeze(["te_test_write", "te_completion"]);
 const ALLOWED_OUTCOMES = new Set(["ADVISE", "REROUTE", "BLOCK", "UNAVAILABLE"]);
 
-const activation = require(path.join(HOOKS_DIR, "activation.cjs"));
+const activation = boundHook(require(path.join(HOOKS_DIR, "activation.cjs")));
 const closeout = require(path.join(HOOKS_DIR, "closeout.cjs"));
 const transition = require(path.join(HOOKS_DIR, "transition-order.cjs"));
 const protectedAction = require(path.join(HOOKS_DIR, "protected-action.cjs"));

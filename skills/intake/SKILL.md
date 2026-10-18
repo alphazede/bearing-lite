@@ -9,8 +9,7 @@ description: >
 
 # Intake
 
-Fresh planning node. If you are the Orchestrator, dispatch this; do not execute it.
-It returns evidence; the Orchestrator records the decision.
+The Orchestrator runs this in its controller session and records the decision.
 Intake handles input and repository selection.
 
 ## Inputs and match
@@ -36,7 +35,7 @@ Intake handles input and repository selection.
 
 Return `FIT_PROPOSED`, `FIT_CONFIRMED`, `FIT_UNAVAILABLE`, `FIT_MALFORMED`, or
 `FIT_UNDECIDABLE` with root, plan directory, evidence, blocker, and next action.
-Retry only from new evidence, at most three attempts.
+Resume only from new evidence; never repeat confirmed input or add agent runs.
 
 Never write files, walk unapproved parents, rank endless alternatives, or
 advance the Lifecycle itself.

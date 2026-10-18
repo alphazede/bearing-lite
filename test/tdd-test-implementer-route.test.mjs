@@ -313,7 +313,8 @@ describe("Issue 97 Test Implementer TDD route", () => {
       /Test Implementer[\s\S]{0,80}before[\s\S]{0,40}Product Implementer/
     );
     assert.match(router, /Test Implementer/);
-    assert.match(router, /frozen snapshot|profile_freeze/);
+    assert.match(router, /frozen Test Implementer \(`roles\.test_implementer`\)/);
+    assert.match(implementer, /from the frozen snapshot/);
     assert.match(profiles, /test_implementer/);
     assert.match(profiles, /Test Implementer/);
   });

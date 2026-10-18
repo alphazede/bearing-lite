@@ -35,9 +35,15 @@ stays reviewable, portable, and bounded without pinning a provider?
 
 ## Answer
 
-Use the Bearing Delivery Lifecycle: Intake → Architectural Alignment → Scope Definition → Planning and Design, then owner authorization, bounded
-implementation, Test Engineer assurance, Reviewer defect review, and
-Integration Engineer execution assessment. Persistent configuration is
+Use the Bearing Delivery Lifecycle: Intake → Architectural Alignment and Scope →
+Requirements Engineer → Systems Modeler → Integration Engineer planning →
+Planning Test Engineer → Orchestrator final Planning and Design and assembly →
+requested planning review → owner confirmation → written handoff → bounded
+implementation (Test Implementer before Product Implementer under `tdd`, or one
+Implementer for code and tests), then any requested Test Engineer assurance,
+Reviewer defect review, and Integration Engineer execution assessment. Only
+profile-enabled roles the task needs run; the arrows are data dependencies, so
+independent ready work runs in parallel. Persistent configuration is
 `~/.agents/bearing-lite/profiles.json` only. The Definition of Done Manifest
 is the human-readable projection of planned versus actual work; it never
 grants execution, acceptance, release, or deployment authority.
@@ -100,13 +106,16 @@ Then give your agent a real task:
 > Use Bearing Lite to add rate limiting to this API without changing its public
 > responses. Require independent assurance at the configured cadence.
 
-Bearing Lite fills missing planning stages, then Planning and Design creates
-the complete five-artifact package (`<lifecycle-topic>-technical-plan.md`,
+Bearing Lite runs Intake and combined Architectural Alignment and Scope,
+dispatches the enabled specialists the task needs, then the Planning
+Orchestrator itself performs final Planning and Design and assembles the
+complete five-artifact package (`<lifecycle-topic>-technical-plan.md`,
 `design.md`, `seit.json`, `implementation.json`, and
 `<plan-name>-dod-manifest.html`) with proposed route, profile, role states,
-reasoning, and cadence. One integrated owner review approves or changes that
-package before bounded sessions dispatch, with visible Markdown task state
-over those JSON authorities.
+reasoning, and cadence. A planning review runs only when requested; one
+integrated owner confirmation approves or changes that package, and the
+written `handoff.md` starts a new Implementation Orchestrator session, with
+visible Markdown task state over those JSON authorities.
 
 ## Install
 
@@ -122,7 +131,9 @@ from release qualification.
 ### Plugin with hooks
 
 Claude Code and Codex install from a local checkout and load
-session-start activation and stop closeout hooks.
+session-start activation and stop closeout hooks. Installation does not activate
+Bearing: an explicit owner request is bound to the current task/native session
+in the existing visible project plan ([binding format](skills/bearing-lite/templates/task.md#current-task-hook-opt-in)).
 
 ```sh
 # Claude Code
@@ -218,8 +229,9 @@ done
 into `~/.deepcode/skills` or `~/.agents/skills`.
 
 Claude Code, Codex, Cursor, and GitHub Copilot clients
-are **partial** hook clients: session start runs the activation advisory and
-stop runs the closeout advisory and the git-sync advisory, which fast-forwards
+are **partial** hook clients: only an explicitly bound current Bearing task runs
+the activation/closeout advice, ownership lock, and git-sync. Ordinary or stale
+sessions stay quiet and never fetch or fast-forward. Active git-sync fast-forwards
 the session checkout from origin and names anything still unpushed. GitHub Copilot also has the implemented Test
 Engineering channels `PreToolUse`, `Stop`, and `SubagentStop`. AGY,
 Pi, DeepCode, and Muse Code are **skills-only**.
@@ -237,7 +249,7 @@ abstract slot IDs and owner-selected primary/ordered fallback route
 references belong only in the approved profile snapshot. Existing host
 mappings cannot safely derive the nested record from session events, so they
 preserve partial or skills-only coverage and apply this gate procedurally.
-Planning review is a pre-dispatch plan gate; implementation
+Planning review is an owner-requested pre-dispatch plan gate; implementation
 `max_assurance_rounds` remains separate.
 
 **Skills-only copy** of `skills/` into a host skills directory does not
@@ -246,13 +258,16 @@ register hooks. That path remains first-class. See
 
 ## What it does
 
-1. **Fill only missing planning stages:** Intake → Architectural Alignment →
-   Scope Definition.
-2. **Invoke Planning and Design** after material intent is settled. It creates
-   technical-plan, `design.md`, `seit.json`, `implementation.json`, and the
-   Definition of Done Manifest together.
-3. **Review once:** approve or change the proposed route, user-owned
-   primary/fallback profile, role states, reasoning, cadence, and plan.
+1. **Fill only missing planning stages:** Intake → Architectural Alignment and Scope.
+2. **Dispatch enabled specialists in data-dependency order** once material intent
+   is settled: Requirements Engineer (with its own quality pass), Systems Modeler,
+   Integration Engineer planning, and Planning Test Engineer; independent ready
+   work runs in parallel. The Planning Orchestrator then authors the final
+   technical plan and `design.md` and assembles `implementation.json` and the
+   Definition of Done Manifest; specialists keep requirements and `seit.json`.
+3. **Confirm once:** after any requested planning review, approve or change the
+   proposed route, user-owned primary/fallback profile, role states, reasoning,
+   cadence, and plan; the Orchestrator then writes `handoff.md`.
 4. **Dispatch bounded sessions** with compact receipts. Implementer may
    continue in-wave. Coordinator continues only on a coordinator wave; direct
    packets never dispatch Coordinator. Declared assurance starts fresh at the
@@ -281,10 +296,13 @@ Current routing diagram source: [`skills/bearing-lite/references/role-routing.mm
 The text below remains authoritative for clients that do not render Mermaid.
 
 **Authoritative text (vision optional):** Owner Authority remains human-only.
-The Bearing Lite Orchestrator is the stateful planning controller, not a work
-role. It invokes only missing planning stages, has Planning and Design
-generate all five artifacts with proposed profile and cadence, then presents
-one integrated owner review before dispatching bounded implementation.
+The Bearing Lite Orchestrator is the stateful controller, not a work role, in
+an explicitly requested Planning or Implementation mode. It invokes only
+missing planning stages and the enabled specialists the task needs, performs
+final Planning and Design itself to complete all five artifacts with proposed
+profile and cadence, runs a planning review only when requested, obtains one
+integrated owner confirmation, and writes the handoff that a new
+Implementation Orchestrator session consumes before bounded implementation.
 Direct packets never dispatch Coordinator; the Orchestrator is the parent
 controller and bookkeeper. Coordinator is dispatched only when the approved
 graph has a one-wave need: two or more proven-independent packets, shared
@@ -299,14 +317,13 @@ explain orientation; they never authorize a transition.
 
 | Role | Sessions | Primary work |
 |---|---|---|
-| **Orchestrator** | planning control | User-facing; planning-state writer; wave sequencing; direct-packet parent controller and bookkeeper. Observed, not selected. |
+| **Orchestrator** | planning or implementation control | Planning mode: context, specialist dispatch, final plan/design, assembly, handoff. Implementation mode: consumes the handoff; wave sequencing; direct-packet parent controller and bookkeeper. Observed, not selected. |
 | **Intake** | planning | Confirms repository and plan directory |
-| **Architectural Alignment** | planning | Workspace map and architecture extract |
-| **Scope Definition** | planning | One owner question at a time |
-| **Planning and Design** | planning | Five-artifact package |
-| **Requirements Engineer** | planning | Register quality findings for the one planning review when a register applies |
-| **Systems Modeler** | planning | After requirements; before design finalization |
-| **Plan Integrator** | planning | Mechanical assembly; no new judgment |
+| **Architectural Alignment and Scope** | controller | Architectural fit, workspace map, and owner-confirmed scope |
+| **Scope Definition** | compatibility | Forwards to the combined skill; no separate stage or agent |
+| **Planning and Design** | controller procedure | The Orchestrator's own final plan/design and assembly; not a dispatched or configured role |
+| **Requirements Engineer** | planning | Authors requirements and runs its own quality pass and repairs; later case bindings stay owned by the Test Engineer |
+| **Systems Modeler** | planning | After requirements; placement receipt for final design |
 | **Coordinator** | implementation | Optional one-wave controller; proven-independent lanes. Not dispatched on a direct packet |
 | **Test Implementer** | implementation | TDD test-first author (`roles.test_implementer`); tests and approved fixtures only |
 | **Product Implementer** | implementation | Product write set under `tdd` (`roles.implementer`); combined author under `single_implementer`. Neither self-certifies |

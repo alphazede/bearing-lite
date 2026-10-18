@@ -35,13 +35,13 @@
       ],
       "planning_wave": {
         "required_sessions": [
-          "planning_and_design",
+          "requirements_engineer",
           "integration_engineer",
           "test_engineer"
         ],
         "sessions": [
           {
-            "session": "planning_and_design",
+            "session": "requirements_engineer",
             "candidate_ref": "plan",
             "verdict": "READY",
             "candidate_revision": "r1",

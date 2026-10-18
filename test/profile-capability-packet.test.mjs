@@ -124,7 +124,8 @@ describe("#114 frozen snapshot to Reviewer packet", () => {
   });
 
   it("keeps planning review and implementation assurance budgets separate", () => {
-    assert.match(ROUTER_SKILL, /Planning review is a separate pre-dispatch gate; never consumes implementation assurance/);
+    const assembly = readFileSync(path.join(ROOT, "skills/bearing-lite/references/planning-assembly.md"), "utf8");
+    assert.match(assembly, /Planning review is a separate pre-dispatch gate; never consumes implementation\s+assurance/);
     assert.match(ASSURANCE_MD, /never consumes implementation/);
     assert.match(ASSURANCE_MD, /this\s+budget never consumes the planning gate/i);
   });

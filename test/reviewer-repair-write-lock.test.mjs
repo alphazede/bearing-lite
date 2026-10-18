@@ -1,3 +1,4 @@
+import { boundHook, withTask } from "./task-opt-in-fixture.mjs";
 /**
  * #206 the real write lock honors a parent-accepted Reviewer -> Repair
  * Implementer transition recorded in `.bearing-round.lock`, and only for the
@@ -18,7 +19,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const HOOK = path.join(ROOT, "hooks/orchestrator-write-lock.cjs");
 const require = createRequire(import.meta.url);
-const lock = require(HOOK);
+const lock = boundHook(require(HOOK));
 
 const PLAN = "docs/plans/x";
 const LISTED = [`${PLAN}/design.md`, `${PLAN}/seit.json`, `${PLAN}/implementation.json`, `${PLAN}/x-technical-plan.md`];
@@ -53,6 +54,7 @@ function checkout({ receipt: patchReceipt = {}, transition: patchTransition = {}
   const round = { candidate: candidate.candidate_ref, plan_dir: PLAN, generation: 3, repair_transition: transition, ...patchRound };
   for (const key of omit) delete round[key];
   if (!omit.includes("record")) writeFileSync(path.join(root, ".bearing-round.lock"), JSON.stringify(round));
+  withTask({ cwd: root, session_id: REVIEWER });
   return root;
 }
 
@@ -75,7 +77,7 @@ function cliVerdict(root, envelope, role = "reviewer", host = "claude-code") {
   if (role === null) delete env.BEARING_ROLE;
   else env.BEARING_ROLE = role;
   const run = spawnSync(process.execPath, [HOOK, `--host=${host}`], {
-    cwd: root, env, input: JSON.stringify(envelope), encoding: "utf8", timeout: 10_000,
+    cwd: root, env, input: JSON.stringify(withTask(envelope)), encoding: "utf8", timeout: 10_000,
   });
   assert.equal(run.status, 0, run.stderr);
   return JSON.parse(run.stderr).hookSpecificOutput;
@@ -264,7 +266,7 @@ describe("#206 no valid recorded transition, no repair authority", () => {
 
   it("keeps the round record parent-owned: no reviewer or implementer may forge it", () => {
     const root = checkout({ omit: ["record"] });
-    for (const role of ["reviewer", "repair_implementer", "implementer", "planning_and_design"]) {
+    for (const role of ["reviewer", "repair_implementer", "implementer", "systems_modeler"]) {
       denied(verdict(claudeEdit(root, ".bearing-round.lock"), role), /only the parent controller/);
       const shell = { hook_event_name: "PreToolUse", session_id: REVIEWER, cwd: root, tool_name: "Bash",
         tool_input: { command: "echo '{}' > .bearing-round.lock" } };
@@ -279,9 +281,12 @@ describe("#206 no valid recorded transition, no repair authority", () => {
 describe("#206 unchanged guards", () => {
   it("keeps bound authors, orchestrator denial, and host fallbacks unchanged", () => {
     const root = checkout();
-    assert.equal(verdict(claudeEdit(root, LISTED[0]), "planning_and_design").verdict, "ALLOW");
+    assert.equal(verdict(claudeEdit(root, LISTED[0]), "systems_modeler").verdict, "ALLOW");
+    denied(verdict(claudeEdit(root, LISTED[0]), "planning_and_design"), /retired_role:planning_and_design/);
     denied(verdict(claudeEdit(root, LISTED[1]), "integration_engineer"), /bound authors/);
-    denied(verdict(claudeEdit(root, LISTED[0]), "orchestrator"), /Orchestrator cannot write/);
+    denied(verdict(claudeEdit(root, LISTED[1]), "orchestrator"), /Orchestrator cannot write/);
+    // The controller's own design write is still deferred while the review is frozen.
+    denied(verdict(claudeEdit(root, LISTED[0]), "orchestrator"), /frozen_candidate/);
     assert.equal(verdict(claudeEdit(root, "src/a.js")).verdict, "ALLOW");
     assert.equal(verdict(claudeEdit(root, LISTED[0]), "reviewer", "kimi").verdict, "UNAVAILABLE");
     // A valid transition never widens another role's authority.
