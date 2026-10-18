@@ -4,6 +4,10 @@
 
 ## [2.0.1](https://github.com/alphazede/bearing-lite/releases/tag/v2.0.1) - 2026-10-18
 
+### Changed
+
+- Prepared the 2.0.1 package and plugin release ([PR #220](https://github.com/alphazede/bearing-lite/pull/220)).
+
 ### Fixed
 
 - Make Scribe optional: Orchestrator records history when it is off, while an enabled Scribe keeps one persistent lifecycle session; handoff and completion still require complete source-backed history ([PR #219](https://github.com/alphazede/bearing-lite/pull/219)).
