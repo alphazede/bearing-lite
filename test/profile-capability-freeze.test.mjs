@@ -41,6 +41,27 @@ function baseProfile() {
 }
 
 describe("freezeSelectedRoutes capability preservation (#114)", () => {
+  it("freezes decision-policy holds and binds delegation changes to the digest", () => {
+    const profile = baseProfile();
+    profile.holds = [
+      { id: "coordinator-decisions", effect: "Escalate unresolved routine issues", routine_resolution_attempts: 2 },
+      { id: "orchestrator-delegation", effect: "Explicitly scoped delegation only", enabled: false },
+    ];
+    const frozen = profilesHook.freezeSelectedRoutes({ profile });
+    assert.deepEqual(frozen.snapshot.holds, profile.holds);
+    for (const change of [
+      p => { p.holds[1].enabled = true; },
+      p => { p.holds[0].routine_resolution_attempts = 3; },
+      p => { p.holds[1].effect = "Changed delegation scope"; },
+    ]) {
+      const candidate = clone(profile);
+      change(candidate);
+      assert.notEqual(profilesHook.freezeSelectedRoutes({ profile: candidate }).digest, frozen.digest);
+    }
+    profile.holds[1].enabled = true;
+    assert.equal(frozen.snapshot.holds[1].enabled, false);
+  });
+
   it("preserves additional testing tools and binds command, enabled, pass, and evidence changes", () => {
     const profile = baseProfile();
     const tool = { name: "Repository tests", enabled: true, command: "node --test test/*.test.mjs", pass: "Exit 0", evidence: "Test summary" };

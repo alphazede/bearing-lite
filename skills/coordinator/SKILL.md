@@ -42,8 +42,9 @@ Planning belongs to the Planning Orchestrator, not this implementation-wave role
    max_assurance_rounds and assurance_rounds; use
    `../bearing-lite/references/assurance-policy.md`. Authorized repair closes by
    deterministic checks, without automatic rereview or budget reset. Failed repair
-   or scope drift returns to the owner; COMPLETE does not reopen review.
+   or scope drift returns to the Orchestrator; COMPLETE does not reopen review.
 
+Decide routine scheduling, ready-packet dispatch, and dependency order within the approved wave; implementation choices stay with the assigned author. Escalate an unresolved routine issue to the Orchestrator after two unsuccessful evidence-based attempts, sooner if no new evidence or safe approach exists. Each attempt needs a changed approach or hypothesis; this grants no extra agent runs, reviews, repairs, or reset of stricter limits. Escalate conflicting requirements, material scope/architecture changes, protected actions, authority conflicts, and exhausted review/repair limits immediately. Send evidence, attempts, affected work and recommendation; continue independent authorized work. Consume frozen decision holds and use `../bearing-lite/references/owner-stops.md#coordinator-escalation-and-delegation`; the Orchestrator decides within its authority or asks the owner.
 ## Completion notifications and recovery
 
 Read the wave once with `node <plugin root>/hooks/plan-package.cjs wave <plan dir> <wave id>`.

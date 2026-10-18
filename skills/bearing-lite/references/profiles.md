@@ -127,6 +127,11 @@ authority. Canonical JSON: UTF-8, sort_keys, compact separators.
 Later catalog edits do not mutate the frozen snapshot copy or its digest.
 For `tdd`, freeze both `test_implementer` and `implementer` routes and
 fallback order into that frozen snapshot copy.
+Preserve profile `holds` in the frozen snapshot and configuration digest, including
+`coordinator-decisions` and `orchestrator-delegation`. Relevant Coordinator and
+Orchestrator packets consume those frozen holds. Delegation defaults off and needs
+explicit task authority; see `owner-stops.md#coordinator-escalation-and-delegation`.
+An older snapshot missing selected holds requires explicit reconciliation before use.
 Selected capability sections (`review`, `deterministic_verification`) are
 frozen alongside routes, and relevant packets must consume that binding.
 Optional `deterministic_verification.additional_tools` entries carry `name`,

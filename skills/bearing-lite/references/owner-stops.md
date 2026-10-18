@@ -28,6 +28,35 @@ evidence first; escalate a real unresolved boundary as C or F. Fallback
 activation is an execution receipt, not an authority amendment. Only the
 owner changes the frozen profile or grants authority.
 
+## Coordinator escalation and delegation
+
+Coordinator handles routine choices within its assigned wave. It escalates one
+routine issue after two unsuccessful evidence-based resolution attempts, or sooner
+when no new evidence or safe approach exists. Conflicting requirements, material
+scope/architecture changes, protected actions, authority conflicts, and exhausted
+review/repair limits escalate immediately. The two attempts never grant another
+agent invocation, review, repair, or reset of a stricter existing limit.
+
+Orchestrator resolves an escalation using settled policy and existing authority
+first. Bring only genuinely unresolved owner decisions to the user. Record the
+choice and its reason once; resume dependent work without repeating approvals.
+
+Optional delegation mode is configured with an `orchestrator-delegation` hold in
+`profiles.json`: `enabled: false` by default. Missing, malformed, conflicting, or
+disabled settings supply no delegation. With `enabled: true`, the Orchestrator may
+choose on the user's behalf only within explicitly delegated decision scope and
+current task authority. Record that scope, exclusions, and expiry in the existing
+Lifecycle authority record; a profile flag alone never grants authority. Preserve
+the hold in the frozen binding and relevant packets. Changing it for an active
+Lifecycle requires an explicit owner amendment, never a live-catalog reload.
+
+Delegation does not authorize material scope or architecture changes, conflicting
+requirements with unresolved owner intent, protected actions, owner holds, model or
+harness substitutions, review activation, or expanded/spent review and repair
+budgets. Those remain owner decisions unless separately expressly authorized.
+It does not approve the final plan or activate a lifecycle. Without delegated
+authority, apply normal A–F handling above; routine approved continuation stays local.
+
 ## Approval and authority
 
 Planning and Design includes `authority.json.continuation` in the integrated gate:
