@@ -19,10 +19,11 @@ own transcription → recheck → return. Use only a profile-enabled assigned ev
   profile selections, configuration digest, `journey.json`.
 - **Match:** Scribe is enabled and assigned a visible event scope. Honor the frozen
   `roles.scribe.cadence`: `event`, `phase`, or `lifecycle`. One event assignment
-  consumes notifications within its existing invocation; never relaunch after
-  every event. Phase/lifecycle assignments consume the batch at their checkpoint.
+  consumes notifications in one persistent Lifecycle session; never relaunch per
+  event or phase. All cadences send only new events or batches to that session.
   Missing event transport is a typed gap; keep untranscribed records visible.
-- **Non-match:** planning dispatch, specialist engineering, execution.
+- **Non-match:** planning dispatch, specialist engineering, execution, or a disabled/
+  omitted Scribe. Orchestrator transcribes by default when this role is not selected.
 
 ## Algorithm
 
@@ -41,6 +42,10 @@ own transcription → recheck → return. Use only a profile-enabled assigned ev
    For an open stream, wait/wake on events without polling or timer loops.
 3. Do not write Lifecycle selections into `profiles.json` unless the owner
    asks to save a reusable profile.
+
+After a genuine context reset/inactive session, resume from the last durable
+receipt and only missing events under existing resume authority; preserve scope,
+route and spent limits. Never reload or retranscribe the whole Lifecycle history.
 
 ## Return and recovery
 

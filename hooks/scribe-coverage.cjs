@@ -3,9 +3,9 @@
 
 /**
  * Scribe coverage (#194). Lists Lifecycle events in journey.json that the
- * Scribe has not transcribed into `history`, so a missed transcription
- * surfaces as Scribe work or a typed capability gap instead of depending on
- * Orchestrator memory. Pure evaluator: no HOOK_CLASS, never writes history.
+ * selected recorder has not transcribed into `history`. Orchestrator records
+ * by default; an enabled Scribe owns transcription instead, with unavailable
+ * selected Scribe remaining a typed gap. Pure evaluator, never writes history.
  *
  * Events: confirmed owner decisions (answered or cancelled owner stops and
  * non-owner-stop decision records), authority events, and observed landings.
@@ -16,7 +16,7 @@ const fs = require("node:fs");
 
 const SCRIBE_CADENCES = Object.freeze(["event", "phase", "lifecycle"]);
 const DEFAULT_SCRIBE_CADENCE = "event";
-const OUTCOMES = Object.freeze(["PASS", "SCRIBE_REQUIRED", "CAPABILITY_GAP", "UNAVAILABLE"]);
+const OUTCOMES = Object.freeze(["PASS", "SCRIBE_REQUIRED", "ORCHESTRATOR_REQUIRED", "CAPABILITY_GAP", "UNAVAILABLE"]);
 
 /** Control-plane list -> history list that transcribes it. */
 const SOURCES = Object.freeze([
@@ -88,7 +88,7 @@ function findScribeRoute(journey) {
   return (match || found[0]).route;
 }
 
-/** Explicit flag, else the snapshot. Only an enabled route counts; omitted or disabled is a gap. */
+/** Explicit flag, else the snapshot. Only an enabled route counts; omitted/disabled uses Orchestrator. */
 function scribeAvailable(journey, explicit) {
   if (typeof explicit === "boolean") return explicit;
   const route = findScribeRoute(journey);
@@ -162,6 +162,16 @@ function evaluateScribeCoverage(input) {
     };
   }
   const ids = pending.map((event) => event.id).join(",");
+  const route = findScribeRoute(journey);
+  if (route === undefined || route.enabled === false) {
+    return {
+      outcome: "ORCHESTRATOR_REQUIRED",
+      reason: "untranscribed:" + ids,
+      untranscribed: pending,
+      cadence,
+      recovery: "Orchestrator records the listed source-backed events, then re-runs coverage; no separate Scribe is selected",
+    };
+  }
   if (!scribeAvailable(journey, input.scribe_available)) {
     return {
       outcome: "CAPABILITY_GAP",
@@ -177,7 +187,7 @@ function evaluateScribeCoverage(input) {
     reason: "untranscribed:" + ids,
     untranscribed: pending,
     cadence,
-    recovery: "Dispatch the Scribe on the frozen route with these events, then re-run this check",
+    recovery: "Send these events to the existing Scribe session on its frozen route, then re-run this check; never relaunch per event or phase",
   };
 }
 

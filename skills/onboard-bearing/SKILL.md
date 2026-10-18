@@ -50,7 +50,7 @@ Loop: obtain explicit choices → validate → save authorized fields → valida
    coverage assist (`review.coverage_assist`) is enabled and required; an explicit
    disabled choice is not a gap; its provider, model and credentials stay in its tooling. Use `references/verification-tools.md` to explain OCR, Reverify, and other optional testing tools and collect explicit choices.
    For requested delegation configuration, use `../bearing-lite/references/owner-stops.md#coordinator-escalation-and-delegation`: explain Coordinator local decisions and two-attempt escalation; store `orchestrator-delegation` in holds, disabled unless explicitly enabled. Explain that enabled mode needs scoped task authority, exclusions and expiry, preserves protected actions and review/repair limits, and carries frozen decision holds into packets.
-4. Every specialist role is optional. Save explicit enabled/disabled choices;
+4. Explain Orchestrator transcription as the default when Scribe is omitted/disabled; an enabled Scribe uses one persistent Lifecycle session and resumes from its receipt after a genuine reset. Preserve explicit personal preferences. Every specialist role is optional. Save explicit enabled/disabled choices;
    configuring a Reviewer does not request review for a task. Write only authorized
    choices atomically; validate schema readback. Store no credentials or unrequested backups.
 

@@ -14,9 +14,10 @@ extra role, review gate, approval checkpoint, or scope to resolve uncertainty.
 | E | Integrated plan approval | Present the package once for approval or change; execution waits for explicit approval. |
 | F | Authority reserved to the owner | Ask only when the action is not already expressly authorized. Owner holds remain effective until explicitly lifted. |
 
-Scribe transcribes decisions, receipts, ledger snapshots, and history.
-Orchestrator does not transcribe. Unavailable Scribe is a typed capability gap,
-not substitution authority.
+Orchestrator records source-backed decisions, receipts, ledger snapshots, and history
+by default. When the selected profile enables Scribe, that role owns transcription
+in one persistent Lifecycle session instead; an unavailable selected Scribe is a
+typed capability gap, never silent substitution. Recording never grants authority.
 
 Routine specialist handoffs continue to the agreed owner-review checkpoint;
 only a genuine blocker or owner intervention pauses work.

@@ -42,7 +42,9 @@ session can be enabled or disabled. Cadence keys attach to
 with values `slice`, `phase`, or `lifecycle`. Defaults are `phase`, `phase`,
 and `lifecycle`. `scribe.cadence` is `event` (default: after each owner
 decision, authority event, or landing), `phase`, or `lifecycle`; handoff and
-closeout check history coverage at every Scribe cadence. The Light Implementer takes only slices whose `work_class`
+closeout check history coverage at every Scribe cadence. Scribe is optional:
+when omitted or disabled, Orchestrator records history; when enabled, reuse one
+persistent Lifecycle session for all events and batches. The Light Implementer takes only slices whose `work_class`
 is `light` (criteria in `skills/light-implementer`); it has its own primary
 and fallbacks, usually a lighter and cheaper route. Surveyor, Explorer,
 Crewmate, Navigator, Park Ranger, and Validator are not profile roles;

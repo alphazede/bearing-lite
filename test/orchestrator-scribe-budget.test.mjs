@@ -42,17 +42,17 @@ describe("#113 Orchestrator, Scribe, and non-resettable budgets", () => {
     assert.match(ASSEMBLY, /return to that author as a named delta/);
   });
 
-  it("Scribe owns transcription; unavailable Scribe is a gap, not Orchestrator substitution", () => {
-    assert.match(ROUTER, /never relaunch it per event or transcribe history yourself/);
-    assert.match(OWNER_STOPS, /Scribe transcribes/);
-    assert.match(OWNER_STOPS, /Orchestrator does not transcribe/i);
+  it("Orchestrator records by default; selected Scribe keeps ownership and one session", () => {
+    assert.match(ROUTER, /never relaunch it per event or phase/);
+    assert.match(OWNER_STOPS, /that role owns transcription/);
+    assert.match(OWNER_STOPS, /Orchestrator records source-backed[\s\S]*by default/i);
     assert.match(
       ROUTER,
       /author delegated artifacts|author specialist artifacts|never specialist artifacts/i
     );
     assert.match(
       `${ROUTER}\n${OWNER_STOPS}`,
-      /unavailable Scribe is a (typed )?capability gap/i
+      /unavailable selected Scribe is a[\s\S]*typed capability gap/i
     );
     assert.match(
       `${ROUTER}\n${OWNER_STOPS}`,

@@ -41,20 +41,20 @@ Write `handoff.md` using the Prompt skill (`../prompt/SKILL.md`) in the confirme
 selected models/harnesses/capabilities, candidate and worktree, assignments and write sets, commands, evidence, review status, blockers, and the next action.
 Recommend starting a new session as Implementation Orchestrator with this handoff. Do not launch it automatically; continuing in the current session is an owner choice.
 The implementation session consumes settled planning; it does not repeat it.
-Handoff and closeout pass `journey` to `hooks/closeout.cjs`; untranscribed decisions, authority events, or landings refuse them until the enabled Scribe transcribes them.
+Handoff and closeout pass `journey` to `hooks/closeout.cjs`; untranscribed decisions, authority events, or landings refuse them until the configured recorder transcribes them.
 
 ## Dispatch and recovery
 
 Preserve the recorded profile; use `references/profiles.md` for authorized amendments.
 Launch each selected agent assignment once. Extra invocations, retries, repairs,
 or resumed agent runs require explicit authority; self-correction stays in-run.
-An enabled Scribe runs by its frozen cadence (`event` default) as one assignment consuming events in-run; never relaunch it per event or transcribe history yourself.
+An enabled Scribe uses one session at its frozen cadence (`event` default); never relaunch it per event or phase. When disabled or omitted, Orchestrator records history.
 Use event-driven coordination: register native response notifications at dispatch. Wait through the harness's event mechanism; wake when an agent response arrives.
 Consume each response once and dispatch newly ready work. Never poll logs, processes,
 status, or worktrees, or use timers/sleep loops for periodic “still running” checks.
 If event waiting is unavailable, return `WAITING_ON`; resume on the actual response.
 Use `references/task-state.md` for state integrity, `references/resume.md` for resume and Scribe coverage, and `references/owner-stops.md` for authority/intent stops. Never replay completed stages or change routes.
-Selected or required capabilities activate; unavailability, including a needed Coordinator, Systems Modeler, or Scribe omitted or disabled, is a typed capability gap, not substitution, not success, not invented behavior. Unselected and unrequired absence remains inactive, not a global failure.
+Selected or required capabilities activate; unavailability, including a needed Coordinator or Systems Modeler omitted or disabled, is a typed capability gap, not substitution, not success, not invented behavior. Unselected and unrequired absence remains inactive, not a global failure.
 Return `READY`, `WAITING_ON`, `OWNER_DECISION_REQUIRED`, or `COMPLETE` with mode,
 stage, candidate, completed work, evidence, blocker, and next action.
 Never expand scope, author delegated artifacts, invent decisions, or pass missing evidence.
