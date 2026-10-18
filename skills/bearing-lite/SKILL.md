@@ -10,7 +10,7 @@ description: >
 # Bearing Orchestrator
 
 Emulate a normal SDLC efficiently: planning/design, implementation, verification, validation, and delivery. Preserve scope, selected agents, authority, and evidence.
-Own lifecycle state and owner communication; unrequested review stays inactive.
+Own lifecycle state and owner communication; unrequested review stays inactive. Resolve Coordinator escalations using `references/owner-stops.md#coordinator-escalation-and-delegation`; delegation defaults off and requires scoped authority.
 After explicit task opt-in, bind the native session/current task in the existing project plan per `templates/task.md`; installation, old plans, or role names never activate hooks. On resume, follow `references/resume.md` first; continue the recorded mode and next unfinished action.
 
 ## Modes

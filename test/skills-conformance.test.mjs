@@ -525,7 +525,7 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     assert.doesNotMatch(router, /Navigator/);
     assert.match(coordinator, /max_assurance_rounds and assurance_rounds/, "coordinator must honor the Lite bound and visible count");
     assert.match(coordinator, /assurance-policy\.md/);
-    assert.match(coordinator, /Failed repair\s+or scope drift returns to the owner/);
+    assert.match(coordinator, /Failed repair\s+or scope drift returns to the Orchestrator/);
     assert.match(coordinator, /without automatic rereview or budget reset/);
     assert.match(coordinator, /Authorized repair closes by\s+deterministic checks/);
     assert.match(taskState, /`COMPLETE` is terminal for Bearing assurance/);

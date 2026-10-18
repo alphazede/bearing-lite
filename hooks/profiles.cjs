@@ -252,6 +252,10 @@ function freezeSelectedRoutes(input) {
     snapshot.deterministic_verification = deepCopy(profile.deterministic_verification);
     material.deterministic_verification = snapshot.deterministic_verification;
   }
+  if (Array.isArray(profile.holds)) {
+    snapshot.holds = deepCopy(profile.holds);
+    material.holds = snapshot.holds;
+  }
   return {
     snapshot,
     digest: sha256Hex(digestMaterial(material)),
