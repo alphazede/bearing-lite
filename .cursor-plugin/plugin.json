@@ -1,6 +1,6 @@
 {
   "name": "bearing-lite",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Skills-first portable planning, routing, bounded execution, and independent assurance for repository work.",
   "author": {
     "name": "William Rumph / AlphaZede"
