@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Make Scribe optional: Orchestrator records history when it is off, while an enabled Scribe keeps one persistent lifecycle session; handoff and completion still require complete source-backed history ([PR #219](https://github.com/alphazede/bearing-lite/pull/219)).
+
 - Preserve frozen decision holds and clarify Coordinator escalation after two evidence-based routine-resolution attempts, with optional scoped Orchestrator delegation disabled by default ([PR #218](https://github.com/alphazede/bearing-lite/pull/218)).
 
 - Prepared the 2.0.0 lifecycle and hook migration ([PR #217](https://github.com/alphazede/bearing-lite/pull/217)).
