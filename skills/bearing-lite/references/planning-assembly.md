@@ -175,7 +175,8 @@ recorded, write `handoff.md` with exact artifact paths/digests, decisions and
 authority, selected routes/capabilities, candidate/worktree, assignments, commands,
 evidence, review status, blockers, and next action. Before writing it, run the
 handoff check in `hooks/closeout.cjs` with `journey` (`mode: "handoff"`); a
-Scribe coverage gap refuses the handoff until the enabled Scribe, on its frozen
-cadence, transcribes the listed decisions, authority events, and landings (see
+history coverage gap refuses the handoff until its recorder transcribes the listed
+decisions, authority events, and landings: Orchestrator when Scribe is omitted or
+disabled, otherwise the existing Scribe session on its frozen cadence (see
 `resume.md`). Recommend a new Implementation Orchestrator session; do not launch
 it automatically or repeat settled planning.
