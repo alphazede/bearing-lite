@@ -1,3 +1,4 @@
+import { bindPlan } from "./task-opt-in-fixture.mjs";
 /**
  * Verified Claude Code / Codex host mapping.
  * Derives Bearing fields from cwd Markdown; translates outcomes to host JSON;
@@ -22,7 +23,8 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(import.meta.url);
-const host = require(path.join(ROOT, "hooks/com.anthropic.claude-code/host.cjs"));
+const actualHost = require(path.join(ROOT, "hooks/com.anthropic.claude-code/host.cjs"));
+const host = { ...actualHost, handle: input => actualHost.handle(bindPlan(input)) };
 const HOST_BIN = path.join(ROOT, "hooks/com.anthropic.claude-code/host.cjs");
 
 const READY_PLAN = `# Journey
@@ -109,7 +111,7 @@ function writePlan(dir, markdown, filename = "PLAN.md") {
 
 function runHost(payload) {
   return spawnSync(process.execPath, [HOST_BIN], {
-    input: JSON.stringify(payload),
+    input: JSON.stringify(bindPlan(payload)),
     encoding: "utf8",
     timeout: 10_000,
   });
@@ -320,6 +322,7 @@ describe("verified host mapping", () => {
     const cwd = path.join(tmp, "copilot-spaces-cwd");
     mkdirSync(cwd);
     writePlan(cwd, READY_PLAN);
+    bindPlan({ cwd, session_id: "copilot-spaces" });
     for (const event of ["SessionStart", "Stop"]) {
       const command = copilotHooks.hooks[event][0].command;
       assert.match(command, /"\$\{PLUGIN_ROOT\}\/hooks\/com\.anthropic\.claude-code\/host\.cjs"/);
@@ -424,11 +427,7 @@ describe("verified host mapping", () => {
       tool_name: "Bash",
       tool_input: { command: "ls" },
     });
-    const context = response.hookSpecificOutput.additionalContext;
-    assert.match(context, /ADVISE/);
-    assert.match(context, /context_incomplete/);
-    assert.doesNotMatch(context, /context_ready/);
-    assert.notEqual(response.decision, "block");
+    assertQuietSuccess(response);
   });
 
   it("treats template placeholders as missing context", () => {
@@ -484,23 +483,20 @@ describe("verified host mapping", () => {
     assert.notEqual(response.decision, "block");
   });
 
-  it("unmapped host events fail open as UNAVAILABLE without blocking", () => {
+  it("unmapped host events stay quiet without blocking", () => {
     const response = host.handle({
       cwd: tmp,
       hook_event_name: "PreToolUse",
       tool_name: "Bash",
       tool_input: { command: "rm -rf /" },
     });
-    assert.match(response.hookSpecificOutput.additionalContext, /UNAVAILABLE/);
-    assert.match(response.hookSpecificOutput.additionalContext, /unmapped_host_event/);
-    assert.notEqual(response.decision, "block");
+    assertQuietSuccess(response);
   });
 
-  it("malformed host input is UNAVAILABLE, never fabricated BLOCK", () => {
+  it("malformed host input stays quiet, never fabricated BLOCK", () => {
     for (const raw of ["{not-json", 42, ["array"]]) {
       const response = host.handle(raw);
-      assert.match(String(response.hookSpecificOutput.additionalContext), /UNAVAILABLE/);
-      assert.notEqual(response.decision, "block");
+      assertQuietSuccess(response);
     }
   });
 
@@ -517,9 +513,7 @@ describe("verified host mapping", () => {
     });
     assert.equal(result.status, 0, result.stderr);
     const parsed = JSON.parse(result.stdout);
-    assert.equal(parsed.hookSpecificOutput.hookEventName, "SessionStart");
-    assert.match(parsed.hookSpecificOutput.additionalContext, /ADVISE|UNAVAILABLE/);
-    assert.notEqual(parsed.decision, "block");
+    assertQuietSuccess(parsed);
   });
 
   it("CLI adapter exits 0 on empty stdin instead of using host exit 2", () => {
@@ -530,7 +524,7 @@ describe("verified host mapping", () => {
     });
     assert.equal(result.status, 0, result.stderr);
     const parsed = JSON.parse(result.stdout);
-    assert.match(parsed.hookSpecificOutput.additionalContext, /UNAVAILABLE/);
+    assertQuietSuccess(parsed);
   });
 
   it("Stop re-entry with stop_hook_active does not request another continuation", () => {
@@ -660,7 +654,7 @@ describe("verified host mapping", () => {
     assert.notEqual(response.decision, "block");
   });
 
-  it("first-pass Stop discovers a journey-marker-only plan", () => {
+  it("first-pass Stop leaves a journey-marker-only plan inactive", () => {
     const cwd = path.join(tmp, "journey-marker-only");
     mkdirSync(cwd);
     writePlan(
@@ -681,11 +675,10 @@ describe("verified host mapping", () => {
       cwd,
       hook_event_name: "Stop",
     });
-    assert.match(response.hookSpecificOutput.additionalContext, /closeout|ADVISE/);
-    assert.notEqual(response.decision, "block");
+    assertQuietSuccess(response);
   });
 
-  it("first-pass Stop discovers a checkout_lease-only plan", () => {
+  it("first-pass Stop leaves a checkout_lease-only plan inactive", () => {
     const cwd = path.join(tmp, "lease-only");
     mkdirSync(cwd);
     writePlan(
@@ -714,18 +707,17 @@ describe("verified host mapping", () => {
       cwd,
       hook_event_name: "Stop",
     });
-    assert.match(response.hookSpecificOutput.additionalContext, /closeout|ADVISE/);
-    assert.notEqual(response.decision, "block");
+    assertQuietSuccess(response);
   });
 
-  it("mapping.md documents quiet Stop cases and first-pass discoverable Journey context", () => {
+  it("mapping.md documents quiet ordinary Stop and explicit current-task context", () => {
     const mapping = readFileSync(
       path.join(ROOT, "hooks/com.anthropic.claude-code/mapping.md"),
       "utf8"
     );
     assert.match(mapping, /stop_hook_active/);
     assert.match(mapping, /quiet success/i);
-    assert.match(mapping, /no discoverable Journey/);
+    assert.match(mapping, /no current task binding/);
     assert.match(mapping, /discoverable Journey/);
     assert.match(mapping, /additionalContext/);
     assert.match(mapping, /checkout_lease/);

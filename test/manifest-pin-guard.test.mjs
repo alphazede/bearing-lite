@@ -84,7 +84,7 @@ function packageFixture(t, writeSet) {
   const root = temporary(t);
   const dir = path.join(root, "docs/plans/x");
   const registerPath = "docs/plans/x/register.sdoc";
-  const register = "[DOCUMENT]\nUID: R-1\n";
+  const register = readFileSync(path.join(ROOT, "test/fixtures/register-precheck/valid.sdoc"), "utf8");
   mkdirSync(path.join(root, ".git"));
   mkdirSync(dir, { recursive: true });
   const put = (rel, text) => {
@@ -94,11 +94,13 @@ function packageFixture(t, writeSet) {
   };
   put(registerPath, register);
   put("docs/plans/x/authority.json", JSON.stringify({ requirement_register: { path: registerPath, sha256: sha(register) } }));
-  const plan = "# Plan\n";
+  const plan = readFileSync(path.join(ROOT, "test/fixtures/register-precheck/plan.md"), "utf8");
+  put("evidence.txt", readFileSync(path.join(ROOT, "test/fixtures/register-precheck/evidence.txt"), "utf8"));
   put("docs/plans/x/plan.md", plan);
   const seit = {
     source_baseline: { planning_inputs: [{ path: "docs/plans/x/plan.md", sha256: sha(plan) }] },
     procedures_and_commands: [],
+    proof_cases: [{ id: "SEIT-1", requirement_id: "REG-1" }, { id: "SEIT-2", requirement_id: "REG-2" }],
   };
   put("docs/plans/x/seit.json", JSON.stringify(seit));
   const manifestDigest = sha([sha(plan), sha(JSON.stringify(seit))].join("\n"));

@@ -1,3 +1,4 @@
+import { withTask } from "./task-opt-in-fixture.mjs";
 /**
  * #92 harness acceptance, component proof only: packed identity, skill files,
  * and hook evaluation through the packaged scripts. Native Codex install and
@@ -67,10 +68,11 @@ describe("#92 harness acceptance", () => {
 
   it("evaluates packaged hook scripts with a write deny and an allowed counterpart", () => {
     const lock = path.join(ROOT, "hooks/orchestrator-write-lock.cjs");
-    const deny = runHook(lock, {
+    // seit.json is Test Engineer content; the Orchestrator controller may not write it.
+    const deny = runHook(lock, withTask({
       hook_event_name: "PreToolUse",
-      tool_input: { file_path: "design.md" },
-    });
+      tool_input: { file_path: "seit.json" },
+    }));
     assert.equal(deny.status, 0, deny.stderr);
     assert.match(deny.stderr, /DENY_DISPATCH/);
     const allow = runHook(lock, {

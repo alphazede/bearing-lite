@@ -1,4 +1,4 @@
 interface:
   display_name: "Write Agent Handoff"
   short_description: "Create concise agent handoffs and work packets"
-  default_prompt: "Use $prompt to create a concise, executable handoff for another agent."
+  default_prompt: "Use $prompt to compose one bounded handoff for the already selected role and session, preserving its canonical loop, self-checks, authority, and evidence contract."

@@ -29,7 +29,7 @@ Pull requests that stay inside that product boundary are welcome. Changes that
 reintroduce deep-harness coupling, model or provider pins, secret material, or
 private path spill will be declined.
 
-The public lifecycle is Intake → Architectural Alignment → Scope Definition →
+The public lifecycle is Intake → Architectural Alignment and Scope →
 Planning and Design, then bounded implementation and independent assessment.
 Use those names. Do not reactivate retired camp terminology in active public
 flow.

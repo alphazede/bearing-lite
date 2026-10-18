@@ -25,7 +25,7 @@ The project's human-readable plan is the only task-state record. Diagrams explai
 - `WAITING_ON` → `READY` when the prerequisite is repaired or replaced; → `EVIDENCE_READY` when fresh assurance becomes available; → `CANCELLED` on owner scope reduction.
 - `READY` → `IN_PROGRESS` when the assigned role starts; → `OWNER_DECISION_REQUIRED` on authority or integrity guard.
 - `IN_PROGRESS` → `EVIDENCE_READY` with candidate and handoff; → `CORRECTION_REQUIRED` on correctable failure; → `OWNER_DECISION_REQUIRED` on security, authority, or integrity guard.
-- `CORRECTION_REQUIRED` → `READY` on attempt 1 or 2 with a new hypothesis and evidence; → `OWNER_DECISION_REQUIRED` on the third failed correction or out-of-contract amendment.
+- `CORRECTION_REQUIRED` → `READY` with a new hypothesis and evidence inside the recorded authority and any owner-supplied allowance; → `OWNER_DECISION_REQUIRED` when that allowance is exhausted or an out-of-contract amendment is needed.
 - `EVIDENCE_READY` → `VALIDATING` | `REVIEWING` | `ACCEPTANCE` for the next missing required role; → `WAITING_ON` if assurance dispatch is unavailable.
 - During the single assurance round, an accepted Assurance Test Engineer or Reviewer handoff returns to `EVIDENCE_READY` to select the next missing assurance role in declared order.
 - `VALIDATING` → `CORRECTION_REQUIRED` when more evidence or repair is needed; otherwise back through `EVIDENCE_READY` for remaining assurance.
@@ -39,7 +39,7 @@ The project's human-readable plan is the only task-state record. Diagrams explai
 - Orchestrator alone writes cross-wave dependencies and Lifecycle-wide sequencing. Direct packets never dispatch Coordinator. `roles.coordinator.enabled` means the route is available, not that every packet gets a Coordinator. A wave that needs Coordinator while the route is omitted or disabled is a typed capability gap, not silent Orchestrator substitution.
 - Workers and assurance roles return handoffs; they do not race plan edits.
 - Candidate authors never provide their own Assurance Test Engineer, Reviewer, or Integration Engineer execution verdict. Implementer must not self-certify.
-- Waiting on a prerequisite consumes no correction attempt. Each task has its own three-attempt correction counter; identical retries without new evidence are invalid.
+- Waiting on a prerequisite consumes no correction attempt. Record corrections as evidence, not a fixed attempt cap. Preserve any owner-supplied allowance; identical retries without new evidence are invalid.
 - Each declared phase or wave receives at most one assurance round and one review-directed repair. Replacement candidates do not reset the count within that declared unit; the next distinct declared phase or wave carries its own 1/1 budget. The parent controller records `assurance_rounds`, routes bounded repair, and verifies that repair deterministically without dispatching assurance again.
 - `COMPLETE` is terminal for Bearing assurance. An already authorized deployment keeps operational verification and rollback readiness but does not reopen review; candidate-changing deployment work requires separate scope.
 
@@ -63,16 +63,20 @@ generation-bound checkout lease before any planning write or dispatch.
 
 ## Planning stage order
 
-Planning runs Intake → Architectural Alignment → Scope Definition → Planning
-and Design. When the Systems Modeler role is selected or required, the
-Systems Modeler contextual pass (current flow, candidate placements with
-`file:line`, constraints) runs before the first register draft, and
-Planning and Design allocates against that placement receipt (see
-`../../planning-and-design/references/allocation-inputs.md`); an unavailable
-Systems Modeler is a typed capability gap, never silent allocation.
-Relationship mappings consume the draft register and Requirements Engineer
-findings in the planning wave. No mapping waits on a Requirements Engineer
-PASS; corrections join the one consolidated review and aggregated repair.
+Planning runs Intake → combined Architectural Alignment and Scope (in the
+Orchestrator controller session; the legacy Scope Definition name forwards to it
+and never starts another stage) → the enabled specialists the task needs, in
+data-dependency order: Requirements Engineer → Systems Modeler → Integration
+Engineer planning → Planning Test Engineer → the Planning Orchestrator's own
+final Planning and Design and assembly → requested planning review → owner
+confirmation → `handoff.md`. Independent ready work runs in parallel; inactive
+roles are skipped. The Requirements Engineer completes its own quality pass from
+confirmed Alignment/Scope context; a selected Systems Modeler then returns a
+placement receipt that final Planning and Design allocates against (see
+`../../planning-and-design/references/allocation-inputs.md`); a selected or
+required but unavailable Systems Modeler is a typed capability gap, never silent
+allocation. The Test Engineer binds SEIT cases to existing requirement IDs, and
+final assembly blocks until every pending binding is complete.
 
 
 ## Bound assurance launch accounting

@@ -1,3 +1,4 @@
+import { withTask } from "./task-opt-in-fixture.mjs";
 /**
  * Closeout git-sync: fast-forward only, never mutate a dirty or diverged
  * checkout, always report what still needs a push or a PR.
@@ -183,7 +184,7 @@ describe("closeout git-sync", () => {
       fs.writeFileSync(path.join(local, "local.txt"), "mine\n");
       git(local, "add", "local.txt");
       git(local, "commit", "-q", "-m", "local-work");
-      const first = handle({ cwd: local, hook_event_name: "Stop" });
+      const first = handle(withTask({ cwd: local, hook_event_name: "Stop" }));
       assert.ok(first.hookSpecificOutput?.additionalContext);
       const again = handle({
         cwd: local,

@@ -160,7 +160,7 @@ describe("model-neutral planning review", () => {
   });
 
   it("keeps implementation assurance separate and core policy model-neutral", () => {
-    const router = readFileSync(path.join(ROOT, "skills/bearing-lite/SKILL.md"), "utf8");
+    const router = readFileSync(path.join(ROOT, "skills/bearing-lite/references/planning-assembly.md"), "utf8");
     const policy = policyDocument;
     assert.match(router, /Planning review is a separate pre-dispatch gate/);
     assert.match(router, /`max_assurance_rounds` is 1/);

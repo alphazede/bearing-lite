@@ -179,9 +179,10 @@ describe("CMD-RECOVERY-01 recovery (SEIT-CORRECTION-01, SEIT-DEPENDENCY-01)", ()
     assert.match(TASK_STATE, /increments generation/);
     assert.match(TASK_STATE, /cannot\s+steal a live lease/);
     assert.match(TASK_STATE, /fail closed/);
-    assert.match(ROUTER, /release the checkout lease exactly once/);
-    assert.match(ROUTER, /explicit recorded generation increment/);
-    assert.match(ROUTER, /cannot steal a live lease/);
+    // The Orchestrator applies these lease rules through its linked task-state reference.
+    assert.match(ROUTER, /references\/task-state\.md/);
+    assert.match(TASK_STATE, /`COMPLETE` or `CANCELLED` releases the lease exactly once/);
+    assert.match(TASK_STATE, /Stale recovery is explicit, recorded, increments generation/);
   });
 
   it("correction attempts 1 and 2 require new evidence/hypothesis and return READY", () => {

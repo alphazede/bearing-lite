@@ -148,7 +148,11 @@ describe("plan-package (#70 embedded digest freeze)", () => {
   });
   it("passes with a manifest digest that binds plan, design, and seit.json", () => {
     impl(expectedManifest);
-    assert.deepEqual(verifyDigests(dir), { manifest_digest: expectedManifest, findings: [] });
+    assert.deepEqual(verifyDigests(dir), { manifest_digest: expectedManifest, input_digests: [
+      { path: "docs/plans/x/plan.md", sha256: sha(plan) },
+      { path: "docs/plans/x/design.md", sha256: sha(design) },
+      { path: "docs/plans/x/seit.json", sha256: sha(seitBytes) },
+    ], findings: [] });
     assert.equal(freeze(dir).outcome, "PASS");
   });
   it("a specification Journey needs an existing SDoc register", () => {

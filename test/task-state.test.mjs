@@ -4,7 +4,7 @@
  */
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync, statSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -290,4 +290,18 @@ describe("CMD-STATE-01 task-state (SEIT-STATE-01)", () => {
       assert.ok(verdict.diagnostics.some((d) => d.code === "image_derived_authority"));
     }
   });
+});
+
+
+it("active Bearing contracts have no fixed correction-attempt cap and preserve explicit budgets", () => {
+  const roots = ["skills", "hooks", "templates", "schemas", "tools", "docs/architecture", "docs/guides", "README.md", "CONTRIBUTING.md", "com.github.copilot", ...readdirSync(ROOT).filter(name => name.startsWith(".") && name !== ".git")];
+  const files = rel => statSync(path.join(ROOT, rel)).isDirectory()
+    ? readdirSync(path.join(ROOT, rel)).flatMap(name => files(path.join(rel, name))) : [rel];
+  const caps = /three[- ]attempt|third failed correction|attempt 1 or 2|0[-–]3 correction attempts|MAX_CORRECTIONS\s*=\s*3/i;
+  for (const rel of roots.flatMap(files).filter(rel => /\.(?:md|mmd|svg|cjs|mjs|json|yaml)$/.test(rel))) {
+    assert.doesNotMatch(readFileSync(path.join(ROOT, rel), "utf8"), caps, rel);
+  }
+  assert.match(TASK_STATE, /owner-supplied allowance/);
+  assert.match(TASK_STATE, /new hypothesis and evidence/);
+  assert.match(TASK_STATE, /at most one assurance round and one review-directed repair/);
 });

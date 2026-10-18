@@ -237,10 +237,17 @@ describe("#194 Scribe coverage", () => {
     const resume = read("skills/bearing-lite/references/resume.md");
     assert.match(scribe, /roles\.scribe\.cadence/);
     assert.match(scribe, /hooks\/scribe-coverage\.cjs/);
-    assert.match(router, /frozen cadence/);
-    assert.match(router, /never by memory/);
-    assert.match(router, /On resume, run `hooks\/scribe-coverage\.cjs`/);
-    assert.match(router, /refuse them until the Scribe runs/);
+    assert.match(router, /frozen cadence \(`event` default\)/);
+    assert.match(router, /never relaunch it per event or transcribe history yourself/);
+    assert.match(router, /`references\/resume\.md` for resume and Scribe coverage/);
+    assert.match(resume, /Resume runs `node <plugin root>\/hooks\/scribe-coverage\.cjs <journey\.json>`/);
+    assert.match(resume, /roles\.scribe\.cadence/);
+    assert.match(router, /pass `journey` to `hooks\/closeout\.cjs`/);
+    assert.match(router, /refuse them until the enabled Scribe transcribes them/);
     assert.match(resume, /never\s+transcribes the events itself/);
+    const assembly = read("skills/bearing-lite/references/planning-assembly.md");
+    assert.match(assembly, /`hooks\/closeout\.cjs` with `journey` \(`mode: "handoff"`\)/);
+    // Configured cadence only: no per-event relaunch and no invented Scribe when disabled.
+    assert.match(resume, /Never relaunch it per event, poll it, or\s+invent a Scribe when the role is disabled/);
   });
 });

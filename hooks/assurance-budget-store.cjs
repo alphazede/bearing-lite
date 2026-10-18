@@ -17,7 +17,8 @@ function local(root, relative) {
   return file;
 }
 /** Visible root plan binding, including when the host reports a child working directory. */
-function binding(cwd) {
+function binding(cwd, input) {
+  const current = input ? require("./task-binding.cjs").binding(input) : null;
   let root = fs.realpathSync(cwd);
   for (;;) {
     const plans = fs.readdirSync(root, { withFileTypes: true })
@@ -27,12 +28,10 @@ function binding(cwd) {
     for (const name of plans) {
       const file = path.join(root, name);
       const raw = fs.readFileSync(file, 'utf8');
-      // Explicit visible task state, not prompt or role-name heuristics.
-      for (const task of raw.split(/^###\s*task_id:.*$/m).slice(1)) {
-        const state = task.match(/^-\s*status:\s*(\S+)/m)?.[1];
-        const required = task.match(/^-\s*required_assurance:\s*(.+)$/m)?.[1]?.trim();
-        if (['EVIDENCE_READY', 'VALIDATING', 'REVIEWING', 'ACCEPTANCE'].includes(state) && required && !['none', '[]'].includes(required)) assurancePending = true;
-      }
+      // A required-assurance label in an unrelated/old task is not task opt-in.
+      const task = current?.file === file ? current.task : null;
+      if (task && ['EVIDENCE_READY', 'VALIDATING', 'REVIEWING', 'ACCEPTANCE'].includes(task.status) &&
+          task.required_assurance && !['none', '[]'].includes(task.required_assurance)) assurancePending = true;
       for (const match of raw.matchAll(/^-\s*assurance_dispatch:\s*(.*)$/gm)) found.push(match[1]);
     }
     if (found.length) {

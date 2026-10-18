@@ -1,7 +1,7 @@
 interface:
   display_name: "Bearing Lite"
   short_description: "Route a stateful repository Journey"
-  default_prompt: "Use $bearing-lite to start or resume this Journey, resolve planning one stage at a time, confirm the lineup, record at-end review, then dispatch bounded sessions."
+  default_prompt: "Use $bearing-lite in the requested Planning Orchestrator or Implementation Orchestrator mode. Preserve owner-selected agents and review cadence. End planning with handoff.md and recommend a new implementation session; do not launch it automatically or repeat settled planning."
 
 policy:
   allow_implicit_invocation: false

@@ -26,6 +26,7 @@ const crypto = require("node:crypto");
 const { isDeepStrictEqual } = require("node:util");
 
 const { checkReviewRounds } = require("./assurance-budget.cjs");
+const { checkRegisterFiles } = require("./register-precheck.cjs");
 const { POLICY: REVIEW_POLICY, planningSessionsVerdict, evaluatePlanningReview, sameCandidate } = require("./planning-review.cjs");
 
 const sha256 = (data) => crypto.createHash("sha256").update(data).digest("hex");
@@ -126,6 +127,7 @@ function verifyDigests(dir) {
     findings.push({ code: "missing_planning_inputs", path: "seit.json" });
   }
   const actual = [];
+  const input_digests = [];
   for (const input of inputs || []) {
     if (typeof input?.path !== "string" || !/^[0-9a-f]{64}$/.test(input?.sha256 || "")) {
       findings.push({ code: "malformed_planning_input", input });
@@ -138,12 +140,15 @@ function verifyDigests(dir) {
     }
     const digest = sha256(fs.readFileSync(file));
     actual.push(digest);
+    input_digests.push({ path: input.path, sha256: digest });
     if (digest !== input.sha256) {
       findings.push({ code: "digest_mismatch", path: input.path, recorded: input.sha256, actual: digest });
     }
   }
   // The manifest binds the planning inputs and seit.json itself (#70).
-  actual.push(sha256(fs.readFileSync(path.join(dir, "seit.json"))));
+  const seitDigest = sha256(fs.readFileSync(path.join(dir, "seit.json")));
+  actual.push(seitDigest);
+  input_digests.push({ path: path.relative(root, path.join(dir, "seit.json")), sha256: seitDigest });
   const manifest_digest = sha256(actual.join("\n"));
   const recorded = implementation?.journey_settings?.planning_review?.candidate_digest;
   if (typeof recorded !== "string" || !recorded) {
@@ -159,7 +164,7 @@ function verifyDigests(dir) {
       findings.push({ code: "missing_requirement_register", recorded: register ?? null });
     }
   }
-  return { manifest_digest, findings };
+  return { manifest_digest, input_digests: findings.length ? undefined : input_digests, findings };
 }
 
 const HISTORICAL_GATE = new Set([
@@ -493,26 +498,31 @@ function checkManifestProjection(implementation) {
 }
 
 /**
- * #205: the one planning wave. A draft freeze (before the review) needs the
- * declared sessions; the final freeze that precedes implementation dispatch
- * also needs the completed wave receipt: every declared session returned,
- * exactly one review, at most one repair, deterministic closure, and the
- * closing candidate equal to the frozen manifest digest. The original pinned
- * review record is evaluated without replacing its sessions or reviewer
- * identities; one explicit repair links that reviewed candidate to closure.
+ * #205: the one planning wave. A draft freeze (before any review) needs a
+ * valid session declaration: exactly the profile-enabled specialist sessions
+ * the task needs, possibly none. The final freeze that precedes the handoff
+ * needs every declared session returned ready for the closing candidate,
+ * deterministic closure, and the closing candidate equal to the frozen
+ * manifest digest. Review evidence is required only at an owner-requested
+ * boundary: `review_requested: false` records the owner's choice with zero
+ * reviews, zero repairs, and no receipt; otherwise (true or omitted) exactly
+ * one digest-pinned review, at most one repair, and its lineage are required.
+ * The original pinned review record is evaluated without replacing its
+ * sessions or reviewer identities; one explicit repair links that reviewed
+ * candidate to closure.
  */
-function checkPlanningWave(implementation, manifestDigest, stage = "final", dir) {
+function checkPlanningWave(implementation, manifestDigest, stage = "final", dir, inputDigests) {
   const wave = implementation?.journey_settings?.planning_wave;
   if (!wave || typeof wave !== "object") return [{ code: "planning_wave_missing" }];
   const sessions = planningSessionsVerdict({ required_sessions: wave.required_sessions, sessions: [] });
   if (sessions?.reason === "planning_sessions_invalid") return [{ code: "planning_sessions_invalid" }];
+  if (wave.review_requested !== undefined && typeof wave.review_requested !== "boolean") {
+    return [{ code: "planning_wave_review_request_invalid", recorded: wave.review_requested }];
+  }
   if (stage === "draft") return [];
   const findings = [];
-  if (!Array.isArray(wave.sessions) || !wave.sessions.length) {
+  if (!Array.isArray(wave.sessions)) {
     findings.push({ code: "planning_wave_sessions_incomplete" });
-  }
-  if (wave.reviews !== REVIEW_POLICY.review_rounds) {
-    findings.push({ code: "planning_wave_review_count", recorded: wave.reviews ?? null });
   }
   if (!Number.isInteger(wave.repairs) || wave.repairs < 0 || wave.repairs > REVIEW_POLICY.aggregated_repairs_max) {
     findings.push({ code: "planning_wave_repair_limit", recorded: wave.repairs ?? null });
@@ -522,6 +532,24 @@ function checkPlanningWave(implementation, manifestDigest, stage = "final", dir)
   }
   if (!manifestDigest || wave.candidate_digest !== manifestDigest) {
     findings.push({ code: "planning_wave_candidate_mismatch", recorded: wave.candidate_digest ?? null, actual: manifestDigest });
+  }
+  if (wave.review_requested === false) {
+    // Unrequested review is recorded, never dispatched or forged.
+    if (wave.reviews !== 0) findings.push({ code: "planning_wave_review_count", recorded: wave.reviews ?? null });
+    if (wave.repairs !== 0) findings.push({ code: "planning_wave_repair_limit", recorded: wave.repairs ?? null });
+    if (wave.review_receipt !== undefined || wave.repair !== undefined) {
+      findings.push({ code: "planning_wave_review_invalid", reason: "unrequested_review_evidence" });
+    }
+    const closing = wave.closing_candidate;
+    if (!sameCandidate(closing, closing) || closing.candidate_digest !== wave.candidate_digest) {
+      findings.push({ code: "planning_wave_candidate_mismatch", recorded: closing ?? null, actual: manifestDigest });
+    } else if (Array.isArray(wave.sessions) && planningSessionsVerdict(wave, closing, inputDigests)) {
+      findings.push({ code: "planning_wave_sessions_incomplete" });
+    }
+    return findings;
+  }
+  if (wave.reviews !== REVIEW_POLICY.review_rounds) {
+    findings.push({ code: "planning_wave_review_count", recorded: wave.reviews ?? null });
   }
   const invalidReview = (reason) => findings.push({ code: "planning_wave_review_invalid", reason });
   const ref = wave.review_receipt;
@@ -658,28 +686,49 @@ function checkBoundaryContract(implementation, seit) {
   return findings;
 }
 
+/** Final assembly must close the requirements-stage pending case bindings. */
+function checkFinalRegister(dir, seit, implementation) {
+  const settings = implementation?.journey_settings || {};
+  const authority = readJson(path.join(dir, "authority.json"));
+  if (settings.journey_type !== "specification" && settings.requirement_register == null && authority?.requirement_register == null) return [];
+  const register = settings.requirement_register ?? authority?.requirement_register?.path;
+  if (typeof register !== "string" || !register.endsWith(".sdoc")) return [{ code: "missing_requirement_register" }];
+  const inputs = seit?.source_baseline?.planning_inputs;
+  const plans = (Array.isArray(inputs) ? inputs : []).filter(input =>
+    typeof input?.path === "string" && (input.path.endsWith("-technical-plan.md") || path.basename(input.path) === "plan.md"));
+  if (plans.length !== 1) return [{ code: "register_precheck_context_invalid", count: plans.length }];
+  const root = repoRoot(dir);
+  const result = checkRegisterFiles({ registerPath: path.resolve(root, register), planPath: path.resolve(root, plans[0].path), root, stage: "final", seitPath: path.join(dir, "seit.json") });
+  return result.findings.map(finding => ({ code: "register_precheck_failed", ...finding }));
+}
+
 function freeze(dir, { stage = "final" } = {}) {
-  const digests = verifyDigests(dir);
-  const seit = readJson(path.join(dir, "seit.json"));
-  const implementation = readJson(path.join(dir, "implementation.json"));
-  const findings = [
-    ...(implementation ? [
-      ...checkReviewRounds(implementation),
-      ...checkPlanningWave(implementation, digests.manifest_digest, stage, dir),
-      ...checkBoundaryContract(implementation, seit),
-    ] : []),
-    ...checkManifestProjection(implementation),
-    ...checkRoles(seit, implementation),
-    ...checkWorkClass(implementation),
-    ...checkPlanningRoles(implementation),
-    ...checkDuplicateGates(implementation),
-    ...checkDuplicateGates(seit),
-    ...checkIntegrationStepRefs(implementation),
-    ...checkFrozenHashes(dir),
-    ...checkLivePins(dir),
-    ...digests.findings,
-  ];
-  return { outcome: findings.length ? "FAIL" : "PASS", stage, manifest_digest: digests.manifest_digest, findings };
+  try {
+    const digests = verifyDigests(dir);
+    const seit = readJson(path.join(dir, "seit.json"));
+    const implementation = readJson(path.join(dir, "implementation.json"));
+    const findings = [
+      ...(implementation ? [
+        ...checkReviewRounds(implementation),
+        ...checkPlanningWave(implementation, digests.manifest_digest, stage, dir, digests.input_digests),
+        ...(stage === "final" ? checkFinalRegister(dir, seit, implementation) : []),
+        ...checkBoundaryContract(implementation, seit),
+      ] : []),
+      ...checkManifestProjection(implementation),
+      ...checkRoles(seit, implementation),
+      ...checkWorkClass(implementation),
+      ...checkPlanningRoles(implementation),
+      ...checkDuplicateGates(implementation),
+      ...checkDuplicateGates(seit),
+      ...checkIntegrationStepRefs(implementation),
+      ...checkFrozenHashes(dir),
+      ...checkLivePins(dir),
+      ...digests.findings,
+    ];
+    return { outcome: findings.length ? "FAIL" : "PASS", stage, manifest_digest: digests.manifest_digest, findings };
+  } catch (error) {
+    return { outcome: "FAIL", stage, manifest_digest: null, findings: [{ code: "planning_input_unreadable", reason: error.code || "INVALID_INPUT" }] };
+  }
 }
 
 /** #190: CMD-* / PROC-* ids named in a wave's free-text exit criterion. */

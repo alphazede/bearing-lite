@@ -1,10 +1,12 @@
 # Named correction loop
 
-This is the correction loop of the planning wave's one aggregated repair
-(`../../plan-integrator/references/planning-wave.md`): Requirements Engineer
-findings arrive through the one consolidated review, and implementation
-assurance budgets stay separate.
-The Orchestrator owns dispatch and receipts; Planning and Design applies changes.
+Use this contract only for explicitly authorized named corrections following a
+requested planning review (`../../bearing-lite/references/planning-assembly.md`).
+Ordinary Requirements Engineer self-quality checks and author repairs happen
+inside its initial assignment; they are not a separate review or this repair round.
+The parent records authority and receipts. Each author repairs its owned content;
+the Planning Orchestrator repairs final planning/design and assembly. Preserve
+the existing allowance and selected route; authorize any extra invocation explicitly.
 
 1. Freeze the complete before snapshot and candidate identity. Aggregate named
    findings to one per UID. Dispatch only those findings in a delta packet.
@@ -37,7 +39,7 @@ The Orchestrator owns dispatch and receipts; Planning and Design applies changes
    do not relabel an extra change as a finding. Exact text must match verbatim
    with every non-text field unchanged. All after-snapshot references must resolve.
    A failed delta closes nothing: undo only this delta, report findings, and retry
-   only with a new hypothesis, at most three mechanical application attempts.
+   only with new evidence or a new hypothesis inside the existing authority.
 5. Record the JSON mechanical verification receipt, including candidate identity,
    changed/named UID sets, cross-reference PASS, and external lint evidence.
    Close `closed_uids` without another Requirements Engineer gate in any round.

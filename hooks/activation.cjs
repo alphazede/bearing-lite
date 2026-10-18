@@ -3,17 +3,19 @@
 
 /**
  * Bearing Lite activation/context advisory adapter (CONTRACT-HOOK-01).
+ * Current-task opt-in is resolved from the visible plan before advising.
  * Advisory only: outcomes are ADVISE or UNAVAILABLE. Never fabricates BLOCK.
  * Skills-only clients: enforcement remains procedural. Claude Code and Codex
  * use the verified partial mapping in hooks/com.anthropic.claude-code/.
  */
 
+const { binding } = require("./task-binding.cjs");
 const HOOK_CLASS = "activation";
 const OUTCOMES = Object.freeze(["ADVISE", "REROUTE", "BLOCK", "UNAVAILABLE"]);
 const ENFORCEMENT = "procedural";
 
 const RECOVERY_UNAVAILABLE =
-  "Report UNAVAILABLE, invoke the bearing-lite router manually, and continue after context is loaded";
+  "Report UNAVAILABLE only within an explicitly requested current Bearing task; ordinary sessions remain inactive";
 const RECOVERY_ROUTER =
   "Invoke skills/bearing-lite (router), load the assigned role skill, and record the next action in the project plan";
 const RECOVERY_CONTINUE =
@@ -71,6 +73,8 @@ function evaluate(input) {
     if (!isPlainObject(input)) {
       return unavailable("malformed_input");
     }
+
+    if (!binding(input)) return result("ADVISE", "ordinary_unbound_work", "");
 
     const writeLock = writeLockStatus(input);
 

@@ -12,7 +12,18 @@ const path = require("node:path");
 
 const PACKAGED_BYTES = '{"schema_version":1,"profiles":{}}';
 const NAME_PATTERN = /^[A-Za-z][A-Za-z0-9_-]*$/;
+/**
+ * Retired planning routes. Final planning/design is the Planning Orchestrator's
+ * own procedure, so these keys have no runtime consumer. They need explicit
+ * owner-requested migration (onboard-bearing) that removes only the key and
+ * preserves every other configured role, model, fallback, and capability; the
+ * route is never copied to another role or to the Orchestrator.
+ */
+const RETIRED_PLANNING_ROUTE_KEYS = new Set(["plan_integrator", "planning_and_design"]);
+const RETIRED_PLANNING_MIGRATION =
+  "remove only the retired planning route after owner confirmation; preserve all other roles, models, fallbacks, and capability sections; never copy it to another role";
 const RETIRED_ROLE_KEYS = new Set([
+  ...RETIRED_PLANNING_ROUTE_KEYS,
   "surveyor",
   "explorer",
   "crewmate",
@@ -99,6 +110,15 @@ function evaluateCatalogState(input) {
       return { outcome: "NEEDS_MORE_EVIDENCE", reason: "invalid_profile_name", path: profilesPath };
     }
     const retired = retiredRoleKeys(profiles[name]);
+    if (retired.length && RETIRED_PLANNING_ROUTE_KEYS.has(retired[0])) {
+      return {
+        outcome: "MIGRATION_REQUIRED",
+        reason: "retired_role:" + retired[0],
+        profile: name,
+        migration: RETIRED_PLANNING_MIGRATION,
+        path: profilesPath,
+      };
+    }
     if (retired.length) {
       return {
         outcome: "NEEDS_MORE_EVIDENCE",
@@ -248,4 +268,5 @@ module.exports = {
   freezeSelectedRoutes,
   packagedCatalogBytes,
   PACKAGED_BYTES,
+  RETIRED_PLANNING_ROUTE_KEYS,
 };

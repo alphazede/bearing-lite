@@ -364,8 +364,10 @@ describe("CMD-ROUTING-01 role-routing (SEIT-ROUTING-01)", () => {
     }
     const router = readFileSync(path.join(ROOT, "skills/bearing-lite/SKILL.md"), "utf8");
     const onboarding = readFileSync(path.join(ROOT, "docs/guides/onboarding.md"), "utf8");
-    assert.match(router, /Direct packets never dispatch Coordinator/);
-    assert.match(router, /Orchestrator is the parent controller/);
+    const taskState = readFileSync(path.join(ROOT, "skills/bearing-lite/references/task-state.md"), "utf8");
+    assert.match(router, /references\/task-state\.md/);
+    assert.match(taskState, /Direct packets never dispatch Coordinator/);
+    assert.match(taskState, /The parent controller is the Orchestrator on a direct packet/);
     assert.match(onboarding, /Disabling Coordinator on a true direct packet is not a capability gap/);
     assert.match(onboarding, /explicit disabled choice/);
   });
@@ -438,7 +440,7 @@ describe("CMD-ROUTING-01 role-routing (SEIT-ROUTING-01)", () => {
       router,
       /Test Implementer[\s\S]{0,160}before[\s\S]{0,80}Product Implementer/
     );
-    assert.match(router, /frozen snapshot|profile_freeze/);
+    assert.match(router, /frozen Test Implementer|frozen snapshot|profile_freeze/);
   });
 
   it("tdd never copies Test Implementer from Product Implementer, Test Engineer, Light Implementer, or a retired role", () => {

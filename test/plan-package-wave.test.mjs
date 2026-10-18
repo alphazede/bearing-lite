@@ -98,10 +98,10 @@ describe("plan-package wave view (#190)", () => {
   it("the coordinator skill names the wave read, verbatim launch, blocking wait, and exit order", () => {
     const skill = readFileSync(path.join(ROOT, "skills/coordinator/SKILL.md"), "utf8");
     assert.match(skill, /hooks\/plan-package\.cjs wave <plan dir> <wave id>/);
-    assert.match(skill, /launch form verbatim, frozen-route carrier included/);
-    assert.match(skill, /block on their exit \(for example `wait <pid>`\)/);
-    assert.match(skill, /never poll logs, processes, or the working tree while children run/);
-    assert.match(skill, /exit commands after your last commit, on the final head/);
-    assert.match(skill, /raw run logs out of commits/);
+    assert.match(skill, /Launch with the packet's frozen-route form unchanged/);
+    assert.match(skill, /Subscribe to native response\s+notifications; wait and wake on each agent return/);
+    assert.match(skill, /Never poll logs, processes,\s+agent status, or worktrees/);
+    assert.match(skill, /Run exit commands on the final candidate/);
+    assert.match(skill, /keep raw logs out of commits/);
   });
 });

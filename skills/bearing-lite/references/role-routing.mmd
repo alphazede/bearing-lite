@@ -1,26 +1,29 @@
 flowchart TD
-    O[Owner Authority] <--> R[Stateful Bearing Lite Orchestrator]
+    O[Owner Authority] <--> R[Stateful Bearing Lite Planning Orchestrator]
     R --> P{Next missing planning stage?}
-    P -->|Intake| IN[Fresh Intake]
-    P -->|Architectural Alignment| AA[Fresh Architectural Alignment]
-    P -->|Scope Definition| SD[Fresh Scope Definition]
-    P -->|planning package| PI[Fresh Plan Integrator dispatches planning sessions]
-    PI -->|when selected or required| SM[Fresh Systems Modeler contextual pass]
-    SM -->|placement receipt| PD[Fresh Planning and Design on plan_integrator route]
-    PI --> PD
-    PD -->|drafts| SP[Requirements Engineer, Systems Modeler model pass, Integration Engineer and Test Engineer planning]
-    SP -->|typed returns and named deltas| PI
-    IN & AA & SD -->|typed return| R
-    PI -->|five artifacts with proposed route, profile, role states, reasoning, cadence| I{One integrated owner review}
-    I -->|change| PI
-    I -->|approve one packet| C[Implementer may continue in-wave]
-    I -->|approve one wave| E[Coordinator may continue in-wave]
-    I -->|approve Lifecycle: Orchestrator sequences waves| E
+    P -->|Intake| IN[Intake in controller]
+    P -->|Architectural Alignment and Scope| AA[Combined alignment and scope in controller]
+    IN & AA -->|recorded context and decisions| R
+    P -->|enabled and needed specialists, data-dependency order| RE[Requirements Engineer authors and self-checks]
+    RE -->|requirements| SM[Systems Modeler placement receipt]
+    RE & SM -->|requirements and models| IEP[Integration Engineer planning boundary contract]
+    RE & IEP -->|requirements and interfaces| TEP[Planning Test Engineer SEIT bound to requirement IDs]
+    RE & SM & IEP & TEP -->|completed inputs; inactive roles skipped| PD[Orchestrator final Planning and Design and assembly in controller]
+    PD -->|only when owner requested| PR[Requested planning review]
+    PD -->|review not requested: recorded| I{Owner confirmation}
+    PR --> I
+    I -->|change| PD
+    I -->|confirmed| H[handoff.md; recommend new Implementation Orchestrator session]
+    H --> X[Implementation Orchestrator consumes handoff]
+    X -->|tdd| TI[Test Implementer writes failing tests first]
+    TI --> C[Product Implementer may continue in-wave]
+    X -->|single_implementer| C
+    X -->|approve one wave| E[Coordinator may continue in-wave]
     E --> C
     C --> A{Declared phase or wave end candidate?}
-    A -->|Assurance Test Engineer declared| V[Fresh Assurance Test Engineer]
-    A -->|Reviewer declared| PK[Fresh Reviewer]
-    A -->|Integration Engineer execution declared| S[Fresh Integration Engineer execution]
+    A -->|Assurance Test Engineer requested| V[Fresh Assurance Test Engineer]
+    A -->|Reviewer requested| PK[Fresh Reviewer]
+    A -->|Integration Engineer execution requested| S[Fresh Integration Engineer execution]
     A -->|direct packet not yet| C
     A -->|coordinator wave not yet| E
-    V & PK & S -->|compact receipt| R
+    V & PK & S -->|compact receipt| X

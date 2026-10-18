@@ -11,7 +11,7 @@ description: >
 
 # Implementer
 
-Lowest mutation authority and highest hands-on work in the Bearing ladder.
+One profile-enabled assignment and invocation. Extra runs or route changes need authority.
 
 ## Inputs and match
 
@@ -27,10 +27,9 @@ Lowest mutation authority and highest hands-on work in the Bearing ladder.
 
 ## Algorithm
 
-1. Continue the current session when repository, worktree, branch, wave
-   generation, authority, and route are unchanged. Start a fresh session only
-   for a route change, conflicting writer, new authority envelope, independent
-   work, or explicit owner choice. Do not infer missing owner choices. Read
+1. Continue this assignment while identity, authority, route, and generation hold.
+   If it cannot continue, return `WAITING_ON`; a new invocation needs explicit
+   authority. Do not infer missing owner choices. Read
    dispatch identities only from the recorded Lifecycle snapshot, never from
    the current global defaults file. Revalidate the visible checkout
    lease against the approved Lifecycle, repository, checkout/worktree, branch,
@@ -39,22 +38,22 @@ Lowest mutation authority and highest hands-on work in the Bearing ladder.
    branch/HEAD-drifted leases fail closed. Authorized same-Lifecycle
    candidate progress whose parent is the current leased revision refreshes
    candidate_revision on the same generation. On mismatch, return WAITING_ON without writing.
-2. For a verified contract defect, create the smallest failing regression first.
+2. Test Implementer: author real-dependency tests, self-check their validity, and
+   prove the expected baseline failure. Repair test defects in this assignment.
+   For a verified contract defect, establish the smallest failing regression first.
 3. Make the smallest change that satisfies the packet inside the write set.
-   When the packet implements a published standard, verify against the cited
-   document and clause before changing code; neighbouring behavior is not the
-   authority.
-4. Run assigned focused commands and author self-checks. At-end review never removes
+   For a published standard, verify its cited document and clause before changing
+   code; neighbouring behavior is not the authority.
+4. Product/combined Implementer: run assigned checks, inspect results, repair your
+   own defects in this assignment, recheck, and return. At-end review never removes
    deterministic testing or grants independent-review identity; diagnostic verification receipts never satisfy an assurance gate. Report results against the mutation, changed-line coverage, and red-then-green claim types with the target repository's own tool; a declared gate with a missing tool or a `not_run` outcome is a typed gap, never PASS. Every red-then-green receipt binds the baseline failing run and the candidate passing run over the same test ids; author gate-chain receipts are diagnostic and cannot satisfy an assurance gate.
 5. Preserve unrelated work. Return only the compact receipt. Stop on acceptance,
    authority boundary, design gap, or exhausted correction.
 
 ## Return and recovery
 
-Return `CANDIDATE_READY`, `PARTIAL`, `WAITING_ON`, or
-`OWNER_DECISION_REQUIRED` with verdict, candidate_ref, changed_paths, tests,
-findings, and blocker. Attempts 1–3 require new evidence, hypothesis, or
-narrower strategy.
+Return `CANDIDATE_READY`, `PARTIAL`, `WAITING_ON`, or `OWNER_DECISION_REQUIRED` with verdict, candidate_ref, changed_paths, tests,
+findings, and blocker. In-run corrections require new evidence or a new hypothesis.
 
-One repair; close by deterministic verification; no extra review; dispatch if
-session cannot be preserved. Never expand scope, self-certify as assurance, publish, or hide a failure.
+An authorized repair closes by deterministic checks, without extra review or invocation.
+Never expand scope, self-certify as assurance, publish, or hide a failure.

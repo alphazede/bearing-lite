@@ -261,9 +261,12 @@ describe("CMD-HANDOFF-01 role-handoff (SEIT-HANDOFF-01)", () => {
       path.join(ROOT, "skills/coordinator/SKILL.md"),
       "utf8"
     );
-    assert.match(router, /Direct route/);
-    assert.match(router, /OWNER_DECISION_REQUIRED` naming the candidate and count/);
-    assert.match(coordinator, /OWNER_DECISION_REQUIRED` with\s+candidate and count/);
+    const assembly = readFileSync(path.join(ROOT, "skills/bearing-lite/references/planning-assembly.md"), "utf8");
+    const taskState = readFileSync(path.join(ROOT, "skills/bearing-lite/references/task-state.md"), "utf8");
+    assert.match(router, /references\/planning-assembly\.md/);
+    assert.match(taskState, /parent controller is the Orchestrator on a direct packet/);
+    assert.match(assembly, /`OWNER_DECISION_REQUIRED` naming the candidate and count/);
+    assert.match(coordinator, /Failed repair\s+or scope drift returns to the owner/);
     assert.doesNotMatch(
       router,
       /only when Navigator|requires Navigator to bound|inherited from Bearing's Navigator/i
