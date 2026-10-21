@@ -1,3 +1,4 @@
+import { withTask } from "./task-opt-in-fixture.mjs";
 /**
  * D2 regression: SessionStart activation must report the write-set lock as present
  * when the shipped hooks/hooks.json registers orchestrator-write-lock.cjs, and as
@@ -32,6 +33,7 @@ function sessionStart(name, editManifest) {
     editManifest(manifest);
     writeFileSync(path.join(root, "hooks", "hooks.json"), JSON.stringify(manifest, null, 2));
   }
+  withTask({ cwd: repo, session_id: "d2" });
   const env = { ...process.env };
   for (const k of Object.keys(env)) if (k.startsWith("BEARING_")) delete env[k];
   const r = spawnSync(process.execPath, [path.join(root, "hooks", "com.anthropic.claude-code", "host.cjs")], {

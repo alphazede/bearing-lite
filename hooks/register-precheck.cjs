@@ -1,6 +1,12 @@
 'use strict';
 
 const CLASSES = ['verification', 'ears', 'glossary', 'reference', 'decision', 'citation'];
+// Stage-aware binding (F4): the Requirements Engineer runs the `requirements`
+// stage before SEIT exists, so a missing case ID is an explicitly owned pending
+// binding for the Test Engineer, never an invented ID. The `final` stage (the
+// default) requires every case ID, and resolves it against SEIT when supplied.
+const STAGES = ['requirements', 'final'];
+const CASE_ID = /\b(?:SEIT|VC|CASE|TEST)-[A-Z0-9.-]*[A-Z0-9]\b/g;
 
 // Parse only requirement fields, including multiline text and relation VALUEs.
 function parseRegister(text) {
@@ -28,8 +34,13 @@ function parseRegister(text) {
   return rows;
 }
 
-function checkRegister({ register, technicalPlan, registerPath = 'register.sdoc', planPath = 'technical-plan.md', files = {} }) {
+function checkRegister({ register, technicalPlan, registerPath = 'register.sdoc', planPath = 'technical-plan.md', files = {}, stage = 'final', seitCaseIds }) {
   const findings = [];
+  const pending = [];
+  if (!STAGES.includes(stage)) {
+    return { outcome: 'FAIL', stage, covered_classes: [], pending_bindings: [], findings: [{ class: 'input', uid: '<register>', location: registerPath + ':1', message: `Unknown stage: ${stage}` }] };
+  }
+  const seitIds = seitCaseIds ? new Set(seitCaseIds) : null;
   const add = (kind, uid, file, line, message) => findings.push({ class: kind, uid, location: `${file}:${line}`, message });
   const rows = parseRegister(register);
   const uidOf = row => row.fields.find(f => f.name === 'UID')?.value.trim() || '<missing>';
@@ -68,8 +79,15 @@ function checkRegister({ register, technicalPlan, registerPath = 'register.sdoc'
     if (uid === '<missing>') add('reference', uid, registerPath, row.line, 'Missing UID');
     const fields = names => row.fields.filter(f => names.includes(f.name));
     const method = fields(['VERIFICATION_METHOD']).some(f => /\b(test|inspection|analysis|demonstration|evaluation)\b/i.test(f.value));
-    const cases = fields(['VERIFICATION_CASE', 'VERIFICATION_CASES', 'VERIFICATION_CASE_ID', 'VERIFICATION']).some(f => /\b(?:SEIT|VC|CASE|TEST)-[A-Z0-9.-]+\b/.test(f.value));
-    if (!method || !cases) add('verification', uid, registerPath, row.line, 'Require verification method and bound case ID');
+    const caseFields = fields(['VERIFICATION_CASE', 'VERIFICATION_CASES', 'VERIFICATION_CASE_ID', 'VERIFICATION']);
+    const caseIds = caseFields.flatMap(f => [...f.value.matchAll(CASE_ID)].map(m => m[0]));
+    if (!method) add('verification', uid, registerPath, row.line, 'Require verification method and bound case ID');
+    else if (!caseIds.length && stage === 'requirements') {
+      pending.push({ uid, binding: 'verification_case', owner: 'test_engineer', location: `${registerPath}:${row.line}`, blocks: 'final_assembly' });
+    } else if (!caseIds.length) add('verification', uid, registerPath, row.line, 'Require verification method and bound case ID');
+    else if (seitIds) {
+      for (const id of caseIds) if (!seitIds.has(id)) add('verification', uid, registerPath, caseFields[0].line, `Bound case ID not found in SEIT: ${id}`);
+    }
     const statement = fields(['STATEMENT'])[0];
     if (!statement || !/\b(When|While|Where|shall)\b|\bIf\b[\s\S]*\bthen\b/i.test(statement.value)) add('ears', uid, registerPath, statement?.line || row.line, 'Statement lacks EARS keyword');
     if (!row.fields.some(f => f.name !== 'UID' && [...f.value.matchAll(/\bDEC-[A-Z0-9.-]+\b/g)].some(m => decisions.has(m[0])))) add('decision', uid, registerPath, row.line, 'No trace to a recorded decision');
@@ -98,27 +116,49 @@ function checkRegister({ register, technicalPlan, registerPath = 'register.sdoc'
     references(body, uid, planPath, index + 1);
     citations(line, uid, planPath, index + 1);
   });
-  return { outcome: findings.length ? 'FAIL' : 'PASS', candidate_ref: { register: registerPath, technical_plan: planPath }, covered_classes: CLASSES.slice(), findings };
+  return { outcome: findings.length ? 'FAIL' : 'PASS', stage, candidate_ref: { register: registerPath, technical_plan: planPath }, covered_classes: CLASSES.slice(), pending_bindings: pending, findings };
 }
 
-module.exports = { parseRegister, checkRegister };
+/** Case IDs a SEIT document declares (proof_cases[].id), for final-stage resolution. */
+function seitCaseIdsOf(seit) {
+  const rows = seit && Array.isArray(seit.proof_cases) ? seit.proof_cases : [];
+  return rows.map(row => row && row.id).filter(id => typeof id === 'string' && id);
+}
+
+/** Shared file-bound check for the CLI and final package freeze. */
+function checkRegisterFiles({ registerPath, planPath, root = process.cwd(), stage = 'final', seitPath }) {
+  const fs = require('node:fs'), path = require('node:path');
+  const register = fs.readFileSync(registerPath, 'utf8'), technicalPlan = fs.readFileSync(planPath, 'utf8');
+  const files = {};
+  for (const match of (register + '\n' + technicalPlan).matchAll(/(?:^|[\s`(])((?:[\w.-]+\/)*[\w.-]+\.[\w.-]+):\d+\b/g)) {
+    const target = path.resolve(root, match[1]);
+    if (path.relative(path.resolve(root), target).startsWith('..')) continue;
+    try { files[match[1]] = fs.readFileSync(target, 'utf8'); } catch { /* Missing citation is a finding. */ }
+  }
+  const seitCaseIds = seitPath ? seitCaseIdsOf(JSON.parse(fs.readFileSync(seitPath, 'utf8'))) : undefined;
+  return checkRegister({ register, technicalPlan, registerPath, planPath, files, stage, seitCaseIds });
+}
+
+module.exports = { parseRegister, checkRegister, checkRegisterFiles, seitCaseIdsOf, STAGES };
 
 if (require.main === module) {
-  const fs = require('node:fs'), path = require('node:path');
-  const [registerPath, planPath, root = process.cwd()] = process.argv.slice(2);
-  if (!registerPath || !planPath) {
-    process.stderr.write('usage: node hooks/register-precheck.cjs <register.sdoc> <technical-plan.md> [repository root]\n');
+  const args = process.argv.slice(2);
+  const flag = name => {
+    const i = args.indexOf(name);
+    if (i < 0) return undefined;
+    const value = args[i + 1];
+    args.splice(i, 2);
+    return value === undefined ? '' : value;
+  };
+  const stage = flag('--stage') ?? 'final';
+  const seitPath = flag('--seit');
+  const [registerPath, planPath, root = process.cwd()] = args;
+  if (!registerPath || !planPath || !STAGES.includes(stage) || seitPath === '' || (seitPath && stage !== 'final')) {
+    process.stderr.write('usage: node hooks/register-precheck.cjs [--stage requirements|final] [--seit <seit.json>] <register.sdoc> <context-or-technical-plan.md> [repository root]\n');
     process.exit(2);
   }
   try {
-    const register = fs.readFileSync(registerPath, 'utf8'), technicalPlan = fs.readFileSync(planPath, 'utf8');
-    const files = {};
-    for (const match of (register + '\n' + technicalPlan).matchAll(/(?:^|[\s`(])((?:[\w.-]+\/)*[\w.-]+\.[\w.-]+):\d+\b/g)) {
-      const target = path.resolve(root, match[1]);
-      if (path.relative(path.resolve(root), target).startsWith('..')) continue;
-      try { files[match[1]] = fs.readFileSync(target, 'utf8'); } catch { /* Missing citation is a finding. */ }
-    }
-    const result = checkRegister({ register, technicalPlan, registerPath, planPath, files });
+    const result = checkRegisterFiles({ registerPath, planPath, root, stage, seitPath });
     process.stdout.write(JSON.stringify(result, null, 2) + '\n');
     process.exitCode = result.outcome === 'PASS' ? 0 : 1;
   } catch (error) {

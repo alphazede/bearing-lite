@@ -8,9 +8,10 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { renderDodManifest, TEMPLATE_VERSION } from "../tools/render-dod-manifest.mjs";
 
-export const REQUIRED_SESSIONS = Object.freeze(["planning_and_design", "integration_engineer", "test_engineer"]);
+/** Profile-enabled specialist sessions this synthetic task needs; none is unconditionally required. */
+export const DECLARED_SESSIONS = Object.freeze(["requirements_engineer", "integration_engineer", "test_engineer"]);
 
-export function planningSessions(candidate = { candidate_ref: "plan", candidate_revision: "r1", candidate_digest: "d1" }, names = REQUIRED_SESSIONS, verdict = "READY") {
+export function planningSessions(candidate = { candidate_ref: "plan", candidate_revision: "r1", candidate_digest: "d1" }, names = DECLARED_SESSIONS, verdict = "READY") {
   return {
     required_sessions: [...names],
     sessions: names.map((session) => ({ session, ...candidate, verdict })),
@@ -50,6 +51,17 @@ export function planningWave(candidate_digest, extra = {}, dir) {
     closing_candidate: { ...candidate },
     review_receipt: { path: "gate-evidence/planning-review.json", sha256: createHash("sha256").update(bytes).digest("hex") },
     ...(extra.repairs === 1 ? { repair: { from_candidate: candidate, to_candidate: candidate, deterministic_gate: "PASS" } } : {}),
+    ...extra,
+  };
+}
+
+/** Final-freeze wave when the owner did not request planning review: recorded, not forged. */
+export function unreviewedPlanningWave(candidate_digest, names = DECLARED_SESSIONS, extra = {}) {
+  const candidate = { candidate_ref: "plan", candidate_revision: "r1", candidate_digest };
+  return {
+    ...planningSessions(candidate, names),
+    review_requested: false, reviews: 0, repairs: 0, closure: "deterministic_PASS", candidate_digest,
+    closing_candidate: { ...candidate },
     ...extra,
   };
 }

@@ -18,6 +18,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const activation = require("../activation.cjs");
+const { binding } = require("../task-binding.cjs");
 const closeout = require("../closeout.cjs");
 const cursorStop = require("../cursor-stop.cjs");
 
@@ -28,6 +29,8 @@ const COVERAGE = Object.freeze({
   transition: Object.freeze({ executable: false, procedural: true }),
   protected_action: Object.freeze({ executable: false, procedural: true }),
 });
+// Bound assurance is the executable subset of transition; other transition checks stay procedural.
+const ASSURANCE_DISPATCH_COVERAGE = require("../assurance-dispatch.cjs").HOST_SUPPORT;
 
 const MAX_FILES = 20;
 const MAX_BYTES = 256 * 1024;
@@ -203,7 +206,13 @@ function parsePlanMarkdown(text) {
  * Does not invent router_invoked, assigned_role, or next_action.
  * @param {string} cwd
  */
-function deriveContext(cwd) {
+function deriveContext(cwd, bound) {
+  if (bound) {
+    const task = bound.task;
+    const journey = parsePlanMarkdown(bound.raw).journey;
+    return { plan_present: true, router_invoked: Boolean(journey), assigned_role: presentString(task.assigned_role),
+      next_action: presentString(task.next_action), next_action_known: Boolean(presentString(task.next_action)), active_task: task, journey };
+  }
   const files = walkMarkdown(cwd);
   const allTasks = [];
   let journey = null;
@@ -266,15 +275,6 @@ function isStopReentry(input, eventName) {
   return isTruthyFlag(input.stop_hook_active) || isTruthyFlag(input.stopHookActive);
 }
 
-function hasDiscoverableJourney(derived) {
-  return (
-    derived.plan_present === true ||
-    derived.router_invoked === true ||
-    Boolean(derived.assigned_role) ||
-    derived.active_task != null
-  );
-}
-
 function quietSuccess() {
   return {};
 }
@@ -285,22 +285,9 @@ function formatAdvice(verdict) {
     verdict.reason ? "reason: " + verdict.reason : "",
     verdict.recovery ? "recovery: " + verdict.recovery : "",
     verdict.write_lock ? "write_lock: " + verdict.write_lock : "",
-    "Coverage: this host mapping is partial. activation and closeout are executable; transition and protected_action remain procedural.",
+    "Coverage: this host mapping is partial. activation and closeout are executable; bound assurance dispatch has its own pretool barrier; other transitions and protected_action remain procedural.",
   ].filter(Boolean);
   return lines.join("\n").slice(0, 4000);
-}
-
-function unavailableHost(eventName, reason) {
-  const event = eventName || "SessionStart";
-  return {
-    hookSpecificOutput: {
-      hookEventName: event,
-      additionalContext:
-        "Bearing Lite UNAVAILABLE: " +
-        reason +
-        ". Invoke the bearing-lite router manually and continue after context is loaded.",
-    },
-  };
 }
 
 /**
@@ -341,7 +328,7 @@ function detectWriteLock() {
   }
 }
 
-function evaluateForHost(eventName, derived) {
+function evaluateForHost(eventName, derived, input = {}) {
   if (classForEvent(eventName) === "closeout") {
     const task = derived.active_task || {};
     return closeout.evaluate({
@@ -355,6 +342,7 @@ function evaluateForHost(eventName, derived) {
     });
   }
   return activation.evaluate({
+    ...input,
     plan_present: derived.plan_present === true,
     next_action_known: derived.next_action_known === true,
     next_action: derived.next_action,
@@ -373,22 +361,20 @@ function handle(input) {
     try {
       parsed = JSON.parse(parsed);
     } catch {
-      return unavailableHost("SessionStart", "malformed_input");
+      return quietSuccess();
     }
   }
   if (parsed === undefined || parsed === null) {
-    return unavailableHost("SessionStart", "missing_input");
+    return quietSuccess();
   }
   if (!isPlainObject(parsed)) {
-    return unavailableHost("SessionStart", "malformed_input");
+    return quietSuccess();
   }
 
   const eventName = canonicalizeEvent(
     parsed.hook_event_name || parsed.hookEventName
   );
-  if (!classForEvent(eventName)) {
-    return unavailableHost(eventName || "SessionStart", "unmapped_host_event");
-  }
+  if (!classForEvent(eventName)) return quietSuccess();
 
   if (isStopReentry(parsed, eventName)) {
     return quietSuccess();
@@ -399,21 +385,19 @@ function handle(input) {
     presentString(parsed.workspaceRoot) ||
     process.cwd();
 
+  const bound = binding(parsed);
+  if (!bound) return quietSuccess();
   let derived;
   try {
-    derived = deriveContext(cwd);
+    derived = deriveContext(cwd, bound);
   } catch {
     return toHostResponse(
       eventName,
-      activation.evaluate({ infrastructure_failure: "permission_error" })
+      activation.evaluate({ ...parsed, infrastructure_failure: "permission_error" })
     );
   }
 
-  if (STOP_CONTINUATION_EVENTS.has(eventName) && !hasDiscoverableJourney(derived)) {
-    return quietSuccess();
-  }
-
-  return toHostResponse(eventName, evaluateForHost(eventName, derived));
+  return toHostResponse(eventName, evaluateForHost(eventName, derived, parsed));
 }
 
 function main() {
@@ -421,14 +405,14 @@ function main() {
   try {
     raw = readStdinSync();
   } catch {
-    process.stdout.write(JSON.stringify(unavailableHost("SessionStart", "stdin_read_failure")) + "\n");
+    process.stdout.write(JSON.stringify(quietSuccess()) + "\n");
     process.exit(0);
     return;
   }
 
   const trimmed = raw.trim();
   if (!trimmed) {
-    process.stdout.write(JSON.stringify(unavailableHost("SessionStart", "missing_input")) + "\n");
+    process.stdout.write(JSON.stringify(quietSuccess()) + "\n");
     process.exit(0);
     return;
   }
@@ -442,6 +426,7 @@ function main() {
 module.exports = {
   HOST,
   COVERAGE,
+  ASSURANCE_DISPATCH_COVERAGE,
   canonicalizeEvent,
   classForEvent,
   deriveContext,

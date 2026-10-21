@@ -4,7 +4,7 @@
 /**
  * Bearing Lite closeout git-sync (advisory, fail-open).
  *
- * Runs on the host Stop event for the checkout the session ran in. It keeps
+ * Runs only on Stop for an explicitly bound current task in this session. It keeps
  * local current with origin by fast-forward only, then reports what still
  * needs a human or a PR. It never merges, rebases, pushes, or touches a dirty
  * tree, and it never blocks: exit status is always 0 and output is JSON.
@@ -170,6 +170,7 @@ function handle(raw) {
         : "Stop";
   // #134: a Stop re-entry exists only because this hook already spoke. Stay quiet.
   if (isStopReentry(input, event)) return {};
+  if (!require("./task-binding.cjs").binding(input)) return {};
   let text = null;
   try {
     text = formatAdvice(sync(cwd));

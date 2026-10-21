@@ -39,7 +39,7 @@ from the Lifecycle snapshot, never the live catalog. Reverify identity stays
 `reverify`; a generic backend name must not stand in for an absent binding.
 Profile `reverify.enabled` records user configuration;
 availability does not select Reverify for every task. Planning Test Engineer
-selects it on an applicable binary-level SEIT claim; Plan Integrator copies
+selects it on an applicable binary-level SEIT claim; Planning Orchestrator copies
 that selection and must not invent V&V.
 
 ## Gates

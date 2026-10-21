@@ -75,7 +75,7 @@ describe("S1 profiles, migration, resume, and role/session contracts", () => {
   it("onboard-bearing asks one setting at a time and never infers writes", () => {
     const text = readFileSync(path.join(SKILLS, "onboard-bearing", "SKILL.md"), "utf8");
     assert.match(text, /one setting at a time/);
-    assert.match(text, /never selects or writes without the\s+user's explicit instruction/i);
+    assert.match(text, /Recommend without selecting or writing unless explicitly instructed/);
     assert.match(text, /MIGRATION_REQUIRED/);
     assert.match(text, /Integration Engineer execution/);
     assert.match(text, /reverify\.enabled: false/);
@@ -86,9 +86,11 @@ describe("S1 profiles, migration, resume, and role/session contracts", () => {
   it("Orchestrator resume checks liveness once and does not duplicate RUNNING", () => {
     const router = readFileSync(path.join(SKILLS, "bearing-lite", "SKILL.md"), "utf8");
     const resume = readFileSync(path.join(SKILLS, "bearing-lite", "references", "resume.md"), "utf8");
-    assert.match(router, /One host-native liveness check/);
-    assert.match(router, /RUNNING, COMPLETED, INACTIVE, or UNKNOWN/);
-    assert.match(router, /Never replay accepted stages or duplicate dispatch/);
+    assert.match(router, /references\/resume\.md/);
+    assert.match(resume, /one\s+host-native liveness check/);
+    for (const state of ["RUNNING", "COMPLETED", "INACTIVE", "UNKNOWN"]) assert.match(resume, new RegExp(`\`${state}\``));
+    assert.match(router, /Never replay completed stages or change routes/);
+    assert.match(router, /Launch each selected agent assignment once/);
     assert.match(resume, /Never duplicate/);
     assert.match(resume, /`WAITING_ON`/);
     assert.match(resume, /never adds a watchdog daemon,\nheartbeat service, global timeout, or model polling/);
@@ -103,6 +105,49 @@ describe("S1 profiles, migration, resume, and role/session contracts", () => {
       const verdict = profilesHook.evaluateCatalogState({ env: { HOME: home } });
       assert.equal(verdict.outcome, "MIGRATION_REQUIRED");
       assert.equal(verdict.reason, "legacy_lineups_present");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("retired planning routes require explicit migration that preserves other roles (F7)", () => {
+    const dir = mkdtempSync(path.join(tmpdir(), "bearing-profiles-"));
+    try {
+      const home = path.join(dir, "home");
+      const catalogDir = path.join(home, ".agents", "bearing-lite");
+      mkdirSync(catalogDir, { recursive: true });
+      const fixture = JSON.parse(readFileSync(path.join(ROOT, "test/fixtures/profiles-populated.example.json"), "utf8"));
+      const [name] = Object.keys(fixture.profiles);
+      const route = { enabled: true, primary: { harness: "h", model: "m", reasoning: "r" }, ordered_fallbacks: [] };
+      for (const key of ["plan_integrator", "planning_and_design"]) {
+        const catalog = structuredClone(fixture);
+        catalog.profiles[name].roles[key] = route;
+        const bytes = JSON.stringify(catalog);
+        writeFileSync(path.join(catalogDir, "profiles.json"), bytes);
+        const verdict = profilesHook.evaluateCatalogState({ env: { HOME: home } });
+        assert.equal(verdict.outcome, "MIGRATION_REQUIRED", key);
+        assert.equal(verdict.reason, `retired_role:${key}`);
+        assert.equal(verdict.profile, name);
+        assert.match(verdict.migration, /preserve all other roles, models, fallbacks, and capability sections/);
+        assert.match(verdict.migration, /never copy it to another role/);
+        // The evaluator never rewrites the user's catalog.
+        assert.equal(readFileSync(path.join(catalogDir, "profiles.json"), "utf8"), bytes);
+        // Migrating by removing only the retired key yields a live catalog.
+        delete catalog.profiles[name].roles[key];
+        writeFileSync(path.join(catalogDir, "profiles.json"), JSON.stringify(catalog));
+        assert.equal(profilesHook.evaluateCatalogState({ env: { HOME: home } }).outcome, "READY");
+      }
+      // Other retired roles keep their existing diagnostic.
+      const legacy = structuredClone(fixture);
+      legacy.profiles[name].roles.surveyor = route;
+      writeFileSync(path.join(catalogDir, "profiles.json"), JSON.stringify(legacy));
+      assert.deepEqual(
+        { ...profilesHook.evaluateCatalogState({ env: { HOME: home } }), path: undefined },
+        { outcome: "NEEDS_MORE_EVIDENCE", reason: "retired_role:surveyor", path: undefined }
+      );
+      const onboard = readFileSync(path.join(SKILLS, "onboard-bearing", "SKILL.md"), "utf8");
+      assert.match(onboard, /roles\.plan_integrator/);
+      assert.match(onboard, /never copy/i);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -131,15 +176,15 @@ describe("S1 profiles, migration, resume, and role/session contracts", () => {
     assert.equal(verdict.reason, "home_unresolved");
   });
 
-  it("approved stage order is Intake then Architectural Alignment then Scope Definition", () => {
+  it("approved stage order is Intake then combined Architectural Alignment and Scope", () => {
     const router = readFileSync(path.join(SKILLS, "bearing-lite", "SKILL.md"), "utf8");
     const intake = readFileSync(path.join(SKILLS, "intake", "SKILL.md"), "utf8");
     const alignment = readFileSync(path.join(SKILLS, "architectural-alignment", "SKILL.md"), "utf8");
     const scope = readFileSync(path.join(SKILLS, "scope-definition", "SKILL.md"), "utf8");
     const intakeAt = router.indexOf("Intake");
     const alignAt = router.indexOf("Architectural Alignment");
-    const scopeAt = router.indexOf("Scope Definition");
-    assert.ok(intakeAt >= 0 && alignAt > intakeAt && scopeAt > alignAt);
+    const planningAt = router.indexOf("**Planning:**");
+    assert.ok(intakeAt >= 0 && alignAt > intakeAt && planningAt > alignAt);
     assert.match(intake, /^name: intake$/m);
     assert.match(intake, /Intake handles input and repository selection/);
     assert.match(intake, /before Architectural\s+Alignment/);
@@ -147,10 +192,10 @@ describe("S1 profiles, migration, resume, and role/session contracts", () => {
     assert.match(intake, /FIT_PROPOSED/);
     assert.match(alignment, /^name: architectural-alignment$/m);
     assert.match(alignment, /after Intake is confirmed/);
-    assert.match(alignment, /usable by Scope Definition/);
     assert.match(scope, /^name: scope-definition$/m);
-    assert.match(scope, /Ask exactly one question/);
-    assert.match(scope, /after\s+Architectural Alignment/);
+    assert.match(scope, /\.\.\/architectural-alignment\/SKILL\.md/);
+    assert.match(alignment, /Ask exactly one question/);
+    assert.doesNotMatch(router, /\*\*Scope Definition:\*\*/);
     assert.doesNotMatch(intake, /Ask exactly one question/);
     assert.doesNotMatch(scope, /Cap discovery at depth 4 and 200 paths/);
   });
@@ -167,8 +212,8 @@ describe("S1 profiles, migration, resume, and role/session contracts", () => {
     assert.match(implementer, /Neither.*self-certif/i);
     assert.match(implementer, /published standard/);
     assert.match(implementer, /recorded Lifecycle snapshot/);
-    assert.match(coordinator, /proven-independent/);
-    assert.match(coordinator, /never add a nested coordinator/);
+    assert.match(coordinator, /Launch every ready independent\s+packet/);
+    assert.match(coordinator, /never force a Coordinator or nest another/);
     assert.match(reviewer, /`ACCEPT`, `ACCEPT_WITH_FINDINGS`, and `BLOCK` are terminal/);
     assert.match(reviewer, /`REPAIR_REQUIRED`\s+permits bounded correction/);
   });

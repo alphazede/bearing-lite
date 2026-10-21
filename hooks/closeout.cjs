@@ -70,7 +70,7 @@ const RECOVERY_CHANNEL =
   "Keep repair, status, owner communication, and safe rollback available; closeout does not block them";
 
 const RECOVERY_SCRIBE_HANDOFF =
-  "Do not render the handoff; dispatch the Scribe for the listed events, or report the typed Scribe capability gap, then retry";
+  "Do not render the handoff; complete the listed transcription with Orchestrator when Scribe is off, otherwise continue the existing Scribe session or report its typed capability gap, then retry";
 
 const SAFE_CHANNELS = new Set([
   "repair",

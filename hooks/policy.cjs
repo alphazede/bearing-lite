@@ -21,9 +21,10 @@ const PLANNING_REVIEW_POLICY = Object.freeze({
   slot_exhaustion_outcome: "FAIL_ROUND",
   terminal_outcomes: ["HALT", "OWNER_AMENDMENT_REQUIRED"],
   planning_unit_id: "planning",
-  planning_sessions_required: ["planning_and_design", "integration_engineer", "test_engineer"],
-  planning_sessions_optional: ["requirements_engineer", "systems_modeler"],
-  planning_session_pending_verdicts: ["WAITING_ON", "UNAVAILABLE", "RUNNING"],
+  planning_sessions_required: [],
+  planning_sessions_optional: ["requirements_engineer", "systems_modeler", "integration_engineer", "test_engineer"],
+  planning_session_ready_verdicts: ["READY", "CANDIDATE_READY"],
+  planning_review: "owner_requested_only",
   requires_regate_rounds_max: 1,
 });
 

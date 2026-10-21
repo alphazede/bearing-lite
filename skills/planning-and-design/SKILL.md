@@ -1,60 +1,60 @@
 ---
 name: planning-and-design
 description: >
-  Create or resume Bearing's complete five-artifact planning package after
-  material decisions are settled. Use for Planning and Design or missing
-  planning artifacts. Do not use to implement, select models, self-approve, or
-  bypass the single integrated owner review.
+  Perform final planning/design in the Planning Orchestrator's current session
+  after the selected specialists return. Use for final plan/design and assembly
+  or an authorized planning correction. Do not dispatch a separate author, repeat
+  specialist requirements or SEIT work, or start implementation.
 ---
 
-# Planning and Design
+# Final Planning and Design
 
-Fresh authoring session, dispatched only by the Plan Integrator on the frozen `plan_integrator` route (`BEARING_ROLE=planning_and_design`); never run by the Orchestrator or Coordinator, never a dispatcher.
+Controller procedure, not a configured specialist role or extra invocation. Use `../bearing-lite/SKILL.md` and its planning-assembly instructions.
 
-## Match, inputs, and non-match
+## Inputs and loop
 
-- **Match:** material intent is settled and any technical-plan, design, SEIT,
-  implementation graph, or DoD Manifest is missing, or a named delta packet.
-- **Inputs:** confirmed decisions, workspace.md and evidence, artifact status, requirements register,
-  repository rules, proposed owner-supplied profile and cadence, plus the return schema. Delta: named findings and proposed text.
-- **Non-match:** unresolved material scope, behavior, authority, risk, or
-  acceptance intent returns `REROUTE_SCOPE_DEFINITION`; generate no
-  `implementation.json` or Manifest.
+Consume confirmed alignment/scope, requirements and definitions, architecture/model
+inputs, boundary and assembly contracts, SEIT, evidence, selected routes/capabilities,
+cadence, authority, and repository rules. Reuse adequate sources for inactive roles;
+expose missing required inputs rather than inventing them.
+Any unresolved material scope, behavior, authority, risk, or
+acceptance intent returns `REROUTE_SCOPE_DEFINITION` to combined alignment/scope in
+this controller session; generate no `implementation.json` or Manifest and never
+choose for the owner.
 
-## Procedure
+1. Verify settled intent and source/candidate bindings. Establish whether a
+   requirements register exists; if evidence cannot decide, ask the owner. Never
+   infer one; keep register references versus Lifecycle-local requirements distinct.
+2. Author the technical plan and `design.md` from the completed inputs. Preserve
+   registered IDs and definitions, published-standard clauses, trust boundaries,
+   and recovery. Copy the confirmed quantity-definitions table into the glossary
+   verbatim (`references/artifact-grammar.md`). Allocate requirements to components
+   from the placement receipt per `references/allocation-inputs.md`. Do not draft
+   a duplicate requirements register or SEIT.
+3. Build coherent bounded slices and dependency-based waves with exact write sets,
+   acceptance, commands, shared resources, and serialization reasons. Tests meet
+   `../test-engineer/references/shared-machine-tests.md`; engine-backed cases carry
+   `resource_group`/`expected_gate_seconds`, waves `added_gate_seconds`/`resource_groups`.
+   Prioritize prerequisite work and parallel ready work; avoid overloaded batches.
+4. Assemble `implementation.json` and the DoD Manifest. Copy specialist-owned
+   decisions faithfully per `../bearing-lite/references/planning-assembly.md`;
+   choose no new roles or capability defaults. Record `planning_wave` with the
+   declared enabled sessions and `review_requested`.
+5. Check your own final package: run the register precheck at its final stage with
+   `--seit`, every pending binding completed, then `plan-package.cjs draft`. Repair
+   your owned artifacts in-session and rerun affected checks. Missing specialist
+   facts stay gaps; return them to their owner, never author them yourself.
+6. Requested planning review opens only after `hooks/planning-review.cjs`
+   `evaluatePlanningReview()` passes its guards (`manifest_not_generated` without
+   the rendered Manifest). Then obtain one integrated owner confirmation (never
+   insert a profile or route pause), run the final freeze, write the handoff,
+   and recommend a new Implementation Orchestrator session.
 
-1. Derive `<lifecycle-topic>-technical-plan.md` from the confirmed title; ask only on
-   ambiguity or collision. Establish whether a requirements register exists;
-   if repository evidence cannot decide, return `NEEDS_OWNER_DECISION`. Never
-   infer one. Registered identities remain references; author only Lifecycle-local
-   criteria; author the needed Lifecycle-level proof or return
-   `NEEDS_OWNER_DECISION` when register authority is unclear. Copy the confirmed
-   quantity-definitions table into the glossary verbatim per `references/artifact-grammar.md`.
-2. Author and prospectively check, in dependency order, the testable
-   technical-plan, `design.md`, and `seit.json`. Preserve IDs, do not drop
-   Lifecycle-level proof or published-standard clause coverage, and select Reverify only on applicable binary-level SEIT claims; consume `references/allocation-inputs.md` before register allocation. Tests must meet `../test-engineer/references/shared-machine-tests.md`; each engine-backed SEIT case declares `resource_group` and `expected_gate_seconds`.
-3. Map the implementation graph and propose development strategy
-   (`single_implementer` default or `tdd`), role states, profile, reasoning, and
-   cadence. Concurrency covers test suites competing for one gate machine, not only agents, branches, and write sets: each wave states `added_gate_seconds` and `resource_groups`. Bind the one planning-review slot to owner-supplied
-   primary and ordered fallback route references under one candidate ref,
-   revision, and digest. Use supplied identities; never invent them.
-4. Return the drafts; the Plan Integrator will generate `implementation.json` with DoD Manifest input carrying content, not references, plus per-unit `review_rounds`, one Reviewer round and at most one repair only at declared wave or phase boundaries, planning included, never at an owner-only step; draft freeze `node <plugin root>/hooks/plan-package.cjs draft <plan dir>`
-   must PASS (any finding halts), then it renders the DoD Manifest input together with its HTML; the final freeze follows the planning-wave receipt. Each includes the proposed
-   route, profile, role states, reasoning, cadence, traceability, waves,
-   recovery, approval boundaries, and register references versus Lifecycle-local
-   requirements. DoD Manifest states: `planning` then append-only closeout.
-5. Give every slice stable requirement/design/SEIT IDs, dependencies, exact write set, authority, role, session rule, evidence, recovery, and stop rule.
-6. Follow `../bearing-lite/references/owner-stops.md`. Through the Plan Integrator, the planning Orchestrator opens and verifies the Manifest, then requests
-   exactly one integrated owner review of outcome, design, route, profile, cadence, and plan. Review
-   presentation is gated by `hooks/planning-review.cjs` `evaluatePlanningReview()`, which returns
-   `NEEDS_MORE_EVIDENCE` / `manifest_not_generated` without the Manifest. An owner change regenerates
-   affected artifacts, then returns to this same gate; never insert a profile or route pause. Delta
-   mode: apply named findings only; check changed UIDs via `hooks/correction-delta.cjs`; no fresh package.
-   Follow `references/correction-loop.md`; return `DELTA_APPLIED` only with its mechanical receipt.
 ## Return and recovery
 
-Return `PLAN_REVIEW_READY`, `REROUTE_SCOPE_DEFINITION`, `DELTA_APPLIED`,
-`NEEDS_OWNER_DECISION`, or `VALIDATION_FAILED` with paths, evidence, blocker,
-and next action. Owner-decision pauses do not consume correction rounds. One
-`requires_regate` round, the planning wave's one aggregated repair; exact_text closes mechanically in any round.
-Never implement or invent approval; a further `requires_regate` round needs an owner-stops class C question.
+Return `READY`, `REROUTE_SCOPE_DEFINITION`, `WAITING_ON`, or
+`OWNER_DECISION_REQUIRED` with candidate, paths, checks, open items, and next
+action. An authorized named delta packet applies named findings only, through
+`references/correction-loop.md` and `hooks/correction-delta.cjs`, within its
+existing authority and allowance; specialist-owned rows return to their author.
+This controller author check is not independent review or an extra agent pass.

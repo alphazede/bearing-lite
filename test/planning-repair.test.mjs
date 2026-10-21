@@ -15,7 +15,7 @@ const { freeze } = require("../hooks/plan-package.cjs");
 const { evaluatePlanningReview } = require("../hooks/planning-review.cjs");
 const corpus = JSON.parse(readFileSync(new URL("./fixtures/planning-repair-package.json", import.meta.url)));
 const sha = bytes => createHash("sha256").update(bytes).digest("hex");
-const names = ["planning_and_design", "integration_engineer", "test_engineer"];
+const names = ["requirements_engineer", "integration_engineer", "test_engineer"];
 const copy = value => structuredClone(value);
 
 function fixture(t, { adoptEarlierInputs = false } = {}) {

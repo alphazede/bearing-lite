@@ -48,7 +48,7 @@ jobs:
           npm install --prefix "${RUNNER_TEMP}/bearing-codex" --ignore-scripts --no-audit --no-fund @openai/codex@0.162.1
           export BEARING_CODEX_BIN="${RUNNER_TEMP}/bearing-codex/node_modules/.bin/codex"
           test "$("$BEARING_CODEX_BIN" --version)" = "codex-cli 0.162.1"
-          node --test test/native/codex-hook-discovery.test.mjs
+          node --test test/native/codex-hook-discovery.test.mjs test/native/assurance-dispatch.test.mjs
 
       - name: Set up Python 3.12
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0

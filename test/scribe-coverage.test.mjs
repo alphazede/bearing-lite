@@ -75,17 +75,22 @@ describe("#194 Scribe coverage", () => {
     assert.equal(verdict.reason, "protected_completion_ready");
   });
 
-  it("an unavailable Scribe is a typed gap, not substitution", () => {
+  it("disabled or omitted Scribe leaves transcription with Orchestrator", () => {
     for (const scribe of [scribeRoute(false), null]) {
       const j = journey({ scribe });
       const before = JSON.stringify(j);
       const coverage = evaluateScribeCoverage({ journey: j });
-      assert.equal(coverage.outcome, "CAPABILITY_GAP");
-      assert.match(coverage.recovery, /never transcribes/);
+      assert.equal(coverage.outcome, "ORCHESTRATOR_REQUIRED");
+      assert.match(coverage.recovery, /Orchestrator/);
       assert.equal(JSON.stringify(j), before, "the check never writes history");
       const verdict = closeout.evaluate(completion(j));
       assert.equal(verdict.outcome, "BLOCK");
-      assert.match(verdict.reason, /scribe:CAPABILITY_GAP:scribe_unavailable:/);
+      assert.match(verdict.reason, /scribe:ORCHESTRATOR_REQUIRED:untranscribed:/);
+      const recorded = journey({ scribe, history: fullHistory });
+      assert.equal(evaluateScribeCoverage({ journey: recorded }).outcome, "PASS");
+      assert.equal(closeout.evaluate(completion(recorded)).reason, "protected_completion_ready");
+      assert.equal(closeout.evaluate({ action_kind: "scribe_coverage", mode: "handoff", journey: j }).outcome, "REROUTE");
+      assert.equal(closeout.evaluate({ action_kind: "scribe_coverage", mode: "handoff", journey: recorded }).outcome, "ADVISE");
     }
   });
 
@@ -199,7 +204,7 @@ describe("#194 Scribe coverage", () => {
         implementation: { roles: { scribe: scribeRoute(false) } },
       },
     };
-    assert.equal(evaluateScribeCoverage({ journey: j }).outcome, "CAPABILITY_GAP");
+    assert.equal(evaluateScribeCoverage({ journey: j }).outcome, "ORCHESTRATOR_REQUIRED");
     j.journey.status = "planning";
     const planning = evaluateScribeCoverage({ journey: j });
     assert.equal(planning.outcome, "SCRIBE_REQUIRED");
@@ -237,10 +242,17 @@ describe("#194 Scribe coverage", () => {
     const resume = read("skills/bearing-lite/references/resume.md");
     assert.match(scribe, /roles\.scribe\.cadence/);
     assert.match(scribe, /hooks\/scribe-coverage\.cjs/);
-    assert.match(router, /frozen cadence/);
-    assert.match(router, /never by memory/);
-    assert.match(router, /On resume, run `hooks\/scribe-coverage\.cjs`/);
-    assert.match(router, /refuse them until the Scribe runs/);
-    assert.match(resume, /never\s+transcribes the events itself/);
+    assert.match(router, /frozen cadence \(`event` default\)/);
+    assert.match(router, /never relaunch it per event or phase/);
+    assert.match(router, /`references\/resume\.md` for resume and Scribe coverage/);
+    assert.match(resume, /Resume runs `node <plugin root>\/hooks\/scribe-coverage\.cjs <journey\.json>`/);
+    assert.match(resume, /roles\.scribe\.cadence/);
+    assert.match(router, /pass `journey` to `hooks\/closeout\.cjs`/);
+    assert.match(router, /refuse them until the configured recorder transcribes them/);
+    assert.match(resume, /Orchestrator records those source-backed events itself/);
+    const assembly = read("skills/bearing-lite/references/planning-assembly.md");
+    assert.match(assembly, /`hooks\/closeout\.cjs` with `journey` \(`mode: "handoff"`\)/);
+    // Configured cadence only: no per-event relaunch and no invented Scribe when disabled.
+    assert.match(resume, /Never relaunch it per event, phase or batch, poll it, or invent a Scribe when disabled/);
   });
 });

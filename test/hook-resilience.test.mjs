@@ -1,3 +1,4 @@
+import { boundHook } from "./task-opt-in-fixture.mjs";
 /**
  * CMD-HOOK-FAILURE-01 / SEIT-HOOK-FAILURE-01
  * Infrastructure failures surface UNAVAILABLE; never fabricate policy BLOCK.
@@ -11,7 +12,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(import.meta.url);
 
-const activation = require(path.join(ROOT, "hooks/activation.cjs"));
+const activation = boundHook(require(path.join(ROOT, "hooks/activation.cjs")));
 const closeout = require(path.join(ROOT, "hooks/closeout.cjs"));
 const transition = require(path.join(ROOT, "hooks/transition-order.cjs"));
 const protectedAction = require(path.join(ROOT, "hooks/protected-action.cjs"));

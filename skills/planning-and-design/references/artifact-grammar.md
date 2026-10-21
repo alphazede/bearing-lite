@@ -64,9 +64,12 @@ optional derived export and is never authority.
    artifact: a draft `.sdoc` path (Markdown sections are not lint-checkable),
    recorded as `implementation.json` `journey_settings.journey_type:
    specification` plus `journey_settings.requirement_register`. The freeze
-   fails without an existing register; Requirements Engineer findings join
-   the one consolidated planning review without gating later sessions; no later
-   implementation wave re-gates it.
+   fails without an existing register. The Requirements Engineer self-checks at
+   the requirements stage with later case bindings pending. Final freeze runs
+   the strict register precheck against the bound technical plan and actual
+   SEIT; pending or unresolved case IDs and unreadable inputs block assembly.
+   This applies whenever a register is declared, including in `authority.json`;
+   draft freeze retains the requirements-stage pending-binding behavior.
 8. Companion artifacts cite the `authority.json` baseline or the bound host
    by reference instead of carrying their own register-digest copy; do not
    copy the register digest into pins, receipts, or evidence.
@@ -81,7 +84,7 @@ optional derived export and is never authority.
 
 ## Glossary
 
-Copy the Scope Definition final batch's quantity-definitions table into the
+Copy the combined Architectural Alignment and Scope final batch's quantity-definitions table into the
 glossary verbatim, instead of redefining any quantity. Requirement and design
 rows cite the defined names; a cited name missing from the table is an
 undefined term and fails the gate.

@@ -1,16 +1,23 @@
-# Planning and Design allocation inputs
+# Allocation inputs for final planning/design
 
-Planning and Design allocates requirement rows against the Systems Modeler
-placement receipt (current flow, candidate placements with `file:line`,
-constraints) whenever that role is selected or required. The placement
-receipt is an input to allocation.
+Data dependencies, in order: Architectural Alignment and Scope supplies
+source-backed context and confirmed decisions; the Requirements Engineer authors
+and self-checks requirements from that context without component placements;
+a selected Systems Modeler then consumes those requirements and existing
+architecture and returns a placement receipt (current flow, candidate placements
+with `file:line`, constraints, and requirement-to-component mappings).
 
-1. Before the first register draft, consume the contextual-pass placement
-   receipt. Allocate each row against a candidate placement from that
-   receipt; the pass-1 return cites the placement receipt.
-2. If the Systems Modeler is unavailable, record a typed gap
-   (`NEEDS_OWNER_DECISION` naming the missing placement receipt) instead
-   of allocating silently.
-3. Relationship mappings are finalized in the planning wave's one aggregated
-   repair when Requirements Engineer findings change rows; no session waits on a
-   Requirements Engineer pass (`../../plan-integrator/references/planning-wave.md`).
+The Planning Orchestrator uses the placement receipt as the input to allocation
+when finalizing the technical plan and design: each allocated requirement cites
+the receipt row it relies on, and the final self-check confirms every required
+allocation is present. It preserves requirement IDs, source bindings, and
+definitions, and creates no duplicate register.
+
+When the Systems Modeler is selected or the task requires placement evidence but
+the role is unavailable, record a typed capability gap and an owner decision
+(`OWNER_DECISION_REQUIRED`); never allocate silently. When the role is inactive
+and not required, allocate from existing architecture evidence and cite it.
+A Modeler placement that contradicts a requirement returns to the owning author
+as a named delta; the final package does not freeze with the contradiction open.
+Do not invent placements, circular dependencies, new agents, or another
+invocation. See `../../bearing-lite/references/planning-assembly.md`.

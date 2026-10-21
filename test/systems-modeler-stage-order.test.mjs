@@ -1,8 +1,10 @@
 /**
- * CMD-STAGE-ORDER-01 / SEIT-STAGE-ORDER-01 (issue #159)
- * A Systems Modeler contextual pass runs before the first register draft
- * whenever that role is selected or required; P&D allocates against its
- * placement receipt and records a typed gap when it is unavailable.
+ * CMD-STAGE-ORDER-01 / SEIT-STAGE-ORDER-01 (issue #159, F4 repair)
+ * Planning data dependencies are acyclic: the Requirements Engineer authors
+ * from confirmed Alignment/Scope context without placements; a selected
+ * Systems Modeler then supplies a placement receipt; final Planning and Design
+ * allocates against that receipt and records a typed gap (never silent
+ * allocation) when a selected or required Modeler is unavailable.
  */
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
@@ -11,73 +13,52 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const router = readFileSync(path.join(ROOT, "skills/bearing-lite/SKILL.md"), "utf8");
-const taskState = readFileSync(
-  path.join(ROOT, "skills/bearing-lite/references/task-state.md"),
-  "utf8"
-);
-const routing = readFileSync(
-  path.join(ROOT, "skills/bearing-lite/references/role-routing.mmd"),
-  "utf8"
-);
-const modeler = readFileSync(path.join(ROOT, "skills/systems-modeler/SKILL.md"), "utf8");
-const pdSkill = readFileSync(
-  path.join(ROOT, "skills/planning-and-design/SKILL.md"),
-  "utf8"
-);
-const allocationInputs = readFileSync(
-  path.join(ROOT, "skills/planning-and-design/references/allocation-inputs.md"),
-  "utf8"
-);
+const read = (rel) => readFileSync(path.join(ROOT, rel), "utf8");
+const assembly = read("skills/bearing-lite/references/planning-assembly.md");
+const taskState = read("skills/bearing-lite/references/task-state.md");
+const routing = read("skills/bearing-lite/references/role-routing.mmd");
+const modeler = read("skills/systems-modeler/SKILL.md");
+const requirements = read("skills/requirements-engineer/SKILL.md");
+const pdSkill = read("skills/planning-and-design/SKILL.md");
+const allocationInputs = read("skills/planning-and-design/references/allocation-inputs.md");
 
-describe("CMD-STAGE-ORDER-01 systems-modeler contextual pass (SEIT-STAGE-ORDER-01)", () => {
-  it("orchestrator schedules the contextual pass before the first register draft when selected or required", () => {
-    assert.match(router, /Systems Modeler contextual pass/);
-    assert.match(router, /selected or required/);
-    assert.match(
-      router,
-      /Systems Modeler contextual pass[\s\S]{0,400}before the first register draft/
-    );
+describe("CMD-STAGE-ORDER-01 acyclic planning dependencies (SEIT-STAGE-ORDER-01)", () => {
+  it("assembly orders Requirements Engineer, then Systems Modeler, then final Planning and Design", () => {
+    const re = assembly.indexOf("**Requirements Engineer");
+    const sm = assembly.indexOf("**Systems Modeler");
+    const pd = assembly.indexOf("final Planning and Design");
+    assert.ok(re >= 0 && sm > re && pd > sm, "RE -> Modeler -> final P&D");
   });
 
-  it("orchestrator records a typed gap instead of allocating silently when unavailable", () => {
-    assert.match(router, /Systems Modeler[\s\S]{0,400}typed capability gap/);
-    assert.match(router, /never silent allocation|not silently allocat/i);
+  it("the Requirements Engineer does not wait on later placements, SEIT, or final design", () => {
+    assert.doesNotMatch(requirements, /Consume selected placement evidence before allocating/);
+    assert.match(requirements, /Do not wait for later Modeler placements, SEIT, or final design/);
+    assert.match(requirements, /--stage requirements/);
   });
 
-  it("task-state text and role-routing diagram place the contextual pass before Planning and Design", () => {
-    assert.match(taskState, /Systems Modeler contextual pass/);
-    assert.match(
-      taskState,
-      /Systems Modeler contextual pass[\s\S]{0,400}before the first register draft/
-    );
-    assert.match(routing, /Systems Modeler contextual/);
-    assert.match(routing, /placement receipt/);
-    assert.ok(
-      routing.indexOf("Systems Modeler") < routing.indexOf("Fresh Planning and Design"),
-      "contextual pass must precede Planning and Design in the diagram"
-    );
+  it("task-state text and role-routing diagram agree: no Modeler pass before the register draft", () => {
+    assert.doesNotMatch(taskState, /contextual pass[\s\S]{0,400}before the first register draft/);
+    assert.match(taskState, /placement receipt/);
+    assert.doesNotMatch(routing, /Systems Modeler contextual pass/);
+    assert.ok(routing.indexOf("Requirements Engineer") < routing.indexOf("Systems Modeler"));
+    assert.ok(routing.indexOf("Systems Modeler") < routing.indexOf("final Planning and Design"));
   });
 
-  it("systems modeler covers flow, placements, and constraints, and takes register findings through the one wave repair (#205)", () => {
-    assert.match(modeler, /contextual pass/);
+  it("systems modeler covers flow, placements, and constraints from the requirements", () => {
     assert.match(modeler, /current flow/);
     assert.match(modeler, /candidate placements with `file:line`/);
     assert.match(modeler, /constraints/);
-    assert.match(modeler, /register findings reach mappings through the\s+wave's one aggregated repair, never a mid-wave gate/);
+    assert.match(modeler, /placement receipt/);
   });
 
-  it("planning-and-design allocation consumes the placement receipt, cites it in pass 1, and gaps when unavailable", () => {
+  it("final allocation consumes the placement receipt, cites it, and gaps when unavailable", () => {
     assert.match(allocationInputs, /placement receipt/);
     assert.match(allocationInputs, /input to allocation/);
-    assert.match(allocationInputs, /pass-1 return cites the placement receipt/i);
-    assert.match(allocationInputs, /typed gap/);
-    assert.match(allocationInputs, /NEEDS_OWNER_DECISION/);
-    assert.match(allocationInputs, /Requirements Engineer/);
-  });
-
-  it("planning-and-design skill reaches allocation-inputs before register allocation", () => {
+    assert.match(allocationInputs, /cites[\s\S]{0,40}receipt/);
+    assert.match(allocationInputs, /typed capability gap/);
+    assert.match(allocationInputs, /never allocate silently/);
+    assert.match(allocationInputs, /OWNER_DECISION_REQUIRED/);
     assert.match(pdSkill, /references\/allocation-inputs\.md/);
-    assert.match(pdSkill, /before register allocation/);
+    assert.match(pdSkill, /placement receipt/);
   });
 });

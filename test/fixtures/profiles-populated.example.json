@@ -63,15 +63,6 @@
           "ordered_fallbacks": [],
           "cadence": "event"
         },
-        "plan_integrator": {
-          "enabled": true,
-          "primary": {
-            "harness": "harness-a",
-            "model": "model-a",
-            "reasoning": "reasoning-a"
-          },
-          "ordered_fallbacks": []
-        },
         "systems_modeler": {
           "sessions": {
             "planning": {

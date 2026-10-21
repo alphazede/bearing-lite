@@ -368,6 +368,114 @@
             }
           }
         },
+        "assurance_dispatch": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "#209 exact bound assurance launch slots; same visible task record carries atomic expenditure. No model selection or hidden runtime authority.",
+          "required": [
+            "slots"
+          ],
+          "properties": {
+            "slots": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "id",
+                  "kind",
+                  "group",
+                  "unit_id",
+                  "candidate",
+                  "scope",
+                  "tool_name",
+                  "tool_input"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "group": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "unit_id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "candidate": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "scope": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "tool_name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "subject": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "authority_id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "kind": {
+                    "enum": [
+                      "review",
+                      "repair",
+                      "deterministic",
+                      "qualification"
+                    ]
+                  },
+                  "unit_kind": {
+                    "enum": [
+                      "wave",
+                      "phase",
+                      "slice",
+                      "lifecycle",
+                      "direct"
+                    ]
+                  },
+                  "tool_input": {
+                    "type": "object"
+                  }
+                }
+              }
+            },
+            "authorities": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "id",
+                  "path",
+                  "sha256"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "path": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "sha256": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  }
+                }
+              }
+            }
+          }
+        },
         "planning_to_implementation_clean_session": { "type": "boolean" },
         "review_rounds": {
           "type": "array",
@@ -388,19 +496,33 @@
         "planning_wave": {
           "type": "object",
           "additionalProperties": true,
-          "description": "The planning wave: declared sessions before review; original digest-pinned planning-review input record plus preserved sessions, closing identity and optional one-repair lineage at final freeze. No second review.",
+          "description": "The planning wave: declared profile-enabled specialist sessions this task needs (possibly none; final Planning and Design is the Planning Orchestrator's own procedure, not a session). At final freeze: preserved ready session returns, closing identity, deterministic closure, and, only when the owner requested planning review, the original digest-pinned planning-review input record with optional one-repair lineage. review_requested false records an unrequested review with zero reviews and no receipt. No second review.",
           "required": [
             "required_sessions"
           ],
+          "if": {
+            "properties": { "review_requested": { "const": false } },
+            "required": ["review_requested"]
+          },
+          "then": {
+            "properties": {
+              "reviews": { "const": 0 },
+              "repairs": { "const": 0 }
+            },
+            "not": { "anyOf": [ { "required": ["review_receipt"] }, { "required": ["repair"] } ] }
+          },
           "properties": {
+            "review_requested": {
+              "type": "boolean",
+              "description": "Whether the owner requested planning review at this boundary. Omitted is treated as requested by hooks/plan-package.cjs, so the review receipt stays required unless false is recorded."
+            },
             "required_sessions": {
               "type": "array",
               "uniqueItems": true,
-              "minItems": 3,
+              "minItems": 0,
               "items": {
                 "type": "string",
                 "enum": [
-                  "planning_and_design",
                   "requirements_engineer",
                   "systems_modeler",
                   "integration_engineer",
@@ -455,7 +577,9 @@
               }
             },
             "reviews": {
-              "const": 1
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1
             },
             "repairs": {
               "type": "integer",

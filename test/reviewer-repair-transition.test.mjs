@@ -22,6 +22,7 @@ const REVIEW_POLICY = readFileSync(
   "utf8"
 );
 const ROUTER = readFileSync(path.join(ROOT, "skills/bearing-lite/SKILL.md"), "utf8");
+const ASSEMBLY = readFileSync(path.join(ROOT, "skills/bearing-lite/references/planning-assembly.md"), "utf8");
 
 const RECEIPT_FIELDS = Object.freeze([
   "candidate_ref",
@@ -143,7 +144,6 @@ function evaluateRepairTransition(ev) {
   return { ok: true, code: "allow" };
 }
 
-
 function admittedIds(ev) {
   const a = ev.addendum;
   return a && a.parent_admitted === true && a.reproduced === true ? a.finding_ids : [];
@@ -210,16 +210,17 @@ const allowedRepair = {
 
 describe("#116 Reviewer to Repair Implementer transition", () => {
   it("planning review-policy.md does not own this transition", () => {
-    assert.match(REVIEW_POLICY, /Planning and Design writes the separate Lifecycle binding/);
+    assert.match(REVIEW_POLICY, /the Planning Orchestrator writes the separate\s+Lifecycle binding/);
     assert.match(REVIEW_POLICY, /Implementation assurance remains governed separately/);
     assert.doesNotMatch(REVIEW_POLICY, /Repair Implementer/);
     assert.doesNotMatch(REVIEW_POLICY, /frozen review receipt/);
   });
 
   it("standing one-repair / no-rereview budget is unchanged", () => {
-    assert.match(ROUTER, /`max_assurance_rounds` is\s+1 per declared phase or wave-end/);
-    assert.match(ROUTER, /one review may authorize\s+one repair/);
-    assert.match(ROUTER, /without another review/);
+    assert.match(ROUTER, /references\/planning-assembly\.md/);
+    assert.match(ASSEMBLY, /`max_assurance_rounds` is 1\s+per declared phase or wave-end/);
+    assert.match(ASSEMBLY, /one review may authorize one repair/);
+    assert.match(ASSEMBLY, /without another review/);
     assert.match(REVIEWER, /max_assurance_rounds/);
     assert.match(REVIEWER, /of 1/);
     assert.match(REVIEWER, /without another review/);
@@ -227,7 +228,7 @@ describe("#116 Reviewer to Repair Implementer transition", () => {
 
   it("rule 1: Reviewer never edits; frozen receipt is required before mutation", () => {
     assert.match(REVIEWER, /While Reviewer,\s+never edit/);
-    assert.match(REVIEWER, /persist a frozen receipt first/);
+    assert.match(REVIEWER, /freeze the receipt first/);
     assert.match(REVIEWER, /ref\/revision\/digest/);
     assert.match(REVIEWER, /finding IDs/);
     assert.match(REVIEWER, /write set/);
@@ -280,7 +281,8 @@ describe("#116 Reviewer to Repair Implementer transition", () => {
   it("rule 3: preserve context or fall back to dispatch", () => {
     assert.match(REVIEWER, /Preserve context|preserve(?:d)? loaded context/i);
     assert.match(REVIEWER, /dispatch/);
-    assert.match(IMPLEMENTER, /dispatch if\s+session cannot be preserved/);
+    // A non-continuable session returns WAITING_ON; a new invocation needs explicit authority.
+    assert.match(IMPLEMENTER, /If it cannot continue, return `WAITING_ON`; a new invocation needs explicit\s+authority/);
     assert.equal(
       evaluateRepairTransition({ ...allowedRepair, preserve_session: false }).code,
       "dispatch_fallback"
@@ -290,8 +292,8 @@ describe("#116 Reviewer to Repair Implementer transition", () => {
   it("rule 4: no self-certification; deterministic close; escalate failed repair", () => {
     assert.match(REVIEWER, /deterministic verification/);
     assert.match(REVIEWER, /Never self-review/);
-    assert.match(IMPLEMENTER, /deterministic verification/);
-    assert.match(IMPLEMENTER, /no extra review/);
+    assert.match(IMPLEMENTER, /closes by deterministic checks/);
+    assert.match(IMPLEMENTER, /without extra review or invocation/);
     assert.match(IMPLEMENTER, /self-certify/);
     assert.equal(
       evaluateRepairTransition({
@@ -335,7 +337,7 @@ describe("#116 Reviewer to Repair Implementer transition", () => {
   it("rule 5: one repair; defects outside the frozen receipt escalate", () => {
     assert.match(REVIEWER, /permits one repair/);
     assert.match(REVIEWER, /outside the frozen receipt/);
-    assert.match(IMPLEMENTER, /One repair/);
+    assert.match(IMPLEMENTER, /An authorized repair closes by deterministic checks/);
     assert.equal(evaluateRepairTransition({ ...allowedRepair, repairs_used: 1 }).code, "one_repair_limit");
     assert.equal(
       evaluateRepairTransition({
@@ -381,6 +383,8 @@ describe("#116 Reviewer to Repair Implementer transition", () => {
       assert.match(REVIEWER, /approved paths/i);
       assert.match(REVIEWER, /unchanged contract and protected boundaries/i);
       assert.match(REVIEWER, /remaining\s+recorded correction allowance/i);
+      // Owner-approved: the allowance is the recorded one; no numeric cap is inferred.
+      assert.match(REVIEWER, /Missing allowance grants none; infer no numeric attempt cap/);
       assert.doesNotMatch(REVIEWER, /at most three/i);
       assert.match(REVIEWER, /age alone does not justify/i);
       assert.match(REVIEWER, /same reviewer session repairs only accepted finding IDs/i);
@@ -418,11 +422,11 @@ describe("#116 Reviewer to Repair Implementer transition", () => {
       assert.equal(code({ ...late, addendum: { ...addendum, protected_action: true } }), "contract_or_protected_change");
     });
 
-    it("missing or exhausted allowance is not granted; the recorded limit is the only cap", () => {
+    it("only the supplied allowance limits corrections; no default cap is inferred", () => {
       assert.equal(code({ ...late, round: { ...openRound, correction_allowance: undefined } }), "correction_allowance_missing");
       assert.equal(code({ ...late, round: { ...openRound, correction_allowance: { used: 0 } } }), "correction_allowance_missing");
       assert.equal(code({ ...late, round: { ...openRound, correction_allowance: { limit: 3, used: 3 } } }), "correction_allowance_exhausted");
-      assert.notEqual(code({ ...late, round: { ...openRound, correction_allowance: { limit: 9, used: 3 } } }), "correction_allowance_exhausted");
+      assert.equal(code({ ...late, round: { ...openRound, correction_allowance: { limit: 9, used: 3 } } }), "allow");
       assert.equal(code({ ...late, round: { ...openRound, correction_allowance: { limit: 1, used: 1 } } }), "correction_allowance_exhausted");
     });
 

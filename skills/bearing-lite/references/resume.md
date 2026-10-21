@@ -26,10 +26,11 @@ make a route ineligible.
 
 Resume runs `node <plugin root>/hooks/scribe-coverage.cjs <journey.json>` and
 lists every untranscribed event it reports (owner decisions, authority
-events, landings) with its id and time. `SCRIBE_REQUIRED` dispatches the
-Scribe on the frozen route before other work; `CAPABILITY_GAP` is reported to
-the owner as a typed Scribe capability gap. The Orchestrator never
-transcribes the events itself. Handoff (`action_kind: "scribe_coverage"`,
+events, landings) with its id and time. `ORCHESTRATOR_REQUIRED` means the profile
+omits or disables Scribe: Orchestrator records those source-backed events itself.
+`SCRIBE_REQUIRED` sends only missing events to the existing Scribe session on its
+frozen route; `CAPABILITY_GAP` reports an unavailable selected Scribe. Handoff
+(`action_kind: "scribe_coverage"`,
 `mode: "handoff"`) and protected completion in `hooks/closeout.cjs` refuse
 until coverage is `PASS`.
 
@@ -40,8 +41,21 @@ continues the same pass and budget from durable artifacts. Confirmed owner
 decisions stay confirmed. A changed envelope, conflicting writer, new
 authority, or explicit owner choice starts fresh.
 
-Router-drafted planning artifacts are a historical exception, not a pattern.
-New Lifecycles fail closed on them: dispatch Planning and Design (or a
-planning delta) instead of authoring `*-technical-plan.md`, `design.md`,
-`workspace.md`, `seit.json`, or `implementation.json` in the Orchestrator
-session.
+On resume the Planning Orchestrator continues its own final Planning and Design
+in the controller session from durable artifacts; it does not dispatch a separate
+design author. Specialist-owned content stays with its author: requirements with
+the Requirements Engineer and `seit.json` with the Planning Test Engineer. A
+missing specialist deliverable is returned to its enabled owner as a named delta
+or surfaced as a typed gap, never drafted by the Orchestrator.
+
+## Scribe cadence
+
+Scribe is optional; when omitted or disabled, Orchestrator owns transcription.
+When enabled, use one persistent session throughout the Lifecycle, consuming events
+or batches by frozen `roles.scribe.cadence`: `event` (default), `phase`, or `lifecycle`.
+Never relaunch it per event, phase or batch, poll it, or invent a Scribe when disabled.
+After a genuine context reset or inactive session, resume from the last durable
+receipt and only missing events under the existing resume authority; do not resend
+raw history or reset budgets. Route or authority drift is an explicit amendment,
+not permission to silently replace the session. An unavailable enabled Scribe
+remains a typed `CAPABILITY_GAP`.

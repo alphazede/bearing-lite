@@ -787,13 +787,15 @@ describe("CMD-TASK-01 task-record (SEIT-TASK-RECORD-01, SEIT-SINGLE-WRITER-01)",
       path.join(ROOT, "skills/bearing-lite/SKILL.md"),
       "utf8"
     );
-    assert.match(router, /Acquire or resume a generation-bound checkout lease before\s+planning or dispatch/);
+    // The Orchestrator applies the lease through its linked task-state reference.
+    const taskState = readFileSync(path.join(ROOT, "skills/bearing-lite/references/task-state.md"), "utf8");
+    assert.match(router, /references\/task-state\.md/);
     assert.match(router, /WAITING_ON/);
-    assert.match(router, /sanitized identity/);
-    assert.match(router, /same generation/);
-    assert.match(router, /duplicate dispatch/);
-    assert.match(router, /Release the lease once/);
-    assert.match(router, /recorded generation increment/);
+    assert.match(taskState, /holds one\s+generation-bound checkout lease before any planning write or dispatch/);
+    assert.match(taskState, /sanitized/);
+    assert.match(taskState, /same generation and must not duplicate dispatch/);
+    assert.match(taskState, /releases the lease exactly once/);
+    assert.match(taskState, /increments generation/);
   });
 
   it("template documents always-present, before-execution, after-candidate, waiting/correcting tiers", () => {

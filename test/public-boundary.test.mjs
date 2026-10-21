@@ -105,10 +105,10 @@ const DEEP_COUPLING_PATTERNS = [
   INTERNAL_METADATA_COUPLING,
 ];
 
-/** DEC-BDL-042 amended 2026-09-30 (#168): prompt skill carries the fan-out section and TIME BUDGET line, and (#175) acceptance evidence and trust-boundary checks; metadata exemption is digest-bound. */
+/** The approved compact prompt frontmatter has a content-bound exemption; every privacy/security pattern still applies. */
 const TRUSTED_PUBLIC_PROMPT_SKILL = "skills/prompt/SKILL.md";
 const TRUSTED_PUBLIC_PROMPT_SKILL_SHA256 =
-  "78f273947aef454039833dfddd0871c21d73e511461367546ab37e6d4413c6c0";
+  "d6c4404bab03d6a99f00bf65b3508cc8414782417e453fee5a5db75c60d6c9ba";
 
 /**
  * @param {string} content
@@ -569,22 +569,21 @@ describe("CMD-PUBLIC-01 public-boundary (SEIT-PUBLIC-01, SEIT-MODEL-01, SEIT-IND
     assert.doesNotMatch(install, /Writes product/);
   });
 
-  it("public lifecycle docs describe Intake then Architectural Alignment then Scope Definition then Planning and Design", () => {
+  it("public lifecycle docs preserve combined scope and requirements-first final planning", () => {
     for (const rel of [
       "README.md",
       "docs/architecture/bearing-delivery-lifecycle.md",
       "docs/guides/lifecycle.md",
     ]) {
-      const text = readFileSync(path.join(ROOT, rel), "utf8");
-      const intake = text.indexOf("Intake");
-      const alignment = text.indexOf("Architectural Alignment");
-      const scope = text.indexOf("Scope Definition");
-      const planning = text.indexOf("Planning and Design");
-      assert.ok(intake >= 0, `${rel} must name Intake`);
-      assert.ok(alignment > intake, `${rel} must order Architectural Alignment after Intake`);
-      assert.ok(scope > alignment, `${rel} must order Scope Definition after Architectural Alignment`);
-      assert.ok(planning > scope, `${rel} must order Planning and Design after Scope Definition`);
+      const text = readFileSync(path.join(ROOT, rel), "utf8").replace(/\s+/g, " ");
+      assert.match(text, /Intake[\s\S]*Architectural Alignment and Scope[\s\S]*Requirements Engineer[\s\S]*Systems Modeler[\s\S]*Integration Engineer planning[\s\S]*Planning Test Engineer[\s\S]*final Planning and Design/, rel);
+      assert.match(text, /(?:requested planning review|planning review[^.]*only when)/, rel);
+      assert.doesNotMatch(text, /dispatches the \*\*Planning Orchestrator|frozen `planning_and_design` route/, rel);
     }
+    const svg = readFileSync(path.join(ROOT, "docs/architecture/bearing-process/lifecycle-process-views.svg"), "utf8");
+    assert.match(svg, /Intake → Alignment &amp; Scope → Requirements → Modeler → IE → TE → final plan\/design → owner → handoff/);
+    assert.match(svg, /SPECIALISTS: ENABLED AND NEEDED/);
+    assert.doesNotMatch(svg, /order[^<]*unsettled|Planning Test Engineer \(Iterative\)/);
   });
 
   it("public docs keep one Integration Engineer and one Test Engineer with named sessions", () => {

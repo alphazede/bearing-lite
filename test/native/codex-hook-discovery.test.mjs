@@ -175,7 +175,7 @@ describe("Codex native hook discovery for the installed candidate (D1)", () => {
     const { $schema, ...rest } = JSON.parse(readFileSync(path.join(ROOT, "plugin.json"), "utf8"));
     assert.ok($schema, "portable source plugin.json must keep its $schema");
     assert.deepEqual(JSON.parse(readFileSync(path.join(installedRoot, "plugin.json"), "utf8")), rest);
-    assert.equal(expectedHooks().length, 7, "candidate hooks/hooks.json should declare 7 registrations");
+    assert.equal(expectedHooks().length, 8, "candidate hooks/hooks.json should declare 8 registrations");
   });
 
   it("enabled install: Codex hooks/list registers every declared hook", async () => {
@@ -194,7 +194,7 @@ describe("Codex native hook discovery for the installed candidate (D1)", () => {
     assert.deepEqual(
       ours.map(pick).sort((a, b) => sortKey(a).localeCompare(sortKey(b))),
       expectedHooks().sort((a, b) => sortKey(a).localeCompare(sortKey(b))),
-      `D1: Codex discovered ${ours.length}/7 Bearing hooks; warnings=${JSON.stringify(data.warnings)} errors=${JSON.stringify(data.errors)}`,
+      `D1: Codex discovered ${ours.length}/8 Bearing hooks; warnings=${JSON.stringify(data.warnings)} errors=${JSON.stringify(data.errors)}`,
     );
     for (const h of ours) assert.equal(h.sourcePath, path.join(installedRoot, "hooks", "hooks.json"));
   });

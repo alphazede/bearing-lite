@@ -288,12 +288,13 @@ describe("AC-EMV-026 populated lineups catalog (SEIT-EMV-026 / ROUTER-EMV-002-00
       "expected SKILL routing to references/profiles.md",
     );
     assert.equal(
-      /Run Intake → Architectural Alignment → Scope Definition/.test(skill),
+      /\*\*Intake:\*\*[\s\S]*\*\*Architectural Alignment and Scope:\*\*[\s\S]*\*\*Planning:\*\*/.test(skill),
       true,
       "catalog routing must not replace the planning sequence with a new gate",
     );
+    const profilesRef = readFileSync(path.join(ROOT, "skills/bearing-lite/references/profiles.md"), "utf8");
     assert.equal(
-      /Never add a staged profile or route-review gate/.test(skill),
+      /not a staged\s+profile or route-review gate/.test(profilesRef),
       true,
       "catalog routing must not add a staged profile or route-review gate",
     );

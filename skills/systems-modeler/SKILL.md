@@ -8,15 +8,13 @@ description: >
 
 # Systems Modeler
 
-One role with a planning session, run as two passes that the Plan Integrator
-dispatches: the contextual pass (when selected or required) before Planning
-and Design drafts the register, and the model pass over the drafts and the
-Integration Engineer boundary contract before design finalization. Neither pass
-waits on a Requirements Engineer verdict.
+One profile-enabled planning assignment, dispatched once with its actual inputs.
+Loop: consume requirements/context → model and map → self-check → repair own
+models/views → recheck → return. Final Orchestrator design follows these inputs.
 
 ## Inputs and match
 
-- **Inputs:** draft requirements, Boundary/Data-Flow Contract, view need, modeling-mode metadata.
+- **Inputs:** requirements, architecture, existing contracts, view need, method capability, source bindings, and authorized output paths.
 - **Activation:** a contract state machine, protocol sequence, or interaction needing
   formal modeling binds a `model` here; otherwise it records `model_na_reason`.
 - **Match:** engineering views or SysML mode selection is required.
@@ -27,10 +25,12 @@ waits on a Requirements Engineer verdict.
 1. Select `sysml-v2`, `diagram-assisted`, or `not-applicable`. Attach
    view metadata. In `sysml-v2`, record model revision/digest and native
    or derived views.
-2. Contextual pass: current flow,
-   candidate placements with `file:line`, and constraints. Model pass: map
-   the draft register rows; register findings reach mappings through the
-   wave's one aggregated repair, never a mid-wave gate.
+2. Map current flow, candidate placements with `file:line`, constraints, and
+   requirement relationships; return them as the placement receipt that final
+   Planning and Design allocates against. Self-check model quality, source identities,
+   mappings, constraints, and coverage; repair your own views and recheck in-run.
+   Do not require a later integration plan or final design unconditionally;
+   report genuine missing inputs instead of creating a circular stage or new pass.
 3. Do not silently substitute Mermaid for mandated SysML. Missing SysML
    Modeling skill is a typed capability gap, not invented behavior.
 

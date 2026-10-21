@@ -1,53 +1,60 @@
 ---
 name: architectural-alignment
 description: >
-  Create or resume the visible Lifecycle workspace and bounded repository map
-  after Intake is confirmed. Use for Architectural Alignment or stale
-  project context. Do not use before fit, for owner decisions, design,
-  implementation, hidden state, or deleting historical plans.
+  Establish architectural fit and resolve material scope decisions after Intake
+  is confirmed. Use for Architectural Alignment, Scope Definition, missing or
+  stale context, or unresolved intent in an explicitly requested Bearing
+  lifecycle. Do not use for already-settled current context, design,
+  implementation, independent review, or an unconfirmed repository.
 ---
 
-# Architectural Alignment
+# Architectural Alignment and Scope
 
-Fresh planning node. The Orchestrator owns and writes `workspace.md` and `repository-map.md` in the confirmed plan directory.
-The Orchestrator announces `Aligning architecture in <repo>.`
-
-## Inputs and match
-
-- **Inputs:** confirmed repository root, owner-confirmed plan directory, Lifecycle
-  title, visible existing artifacts, repository rules, and return schema.
-- **Match:** the workspace, repository map, or architecture extract is missing or stale.
-- **Non-match:** both are current and usable by Scope Definition or Planning and Design.
-  Completed alignment is not repeated unless relevant source changes invalidate its map.
+The Orchestrator runs this once in its controller session, owning `workspace.md`
+and `repository-map.md`. Establish architectural fit and shared scope before design.
+Use the requested outcome, confirmed repository and plan directory, prior owner
+decisions, source evidence, and repository rules. Run after Intake is confirmed.
+Completed alignment is not repeated unless relevant source changes invalidate
+its map or the requested scope changes. Reuse confirmed scope and current evidence.
 
 ## Algorithm
 
-1. Re-read the exact confirmed root and plan directory; never derive a different
-   root, slug, suffix, or sibling workspace.
-2. If `workspace.md` exists in the plan directory, verify recorded root and plan
-   directory match confirmed inputs; a mismatch returns `BLOCKED`. Run `git
-   status --porcelain` scoped to mapped inputs; if unmodified, return
-   `WORKSPACE_RESUMED` (1 read, 1 status).
-3. Bound discovery: depth 2, max 40 paths, max 64 KiB, read-only. Anchors are
-   root manifest, task runner, CI entrypoint, top-level instructions, and root
-   test configs. Strictly prohibit discovery traversal into repo-relative
-   `src/`, `lib/`, `vendor/`, and `docs/`.
-4. Map existing architecture covering the affected scope and hand off. If none
-   exists or evidence does not cover it, record that gap and activate Systems
-   Modeler; do not design missing architecture.
-5. If bounds are exhausted before required anchors are found, return
-   `NEEDS_EVIDENCE` naming the missing anchor. Never compose unobserved commands.
-6. Create missing plan directory or update `workspace.md` in place, preserving
-   existing recorded evidence and unrelated edits. Initialize a missing file
-   from `templates/workspace.md`. Quote validation commands with source and mark
-   `[observed, not run]`. Drop detail before Constraints and Unknowns.
-7. Verify written paths remain inside authority and return `WORKSPACE_READY`.
+1. Verify the exact root, repository identity, plan directory, and requested
+   scope. Conflicting identity returns `BLOCKED`; never invent a sibling path.
+2. Verify source bindings and scoped committed, staged, unstaged, and relevant
+   untracked changes. Compare recorded revisions and content digests with current
+   inputs; a clean Git status alone does not prove freshness. Refresh affected
+   context only. Missing bindings require fresh evidence.
+3. Read canonical architecture, relevant manifests, instructions, entry points,
+   tests, and ownership records; follow evidence into `docs/`, `src/`, and `lib/`.
+   Use BRAN with native policy; otherwise report `bran_status: unavailable`.
+   Bound discovery to the authorized task and affected flows. Never ask the
+   owner for a fact tools can establish, or invent architecture or commands.
+4. Map components, interfaces, data flow, ownership, constraints, and trust
+   boundaries with sources. Explain where the requested work fits; distinguish
+   facts, inferences, and gaps. Do not design missing architecture, activate a
+   specialist automatically, or choose material changes or risk for the owner.
+5. Track material outcome, scope, authority, risk, and acceptance decisions as
+   dependency-ordered branches. Ask exactly one question whose prerequisites are
+   settled, give the recommended answer and material alternatives, then wait.
+   Challenge contradictions and vague acceptance. Silence is not approval;
+   revisit a settled answer only when scope or conflicting evidence changes it.
+6. Buffer confirmed decisions in the active session. Do not persist, patch, or
+   re-render Lifecycle state after each answer. At a completed branch, before
+   Planning and Design, on handoff/context loss, or owner request, record one
+   consolidated decision batch using `references/decision-batch.md`: its
+   quantity-definitions table and `enforced_rule`/`expected_outcome` typing; any
+   gap blocks `WORKSPACE_READY` as a class C owner question. Each open
+   item must be decided, owner-deferred with a trigger, justified inapplicable,
+   or visibly blocked. Ask for explicit confirmation that shared understanding
+   is reached when prior confirmation does not cover the current scope.
+7. Update the two owned records using `templates/workspace.md` when needed and
+   repository metadata rules. Preserve history, bindings, decisions, constraints,
+   and gaps; label validation commands `[observed, not run]` with their sources.
+   Verify the write set and hand off only when fit and material intent are settled.
 
-## Return and recovery
-
-Return `WORKSPACE_READY`, `WORKSPACE_RESUMED`, `NEEDS_EVIDENCE`, or `BLOCKED`
-with paths, map freshness, evidence, blocker, and next planning stage. Retry only
-from corrected evidence.
-
-Never ask planning questions, write risk choices, design, implement, create
-hidden runtime state, or delete plan content.
+Return `WORKSPACE_READY`, `WORKSPACE_RESUMED`, `NEEDS_EVIDENCE`,
+`OWNER_DECISION_REQUIRED`, or `BLOCKED` with paths, scope, fit, freshness evidence,
+confirmed decisions, open items, and next action. Missing facts and pending owner
+answers are distinct. Resume only valid context; never start a second scope stage.
+Do not implement, delete plan content, or invent retries or agent invocations.

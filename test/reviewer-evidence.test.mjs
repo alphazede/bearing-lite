@@ -26,8 +26,9 @@ test("AC-144.03 / SEIT-144.03: Reviewer uses gate evidence and limits its scope"
   assert.match(reviewer, /(?:scope|review)[^.]*limited to[^.]*requirement conformance[^.]*design[^.]*security reasoning[^.]*plan drift/i);
   assert.match(reviewer, /consum(?:e|es) the gate-chain receipt/i);
   assert.match(reviewer, /(?:do(?:es)? not|never|must not) re-litigate passed gates/i);
-  assert.match(reviewer, /Assurance Test Engineer[^.]*(?:does not|must not|never) re-review code/i);
-  assert.match(reviewer, /no (?:concrete |external semantic )?classifier is named or required/i);
+  assert.match(reviewer, /(?:do(?:es)? not|never|must not)[^.]*duplicate Assurance Test Engineer work/i);
+  // No external classifier is introduced or required by the Reviewer.
+  assert.doesNotMatch(reviewer, /classifier (?:is )?required|requires? (?:a|an) [\w ]*classifier/i);
 });
 
 test("AC-144.04", () => {

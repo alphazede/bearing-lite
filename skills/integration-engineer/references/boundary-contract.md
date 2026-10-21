@@ -11,9 +11,10 @@ assessment are unchanged.
 
 ## Where it lives
 
-No sixth canonical planning artifact. Author the contract in `design.md`
-(interfaces and boundaries), the optional System Catalog, and model views; the
-Plan Integrator copies it mechanically into `implementation.json`
+No sixth canonical planning artifact. Return the authored boundary inputs to the
+Planning Orchestrator. It places them
+in final `design.md` (interfaces and boundaries), the optional System Catalog,
+and model views as applicable, then copies them into `implementation.json`
 `boundary_contract`, which `hooks/plan-package.cjs` checks at both freezes.
 Distinguish observed repository evidence (`evidence: "observed"`) from proposed
 design (`"proposed"`).

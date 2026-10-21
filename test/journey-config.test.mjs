@@ -17,7 +17,7 @@ const ROLES = [
   "Reviewer",
   "Test Engineer",
   "Scribe",
-  "Plan Integrator",
+  "Planning Orchestrator",
   "Systems Modeler",
   "Integration Engineer",
   "Requirements Engineer",
@@ -54,9 +54,9 @@ describe("Lifecycle profile defaults", () => {
     assert.match(CONFIG, /`MIGRATION_REQUIRED`/);
     const router = readFileSync(path.join(ROOT, "skills/bearing-lite/SKILL.md"), "utf8");
     assert.doesNotMatch(router, /default-role-lineup\.md/);
-    assert.match(router, /`no_named_profiles`/);
-    assert.match(router, /never a generated file/);
-    assert.match(router, /The Orchestrator is observed, not selected/);
+    assert.match(router, /references\/profiles\.md/);
+    assert.match(CONFIG, /Do not auto-create the live\s+catalog/);
+    assert.match(CONFIG, /The Orchestrator is not a configurable role/);
     const task = readFileSync(path.join(ROOT, "skills/bearing-lite/templates/task.md"), "utf8");
     assert.doesNotMatch(task, /default-role-lineup\.md/);
     assert.match(task, /observed identity of the session/);
@@ -74,7 +74,9 @@ describe("Lifecycle profile defaults", () => {
       path.join(ROOT, "skills/bearing-lite/SKILL.md"),
       "utf8"
     );
-    assert.match(router, /`max_assurance_rounds` is\s+1/);
+    assert.match(router, /references\/planning-assembly\.md/);
+    const assembly = readFileSync(path.join(ROOT, "skills/bearing-lite/references/planning-assembly.md"), "utf8");
+    assert.match(assembly, /`max_assurance_rounds` is 1\s+per declared phase or wave-end/);
     assert.doesNotMatch(CONFIG, /max_assurance_rounds|assurance_rounds/);
     assert.doesNotMatch(CONFIG, /assurance budget|review-round limit/i);
   });
@@ -84,11 +86,9 @@ describe("Lifecycle profile defaults", () => {
       path.join(ROOT, "skills/bearing-lite/SKILL.md"),
       "utf8"
     );
-    assert.match(router, /recorded\s+snapshot is authoritative for this Lifecycle/);
-    assert.match(
-      router,
-      /Later edits to\s+`~\/\.agents\/bearing-lite\/profiles\.json` have no effect on it/
-    );
+    assert.match(router, /Preserve the recorded profile/);
+    assert.match(router, /Never replay completed stages or change routes/);
+    assert.match(CONFIG, /Later catalog edits do not mutate the frozen snapshot copy or its digest/);
     assert.doesNotMatch(
       CONFIG,
       /overrides the recorded Lifecycle snapshot|live override of an in-flight Lifecycle/i

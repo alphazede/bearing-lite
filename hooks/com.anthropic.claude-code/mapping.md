@@ -36,7 +36,7 @@ Codex 0.162.1 registers no plugin hooks, silently, when the installed root
 marketplace that `tools/prepare-codex-plugin.mjs --out <new dir>` prepares: the
 same package bytes plus `.codex-plugin/`, with only root `$schema` omitted.
 `node --test test/native/codex-hook-discovery.test.mjs` proves registration
-(7 hooks, all skills, none when disabled), not invocation.
+(8 hooks, all skills, none when disabled), not invocation.
 
 Skill-copy into a host skills directory does **not** register plugin hooks.
 To carry the Orchestrator write-set lock, merge `hooks/skill-copy-write-lock.json`
@@ -73,17 +73,10 @@ procedural there. AGY, Pi, and DeepCode remain skills-only. Do not
 claim full planning-review enforcement for any of these hosts until a native
 event supplies the complete record.
 
-The per-declared-phase-or-wave assurance record
-(`skills/bearing-lite/references/assurance-policy.md`) is evaluated by the same
-`transition` class through the `assurance_transition` action_kind. No mapped
-host exposes a hook event that carries the frozen declaration and the visible
-task record, so the assurance budget is procedural on every mapped host:
-Claude Code, Codex, Cursor, and GitHub Copilot stay
-partial, and AGY, Pi, and DeepCode stay skills-only. No host may
-advertise an enforcement of the assurance budget it cannot perform.
-
-The adapter accepts snake_case and camelCase (`hook_event_name` /
-`hookEventName`, `cwd` / `workspaceRoot`).
+The per-declared-phase-or-wave assurance record still supports read-only
+`transition` evaluation through `assurance_transition`. The bound pre-dispatch
+barrier below consumes that same evaluator and visible task record before
+launch. Unbound legacy flows remain procedural; they are not native proof.
 
 ## Test Engineering classes
 
@@ -152,21 +145,40 @@ through `hookSpecificOutput.permissionDecision`. Copilot `Stop` denies through
 `reason`. Copilot `SubagentStop` denies through a top-level `decision` block
 and `reason`. `Stop` and `SubagentStop` carry `stop_hook_active`; a true
 re-entry terminates as quiet success so a deny cannot loop. Transition-order,
-protected-action, planning-review, and assurance-budget stay procedural.
+protected-action and planning-review stay procedural; bound assurance dispatch is registered separately below.
 This Copilot mapping does not yet register the Orchestrator write-set lock;
 use the documented fallback until that host file is wired.
 
+## Current-task activation boundary
+
+All four general hooks use `hooks/task-binding.cjs`, a read-only resolver of the
+existing visible project plan. On an explicit owner request for this current task,
+record `- bearing_session: {"owner_requested":true,"session_id":"<native session id>","task_id":"<current task id>"}`
+in that plan, beside the nonterminal `### task_id:` block. The resolver checks
+root Markdown plans and ancestors up to the checkout boundary; it never scans
+historical plan subdirectories, global profiles, transcripts, or role names for
+activation authority. Native `session_id`/`sessionId` and Cursor `conversation_id`
+identify the session. Missing, ambiguous, completed/cancelled, and cross-session
+bindings stay inactive. An old journey marker or checkout_lease is context only.
+Rebind explicitly for a new task or separately launched session; remove/release
+on completion. Legacy plan presence is never automatic migration authority.
+No new state file, service, global switch, or activation daemon is introduced.
+
+Ordinary SessionStart/Stop stays quiet, the write lock allows ordinary writes,
+and Stop git-sync performs no Git operation. Active tasks retain ownership
+refusals and closeout. Stop re-entry (`stop_hook_active`) still terminates quietly.
+Standalone explicitly selected/required TE is independent. Explicit bound
+`assurance_dispatch` still enforces reservations/budgets even without a general
+Bearing session binding; missing dispatch declarations block only the current
+explicitly bound task that requires assurance, never an unrelated old label.
+
 ## Orchestrator write-set lock
 
-`hooks/orchestrator-write-lock.cjs` denies Orchestrator sessions (no
-`BEARING_ROLE`, empty, or `orchestrator`) writing `*-technical-plan.md`,
-`design.md`, `workspace.md`, `seit.json`, `implementation.json`,
-`*-dod-manifest.html`, `repository-map.md`, or `docs/coe/**`. Refusal names
-the owning role and the dispatch command (`BEARING_ROLE=<role>`). A session
-with a non-Orchestrator `BEARING_ROLE` is allowed. Dispatch every specialist
-and stage session as a separate process with `BEARING_ROLE` set. Locked
-basenames match at any path (`/tmp/workspace.md`, nested `x/docs/coe/y.md`);
-that breadth is intentional, not a repo-root-only check.
+For an explicitly bound current task, `hooks/orchestrator-write-lock.cjs`
+keeps specialist requirements and SEIT owned by their authors; the existing
+Planning Orchestrator owns final plan/design, assembly and handoff. Native
+role metadata chooses the author inside that active task, never activates it.
+The frozen review/repair transition and parent-record guards remain enforced.
 
 | Host | write-set lock |
 |---|---|
@@ -191,8 +203,8 @@ trees) and sets only:
 | closeout handoff fields | matching task-record keys when present. Receipt `verdict` is a closed role-return token; task `outcome` is approved intent and is not mapped into the receipt |
 
 `assigned_role` and `router_invoked` are **not** inferred from the tool-call
-payload. Missing values stay missing, so activation advises the router instead
-of inventing context.
+payload. Missing values stay missing. Only after current-task opt-in does activation
+advise on missing context; it never invokes Bearing for ordinary work.
 
 The Orchestrator writes the visible `checkout_lease` before any planning write
 or dispatch; its nested non-placeholder Lifecycle identity is the
@@ -203,10 +215,10 @@ recorded later at the integrated owner review.
 
 | Outcome | Host JSON | Process exit |
 |---|---|---|
-| `ADVISE`, `REROUTE`, `UNAVAILABLE` on activation or a discoverable-Journey first-pass Stop | `hookSpecificOutput.additionalContext` | always `0` |
+| `ADVISE`, `REROUTE`, `UNAVAILABLE` on activation or an explicitly bound current-task first-pass Stop | `hookSpecificOutput.additionalContext` | always `0` |
 | Stop/SubagentStop re-entry (`stop_hook_active`) | quiet success (empty JSON; no `additionalContext`) | always `0` |
-| Stop/SubagentStop with no discoverable Journey | quiet success (empty JSON; no `additionalContext`) | always `0` |
-| first-pass Stop/SubagentStop with a discoverable Journey | `hookSpecificOutput.additionalContext` | always `0` |
+| Stop/SubagentStop with no current task binding | quiet success (empty JSON; no `additionalContext`) | always `0` |
+| first-pass Stop/SubagentStop with an explicitly bound current task | `hookSpecificOutput.additionalContext` | always `0` |
 | `BLOCK` | JSON `decision: "block"` only; this mapping never requests protected completion | always `0` |
 | Copilot `PreToolUse` deny | `hookSpecificOutput.permissionDecision` `"deny"` | always `0` |
 | Copilot `Stop` deny | `hookSpecificOutput` `{ hookEventName: "Stop", decision: "block", reason }` | always `0` |
@@ -222,7 +234,44 @@ GitHub Copilot run this same adapter. Those wires omit advisory Stop context.
 is sent only for `decision: "block"` and is not a completion deny. Pi, AGY,
 DeepCode, and Qwen Code register no stop hook.
 
-A discoverable Journey is a visible plan with a `task_id`, `assigned_role`,
-non-placeholder journey marker, or `checkout_lease` block. Empty cwd and
-`stop_hook_active` re-entry stay quiet. Never map policy or infrastructure to
+A discoverable Journey supplies context only: `task_id`, `assigned_role`, a
+non-placeholder journey marker, or `checkout_lease` never substitutes for the
+current-task binding. No discoverable Journey or no current binding means quiet
+success. Empty cwd and `stop_hook_active` re-entry stay quiet. Never map policy or infrastructure to
 a non-zero exit.
+
+
+## Bound assurance dispatch capability
+
+`hooks/assurance-dispatch.cjs` makes the existing assurance evaluator a
+mandatory barrier for the explicitly bound flow in
+[assurance-policy.md](../../skills/bearing-lite/references/assurance-policy.md#mandatory-bound-dispatch-209--210).
+General transition-order and protected-action remain procedural. Missing or
+invalid bound state is a typed evidence gap and denies launch; ordinary work
+without a binding stays open. Hook infrastructure that never invokes the
+adapter is a host gap, not a passing budget check.
+
+| Host | Barrier wire / registration | Test status |
+|---|---|---|
+| Codex | common `PreToolUse`, native `permissionDecision: deny` | installed-plugin native sentinel and hook discovery on 0.162.1; credential-free local driver, no paid provider calls |
+| Claude Code | common `PreToolUse`, nested `permissionDecision: deny` | component replay; native qualification not run |
+| Cursor | `preToolUse` for agent/MCP launches; `beforeShellExecution` for shell | component replay; native qualification not run |
+| GitHub Copilot | `PreToolUse`, nested `permissionDecision: deny` | component replay; native qualification not run / client unavailable locally |
+| AGY, Pi, DeepCode, skill-copy | no registered barrier | skills-only / procedural |
+| Qwen Code, Kimi Code, Grok Build | no maintained barrier | unsupported; excluded from native tests |
+
+Cursor's generic `preToolUse` shell event defers to `beforeShellExecution`,
+so one shell launch consumes once. The shell hook reads the documented
+`command`/`cwd` envelope and returns native `permission: deny`; generic agent
+launches read `tool_name` and `tool_input`. All registrations cover the full
+relevant event, independent of prompt wording. Shell wrappers or scripts
+inside a frozen slot must themselves have the authorized bounded invocation
+contract; no hook inspects or claims to meter arbitrary subprocess internals.
+
+`test/assurance-dispatch.test.mjs` is real module/CLI/filesystem component
+replay, not native host evidence. `test/native/assurance-dispatch.test.mjs`
+installs the candidate into isolated Codex config and drives its real tool
+loop with an owned loopback protocol driver. The allowed sentinel starts;
+excess launches do not; repair closes deterministically. It makes no real
+provider call. An absent native tool, missing trust or wrong release pin is a
+typed qualification gap, never an inferred native pass for another host.

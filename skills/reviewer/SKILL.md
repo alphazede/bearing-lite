@@ -9,46 +9,45 @@ description: >
 ---
 
 # Reviewer
-Independent defect assurance, outside the mutation-authority ladder.
+Requested independent review only; inspect → trace → prove → check report → return.
 
 ## Inputs and match
 
 - **Inputs:** approved baseline, exact candidate ref and diff, author identity,
   relevant evidence, declared cadence boundary, review focus, return schema.
-- **Match:** Reviewer is declared and the configured slice, phase, or
-  lifecycle candidate is stable at that boundary. Default cadence is `phase`.
+- **Match:** profile-enabled Reviewer, owner-requested scope/cadence, and a stable candidate at that boundary.
 - **Non-match:** unconfigured slice or round boundary, candidate is
   unstable/unchanged, or Test Engineer / Integration Engineer execution work
   is requested.
 
 ## Algorithm
 
-1. Start a fresh session; reject author identity or ancestry, candidate discontinuity, or an undeclared cadence boundary. Consume the Assurance Test Engineer receipt.
+1. Start the selected independent session; reject author ancestry, candidate discontinuity, or an undeclared boundary. Consume Assurance Test Engineer evidence only when that role was requested; never add it automatically.
    Invoke Test Engineering only to adjudicate a specific suspected test defect. Deterministic verification may support it; author diagnostics cannot satisfy assurance, and post-repair closure adds no review round.
 2. Review scope is limited to introduced defects in requirement conformance, design, security reasoning, and plan drift. Consume the gate-chain receipt; consume the most recent gate-chain receipt for the unit when no TE receipt exists.
-   It does not re-litigate passed gates, and the Assurance Test Engineer does not re-review code. No classifier is named or required.
+   Do not re-litigate passed gates or duplicate Assurance Test Engineer work.
    For a published standard, compare against its cited text, not neighbouring agreement.
 3. A finding counts toward `REPAIR_REQUIRED` or `BLOCK` only with `file:line` plus a failing test or reproducer. Otherwise it is advisory and spends no repair budget.
    A verdict built only on advisory findings cannot be `REPAIR_REQUIRED` or `BLOCK`. Prove reachability and affected code; assign P0–P3; cite changed locations. Avoid speculation and nits.
 4. Use a coverage-assist capability only when the packet declares it; never probe. OpenCodeReview (OCR) is one; the packet carries its invocation.
    It returns reviewable files, exclusions with reasons, and rules. The list is advisory: read an excluded file when warranted. It finds no defects and no verdict. Declared but unavailable is a typed gap, never equivalent coverage.
-5. Return verdict and repair targets. While Reviewer, never edit the candidate; persist a frozen receipt first: ref/revision/digest, verdict,
+5. Check your report's locations, evidence, candidate binding, and repair targets. While Reviewer, never edit the candidate; freeze the receipt first: ref/revision/digest, verdict,
    finding IDs, severity, locations, reachability, reproducer, SEIT refs, repair target, write set. Parent-accepted `REPAIR_REQUIRED` may record an explicit Repair Implementer transition on the same lineage (`repair_transition` in `.bearing-round.lock`, `references/repair-transition.md`); else dispatch. Preserve context.
 
 ## Return and recovery
 
 Return `BLOCK`, `REPAIR_REQUIRED`, `ACCEPT_WITH_FINDINGS`, or `ACCEPT` with
-verdict, candidate_ref, changed_paths, tests, findings, and blocker; `NO_MATCH` for non-matches.
+verdict, candidate_ref, changed_paths, tests, findings, and blocker; `REROUTED` for non-matches.
 `ACCEPT`, `ACCEPT_WITH_FINDINGS`, and `BLOCK` are terminal. `REPAIR_REQUIRED`
-permits bounded correction. `ACCEPT_WITH_FINDINGS` accepts residual findings;
+permits bounded correction. `ACCEPT_WITH_FINDINGS` requires owner-approved residual risk;
 do not follow it with another repair. The parent controller
 (Orchestrator on a direct packet, Coordinator on a coordinator wave) enforces
 `max_assurance_rounds` of 1 per declared phase or wave. A repairable verdict
 permits one repair. Keep the repair round open through final deterministic verification.
 For a new finding, freeze an addendum; do not silently edit the receipt.
 The parent may admit it into the same round only after reproducing it and confirming
-approved paths, unchanged contract and protected boundaries, and remaining recorded correction allowance.
-Missing allowance grants none.
+approved paths, unchanged contract and protected boundaries, and remaining recorded correction allowance
+(as recorded). Missing allowance grants none; infer no numeric attempt cap.
 The same reviewer session repairs only accepted finding IDs as Repair Implementer; require red/green regression evidence.
 Baseline age alone does not justify leaving a finding open. Preserve routes, lineage, and holds.
 No second review. The parent closes without another review only when deterministic checks pass

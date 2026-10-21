@@ -32,8 +32,9 @@ and validates a semantically equivalent `profiles.json`, and removes
 
 Catalog entries assign nested role/session routes for Product Implementer
 (`implementer`), Test Implementer (`test_implementer`), Light
-Implementer, Coordinator, Reviewer, Test Engineer, Scribe, Plan Integrator,
-Systems Modeler, Integration Engineer, and Requirements Engineer. Systems
+Implementer, Coordinator, Reviewer, Test Engineer, Scribe, Systems Modeler,
+Integration Engineer, and Requirements Engineer. Every specialist role is
+optional; configuration alone does not request independent review. Systems
 Modeler has a planning session; Test Engineer has planning and assurance
 sessions; Integration Engineer has planning and execution sessions. Each
 session can be enabled or disabled. Cadence keys attach to
@@ -41,13 +42,25 @@ session can be enabled or disabled. Cadence keys attach to
 with values `slice`, `phase`, or `lifecycle`. Defaults are `phase`, `phase`,
 and `lifecycle`. `scribe.cadence` is `event` (default: after each owner
 decision, authority event, or landing), `phase`, or `lifecycle`; handoff and
-closeout check history coverage at every Scribe cadence. The Light Implementer takes only slices whose `work_class`
+closeout check history coverage at every Scribe cadence. Scribe is optional:
+when omitted or disabled, Orchestrator records history; when enabled, reuse one
+persistent Lifecycle session for all events and batches. The Light Implementer takes only slices whose `work_class`
 is `light` (criteria in `skills/light-implementer`); it has its own primary
 and fallbacks, usually a lighter and cheaper route. Surveyor, Explorer,
 Crewmate, Navigator, Park Ranger, and Validator are not profile roles;
 existing plans that still assign them use the compatibility diagnostics and
 treat the assignment as unused. Never fill agent, model, or reasoning values
 on the user's behalf.
+
+Plan Integrator (`roles.plan_integrator`) and the interim separate Planning and
+Design route (`roles.planning_and_design`) are retired. Final planning/design and
+assembly are the Planning Orchestrator's own procedure, so neither key has a
+consumer. `hooks/profiles.cjs` returns `MIGRATION_REQUIRED` with
+`retired_role:<key>` and the profile name. Only an explicit owner request runs
+migration through `onboard-bearing`: show the key, remove only that key, keep
+every other role, model, fallback, cadence, and capability section unchanged,
+validate readback, and never copy the retired route to another role or treat it
+as the Orchestrator identity. Do not edit a live catalog without that request.
 
 The Orchestrator is not a configurable role: it is whatever session is running
 planning. The Lifecycle snapshot records the observed Orchestrator identity
@@ -88,7 +101,7 @@ as follows even when the schema cannot express the check:
 - Defaults keys must resolve exactly. Unresolved defaults fail closed.
 - Invalid structure or name fails closed on both load and save.
 - Reject active Surveyor, Explorer, Crewmate, Navigator, Park Ranger, or
-  Validator role keys.
+  Validator role keys, and retired planning route keys until migrated.
 
 Refuse named selection or save on any of those failures. Do not invent a
 fallback profile and do not read packaged bytes as user data.
@@ -116,8 +129,21 @@ authority. Canonical JSON: UTF-8, sort_keys, compact separators.
 Later catalog edits do not mutate the frozen snapshot copy or its digest.
 For `tdd`, freeze both `test_implementer` and `implementer` routes and
 fallback order into that frozen snapshot copy.
+Preserve profile `holds` in the frozen snapshot and configuration digest, including
+`coordinator-decisions` and `orchestrator-delegation`. Relevant Coordinator and
+Orchestrator packets consume those frozen holds. Delegation defaults off and needs
+explicit task authority; see `owner-stops.md#coordinator-escalation-and-delegation`.
+An older snapshot missing selected holds requires explicit reconciliation before use.
 Selected capability sections (`review`, `deterministic_verification`) are
 frozen alongside routes, and relevant packets must consume that binding.
+Optional `deterministic_verification.additional_tools` entries carry `name`,
+`enabled`, `command`, `pass`, and `evidence`. Omitted/empty lists add nothing;
+disabled entries stay inactive. Their actual commands and evidence are planning
+inputs for applicable SEIT procedures, not automatic execution or installation
+authority. Preserve them in the frozen snapshot; a live edit requires the same
+explicit amendment as other capability changes. Required project gates remain
+in force. Onboarding explains the choices in
+`../../onboard-bearing/references/verification-tools.md`.
 The parent controller declares Reviewer and assurance packets from that
 frozen snapshot copy, never from the live catalog.
 OCR means OpenCodeReview via `coverage_assist`, not a new role or backend
@@ -172,8 +198,8 @@ Migration preserves meaning from `planned_planning_assignments` and
 Coordinator, Park Ranger to Reviewer, Light Implementer unchanged, Test
 Engineer planning-phase rows to `test_engineer.planning` and
 implementation-phase rows to `test_engineer.assurance`. Do not auto-assign
-Integration Engineer execution from Surveyor; onboard-bearing asks which
-route to assign. Migration must ask for the missing Test Implementer
-route; it never copies or invents `test_implementer` from Product
+Integration Engineer execution from Surveyor; if that optional session is enabled,
+onboard-bearing asks which route to assign. Migration asks for a missing Test
+Implementer route only in `tdd`; it never copies or invents `test_implementer` from Product
 Implementer, Test Engineer, Light Implementer, or a retired role.
 Validate the new profile, then remove `lineups.json`.

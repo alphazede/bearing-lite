@@ -10,8 +10,8 @@ stateDiagram-v2
     IN_PROGRESS --> EVIDENCE_READY
     IN_PROGRESS --> CORRECTION_REQUIRED
     IN_PROGRESS --> OWNER_DECISION_REQUIRED
-    CORRECTION_REQUIRED --> READY
-    CORRECTION_REQUIRED --> OWNER_DECISION_REQUIRED: out-of-contract amendment
+    CORRECTION_REQUIRED --> READY: new hypothesis and evidence within authority
+    CORRECTION_REQUIRED --> OWNER_DECISION_REQUIRED: owner-supplied allowance exhausted or authority change
     EVIDENCE_READY --> VALIDATING: Assurance Test Engineer required
     EVIDENCE_READY --> REVIEWING: Reviewer required
     EVIDENCE_READY --> ACCEPTANCE: Integration Engineer execution, owner, or parent controller when required_assurance is none
