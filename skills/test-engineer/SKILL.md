@@ -39,7 +39,7 @@ Integration Engineer execution assessment.
    typed gap, never PASS. Every red-then-green receipt binds the
    baseline failing run and the candidate passing run over the same test IDs.
 4. Check and repair the plan in this assignment, then return it directly to the
-   Planning Orchestrator with proof cases and selected capability bindings. Verify
+   Planning Orchestrator with proof cases, selected capability bindings, and any exact fixes found in other roles' artifacts as named deltas (`../bearing-lite/references/planning-assembly.md#author-known-deltas-221`). Verify
    coverage, source bindings, feasible methods, pass/fail criteria, and gate cost.
    Final Orchestrator design follows these inputs; do not require it as a prerequisite.
 5. Assurance Test Engineer runs only when requested, in a fresh session without author

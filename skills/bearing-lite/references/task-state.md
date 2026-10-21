@@ -43,6 +43,40 @@ The project's human-readable plan is the only task-state record. Diagrams explai
 - Each declared phase or wave receives at most one assurance round and one review-directed repair. Replacement candidates do not reset the count within that declared unit; the next distinct declared phase or wave carries its own 1/1 budget. The parent controller records `assurance_rounds`, routes bounded repair, and verifies that repair deterministically without dispatching assurance again.
 - `COMPLETE` is terminal for Bearing assurance. An already authorized deployment keeps operational verification and rollback readiness but does not reopen review; candidate-changing deployment work requires separate scope.
 
+## Landing a closed unit
+
+Landing moves a closed unit toward the repository's default branch. It is
+delivery, not assurance: it never opens or reopens a review.
+
+- **When:** a declared wave or phase, or a direct packet, is closed once its
+  deterministic checks pass and any owner-requested review round has closed
+  through its deterministic gate. The parent controller (Coordinator on a
+  coordinator wave, Orchestrator on a direct packet) lands it before reporting
+  the unit `READY` or `COMPLETE`. A unit is not landed while its requested
+  review is pending.
+- **Commit:** revalidate the wave receipt at `commit`, then commit the closed
+  candidate on the leased Lifecycle branch. Never commit on the default
+  branch. Run the unit's exit commands after that last commit, and keep raw
+  logs out of commits.
+- **Push and pull request:** push the Lifecycle branch, then open or update one
+  pull request to the default branch. Name the unit, candidate revision,
+  deterministic and review receipts, and the issues it addresses. Planning
+  proposes `commit`, `push`, and `open_pull_request` in the authority
+  envelope's `allowed.actions`, and the integrated approval grants them.
+  Without them, or with them in `prohibited.actions`, return
+  `OWNER_DECISION_REQUIRED` (owner-stops class F). A missing remote or a
+  refused push is `WAITING_ON`, never a landed unit.
+- **Merge:** merge only when `allowed.actions` includes `merge` for that unit
+  and the repository's required checks pass on the pull request head. A
+  passing check, a review verdict, or a profile setting never grants merge.
+  Otherwise merge stays with the owner: report the pull request, mark the unit
+  as awaiting the owner's merge, and continue dependency-ready work on the
+  same branch. Never rewrite published history to land.
+- **Record:** each push, pull request, and observed merge is a landing. The
+  configured recorder transcribes it before handoff or closeout.
+  `hooks/reconcile.cjs` observes merges through `merge` events. It never
+  performs them.
+
 ## Checkout lease
 
 The Orchestrator inventories visible nonterminal Lifecycles and holds one

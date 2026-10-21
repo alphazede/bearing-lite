@@ -18,28 +18,28 @@ After explicit task opt-in, bind the native session/current task in the existing
 - **Planning Orchestrator:** owns context, specialist dispatch, final plan/design, owner agreement, and the written handoff; does not dispatch implementation.
 - **Implementation Orchestrator:** consumes the handoff, checks authority/candidate, dispatches enabled roles, and owns delivery.
 
-1. **Intake:** use `../intake/SKILL.md` to confirm repository and task location. Reuse confirmed inputs; ask only when material ambiguity remains.
+1. **Intake:** use `../intake/SKILL.md` to confirm repository and task location. Reuse confirmed inputs; ask only on material ambiguity.
 2. **Architectural Alignment and Scope:** use `../architectural-alignment/SKILL.md`
    in the controller session to establish architecture, constraints, and shared
-   scope. Own the workspace and map; do not add a second scope stage or agent.
+   scope. Own the workspace and map; add no second scope stage or agent.
 3. **Planning:** coordinate profile-enabled specialists, then author final plan/design
    and assemble the package using `references/planning-assembly.md`. Run requested
-   planning review after assembly, before owner confirmation and handoff.
+   planning review after assembly, before owner confirmation/handoff.
 4. **Implementation:** consume the handoff; in selected TDD run the frozen Test Implementer (`roles.test_implementer`)
    before Product Implementer. Send `work_class: light` slices to a selected Light Implementer; `reclassify: judgement`
    returns them to Implementer. Honor dependencies, commands, and write sets; use
    `../coordinator/SKILL.md` only for a justified profile-enabled coordination role.
-5. **Review:** dispatch only when explicitly requested, at the chosen task, phase,
-   or lifecycle boundary. A differently named independent evaluator is a reviewer.
-   Preserve selected assistance tools when review runs; do not add quality agents.
-6. **Closeout:** check deliverables and deterministic evidence. Distinguish author
-   checks, requested review, deployment, and activation; report remaining obligations.
+5. **Review:** dispatch owner-requested review immediately when each frozen task, phase,
+   or lifecycle boundary passes deterministic checks; never re-ask or defer it. A differently named independent evaluator is a reviewer.
+   Preserve selected assistance tools; add no quality agents.
+6. **Landing and closeout:** land each closed unit (`references/task-state.md#landing-a-closed-unit`); check deliverables and evidence. Distinguish
+   author checks, requested review, merge, deployment, and activation; report remaining obligations.
 
 ## Planning handoff
 
 Write `handoff.md` using the Prompt skill (`../prompt/SKILL.md`) in the confirmed plan directory when planning is complete. Include exact plan paths and digests, scope, owner decisions and authority,
 selected models/harnesses/capabilities, candidate and worktree, assignments and write sets, commands, evidence, review status, blockers, and the next action.
-Recommend starting a new session as Implementation Orchestrator with this handoff. Do not launch it automatically; continuing in the current session is an owner choice.
+Recommend a new Implementation Orchestrator session with this handoff; never launch it automatically. Continuing here is an owner choice.
 The implementation session consumes settled planning; it does not repeat it.
 Handoff and closeout pass `journey` to `hooks/closeout.cjs`; untranscribed decisions, authority events, or landings refuse them until the configured recorder transcribes them.
 

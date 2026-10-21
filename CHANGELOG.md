@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Dispatch owner-requested review and assurance as soon as each frozen boundary passes its deterministic checks, without a second request or deferral to a later wave. With waves declared, `phase` cadence already reviews at every wave end ([#222](https://github.com/alphazede/bearing-lite/issues/222)).
+- Land each closed unit: commit on the leased Lifecycle branch, run exit commands after that last commit, push, and open or update one PR to the default branch. Merge only when the frozen authority envelope allows `merge` for that unit; otherwise merge stays with the owner ([#223](https://github.com/alphazede/bearing-lite/issues/223)).
+- Return author-known exact-text deltas on another role's artifact to their owner at the next in-wave reconciliation, with one binding refresh and no review, repair or round spent ([#221](https://github.com/alphazede/bearing-lite/issues/221)).
+
 ## [2.0.1](https://github.com/alphazede/bearing-lite/releases/tag/v2.0.1) - 2026-10-18
 
 ### Changed

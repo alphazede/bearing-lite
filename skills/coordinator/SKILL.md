@@ -37,8 +37,8 @@ Planning belongs to the Planning Orchestrator, not this implementation-wave role
 4. Inspect compact returns against acceptance and write sets. Integrate evidence
    without implementing; update implementation.json and the DoD Manifest once per
    wave, plus material owner-decision or blocker changes. Preserve unrelated work.
-5. Run deterministic checks. Dispatch independent review or assurance only when
-   profile-enabled and explicitly requested at this boundary. Honor declared
+5. Run deterministic checks. When they pass, immediately dispatch the profile-enabled review or assurance
+   the owner requested for this boundary in the frozen plan; never re-ask or defer it to a later wave. Honor declared
    max_assurance_rounds and assurance_rounds; use
    `../bearing-lite/references/assurance-policy.md`. Authorized repair closes by
    deterministic checks, without automatic rereview or budget reset. Failed repair
@@ -54,7 +54,7 @@ schedule newly ready independent work immediately. Never poll logs, processes,
 agent status, or worktrees, or use timer loops to simulate notifications.
 If notifications are unavailable, return `WAITING_ON`; resume on the actual return.
 One liveness check after disconnection may recover state; it never permits relaunch.
-Run exit commands on the final candidate; keep raw logs out of commits.
+Land the closed wave per `../bearing-lite/references/task-state.md#landing-a-closed-unit`: commit, run exit commands after that last commit, push, open or update its PR; merge only under express authority. Keep raw logs out of commits.
 Return `READY`, `REROUTED`, `WAITING_ON`, or `OWNER_DECISION_REQUIRED` with verdict, candidate_ref,
 changed_paths, tests, findings, and blocker, plus completed/remaining work and next action. Use `../bearing-lite/references/owner-stops.md` for authority or intent stops.
 Never implement, self-assure, select models, expand scope, or invent attempt limits.

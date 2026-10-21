@@ -34,7 +34,7 @@ Each assignment runs once on its frozen route and actual input dependencies.
 
 ## Execution loop
 
-1. Run only when profile-enabled and explicitly requested at the declared boundary,
+1. Run only when profile-enabled and owner-requested for the declared boundary (dispatched when it closes),
    in a fresh session independent of author identity/ancestry. Bind the exact integrated candidate,
    approved outcome, SEIT, and authorized checks.
 2. Run the planned system-level checks and assess compatibility and evidence.
