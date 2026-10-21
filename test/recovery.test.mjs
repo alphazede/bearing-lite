@@ -32,7 +32,7 @@ const ROUTER = readFileSync(
 
 /**
  * Apply a correction attempt with new hypothesis/evidence policy.
- * Waiting does not consume attempts. Max 3 attempts → OWNER_DECISION_REQUIRED.
+ * Waiting does not consume attempts. The counter is a record, not a limit.
  * @param {CorrectionTask} task
  * @param {{ hypothesis?: string, evidence?: string, kind?: 'correct'|'wait' }} action
  * @returns {CorrectionVerdict}
@@ -72,28 +72,7 @@ export function applyCorrection(task, action) {
   }
 
   const nextAttempts = task.attempts + 1;
-  if (nextAttempts > 3) {
-    return {
-      ok: false,
-      code: "fourth_correction",
-      message: "fourth correction attempt is rejected; owner decision already required",
-      task: { ...task, status: "OWNER_DECISION_REQUIRED" },
-    };
-  }
-  if (nextAttempts === 3) {
-    // Third failed correction → OWNER_DECISION_REQUIRED
-    return {
-      ok: true,
-      task: {
-        ...task,
-        attempts: nextAttempts,
-        lastHypothesis: hypothesis,
-        lastEvidence: evidence,
-        status: "OWNER_DECISION_REQUIRED",
-      },
-    };
-  }
-  // Attempts 1 and 2: return to READY with new evidence.
+  // Any correction with new evidence returns to READY; no attempt cap.
   return {
     ok: true,
     task: {
@@ -212,7 +191,7 @@ describe("CMD-RECOVERY-01 recovery (SEIT-CORRECTION-01, SEIT-DEPENDENCY-01)", ()
     }
   });
 
-  it("third failed correction → OWNER_DECISION_REQUIRED", () => {
+  it("no attempt cap: third and later corrections with new evidence return READY", () => {
     const task = {
       taskId: "T1",
       attempts: 2,
@@ -227,7 +206,13 @@ describe("CMD-RECOVERY-01 recovery (SEIT-CORRECTION-01, SEIT-DEPENDENCY-01)", ()
     assert.equal(a3.ok, true);
     if (a3.ok) {
       assert.equal(a3.task.attempts, 3);
-      assert.equal(a3.task.status, "OWNER_DECISION_REQUIRED");
+      assert.equal(a3.task.status, "READY");
+      const a4 = applyCorrection(a3.task, { hypothesis: "h4", evidence: "e4" });
+      assert.equal(a4.ok, true);
+      if (a4.ok) {
+        assert.equal(a4.task.attempts, 4);
+        assert.equal(a4.task.status, "READY");
+      }
     }
   });
 
@@ -291,24 +276,6 @@ describe("CMD-RECOVERY-01 recovery (SEIT-CORRECTION-01, SEIT-DEPENDENCY-01)", ()
     assert.equal(verdict.ok, false);
     if (!verdict.ok) {
       assert.equal(verdict.code, "identical_retry_without_new_evidence");
-    }
-  });
-
-  it("negative: fourth correction is rejected", () => {
-    const task = {
-      taskId: "T1",
-      attempts: 3,
-      lastHypothesis: "h3",
-      lastEvidence: "e3",
-      status: "OWNER_DECISION_REQUIRED",
-    };
-    const verdict = applyCorrection(task, {
-      hypothesis: "h4",
-      evidence: "e4",
-    });
-    assert.equal(verdict.ok, false);
-    if (!verdict.ok) {
-      assert.equal(verdict.code, "fourth_correction");
     }
   });
 
