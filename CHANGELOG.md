@@ -4,7 +4,7 @@
 
 ### Fixed
 
-- Removed the last hard-coded correction cap: the recovery contract-test model no longer forces `OWNER_DECISION_REQUIRED` on a third correction or rejects a fourth; a correction with new evidence returns `READY`. Skill-text caps were already removed in 2.0.0 ([PR #212](https://github.com/alphazede/bearing-lite/pull/212), refs [#211](https://github.com/alphazede/bearing-lite/issues/211)).
+- Removed the last hard-coded correction cap: the recovery contract-test model no longer forces `OWNER_DECISION_REQUIRED` on a third correction or rejects a fourth; a correction with new evidence returns `READY`. Skill-text caps were already removed in 2.0.0 ([PR #224](https://github.com/alphazede/bearing-lite/pull/224), refs [#211](https://github.com/alphazede/bearing-lite/issues/211)).
 
 ## [2.0.1](https://github.com/alphazede/bearing-lite/releases/tag/v2.0.1) - 2026-10-18
 
