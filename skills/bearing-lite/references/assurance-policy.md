@@ -217,4 +217,18 @@ An optional deterministic launch may consume the combined PASS; no extra launch
 is needed merely to repeat checks already run. All independent acceptance remains.
 `inline_repair` is invalid on a non-review slot or a group with multiple review
 slots: those groups must finish independent reviews and aggregate before repair.
+For an owner-authorized budget amendment, each selected inline review slot counts
+as both a review group and one repair reservation. Its matching authority must
+include both allowances; an unrelated standalone repair slot is unnecessary.
+
+When another opened review group on the same candidate has unfinished results or
+missing declared members, the hook emits a scheduling advisory on an otherwise
+authorized inline launch. Membership comes from the frozen declaration and any
+recorded owner amendment, not tool-input completion claims. Completed groups and
+reviews of another candidate do not trigger it. The advisory uses PreToolUse
+`additionalContext`, or Cursor's allow response with agent and user messages;
+it adds no denial or allowance and does not claim aggregation is complete.
+The parent schedules every review and OCR read-only, waits for all declared
+reviews to finish, then aggregates results before permitting candidate mutation.
+An allowed launch or absent advisory never grants permission to repair early.
 Legacy declarations without the field retain their existing dispatch behavior.

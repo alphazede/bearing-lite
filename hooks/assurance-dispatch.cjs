@@ -142,9 +142,14 @@ function consume(b, slot, slots) {
       try { if (store.digest(fs.readFileSync(store.local(b.root, a.path))) !== a.sha256) return gap('qualification_authority_changed'); }
       catch { return gap('qualification_authority_unavailable'); }
     }
+    const reviews = record.dispatch_log.filter(e => e.kind === 'review' && e.candidate === slot.candidate);
+    const pendingReviews = slot.inline_repair && reviews.some(first =>
+      reviewMembers(record, slots, first).some(member => !reviews.some(e => e.slot_id === member.id && CLOSED.has(e.result))));
     record.dispatch_declaration_sha256 = b.declaration_sha256;
     record.dispatch_log.push({ slot_id: slot.id, kind: slot.kind, group: slot.group, unit_id: slot.unit_id,
       candidate: slot.candidate, scope: slot.scope, launch_sha256: store.digest(signature(slot)), reserved_at: new Date().toISOString(), result: 'RESERVED' });
+    if (pendingReviews) return { ...result('PASS', 'dispatch_reserved'),
+      advisory: 'Bearing Lite scheduling advisory: other reviews of this candidate are incomplete. Keep review and OCR read-only; wait for all declared review members and aggregate their results before repair.' };
     return result('PASS', 'dispatch_reserved');
   });
 }
@@ -160,7 +165,7 @@ function amend(cwd, a) {
     if (!store.authority(b.root, a.authority_path, 'assurance_budget_amendment', subject, a.scope, a.id, { additional_rounds: a.additional_rounds, additional_repairs: a.additional_repairs, slot_ids: a.slot_ids })) return result('OWNER_DECISION_REQUIRED', 'amendment_authority_missing');
     const selected = a.slot_ids.map(id => slots.find(s => s.id === id));
     if (selected.some(s => !s || s.unit_id !== a.unit_id || s.scope !== a.scope || s.candidate !== a.candidate || !['review', 'repair'].includes(s.kind))) return result('OWNER_DECISION_REQUIRED', 'amendment_scope_mismatch');
-    if (new Set(selected.filter(s => s.kind === 'review').map(s => s.group)).size !== a.additional_rounds || selected.filter(s => s.kind === 'repair').length !== a.additional_repairs) return result('OWNER_DECISION_REQUIRED', 'amendment_allowance_mismatch');
+    if (new Set(selected.filter(s => s.kind === 'review').map(s => s.group)).size !== a.additional_rounds || selected.filter(s => s.kind === 'repair' || s.inline_repair).length !== a.additional_repairs) return result('OWNER_DECISION_REQUIRED', 'amendment_allowance_mismatch');
     return store.update(b, record => {
       const invalid = validateRecord(b, record, slots); if (invalid) return invalid;
       if (record.amendments.some(old => old.id === a.id || old.slot_ids.some(id => a.slot_ids.includes(id))) || record.dispatch_log.some(e => a.slot_ids.includes(e.slot_id))) return result('HALT', 'amendment_already_used');
@@ -195,6 +200,10 @@ function handle(input, host = 'claude-code') {
 }
 function toWire(r, host) {
   if (!HOST_SUPPORT[host]?.executable) return {};
+  if (r.outcome === 'PASS' && r.advisory) {
+    if (host === 'cursor') return { permission: 'allow', user_message: r.advisory, agent_message: r.advisory };
+    return { hookSpecificOutput: { hookEventName: 'PreToolUse', additionalContext: r.advisory } };
+  }
   if (['PASS', 'INACTIVE'].includes(r.outcome) || r.reason === 'host_enforcement_unavailable') return host === 'cursor' ? { permission: 'allow' } : {};
   const reason = `Bearing Lite assurance dispatch: ${r.outcome}: ${r.reason}`;
   if (host === 'cursor') return { permission: 'deny', user_message: reason, agent_message: reason };
