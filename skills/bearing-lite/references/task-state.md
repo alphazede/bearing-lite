@@ -40,7 +40,7 @@ The project's human-readable plan is the only task-state record. Diagrams explai
 - Workers and assurance roles return handoffs; they do not race plan edits.
 - Candidate authors never provide their own Assurance Test Engineer, Reviewer, or Integration Engineer execution verdict. Implementer must not self-certify.
 - Waiting on a prerequisite consumes no correction attempt. Record corrections as evidence, not a fixed attempt cap. Preserve any owner-supplied allowance; identical retries without new evidence are invalid.
-- Each declared phase or wave receives at most one assurance round and one review-directed repair. Replacement candidates do not reset the count within that declared unit; the next distinct declared phase or wave carries its own 1/1 budget. The parent controller records `assurance_rounds`, routes bounded repair, and verifies that repair deterministically without dispatching assurance again.
+- Each declared phase or wave receives at most one assurance round and one review-directed repair. Replacement candidates do not reset the count within that declared unit; the next distinct declared phase or wave carries its own 1/1 budget. The parent controller records `assurance_rounds`, preauthorizes bounded same-session repair in the review packet, and records deterministic closure from the repaired candidate’s evidence without dispatching assurance again.
 - `COMPLETE` is terminal for Bearing assurance. An already authorized deployment keeps operational verification and rollback readiness but does not reopen review; candidate-changing deployment work requires separate scope.
 
 ## Checkout lease

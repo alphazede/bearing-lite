@@ -253,7 +253,10 @@ function repairAuthority(body, root, paths) {
   if (!round) return no("repair_transition_missing: no round record");
   const t = round.repair_transition;
   if (!isPlainObject(t)) return no("repair_transition_missing: round record has no repair_transition");
-  if (!PARENT_ROLES.has(normalizeRole(t.accepted_by)) || t.parent_accepted !== "REPAIR_REQUIRED") {
+  const advance = t.authorization === "advance";
+  if (!PARENT_ROLES.has(normalizeRole(t.accepted_by)) ||
+      (advance ? t.parent_accepted !== "IN_SCOPE_REPAIR" || t.repairs_max !== 1 ||
+        !Array.isArray(t.write_set) || !t.write_set.length : t.parent_accepted !== "REPAIR_REQUIRED")) {
     return no("repair_transition_not_accepted: parent acceptance of REPAIR_REQUIRED is not recorded");
   }
   if (t.repair_round !== "open") return no("repair_round_closed");
@@ -277,7 +280,8 @@ function repairAuthority(body, root, paths) {
     bytes = null;
   }
   if (!bytes) return no("frozen_receipt_unresolved");
-  if (crypto.createHash("sha256").update(bytes).digest("hex") !== t.receipt_sha256) {
+  const receiptDigest = crypto.createHash("sha256").update(bytes).digest("hex");
+  if ((!advance || t.receipt_sha256 !== undefined) && receiptDigest !== t.receipt_sha256) {
     return no("frozen_receipt_digest_mismatch");
   }
   let receipt;
@@ -299,6 +303,13 @@ function repairAuthority(body, root, paths) {
     return no("frozen_receipt_invalid: receipt does not match the recorded transition");
   }
   const allowed = new Set(receipt.write_set.map((rel) => (presentString(rel) ? insideRoot(root, rel) : null)));
+  if (advance) {
+    const authorized = new Set(t.write_set.map(rel => presentString(rel) ? insideRoot(root, rel) : null));
+    if (authorized.has(null) || allowed.has(null) || !allowed.size ||
+        [...allowed].some(rel => !authorized.has(rel) || isRoundRecord(rel))) {
+      return no("outside_repair_write_set: receipt exceeds advance authority");
+    }
+  }
   for (const rel of paths) {
     if (!planningArtifact(rel, root)) continue;
     const target = insideRoot(root, rel);
@@ -312,6 +323,23 @@ function repairAuthority(body, root, paths) {
       }
       if (path.dirname(file) === file) break;
     }
+  }
+  if (advance && t.receipt_sha256 === undefined) {
+    // Pin once under the existing atomic-record lock before any repair write.
+    const store = require("./assurance-budget-store.cjs");
+    let recordPath;
+    try { recordPath = store.local(root, ROUND_RECORD); }
+    catch { return no("repair_record_unavailable"); }
+    const pinned = store.update({ task_record_path: recordPath }, current => {
+      const transition = current.repair_transition;
+      const expected = { ...t };
+      if (transition?.receipt_sha256 !== undefined) expected.receipt_sha256 = receiptDigest;
+      if (current.candidate !== round.candidate || current.generation !== round.generation ||
+          JSON.stringify(transition) !== JSON.stringify(expected)) return store.gap("repair_authority_changed");
+      transition.receipt_sha256 = receiptDigest;
+      return store.result("PASS", "repair_receipt_pinned");
+    });
+    if (pinned.outcome !== "PASS") return no(pinned.reason);
   }
   return { ok: true };
 }

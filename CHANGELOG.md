@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Let Reviewer start bounded OCR bug/security coverage while assessing architecture and verification evidence, then repair validated in-scope findings under advance authority in the same session. Preserve candidate, write-set and review/repair limits.
+
 ## [2.0.2](https://github.com/alphazede/bearing-lite/releases/tag/v2.0.2) - 2026-10-21
 
 ### Fixed

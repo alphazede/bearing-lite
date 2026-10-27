@@ -22,8 +22,7 @@ One profile-enabled assignment and invocation. Extra runs or route changes need 
 - **Non-match:** multi-packet coordination, design gaps, missing authority,
   assurance, or owner-only action.
 - **Split:** `tdd` orders Test Implementer before Product Implementer from the frozen snapshot. Test Implementer may change only tests and approved fixtures. Product Implementer write set excludes tests and must not weaken independently authored tests. Same-feature parallel is prohibited. `single_implementer` writes product plus tests. Neither self-certifies.
-- **Repair:** consume the frozen review receipt after parent-accepted `REPAIR_REQUIRED`:
-  candidate ref/revision/digest, finding IDs, write set, same worktree/branch/generation. Consume parent-approved frozen addenda only under Reviewer’s same-open-round admission rules; they grant no new allowance. Planning-artifact repair writes need the parent's `repair_transition` in `.bearing-round.lock` (`../reviewer/references/repair-transition.md`).
+- **Repair:** consume the frozen review receipt and exact write set under advance authority, or legacy parent-accepted `REPAIR_REQUIRED`: candidate ref/revision/digest, finding IDs, same worktree/branch/generation. Same-session reviewer repair needs no controller round-trip when preauthorized; never expand scope or reset allowance. Planning-artifact writes use `repair_transition` in `.bearing-round.lock` (`../reviewer/references/repair-transition.md`).
 
 ## Algorithm
 

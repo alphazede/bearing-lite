@@ -322,3 +322,24 @@ test('209 repair F04 both pinned hosted native commands include discovery and la
     assert.match(workflow, /test "\$\("\$BEARING_CODEX_BIN" --version\)" = "codex-cli 0\.162\.1"/);
   }
 });
+
+test('advance-authorized review reserves its one inline repair before launch', t => {
+  const f = fixture(t);
+  f.slots[0].inline_repair = true;
+  json(f.declaration_path, f.declaration); f.bind();
+  assert.equal(denied(launch(f, 'review-a')), false);
+  assert.equal(f.read().units[0].assurance_repairs, 1);
+  const record = f.read(); record.dispatch_log[0].result = 'PASS';
+  json(f.task_record_path, record);
+  assert.equal(denied(launch(f, 'repair')), true);
+  assert.equal(denied(launch(f, 'close')), false);
+  record.units[0].assurance_repairs = 0;
+  json(f.task_record_path, record);
+  assert.equal(denied(launch(f, 'close')), true);
+});
+test('inline repair cannot start before other independent reviewers finish', t => {
+  const f = fixture(t, { parallel: true });
+  f.slots[0].inline_repair = true;
+  json(f.declaration_path, f.declaration); f.bind();
+  assert.equal(denied(launch(f, 'review-a')), true);
+});

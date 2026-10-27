@@ -159,11 +159,22 @@ Field rules:
 
 `required_assurance` lists only roles that must accept the same candidate (for example `Assurance Test Engineer`, and `Reviewer` or `Integration Engineer execution` when their triggers apply).
 
-The parent controller resolves each declared capability once and states
-`enabled`, `required`, and `available` in the packet. A worker never probes for
-a capability: discovery spends a turn on plumbing before any work starts, and a
-capability the packet does not declare is not used. Declared but unavailable is
-a typed capability gap, never silently equivalent coverage.
+For requested review, include advance same-session repair authority in the original
+packet: exact candidate/session, allocated repair paths and regression tests, one
+remaining repair allowance, required deterministic commands and protected-action
+holds. Follow `skills/reviewer/references/repair-transition.md`; do not grant new
+scope through a receipt. Reviewer starts bug/security OCR and performs complementary
+architecture, requirements, implementation/V&V and lint/quality work concurrently,
+then validates all findings, freezes one receipt, repairs and verifies in the same
+assignment. No parent reproduction/acceptance round-trip is needed. Aggregate any
+split review before repair; do not mutate a candidate still under inspection.
+
+The parent declares selected capabilities and frozen enabled/required/mode settings.
+For Reviewer coverage assist, the Reviewer resolves backend availability once,
+previews the exact candidate and initiates OCR; record the resolved `available`
+state before capability execution. Other worker capabilities retain their declared
+availability contract. An unselected capability is not activated by discovery;
+unavailable required coverage stays a typed gap, never equivalent evidence.
 
 Test Implementer write set is tests and approved fixtures only. Product
 write set excludes tests and must not weaken independently authored tests.
@@ -189,7 +200,8 @@ wave carries its own budget. The parent
 controller writes the count before dispatch: Orchestrator on a direct packet,
 Coordinator on a coordinator wave. If the review permits correction, use at
 most the one authorized review-directed repair, run deterministic parent-controller
-verification, and close the gate without another review. A failed repair or
+verification (consume applicable repaired-candidate results; no redundant rerun),
+and close the gate without another review. A failed repair or
 scope change returns `OWNER_DECISION_REQUIRED`.
 
 ## Waiting or correcting only

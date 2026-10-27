@@ -12,10 +12,9 @@
  * the Reviewer's method, not a second opinion, so there is no separate findings
  * set, nothing to anchor on, and nothing to reconcile.
  *
- * Availability is declared, never discovered. The parent controller resolves it
- * once and states it in the packet; a Reviewer that probes spends a turn on
- * plumbing before reviewing anything, which is the cost this capability exists
- * to avoid.
+ * Availability is declared before evaluation. The Reviewer resolves it once
+ * for the frozen capability and candidate; this pure adapter never probes.
+ * It models delegation selection/rules, not own-engine execution.
  *
  * Pure evaluator: no HOOK_CLASS, no host event, no download, no process
  * execution. The caller runs the planned command. The capability is a tool. It
@@ -42,8 +41,7 @@ function candidateBound(candidate) {
 
 /**
  * A declaration is a complete statement of all three states. A missing field
- * means the parent controller did not resolve it, which is not the Reviewer's
- * job to finish.
+ * means the caller has not supplied its resolved capability state.
  */
 function declarationOf(spec) {
   const declared = spec.declared;

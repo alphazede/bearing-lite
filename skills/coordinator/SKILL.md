@@ -11,13 +11,11 @@ description: >
 
 Deliver the assigned SDLC implementation wave efficiently. Prioritize unblocking
 work, parallel ready assignments, and compact evidence without adding agents.
-
 Use the approved wave, dependencies, exact write sets, acceptance, commands,
 authority, frozen role/capability selections, visible receipt, and candidate.
 `roles.coordinator.enabled` makes the role available, not mandatory. Direct
 packets stay with the Orchestrator; never force a Coordinator or nest another.
 Planning belongs to the Planning Orchestrator, not this implementation-wave role.
-
 ## Algorithm
 
 1. Continue the same assignment only while identity, authority, route, and
@@ -40,7 +38,8 @@ Planning belongs to the Planning Orchestrator, not this implementation-wave role
 5. Run deterministic checks. Dispatch independent review or assurance only when
    profile-enabled and explicitly requested at this boundary. Honor declared
    max_assurance_rounds and assurance_rounds; use
-   `../bearing-lite/references/assurance-policy.md`. Authorized repair closes by
+   `../bearing-lite/references/assurance-policy.md`. Preauthorize bounded same-session repair
+   in the review packet; consume consolidated evidence without reproducing findings or rerunning checks. Authorized repair closes by
    deterministic checks, without automatic rereview or budget reset. Failed repair
    or scope drift returns to the Orchestrator; COMPLETE does not reopen review.
 
