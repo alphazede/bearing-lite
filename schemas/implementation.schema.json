@@ -442,6 +442,10 @@
                       "direct"
                     ]
                   },
+                  "inline_repair": {
+                    "type": "boolean",
+                    "description": "Reserve one in-session repair with a single review slot; advance write authority remains in the parent round record."
+                  },
                   "tool_input": {
                     "type": "object"
                   }

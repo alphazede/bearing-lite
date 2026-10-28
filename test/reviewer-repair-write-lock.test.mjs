@@ -9,7 +9,7 @@ import { boundHook, withTask } from "./task-opt-in-fixture.mjs";
 import { after, describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import os from "node:os";
@@ -306,5 +306,48 @@ describe("#206 unchanged guards", () => {
     const implementer = readFileSync(path.join(ROOT, "skills/implementer/SKILL.md"), "utf8");
     assert.match(implementer, /\.bearing-round\.lock/);
     assert.match(implementer, /repair_transition/);
+  });
+});
+
+// Advance authority is parent-owned; the reviewer supplies proof, never scope.
+describe("advance-authorized same-session repair", () => {
+  const advance = (patch = {}) => checkout({ transition: {
+    authorization: "advance", parent_accepted: "IN_SCOPE_REPAIR", repairs_max: 1,
+    write_set: LISTED, receipt_sha256: undefined, ...patch,
+  } });
+  it("pins a validated receipt on first write without another controller action", () => {
+    const root = advance();
+    assert.equal(verdict(claudeEdit(root, LISTED[0])).verdict, "ALLOW");
+    const record = JSON.parse(readFileSync(path.join(root, ".bearing-round.lock")));
+    assert.equal(record.repair_transition.receipt_sha256,
+      createHash("sha256").update(readFileSync(path.join(root, ".bearing/review/receipt.json"))).digest("hex"));
+    assert.equal(verdict(codexPatch(root, LISTED[1]), "reviewer", "codex").verdict, "ALLOW");
+    const receipt = path.join(root, ".bearing/review/receipt.json");
+    writeFileSync(receipt, readFileSync(receipt, "utf8") + " ");
+    denied(verdict(claudeEdit(root, LISTED[0])), /digest_mismatch/);
+  });
+  it("concurrent first writes pin one unchanged receipt through the real CLI", async () => {
+    const root = advance();
+    const request = file => new Promise((resolve, reject) => {
+      const child = spawn(process.execPath, [HOOK, "--host=claude-code"], {
+        cwd: root, env: { ...process.env, BEARING_ROLE: "reviewer" },
+        stdio: ["pipe", "pipe", "pipe"],
+      });
+      let stderr = "";
+      child.stderr.on("data", data => stderr += data);
+      child.on("error", reject);
+      child.on("close", code => code === 0 ? resolve(JSON.parse(stderr).hookSpecificOutput) : reject(Error(stderr)));
+      child.stdin.end(JSON.stringify(claudeEdit(root, file)));
+    });
+    const results = await Promise.all([request(LISTED[0]), request(LISTED[1])]);
+    assert.ok(results.every(result => result.verdict === "ALLOW"), JSON.stringify(results));
+    assert.equal(existsSync(path.join(root, ".bearing-round.lock.lock")), false);
+  });
+  it("cannot widen the parent's write set or repair allowance", () => {
+    denied(verdict(claudeEdit(advance({ write_set: [LISTED[0]] }), LISTED[0])), /outside_repair_write_set/);
+    denied(verdict(claudeEdit(advance({ repairs_max: 2 }), LISTED[0])), /not_accepted/);
+    denied(verdict(claudeEdit(advance({ accepted_by: "reviewer" }), LISTED[0])), /not_accepted/);
+    denied(verdict(claudeEdit(advance(), LISTED[0], { session_id: "other" })), /context_mismatch/);
+    denied(verdict(claudeEdit(advance({ repair_round: "closed" }), LISTED[0])), /round_closed/);
   });
 });

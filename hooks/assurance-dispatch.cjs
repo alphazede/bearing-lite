@@ -40,6 +40,8 @@ function slotsFor(b) {
     const group = slots.filter(other => other.group === s.group);
     if (group.some(other => other.kind !== s.kind || other.unit_id !== s.unit_id || other.candidate !== s.candidate || other.scope !== s.scope)) throw Error('dispatch_group_invalid');
     if (s.kind !== 'review' && group.length !== 1) throw Error('dispatch_group_invalid');
+    if (s.inline_repair !== undefined && typeof s.inline_repair !== 'boolean') throw Error('dispatch_slots_invalid');
+    if (s.inline_repair && (s.kind !== 'review' || group.length !== 1)) throw Error('dispatch_group_invalid');
   }
   return slots;
 }
@@ -70,7 +72,7 @@ function validateRecord(b, record, slots) {
     for (const [kind, field] of [['review', 'assurance_rounds'], ['repair', 'assurance_repairs']]) {
       const baseline = record.dispatch_baseline?.find(base => base.unit_id === (u.unit_id || u.assurance_unit));
       if (record.dispatch_baseline && (!baseline || !count(baseline[field]))) return gap('dispatch_baseline_invalid');
-      if ((baseline?.[field] || 0) + new Set(logs.filter(e => e.kind === kind).map(e => e.group)).size > u[field]) return gap('assurance_counter_reset');
+      if ((baseline?.[field] || 0) + new Set(logs.filter(e => e.kind === kind || (kind === 'repair' && slots.find(s => s.id === e.slot_id)?.inline_repair)).map(e => e.group)).size > u[field]) return gap('assurance_counter_reset');
     }
   }
   for (const a of record.amendments) {
@@ -115,6 +117,10 @@ function consume(b, slot, slots) {
         if (evaluated.outcome !== 'PASS') return evaluated;
         if (u.assurance_rounds >= 1 && !amendment) return result('HALT', 'assurance_round_limit');
         if (u.assurance_rounds >= bounds.reviewer_rounds) return result('HALT', 'assurance_round_limit');
+        if (slot.inline_repair) {
+          if (u.assurance_repairs >= bounds.repairs_max) return result('HALT', 'assurance_repair_limit');
+          u.assurance_repairs++;
+        }
         u.assurance_rounds++;
       }
     } else if (slot.kind === 'repair') {
@@ -127,7 +133,8 @@ function consume(b, slot, slots) {
           approved.some(s => !reviews.some(e => e.slot_id === s.id))) return gap('aggregate_review_incomplete');
       u.assurance_repairs++;
     } else if (slot.kind === 'deterministic') {
-      if (!u.assurance_repairs || !logs.some(e => e.kind === 'repair' && e.result === 'PASS') || logs.some(e => e.kind === 'repair' && e.result !== 'PASS')) return gap('repair_incomplete');
+      const repairs = logs.filter(e => e.kind === 'repair' || slots.find(s => s.id === e.slot_id)?.inline_repair);
+      if (!u.assurance_repairs || !repairs.length || repairs.some(e => e.result !== 'PASS')) return gap('repair_incomplete');
     } else {
       const a = b.declaration.journey_settings.assurance_dispatch.authorities?.find(a => a.id === slot.authority_id);
       const subject = { journey: b.journey, unit_id: slot.unit_id, candidate: slot.candidate };
