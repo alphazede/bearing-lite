@@ -265,6 +265,8 @@ register hooks. That path remains first-class. See
    work runs in parallel. The Planning Orchestrator then authors the final
    technical plan and `design.md` and assembles `implementation.json` and the
    Definition of Done Manifest; specialists keep requirements and `seit.json`.
+   Design fixes owners, structures, and bounds per slice lens; programs add
+   milestones, dependencies, estimates, notices, and replanning.
 3. **Confirm once:** after any requested planning review, approve or change the
    proposed route, user-owned primary/fallback profile, role states, reasoning,
    cadence, and plan; the Orchestrator then writes `handoff.md`.

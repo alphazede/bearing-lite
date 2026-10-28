@@ -36,7 +36,8 @@ Unresolved material intent or unclear register authority returns an owner questi
    checklist and `references/gate-report.md`, then run the candidate-bound
    `references/precheck.md` at `--stage requirements` and applicable workspace lint.
    Repair your own requirements in this assignment and recheck affected rows;
-   its `pending_bindings` name later owners and block final assembly until bound.
+   run the author loop in `references/quality-gate.md` for concrete findings.
+   Its `pending_bindings` name later owners and block final assembly until bound.
    Missing tools or stale receipts are typed gaps, never PASS. The method's
    checklist does not authorize another agent, invocation, or fixed retry limit.
 4. Preserve quantity definitions and conditional meanings from Architectural
@@ -50,7 +51,7 @@ Unresolved material intent or unclear register authority returns an owner questi
 
 Return `READY`, `NEEDS_MORE_EVIDENCE`, or `OWNER_DECISION_REQUIRED` with
 candidate identity, paths, source/decision traceability, checks, and next action.
-Self-checks are author evidence, not independent review or owner acceptance.
+Self-checks are author evidence, not independent review or owner acceptance. Author corrections do not consume review or repair budget.
 Return `READY` only when required self-quality checks pass and no fixable
 requirement defect remains; unresolved owner decisions and missing proof stay typed.
 Use `references/gate-report.md` for the compact author return. A new invocation

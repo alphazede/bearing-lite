@@ -48,6 +48,10 @@ These are not additional dispatched specialist roles:
   obtain choices, validate the proposed change, save authorized fields, and read back.
 - [Prompt composition](../SKILL.md): choose the already selected session's row and
   return its bounded packet; never dispatch itself or another agent.
+- [Storage lifecycle and landing](../../bearing-lite/references/storage-lifecycle.md):
+  land coherent outcomes and maintain worktree, output, and evidence storage.
+- [Wave operations](../../coordinator/references/wave-operations.md): keep the
+  wave task graph, name method skills in packets, and hand storage to the Orchestrator.
 
 ## Conditions that remain with the caller
 

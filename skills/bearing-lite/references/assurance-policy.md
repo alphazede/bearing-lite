@@ -91,6 +91,30 @@ under the same `unit_kind` + `unit_id` key.
 - The next distinct declared phase or wave carries its own budget. Declared
   slice and lifecycle units likewise retain their spent counts.
 
+## Dispatch timing (#222)
+
+The owner requests independent review and assurance once, at the integrated
+plan approval, by freezing each session's scope and cadence. That frozen
+request is the dispatch authority for every declared boundary;
+`automatic_phase_or_wave_end_review: "required"` means the parent controller
+does not ask again.
+
+- As soon as a declared unit's integrated candidate passes its deterministic
+  checks, the parent controller (Coordinator on a coordinator wave,
+  Orchestrator on a direct packet) dispatches every requested session for that
+  boundary. It never waits for a later wave, batches several units into one
+  review, or defers the review to lifecycle end.
+- When waves are declared, `phase` cadence resolves to each wave (see Unit
+  identity). The default therefore reviews at every wave end, and no separate
+  `wave` cadence value is needed.
+- A session the owner did not request stays inactive. Profile configuration
+  alone requests nothing.
+- When dispatch is unavailable at the boundary, record `WAITING_ON` for that
+  unit and dispatch on recovery. The waiting review never counts as passed,
+  and ready work continues meanwhile.
+- Landing follows closure (`task-state.md#landing-a-closed-unit`). A unit with
+  requested review is not landed before its round closes.
+
 ## Planning review stays separate
 
 Planning review is a separate pre-dispatch gate with its own 1/1 allowance in

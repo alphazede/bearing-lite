@@ -40,9 +40,11 @@ One profile-enabled assignment and invocation. Extra runs or route changes need 
 2. Test Implementer: author real-dependency tests, self-check their validity, and
    prove the expected baseline failure. Repair test defects in this assignment.
    For a verified contract defect, establish the smallest failing regression first.
+   Follow the red/repair/green ordering in `references/tdd.md`.
 3. Make the smallest change that satisfies the packet inside the write set.
    For a published standard, verify its cited document and clause before changing
-   code; neighbouring behavior is not the authority.
+   code; neighbouring behavior is not the authority. When the packet carries a
+   design lens, follow its rows per `../planning-and-design/references/oopdsa-design.md`.
 4. Product/combined Implementer: run assigned checks, inspect results, repair your
    own defects in this assignment, recheck, and return. At-end review never removes
    deterministic testing or grants independent-review identity; diagnostic verification receipts never satisfy an assurance gate. Report results against the mutation, changed-line coverage, and red-then-green claim types with the target repository's own tool; a declared gate with a missing tool or a `not_run` outcome is a typed gap, never PASS. Every red-then-green receipt binds the baseline failing run and the candidate passing run over the same test ids; author gate-chain receipts are diagnostic and cannot satisfy an assurance gate.

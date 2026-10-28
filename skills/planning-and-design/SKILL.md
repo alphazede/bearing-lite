@@ -26,11 +26,11 @@ choose for the owner.
    requirements register exists; if evidence cannot decide, ask the owner. Never
    infer one; keep register references versus Lifecycle-local requirements distinct.
 2. Author the technical plan and `design.md` from the completed inputs. Preserve
-   registered IDs and definitions, published-standard clauses, trust boundaries,
-   and recovery. Copy the confirmed quantity-definitions table into the glossary
-   verbatim (`references/artifact-grammar.md`). Allocate requirements to components
-   from the placement receipt per `references/allocation-inputs.md`. Do not draft
-   a duplicate requirements register or SEIT.
+   registered IDs and definitions, published-standard clauses, trust boundaries, and recovery.
+   Copy the confirmed quantity-definitions table into the glossary verbatim (`references/artifact-grammar.md`).
+   Allocate requirements to components from the placement receipt per `references/allocation-inputs.md`.
+   Author the OOPDSA Implementation Design section per `references/oopdsa-design.md`; plan programs per `references/program-planning.md`.
+   Do not draft a duplicate requirements register or SEIT.
 3. Build coherent bounded slices and dependency-based waves with exact write sets,
    acceptance, commands, shared resources, and serialization reasons. Tests meet
    `../test-engineer/references/shared-machine-tests.md`; engine-backed cases carry
