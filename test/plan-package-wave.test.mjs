@@ -101,7 +101,7 @@ describe("plan-package wave view (#190)", () => {
     assert.match(skill, /Launch with the packet's frozen-route form unchanged/);
     assert.match(skill, /Subscribe to native response\s+notifications; wait and wake on each agent return/);
     assert.match(skill, /Never poll logs, processes,\s+agent status, or worktrees/);
-    assert.match(skill, /Run exit commands on the final candidate/);
-    assert.match(skill, /keep raw logs out of commits/);
+    assert.match(skill, /run exit commands after that last commit/);
+    assert.match(skill, /keep raw logs out of commits/i);
   });
 });

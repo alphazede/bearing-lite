@@ -2,6 +2,10 @@
 
 Use this contract only for explicitly authorized named corrections following a
 requested planning review (`../../bearing-lite/references/planning-assembly.md`).
+Author-known exact-text deltas on another role's artifact do not wait for that
+review. They return to their owner at the next in-wave reconciliation under
+`planning-assembly.md#author-known-deltas-221` and use step 3's mechanical
+check without spending this round.
 Ordinary Requirements Engineer self-quality checks and author repairs happen
 inside its initial assignment; they are not a separate review or this repair round.
 The parent records authority and receipts. Each author repairs its owned content;

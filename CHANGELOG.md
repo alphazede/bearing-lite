@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Consolidated portable workflow behaviors into the public skills: independently justified test oracles with circular-expectation rejection and coverage reuse (`test-engineer`, `implementer`), a reusable real-app verification procedure, an optional formal-analysis path, a Requirements Engineer author self-correction loop, method-skill routing with durable task graphs and storage lifecycle (`coordinator`, `bearing-lite`), an OOPDSA Implementation Design lens for plans and slices, and program planning with milestone ladder, dependency domains, bottom-up estimates, notices, and tiered replanning.
+
 ### Changed
 
 - Let Reviewer start bounded OCR bug/security coverage while assessing architecture and verification evidence, then repair validated in-scope findings under advance authority in the same session. Preserve candidate, write-set and review/repair limits.
