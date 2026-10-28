@@ -16,6 +16,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const REVIEWER = readFileSync(path.join(ROOT, "skills/reviewer/SKILL.md"), "utf8");
+const REPAIR_REFERENCE = readFileSync(path.join(ROOT, "skills/reviewer/references/repair-transition.md"), "utf8");
 const IMPLEMENTER = readFileSync(path.join(ROOT, "skills/implementer/SKILL.md"), "utf8");
 const REVIEW_POLICY = readFileSync(
   path.join(ROOT, "skills/bearing-lite/references/review-policy.md"),
@@ -376,24 +377,24 @@ describe("#116 Reviewer to Repair Implementer transition", () => {
     const code = (ev) => evaluateRepairTransition(ev).code;
 
     it("skill text: open round, frozen addendum, parent admission and allowance", () => {
-      assert.match(REVIEWER, /repair round open through final\s+deterministic verification/i);
-      assert.match(REVIEWER, /freeze an addendum/i);
-      assert.match(REVIEWER, /do not silently edit the receipt/i);
-      assert.match(REVIEWER, /same round only after reproducing/i);
-      assert.match(REVIEWER, /approved paths/i);
-      assert.match(REVIEWER, /unchanged contract and protected boundaries/i);
-      assert.match(REVIEWER, /remaining\s+recorded correction allowance/i);
+      assert.match(REPAIR_REFERENCE, /repair round open through final\s+deterministic verification/i);
+      assert.match(REPAIR_REFERENCE, /freeze an addendum/i);
+      assert.match(REPAIR_REFERENCE, /do not silently edit the receipt/i);
+      assert.match(REPAIR_REFERENCE, /same round only after reproducing/i);
+      assert.match(REPAIR_REFERENCE, /approved paths/i);
+      assert.match(REPAIR_REFERENCE, /unchanged contract and protected boundaries/i);
+      assert.match(REPAIR_REFERENCE, /remaining\s+recorded correction allowance/i);
       // Owner-approved: the allowance is the recorded one; no numeric cap is inferred.
-      assert.match(REVIEWER, /Missing allowance grants none; infer no numeric attempt cap/);
-      assert.doesNotMatch(REVIEWER, /at most three/i);
-      assert.match(REVIEWER, /age alone does not justify/i);
-      assert.match(REVIEWER, /same reviewer session repairs only accepted finding IDs/i);
-      assert.match(REVIEWER, /red\/green regression evidence/i);
-      assert.match(REVIEWER, /No second review/);
-      assert.match(REVIEWER, /no accepted\s+fixable finding remains/i);
-      assert.match(REVIEWER, /exhausted allowance/i);
-      assert.match(REVIEWER, /reopen a closed round/i);
-      assert.match(REVIEWER, /Never reset\s+budgets/i);
+      assert.match(REPAIR_REFERENCE, /Missing allowance grants none; infer no numeric attempt cap/);
+      assert.doesNotMatch(REPAIR_REFERENCE, /at most three/i);
+      assert.match(REPAIR_REFERENCE, /age alone does not justify/i);
+      assert.match(REPAIR_REFERENCE, /same reviewer session repairs only accepted finding IDs/i);
+      assert.match(REPAIR_REFERENCE, /red\/green regression evidence/i);
+      assert.match(REPAIR_REFERENCE, /No second review/);
+      assert.match(REPAIR_REFERENCE, /no accepted\s+fixable finding remains/i);
+      assert.match(REPAIR_REFERENCE, /exhausted allowance/i);
+      assert.match(REPAIR_REFERENCE, /reopen a closed round/i);
+      assert.match(REPAIR_REFERENCE, /Never reset\s+budgets/i);
     });
 
     it("valid parent-admitted addendum continues the open round", () => {

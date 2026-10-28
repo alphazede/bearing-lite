@@ -163,7 +163,8 @@ requested, record `review_requested: false` with zero reviews and no receipt;
 never dispatch, forge, or infer a reviewer from the package. Implementation
 review and assurance follow `assurance-policy.md`: `max_assurance_rounds` is 1
 per declared phase or wave-end, one review may authorize one repair verified
-deterministically without another review; a failed repair or scope change returns
+deterministically without another review; the original review packet may preauthorize
+same-session repair within its exact write set without a parent acceptance round-trip; a failed repair or scope change returns
 `OWNER_DECISION_REQUIRED` naming the candidate and count. Preserve spent budgets and candidate
 identity; author self-checks never become independent review. Selected or
 required `review.coverage_assist` and `deterministic_verification.reverify`

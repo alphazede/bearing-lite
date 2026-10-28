@@ -74,11 +74,13 @@ under the same `unit_kind` + `unit_id` key.
   lifecycle). A second round on the same unit
   halts with `assurance_round_limit`.
 - A repairable verdict permits at most one aggregate repair. Aggregate findings
-  before that repair; role packets share the bound. A second repair
+  before that repair; role packets share the bound. Prefer advance same-session
+  authority in the review packet, not a per-finding parent approval. A second repair
   halts with `assurance_repair_limit`.
 - After that repair the parent controller closes the unit on a deterministic
   `PASS` gate (Orchestrator on a direct packet, Coordinator on a coordinator
-  wave); a missing or non-`PASS` gate halts with
+  wave), consuming applicable repaired-candidate results without rerunning them;
+  a missing or non-`PASS` gate halts with
   `deterministic_post_repair_gate_required`.
 - The repaired unit is never reviewed again. `automatic_rereview_requested` and
   `review_after_repair` both require an owner amendment.
@@ -198,3 +200,21 @@ JSON object `{tool_name,tool_input}`). The parent checks the genuinely bounded
 qualification purpose before freezing; renaming a review in a tool payload
 cannot change a slot's kind. Qualification creates a reservation, consumes no
 review/repair allowance, and never establishes independent assurance PASS.
+
+## Advance-authorized inline repair
+
+A single review slot may declare `inline_repair: true` for one bounded invocation
+that reviews, freezes validated findings, transitions to Repair Implementer and
+runs deterministic verification. The parent supplies advance authority and exact
+repair paths as described in `skills/reviewer/references/repair-transition.md`.
+At review reservation the dispatch hook also reserves one repair allowance; this
+is expenditure, not proof that a repair occurred. No refund or second repair follows
+from zero findings. Preserve actual repair counts separately in the role receipt.
+The combined slot's actual `PASS` establishes completed authorized work; a pending,
+failed or missing result never closes repair. The parent records deterministic
+closure from candidate-bound evidence without another finding-acceptance exchange.
+An optional deterministic launch may consume the combined PASS; no extra launch
+is needed merely to repeat checks already run. All independent acceptance remains.
+`inline_repair` is invalid on a non-review slot or a group with multiple review
+slots: those groups must finish independent reviews and aggregate before repair.
+Legacy declarations without the field retain their existing dispatch behavior.
