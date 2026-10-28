@@ -41,8 +41,8 @@ describe("design-lens (OOPDSA)", () => {
   it("OD-02 design.md gains an OOPDSA Implementation Design section with six ordered subsections", () => {
     const raw = readShipped(OOPDSA_REF);
     assert.match(raw, /## OOPDSA Implementation Design/, `${OOPDSA_REF} must name the design.md heading`);
-    const text = flat(raw);
-    // Subsections are listed under the named heading; search from its first mention.
+    const text = flat(section(raw, /^Plan:/));
+    // Planning definitions must stay inside Plan, not in a later role's section.
     const from = text.indexOf(LENS.toLowerCase());
     const at = SUBSECTIONS.map((name) => ({ name, i: from < 0 ? -1 : text.indexOf(name.toLowerCase(), from) }));
     const missing = at.filter((s) => s.i < 0).map((s) => s.name);

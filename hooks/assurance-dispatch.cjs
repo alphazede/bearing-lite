@@ -133,6 +133,9 @@ function consume(b, slot, slots) {
           approved.some(s => !reviews.some(e => e.slot_id === s.id))) return gap('aggregate_review_incomplete');
       u.assurance_repairs++;
     } else if (slot.kind === 'deterministic') {
+      const reviews = logs.filter(e => e.kind === 'review' && e.candidate === slot.candidate);
+      if (reviews.some(first => reviewMembers(record, slots, first).some(member =>
+        !reviews.some(e => e.slot_id === member.id && CLOSED.has(e.result))))) return gap('aggregate_review_incomplete');
       const repairs = logs.filter(e => e.kind === 'repair' || slots.find(s => s.id === e.slot_id)?.inline_repair);
       if (!u.assurance_repairs || !repairs.length || repairs.some(e => e.result !== 'PASS')) return gap('repair_incomplete');
     } else {

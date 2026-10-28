@@ -32,10 +32,27 @@ The Reviewer freezes a JSON receipt with matching candidate identity and `lineag
 (`worktree`, `branch`, `generation`), `verdict: "REPAIR_REQUIRED"`, nonempty
 `finding_ids`, severity, locations, reachability, reproducer, SEIT refs, repair target
 and exact `write_set`. The receipt's write set must be a subset of the advance grant.
-The first allowed planning-artifact write atomically pins `receipt_sha256` in the
-existing round record; later edits to the receipt invalidate the transition.
-A competing record change or unavailable atomic lock is a typed gap; do not retry
-without resolving that state. No second ledger or persistent process is introduced.
+The first allowed planning-artifact write atomically pins `receipt_sha256` in
+`.bearing-round.lock.receipt-<identity-sha256>` beside the parent round record.
+Extend the existing parent-control matcher and native shell-token recognition to
+the `.bearing-round.lock.` namespace. Children cannot edit, delete, rename or
+replace this metadata through supported native write targets; parent access stays
+allowed. The metadata does not live below `.bearing`, so ordinary evidence-directory
+cleanup cannot remove the receipt pin while leaving authority live. The identity binds resolved worktree, original
+candidate ref/revision/digest, branch, generation, reviewer context and receipt path;
+it excludes mutable grant scope and open/closed state so those changes cannot repin
+an edited receipt. This metadata contains only the digest, never authority or budget.
+The parent round record remains the sole authority source and is never rewritten by
+pinning. Existing legacy or parent-pinned digests remain checked in that record.
+After pinning, recheck the current parent record and receipt before allowing the
+write; an observed authority change, changed receipt, unavailable lock, storage or
+cleanup failure is a typed denial. Never retry an unresolved competing state.
+Later receipt edits invalidate the transition. Parent closure or lineage changes
+remain authoritative on every write; old pin metadata grants nothing by itself.
+No second authority/budget ledger or persistent process is introduced. Metadata
+must remain present for the lifetime of its grant and is removed by the parent
+with normal completed-workspace cleanup. This pre-tool hook checks current authority;
+it does not make a host's later filesystem write atomic with a later revocation.
 Product paths remain governed by the packet's ordinary write-set contract; this hook
 continues enforcing planning-artifact ownership, not a new general filesystem sandbox.
 

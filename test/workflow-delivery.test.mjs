@@ -42,6 +42,7 @@ describe("workflow-and-delivery-efficiency", () => {
         "selected, loaded and performed are kept separate": /selected, loaded,? and performed/,
         "a missing skill or prerequisite is a visible gap, never substituted":
           /missing (method )?skills?[^.]*(visible|typed) gap|silently substitute another method/,
+        "missing method must never substitute": /never silently substituted with another method/,
         "routing grants no fan-out, review, or publication authority":
           /routing (never )?grants? no[^.]*(fan-out|review)[^.]*publication|routing never grants[^.]*(fan-out|review)/,
       },
@@ -93,7 +94,7 @@ describe("workflow-and-delivery-efficiency", () => {
         "preserve required evidence and dirty or unmerged work": /preserve required evidence and dirty or unmerged work/,
         "report reclaimed space and retention holds": /reclaimed space[^.]*retention holds?/,
         "a merged PR alone does not complete storage closeout": /merged pr alone does not complete (storage )?closeout|merge alone does not prove cleanup/,
-        "bounded to assigned paths, no whole-workspace purge": /whole-workspace purge/,
+        "bounded to assigned paths, no whole-workspace purge": /keep this bounded to assigned paths, never a whole-workspace purge/,
       },
       "controller surface"
     );

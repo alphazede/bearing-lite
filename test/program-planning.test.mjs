@@ -17,6 +17,7 @@ import {
   flat,
   markdownTable,
   readShipped,
+  section,
 } from "./skill-contract-fixture.mjs";
 
 const PD_SKILL = "skills/planning-and-design/SKILL.md";
@@ -208,8 +209,10 @@ describe("program-planning", () => {
   });
 
   it("PP-10 replanning takes the smallest of seven ordered tiers, and only tier 7 rebaselines", () => {
-    const text = flat(readShipped(PP_REF));
-    assert.match(text, /smallest tier/, `${PP_REF} must take the smallest tier`);
+    const text = flat(section(readShipped(PP_REF), /^Replan$/));
+    const list = /take the smallest tier: (.*?) for tiers/.exec(text);
+    assert.ok(list, `${PP_REF} must take the smallest tier`);
+    const bodies = list[1].split(";").map(tier => tier.trim());
     const tiers = [
       [1, /local ruling/],
       [2, /resequence/],
@@ -219,15 +222,13 @@ describe("program-planning", () => {
       [6, /milestone replan/],
       [7, /rebaseline[^.;]*needs_owner_decision/],
     ];
-    let from = text.search(/smallest tier/);
-    for (const [n, re] of tiers) {
-      const rest = text.slice(from);
-      const marker = new RegExp(`(tier )?${n}[.):]? `).exec(rest);
-      assert.ok(marker, `${PP_REF} must number tier ${n}`);
-      const body = rest.slice(marker.index);
-      const m = re.exec(body);
-      assert.ok(m, `${PP_REF} tier ${n} must match ${re}`);
-      from += marker.index + m.index;
+    assert.equal(bodies.length, tiers.length, `${PP_REF} must define exactly seven tiers`);
+    for (const [index, [n, re]] of tiers.entries()) {
+      const tier = /^(\d+) (.*)$/.exec(bodies[index]);
+      assert.ok(tier, `${PP_REF} must number tier ${n}`);
+      assert.equal(Number(tier[1]), n, `${PP_REF} tiers must remain ordered`);
+      assert.match(tier[2], re, `${PP_REF} tier ${n} must match ${re}`);
+      if (n < 7) assert.doesNotMatch(tier[2], /rebaseline|needs_owner_decision/, `${PP_REF} tier ${n} must not rebaseline`);
     }
   });
 

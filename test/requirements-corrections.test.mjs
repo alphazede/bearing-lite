@@ -79,6 +79,7 @@ describe("requirements-author-corrections", () => {
         "retain candidate-bound evidence": /retain candidate-bound evidence/,
         "no fixed correction-round limit": /(do not impose a fixed correction-round limit|no fixed correction-round limit)/,
         "stop when the quality gate passes": /stop when the quality gate passes/,
+        "typed gap stops corrections": /stop when[^.]*a typed gap prevents progress/,
         "stop when no new evidence, hypothesis, or strategy exists":
           /no new evidence, hypothesis,? or strategy/,
         "preserve an explicit owner-set limit": /preserve any explicit owner-set limit|explicit owner-set limit/,
@@ -117,6 +118,7 @@ describe("requirements-author-corrections", () => {
       {
         "gate does not author": /do not author here/,
         "gate does not persist or publish": /(do not persist|never persist)/,
+        "publication typed-gap routing": /typed_gap_persistence \| [^|]*publish the register \| the register host workflow/,
         "gate does not choose models": /do not choose models/,
         "record is not review or publication": /not treat this record as[^.]*review[^.]*publication/,
       },

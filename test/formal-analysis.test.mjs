@@ -130,6 +130,8 @@ describe("optional-formal-analysis", () => {
     assertContracts(
       text,
       {
+        "failed check on implementation": /for a code-level verifier, retain the failed check on that implementation/,
+        "model counterexample": /for a separate model, detect the correspondence change, faithfully reflect the broken implementation step in the model without changing the property, and retain the checker counterexample/,
         "mutating a detached model alone is insufficient": /mutating a detached model does not establish/,
         "preserve failure evidence and restored baseline": /preserve both failure evidence and the restored baseline/,
         "unexercised procedure needs evidence": /not exercised this way remains needs_(more_)?evidence/,

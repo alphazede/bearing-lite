@@ -413,3 +413,35 @@ for (const host of ['claude-code', 'codex', 'cursor', 'copilot']) {
     });
   }
 }
+
+for (const variant of ['unlaunched', 'reserved', 'narrow', 'other-candidate']) test(`F04 deterministic closure accounts for ${variant} review membership`, t => {
+  const f = fixture(t, { parallel: true });
+  const dispatch = require('../hooks/assurance-dispatch.cjs');
+  f.slots.find(s => s.id === 'excess').inline_repair = true;
+  if (variant === 'other-candidate') for (const s of f.slots.filter(s => s.group === 'round-1')) s.candidate = 'other';
+  json(f.declaration_path, f.declaration); f.bind();
+  function amend(id, slot_ids, additional_repairs) {
+    const detail = { additional_rounds: 1, additional_repairs, slot_ids };
+    const a = { id, unit_id: 'W1', scope: 'issue-209', candidate: 'candidate-a', ...detail,
+      authority_path: authority(f, 'assurance_budget_amendment', id, detail) };
+    assert.equal(dispatch.amend(f.dir, a).outcome, 'PASS');
+  }
+  if (variant === 'narrow') amend('narrow-original', ['review-a'], 0);
+  assert.equal(denied(run(f, envelope(f, 'review-a'))), false);
+  if (variant === 'reserved' || variant === 'other-candidate') assert.equal(denied(run(f, envelope(f, 'review-b'))), false);
+  let record = f.read(); record.dispatch_log.find(e => e.slot_id === 'review-a').result = 'PASS'; json(f.task_record_path, record);
+  amend('inline-completion', ['excess'], 1);
+  assert.equal(denied(run(f, envelope(f, 'excess'))), false);
+  record = f.read(); record.dispatch_log.find(e => e.slot_id === 'excess').result = 'PASS'; json(f.task_record_path, record);
+  const close = run(f, envelope(f, 'close'));
+  if (variant === 'narrow' || variant === 'other-candidate') {
+    assert.equal(denied(close), false, JSON.stringify(close.detail));
+  } else {
+    assert.equal(denied(close), true, 'unfinished declared review member must prevent deterministic closure');
+    assert.equal(close.detail.reason, 'aggregate_review_incomplete');
+    assert.equal(f.read().dispatch_log.some(e => e.slot_id === 'close'), false);
+    if (variant === 'unlaunched') assert.equal(denied(run(f, envelope(f, 'review-b'))), false, 'refused close must not strand the missing reviewer');
+    record = f.read(); record.dispatch_log.find(e => e.slot_id === 'review-b').result = 'PASS'; json(f.task_record_path, record);
+    assert.equal(denied(run(f, envelope(f, 'close'))), false, 'completed review group permits deterministic closure');
+  }
+});
