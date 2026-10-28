@@ -45,8 +45,13 @@ launch, even if no repair proves necessary. Reservation is not an actual repair 
 report actual repairs separately and never refund the reserved allowance. The slot
 must be the only reviewer in its group; a split review must aggregate all independent
 returns before a separately authorized repair. Never repair while another reviewer
-is still inspecting that candidate. Planning retains its separate 1/1 budget and
-records the advance allowance in its review packet, without an implementation slot.
+is still inspecting that candidate. If an amended inline launch overlaps another
+opened group with unfinished or missing review members, the dispatch hook advises
+without denying the launch. Continue review and OCR read-only; the parent schedules
+repair only after every declared review finishes and the results are aggregated.
+An allowed launch or absent advisory does not authorize early mutation. Planning
+retains its separate 1/1 budget and records the advance allowance in its review
+packet, without an implementation slot.
 
 ## Legacy transition and closure
 

@@ -15,8 +15,9 @@ No new reviewer, assurance round, install or authority follows from tool selecti
 Record repository, unit ID, approved wave base, exact head SHA, effective merge-base,
 PR number when applicable, and candidate digest. Resolve moving refs once; preserve
 that snapshot throughout review. For a PR, obtain its base/head object IDs with
-`gh pr view <PR> --json baseRefOid,headRefOid`; reconcile them with the approved wave
-boundary. The PR base does not silently replace a prior-wave baseline. Range mode
+`gh api repos/<OWNER>/<REPO>/pulls/<PR> --jq '{base_sha: .base.sha, head_sha: .head.sha}'`;
+reconcile them with the approved wave boundary. The PR base does not silently
+replace a prior-wave baseline. Range mode
 uses merge-base semantics: record `git merge-base "$BASE_SHA" "$HEAD_SHA"` and the
 resolved range from OCR's report. Stop on an unexpected or moving head. A commit
 review covers one commit only, never an entire multi-commit wave by implication.
