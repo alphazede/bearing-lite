@@ -158,14 +158,21 @@ test('209 unbound ordinary work stays open; unsupported host is typed, never enf
   assert.equal(result.detail.outcome, 'NEEDS_MORE_EVIDENCE'); assert.equal(result.detail.reason, 'host_enforcement_unavailable');
 });
 // Amendment and qualification authority use the existing visible authority envelope; tool flags grant nothing.
-function authority(f, action, id) {
+function authority(f, action, id, amendment = { additional_rounds: 1, additional_repairs: 0, slot_ids: ['excess'] }) {
   const p = path.join(f.dir, id + '.json');
-  json(p, { id, state: 'active', effective: true, granting_owner_decisions: [id], approval_receipt: { actor: 'owner', decision_id: id }, allowed: { actions: [action], scope: ['issue-209'], paths: [] }, subject: { journey: 'J', unit_id: 'W1', candidate: 'candidate-a', [action]: action === 'assurance_budget_amendment' ? { additional_rounds: 1, additional_repairs: 0, slot_ids: ['excess'] } : { subject: 'native hook sentinel', launch_sha256: createHash('sha256').update(stable({ tool_name: f.slots.find(s => s.id === 'qualify').tool_name, tool_input: f.slots.find(s => s.id === 'qualify').tool_input })).digest('hex') } }, expiry_conditions: ['scope_change'], prohibited: { actions: [], scope: [], paths: [] } });
+  json(p, { id, state: 'active', effective: true, granting_owner_decisions: [id], approval_receipt: { actor: 'owner', decision_id: id }, allowed: { actions: [action], scope: ['issue-209'], paths: [] }, subject: { journey: 'J', unit_id: 'W1', candidate: 'candidate-a', [action]: action === 'assurance_budget_amendment' ? amendment : { subject: 'native hook sentinel', launch_sha256: createHash('sha256').update(stable({ tool_name: f.slots.find(s => s.id === 'qualify').tool_name, tool_input: f.slots.find(s => s.id === 'qualify').tool_input })).digest('hex') } }, expiry_conditions: ['scope_change'], prohibited: { actions: [], scope: [], paths: [] } });
   return p;
 }
-test('209 bounded amendment appends exact additional allowance without erasing expenditure', t => {
-  const f = fixture(t); run(f, envelope(f, 'review-a'));
-  const a = { id: 'amend-1', unit_id: 'W1', scope: 'issue-209', candidate: 'candidate-a', additional_rounds: 1, additional_repairs: 0, slot_ids: ['excess'], authority_path: authority(f, 'assurance_budget_amendment', 'amend-1') };
+for (const inline of [false, true]) test(`209 bounded amendment appends exact ${inline ? 'inline review/repair' : 'review'} allowance without erasing expenditure`, t => {
+  const f = fixture(t);
+  if (inline) {
+    f.slots[0].inline_repair = true; f.slots.find(s => s.id === 'excess').inline_repair = true;
+    json(f.declaration_path, f.declaration); f.bind();
+  }
+  assert.equal(denied(run(f, envelope(f, 'review-a'))), false);
+  const completed = f.read(); completed.dispatch_log[0].result = 'PASS'; json(f.task_record_path, completed);
+  const detail = { additional_rounds: 1, additional_repairs: inline ? 1 : 0, slot_ids: ['excess'] };
+  const a = { id: 'amend-1', unit_id: 'W1', scope: 'issue-209', candidate: 'candidate-a', ...detail, authority_path: authority(f, 'assurance_budget_amendment', 'amend-1', detail) };
   const dispatch = require('../hooks/assurance-dispatch.cjs');
   assert.equal(dispatch.amend(f.dir, { ...a, authority_path: 'missing', owner_approved: true }).outcome, 'OWNER_DECISION_REQUIRED');
   assert.equal(dispatch.amend(f.dir, { ...a, additional_rounds: 100 }).outcome, 'OWNER_DECISION_REQUIRED');
@@ -175,8 +182,10 @@ test('209 bounded amendment appends exact additional allowance without erasing e
   authorityRecord.prohibited.scope = []; json(a.authority_path, authorityRecord);
   assert.equal(dispatch.amend(f.dir, a).outcome, 'PASS');
   assert.equal(f.read().units[0].assurance_rounds, 1);
+  assert.equal(f.read().units[0].assurance_repairs, inline ? 1 : 0);
   assert.equal(denied(run(f, envelope(f, 'excess'))), false);
   assert.equal(f.read().units[0].assurance_rounds, 2);
+  assert.equal(f.read().units[0].assurance_repairs, inline ? 2 : 0);
   assert.equal(f.read().amendments.length, 1);
   assert.notEqual(dispatch.amend(f.dir, a).outcome, 'PASS');
 });
@@ -343,3 +352,64 @@ test('inline repair cannot start before other independent reviewers finish', t =
   json(f.declaration_path, f.declaration); f.bind();
   assert.equal(denied(launch(f, 'review-a')), true);
 });
+
+// F2: the owner chose scheduling advice, not another dispatch denial.
+for (const host of ['claude-code', 'codex', 'cursor', 'copilot']) {
+  for (const state of ['active', 'complete', 'missing-member', 'narrow-complete', 'other-candidate']) {
+    test(`F2 ${host} inline scheduling advisory with ${state} prior group`, t => {
+      const f = fixture(t, { parallel: true });
+      const dispatch = require('../hooks/assurance-dispatch.cjs');
+      f.slots.find(s => s.id === 'excess').inline_repair = true;
+      if (state === 'other-candidate') {
+        for (const s of f.slots.filter(s => s.group === 'round-1')) s.candidate = 'candidate-b';
+      }
+      json(f.declaration_path, f.declaration); f.bind();
+      if (state === 'narrow-complete') {
+        f.record.units[0].assurance_rounds = 1; f.save();
+        const detail = { additional_rounds: 1, additional_repairs: 0, slot_ids: ['review-a'] };
+        const a = { id: 'narrow', unit_id: 'W1', scope: 'issue-209', candidate: 'candidate-a', ...detail,
+          authority_path: authority(f, 'assurance_budget_amendment', 'narrow', detail) };
+        assert.equal(dispatch.amend(f.dir, a).outcome, 'PASS');
+      }
+      assert.equal(denied(launch(f, 'review-a', host)), false);
+      if (!['missing-member', 'narrow-complete'].includes(state)) assert.equal(denied(launch(f, 'review-b', host)), false);
+      const record = f.read();
+      if (['complete', 'missing-member', 'narrow-complete'].includes(state)) {
+        for (const entry of record.dispatch_log) entry.result = 'PASS';
+        json(f.task_record_path, record);
+      }
+      const detail = { additional_rounds: 1, additional_repairs: 1, slot_ids: ['excess'] };
+      const a = { id: 'inline', unit_id: 'W1', scope: 'issue-209', candidate: 'candidate-a', ...detail,
+        authority_path: authority(f, 'assurance_budget_amendment', 'inline', detail) };
+      assert.equal(dispatch.amend(f.dir, a).outcome, 'PASS');
+      // Input assertions cannot hide unfinished members in the visible record.
+      const r = run(f, envelope(f, 'excess', { all_reviews_complete: true, reviews: [] }), host);
+      assert.equal(denied(r), false, JSON.stringify(r));
+      const sentinel = spawnSync('/bin/sh', ['-c', f.slots.find(s => s.id === 'excess').tool_input.command], { cwd: f.dir, timeout: 15000 });
+      assert.equal(sentinel.status, 0);
+      const warn = ['active', 'missing-member'].includes(state);
+      if (warn) {
+        assert.match(r.detail.advisory, /scheduling advisory/);
+        assert.match(r.detail.advisory, /aggregate.*before repair/);
+        if (host === 'cursor') {
+          assert.equal(r.wire.permission, 'allow');
+          assert.equal(r.wire.agent_message, r.detail.advisory);
+          assert.equal(r.wire.user_message, r.detail.advisory);
+        } else {
+          assert.equal(r.wire.hookSpecificOutput.hookEventName, 'PreToolUse');
+          assert.equal(r.wire.hookSpecificOutput.additionalContext, r.detail.advisory);
+          assert.equal(r.wire.hookSpecificOutput.permissionDecision, undefined);
+        }
+      } else {
+        assert.equal(r.detail.advisory, undefined);
+        assert.deepEqual(r.wire, host === 'cursor' ? { permission: 'allow' } : {});
+      }
+      assert.equal(f.read().units[0].assurance_rounds, record.units[0].assurance_rounds + 1);
+      assert.equal(f.read().units[0].assurance_repairs, record.units[0].assurance_repairs + 1);
+      const reserved = f.read();
+      assert.equal(denied(launch(f, 'excess', host)), true);
+      assert.deepEqual(f.read(), reserved);
+      assert.equal(readFileSync(path.join(f.dir, 'excess.marker'), 'utf8'), 'started\n');
+    });
+  }
+}
