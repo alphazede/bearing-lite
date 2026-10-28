@@ -77,7 +77,12 @@ function update(b, fn) {
         Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 5);
       }
     }
-    const record = read(b.task_record_path);
+    let record;
+    try { record = read(b.task_record_path); }
+    catch (error) {
+      if (!b.create_if_missing || error.code !== 'ENOENT') throw error;
+      record = {};
+    }
     const response = fn(record);
     if (response.outcome !== 'PASS') return response;
     tmp = path.join(path.dirname(b.task_record_path), `.${path.basename(b.task_record_path)}.${process.pid}.${crypto.randomUUID()}.tmp`);

@@ -222,7 +222,8 @@ const PARENT_ROLES = new Set(["orchestrator", "coordinator"]);
 const CANDIDATE_FIELDS = ["candidate_ref", "candidate_revision", "candidate_digest"];
 
 function isRoundRecord(rel) {
-  return basename(posix(stripQuotes(rel))) === ROUND_RECORD;
+  const name = basename(posix(stripQuotes(rel)));
+  return name === ROUND_RECORD || name.startsWith(ROUND_RECORD + ".");
 }
 
 function insideRoot(root, rel) {
@@ -325,20 +326,32 @@ function repairAuthority(body, root, paths) {
     }
   }
   if (advance && t.receipt_sha256 === undefined) {
-    // Pin once under the existing atomic-record lock before any repair write.
-    const store = require("./assurance-budget-store.cjs");
-    let recordPath;
-    try { recordPath = store.local(root, ROUND_RECORD); }
-    catch { return no("repair_record_unavailable"); }
-    const pinned = store.update({ task_record_path: recordPath }, current => {
-      const transition = current.repair_transition;
-      const expected = { ...t };
-      if (transition?.receipt_sha256 !== undefined) expected.receipt_sha256 = receiptDigest;
-      if (current.candidate !== round.candidate || current.generation !== round.generation ||
-          JSON.stringify(transition) !== JSON.stringify(expected)) return store.gap("repair_authority_changed");
-      transition.receipt_sha256 = receiptDigest;
-      return store.result("PASS", "repair_receipt_pinned");
-    });
+    // Pin proof separately: this operation must never rewrite parent authority.
+    let pinned;
+    try {
+      const store = require("./assurance-budget-store.cjs");
+      store.local(root, ROUND_RECORD);
+      const identity = JSON.stringify([root, ...CANDIDATE_FIELDS.map(key => t[key]),
+        t.branch, t.generation, t.reviewer_context, receiptRel]);
+      const key = crypto.createHash("sha256").update(identity).digest("hex");
+      const pinPath = path.join(root, `${ROUND_RECORD}.receipt-${key}`);
+      try { fs.lstatSync(pinPath); store.local(root, path.relative(root, pinPath)); }
+      catch (error) { if (error.code !== "ENOENT") throw error; }
+      pinned = store.update({ task_record_path: pinPath, create_if_missing: true }, pin => {
+        if (pin.receipt_sha256 !== undefined && pin.receipt_sha256 !== receiptDigest) {
+          return store.gap("frozen_receipt_digest_mismatch");
+        }
+        pin.receipt_sha256 = receiptDigest;
+        return store.result("PASS", "repair_receipt_pinned");
+      });
+      // Parent writes remain independent. A pin never carries or restores authority.
+      if (JSON.stringify(loadRoundLock(root)) !== JSON.stringify(round)) {
+        return no("repair_authority_changed");
+      }
+      if (crypto.createHash("sha256").update(fs.readFileSync(path.join(root, receiptRel))).digest("hex") !== receiptDigest) {
+        return no("frozen_receipt_digest_mismatch");
+      }
+    } catch { return no("repair_pin_unavailable"); }
     if (pinned.outcome !== "PASS") return no(pinned.reason);
   }
   return { ok: true };
@@ -350,7 +363,7 @@ function dispatchFor(owner) {
 }
 
 const LOCKED_TOKEN_RE =
-  /(?:^|[^\w./-])((?:[\w./-]*\/)?(?:design\.md|workspace\.md|handoff\.md|seit\.json|implementation\.json|repository-map\.md|[\w.-]*-technical-plan\.md|[\w.-]*-dod-manifest\.html|\.bearing-round\.lock|docs\/coe(?:\/[\w./-]*)?))(?:[^\w./-]|$)/g;
+  /(?:^|[^\w./-])((?:[\w./-]*\/)?(?:design\.md|workspace\.md|handoff\.md|seit\.json|implementation\.json|repository-map\.md|[\w.-]*-technical-plan\.md|[\w.-]*-dod-manifest\.html|\.bearing-round\.lock(?:\.[\w.*?\[\]-]+)?|docs\/coe(?:\/[\w./-]*)?))(?:[^\w./-]|$)/g;
 
 function fieldText(value) {
   if (typeof value === "string") return value;

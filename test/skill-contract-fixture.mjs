@@ -118,12 +118,13 @@ export function citedPaths(rel, text) {
  */
 export function assertLinksTo(rel, targetRel) {
   const text = readShipped(rel);
+  const target = targetRel.replaceAll("\\", "/");
   const refs = [...localLinks(rel, text), ...citedPaths(rel, text)];
   assert.ok(
-    refs.some((l) => l.target === targetRel),
+    refs.some((l) => l.target.replaceAll("\\", "/") === target),
     `${rel} must reference ${targetRel}; resolved references: ${JSON.stringify(refs.map((l) => l.href))}`
   );
-  assert.ok(existsSync(path.join(ROOT, targetRel)), `${targetRel} must ship`);
+  assert.ok(existsSync(path.join(ROOT, target)), `${targetRel} must ship`);
 }
 
 /**

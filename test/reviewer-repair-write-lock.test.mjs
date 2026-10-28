@@ -319,7 +319,11 @@ describe("advance-authorized same-session repair", () => {
     const root = advance();
     assert.equal(verdict(claudeEdit(root, LISTED[0])).verdict, "ALLOW");
     const record = JSON.parse(readFileSync(path.join(root, ".bearing-round.lock")));
-    assert.equal(record.repair_transition.receipt_sha256,
+    assert.equal(record.repair_transition.receipt_sha256, undefined, "parent authority is never changed by pinning");
+    const pins = require("node:fs").readdirSync(root).filter(name => name.startsWith(".bearing-round.lock.receipt-") && !name.endsWith(".lock"));
+    assert.equal(pins.length, 1);
+    const pin = JSON.parse(readFileSync(path.join(root, pins[0])));
+    assert.equal(pin.receipt_sha256,
       createHash("sha256").update(readFileSync(path.join(root, ".bearing/review/receipt.json"))).digest("hex"));
     assert.equal(verdict(codexPatch(root, LISTED[1]), "reviewer", "codex").verdict, "ALLOW");
     const receipt = path.join(root, ".bearing/review/receipt.json");
@@ -350,4 +354,155 @@ describe("advance-authorized same-session repair", () => {
     denied(verdict(claudeEdit(advance(), LISTED[0], { session_id: "other" })), /context_mismatch/);
     denied(verdict(claudeEdit(advance({ repair_round: "closed" }), LISTED[0])), /round_closed/);
   });
+});
+
+// F03/F05: retained receipt identity and parent revocation; owned filesystem fixtures only.
+const rawFs = require('node:fs');
+const advanceCheckout = () => checkout({transition:{authorization:'advance',parent_accepted:'IN_SCOPE_REPAIR',repairs_max:1,write_set:LISTED,receipt_sha256:undefined}});
+const pinFiles = root => rawFs.readdirSync(root).filter(n=>n.startsWith('.bearing-round.lock.receipt-')&&!n.endsWith('.lock')).map(n=>path.join(root,n));
+const controlOf = root => path.join(root,'.bearing-round.lock');
+const changeControl = (root,mutate) => {const file=controlOf(root),v=JSON.parse(readFileSync(file,'utf8'));mutate(v);writeFileSync(file,JSON.stringify(v));};
+for(const mutation of ['close','generation','context','write-set','candidate','delete']) it(`F05 preserves parent ${mutation} during pin publication`,()=>{
+ const root=advanceCheckout(),originalRename=rawFs.renameSync;
+ let exercised=false,parentBytes;
+ rawFs.renameSync=function(from,to){
+  if((String(to)===controlOf(root)||String(to).includes('.bearing-round.lock.receipt-'))&&!exercised){
+   exercised=true;
+   assert.equal(verdict(claudeEdit(root,'.bearing-round.lock'),'orchestrator').verdict,'ALLOW');
+   if(mutation==='delete')rawFs.unlinkSync(controlOf(root));
+   else changeControl(root,r=>{
+    if(mutation==='close')r.repair_transition.repair_round='closed';
+    if(mutation==='generation')r.generation++;
+    if(mutation==='context')r.repair_transition.reviewer_context='new-context';
+    if(mutation==='write-set')r.repair_transition.write_set=[];
+    if(mutation==='candidate')r.candidate='different';
+   });
+   parentBytes=existsSync(controlOf(root))?readFileSync(controlOf(root),'utf8'):null;
+  }
+  return originalRename.call(this,from,to);
+ };
+ let out;try{out=verdict(claudeEdit(root,LISTED[0]));}finally{rawFs.renameSync=originalRename;}
+ assert.equal(exercised,true);denied(out,/repair_authority_changed/);
+ assert.equal(existsSync(controlOf(root))?readFileSync(controlOf(root),'utf8'):null,parentBytes);
+ denied(verdict(claudeEdit(root,LISTED[0])));
+});
+it('F05 does not write the parent record and preserves legacy parent pin',()=>{
+ for(const root of [advanceCheckout(),checkout()]){
+  const bytes=readFileSync(controlOf(root),'utf8');
+  assert.equal(verdict(claudeEdit(root,LISTED[0])).verdict,'ALLOW');
+  assert.equal(readFileSync(controlOf(root),'utf8'),bytes);
+ }
+});
+it('F05 metadata extends existing parent-control namespace on native envelopes',()=>{
+ const root=advanceCheckout();assert.equal(verdict(claudeEdit(root,LISTED[0])).verdict,'ALLOW');
+ const pin=pinFiles(root)[0];
+ for(const role of ['reviewer','repair_implementer','implementer','test_engineer']){
+  denied(verdict(claudeEdit(root,pin),role),/only the parent controller/);
+  denied(verdict(codexPatch(root,pin),role,'codex'),/only the parent controller/);
+ }
+ denied(verdict({...claudeEdit(root,pin),agent_id:'child'},null));
+ for(const command of [`printf changed > ${pin}`,`rm ${pin}`,`mv ${pin} ${pin}.gone`]){
+  denied(cliVerdict(root,claudeEdit(root,pin,{tool_name:'Bash',tool_input:{command}})),/only the parent controller/);
+ }
+ assert.equal(verdict(claudeEdit(root,pin),'orchestrator').verdict,'ALLOW');
+});
+it('F05 pins once per identity and cannot repin edited proof after scope changes',()=>{
+ const root=advanceCheckout();assert.equal(verdict(claudeEdit(root,LISTED[0])).verdict,'ALLOW');
+ const pin=pinFiles(root)[0],pinBytes=readFileSync(pin,'utf8');
+ const receipt=path.join(root,'.bearing/review/receipt.json');writeFileSync(receipt,readFileSync(receipt,'utf8')+' ');
+ changeControl(root,r=>r.repair_transition.write_set=[...r.repair_transition.write_set,UNLISTED]);
+ denied(verdict(claudeEdit(root,LISTED[0])),/digest_mismatch/);
+ assert.equal(readFileSync(pin,'utf8'),pinBytes);
+});
+it('F05 retains pin across close/reopen and changes namespace only for new lineage',()=>{
+ const root=advanceCheckout();assert.equal(verdict(claudeEdit(root,LISTED[0])).verdict,'ALLOW');
+ const first=pinFiles(root)[0];changeControl(root,r=>r.repair_transition.repair_round='closed');
+ denied(verdict(claudeEdit(root,LISTED[0])),/round_closed/);
+ changeControl(root,r=>r.repair_transition.repair_round='open');assert.equal(verdict(claudeEdit(root,LISTED[0])).verdict,'ALLOW');
+ changeControl(root,r=>{r.generation++;r.repair_transition.generation++;});
+ const file=path.join(root,'.bearing/review/receipt.json'),receipt=JSON.parse(readFileSync(file));receipt.lineage.generation++;
+ writeFileSync(file,JSON.stringify(receipt));assert.equal(verdict(claudeEdit(root,LISTED[0])).verdict,'ALLOW');
+ assert.equal(pinFiles(root).length,2);assert.equal(existsSync(first),true);
+});
+it('F05 fails closed on pin cleanup exceptions',()=>{
+ const root=advanceCheckout(),old=rawFs.rmdirSync;
+ rawFs.rmdirSync=function(file,...args){if(String(file).includes('.bearing-round.lock.receipt-'))throw Object.assign(Error('owned cleanup failure'),{code:'ENOTEMPTY'});return old.call(this,file,...args);};
+ let out;try{out=verdict(claudeEdit(root,LISTED[0]));}finally{rawFs.rmdirSync=old;}
+ denied(out,/repair_pin_unavailable/);
+ assert.equal(JSON.parse(readFileSync(controlOf(root))).repair_transition.receipt_sha256,undefined);
+});
+it('F05 fails closed on malformed or symlinked stored pin',()=>{
+ for(const scenario of ['malformed','symlink']){
+  const root=advanceCheckout();assert.equal(verdict(claudeEdit(root,LISTED[0])).verdict,'ALLOW');
+  const pin=pinFiles(root)[0];
+  if(scenario==='malformed')writeFileSync(pin,'{');
+  else {rawFs.unlinkSync(pin);symlinkSync(path.join(root,'.bearing/review/receipt.json'),pin);}
+  denied(verdict(claudeEdit(root,LISTED[0])),/pin_unavailable|record_unavailable/);
+ }
+});
+it('F05 changed proof during pin publication is refused',()=>{
+ const root=advanceCheckout(),old=rawFs.renameSync;let exercised=false;
+ rawFs.renameSync=function(from,to){if((String(to)===controlOf(root)||String(to).includes('.bearing-round.lock.receipt-'))&&!exercised){exercised=true;const p=path.join(root,'.bearing/review/receipt.json');writeFileSync(p,readFileSync(p,'utf8')+' ');}return old.call(this,from,to);};
+ let out;try{out=verdict(claudeEdit(root,LISTED[0]));}finally{rawFs.renameSync=old;}
+ assert.equal(exercised,true);denied(out,/digest_mismatch/);
+});
+it('F05 initializer does not reset existing or malformed records',()=>{
+ const store=require('../hooks/assurance-budget-store.cjs'),root=advanceCheckout(),file=path.join(root,'seed.json');
+ const init=()=>store.update({task_record_path:file,create_if_missing:true},record=>{record.count=(record.count||0)+1;return store.result('PASS','checked');});
+ assert.equal(init().outcome,'PASS');assert.equal(init().outcome,'PASS');assert.equal(JSON.parse(readFileSync(file)).count,2);
+ writeFileSync(file,'{');assert.equal(init().outcome,'NEEDS_MORE_EVIDENCE');assert.equal(readFileSync(file,'utf8'),'{');
+ rawFs.unlinkSync(file);assert.equal(store.update({task_record_path:file},()=>store.result('PASS','unexpected')).outcome,'NEEDS_MORE_EVIDENCE');
+ assert.equal(existsSync(file),false);
+});
+
+it('F05 root pin survives ordinary .bearing cleanup and refuses edited receipt',()=>{
+ const root=advanceCheckout();assert.equal(verdict(claudeEdit(root,LISTED[0])).verdict,'ALLOW');
+ const pin=pinFiles(root)[0],pinBytes=readFileSync(pin,'utf8');
+ const command='rm -rf .bearing';
+ assert.equal(cliVerdict(root,claudeEdit(root,'.bearing',{tool_name:'Bash',tool_input:{command}})).verdict,'ALLOW');
+ assert.equal(spawnSync('rm',['-rf','.bearing'],{cwd:root}).status,0);
+ mkdirSync(path.join(root,'.bearing/review'),{recursive:true});
+ const original=JSON.parse(readFileSync(pin,'utf8'));assert.equal(original.receipt_sha256.length,64);
+ // Recreate the valid receipt with changed bytes using the unchanged parent candidate/lineage.
+ const c=JSON.parse(readFileSync(controlOf(root),'utf8')).repair_transition;
+ writeFileSync(path.join(root,'.bearing/review/receipt.json'),JSON.stringify({candidate_ref:c.candidate_ref,candidate_revision:c.candidate_revision,candidate_digest:c.candidate_digest,verdict:'REPAIR_REQUIRED',finding_ids:['F1'],write_set:LISTED,lineage:{worktree:'.',branch:c.branch,generation:c.generation}}));
+ denied(verdict(claudeEdit(root,LISTED[0])),/digest_mismatch/);assert.equal(readFileSync(pin,'utf8'),pinBytes);
+});
+it('F05 root pin explicit deletion and control-prefix shell glob are protected',()=>{
+ const root=advanceCheckout();assert.equal(verdict(claudeEdit(root,LISTED[0])).verdict,'ALLOW');
+ const pin=pinFiles(root)[0],bytes=readFileSync(pin,'utf8');
+ for(const command of [`rm ${pin}`,`mv ${pin} ${pin}.gone`,'rm .bearing-round.lock.receipt-*']){
+  const out=cliVerdict(root,claudeEdit(root,pin,{tool_name:'Bash',tool_input:{command}}));denied(out,/only the parent controller/);
+ }
+ assert.equal(readFileSync(pin,'utf8'),bytes);
+});
+it('F05 root pin concurrent edited-receipt writes cannot replace first digest',async()=>{
+ const root=advanceCheckout(),initial=readFileSync(path.join(root,'.bearing/review/receipt.json'),'utf8');
+ assert.equal(verdict(claudeEdit(root,LISTED[0])).verdict,'ALLOW');
+ const pin=pinFiles(root)[0],bytes=readFileSync(pin,'utf8');
+ writeFileSync(path.join(root,'.bearing/review/receipt.json'),initial+' ');
+ const request=file=>new Promise((resolve,reject)=>{const child=spawn(process.execPath,[HOOK,'--host=claude-code'],{cwd:root,env:{...process.env,BEARING_ROLE:'reviewer'},stdio:['pipe','pipe','pipe']});let stderr='';child.stderr.on('data',d=>stderr+=d);child.on('error',reject);child.on('close',code=>code===0?resolve(JSON.parse(stderr).hookSpecificOutput):reject(Error(stderr)));child.stdin.end(JSON.stringify(claudeEdit(root,file)));});
+ const out=await Promise.all([request(LISTED[0]),request(LISTED[1])]);out.forEach(x=>denied(x,/digest_mismatch/));assert.equal(readFileSync(pin,'utf8'),bytes);
+});
+
+// Real CLI regression: only owned filesystem operations inject the observed cleanup failure.
+it('F03 cleanup failure preserves wire denial after parent revocation', () => {
+  const root = advanceCheckout();
+  const preloader = path.join(root, 'cleanup-preload.cjs');
+  writeFileSync(preloader, `const fs=require('node:fs'),path=require('node:path');
+const control=path.join(process.env.REPAIR_FIXTURE_ROOT,'.bearing-round.lock');
+const read=fs.readFileSync,write=fs.writeFileSync,rename=fs.renameSync;
+let exercised=false;
+function revoke(lock){exercised=true;const record=JSON.parse(read(control,'utf8'));record.repair_transition.repair_round='closed';write(control,JSON.stringify(record));write(path.join(lock,'owned-child'),'owned failure');}
+fs.readFileSync=function(file,...args){if(String(file)===control&&!exercised&&fs.existsSync(control+'.lock'))revoke(control+'.lock');return read.call(this,file,...args);};
+fs.renameSync=function(from,to){if(String(to).includes('.bearing-round.lock.receipt-')&&!exercised)revoke(String(to)+'.lock');return rename.call(this,from,to);};
+`);
+  const run = spawnSync(process.execPath, ['-r', preloader, HOOK, '--host=claude-code'], {
+    cwd: root, env: { ...process.env, BEARING_ROLE: 'reviewer', REPAIR_FIXTURE_ROOT: root },
+    input: JSON.stringify(withTask(claudeEdit(root, LISTED[0]))), encoding: 'utf8', timeout: 15000,
+  });
+  assert.equal(run.status, 0, run.stderr);
+  assert.equal(JSON.parse(readFileSync(controlOf(root))).repair_transition.repair_round, 'closed', 'owned revocation must be exercised');
+  assert.equal(JSON.parse(run.stdout).hookSpecificOutput?.permissionDecision, 'deny', 'cleanup failure must retain native wire denial');
+  assert.equal(JSON.parse(run.stderr).hookSpecificOutput.verdict, 'DENY_DISPATCH');
 });
