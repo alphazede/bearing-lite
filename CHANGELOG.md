@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- `prompt` packets empower the agent: expected files are a guide, not a fence; the agent resolves plumbing and design-versus-reality conflicts itself and records them; stop conditions are protected actions and genuine owner decisions only. A stop or bounce sends the controller back to the packet first. (PR #TBD)
+
 ## [2.0.3](https://github.com/alphazede/bearing-lite/releases/tag/v2.0.3) - 2026-10-28
 
 ### Added
