@@ -44,6 +44,12 @@ describe("#168 retired specialist fan-out stays retired", () => {
     assert.doesNotMatch(prompt, /^TIME BUDGET/m);
     assert.match(prompt, /time\/call\s+limits only when supplied/);
     assert.match(prompt, /Never poll or add automatic fan-out, reviews, or agent invocations/);
+    assert.match(prompt, /within supplied authority and canonical role and repository\s+rules/);
+    assert.match(
+      prompt,
+      /dependencies and\s+lockfiles change only when existing authority and contribution controls permit\s+them/
+    );
+    assert.match(prompt, /binding authority conflicts\s+the agent cannot resolve/);
     const loops = read("skills/prompt/references/role-loops.md");
     assert.match(loops, /No loop authorizes polling,\s+automatic fan-out/);
   });
