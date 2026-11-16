@@ -29,16 +29,19 @@ independent review also requires the owner's requested scope and cadence.
    rediscovery. Preserve the provided model, harness, reasoning, and authority.
 3. Define one observable objective and numbered acceptance criteria, each touched
    trust boundary/invariant (or none), expected files, and protected actions.
-4. Empower the agent. Give the outcome, its intent, and only the hard limits:
-   protected actions, outside access, credentials, destructive git, landing, and
-   new product guards. Name expected files as a guide, not a fence. The agent may
-   change what the outcome needs (dependencies, lockfiles, gate inputs, fixtures,
-   affected tests and docs), resolve design-versus-reality conflicts with the
-   smallest approach that meets the intent, and record each decision and changed
-   path in its return. Stop conditions are protected actions and genuine owner
-   decisions only, never plumbing the agent can resolve. The controller verifies
-   changed paths after return. When an agent stops or bounces, revise the packet
-   first; do not blame the agent for following it.
+4. Empower the agent within supplied authority and canonical role and repository
+   rules. Give the outcome, its intent, and the binding limits: owner/session
+   authority, role and repository/contribution rules, protected actions, outside
+   access, credentials, destructive git, landing, and new product guards. Name
+   expected files as a guide, not a fence. The agent may change what the authorized
+   outcome needs (gate inputs, fixtures, affected tests and docs); dependencies and
+   lockfiles change only when existing authority and contribution controls permit
+   them. Resolve design-versus-reality conflicts with the smallest authorized
+   approach, and record each decision and changed path in the return. Stop conditions
+   are protected actions, genuine owner decisions, and binding authority conflicts
+   the agent cannot resolve, never plumbing inside its authority. The controller
+   verifies changed paths after return. When an agent stops or bounces, revise the
+   packet first; do not blame the agent for following it.
 5. Include the selected loop only. Requirements Engineer owns its requirements-
    quality pass and self-repairs. Other authors check and repair their own outputs.
    Evaluators report without repairing the candidate while evaluating; Light
@@ -60,7 +63,7 @@ independent review also requires the owner's requested scope and cadence.
 ROLE / SESSION: <selected role/mode and canonical skill>
 STATE / INPUTS: <candidate, source bindings, dependencies, known facts>
 OBJECTIVE / ACCEPTANCE: <one outcome; numbered observable conditions>
-AUTHORITY: <permitted actions, expected files as a guide, protected boundaries as the only hard limits>
+AUTHORITY: <permitted actions; binding owner/session, role, repository and contribution limits; expected files as a guide; protected boundaries>
 LOOP: <one selected loop, its self-checks, and repair boundary>
 VERIFY: <repository gate first with exit code, focused checks, expected results, acceptance-to-evidence table>
 RETURN / STOP: <compact receipt: verdict, candidate_ref, changed_paths, tests, findings, blocker; remaining work and genuine stops>
