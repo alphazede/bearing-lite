@@ -64,7 +64,10 @@ Planning and Design includes `authority.json.continuation` in the integrated gat
 `granted`, `owner_decision_id`, named `exclusions`, and `expires_at` (UTC or
 null for event-based expiry). The surrounding envelope retains allowed and
 prohibited actions/paths, role grants, approval receipt, and nonempty
-`expiry_conditions`. Record explicit approval against the exact package;
+`expiry_conditions`. Its `allowed.actions` proposes the landing actions
+`commit`, `push`, and `open_pull_request`, and includes `merge` only when the
+owner chooses to delegate merge (`task-state.md#landing-a-closed-unit`).
+Record explicit approval against the exact package;
 the continuation decision ID must occur in `granting_owner_decisions`.
 No grant is inferred from silence, a profile selection, or passing checks.
 

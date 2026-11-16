@@ -19,7 +19,7 @@ The parent controller is the Orchestrator on a direct packet, Coordinator on a c
 1. Reject author ancestry or candidate discontinuity. Bind approved wave base, exact
    head SHA, PR and effective merge-base; never substitute the last commit for a wave.
    Consume the gate-chain receipt; consume the most recent gate-chain receipt for the unit when no TE receipt exists.
-   Do not re-litigate passed gates or duplicate Assurance Test Engineer work. Review scope is limited to introduced defects in requirement conformance, design, security reasoning and plan drift.
+   Do not re-litigate passed gates or duplicate Assurance Test Engineer work. Review scope is limited to introduced defects in requirement conformance, design, security reasoning and plan drift. When the packet carries a design lens, check the candidate against its rows per `../planning-and-design/references/oopdsa-design.md`.
 2. Own selected/required OCR preflight and execution. Resolve configured availability
    once without credentials; preserve mode/model/effort. Preview the pinned diff and
    scope OCR to bugs and security in changed code, tests, configuration and affected

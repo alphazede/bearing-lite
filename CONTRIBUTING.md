@@ -117,7 +117,9 @@ BEARING_LITE_SCHEMA_ISOLATED_ROOT=.venv-schema-validator/lib/python3.12/site-pac
 Keep that virtualenv uncommitted.
 
 Keep skills lean. Prefer references and assets only when progressive disclosure
-needs them. Do not add dependencies or change the lockfile without explicit
+needs them. Role `SKILL.md` files stay within the enforced budget (60 lines,
+650 words); move conditional detail into a linked reference instead of growing
+the core skill. Do not add dependencies or change the lockfile without explicit
 maintainer approval. Do not add `mcp.json`, postinstall scripts, or global hook
 installers.
 

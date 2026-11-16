@@ -959,10 +959,10 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
       assert.match(text, /distinct declared/i, `${role} must state the next distinct unit rule`);
       assert.match(text, /own budget|its own (1\/1 )?(round|budget|allowance)/i, `${role} must give it its own budget`);
     }
-    // Review/assurance is dispatched only when requested, at the chosen boundary.
+    // Owner-requested review/assurance is dispatched as soon as its frozen boundary passes (#222).
     const router = readFileSync(path.join(SKILLS_DIR, "bearing-lite", "SKILL.md"), "utf8");
-    assert.match(router, /dispatch only when explicitly requested, at the chosen task, phase,\s+or lifecycle boundary/);
-    assert.match(coordinatorText, /only when\s+profile-enabled and explicitly requested at this boundary/);
+    assert.match(router, /dispatch owner-requested review immediately when each frozen task, phase,\s+or lifecycle boundary passes deterministic checks; never re-ask or defer it/);
+    assert.match(coordinatorText, /When they pass, immediately dispatch the profile-enabled review or assurance\s+the owner requested for this boundary in the frozen plan; never re-ask or defer it/);
     assert.match(assembly, /per declared phase or wave-end/);
     // The separate pre-dispatch planning gate is still not folded in.
     assert.match(

@@ -54,8 +54,10 @@ pre-planning profile or route-review gate is allowed.
 Cadence values are `slice`, `phase`, or `lifecycle` for each declared phase or
 wave. Defaults are `phase` for Test Engineer assurance, `phase` for Reviewer,
 and `lifecycle` for Integration Engineer execution. The single independent
-review runs on that unit's integrated candidate at its declared cadence
-boundary, not as task-level tests or author self-checks. Never infer it from
+review runs on that unit's integrated candidate as soon as its declared cadence
+boundary passes deterministic checks, not as task-level tests or author self-checks.
+When waves are declared, `phase` cadence resolves to each wave, so wave-end review
+needs no separate setting. Never infer it from
 `required_assurance` on an individual task. The proposal is visible in
 `implementation.json` and the DoD Manifest, then becomes authoritative only
 after the integrated owner approval.

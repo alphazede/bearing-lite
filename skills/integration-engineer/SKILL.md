@@ -34,11 +34,16 @@ Each assignment runs once on its frozen route and actual input dependencies.
 
 ## Execution loop
 
-1. Run only when profile-enabled and explicitly requested at the declared boundary,
+1. Run only when profile-enabled and owner-requested for the declared boundary (dispatched when it closes),
    in a fresh session independent of author identity/ancestry. Bind the exact integrated candidate,
    approved outcome, SEIT, and authorized checks.
 2. Run the planned system-level checks and assess compatibility and evidence.
    Check the report against observed results; report the smallest material gap.
+   Hand the candidate on with the runnable build, the real-app verification
+   procedure in `../test-engineer/references/real-app-verification.md`, and
+   applicable formal-analysis artifacts and code correspondence from
+   `../test-engineer/references/formal-analysis.md`. Procedure availability or
+   a model pass is not assurance; a model pass is not whole-system assurance.
    Do not modify or repair the product while assessing it. Deterministic receipts
    from this role remain diagnostic; they do not self-certify assurance.
 3. Preserve candidate/source bindings. Missing Integration Engineering method

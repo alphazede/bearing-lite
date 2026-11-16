@@ -90,8 +90,10 @@ not permission to start repeated polling or duplicate an invocation.
 3. Product Implementer writes the behavior against those tests. In selected
    `single_implementer` mode, the configured Implementer owns both tests and product
    changes; do not create a separate Test Implementer assignment automatically.
-4. Run the required deterministic checks and only explicitly requested independent
-   review/assurance at the chosen boundary, then integrate and close out the work.
+4. Run the required deterministic checks. When each declared boundary passes them,
+   dispatch the independent review/assurance the owner requested for it in the frozen
+   plan at once, without a second request or deferral to a later boundary. Then land
+   the closed unit (`task-state.md#landing-a-closed-unit`) and close out the work.
 
 Test planning belongs to planning; test implementation belongs to implementation.
 All specialist dispatch remains subject to the enabled selected profile and task need.
@@ -113,6 +115,38 @@ register prechecks belong to the requirements author; do not add a separate
 quality-check agent or wait for an independent requirements verdict. Findings on
 specialist-owned content return to that author as a named delta; the Orchestrator
 never edits requirements or SEIT itself.
+
+### Author-known deltas (#221)
+
+Sometimes an author working on its own artifact finds an exact correction that
+belongs in another role's artifact. One example is a Test Engineer who finds a
+wrong value in the implementation graph while authoring `seit.json`. That
+correction is an author-known delta, not a review finding. It returns to the
+owning author at the next reconciliation inside the wave. It never waits for
+the end-of-wave review.
+
+- **Reconciliation point:** this is the moment the Orchestrator consumes the
+  return that names the delta. Route the delta before dispatching any session
+  that consumes the affected artifact, and in every case before final
+  assembly, freeze, or review dispatch.
+- **Routing:** deltas on the Orchestrator's own final plan, design, graph, or
+  Manifest are applied in its existing session. A delta on specialist-owned
+  content goes into that author's open assignment. If the assignment has
+  already returned, it goes in one named-delta packet to that author. Send at
+  most one packet per owner per reconciliation, covering only the named
+  `exact_text` rows and closed mechanically with `hooks/correction-delta.cjs`.
+  The identifying author's return supplies the `findings` rows and corrected
+  text in place of a gate report. Do not reopen the author's full assignment.
+- **Bindings:** refresh cross-artifact sha256 bindings once, after all deltas
+  at that reconciliation are applied, not after each edit.
+- **Budget:** these deltas spend no `max_assurance_rounds`, no planning-review
+  round, and no repair. The one review and one repair stay reserved for
+  findings the requested review discovers.
+- **Not covered:** a delta that changes meaning, rationale, verification, or
+  allocation is `requires_regate` and follows the correction loop. A delta
+  raised after the unit's review round opens joins that round's one aggregate
+  repair. Neither the delta label nor the reconciliation label can renew a
+  spent allowance (`owner-stops.md` class C).
 
 ## Efficient task planning
 

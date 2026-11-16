@@ -28,7 +28,9 @@ Integration Engineer execution assessment.
    Engineer's pending case bindings; no author drafts SEIT first. Cover every relevant
    flow, state transition, illegal transition, trust boundary, and failure path
    from the Integration Engineer Boundary/Data-Flow Contract when applicable.
+   Every case carries independently justified expectations per `references/verification-case.md`.
 2. Select methods, proof cases, commands, evidence, and pass/fail criteria. Map applicable enabled frozen `deterministic_verification.additional_tools` into SEIT commands with their pass rules and expected evidence; selection alone does not execute them.
+   User-path cases reuse `references/real-app-verification.md`; invariant, ordering, safety, or exhaustive-input questions may use `references/formal-analysis.md`.
    Reference registered requirements and preserve published-standard clauses.
    Every case meets `references/shared-machine-tests.md`: correct on a shared,
    loaded machine; engine-backed cases name `resource_group` and `expected_gate_seconds`.
@@ -38,12 +40,9 @@ Integration Engineer execution assessment.
    a plain string. A declared gate with a missing tool or a `not_run` outcome is a
    typed gap, never PASS. Every red-then-green receipt binds the
    baseline failing run and the candidate passing run over the same test IDs.
-4. Check and repair the plan in this assignment, then return it directly to the
-   Planning Orchestrator with proof cases and selected capability bindings. Verify
-   coverage, source bindings, feasible methods, pass/fail criteria, and gate cost.
-   Final Orchestrator design follows these inputs; do not require it as a prerequisite.
-5. Assurance Test Engineer runs only when requested, in a fresh session without author
-   ancestry, on the exact candidate; refuse an unconfigured slice or round boundary. VALIDATING belongs here.
+4. Check and repair the plan in this assignment, then return it to the Planning Orchestrator with proof cases, selected capability bindings, and exact fixes in other roles' artifacts as named deltas (`../bearing-lite/references/planning-assembly.md#author-known-deltas-221`).
+   Verify coverage, source bindings, feasible methods, pass/fail criteria, and gate cost; Orchestrator design follows these inputs.
+5. Assurance Test Engineer runs only when requested, in a fresh session without author ancestry, on the exact candidate; refuse an unconfigured slice or round boundary. VALIDATING belongs here.
    The Assurance Test Engineer independently reruns the gate-chain at the declared boundary for
    required claims and attaches `assurance` receipts; author gate-chain receipts are
    diagnostic-only and cannot satisfy independent assurance.
