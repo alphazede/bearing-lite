@@ -14,7 +14,7 @@ tags: [internal, skills]
 
 Compose the smallest packet for one authorized assignment; launch nothing.
 Use the provided role/session, selected route/capability binding, candidate,
-objective, acceptance, inputs, exact write set, authority, commands, and return
+objective, acceptance, inputs, expected files, authority, commands, and return
 contract. Missing material inputs are typed gaps, not permission to invent them.
 In Bearing, specialist dispatch requires the enabled frozen profile role and task need;
 independent review also requires the owner's requested scope and cadence.
@@ -28,21 +28,31 @@ independent review also requires the owner's requested scope and cadence.
    dependencies, recorded decisions, and gaps. Omit raw history and settled-context
    rediscovery. Preserve the provided model, harness, reasoning, and authority.
 3. Define one observable objective and numbered acceptance criteria, each touched
-   trust boundary/invariant (or none), exact write set, and protected actions.
-4. Include the selected loop only. Requirements Engineer owns its requirements-
+   trust boundary/invariant (or none), expected files, and protected actions.
+4. Empower the agent. Give the outcome, its intent, and only the hard limits:
+   protected actions, outside access, credentials, destructive git, landing, and
+   new product guards. Name expected files as a guide, not a fence. The agent may
+   change what the outcome needs (dependencies, lockfiles, gate inputs, fixtures,
+   affected tests and docs), resolve design-versus-reality conflicts with the
+   smallest approach that meets the intent, and record each decision and changed
+   path in its return. Stop conditions are protected actions and genuine owner
+   decisions only, never plumbing the agent can resolve. The controller verifies
+   changed paths after return. When an agent stops or bounces, revise the packet
+   first; do not blame the agent for following it.
+5. Include the selected loop only. Requirements Engineer owns its requirements-
    quality pass and self-repairs. Other authors check and repair their own outputs.
    Evaluators report without repairing the candidate while evaluating; Light
    Implementer executes the exact command and returns failure without repair.
-5. Controllers wait on completion events, wake on responses, and consume each
+6. Controllers wait on completion events, wake on responses, and consume each
    result once. Never poll or add automatic fan-out, reviews, or agent invocations.
-6. Name the repository gate first and require its exit code; author-selected
+7. Name the repository gate first and require its exit code; author-selected
    criteria and focused commands supplement it, never replace it, and a VERIFY list
    without it is incomplete. Give expected results and evidence per acceptance item.
    Required missing/not-run proof is a gap. Include time/call
    limits only when supplied; invent no deadline, round count, or reasoning level.
    Require one negative check per named trust boundary. A passing return is invalid
    while an acceptance item is unmet or unmapped in its acceptance-to-evidence table.
-7. Use the selected role's exact typed outcomes and genuine stop conditions.
+8. Use the selected role's exact typed outcomes and genuine stop conditions.
 
 ## Packet template
 
@@ -50,7 +60,7 @@ independent review also requires the owner's requested scope and cadence.
 ROLE / SESSION: <selected role/mode and canonical skill>
 STATE / INPUTS: <candidate, source bindings, dependencies, known facts>
 OBJECTIVE / ACCEPTANCE: <one outcome; numbered observable conditions>
-AUTHORITY: <write set, permitted actions, protected boundaries>
+AUTHORITY: <permitted actions, expected files as a guide, protected boundaries as the only hard limits>
 LOOP: <one selected loop, its self-checks, and repair boundary>
 VERIFY: <repository gate first with exit code, focused checks, expected results, acceptance-to-evidence table>
 RETURN / STOP: <compact receipt: verdict, candidate_ref, changed_paths, tests, findings, blocker; remaining work and genuine stops>
