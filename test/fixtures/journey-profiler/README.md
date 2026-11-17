@@ -10,10 +10,21 @@ inventory in the Bearing 3.0 plan; values are invented.
 
 | Command | Effect |
 | --- | --- |
-| `profile --journey <file>... [--events <jsonl>]... [--receipt <file>]... [--host-log <harness>=<file>]... --as-of <UTC> --out <dir>` | Writes `<dir>/profile.json` (valid against `schemas/journey-profile.schema.json`) and `<dir>/report.md`, exit 0. Only journeys with `"profiler_tracking": true` are profiled; when none is, no file is written and no host log is read. A missing or malformed `--as-of` exits non-zero and leaves an existing profile untouched. |
-| `stage-boundary --journey <file> --stage <name> --at <UTC> --session <orchestrator host session id> --host-log <harness>=<file> --record <file>` | Appends one entry to `stage_boundaries[]` of the private Lifecycle record: Orchestrator calls after the previous boundary up to `--at`. Journey flag off: no record written. |
+| `profile --journey <file>... [--events <jsonl>]... [--receipt <file>]... [--host-log <harness>=<file>]... [--host-qualification <harness>=<record>]... --as-of <UTC> --out <dir>` | Writes `<dir>/profile.json` (valid against `schemas/journey-profile.schema.json`) and `<dir>/report.md`, exit 0. Only journeys with `"profiler_tracking": true` are profiled; when none is, no file is written and no host log is read. A missing or malformed `--as-of` exits non-zero and leaves an existing profile untouched. |
+| `stage-boundary --journey <file> --stage <name> --at <UTC> --session <orchestrator host session id> --host-log <harness>=<file> [--host-qualification <harness>=<record>]... --record <file>` | Appends one entry to `stage_boundaries[]` of the private Lifecycle record: Orchestrator calls after the previous boundary up to `--at`. Journey flag off: no record written. |
 | `export --profile <profile.json> --out <dir>` | Writes the staged sanitized `<dir>/export.json` (role only) and prints `{"sha256": "<hex of export.json>"}`. It never publishes. |
 | `validate <profile.json>` | Exit 0 when the file is valid against the profile schema, non-zero otherwise. |
+
+A host is qualified only by `--host-qualification <harness>=<record>` (DEC-57;
+never by its name). The record is JSON `{harness, controlled_session_log,
+host_reported: {fresh_tokens, cache_read_tokens}}`; a relative
+`controlled_session_log` resolves against the record's directory. The harness
+is `qualified` only when the record's `harness` equals the flag's harness and
+the reader's totals over the whole controlled session log equal
+`host_reported` exactly. Otherwise, and without a record, the host is
+`{"status": "unavailable", "reason": "host_not_qualified"}` and every metric
+from it (profile usage and stage-boundary counters) is unavailable. A record
+that is not valid JSON adds one `diagnostics[]` entry and qualifies nothing.
 
 Every metric is `{"value": <number>}` or `{"value": "unavailable", "reason": "<code>"}`.
 A `reason` with a numeric or null value is invalid.
@@ -38,7 +49,7 @@ role, stage, model, harness, metrics: {model_calls, fresh_tokens, cache_read_tok
 
 ## Hand totals (`--as-of 2026-11-10T13:00:00Z`)
 
-Claude Code (`claude-code.jsonl`, qualified: `input_tokens` is uncached input;
+Claude Code (`claude-code.jsonl`, with `qualification-claude-code.json`: `input_tokens` is uncached input;
 `fresh_tokens = input + cache_creation + output`). Lines sharing one
 `message.id` are one call.
 
@@ -52,8 +63,19 @@ Codex (`codex.jsonl`, sess-codex-1, inferred jrn-alpha): per-call `usage` only;
 `thread_token_usage` is cumulative and must not be added. Cache-inclusive input
 normalized: (1000-600) + (500-400) = 500 uncached, cache-write 0, output 200+100
 (reasoning already inside output) gives fresh_tokens 800, cache_read_tokens 1000.
-Codex normalization is not yet host-qualified, so the reader may instead report
-every Codex metric `unavailable`; it may never report another number.
+Without `qualification-codex.json` every Codex metric is `unavailable`; it may
+never report another number.
+
+Qualification records (controlled-session totals):
+
+| Record | Harness | controlled_session_log | Reader totals | host_reported | Result |
+| --- | --- | --- | --- | --- | --- |
+| `qualification-claude-code.json` | claude-code | `controlled-claude-code.jsonl` (sess-ctrl-claude-1, the sess-bound-1 calls) | 1650 / 11000 | 1650 / 11000 | qualified |
+| `qualification-claude-code-1651.json` | claude-code | same | 1650 / 11000 | 1651 / 11000 | unavailable |
+| `qualification-codex.json` | codex | `codex.jsonl` | 800 / 1000 | 800 / 1000 | qualified |
+| `qualification-malformed.json` | (truncated JSON) | none | none | none | unavailable, one diagnostic |
+
+Passing the claude-code record under `codex=` qualifies neither harness.
 
 `other-host.jsonl` is passed as agy, cursor-agent, deepcode, muse-code, omp and pi.
 None is qualified: every metric from them is `unavailable`.
@@ -68,7 +90,8 @@ jrn-alpha: S1, S2 (S3 merge verdict FAIL). Claude-only cohort:
 `claude-code-malformed.jsonl`: line 2 is truncated JSON; lines 1 and 3 give
 sess-diag-1 (model-d, unattributed) 2 calls, fresh_tokens 3+2 + 4+1 = 10.
 
-`orchestrator-claude.jsonl`, session sess-orch-1: boundary `planning` at 09:30
+`orchestrator-claude.jsonl`, session sess-orch-1, with the claude-code record
+(without it all five counters are unavailable): boundary `planning` at 09:30
 covers 09:10 and 09:20: 2 calls, input 12, cache-write 24, cache-read 36,
 output 48. Boundary `implementation` at 10:00 covers 09:40 and 09:50, whose
 records carry no cache-creation field: 2 calls, input 11, cache-write

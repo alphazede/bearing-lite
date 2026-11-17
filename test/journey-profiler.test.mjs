@@ -41,14 +41,18 @@ function tempRoot(t) {
 
 const journeys = (...names) => names.flatMap((n) => ["--journey", fx(n)]);
 const hostLog = (harness, file) => ["--host-log", `${harness}=${fx(file)}`];
+// DEC-57: a host is qualified only by an explicit record whose controlled-session totals match host_reported.
+const qual = (harness, file) => ["--host-qualification", `${harness}=${fx(file)}`];
+const CLAUDE = [...hostLog("claude-code", "claude-code.jsonl"), ...qual("claude-code", "qualification-claude-code.json")];
+const CODEX = [...hostLog("codex", "codex.jsonl"), ...qual("codex", "qualification-codex.json")];
 const BASE_INPUTS = [
   ...journeys("journey-alpha.json", "journey-beta.json"),
   "--events", fx("events.jsonl"),
   "--receipt", fx("receipt-reviewer.json"),
 ];
 const ALL_HOSTS = [
-  ...hostLog("claude-code", "claude-code.jsonl"),
-  ...hostLog("codex", "codex.jsonl"),
+  ...CLAUDE,
+  ...CODEX,
   ...UNQUALIFIED.flatMap((h) => hostLog(h, "other-host.jsonl")),
 ];
 
@@ -102,7 +106,7 @@ function filesIn(dir) {
 
 describe("journey profiler: join labels and aggregation (B30-104, B30-106, SM01.T2-T5, F01)", () => {
   it("labels and totals every Claude Code cell against the hand totals", (t) => {
-    const p = profile(t, [...BASE_INPUTS, ...hostLog("claude-code", "claude-code.jsonl")]).json;
+    const p = profile(t, [...BASE_INPUTS, ...CLAUDE]).json;
     assert.equal(p.hosts["claude-code"].status, "qualified");
 
     const bound = oneRow(p, { harness: "claude-code", model: "model-a" });
@@ -131,7 +135,7 @@ describe("journey profiler: join labels and aggregation (B30-104, B30-106, SM01.
   });
 
   it("reports elapsed, owner wait and idle time per journey, unavailable where not exposed", (t) => {
-    const p = profile(t, [...BASE_INPUTS, ...hostLog("claude-code", "claude-code.jsonl")]).json;
+    const p = profile(t, [...BASE_INPUTS, ...CLAUDE]).json;
     const alpha = journeyRow(p, "jrn-alpha").metrics;
     assert.equal(num(alpha.elapsed_time, "alpha elapsed"), 6300);
     assert.equal(num(alpha.owner_wait_time, "alpha owner wait"), 900, "union of overlapping blocked intervals, seconds");
@@ -144,12 +148,12 @@ describe("journey profiler: join labels and aggregation (B30-104, B30-106, SM01.
   });
 
   it("computes cohort ratios from attributed usage only and marks zero denominators unavailable (F02)", (t) => {
-    const p = profile(t, [...BASE_INPUTS, ...hostLog("claude-code", "claude-code.jsonl")]).json;
+    const p = profile(t, [...BASE_INPUTS, ...CLAUDE]).json;
     assert.equal(num(p.cohort.tokens_per_completed_journey, "per completed journey"), 1727);
     assert.equal(num(p.cohort.tokens_per_integrated_slice, "per integrated slice"), 863.5);
 
     const betaOnly = profile(t, [...journeys("journey-beta.json"), "--events", fx("events.jsonl"),
-      ...hostLog("claude-code", "claude-code.jsonl")]).json;
+      ...CLAUDE]).json;
     assertUnavailable(betaOnly.cohort.tokens_per_completed_journey, "no completed journey");
     assertUnavailable(betaOnly.cohort.tokens_per_integrated_slice, "no merged slice");
   });
@@ -159,7 +163,7 @@ describe("journey profiler: join labels and aggregation (B30-104, B30-106, SM01.
     const merge = events.trim().split("\n").map(JSON.parse).find((event) => event.event_id === "ev-2");
     const file = path.join(tempRoot(t), "events.jsonl");
     writeFileSync(file, events + JSON.stringify({ ...merge, journey: "jrn-beta", event_id: "ev-beta-1" }) + "\n");
-    const p = profile(t, [...BASE_INPUTS, "--events", file, ...hostLog("claude-code", "claude-code.jsonl")]).json;
+    const p = profile(t, [...BASE_INPUTS, "--events", file, ...CLAUDE]).json;
     assert.equal(num(p.cohort.tokens_per_integrated_slice, "α S1 and S2, β S1"), 1727 / 3);
   });
 
@@ -167,18 +171,18 @@ describe("journey profiler: join labels and aggregation (B30-104, B30-106, SM01.
     const receipt = JSON.parse(readFileSync(fx("receipt-reviewer.json"), "utf8"));
     const other = path.join(tempRoot(t), "receipt.json");
     writeFileSync(other, JSON.stringify({ ...receipt, stage: "planning" }));
-    const p = profile(t, [...BASE_INPUTS, "--receipt", other, ...hostLog("claude-code", "claude-code.jsonl")]).json;
+    const p = profile(t, [...BASE_INPUTS, "--receipt", other, ...CLAUDE]).json;
     const row = oneRow(p, { model: "model-a" });
     assert.deepEqual([row.attribution, row.journey, row.role, row.stage], ["unattributed", null, null, null]);
   });
 
   it("marks the owner-ask rate unavailable when no evaluated-decision record is supplied (B30-230)", (t) => {
-    const p = profile(t, [...BASE_INPUTS, ...hostLog("claude-code", "claude-code.jsonl")]).json;
+    const p = profile(t, [...BASE_INPUTS, ...CLAUDE]).json;
     assertUnavailable(p.owner_ask_rate, "owner ask rate without decisions");
   });
 
   it("prints every join label in the concise report and marks inferred usage as inference", (t) => {
-    const { report } = profile(t, [...BASE_INPUTS, ...hostLog("claude-code", "claude-code.jsonl")]);
+    const { report } = profile(t, [...BASE_INPUTS, ...CLAUDE]);
     for (const label of ["bound", "inferred", "unattributed"]) {
       assert.match(report, new RegExp(`\\b${label}\\b`), `report lacks ${label}`);
     }
@@ -186,7 +190,7 @@ describe("journey profiler: join labels and aggregation (B30-104, B30-106, SM01.
   });
 
   it("reports counts for each attribution label, including empty groups", (t) => {
-    const full = profile(t, [...BASE_INPUTS, ...hostLog("claude-code", "claude-code.jsonl")]);
+    const full = profile(t, [...BASE_INPUTS, ...CLAUDE]);
     assert.match(full.report, /Attribution rows: bound 1, inferred 1, unattributed 1\./);
     const empty = profile(t, BASE_INPUTS);
     assert.match(empty.report, /Attribution rows: bound 0, inferred 0, unattributed 0\./);
@@ -195,7 +199,7 @@ describe("journey profiler: join labels and aggregation (B30-104, B30-106, SM01.
 
 describe("journey profiler: host normalization and unavailable markers (B30-105, SM01.X2, SEIT-HOSTNORM-*)", () => {
   it("reports an observed zero cache-read total as measured", (t) => {
-    const p = profile(t, [...BASE_INPUTS, ...hostLog("claude-code", "claude-code-malformed.jsonl")]);
+    const p = profile(t, [...BASE_INPUTS, ...hostLog("claude-code", "claude-code-malformed.jsonl"), ...qual("claude-code", "qualification-claude-code.json")]);
     const row = oneRow(p.json, { model: "model-d" });
     assert.equal(num(row.metrics.cache_read_tokens, "observed cache reads"), 0);
     assert.equal(run(["validate", path.join(p.out, "profile.json")]).status, 0);
@@ -229,7 +233,7 @@ describe("journey profiler: host normalization and unavailable markers (B30-105,
   }
 
   it("validates its own output and rejects 0 or null in place of an unavailable marker", (t) => {
-    const { out, json } = profile(t, [...BASE_INPUTS, ...hostLog("claude-code", "claude-code.jsonl")]);
+    const { out, json } = profile(t, [...BASE_INPUTS, ...CLAUDE]);
     const file = path.join(out, "profile.json");
     assert.equal(run(["validate", file]).status, 0, "generated profile must be schema-valid");
 
@@ -245,7 +249,7 @@ describe("journey profiler: host normalization and unavailable markers (B30-105,
 
   const hasJsonschema = spawnSync("python3", ["-c", "import jsonschema"]).status === 0;
   it("agrees with an independent Draft 2020-12 validator", { skip: !hasJsonschema && "python3 jsonschema not installed" }, (t) => {
-    const { out, json } = profile(t, [...BASE_INPUTS, ...hostLog("claude-code", "claude-code.jsonl")]);
+    const { out, json } = profile(t, [...BASE_INPUTS, ...CLAUDE]);
     const check = (file) => spawnSync("python3", ["-I", "-c",
       "import json,sys,jsonschema;s=json.load(open(sys.argv[1]));jsonschema.Draft202012Validator.check_schema(s);" +
       "jsonschema.Draft202012Validator(s).validate(json.load(open(sys.argv[2])))", SCHEMA, file]).status;
@@ -254,6 +258,67 @@ describe("journey profiler: host normalization and unavailable markers (B30-105,
     const edited = path.join(out, "edited.json");
     writeFileSync(edited, JSON.stringify(json));
     assert.notEqual(check(edited), 0);
+  });
+});
+
+describe("journey profiler: host qualification from controlled-session records (SEIT-W1G-11-QUAL, B30-104, B30-105)", () => {
+  const BOTH_LOGS = [...hostLog("claude-code", "claude-code.jsonl"), ...hostLog("codex", "codex.jsonl")];
+
+  function assertNotQualified(p, harness, label) {
+    assert.deepEqual(p.hosts[harness], { status: "unavailable", reason: "host_not_qualified" }, `${label}: ${harness} host`);
+    const found = rows(p, { harness });
+    assert.ok(found.length > 0, `${label}: ${harness} rows are still listed`);
+    for (const row of found) for (const [k, m] of Object.entries(row.metrics)) assertUnavailable(m, `${label}: ${harness} ${k}`);
+  }
+
+  it("(a) never qualifies claude-code or codex by name alone", (t) => {
+    const p = profile(t, [...BASE_INPUTS, ...BOTH_LOGS]).json;
+    assertNotQualified(p, "claude-code", "no record");
+    assertNotQualified(p, "codex", "no record");
+  });
+
+  it("(b) qualifies claude-code from its exact record and reports the hand totals", (t) => {
+    const p = profile(t, [...BASE_INPUTS, ...BOTH_LOGS, ...qual("claude-code", "qualification-claude-code.json")]).json;
+    assert.deepEqual(p.hosts["claude-code"], { status: "qualified" });
+    const cells = [["model-a", 2, 1650, 11000], ["model-b", 2, 77, 33], ["model-c", 2, 25, 5]];
+    for (const [model, calls, fresh, cacheRead] of cells) {
+      const m = oneRow(p, { harness: "claude-code", model }).metrics;
+      assert.deepEqual([num(m.model_calls, model), num(m.fresh_tokens, model), num(m.cache_read_tokens, model)],
+        [calls, fresh, cacheRead], model);
+    }
+    assertNotQualified(p, "codex", "claude-code record only");
+  });
+
+  it("(c) leaves claude-code unavailable when host_reported differs by one token", (t) => {
+    const p = profile(t, [...BASE_INPUTS, ...BOTH_LOGS, ...qual("claude-code", "qualification-claude-code-1651.json")]).json;
+    assertNotQualified(p, "claude-code", "fresh_tokens 1651");
+  });
+
+  it("(d) qualifies only the harness whose record is supplied", (t) => {
+    const p = profile(t, [...BASE_INPUTS, ...BOTH_LOGS, ...qual("codex", "qualification-codex.json")]).json;
+    assert.deepEqual(p.hosts.codex, { status: "qualified" });
+    const codex = rows(p, { harness: "codex" });
+    const sum = (k) => codex.reduce((total, row) => total + num(row.metrics[k], `codex ${k}`), 0);
+    assert.deepEqual([sum("model_calls"), sum("fresh_tokens"), sum("cache_read_tokens")], [2, 800, 1000]);
+    assertNotQualified(p, "claude-code", "codex record only");
+  });
+
+  it("(d) does not let one harness's record qualify another", (t) => {
+    const p = profile(t, [...BASE_INPUTS, ...BOTH_LOGS, ...qual("codex", "qualification-claude-code.json")]).json;
+    assertNotQualified(p, "codex", "claude-code record passed for codex");
+    assertNotQualified(p, "claude-code", "record passed under another harness");
+  });
+
+  it("(e) turns a malformed record into a diagnostic and leaves claude-code unavailable", (t) => {
+    const before = profile(t, [...BASE_INPUTS, ...BOTH_LOGS]).json.diagnostics.map((d) => JSON.stringify(d));
+    const p = profile(t, [...BASE_INPUTS, ...BOTH_LOGS, ...qual("claude-code", "qualification-malformed.json")]);
+    assertNotQualified(p.json, "claude-code", "malformed record");
+    const added = p.json.diagnostics.filter((d) => !before.includes(JSON.stringify(d)));
+    assert.equal(added.length, 1, `expected one diagnostic for the record, got ${JSON.stringify(p.json.diagnostics)}`);
+    assert.ok(added[0].code && added[0].source, "diagnostic needs a code and a source pseudonym");
+    assertNoLeak({ "profile.json": p.bytes, "report.md": p.report, stdout: p.run.stdout, stderr: p.run.stderr },
+      ["qualification-malformed.json", FX], "malformed record");
+    assert.equal(run(["validate", path.join(p.out, "profile.json")]).status, 0);
   });
 });
 
@@ -267,7 +332,7 @@ describe("journey profiler: allowlist readers and trust boundary (B30-102, B30-1
   });
 
   it("records input hashes, never input paths (B30-109 reproducibility)", (t) => {
-    const p = profile(t, [...BASE_INPUTS, ...hostLog("claude-code", "claude-code.jsonl")]).json;
+    const p = profile(t, [...BASE_INPUTS, ...CLAUDE]).json;
     const hashes = new Set(p.inputs.map((i) => i.sha256));
     for (const name of ["journey-alpha.json", "journey-beta.json", "events.jsonl", "receipt-reviewer.json", "claude-code.jsonl"]) {
       assert.ok(hashes.has(sha256(readFileSync(fx(name)))), `input hash missing for ${name}`);
@@ -275,7 +340,7 @@ describe("journey profiler: allowlist readers and trust boundary (B30-102, B30-1
   });
 
   it("turns a malformed record into a structured diagnostic without the raw line and keeps the rest", (t) => {
-    const p = profile(t, [...journeys("journey-alpha.json"), ...hostLog("claude-code", "claude-code-malformed.jsonl")]);
+    const p = profile(t, [...journeys("journey-alpha.json"), ...hostLog("claude-code", "claude-code-malformed.jsonl"), ...qual("claude-code", "qualification-claude-code.json")]);
     const diag = p.json.diagnostics.filter((d) => d.record_index === 2);
     assert.equal(diag.length, 1, `expected one diagnostic for line 2, got ${JSON.stringify(p.json.diagnostics)}`);
     assert.ok(diag[0].code && diag[0].source, "diagnostic needs a code and a source pseudonym");
@@ -296,15 +361,15 @@ describe("journey profiler: allowlist readers and trust boundary (B30-102, B30-1
   });
 
   it("leaves the previous profile intact when a run fails (F02 failure recovery)", (t) => {
-    const p = profile(t, [...BASE_INPUTS, ...hostLog("claude-code", "claude-code.jsonl")]);
-    const r = run(["profile", ...BASE_INPUTS, ...hostLog("claude-code", "claude-code.jsonl"), "--as-of", "yesterday", "--out", p.out]);
+    const p = profile(t, [...BASE_INPUTS, ...CLAUDE]);
+    const r = run(["profile", ...BASE_INPUTS, ...CLAUDE, "--as-of", "yesterday", "--out", p.out]);
     assert.notEqual(r.status, 0, "a malformed --as-of must fail");
     assert.equal(readFileSync(path.join(p.out, "profile.json"), "utf8"), p.bytes);
     assert.equal(readFileSync(path.join(p.out, "report.md"), "utf8"), p.report);
   });
 
   it("keeps the previous profile when the report path cannot be replaced", (t) => {
-    const p = profile(t, [...BASE_INPUTS, ...hostLog("claude-code", "claude-code.jsonl")]);
+    const p = profile(t, [...BASE_INPUTS, ...CLAUDE]);
     const report = path.join(p.out, "report.md");
     rmSync(report);
     mkdirSync(report);
@@ -341,8 +406,9 @@ describe("journey profiler: opt-in and no model calls (B30-110, SM01.T1, SM01.X1
 });
 
 describe("journey profiler: stage-boundary Orchestrator usage (B30-131)", () => {
-  const boundary = (record, journey, stage, at) => run(["stage-boundary", "--journey", fx(journey), "--stage", stage, "--at", at,
-    "--session", "sess-orch-1", ...hostLog("claude-code", "orchestrator-claude.jsonl"), "--record", record]);
+  const boundary = (record, journey, stage, at, qualification = qual("claude-code", "qualification-claude-code.json")) =>
+    run(["stage-boundary", "--journey", fx(journey), "--stage", stage, "--at", at,
+      "--session", "sess-orch-1", ...hostLog("claude-code", "orchestrator-claude.jsonl"), ...qualification, "--record", record]);
 
   it("records call count and token counters per boundary, unavailable where the host omits one", (t) => {
     const record = path.join(tempRoot(t), "lifecycle.json");
@@ -362,6 +428,19 @@ describe("journey profiler: stage-boundary Orchestrator usage (B30-131)", () => 
 
     assertNoLeak({ "lifecycle record": text }, [...CANARIES, "sess-orch-1", "/work/plan"], "stage boundary");
     assert.equal(sha256(readFileSync(fx("journey-alpha.json"))), before, "journey input must stay read-only");
+  });
+
+  it("reports the five Orchestrator counters only with the exact claude-code record (SEIT-W1G-11-QUAL)", (t) => {
+    const keys = ["model_calls", "input_tokens", "cache_write_tokens", "cache_read_tokens", "output_tokens"];
+    const counters = (qualification) => {
+      const record = path.join(tempRoot(t), "lifecycle.json");
+      assert.equal(boundary(record, "journey-alpha.json", "planning", "2026-11-10T09:30:00Z", qualification).status, 0);
+      return JSON.parse(readFileSync(record, "utf8")).stage_boundaries[0].orchestrator;
+    };
+    const without = counters([]);
+    for (const k of keys) assertUnavailable(without[k], `no record ${k}`);
+    const qualified = counters(qual("claude-code", "qualification-claude-code.json"));
+    assert.deepEqual(keys.map((k) => num(qualified[k], `record ${k}`)), [2, 12, 24, 36, 48]);
   });
 
   it("records nothing for a journey without the profiler flag", (t) => {
@@ -407,7 +486,7 @@ describe("journey profiler: staged sanitized export (B30-112, B30-123, SM01.T6, 
   });
 
   it("rejects a role, stage, or coverage reason outside the public codes", (t) => {
-    const p = profile(t, [...BASE_INPUTS, ...hostLog("claude-code", "claude-code.jsonl")]);
+    const p = profile(t, [...BASE_INPUTS, ...CLAUDE]);
     const base = JSON.parse(p.bytes);
     const cases = [
       ["role", "private-route", (doc) => { doc.usage.find((row) => row.role === "reviewer").role = "private-route"; }],
@@ -431,7 +510,7 @@ describe("journey profiler: staged sanitized export (B30-112, B30-123, SM01.T6, 
   });
 
   it("uses the same export-local alias for a journey and its participation", (t) => {
-    const p = profile(t, [...BASE_INPUTS, ...hostLog("claude-code", "claude-code.jsonl")]);
+    const p = profile(t, [...BASE_INPUTS, ...CLAUDE]);
     const out = path.join(tempRoot(t), "export");
     const result = run(["export", "--profile", path.join(p.out, "profile.json"), "--out", out]);
     assert.equal(result.status, 0, result.stderr);
