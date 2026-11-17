@@ -363,6 +363,17 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     assert.doesNotMatch(reviewer, /the coordinator then runs deterministic verification/);
   });
 
+  it("S09T migrated duties: the Implementation Orchestrator receives D1-D9 and D11 while the Coordinator stays available", () => {
+    // B30-218, B30-303, SEIT-SM04-T: receiving text lands before removal (DES-F09).
+    const coordinator = readFileSync(path.join(SKILLS_DIR, "coordinator", "SKILL.md"), "utf8");
+    const reviewer = readFileSync(path.join(SKILLS_DIR, "reviewer", "SKILL.md"), "utf8").replace(/\s+/g, " ");
+    const migration = path.join(LITE_REF_DIR, "coordinator-migration.md");
+    assert.equal(validateSkillDocument("coordinator", coordinator).ok, true, "Coordinator stays shipped in W3 (SM04.X1)");
+    assert.ok(existsSync(migration), "skills/bearing-lite/references/coordinator-migration.md must ship");
+    // D8: wave-boundary review dispatch is received by the Implementation Orchestrator.
+    assert.match(reviewer, /Implementation Orchestrator[^.]*\bwave\b/);
+  });
+
   it("each skill frontmatter name equals directory and description is present", () => {
     for (const name of skillDirs) {
       const text = readFileSync(path.join(SKILLS_DIR, name, "SKILL.md"), "utf8");
