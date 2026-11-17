@@ -551,7 +551,12 @@ function checkWaveRecord(wave, { expectedDigest, isLatest, stage = "final", dir,
     const closing = wave.closing_candidate;
     if (!sameCandidate(closing, closing) || closing.candidate_digest !== wave.candidate_digest) {
       push({ code: "planning_wave_candidate_mismatch", recorded: closing ?? null, actual: expectedDigest });
-    } else if (Array.isArray(wave.sessions) && planningSessionsVerdict(wave, closing, isLatest ? inputDigests : wave.input_digests)) {
+    } else if (Array.isArray(wave.sessions) && planningSessionsVerdict(
+      wave,
+      closing,
+      isLatest ? inputDigests : wave.input_digests,
+      { requireSnapshot: isLatest || correctionId !== null || wave.input_digests !== undefined },
+    )) {
       push({ code: "planning_wave_sessions_incomplete" });
     }
     return findings;
