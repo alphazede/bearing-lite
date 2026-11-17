@@ -20,4 +20,7 @@ publication authority.
 Release disposable wave outputs after their consumers finish; retain integration
 inputs until the Orchestrator accepts the handoff, giving each retained path an
 owner, a reason, and a release event. Do not remove another wave's files, and a
-child `COMPLETE` is not permission to delete integration evidence.
+child `COMPLETE` is not permission to delete integration evidence. The
+Orchestrator guarantees cleanup by running the storage `recover` command in
+finally, cancellation, and restart paths (see
+`../../bearing-lite/references/storage-lifecycle.md`).
