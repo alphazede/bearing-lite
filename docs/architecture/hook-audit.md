@@ -22,8 +22,8 @@ for the same `orchestrator-write-lock.cjs` module, not a new hook.
 - **keep** — hard enforcement or standing advisory whose removal would
   drop a contract-covered protection. No tenant is harmed by an `allow`.
 - **quiet-unless-gated** — silent when the gate is false; speaks only
-  context (or, for TE denies, blocks exactly once; a re-fired stop is
-  silent). The gate is named in the row.
+  context (or, for TE denies, blocks; a re-fired stop re-evaluates, except
+  on Copilot where it is silent). The gate is named in the row.
 - **drop** — unused on every host. **None.** Every registered hook
   enforces behavior pinned by a test or contract below; dropping any
   one would remove a shipped protection, so no drop is taken in this
@@ -42,10 +42,10 @@ for the same `orchestrator-write-lock.cjs` module, not a new hook.
    sends `loop_count` ≥ 1 on a stop re-fired after a real follow-up.
    `hooks/com.anthropic.claude-code/host.cjs` and `hooks/git-sync.cjs`
    now stay quiet there, matching the existing `stop_hook_active` rule.
-3. **TE stop re-entry was Copilot-only; extended to every native host.**
-   `hooks/te-host.cjs` now returns quiet success on `stop_hook_active`
-   for Claude Code, Codex, and Grok Build too, so a completion deny
-   cannot loop on those hosts either.
+3. **TE stop re-entry stays Copilot-only.** `hooks/te-host.cjs` returns
+   quiet success on `stop_hook_active` only for Copilot. On Claude Code,
+   Codex, and Grok Build the blocking completion gate re-evaluates on a
+   re-fired stop, so stopping twice cannot skip the completion check.
 
 ## Rows
 
@@ -58,9 +58,9 @@ for the same `orchestrator-write-lock.cjs` module, not a new hook.
 | `hooks/te-host.cjs` | `PreToolUse` | keep | deny only when test-engineering is selected/required; fail-open otherwise | `te_test_write`: a test-file write without a TE method denies | `test/te-hook-contract.test.mjs`, `test/hook-resilience.test.mjs` | Capability resolve + evaluator against the real Git candidate state |
 | `hooks/orchestrator-write-lock.cjs` | `PreToolUse` | keep | enforced for the explicitly bound task; ordinary writes allow | Specialist requirements/SEIT stay author-owned; frozen review/repair transitions | `test/orchestrator-write-lock.test.mjs`, `test/reviewer-repair-write-lock.test.mjs` | Plan/state read; deny JSON on violation |
 | `hooks/com.anthropic.claude-code/host.cjs` | `Stop` | quiet-unless-gated | bound task only; second stop (`stop_hook_active`) and Cursor `loop_count` silent; never blocks or continues | Closeout advisory: `handoff_complete` / `handoff_incomplete` checklist; Cursor keeps it as `additional_context`, other wires omit it | `test/host-mapping.test.mjs`, `test/cursor-stop.test.mjs`, `test/hook-quiet.test.mjs` | Same bounded scan + closeout evaluator |
-| `hooks/te-host.cjs` | `Stop` | keep | hard completion deny; allow prints `{}`; re-entry silent on every native host | `te_completion`: completion without a receipt denies exactly once | `test/te-hook-contract.test.mjs`, `test/hook-quiet.test.mjs` | Evaluator on stop only when TE is active |
+| `hooks/te-host.cjs` | `Stop` | keep | hard completion deny; allow prints `{}`; re-entry quiet on Copilot only, re-evaluates on native hosts | `te_completion`: completion without a receipt denies | `test/te-hook-contract.test.mjs`, `test/hook-quiet.test.mjs` | Evaluator on stop only when TE is active |
 | `hooks/git-sync.cjs` | `Stop` | quiet-unless-gated | bound task **and** actionable Git facts; silent when current, outside a checkout, or on re-entry | Fast-forward-only sync plus an attention list; never merges, rebases, pushes, or blocks | `test/git-sync.test.mjs`, `test/hook-quiet.test.mjs` | `git fetch` + rev ops, bound stops only, 10 s per command |
-| `hooks/te-host.cjs` | `SubagentStop` | keep | hard child-stop deny; allow prints `{}`; re-entry silent | `te_completion` at child stop | `test/te-hook-contract.test.mjs` | Evaluator on child stop only when TE is active |
+| `hooks/te-host.cjs` | `SubagentStop` | keep | hard child-stop deny; allow prints `{}`; re-entry quiet on Copilot only | `te_completion` at child stop | `test/te-hook-contract.test.mjs` | Evaluator on child stop only when TE is active |
 
 ### `hooks/com.cursor/hooks.json` — Cursor
 
@@ -87,8 +87,8 @@ Cursor registers no `te-host` stop hook (no hard completion deny there;
 | `hooks/assurance-dispatch.cjs` `--host=copilot` | `PreToolUse` | keep | bound barrier; `permissionDecision: deny` wire | Bound assurance reservation | `test/assurance-dispatch.test.mjs` | Task-record read |
 | `hooks/te-host.cjs` `--host=copilot` | `PreToolUse` | keep | write-time deny when TE is active | `te_test_write` on Copilot | `test/te-hook-contract.test.mjs` | Evaluator on writes when TE is active |
 | `hooks/com.anthropic.claude-code/host.cjs` | `Stop` | quiet-unless-gated | bound task only; `stop_hook_active` silent; advisory omitted on this wire | Closeout advisory (BLOCK-only closeout would be the sole continue) | `test/host-mapping.test.mjs`, `test/hook-quiet.test.mjs` | Bounded scan + evaluator |
-| `hooks/te-host.cjs` `--host=copilot` | `Stop` | keep | `Stop` nested deny; re-entry silent | `te_completion` on Copilot | `test/te-hook-contract.test.mjs`, `test/hook-quiet.test.mjs` | Evaluator when TE is active |
-| `hooks/te-host.cjs` `--host=copilot` | `SubagentStop` | keep | top-level deny; re-entry silent | Child-stop completion deny | `test/te-hook-contract.test.mjs` | Evaluator when TE is active |
+| `hooks/te-host.cjs` `--host=copilot` | `Stop` | keep | `Stop` nested deny; re-entry quiet (Copilot-only) | `te_completion` on Copilot | `test/te-hook-contract.test.mjs`, `test/hook-quiet.test.mjs` | Evaluator when TE is active |
+| `hooks/te-host.cjs` `--host=copilot` | `SubagentStop` | keep | top-level deny; re-entry quiet (Copilot-only) | Child-stop completion deny | `test/te-hook-contract.test.mjs` | Evaluator when TE is active |
 
 Copilot registers no orchestrator write-lock and no git-sync; the
 documented fallback is procedural plus `write_lock: absent` on
@@ -110,8 +110,10 @@ skill-copy. That is an absence, not a drop.
 - Nothing-to-do is silent: unbound stops, a current git checkout, and
   anything outside a checkout all print an empty object (git-sync
   prints nothing at all).
-- A second stop is silent: `stop_hook_active` on Claude Code, Codex,
-  Grok Build, and Copilot; `loop_count` ≥ 1 on Cursor after a real
-  follow-up.
+- A second advisory stop is silent: `stop_hook_active` on Claude Code,
+  Codex, Grok Build, and Copilot; `loop_count` ≥ 1 on Cursor after a real
+  follow-up. The TE completion gate is the exception: on Claude Code,
+  Codex, and Grok Build a re-fired stop re-evaluates; only Copilot
+  re-entry is quiet.
 
 This audit adds no new hook: manifests and registrations are unchanged.

@@ -144,8 +144,9 @@ through `hookSpecificOutput.permissionDecision`. Copilot `Stop` denies through
 `hookSpecificOutput` with `hookEventName` `Stop`, `decision` `block`, and
 `reason`. Copilot `SubagentStop` denies through a top-level `decision` block
 and `reason`. `Stop` and `SubagentStop` carry `stop_hook_active`; a true
-re-entry terminates as quiet success so a deny cannot loop, on Copilot and on
-every native TE host (Claude Code, Codex, Grok Build). Cursor instead signals a
+re-entry terminates as quiet success so a deny cannot loop, on Copilot only.
+On Claude Code, Codex, and Grok Build the completion gate re-evaluates on
+a re-fired stop. Cursor instead signals a
 stop re-entry after a real follow-up with `loop_count` ≥ 1; closeout and
 git-sync stay quiet there too. Transition-order,
 protected-action and planning-review stay procedural; bound assurance dispatch is registered separately below.
@@ -221,7 +222,6 @@ recorded later at the integrated owner review.
 | `ADVISE`, `REROUTE`, `UNAVAILABLE` on activation or an explicitly bound current-task first-pass Stop | `hookSpecificOutput.additionalContext` | always `0` |
 | Stop/SubagentStop re-entry (`stop_hook_active`) | quiet success (empty JSON; no `additionalContext`) | always `0` |
 | Cursor `stop` re-entry (`loop_count` ≥ 1 after a real follow-up) | quiet success (empty JSON; no `additional_context`) | always `0` |
-| Stop/SubagentStop re-entry (`stop_hook_active`) on any native TE host | quiet success (empty JSON; a deny cannot loop) | always `0` |
 | Stop/SubagentStop with no current task binding | quiet success (empty JSON; no `additionalContext`) | always `0` |
 | first-pass Stop/SubagentStop with an explicitly bound current task | `hookSpecificOutput.additionalContext` | always `0` |
 | `BLOCK` | JSON `decision: "block"` only; this mapping never requests protected completion | always `0` |
