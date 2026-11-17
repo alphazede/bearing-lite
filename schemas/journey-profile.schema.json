@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/alphazede/bearing-lite/schemas/journey-profile.schema.json",
+  "title": "Bearing Lite journey profile",
+  "description": "Private opt-in journey profile. A missing host counter is the unavailable marker; a numeric value is a real measurement and is greater than zero.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["inputs", "hosts", "usage", "journeys", "cohort", "owner_ask_rate", "diagnostics"],
+  "$defs": {
+    "metric": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["value"],
+          "properties": {
+            "value": {"type": "number", "exclusiveMinimum": 0}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["value", "reason"],
+          "properties": {
+            "value": {"const": "unavailable"},
+            "reason": {"type": "string", "minLength": 1}
+          }
+        }
+      ]
+    },
+    "host": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status"],
+          "properties": {"status": {"const": "qualified"}}
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "reason"],
+          "properties": {
+            "status": {"const": "unavailable"},
+            "reason": {"type": "string", "minLength": 1}
+          }
+        }
+      ]
+    }
+  },
+  "properties": {
+    "inputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["sha256"],
+        "properties": {"sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}
+      }
+    },
+    "hosts": {
+      "type": "object",
+      "additionalProperties": {"$ref": "#/$defs/host"}
+    },
+    "usage": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["journey", "attribution", "role", "stage", "model", "harness", "metrics"],
+        "properties": {
+          "journey": {"type": ["string", "null"]},
+          "attribution": {"enum": ["bound", "inferred", "unattributed"]},
+          "role": {"type": ["string", "null"]},
+          "stage": {"type": ["string", "null"]},
+          "model": {"type": ["string", "null"]},
+          "harness": {"type": "string", "minLength": 1},
+          "metrics": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["model_calls", "fresh_tokens", "cache_read_tokens"],
+            "properties": {
+              "model_calls": {"$ref": "#/$defs/metric"},
+              "fresh_tokens": {"$ref": "#/$defs/metric"},
+              "cache_read_tokens": {"$ref": "#/$defs/metric"}
+            }
+          }
+        }
+      }
+    },
+    "journeys": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["journey", "metrics"],
+        "properties": {
+          "journey": {"type": "string", "minLength": 1},
+          "metrics": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["elapsed_time", "owner_wait_time", "agent_idle_time"],
+            "properties": {
+              "elapsed_time": {"$ref": "#/$defs/metric"},
+              "owner_wait_time": {"$ref": "#/$defs/metric"},
+              "agent_idle_time": {"$ref": "#/$defs/metric"}
+            }
+          }
+        }
+      }
+    },
+    "cohort": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tokens_per_integrated_slice", "tokens_per_completed_journey"],
+      "properties": {
+        "tokens_per_integrated_slice": {"$ref": "#/$defs/metric"},
+        "tokens_per_completed_journey": {"$ref": "#/$defs/metric"}
+      }
+    },
+    "owner_ask_rate": {"$ref": "#/$defs/metric"},
+    "diagnostics": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source", "record_index", "code"],
+        "properties": {
+          "source": {"type": "string", "minLength": 1},
+          "record_index": {"type": "integer", "minimum": 1},
+          "code": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}
