@@ -904,9 +904,22 @@ describe("renderer invocation identity (#182)", () => {
 });
 
 function contentProjection(html) {
-  const source = String(html).replace(/<style[\s\S]*?<\/style>/gi, "");
+  let source = String(html);
+  let previous;
+  do {
+    previous = source;
+    source = source.replace(/<style[\s\S]*?<\/style>/gi, "");
+  } while (source !== previous);
   const visible = source.replace(/<img\b[^>]*>/gi, "");
-  const textOf = (value) => value.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+  const textOf = (value) => {
+    let text = value;
+    let before;
+    do {
+      before = text;
+      text = text.replace(/<[^>]+>/g, "");
+    } while (text !== before);
+    return text.replace(/\s+/g, " ").trim();
+  };
   return {
     headings: [...visible.matchAll(/<h[1-3]\b[^>]*>([\s\S]*?)<\/h[1-3]>/gi)].map((m) => textOf(m[1])),
     rows: [...visible.matchAll(/<tr\b[\s\S]*?<\/tr>/gi)].map((m) =>
