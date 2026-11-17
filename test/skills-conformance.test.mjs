@@ -31,7 +31,7 @@ const ACTIVE_ROLES = [
   "integration-engineer",
   "onboard-bearing",
 ];
-const COMPATIBILITY_ROLES = [];
+const COMPATIBILITY_ROLES = ["orchestrator"];
 const PACKAGED_UTILITIES = ["prompt"];
 const REQUIRED_CATALOG = [ROUTER, ...PLANNING, ...ACTIVE_ROLES];
 const RETIRED_SOURCE_SKILLS = [
