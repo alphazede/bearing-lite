@@ -445,3 +445,11 @@ for (const variant of ['unlaunched', 'reserved', 'narrow', 'other-candidate']) t
     assert.equal(denied(run(f, envelope(f, 'close'))), false, 'completed review group permits deterministic closure');
   }
 });
+
+test('229 nonexistent or unreadable cwd with no binding is ordinary unbound work', t => {
+  const nonexistent = path.join(tmpdir(), `nonexistent-bl-229-${process.pid}-${process.hrtime.bigint()}`);
+  const r = run({ dir: ROOT }, { hook_event_name: 'PreToolUse', tool_name: 'Bash', tool_input: { command: 'true' }, cwd: nonexistent });
+  assert.equal(r.detail.outcome, 'INACTIVE');
+  assert.equal(r.detail.reason, 'ordinary_unbound_work');
+  assert.deepEqual(r.wire, {});
+});
