@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/alphazede/bearing-lite/schemas/handoff.schema.json",
+  "title": "Bearing Lite compiled handoff",
+  "description": "Derived projection of frozen records. Digests and write_set are copies. This schema grants no path and is not a second authority source.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "outcome",
+    "identity",
+    "write_set",
+    "expected_files",
+    "route",
+    "capabilities",
+    "commands",
+    "acceptance",
+    "sections",
+    "text"
+  ],
+  "$defs": {
+    "hop": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["harness", "model", "reasoning"],
+      "properties": {
+        "harness": {"type": "string", "minLength": 1},
+        "model": {"type": "string", "minLength": 1},
+        "reasoning": {"type": "string", "minLength": 1}
+      }
+    }
+  },
+  "properties": {
+    "outcome": {"const": "PACKET_READY"},
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "slice",
+        "wave",
+        "role",
+        "candidate_revision",
+        "authority_id",
+        "authority_sha256",
+        "binding_sha256",
+        "implementation_sha256"
+      ],
+      "properties": {
+        "slice": {"type": "string", "minLength": 1},
+        "wave": {"type": "string", "minLength": 1},
+        "role": {"type": "string", "minLength": 1},
+        "candidate_revision": {"type": "string", "minLength": 1},
+        "authority_id": {"type": "string", "minLength": 1},
+        "authority_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "binding_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "implementation_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    },
+    "write_set": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "expected_files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "inside_write_set"],
+        "properties": {
+          "path": {"type": "string", "minLength": 1},
+          "inside_write_set": {"type": "boolean"}
+        }
+      }
+    },
+    "route": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled", "primary", "ordered_fallbacks"],
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "primary": {"$ref": "#/$defs/hop"},
+        "ordered_fallbacks": {"type": "array", "items": {"$ref": "#/$defs/hop"}},
+        "cadence": {"type": "string", "minLength": 1}
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["review", "deterministic_verification"],
+      "properties": {
+        "review": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["coverage_assist", "ocr_execution_mode"],
+          "properties": {
+            "coverage_assist": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["enabled", "required"],
+              "properties": {
+                "enabled": {"type": "boolean"},
+                "required": {"type": "boolean"}
+              }
+            },
+            "ocr_execution_mode": {"type": "string", "minLength": 1}
+          }
+        },
+        "deterministic_verification": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["reverify"],
+          "properties": {
+            "reverify": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["enabled"],
+              "properties": {
+                "enabled": {"type": "boolean"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "commands": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "command"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "command": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "acceptance": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "pass_fail_rule", "observable_evidence"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "pass_fail_rule": {"type": "string", "minLength": 1},
+          "observable_evidence": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "sections": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "prefixItems": [
+        {"type": "object", "additionalProperties": false, "required": ["title", "body"], "properties": {"title": {"const": "ROLE / SESSION"}, "body": {"type": "string", "minLength": 1}}},
+        {"type": "object", "additionalProperties": false, "required": ["title", "body"], "properties": {"title": {"const": "STATE / INPUTS"}, "body": {"type": "string", "minLength": 1}}},
+        {"type": "object", "additionalProperties": false, "required": ["title", "body"], "properties": {"title": {"const": "OBJECTIVE / ACCEPTANCE"}, "body": {"type": "string", "minLength": 1}}},
+        {"type": "object", "additionalProperties": false, "required": ["title", "body"], "properties": {"title": {"const": "AUTHORITY"}, "body": {"type": "string", "minLength": 1}}},
+        {"type": "object", "additionalProperties": false, "required": ["title", "body"], "properties": {"title": {"const": "LOOP"}, "body": {"type": "string", "minLength": 1}}},
+        {"type": "object", "additionalProperties": false, "required": ["title", "body"], "properties": {"title": {"const": "VERIFY"}, "body": {"type": "string", "minLength": 1}}},
+        {"type": "object", "additionalProperties": false, "required": ["title", "body"], "properties": {"title": {"const": "RETURN / STOP"}, "body": {"type": "string", "minLength": 1}}}
+      ],
+      "items": false
+    },
+    "text": {"type": "string", "minLength": 1}
+  }
+}
