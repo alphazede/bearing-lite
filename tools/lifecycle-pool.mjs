@@ -136,12 +136,16 @@ function withLock(fn) {
   const lockDir = path.join(pool, ".lock");
   const holderFile = path.join(lockDir, "holder.json");
   for (let attempt = 0; attempt < 200; attempt++) {
+    let acquired = false;
     try {
       mkdirSync(lockDir);
+      acquired = true;
       try { writeFileSync(holderFile, JSON.stringify({ pid: process.pid, ts: Date.now() })); } catch { /* lock still held */ }
-      try { return fn(); } finally { rmSync(lockDir, { recursive: true, force: true }); }
     } catch (e) {
       if (e.code !== "EEXIST") throw e;
+    }
+    if (acquired) {
+      try { return fn(); } finally { rmSync(lockDir, { recursive: true, force: true }); }
     }
     let holder = null;
     try { if (lstatSync(lockDir).isSymbolicLink()) rmSync(lockDir, { force: true }); } catch { continue; }
