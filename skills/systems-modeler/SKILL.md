@@ -33,10 +33,27 @@ models/views → recheck → return. Final Orchestrator design follows these inp
    report genuine missing inputs instead of creating a circular stage or new pass.
 3. Do not silently substitute Mermaid for mandated SysML. Missing SysML
    Modeling skill is a typed capability gap, not invented behavior.
+4. Supply each model as one `dod_manifest.models[]` entry the Orchestrator
+   copies unchanged. `id` is required. An activated model (`selected` or
+   `required`, and not not-applicable) also sets `digest` (`sha256:` plus the
+   hex of the view bytes) and `view`, or `views[0]` when `view` is absent:
+   `format` `svg` or `png` with `path` relative to `implementation.json`, or
+   `format` `svg` with `inline`. Set `mode`, `source`, `revision`, `viewpoint`
+   (the question the owner is judging), `trace`, `limitations`, `render_status`,
+   and view `alt`. Inactive (`selected` false and `required` false) or
+   not-applicable gives `reason` and no view.
+5. Close every finding. Fix it in your own models, or name its owner (a role
+   or an artifact) and a proposed fix. A finding that only restates a problem
+   is incomplete.
+6. Write for the owner who reads the views in the DoD Manifest. Plain English,
+   one claim per sentence. Cite `path:line` or a requirement ID. Do not restate
+   the source. Keep only what the owner needs to judge the view. Overlap among
+   systems engineering, test, and MBSE stays.
 
 ## Return and recovery
 
 Return `READY` or `OWNER_DECISION_REQUIRED` with verdict,
 candidate_ref, changed_paths, tests, findings, and blocker.
+Findings carry an id, an owner, a proposed fix or `closed`, and a source citation.
 
 Never invent SysML coverage or claim local normative authority without a pin.
