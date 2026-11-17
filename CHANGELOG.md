@@ -10,6 +10,10 @@
 - SEIT proof cases can record an optional `oracle_source` (derivation from production logic is rejected) and a `property_based` applicability decision. The Test Engineer evaluates property-based testing per claim, and assurance treats circular oracles and unrun property claims as gaps. ([PR #248](https://github.com/alphazede/bearing-lite/pull/248), closes [#154](https://github.com/alphazede/bearing-lite/issues/154))
 - When the frozen profile sets `assurance_repair.enabled`, the Assurance Test Engineer may make one bounded same-session repair of a proven test-side defect, reusing the Reviewer's repair transition. Deterministic verification decides afterwards; without the field, behavior is unchanged. ([PR #249](https://github.com/alphazede/bearing-lite/pull/249), closes [#243](https://github.com/alphazede/bearing-lite/issues/243))
 
+### Changed
+
+- CI: bump `actions/setup-node` and `actions/setup-python` to v7.1.0 and `github/codeql-action` to v4.39.1, all pinned by verified commit SHA. ([PR #230](https://github.com/alphazede/bearing-lite/pull/230))
+
 ### Fixed
 
 - The assurance-dispatch hook no longer denies every Bash call when the session working directory is missing or unreadable and no task binding resolved. Bound assurance stays fail-closed. ([PR #238](https://github.com/alphazede/bearing-lite/pull/238), fixes [#229](https://github.com/alphazede/bearing-lite/issues/229))
