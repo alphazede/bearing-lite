@@ -988,13 +988,23 @@ describe("SEIT-B30-524 content parity and artwork", () => {
   it("embeds Bearing artwork in the file and loads nothing from the network", () => {
     const dir = tempDir();
     const html = renderFile(writeFixture(dir, { dod_manifest: baseManifest({ models: [] }) })).html;
-    for (const name of ["bearing-title-mark.webp", "bearing-expedition-card.webp"]) {
+    const images = [...html.matchAll(/<img\b([^>]*)>/gi)].map((match) => Object.fromEntries(
+      [...match[1].matchAll(/\b([a-z-]+)="([^"]*)"/gi)].map((attr) => [attr[1], attr[2]]),
+    ));
+    const expected = [
+      ["bearing-title-mark.webp", "192", "192"],
+      ["bearing-expedition-card.webp", "1440", "810"],
+    ];
+    for (const [name, width, height] of expected) {
       const bytes = readFileSync(path.join(ROOT, "templates/assets", name));
       assert.ok(bytes.length > 0 && bytes.length <= 200 * 1024, name);
-      assert.equal(html.includes(`data:image/webp;base64,${bytes.toString("base64")}`), true, name);
+      const src = `data:image/webp;base64,${bytes.toString("base64")}`;
+      const image = images.find((item) => item.src === src);
+      assert.ok(image, name);
+      assert.equal(image.alt, "", name);
+      assert.equal(image.width, width, name);
+      assert.equal(image.height, height, name);
     }
-    assert.match(html, /<img class="mast-mark" src="data:image\/webp;base64,[^"]+" alt="" width="192" height="192">/);
-    assert.match(html, /<img class="mast-card" src="data:image\/webp;base64,[^"]+" alt="" width="1440" height="810">/);
     assert.equal(html.includes("<svg"), false);
     assert.equal(/https?:\/\//i.test(html), false);
     assert.equal(/<script|<link\b/i.test(html), false);
