@@ -44,7 +44,7 @@ const nonempty = (value) => typeof value === "string" && value.trim().length > 0
  * incomplete return stays a gap. Returns null when complete, else a typed
  * { outcome, reason }. Shared with plan-package.cjs.
  */
-function planningSessionsVerdict(wave, candidate, inputDigests) {
+function planningSessionsVerdict(wave, candidate, inputDigests, { requireSnapshot = true } = {}) {
   if (!wave || typeof wave !== "object") {
     return { outcome: "NEEDS_MORE_EVIDENCE", reason: "planning_sessions_incomplete" };
   }
@@ -65,14 +65,16 @@ function planningSessionsVerdict(wave, candidate, inputDigests) {
   }
   // An adoption preserves the source return; its consumed inputs must resolve
   // unchanged in the snapshot bound to the target candidate's manifest digest.
+  const validInputRow = (row) => nonempty(row?.path) && /^[0-9a-f]{64}$/.test(row?.sha256);
   const snapshotBound = Array.isArray(inputDigests) && inputDigests.length > 0 &&
-    inputDigests.every((row) => nonempty(row?.path) && /^[0-9a-f]{64}$/.test(row?.sha256)) &&
+    inputDigests.every(validInputRow) &&
     new Set(inputDigests.map((row) => row.path)).size === inputDigests.length &&
     crypto.createHash("sha256").update(inputDigests.map((row) => row.sha256).join("\n")).digest("hex") === candidate?.candidate_digest;
-  const adopted = (session) => snapshotBound && sameCandidate(session, session) &&
+  const adopted = (session) => sameCandidate(session, session) &&
     sameCandidate(session.adopted_to, candidate) && Array.isArray(session.inputs) &&
-    session.inputs.length > 0 && session.inputs.every((input) =>
-      inputDigests.some((row) => row.path === input?.path && row.sha256 === input?.sha256));
+    session.inputs.length > 0 && session.inputs.every(validInputRow) &&
+    (!requireSnapshot || (snapshotBound && session.inputs.every((input) =>
+      inputDigests.some((row) => row.path === input?.path && row.sha256 === input?.sha256))));
   const returned = declared.every((name) => {
     const session = sessions.find((item) => item?.session === name);
     return (
