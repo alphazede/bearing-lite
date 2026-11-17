@@ -451,3 +451,49 @@ describe("skills declare the planning wave without a mid-wave Requirements Engin
     assert.match(ie, /independent/);
   });
 });
+
+describe("B30-525 planning inputs stay out of the end-review repair (DEC-33)", () => {
+  const assembly = read("skills/bearing-lite/references/planning-assembly.md");
+  const loop = read("skills/planning-and-design/references/correction-loop.md");
+  const rule = assembly.slice(
+    assembly.indexOf("### Author-known deltas"),
+    assembly.indexOf("## Efficient task planning"),
+  );
+  const opening = loop.slice(0, loop.indexOf("\n1. "));
+
+  it("consumes a specialist finding and owner-added scope before assembly and spends the one repair only on the end review", () => {
+    assert.match(rule, /specialist finding on another author's artifact/);
+    assert.match(rule, /owner-added scope/);
+    assert.match(rule, /planning inputs/);
+    assert.match(rule, /consumes them before assembly/);
+    assert.match(rule, /start no review round/);
+    assert.match(rule, /repair allowance stays 1/);
+    assert.match(rule, /single end-of-planning review/);
+    assert.doesNotMatch(rule, /`requires_regate` and follows the correction loop/);
+    assert.match(opening, /only for the one repair of findings from the single\s+end-of-planning review/);
+    assert.match(opening, /owner-added scope/);
+    assert.match(opening, /planning inputs/);
+    assert.match(opening, /planning-assembly\.md#author-known-deltas-221/);
+
+    const { dir } = planPackage((doc, digest) => {
+      doc.journey_settings.planning_wave = unreviewedPlanningWave(digest, ["test_engineer"]);
+    });
+    assert.deepEqual(freeze(dir).findings, []);
+    const wave = JSON.parse(readFileSync(path.join(dir, "implementation.json"), "utf8")).journey_settings.planning_wave;
+    assert.equal(wave.reviews, 0);
+    assert.equal(wave.repairs, 0);
+
+    const endReview = (correction_rounds) => {
+      const input = JSON.parse(read("test/fixtures/correction-delta/round.json"));
+      input.after[1].text = "The receipt includes a unique identifier.";
+      input.findings.push({ uid: "REQ-2", finding_type: "requires_regate" });
+      return { ...input, correction_rounds };
+    };
+    const first = evaluateCorrectionDelta(endReview(0));
+    assert.equal(first.verdict, "REQUIRES_REGATE");
+    assert.equal(first.correction_rounds, 1);
+    const second = evaluateCorrectionDelta(endReview(first.correction_rounds));
+    assert.equal(second.verdict, "NEEDS_OWNER_DECISION");
+    assert.equal(second.correction_rounds, 1);
+  });
+});
