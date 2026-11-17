@@ -37,6 +37,10 @@ claim. Keep that gap visible; cost alone never cancels required proof or securit
 Never add brittle mocks, timing guesses, or production-only dependencies to
 make the workflow appear complete.
 
+Write every expectation from the allocated oracle source. Never reimplement
+the production algorithm or mirror production logic to compute the expected
+result; assert the observable behavior the oracle predicts.
+
 Use the existing evidence-driven correction bound. A flaky result needs
 a new causal hypothesis and deterministic signal; repeating it until green is
 not a repair. Retain all required reliability runs from the Test Engineer.

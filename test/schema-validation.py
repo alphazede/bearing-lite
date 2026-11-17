@@ -1157,6 +1157,32 @@ def cases() -> list[tuple[str, str, str, object, str]]:
         ("SEIT-EMV-021", "seit_proof_string_gate_seconds", "seit", complete_seit(
             proof_cases=[complete_proof(expected_gate_seconds="45")]
         ), "reject"),
+        # Optional oracle-source field: present validates, absent validates.
+        ("SEIT-EMV-021", "seit_proof_with_oracle_source", "seit", complete_seit(
+            proof_cases=[complete_proof(
+                oracle_source="Requirement REQ-SYN-001 text, independently worked example.")]
+        ), "accept"),
+        # Property-based applicability: applicable and justified
+        # non-applicable both validate; unknown applicability rejects.
+        ("SEIT-EMV-021", "seit_proof_applicable_property_based", "seit", complete_seit(
+            proof_cases=[complete_proof(property_based={
+                "applicability": "applicable",
+                "rationale": "Meaningful invariant over a large combinatorial domain.",
+                "invariant_source": "Requirement REQ-SYN-001",
+            })]
+        ), "accept"),
+        ("SEIT-EMV-021", "seit_proof_justified_nonapplicable_property_based", "seit", complete_seit(
+            proof_cases=[complete_proof(property_based={
+                "applicability": "not_applicable",
+                "rationale": "Fixed example covers the whole small input domain.",
+            })]
+        ), "accept"),
+        ("SEIT-EMV-021", "seit_proof_unknown_property_applicability", "seit", complete_seit(
+            proof_cases=[complete_proof(property_based={
+                "applicability": "mandatory",
+                "rationale": "Synthetic invalid applicability value.",
+            })]
+        ), "reject"),
         ("SEIT-EMV-021", "planning_repair_complete_seit_corpus", "seit", json.loads(
             (ROOT / "test/fixtures/planning-repair-package.json").read_text()
         )["seit"], "accept"),

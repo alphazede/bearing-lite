@@ -31,7 +31,7 @@ Integration Engineer execution assessment.
    Every case carries independently justified expectations per `references/verification-case.md`.
 2. Select methods, proof cases, commands, evidence, and pass/fail criteria. Map applicable enabled frozen `deterministic_verification.additional_tools` into SEIT commands with their pass rules and expected evidence; selection alone does not execute them.
    User-path cases reuse `references/real-app-verification.md`; invariant, ordering, safety, or exhaustive-input questions may use `references/formal-analysis.md`.
-   Reference registered requirements and preserve published-standard clauses.
+   Reference registered requirements and preserve published-standard clauses. Evaluate property-based applicability for each claim per `references/verification-case.md` and record the rationale.
    Every case meets `references/shared-machine-tests.md`: correct on a shared,
    loaded machine; engine-backed cases name `resource_group` and `expected_gate_seconds`.
 3. Define applicable deterministic claims and select Reverify only for applicable
@@ -45,7 +45,7 @@ Integration Engineer execution assessment.
 5. Assurance Test Engineer runs only when requested, in a fresh session without author ancestry, on the exact candidate; refuse an unconfigured slice or round boundary. VALIDATING belongs here.
    The Assurance Test Engineer independently reruns the gate-chain at the declared boundary for
    required claims and attaches `assurance` receipts; author gate-chain receipts are
-   diagnostic-only and cannot satisfy independent assurance.
+   diagnostic-only and cannot satisfy independent assurance. Reject as typed gaps, not PASS, expectations circularly derived from the candidate implementation, tests mirroring implementation logic, declared property claims not run, and invariants untied to a requirement, design, or standard source.
 6. Verify cited standards and clauses. Return the smallest missing proof and
    check the report against observed evidence. Preserve the candidate; do not
    weaken tests, repair product behavior, or infer user acceptance while evaluating.
