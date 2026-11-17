@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Opt-in native real-harness acceptance suite (`test/native/harness-acceptance.test.mjs`) and a versioned compatibility matrix (`docs/harness-compatibility.md`) that separates install, discovery, advisory and blocking evidence and labels unverified capabilities explicitly. ([PR #245](https://github.com/alphazede/bearing-lite/pull/245), closes [#92](https://github.com/alphazede/bearing-lite/issues/92))
+
 ### Fixed
 
 - The assurance-dispatch hook no longer denies every Bash call when the session working directory is missing or unreadable and no task binding resolved. Bound assurance stays fail-closed. ([PR #238](https://github.com/alphazede/bearing-lite/pull/238), fixes [#229](https://github.com/alphazede/bearing-lite/issues/229))
