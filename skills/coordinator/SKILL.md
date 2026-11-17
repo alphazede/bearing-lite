@@ -33,7 +33,7 @@ Planning belongs to the Planning Orchestrator, not this implementation-wave role
    packet within selected capacity; avoid overloaded slices/waves and tiny handoffs.
    Serialize only real dependencies, overlapping writes, or shared mutable resources;
    name the reason and resource. Never add an unselected role.
-   Own storage cleanup via node tools/lifecycle-pool.mjs per `../bearing-lite/references/storage-lifecycle.md`.
+   Own storage cleanup via `node <plugin root>/tools/lifecycle-pool.mjs` (installed plugin path) per `../bearing-lite/references/storage-lifecycle.md`.
 4. Inspect compact returns against acceptance and write sets. Integrate evidence
    without implementing; update implementation.json and the DoD Manifest once per
    wave, plus material owner-decision or blocker changes. Preserve unrelated work.

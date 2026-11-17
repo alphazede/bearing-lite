@@ -13,30 +13,59 @@ dirty or unmerged work. Report reclaimed space and named retention holds; a
 merged PR alone does not complete storage closeout. Keep this bounded to assigned
 paths, never a whole-workspace purge.
 
-## Tooling (tools/lifecycle-pool.mjs)
+## Tooling (lifecycle-pool.mjs)
 
-Routines, no daemon. The Orchestrator calls it; agents register outputs but
-are not the sole cleanup authority. Defaults: pool max 4 (concurrency bound),
-failed-diagnostic TTL 24h; both flags ride on every command.
+Routines, no daemon. Call `node <plugin root>/tools/lifecycle-pool.mjs`, where
+`<plugin root>` is the absolute directory of the installed plugin (the folder
+containing `tools/` and `plugin.json`). Never use a path relative to the
+consumer checkout; the tool ships with the plugin, not the consumer project.
+The Orchestrator calls it; agents register outputs but are not the sole cleanup
+authority. Defaults: pool max 4 (concurrency bound), failed-diagnostic TTL 24h.
 
-- `lease --pool P --repo R --owner O --branch B --worktree W --max N`:
-  exclusive lease file `P/leases/<owner>.json` (pid, ts, branch, worktree);
-  backpressure (`pool exhausted`) when active leases hit max. Branch is
-  created when missing and kept forever; only the worktree is removed later.
-- `release --pool P --owner O`: mark released; the lease stays until reclaimed.
-- `reclaim --pool P [--dry-run]`: removes released/stale worktrees whose branch
-  is merged, clean, unlocked and out of use. Refuses with the reason
-  (locked/dirty/unmerged/in-use); never `--force`. Stale = dead pid or ts
-  older than 7d. Prunes missing entries.
+- `lease --pool P --repo R --owner O --branch B --worktree W --max N`: exclusive
+  lease file `P/leases/<owner>.json` (pid, ts, branch, worktree); backpressure
+  (`pool exhausted`) when active worktree leases hit max. Branch is created when
+  missing and kept forever; only the worktree is removed later. Sequential
+  slices should use `--branch-only` (branch without a worktree); allocate a
+  worktree only when concurrency or filesystem isolation requires it.
+- `release --pool P --owner O [--no-reclaim]`: mark released, then reclaim the
+  worktree immediately when safe (clean, merged, unlocked). Refused reasons are
+  reported in the result and the record stays released. Repeated lease/release
+  cycles therefore leave no worktrees behind.
+- `reclaim --pool P [--dry-run] [--max-total-mb N] [--priority largest|oldest|newest]`:
+  removes released/stale worktrees whose actual checkout HEAD is merged into the
+  repo HEAD, clean, unlocked and out of use. Refuses with the reason
+  (locked/dirty/drift/unmerged/in-use); never `--force`. Stale means the recorded
+  pid is dead; elapsed age alone never reclaims a live owner. Records are kept
+  until safe reclamation succeeds. `--max-total-mb` (or `P/config.json` with
+  `maxTotalBytes` and `priority`) bounds total worktree bytes and picks victims
+  in priority order; others are reported as skipped.
 - `clean-artifacts --pool P --root R --owner O [--status success|failed]
-  [--extra a,b,c] [--dry-run]`: removes only exact disposable names
-  (`target`, `__pycache__`, `.pytest_cache`, `.coverage`, `htmlcov`,
-  `.ruff_cache`, `.mypy_cache`, `.hypothesis`, `CARGO_TARGET_DIR`, extras).
-  `--status failed` retains diagnostics newer than `--ttl-hours`. Refuses
-  symlink candidates; canonical containment per path. `node_modules`,
-  venvs, shared caches and similar-name user files are never touched.
-- `status --pool P`: active count, per-lease bytes, total reclaimed so far.
-- Audit: `P/audit.jsonl` per event (owner, action, bytes); totals derive from it.
+  [--extra a,b,c] [--registry file.json] [--evict-caches] [--dry-run]`: deletes
+  only discovered or registered disposable outputs inside a root covered by the
+  owner's lease (`target`, `__pycache__`, `.pytest_cache`, `.coverage`, `htmlcov`,
+  `.ruff_cache`, `.mypy_cache`, `.hypothesis`, `CARGO_TARGET_DIR`, registered
+  project outputs), including nested copies at any depth. The full plan is
+  validated before any mutation and each path component is re-verified before
+  each unlink. `--status failed` retains diagnostics newer than `--ttl-hours`.
+  `node_modules`, venvs, similar-name user files and reusable caches
+  (`incremental`/`deps` fingerprints, shared `CARGO_TARGET_DIR`) are preserved
+  unless `--evict-caches` is given. Unleased roots are refused.
+- `register --pool P --owner O --root R --path rel[,rel2]`: records project
+  outputs for later cleanup under the same ownership and containment checks.
+- `scan --pool P --repo R [--adopt] [--dry-run]`: inventories actual Git
+  worktrees against leases (orphan, missing, dirty, merged, bytes). Read-only
+  unless `--adopt`, which records orphan worktrees as released leases so
+  `recover` can reclaim them during migration.
+- `recover --pool P [--repo R] [--dry-run]`: runs safe reclamation and, with
+  `--repo`, reconciles actual worktrees against leases. The Orchestrator runs
+  it in finally, cancellation, and restart paths so cleanup is guaranteed.
+- `status --pool P`: active count, per-lease bytes, total worktree bytes, total
+  reclaimed so far. Audit: `P/audit.jsonl` per event (owner, action, bytes).
 
 `--dry-run` prints every path that would be removed and deletes nothing.
-Measure before tightening defaults: see test/lifecycle-pool.test.mjs fixtures.
+
+Measurements, observed by test/lifecycle-pool.test.mjs on 2026-11-17: reclaim
+frees exactly the worktree byte count; artifact cleanup frees exactly the
+deleted bytes; re-checkout costs one worktree add (observed 43 ms). Defaults
+are unchanged pending further measurement.
