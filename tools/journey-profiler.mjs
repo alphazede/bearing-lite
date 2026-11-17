@@ -11,7 +11,6 @@ import { fileURLToPath } from "node:url";
 const require = createRequire(import.meta.url);
 const { ownerWaitMetrics } = require("../hooks/owner-stops.cjs");
 const SCHEMA_PATH = fileURLToPath(new URL("../schemas/journey-profile.schema.json", import.meta.url));
-const QUALIFIED = new Set(["claude-code", "codex"]);
 const PUBLIC_ROLES = new Set([
   "coordinator", "fellow", "implementer", "integration-engineer", "light-implementer",
   "onboard-bearing", "orchestrator", "prompt", "reviewer", "scribe", "systems-modeler", "test-engineer",
@@ -261,7 +260,6 @@ function claudeCalls(records) {
       cache_read_tokens: presentNumber(usage, "cache_read_input_tokens"),
       output_tokens: output,
       fresh: [input, cacheWrite, output].every((part) => part !== undefined) ? input + cacheWrite + output : undefined,
-      qualified: true,
     });
   }
   return calls;
@@ -302,7 +300,6 @@ function codexCalls(records) {
       model,
       cache_read_tokens: cached,
       fresh,
-      qualified: true,
     });
   }
   return calls;
@@ -315,8 +312,48 @@ function unqualifiedCalls(records) {
     cwd: text(rec.cwd),
     branch: text(rec.gitBranch) ?? text(rec.branch),
     model: text(rec.model) ?? null,
-    qualified: false,
   }));
+}
+
+function readerTotals(calls) {
+  let fresh = 0;
+  let cacheRead = 0;
+  for (const call of calls) {
+    if (typeof call.fresh !== "number" || typeof call.cache_read_tokens !== "number") return;
+    fresh += call.fresh;
+    cacheRead += call.cache_read_tokens;
+  }
+  return [fresh, cacheRead];
+}
+
+function qualificationInputs(specs, diagnostics) {
+  const qualified = new Set();
+  const files = [];
+  specs.forEach((spec, index) => {
+    const [harness, recordFile] = splitHost(spec);
+    files.push(recordFile);
+    const source = `qualification-${index + 1}`;
+    let doc;
+    try {
+      doc = JSON.parse(readBytes(recordFile).toString("utf8"));
+    } catch (error) {
+      if (error.message === "unreadable_input") throw error;
+      diagnostics.push({ source, record_index: 1, code: "malformed_json" });
+      return;
+    }
+    if (doc === null || typeof doc !== "object" || Array.isArray(doc) || doc.harness !== harness) return;
+    const reported = doc.host_reported;
+    const wantFresh = finite(reported?.fresh_tokens);
+    const wantCache = finite(reported?.cache_read_tokens);
+    const logName = text(doc.controlled_session_log);
+    if (wantFresh === undefined || wantCache === undefined || !logName) return;
+    const logFile = path.resolve(path.dirname(recordFile), logName);
+    files.push(logFile);
+    const logDiagnostics = [];
+    const totals = readerTotals(hostCalls(harness, readJsonl(logFile, source, logDiagnostics)));
+    if (logDiagnostics.length === 0 && totals && totals[0] === wantFresh && totals[1] === wantCache) qualified.add(harness);
+  });
+  return { qualified, files };
 }
 
 function hostCalls(harness, records) {
@@ -398,7 +435,7 @@ function sumField(calls, key) {
   return total >= 0 ? num(total) : unavail("negative_counter");
 }
 
-function usageRows(calls, harness) {
+function usageRows(calls, harness, qualified) {
   const groups = new Map();
   for (const call of calls) {
     const key = JSON.stringify([call.attribution, call.journey, call.role, call.stage, call.model]);
@@ -407,7 +444,6 @@ function usageRows(calls, harness) {
     groups.set(key, group);
   }
   return [...groups.values()].map((group) => {
-    const qualified = QUALIFIED.has(harness) && group.calls.every((call) => call.qualified);
     return {
       journey: group.journey,
       attribution: group.attribution,
@@ -524,6 +560,7 @@ function profileCmd(bag) {
   const receiptFiles = many(bag, "receipt");
   const hostSpecs = many(bag, "host-log").map(splitHost);
   const diagnostics = [];
+  const { qualified, files: qualificationFiles } = qualificationInputs(many(bag, "host-qualification"), diagnostics);
   const events = eventFiles.flatMap((file, index) => readJsonl(file, `events-${index + 1}`, diagnostics).map(projectEvent));
   const receipts = receiptFiles.flatMap((file) => {
     const doc = readJson(file);
@@ -537,10 +574,10 @@ function profileCmd(bag) {
       ...call,
       ...attribute(call, leases, receipts),
     }));
-    usage.push(...usageRows(calls, harness));
-    hosts[harness] = QUALIFIED.has(harness) ? { status: "qualified" } : { status: "unavailable", reason: "host_not_qualified" };
+    usage.push(...usageRows(calls, harness, qualified.has(harness)));
+    hosts[harness] = qualified.has(harness) ? { status: "qualified" } : { status: "unavailable", reason: "host_not_qualified" };
   });
-  const inputs = [...journeyFiles, ...eventFiles, ...receiptFiles, ...hostSpecs.map(([, file]) => file)]
+  const inputs = [...journeyFiles, ...eventFiles, ...receiptFiles, ...hostSpecs.map(([, file]) => file), ...qualificationFiles]
     .map((file) => ({ sha256: createHash("sha256").update(readBytes(file)).digest("hex") }));
   diagnostics.sort((a, b) => a.source.localeCompare(b.source) || a.record_index - b.record_index);
   const profile = {
@@ -559,8 +596,8 @@ function profileCmd(bag) {
   emit(out, { "profile.json": body, "report.md": renderReport(profile) });
 }
 
-function orchestratorMetrics(calls, harness) {
-  if (harness !== "claude-code") {
+function orchestratorMetrics(calls, qualified) {
+  if (!qualified) {
     return {
       model_calls: unavail("host_not_qualified"),
       input_tokens: unavail("host_not_qualified"),
@@ -587,6 +624,7 @@ function stageCmd(bag) {
   const [harness, file] = splitHost(one(bag, "host-log"));
   const record = one(bag, "record");
   const stage = one(bag, "stage");
+  const { qualified } = qualificationInputs(many(bag, "host-qualification"), []);
   const calls = hostCalls(harness, readJsonl(file, "log-1", []));
   let existing = { stage_boundaries: [] };
   let previous = null;
@@ -598,7 +636,7 @@ function stageCmd(bag) {
   }
   const chosen = calls.filter((call) => call.host_session_id === session && call.time !== undefined
     && (previous === null || call.time > previous) && call.time <= end);
-  existing.stage_boundaries.push({ stage, at, orchestrator: orchestratorMetrics(chosen, harness) });
+  existing.stage_boundaries.push({ stage, at, orchestrator: orchestratorMetrics(chosen, qualified.has(harness)) });
   writeFileSync(record, `${canonicalize(existing)}\n`);
 }
 
