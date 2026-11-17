@@ -13,6 +13,7 @@
 ### Changed
 
 - CI: bump `actions/setup-node` and `actions/setup-python` to v7.1.0 and `github/codeql-action` to v4.39.1, all pinned by verified commit SHA. ([PR #230](https://github.com/alphazede/bearing-lite/pull/230))
+- Prompt packets let agents resolve routine prerequisite and adjacent-file work within the approved outcome, while preserving supplied owner, role, repository and contribution authority. Dependency or lockfile changes still need existing permission. ([PR #251](https://github.com/alphazede/bearing-lite/pull/251), replaces [#231](https://github.com/alphazede/bearing-lite/pull/231))
 
 ### Fixed
 
