@@ -1,9 +1,10 @@
 /**
  * #214 Orchestrator skill: discoverability alias with one canonical owner.
  * Matching: coordinate an approved multi-packet wave through its end
- * boundary dispatches Coordinator + Implementer (+ requested assurance only),
- * parented to the Orchestrator. Non-matching: one assigned packet stays
- * direct with the Implementer and no forced Coordinator.
+ * boundary; the Implementation Orchestrator owns the migrated wave duties
+ * (D1-D9, D11; S09T, B30-218) and a Coordinator runs only for a justified
+ * profile-enabled one-wave need while it still ships. Non-matching: one
+ * assigned packet stays direct with the Implementer and no forced Coordinator.
  *
  * Forward evidence is derived from the shipped SKILL text itself: match /
  * non-match clauses, dispatch and stop wording are read from
@@ -182,6 +183,14 @@ describe("orchestrator-skill #214", () => {
     assert.match(canon, /On resume, follow `references\/resume\.md` first/);
     assert.match(canon, /Return `READY`, `WAITING_ON`, `OWNER_DECISION_REQUIRED`, or `COMPLETE`/);
     assert.match(canon, /WAITING_ON.*OWNER_DECISION_REQUIRED/s);
+  });
+
+  it("S09T canonical owner and alias cite the Coordinator migration reference (B30-206, B30-218)", () => {
+    // One lifecycle owner: the alias forwards to the same reference, no second copy of the duty table.
+    const ref = "skills/bearing-lite/references/coordinator-migration.md";
+    assertLinksTo(CANON, ref);
+    assertLinksTo(ORCH, ref);
+    assert.doesNotMatch(orchText(), /^\|\s*D\d+\s*\|/m, "alias must not duplicate the duty table");
   });
 
   it("catalog allows exactly one orchestrator discovery name", () => {
