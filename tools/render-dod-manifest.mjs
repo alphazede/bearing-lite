@@ -12,6 +12,17 @@ import { fileURLToPath } from "node:url";
 export const TEMPLATE_VERSION = "1.0.1";
 export const TEMPLATE_RELATIVE = "templates/dod-manifest-v1.html";
 
+function packagedArtwork(className, filename, width, height) {
+  const file = path.resolve(
+    path.dirname(fileURLToPath(import.meta.url)),
+    "..",
+    "templates/assets",
+    filename
+  );
+  const b64 = readFileSync(file).toString("base64");
+  return `<img class="${className}" src="data:image/webp;base64,${b64}" alt="" width="${width}" height="${height}">`;
+}
+
 const PNG_MAGIC = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 const MAX_SVG_BYTES = 512 * 1024;
 const MAX_PNG_BYTES = 2 * 1024 * 1024;
@@ -1640,13 +1651,19 @@ export function renderDodManifest(doc, opts = {}) {
     `  <a class="skip" href="#main">Skip to content</a>`,
     `  <div class="page">`,
     `    <header class="mast">`,
-    `      <div class="kicker">`,
-    `        <span class="stamp stamp-state">State: ${esc(stateLabel)}</span>`,
-    `        <span class="stamp">Template ${esc(TEMPLATE_VERSION)}</span>`,
-    `        <span class="stamp stamp-warn">Not authority</span>`,
+    `      <div class="mast-id">`,
+    `        ${packagedArtwork("mast-mark", "bearing-title-mark.webp", 192, 192)}`,
+    `        <div class="mast-copy">`,
+    `          <div class="kicker">`,
+    `            <span class="stamp stamp-state">State: ${esc(stateLabel)}</span>`,
+    `            <span class="stamp">Template ${esc(TEMPLATE_VERSION)}</span>`,
+    `            <span class="stamp stamp-warn">Not authority</span>`,
+    `          </div>`,
+    `          <h1>${esc(man.title)}</h1>`,
+    `          <p class="lede">${esc(lede)}</p>`,
+    `        </div>`,
     `      </div>`,
-    `      <h1>${esc(man.title)}</h1>`,
-    `      <p class="lede">${esc(lede)}</p>`,
+    `      ${packagedArtwork("mast-card", "bearing-expedition-card.webp", 1440, 810)}`,
     `    </header>`,
     `    <div class="layout">`,
     `      <nav class="toc" aria-label="Manifest sections">`,

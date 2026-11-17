@@ -3,9 +3,9 @@
  * Deterministic DoD Manifest renderer: double-render, escaping, missing/stale
  * views, N/A, append-only closeout, sanitized SVG/PNG, unsafe rejection.
  */
-import { after, describe, it } from "node:test";
+import { after, before, describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { spawnSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import {
   existsSync,
   mkdirSync,
@@ -899,5 +899,116 @@ describe("renderer invocation identity (#182)", () => {
     assert.equal(result.status, 0, result.stderr);
     assert.equal(result.stdout, "");
     assert.equal(result.stderr, "");
+  });
+});
+
+function contentProjection(html) {
+  const source = String(html).replace(/<style[\s\S]*?<\/style>/gi, "");
+  const visible = source.replace(/<img\b[^>]*>/gi, "");
+  const textOf = (value) => value.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+  return {
+    headings: [...visible.matchAll(/<h[1-3]\b[^>]*>([\s\S]*?)<\/h[1-3]>/gi)].map((m) => textOf(m[1])),
+    rows: [...visible.matchAll(/<tr\b[\s\S]*?<\/tr>/gi)].map((m) =>
+      [...m[0].matchAll(/<t[hd]\b[^>]*>([\s\S]*?)<\/t[hd]>/gi)].map((cell) => textOf(cell[1]))
+    ),
+    links: [...visible.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/gi)].map((m) => {
+      const href = /href="([^"]*)"/.exec(m[1]);
+      return [href ? href[1] : "", textOf(m[2])];
+    }),
+    dataAttrs: [...visible.matchAll(/\s(data-[\w:-]+)="([^"]*)"/g)].map((m) => [m[1], m[2]]),
+    labels: [...visible.matchAll(/\baria-label="([^"]*)"/g)].map((m) => m[1]),
+    alts: [...source.matchAll(/<img\b[^>]*\balt="([^"]*)"/gi)].map((m) => m[1]),
+    text: textOf(visible),
+  };
+}
+
+function renderOutcome(render, doc, assetRoot) {
+  try {
+    return { code: null, html: render(doc, { assetRoot }).html };
+  } catch (err) {
+    return { code: err && err.code ? err.code : "ERROR", html: err && err.html ? err.html : "" };
+  }
+}
+
+describe("SEIT-B30-524 content parity and artwork", () => {
+  let baselineRender;
+
+  before(async () => {
+    const dir = tempDir();
+    mkdirSync(path.join(dir, "tools"), { recursive: true });
+    mkdirSync(path.join(dir, "templates"), { recursive: true });
+    writeFileSync(
+      path.join(dir, "tools/render-dod-manifest.mjs"),
+      execFileSync("git", ["show", "9fdf4d0:tools/render-dod-manifest.mjs"], { cwd: ROOT })
+    );
+    writeFileSync(
+      path.join(dir, "templates/dod-manifest-v1.html"),
+      execFileSync("git", ["show", "9fdf4d0:templates/dod-manifest-v1.html"], { cwd: ROOT })
+    );
+    const mod = await import(pathToFileURL(path.join(dir, "tools/render-dod-manifest.mjs")).href);
+    baselineRender = (doc, opts) => mod.renderDodManifest(doc, opts);
+  });
+
+  function assertSameContent(doc, assetRoot) {
+    const base = renderOutcome(baselineRender, doc, assetRoot);
+    const next = renderOutcome(renderDodManifest, doc, assetRoot);
+    assert.equal(next.code, base.code);
+    const baseProjection = contentProjection(base.html);
+    const nextProjection = contentProjection(next.html);
+    assert.ok(nextProjection.alts.every((alt) => alt === ""));
+    delete baseProjection.alts;
+    delete nextProjection.alts;
+    assert.deepEqual(nextProjection, baseProjection);
+  }
+
+  it("keeps visible text, headings, tables, links, and labels equal to the 1.0.1 renderer", () => {
+    const dir = tempDir();
+    const doc = { dod_manifest: baseManifest({ models: [boundSvgModel()] }) };
+    writeFixture(dir, doc);
+    assertSameContent(doc, dir);
+
+    for (const name of ["manifest-complete.json", "manifest-reference-index.json"]) {
+      const fixture = JSON.parse(readFileSync(path.join(ROOT, "test/fixtures", name), "utf8"));
+      assertSameContent(fixture, dir);
+    }
+
+    const empty = {
+      dod_manifest: baseManifest({
+        scope: [],
+        exclusions: [],
+        definition_of_done: [],
+        requirements: [],
+        architecture: [],
+        models: { not_applicable: true, reason: "Modeling mode was not selected." },
+        tasks: [],
+        vv: [],
+        documentation: [],
+        risks: [],
+        authority: [],
+      }),
+    };
+    assertSameContent(empty, dir);
+
+    const missing = {
+      dod_manifest: baseManifest({
+        models: [boundSvgModel({ id: "MODEL-FIX-MISSING", view: { format: "svg", path: "views/missing.svg" } })],
+      }),
+    };
+    assertSameContent(missing, dir);
+  });
+
+  it("embeds Bearing artwork in the file and loads nothing from the network", () => {
+    const dir = tempDir();
+    const html = renderFile(writeFixture(dir, { dod_manifest: baseManifest({ models: [] }) })).html;
+    for (const name of ["bearing-title-mark.webp", "bearing-expedition-card.webp"]) {
+      const bytes = readFileSync(path.join(ROOT, "templates/assets", name));
+      assert.ok(bytes.length > 0 && bytes.length <= 200 * 1024, name);
+      assert.equal(html.includes(`data:image/webp;base64,${bytes.toString("base64")}`), true, name);
+    }
+    assert.match(html, /<img class="mast-mark" src="data:image\/webp;base64,[^"]+" alt="" width="192" height="192">/);
+    assert.match(html, /<img class="mast-card" src="data:image\/webp;base64,[^"]+" alt="" width="1440" height="810">/);
+    assert.equal(html.includes("<svg"), false);
+    assert.equal(/https?:\/\//i.test(html), false);
+    assert.equal(/<script|<link\b/i.test(html), false);
   });
 });
