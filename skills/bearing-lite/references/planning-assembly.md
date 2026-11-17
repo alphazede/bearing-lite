@@ -177,7 +177,13 @@ selections mechanically; do not invent technical decisions or V&V claims.
 
 Generate `implementation.json` with `review_rounds` and a `planning_wave` that
 declares exactly the enabled specialist sessions this task needed (possibly none)
-and records `review_requested` as the owner chose. Generate the DoD Manifest
+and records `review_requested` as the owner chose. Post-approval planning
+corrections append to `journey_settings.planning_corrections` beside
+`planning_wave`—each carrying `correction_id`, `from_candidate`, and its own
+per-correction sessions, review receipt (`correction_id`), optional one-repair
+lineage, deterministic closure, and `closing_candidate`—keeping round-1
+`planning_wave` and receipts byte-identical while binding the latest correction's
+`closing_candidate` to the current manifest digest. Generate the DoD Manifest
 (`planning`, append-only closeout). Use
 `node <plugin root>/hooks/plan-package.cjs draft <plan dir>` for draft checks and
 the candidate-bound final freeze when its receipts are complete: every declared

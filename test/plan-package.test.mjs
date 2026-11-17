@@ -376,3 +376,174 @@ describe("plan-package (#153 complete manifest projection)", () => {
     rejects(doc, "manifest_model_view_missing");
   });
 });
+
+describe("plan-package (#226 post-approval correction round)", () => {
+  const names = ["requirements_engineer", "integration_engineer", "test_engineer"];
+  const corpus = JSON.parse(readFileSync(new URL("./fixtures/planning-repair-package.json", import.meta.url)));
+
+  function setupCorrectionFixture() {
+    const dir = mkdtempSync(path.join(os.tmpdir(), "plan-pkg-226-"));
+    mkdirSync(path.join(dir, ".git"), { recursive: true });
+    mkdirSync(path.join(dir, "gate-evidence"), { recursive: true });
+    const doc = structuredClone(corpus.implementation);
+    const seitDoc = structuredClone(corpus.seit);
+    let plan = "# Round 1 plan\n";
+    let notes = "Round 1 notes\n";
+
+    function writeInputs() {
+      writeFileSync(path.join(dir, "plan.md"), plan);
+      writeFileSync(path.join(dir, "notes.md"), notes);
+      seitDoc.source_baseline.planning_inputs = [
+        { path: "plan.md", sha256: sha(plan) },
+        { path: "notes.md", sha256: sha(notes) },
+      ];
+      const seitBytes = JSON.stringify(seitDoc);
+      writeFileSync(path.join(dir, "seit.json"), seitBytes);
+      return [...seitDoc.source_baseline.planning_inputs, { path: "seit.json", sha256: sha(seitBytes) }];
+    }
+
+    // Round 1: approved plan
+    const r1Inputs = writeInputs();
+    const r1Candidate = {
+      candidate_ref: "plan",
+      candidate_revision: "r1",
+      candidate_digest: sha(r1Inputs.map((x) => x.sha256).join("\n")),
+    };
+    const r1Sessions = names.map((session) => ({
+      session,
+      ...r1Candidate,
+      verdict: "READY",
+      inputs: [structuredClone(r1Inputs[0])],
+    }));
+    const r1Review = {
+      candidate: structuredClone(r1Candidate),
+      input_digests: r1Inputs,
+      planning_wave: { required_sessions: names, sessions: structuredClone(r1Sessions) },
+      dod_manifest: { output_name: "review.html" },
+      reviewer_slots: [{ slot_id: "one", primary_route_ref: "independent-route", fallback_route_refs: [] }],
+      round_number: 1,
+      completed_rounds: 1,
+      receipts: [{
+        slot_id: "one",
+        selected_route_ref: "independent-route",
+        ...r1Candidate,
+        independent: true,
+        findings_isolated: true,
+        verdict: "ACCEPT",
+      }],
+      aggregation_complete: true,
+      aggregated_repairs: 0,
+    };
+    const r1ReviewBytes = Buffer.from(JSON.stringify(r1Review));
+    writeFileSync(path.join(dir, "gate-evidence/planning-review.json"), r1ReviewBytes);
+    writeFileSync(path.join(dir, "review.html"), "<!doctype html><title>DoD</title>");
+    const r1Wave = {
+      required_sessions: names,
+      sessions: structuredClone(r1Sessions),
+      reviews: 1,
+      repairs: 0,
+      closure: "deterministic_PASS",
+      candidate_digest: r1Candidate.candidate_digest,
+      closing_candidate: structuredClone(r1Candidate),
+      review_receipt: { path: "gate-evidence/planning-review.json", sha256: sha(r1ReviewBytes) },
+    };
+    doc.journey_settings.planning_wave = structuredClone(r1Wave);
+    doc.journey_settings.planning_review = { candidate_digest: r1Candidate.candidate_digest };
+
+    // Correction 1: new requirements, one review (REPAIR_REQUIRED), one repair
+    plan += "New requirements added in correction.\n";
+    const c1Inputs = writeInputs();
+    const c1Reviewed = {
+      candidate_ref: "plan",
+      candidate_revision: "r2",
+      candidate_digest: sha(c1Inputs.map((x) => x.sha256).join("\n")),
+    };
+    // requirements_engineer re-ran on changed plan.md; integration_engineer & test_engineer also returned for r2
+    const c1Sessions = names.map((session) => ({
+      session,
+      ...c1Reviewed,
+      verdict: "READY",
+      inputs: [structuredClone(c1Inputs[0])],
+    }));
+    const c1Review = {
+      correction_id: "corr-1",
+      candidate: structuredClone(c1Reviewed),
+      input_digests: c1Inputs,
+      planning_wave: { required_sessions: names, sessions: structuredClone(c1Sessions) },
+      dod_manifest: { output_name: "review.html" },
+      reviewer_slots: [{ slot_id: "one", primary_route_ref: "independent-route", fallback_route_refs: [] }],
+      round_number: 1,
+      completed_rounds: 1,
+      receipts: [{
+        slot_id: "one",
+        selected_route_ref: "independent-route",
+        ...c1Reviewed,
+        independent: true,
+        findings_isolated: true,
+        verdict: "REPAIR_REQUIRED",
+      }],
+      aggregation_complete: true,
+      aggregated_repairs: 0,
+    };
+    const c1ReviewBytes = Buffer.from(JSON.stringify(c1Review));
+    writeFileSync(path.join(dir, "gate-evidence/planning-review-corr-1.json"), c1ReviewBytes);
+
+    // One repair inside correction 1
+    plan += "Repair applied for correction 1.\n";
+    const c1ClosingInputs = writeInputs();
+    const c1Closing = {
+      candidate_ref: "plan",
+      candidate_revision: "r3",
+      candidate_digest: sha(c1ClosingInputs.map((x) => x.sha256).join("\n")),
+    };
+    doc.journey_settings.planning_review = { candidate_digest: c1Closing.candidate_digest };
+    doc.journey_settings.planning_corrections = [{
+      correction_id: "corr-1",
+      from_candidate: structuredClone(r1Candidate),
+      required_sessions: names,
+      sessions: structuredClone(c1Sessions),
+      reviews: 1,
+      repairs: 1,
+      closure: "deterministic_PASS",
+      candidate_digest: c1Closing.candidate_digest,
+      closing_candidate: structuredClone(c1Closing),
+      review_receipt: { path: "gate-evidence/planning-review-corr-1.json", sha256: sha(c1ReviewBytes) },
+      repair: {
+        from_candidate: structuredClone(c1Reviewed),
+        to_candidate: structuredClone(c1Closing),
+        deterministic_gate: "PASS",
+      },
+    }];
+
+    return { dir, doc, r1Wave, r1ReviewBytes };
+  }
+
+  it("passes final freeze with approved plan + one correction while keeping round-1 provenance byte-identical", () => {
+    const { dir, doc, r1Wave, r1ReviewBytes } = setupCorrectionFixture();
+    writeFileSync(path.join(dir, "implementation.json"), JSON.stringify(doc));
+    const result = freeze(dir, { stage: "final" });
+    assert.equal(result.outcome, "PASS", JSON.stringify(result));
+    assert.deepEqual(result.findings, []);
+    // Round-1 receipts and session input digests stay byte-identical
+    assert.deepEqual(readFileSync(path.join(dir, "gate-evidence/planning-review.json")), r1ReviewBytes);
+    assert.deepEqual(doc.journey_settings.planning_wave, r1Wave);
+  });
+
+  it("fails the freeze when a historical round-1 receipt digest is rewritten", () => {
+    const { dir, doc } = setupCorrectionFixture();
+    doc.journey_settings.planning_wave.review_receipt.sha256 = "0".repeat(64);
+    writeFileSync(path.join(dir, "implementation.json"), JSON.stringify(doc));
+    const result = freeze(dir, { stage: "final" });
+    assert.equal(result.outcome, "FAIL");
+    assert.ok(result.findings.some((f) => f.code === "planning_wave_review_invalid" && f.reason === "receipt_digest_mismatch"), JSON.stringify(result));
+  });
+
+  it("rejects a second review inside the same correction", () => {
+    const { dir, doc } = setupCorrectionFixture();
+    doc.journey_settings.planning_corrections[0].reviews = 2;
+    writeFileSync(path.join(dir, "implementation.json"), JSON.stringify(doc));
+    const result = freeze(dir, { stage: "final" });
+    assert.equal(result.outcome, "FAIL");
+    assert.ok(result.findings.some((f) => f.code === "planning_wave_review_count"), JSON.stringify(result));
+  });
+});

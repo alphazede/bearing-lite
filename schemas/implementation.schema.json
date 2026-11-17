@@ -625,6 +625,92 @@
               }
             }
           }
+        },
+        "planning_corrections": {
+          "type": "array",
+          "description": "Append-only post-approval planning correction records beside planning_wave (#226). Each entry carries correction_id, from_candidate, and its own per-correction sessions, review (or review_requested: false), optional one-repair lineage, deterministic closure, and closing_candidate. Round-1 planning_wave stays immutable; the latest correction's closing_candidate binds to the current manifest digest.",
+          "items": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": [
+              "correction_id",
+              "from_candidate",
+              "required_sessions"
+            ],
+            "if": {
+              "properties": { "review_requested": { "const": false } },
+              "required": ["review_requested"]
+            },
+            "then": {
+              "properties": {
+                "reviews": { "const": 0 },
+                "repairs": { "const": 0 }
+              },
+              "not": { "anyOf": [ { "required": ["review_receipt"] }, { "required": ["repair"] } ] }
+            },
+            "properties": {
+              "correction_id": { "type": "string", "minLength": 1 },
+              "from_candidate": { "$ref": "#/$defs/planningCandidate" },
+              "review_requested": { "type": "boolean" },
+              "required_sessions": {
+                "type": "array",
+                "uniqueItems": true,
+                "minItems": 0,
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "requirements_engineer",
+                    "systems_modeler",
+                    "integration_engineer",
+                    "test_engineer"
+                  ]
+                }
+              },
+              "sessions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "required": [
+                    "session",
+                    "candidate_ref",
+                    "candidate_revision",
+                    "candidate_digest",
+                    "verdict"
+                  ],
+                  "properties": {
+                    "session": { "type": "string", "minLength": 1 },
+                    "candidate_ref": { "type": "string", "minLength": 1 },
+                    "verdict": { "type": "string", "minLength": 1 },
+                    "candidate_revision": { "type": "string", "minLength": 1 },
+                    "candidate_digest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+                    "inputs": {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": { "$ref": "#/$defs/planningInputDigest" }
+                    },
+                    "adopted_to": { "$ref": "#/$defs/planningCandidate" }
+                  }
+                }
+              },
+              "reviews": { "type": "integer", "minimum": 0, "maximum": 1 },
+              "repairs": { "type": "integer", "minimum": 0, "maximum": 1 },
+              "closure": { "const": "deterministic_PASS" },
+              "candidate_digest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+              "review_receipt": { "$ref": "#/$defs/planningInputDigest" },
+              "closing_candidate": { "$ref": "#/$defs/planningCandidate" },
+              "repair": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["from_candidate", "to_candidate", "deterministic_gate"],
+                "properties": {
+                  "from_candidate": { "$ref": "#/$defs/planningCandidate" },
+                  "to_candidate": { "$ref": "#/$defs/planningCandidate" },
+                  "deterministic_gate": { "const": "PASS" }
+                }
+              }
+            }
+          }
         }
       }
     },
