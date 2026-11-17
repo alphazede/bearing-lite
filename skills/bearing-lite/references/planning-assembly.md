@@ -142,8 +142,12 @@ the end-of-wave review.
 - **Budget:** these deltas spend no `max_assurance_rounds`, no planning-review
   round, and no repair. The one review and one repair stay reserved for
   findings the requested review discovers.
-- **Not covered:** a delta that changes meaning, rationale, verification, or
-  allocation is `requires_regate` and follows the correction loop. A delta
+- **Planning inputs, not the repair:** a specialist finding on another author's artifact,
+  including one that changes meaning, rationale, verification, or allocation,
+  and owner-added scope during planning are planning inputs. The owning author
+  consumes them before assembly. They start no review round, they are not
+  `requires_regate`, and the repair allowance stays 1. Only findings from the
+  single end-of-planning review follow the correction loop. A delta
   raised after the unit's review round opens joins that round's one aggregate
   repair. Neither the delta label nor the reconciliation label can renew a
   spent allowance (`owner-stops.md` class C).
