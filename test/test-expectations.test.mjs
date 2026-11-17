@@ -304,6 +304,37 @@ describe("test-expectations-and-coverage-reuse", () => {
       "expected_result: value returned by calling the production helper computeTotal on the same inputs"
     );
     assert.match(tautological, /production helper compute(total|Total)/);
+    // Executed proof: the tautological fixture is green (expected from the
+    // production helper) and the independent control is green (hand-computed).
+    const computeTotal = (items) => {
+      let subtotal = 0;
+      for (const item of items) subtotal += item.quantity * item.unitPrice;
+      return subtotal + Math.round((subtotal * 1000) / 10000);
+    };
+    const items = [{ quantity: 2, unitPrice: 30 }, { quantity: 1, unitPrice: 40 }];
+    const tautExpected = computeTotal(items);
+    assert.equal(computeTotal(items), tautExpected, "tautological fixture must run green");
+    // Independent: 2*30 + 1*40 = 100, 1000bps tax = 10, total 110 (hand math).
+    const independentExpected = 110;
+    assert.equal(computeTotal(items), independentExpected, "independent control must run green");
+    const tautOracle = "Expected value obtained by calling the production helper computeTotal on the same inputs.";
+    const controlOracle = "Requirement REQ-SYN-001 text, independently worked example.";
+    const schema = JSON.parse(readShipped("schemas/seit.schema.json"));
+    const oracleNode = schema.$defs.proofCase.properties.oracle_source;
+    assert.ok(
+      oracleNode && oracleNode.not && typeof oracleNode.not.pattern === "string",
+      "shipped seit schema must reject circular oracle_source"
+    );
+    const oracleRe = new RegExp(oracleNode.not.pattern);
+    const tautVerdict = oracleRe.test(tautOracle)
+      ? { outcome: "REJECT", reason: "circular_oracle_source" }
+      : { outcome: "PASS", reason: "circular_oracle_source" };
+    const controlVerdict = oracleRe.test(controlOracle)
+      ? { outcome: "REJECT", reason: "circular_oracle_source" }
+      : { outcome: "PASS", reason: "independent_oracle_source" };
+    assert.equal(tautVerdict.outcome, "REJECT", "shipped validation must reject tautological oracle_source");
+    assert.equal(tautVerdict.reason, "circular_oracle_source", "typed rejection must name circular oracle");
+    assert.equal(controlVerdict.outcome, "PASS", "shipped validation must accept independent oracle_source");
     const text = teSurface();
     assertContracts(
       text,

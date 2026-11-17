@@ -1162,19 +1162,23 @@ def cases() -> list[tuple[str, str, str, object, str]]:
             proof_cases=[complete_proof(
                 oracle_source="Requirement REQ-SYN-001 text, independently worked example.")]
         ), "accept"),
+        ("SEIT-EMV-021", "seit_proof_circular_oracle_source", "seit", complete_seit(
+            proof_cases=[complete_proof(
+                oracle_source="Expected value obtained by calling the production helper computeTotal on the same inputs.")]
+        ), "reject"),
         # Property-based applicability: applicable and justified
         # non-applicable both validate; unknown applicability rejects.
         ("SEIT-EMV-021", "seit_proof_applicable_property_based", "seit", complete_seit(
             proof_cases=[complete_proof(property_based={
                 "applicability": "applicable",
-                "rationale": "Meaningful invariant over a large combinatorial domain.",
-                "invariant_source": "Requirement REQ-SYN-001",
+                "rationale": "Applicable: invariant 'total equals sum(quantity*unit_price) plus tax and is non-negative' over domain 'lists of 1..8 items, quantity 1..10, unit_price 0..100' per CONTRACT-SYN-007; 3 fixed examples miss empty-list and max-tax boundary; ties to AC-SYN-001 and REQ-SYN-001.",
+                "invariant_source": "Requirement REQ-SYN-001; design CONTRACT-SYN-007",
             })]
         ), "accept"),
         ("SEIT-EMV-021", "seit_proof_justified_nonapplicable_property_based", "seit", complete_seit(
             proof_cases=[complete_proof(property_based={
                 "applicability": "not_applicable",
-                "rationale": "Fixed example covers the whole small input domain.",
+                "rationale": "Not applicable: SEIT-SYN-001 inspects 2 boolean flags (flag A x flag B, 4 total combinations); 4 fixed examples exhaust the whole domain, so no shrinking generator is needed.",
             })]
         ), "accept"),
         ("SEIT-EMV-021", "seit_proof_unknown_property_applicability", "seit", complete_seit(
@@ -1773,6 +1777,49 @@ def check_fixture_contract_fields() -> tuple[bool, str]:
     return True, "complete fixtures include CONTRACT-EMV-007/008/009 named structures and lease identity fields"
 
 
+def check_property_based_applicability() -> tuple[bool, str]:
+    by_name: dict[str, object] = {}
+    for _seit, name, _schema, instance, _expect in cases():
+        by_name[name] = instance
+
+    def rationale_for(case_name: str) -> str:
+        doc = by_name.get(case_name)
+        if not isinstance(doc, dict):
+            return ""
+        cases_list = doc.get("proof_cases")
+        if not isinstance(cases_list, list) or not cases_list:
+            return ""
+        first = cases_list[0]
+        if not isinstance(first, dict):
+            return ""
+        pb = first.get("property_based")
+        if not isinstance(pb, dict):
+            return ""
+        rationale = pb.get("rationale")
+        return rationale if isinstance(rationale, str) else ""
+
+    applicable = rationale_for("seit_proof_applicable_property_based")
+    non_applicable = rationale_for("seit_proof_justified_nonapplicable_property_based")
+    problems = []
+    low_applicable = applicable.lower()
+    low_non = non_applicable.lower()
+    if "invariant" not in low_applicable:
+        problems.append("applicable rationale must name an invariant")
+    if ".." not in applicable:
+        problems.append("applicable rationale must name an input domain range")
+    if not any(token in applicable for token in ("REQ-SYN-001", "AC-SYN-001", "CONTRACT-SYN-007")):
+        problems.append("applicable rationale must tie to a requirement/design source")
+    if "fixed example" not in low_non:
+        problems.append("non-applicable rationale must cite fixed examples")
+    if "exhaust" not in low_non and "whole" not in low_non:
+        problems.append("non-applicable rationale must say fixed examples exhaust the domain")
+    if "4" not in non_applicable and "2 boolean" not in non_applicable:
+        problems.append("non-applicable rationale must name the small domain size")
+    if problems:
+        return False, "property-based applicability not concrete: " + "; ".join(problems)
+    return True, "applicable names invariant+domain+source; non-applicable justifies fixed examples"
+
+
 def check_test_implementer_role_field(profiles_schema: dict | None) -> tuple[bool, str]:
     if not isinstance(profiles_schema, dict):
         return False, PROFILES_MISSING_SCHEMA
@@ -1866,6 +1913,15 @@ def run_cases() -> int:
 
     ok, detail = check_fixture_contract_fields()
     label = "HARNESS complete_fixture_contract_fields"
+    if ok:
+        print(f"PASS {label}: {detail}")
+        passed += 1
+    else:
+        print(f"FAIL {label}: {detail}")
+        failed += 1
+
+    ok, detail = check_property_based_applicability()
+    label = "HARNESS property_based_applicability_concrete"
     if ok:
         print(f"PASS {label}: {detail}")
         passed += 1
