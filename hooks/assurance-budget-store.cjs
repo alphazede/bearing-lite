@@ -20,10 +20,10 @@ function local(root, relative) {
 function binding(cwd, input) {
   const current = input ? require("./task-binding.cjs").binding(input) : null;
   let root;
-  try { root = fs.realpathSync(cwd); } catch { return null; }
+  try { root = fs.realpathSync(cwd); } catch (e) { if (current) throw e; return null; }
   for (;;) {
     let entries;
-    try { entries = fs.readdirSync(root, { withFileTypes: true }); } catch { return null; }
+    try { entries = fs.readdirSync(root, { withFileTypes: true }); } catch (e) { if (current) throw e; return null; }
     const plans = entries
       .filter(e => e.isFile() && /\.(md|markdown)$/i.test(e.name)).map(e => e.name).sort();
     const found = [];
