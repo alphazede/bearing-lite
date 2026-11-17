@@ -5,6 +5,7 @@
 ### Added
 
 - Opt-in native real-harness acceptance suite (`test/native/harness-acceptance.test.mjs`) and a versioned compatibility matrix (`docs/harness-compatibility.md`) that separates install, discovery, advisory and blocking evidence and labels unverified capabilities explicitly. ([PR #245](https://github.com/alphazede/bearing-lite/pull/245), closes [#92](https://github.com/alphazede/bearing-lite/issues/92))
+- An explicitly named `orchestrator` skill that forwards to the canonical Bearing Orchestrator (`bearing-lite`), with matching explicit-invocation metadata and native discovery evidence for Codex and Claude Code. ([PR #246](https://github.com/alphazede/bearing-lite/pull/246), closes [#214](https://github.com/alphazede/bearing-lite/issues/214))
 
 ### Fixed
 
