@@ -5,6 +5,12 @@
 ### Added
 
 - Planning and Assurance Test Engineer guidance for a selected behavior-not-implementation test-suite audit, including the loss-proof reduction record.
+- Bearing 3.0 wave 1: opt-in journey profiler (`tools/journey-profiler.mjs`, `schemas/journey-profile.schema.json`) with atomic output and public-code export; restyled DoD Manifest review sheet with Bearing artwork; Systems Modeler findings and DoD Manifest model entries; prompt audit, decision taxonomy, host-limit matrix, Pstack capability matrix and acknowledgements, and the wave 1 baseline under `docs/architecture/`. ([#PR](https://github.com/alphazede/bearing-lite/pulls))
+
+### Fixed
+
+- Planning findings and owner-added scope are consumed before assembly; only end-of-planning review findings use the repair round.
+- `test/task-opt-in.test.mjs` no longer changes result when the caller environment carries `BEARING_ROLE`.
 
 ## [2.1.0](https://github.com/alphazede/bearing-lite/releases/tag/v2.1.0) - 2026-11-17
 
