@@ -546,4 +546,102 @@ describe("plan-package (#226 post-approval correction round)", () => {
     assert.equal(result.outcome, "FAIL");
     assert.ok(result.findings.some((f) => f.code === "planning_wave_review_count"), JSON.stringify(result));
   });
+
+  it("passes final freeze when a historical no-review round-1 wave has adopted specialist returns without wave.input_digests (F226-1)", () => {
+    const dir = mkdtempSync(path.join(os.tmpdir(), "plan-pkg-226-f226-1-"));
+    mkdirSync(path.join(dir, ".git"), { recursive: true });
+    mkdirSync(path.join(dir, "gate-evidence"), { recursive: true });
+    const doc = structuredClone(corpus.implementation);
+    const seitDoc = structuredClone(corpus.seit);
+    let plan = "# Round 0 plan\n";
+    const notes = "Shared unchanged notes\n";
+
+    function writeInputs() {
+      writeFileSync(path.join(dir, "plan.md"), plan);
+      writeFileSync(path.join(dir, "notes.md"), notes);
+      seitDoc.source_baseline.planning_inputs = [
+        { path: "plan.md", sha256: sha(plan) },
+        { path: "notes.md", sha256: sha(notes) },
+      ];
+      const seitBytes = JSON.stringify(seitDoc);
+      writeFileSync(path.join(dir, "seit.json"), seitBytes);
+      return [...seitDoc.source_baseline.planning_inputs, { path: "seit.json", sha256: sha(seitBytes) }];
+    }
+
+    const r0Inputs = writeInputs();
+    const r0Candidate = {
+      candidate_ref: "plan",
+      candidate_revision: "r0",
+      candidate_digest: sha(r0Inputs.map((x) => x.sha256).join("\n")),
+    };
+
+    plan = "# Round 1 plan\n";
+    const r1Inputs = writeInputs();
+    const r1Candidate = {
+      candidate_ref: "plan",
+      candidate_revision: "r1",
+      candidate_digest: sha(r1Inputs.map((x) => x.sha256).join("\n")),
+    };
+    const r1Wave = {
+      review_requested: false,
+      required_sessions: names,
+      sessions: [
+        {
+          session: names[0],
+          ...r0Candidate,
+          verdict: "READY",
+          inputs: [structuredClone(r0Inputs[1])],
+          adopted_to: structuredClone(r1Candidate),
+        },
+        ...names.slice(1).map((session) => ({
+          session,
+          ...r1Candidate,
+          verdict: "READY",
+          inputs: [structuredClone(r1Inputs[0])],
+        })),
+      ],
+      reviews: 0,
+      repairs: 0,
+      closure: "deterministic_PASS",
+      candidate_digest: r1Candidate.candidate_digest,
+      closing_candidate: structuredClone(r1Candidate),
+    };
+    doc.journey_settings.planning_wave = structuredClone(r1Wave);
+    doc.journey_settings.planning_review = { candidate_digest: r1Candidate.candidate_digest };
+    writeFileSync(path.join(dir, "implementation.json"), JSON.stringify(doc));
+    const preCorrection = freeze(dir, { stage: "final" });
+    assert.equal(preCorrection.outcome, "PASS", JSON.stringify(preCorrection));
+
+    // Append a no-review correction without mutating historical planning_wave
+    plan = "# Round 2 correction plan\n";
+    const c1Inputs = writeInputs();
+    const c1Candidate = {
+      candidate_ref: "plan",
+      candidate_revision: "r2",
+      candidate_digest: sha(c1Inputs.map((x) => x.sha256).join("\n")),
+    };
+    doc.journey_settings.planning_review = { candidate_digest: c1Candidate.candidate_digest };
+    doc.journey_settings.planning_corrections = [{
+      correction_id: "corr-1",
+      from_candidate: structuredClone(r1Candidate),
+      review_requested: false,
+      required_sessions: names,
+      sessions: names.map((session) => ({
+        session,
+        ...c1Candidate,
+        verdict: "READY",
+        inputs: [structuredClone(c1Inputs[0])],
+      })),
+      reviews: 0,
+      repairs: 0,
+      closure: "deterministic_PASS",
+      candidate_digest: c1Candidate.candidate_digest,
+      closing_candidate: structuredClone(c1Candidate),
+    }];
+    writeFileSync(path.join(dir, "implementation.json"), JSON.stringify(doc));
+    const postCorrection = freeze(dir, { stage: "final" });
+    assert.equal(postCorrection.outcome, "PASS", JSON.stringify(postCorrection));
+    assert.deepEqual(postCorrection.findings, []);
+    assert.deepEqual(doc.journey_settings.planning_wave, r1Wave);
+  });
 });
