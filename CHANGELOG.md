@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- The assurance-dispatch hook no longer denies every Bash call when the session working directory is missing or unreadable and no task binding resolved. Bound assurance stays fail-closed. ([PR #238](https://github.com/alphazede/bearing-lite/pull/238), fixes [#229](https://github.com/alphazede/bearing-lite/issues/229))
+
 ## [2.0.3](https://github.com/alphazede/bearing-lite/releases/tag/v2.0.3) - 2026-10-28
 
 ### Added
