@@ -1,0 +1,64 @@
+{
+  "schema_version": "1",
+  "journey": {
+    "id": "jrn-alpha",
+    "title": "fixture journey jrn-alpha",
+    "status": "complete",
+    "planning_repository": "fixture-plans"
+  },
+  "checkout_lease": {
+    "journey": "jrn-alpha",
+    "controller": "fixture-controller",
+    "repository": "fixture-repo",
+    "checkout": "/work/alpha",
+    "branch": "slice/alpha",
+    "candidate_revision": "rev-alpha-1",
+    "acquired_at": "2026-11-10T10:00:00Z",
+    "generation": 1,
+    "state": "released",
+    "released_at": "2026-11-10T12:00:00Z",
+    "release_reason": "integrated"
+  },
+  "decisions": [
+    {
+      "id": "d1",
+      "record_type": "owner_stop",
+      "class": "A",
+      "status": "answered",
+      "question": "CANARY-PROMPT-b30103-summarize-the-plan",
+      "evidence_ref": "evidence/owner-stop.md",
+      "why_owner": "scope decision",
+      "blocking": true,
+      "affected_slices": [
+        "S1"
+      ],
+      "created_at": "2026-11-10T10:25:00Z",
+      "asked_at": "2026-11-10T10:30:00Z",
+      "answered_at": "2026-11-10T10:45:00Z",
+      "cancelled_at": null,
+      "round_trip_id": "rt-1",
+      "answer_ref": "evidence/answer.md"
+    }
+  ],
+  "open_decisions": [],
+  "planning_receipts": [],
+  "profile_selection": {},
+  "profiler_tracking": true,
+  "owner_wait_tracking": true,
+  "owner_blocked_intervals": [
+    {
+      "decision_ids": [
+        "d1"
+      ],
+      "started_at": "2026-11-10T10:30:00Z",
+      "ended_at": "2026-11-10T10:40:00Z"
+    },
+    {
+      "decision_ids": [
+        "d1"
+      ],
+      "started_at": "2026-11-10T10:35:00Z",
+      "ended_at": "2026-11-10T10:45:00Z"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "schema_version": "1",
+  "journey": {
+    "id": "jrn-beta",
+    "title": "fixture journey jrn-beta",
+    "status": "cancelled",
+    "planning_repository": "fixture-plans"
+  },
+  "checkout_lease": {
+    "journey": "jrn-beta",
+    "controller": "fixture-controller",
+    "repository": "fixture-repo",
+    "checkout": "/work/alpha",
+    "branch": "slice/alpha",
+    "candidate_revision": "rev-beta-1",
+    "acquired_at": "2026-11-10T10:30:00Z",
+    "generation": 1,
+    "state": "released",
+    "released_at": "2026-11-10T11:30:00Z",
+    "release_reason": "integrated"
+  },
+  "decisions": [],
+  "open_decisions": [],
+  "planning_receipts": [],
+  "profile_selection": {},
+  "profiler_tracking": true
+}
