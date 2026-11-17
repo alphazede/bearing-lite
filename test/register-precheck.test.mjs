@@ -118,3 +118,37 @@ test('CLI stage flags: requirements exits 0 with pending bindings; invalid use e
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('accepts any uppercase-prefix case ID scheme (e.g. VCASE-) and resolves against SEIT', () => {
+  const vcaseRegister = read('valid.sdoc')
+    .replace('VERIFICATION_CASE: SEIT-1', 'VERIFICATION_CASE: VCASE-LIB-005')
+    .replace('VERIFICATION_CASE: SEIT-2', 'VERIFICATION: Test; VCASE-LIB-006');
+  const seit = { proof_cases: [{ id: 'VCASE-LIB-005' }, { id: 'VCASE-LIB-006' }] };
+  const pass = stageCheck('final', vcaseRegister, { seitCaseIds: seitCaseIdsOf(seit) });
+  assert.equal(pass.outcome, 'PASS', JSON.stringify(pass.findings));
+  assert.deepEqual(pass.findings, []);
+
+  const missing = stageCheck('final', vcaseRegister, { seitCaseIds: ['VCASE-LIB-005'] });
+  assert.equal(missing.outcome, 'FAIL');
+  assert.ok(missing.findings.some(f => f.class === 'verification' && f.message === 'Bound case ID not found in SEIT: VCASE-LIB-006'));
+
+  const methodOnly = stageCheck('final', read('valid.sdoc').replace('VERIFICATION_CASE: SEIT-1', 'VERIFICATION: Test'));
+  assert.equal(methodOnly.outcome, 'FAIL');
+  assert.ok(methodOnly.findings.some(f => f.class === 'verification' && f.uid === 'REG-1' && f.message === 'Require verification method and bound case ID'));
+
+  const dir = mkdtempSync(path.join(tmpdir(), 'precheck-vcase-'));
+  try {
+    writeFileSync(path.join(dir, 'register.sdoc'), vcaseRegister);
+    writeFileSync(path.join(dir, 'plan.md'), read('plan.md'));
+    writeFileSync(path.join(dir, 'evidence.txt'), read('evidence.txt'));
+    writeFileSync(path.join(dir, 'seit.json'), JSON.stringify(seit));
+    const run = spawnSync(process.execPath, [
+      'hooks/register-precheck.cjs', '--stage', 'final', '--seit',
+      path.join(dir, 'seit.json'), path.join(dir, 'register.sdoc'), path.join(dir, 'plan.md'), dir,
+    ], { encoding: 'utf8' });
+    assert.equal(run.status, 0, run.stdout);
+    assert.equal(JSON.parse(run.stdout).outcome, 'PASS');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
