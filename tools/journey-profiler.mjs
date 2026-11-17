@@ -4,7 +4,7 @@
 // before any output. Codex thread_token_usage is cumulative; only per-call usage counts.
 import { createHash } from "node:crypto";
 import { createRequire } from "node:module";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -12,6 +12,16 @@ const require = createRequire(import.meta.url);
 const { ownerWaitMetrics } = require("../hooks/owner-stops.cjs");
 const SCHEMA_PATH = fileURLToPath(new URL("../schemas/journey-profile.schema.json", import.meta.url));
 const QUALIFIED = new Set(["claude-code", "codex"]);
+const PUBLIC_ROLES = new Set([
+  "coordinator", "fellow", "implementer", "integration-engineer", "light-implementer",
+  "onboard-bearing", "orchestrator", "prompt", "reviewer", "scribe", "systems-modeler", "test-engineer",
+]);
+const PUBLIC_STAGES = new Set(["assurance", "implementation", "planning", "review"]);
+const PUBLIC_REASONS = new Set([
+  "attributed_usage_incomplete", "dispatch_times_not_recorded", "evaluated_decisions_not_supplied",
+  "host_field_absent", "host_not_qualified", "negative_counter", "no_attributed_usage",
+  "no_completed_journey", "no_events", "no_merged_slice", "non_positive", "owner_wait_not_tracked",
+]);
 const UTC = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/;
 
 const num = (value) => ({ value });
@@ -91,9 +101,37 @@ function canonicalize(value) {
 }
 
 function emit(dir, files) {
-  // rename counts as a read of the output directory, which the opt-in permission test does not grant.
+  // Write every body beside the destination, then replace. A failed replace puts the previous bytes back.
   mkdirSync(dir, { recursive: true });
-  for (const [name, body] of Object.entries(files)) writeFileSync(path.join(dir, name), body);
+  const names = Object.keys(files);
+  const prior = new Map();
+  const temps = [];
+  try {
+    for (const name of names) {
+      const dest = path.join(dir, name);
+      if (existsSync(dest)) prior.set(name, readFileSync(dest));
+      const temp = path.join(dir, `.${name}.${process.pid}.tmp`);
+      writeFileSync(temp, files[name]);
+      temps.push(temp);
+    }
+    for (let index = 0; index < names.length; index += 1) renameSync(temps[index], path.join(dir, names[index]));
+  } catch (error) {
+    for (const temp of temps) {
+      try { unlinkSync(temp); } catch { /* already moved, or the write never happened */ }
+    }
+    for (const name of names) {
+      const dest = path.join(dir, name);
+      if (!prior.has(name)) {
+        try { unlinkSync(dest); } catch { /* absent, or not a file this run created */ }
+        continue;
+      }
+      try { writeFileSync(dest, prior.get(name)); } catch { /* destination is not a replaceable file */ }
+    }
+    if (error && (error.code === "EISDIR" || error.code === "EACCES" || error.code === "EPERM" || error.code === "ERR_ACCESS_DENIED")) {
+      throw new Error("output_replace_failed");
+    }
+    throw error;
+  }
 }
 
 function schemaDocument() {
@@ -564,19 +602,34 @@ function stageCmd(bag) {
   writeFileSync(record, `${canonicalize(existing)}\n`);
 }
 
+function publicReason(value) {
+  if (!value || typeof value !== "object") return;
+  if (Array.isArray(value)) {
+    value.forEach(publicReason);
+    return;
+  }
+  if (typeof value.reason === "string" && !PUBLIC_REASONS.has(value.reason)) throw new Error("unsafe_projection");
+  Object.values(value).forEach(publicReason);
+}
+
 function exportCmd(bag) {
   const profile = readJson(one(bag, "profile"));
   assertProfile(profile);
   const journeyIds = [...new Set(profile.journeys.map((row) => row.journey))].sort();
   const aliases = new Map(journeyIds.map((id, index) => [id, `journey-${index + 1}`]));
+  const participation = [];
+  for (const row of profile.usage) {
+    if (typeof row.role !== "string") continue;
+    if (!PUBLIC_ROLES.has(row.role) || (row.stage !== null && !PUBLIC_STAGES.has(row.stage))) throw new Error("unsafe_projection");
+    participation.push({ role: row.role, stage: row.stage, attribution: row.attribution, journey: aliases.get(row.journey) ?? null });
+  }
   const staged = {
-    participation: profile.usage
-      .filter((row) => typeof row.role === "string")
-      .map((row) => ({ role: row.role, stage: row.stage, attribution: row.attribution, journey: aliases.get(row.journey) ?? null })),
+    participation,
     journeys: profile.journeys.map((row) => ({ journey: aliases.get(row.journey), metrics: row.metrics })),
     cohort: profile.cohort,
     owner_ask_rate: profile.owner_ask_rate,
   };
+  publicReason(staged);
   const out = one(bag, "out");
   const body = `${canonicalize(staged)}\n`;
   emit(out, { "export.json": body });

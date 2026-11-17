@@ -10,7 +10,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -302,6 +302,17 @@ describe("journey profiler: allowlist readers and trust boundary (B30-102, B30-1
     assert.equal(readFileSync(path.join(p.out, "profile.json"), "utf8"), p.bytes);
     assert.equal(readFileSync(path.join(p.out, "report.md"), "utf8"), p.report);
   });
+
+  it("keeps the previous profile when the report path cannot be replaced", (t) => {
+    const p = profile(t, [...BASE_INPUTS, ...hostLog("claude-code", "claude-code.jsonl")]);
+    const report = path.join(p.out, "report.md");
+    rmSync(report);
+    mkdirSync(report);
+    const r = run(["profile", ...BASE_INPUTS, ...ALL_HOSTS, "--as-of", AS_OF, "--out", p.out]);
+    assert.notEqual(r.status, 0, "a report path that is a directory must fail");
+    assert.equal(readFileSync(path.join(p.out, "profile.json"), "utf8"), p.bytes);
+    assert.equal(statSync(report).isDirectory(), true);
+  });
 });
 
 describe("journey profiler: opt-in and no model calls (B30-110, SM01.T1, SM01.X1)", () => {
@@ -321,7 +332,7 @@ describe("journey profiler: opt-in and no model calls (B30-110, SM01.T1, SM01.X1
     const root = tempRoot(t);
     const out = path.join(root, "out");
     const flags = ["--permission", `--allow-fs-read=${path.join(ROOT, "tools")}`, `--allow-fs-read=${path.join(ROOT, "hooks")}`,
-      `--allow-fs-read=${path.join(ROOT, "schemas")}`, `--allow-fs-read=${FX}`, `--allow-fs-write=${root}`];
+      `--allow-fs-read=${path.join(ROOT, "schemas")}`, `--allow-fs-read=${FX}`, `--allow-fs-read=${out}/*`, `--allow-fs-write=${root}`];
     const r = run(["profile", ...BASE_INPUTS, ...ALL_HOSTS, "--as-of", AS_OF, "--out", out], flags);
     assert.equal(r.status, 0, r.stderr);
     assert.ok(readFileSync(path.join(out, "report.md"), "utf8").length > 0, "concise report missing");
@@ -393,6 +404,30 @@ describe("journey profiler: staged sanitized export (B30-112, B30-123, SM01.T6, 
     assert.ok(strings.has("reviewer"), "participation is identified by role");
     assertNoLeak({ "export.json": first }, [...CANARIES, ...INTERNAL, "claude"], "export");
     assert.equal(readFileSync(path.join(p.out, "profile.json"), "utf8"), p.bytes, "export must not change the private profile");
+  });
+
+  it("rejects a role, stage, or coverage reason outside the public codes", (t) => {
+    const p = profile(t, [...BASE_INPUTS, ...hostLog("claude-code", "claude-code.jsonl")]);
+    const base = JSON.parse(p.bytes);
+    const cases = [
+      ["role", "private-route", (doc) => { doc.usage.find((row) => row.role === "reviewer").role = "private-route"; }],
+      ["stage", "secret-stage", (doc) => { doc.usage.find((row) => row.role === "reviewer").stage = "secret-stage"; }],
+      ["reason", "threshold-0.9", (doc) => { doc.owner_ask_rate.reason = "threshold-0.9"; }],
+    ];
+    for (const [name, token, mutate] of cases) {
+      const doc = structuredClone(base);
+      mutate(doc);
+      const dir = path.join(tempRoot(t), name);
+      mkdirSync(dir);
+      const profilePath = path.join(dir, "profile.json");
+      writeFileSync(profilePath, JSON.stringify(doc));
+      const out = path.join(dir, "out");
+      const result = run(["export", "--profile", profilePath, "--out", out]);
+      assert.notEqual(result.status, 0, name);
+      assert.match(result.stderr, /unsafe_projection/, name);
+      assert.equal(existsSync(path.join(out, "export.json")), false, name);
+      assert.equal(`${result.stdout}${result.stderr}`.includes(token), false, name);
+    }
   });
 
   it("uses the same export-local alias for a journey and its participation", (t) => {
