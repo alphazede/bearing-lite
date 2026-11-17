@@ -453,3 +453,13 @@ test('229 nonexistent or unreadable cwd with no binding is ordinary unbound work
   assert.equal(r.detail.reason, 'ordinary_unbound_work');
   assert.deepEqual(r.wire, {});
 });
+
+test('229 unreadable or missing cwd with resolved explicit task binding stays fail-closed', t => {
+  const f = fixture(t);
+  writeFileSync(path.join(f.dir, 'plan.md'), '# Visible task plan\n### task_id: assurance\n- status: EVIDENCE_READY\n- required_assurance: Reviewer\n');
+  bindPlan(envelope(f, 'review-a'));
+  const r = run(f, envelope(f, 'review-a', { cwd: ` ${f.dir} ` }));
+  assert.equal(r.detail.outcome, 'NEEDS_MORE_EVIDENCE');
+  assert.equal(r.detail.reason, 'dispatch_state_unavailable');
+  assert.equal(denied(r), true);
+});
