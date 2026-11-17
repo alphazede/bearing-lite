@@ -96,3 +96,31 @@ invocation remains UNVERIFIED for the same reason (no authenticated
 session in a disposable profile); `TC-CLAUDE-DISC-01` now fails when a
 referenced resource such as `assurance-policy.md` is missing from the
 installed artifact.
+
+## Decision-adapter column
+
+Added 2026-11-17 by slice S02. Observer: Implementer. Source revision
+`9fdf4d0`. This section states which already registered events can invoke
+a decision adapter. It does not change the capability matrix above.
+
+No `decision-adapter` module exists under `hooks/` at this revision.
+No cell is `native-proven`. A `native-proven` cell would name a
+`SEIT-NATIVE-ADAPTER` receipt on this candidate. No such receipt exists.
+`component-only` is not used: there is no adapter component to replay.
+
+The four events are the keys of `hooks/hooks.json`: `SessionStart`,
+`PreToolUse`, `Stop`, and `SubagentStop`. Cursor's map uses `sessionStart`
+and `stop` for the first and third. `PreToolUse` cannot invoke the adapter:
+it runs only after a model has asked for a tool (`hooks/hooks.json:16-47`).
+`SubagentStop` registers `te-host.cjs` only (`hooks/hooks.json:82-90`).
+
+| Host | SessionStart | PreToolUse | Stop | SubagentStop |
+| --- | --- | --- | --- | --- |
+| Claude Code | unverified. Limitation: `hooks/hooks.json:4-12` registers `host.cjs`; the 2026-11-17 run did not fire the event (lines 70-72 of this file); `host.cjs` does not call an adapter. | unsupported. Limitation: registered at `hooks/hooks.json:16-47`, but the event follows a model tool request, so it is not an adapter call site. Native invocation was not fired. | unverified. Limitation: `hooks/hooks.json:50-60` registers `host.cjs`; Stop effects are unexercised (lines 89-93 of this file); no adapter call. | unsupported. Limitation: `hooks/hooks.json:82-90` registers `te-host.cjs` only. |
+| Codex | unverified. Limitation: hook scripts are installed; the SessionStart effect is unexercised (lines 86-89 of this file); no adapter call. | unsupported. Limitation: `TC-CODEX-EXEC-01` proves PreToolUse assurance dispatch, not an adapter. The event follows a model tool request. | unverified. Limitation: Stop effects are unexercised (lines 89-93 of this file); no adapter call. | unsupported. Limitation: `hooks/hooks.json:82-90` registers `te-host.cjs` only; the effect is unexercised. |
+| Cursor | unverified. Limitation: `hooks/com.cursor/hooks.json:4-8` registers `sessionStart` with no timeout field; `TC-CURSOR-UNAVAIL-01`; no adapter call. | unsupported. Limitation: `hooks/com.cursor/hooks.json:17-27` registers `preToolUse` after a model tool request. Not an adapter call site. | unverified. Limitation: `hooks/com.cursor/hooks.json:9-16` registers `stop` and declares no hard completion deny; `TC-CURSOR-UNAVAIL-01`; no adapter call. | unsupported. Limitation: `hooks/com.cursor/hooks.json` does not register `SubagentStop`. |
+| Muse Code | unsupported. Limitation: hook registration is `UNSUPPORTED` (lines 45-46 of this file, `TC-MUSE-ISC-01` and `TC-MUSE-PLUG-01`). No registered event can invoke an adapter. An Orchestrator command would be a model tool call. | unsupported. Limitation: same as SessionStart. No hook surface. | unsupported. Limitation: same as SessionStart. No hook surface. | unsupported. Limitation: same as SessionStart. No hook surface. |
+| AGY | unsupported. Limitation: `hooks/com.anthropic.claude-code/mapping.md:22` records no hooks (skills-only). The 2026-11-17 copy install reported 0 hooks (lines 47-48 of this file). | unsupported. Limitation: same as SessionStart. No hook surface. | unsupported. Limitation: same as SessionStart. No hook surface. | unsupported. Limitation: same as SessionStart. No hook surface. |
+| Oh My Pi | unsupported. Limitation: the host table in `hooks/com.anthropic.claude-code/mapping.md:15-26` does not list Oh My Pi, and this file's capability matrix has no row. This package declares no hook surface. | unsupported. Limitation: same as SessionStart. No declared hook surface. | unsupported. Limitation: same as SessionStart. No declared hook surface. | unsupported. Limitation: same as SessionStart. No declared hook surface. |
+| DeepCode | unsupported. Limitation: `hooks/com.anthropic.claude-code/mapping.md:24` records no hooks (skills-only). `TC-DEEPCODE-UNVERIFIED-01` is discovery only. | unsupported. Limitation: same as SessionStart. No hook surface. | unsupported. Limitation: same as SessionStart. No hook surface. | unsupported. Limitation: same as SessionStart. No hook surface. |
+| Pi | unsupported. Limitation: `hooks/com.anthropic.claude-code/mapping.md:23` records no command hooks. The Pi binary was absent (`TC-PI-UNAVAIL-01`, line 53 of this file). | unsupported. Limitation: same as SessionStart. No command-hook surface. | unsupported. Limitation: same as SessionStart. No command-hook surface. | unsupported. Limitation: same as SessionStart. No command-hook surface. |
