@@ -62,13 +62,13 @@ Rank is the observed count, largest first. Equal counts use the opportunity id i
 
 ## Enforced versus instructed
 
-One class per row. The row list is the S02 taxonomy table at `docs/architecture/bearing-3-decision-taxonomy.md:20-38` on bearing-lite `b43ae58`, plus the prompt expected-files sentence from placement section 2.6. A row is enforced only when a registered hook or an executable check refuses the violation and a test proves that refusal. Every other row is instructed.
+One class per row. The row list is the S02 taxonomy table at `docs/architecture/bearing-3-decision-taxonomy.md:20-38` on bearing-lite `b43ae58`, plus the prompt expected-files sentence from placement section 2.6. A row is enforced only when a registered hook or an executable check refuses the violation and a test proves that refusal. A check whose registered hook map keeps the invocation procedural is instructed. Every other row is instructed.
 
 | Behavior | Class | Citation |
 | --- | --- | --- |
 | Bound assurance launch | enforced | hooks/assurance-dispatch.cjs:185-203, registered at hooks/hooks.json:16-24. Test: test/hook-contract.test.mjs:544. |
 | Dispatch of every other role | instructed | skills/bearing-lite/SKILL.md:48-55. No hook selects the role. |
-| Transition order | enforced | hooks/transition-order.cjs:218-223 reroutes an illegal jump. Test: test/task-state.test.mjs:235. hooks/hooks.json:2 says the hook is not registered. |
+| Transition order | instructed | hooks/transition-order.cjs:218-223 is an executable evaluator and reroutes an illegal jump. Test: test/task-state.test.mjs:235. hooks/hooks.json:2 says the hook remains procedural, so invocation is instructed. |
 | Planning-artifact write lock | enforced | hooks/orchestrator-write-lock.cjs:773, registered at hooks/hooks.json:38-47. Owner map at hooks/orchestrator-write-lock.cjs:131-132. Test: test/orchestrator-write-lock.test.mjs:26. |
 | Test-engineering write check | enforced | hooks/te-host.cjs:32, registered at hooks/hooks.json:28-36. Test: test/hook-contract.test.mjs:76. |
 | Product write-set check | enforced | hooks/write-set-check.cjs:80-89. Test: test/write-set-check.test.mjs:57. Not a registered hook (test/hook-contract.test.mjs:71). |
