@@ -43,6 +43,20 @@ state, output, effects, or failure. Finding implementation strings, tokens,
 AST shapes, or incidental snapshots does not prove that behavior. This does
 not prohibit source inspection under an allocated inspection or analysis method.
 
+## Behavior, not implementation
+
+A test asserts what a caller or operator observes through a public entry point:
+outputs, persisted state, sends, refusals and error types. It does not assert
+private helper results, SQL text, call counts or internal structures.
+
+Two imagined edits decide whether the test earns its place. Breaking the
+behavior must fail the test. A test that still passes proves nothing. Changing
+internals while every observable result stays the same must leave the test
+passing. A test that then fails is pinned to the implementation. Keep a test
+that catches the break and survives the internal change.
+
+Planning and assurance procedures reference this section. They do not restate it.
+
 Preserve legitimate contracts where text or bytes are themselves the product:
 generated public output, serialized protocols, persisted state, or an explicitly
 owned snapshot. Name the contract and check its actual output. For declarative
