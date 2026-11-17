@@ -5,7 +5,7 @@
 ### Added
 
 - Planning and Assurance Test Engineer guidance for a selected behavior-not-implementation test-suite audit, including the loss-proof reduction record.
-- Bearing 3.0 wave 1: opt-in journey profiler (`tools/journey-profiler.mjs`, `schemas/journey-profile.schema.json`) with atomic output and public-code export; restyled DoD Manifest review sheet with Bearing artwork; Systems Modeler findings and DoD Manifest model entries; prompt audit, decision taxonomy, host-limit matrix, Pstack capability matrix and acknowledgements, and the wave 1 baseline under `docs/architecture/`. ([#PR](https://github.com/alphazede/bearing-lite/pulls))
+- Bearing 3.0 wave 1: opt-in journey profiler (`tools/journey-profiler.mjs`, `schemas/journey-profile.schema.json`) with atomic output and public-code export; restyled DoD Manifest review sheet with Bearing artwork; Systems Modeler findings and DoD Manifest model entries; prompt audit, decision taxonomy, host-limit matrix, Pstack capability matrix and acknowledgements, and the wave 1 baseline under `docs/architecture/`. ([#253](https://github.com/alphazede/bearing-lite/pull/253))
 
 ### Fixed
 
