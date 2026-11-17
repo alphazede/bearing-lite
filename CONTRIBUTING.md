@@ -66,6 +66,7 @@ node --test test/*.test.mjs
 python3 test/schema-validation.py
 node --test test/native/codex-hook-discovery.test.mjs
 node --test test/native/assurance-dispatch.test.mjs
+node --test test/native/harness-acceptance.test.mjs
 node hooks/write-set-check.cjs -- <paths the slice wrote>
 ```
 
@@ -135,6 +136,16 @@ behavior, or skill activation contracts. Those are the product rather than
 details of it, so expect questions and expect evidence that the change stays
 inside the approved Lite surface.
 
+
+The harness-acceptance native suite packs the actual distributable with
+`npm pack` and installs it into disposable profiles for every advertised
+harness path, using only the loopback-driver Codex execution channel for
+hook events. Results are recorded in the versioned matrix at
+`docs/harness-compatibility.md`; a disposable profile that cannot
+authenticate or a missing binary is an explicit `UNAVAILABLE`, never a
+pass. Client binaries are overridable with `BEARING_CODEX_BIN`,
+`BEARING_MUSE_BIN`, `BEARING_CLAUDE_BIN`, `BEARING_AGY_BIN`, or
+`BEARING_CURSOR_BIN`.
 
 The bound assurance native test installs the candidate in disposable config and
 uses an owned loopback Responses driver plus harmless local launch sentinels.
