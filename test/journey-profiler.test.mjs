@@ -154,6 +154,24 @@ describe("journey profiler: join labels and aggregation (B30-104, B30-106, SM01.
     assertUnavailable(betaOnly.cohort.tokens_per_integrated_slice, "no merged slice");
   });
 
+  it("counts a shared slice ID separately for each journey that integrated it", (t) => {
+    const events = readFileSync(fx("events.jsonl"), "utf8");
+    const merge = events.trim().split("\n").map(JSON.parse).find((event) => event.event_id === "ev-2");
+    const file = path.join(tempRoot(t), "events.jsonl");
+    writeFileSync(file, events + JSON.stringify({ ...merge, journey: "jrn-beta", event_id: "ev-beta-1" }) + "\n");
+    const p = profile(t, [...BASE_INPUTS, "--events", file, ...hostLog("claude-code", "claude-code.jsonl")]).json;
+    assert.equal(num(p.cohort.tokens_per_integrated_slice, "α S1 and S2, β S1"), 1727 / 3);
+  });
+
+  it("leaves a session with conflicting receipt stages unattributed", (t) => {
+    const receipt = JSON.parse(readFileSync(fx("receipt-reviewer.json"), "utf8"));
+    const other = path.join(tempRoot(t), "receipt.json");
+    writeFileSync(other, JSON.stringify({ ...receipt, stage: "planning" }));
+    const p = profile(t, [...BASE_INPUTS, "--receipt", other, ...hostLog("claude-code", "claude-code.jsonl")]).json;
+    const row = oneRow(p, { model: "model-a" });
+    assert.deepEqual([row.attribution, row.journey, row.role, row.stage], ["unattributed", null, null, null]);
+  });
+
   it("marks the owner-ask rate unavailable when no evaluated-decision record is supplied (B30-230)", (t) => {
     const p = profile(t, [...BASE_INPUTS, ...hostLog("claude-code", "claude-code.jsonl")]).json;
     assertUnavailable(p.owner_ask_rate, "owner ask rate without decisions");
@@ -166,9 +184,23 @@ describe("journey profiler: join labels and aggregation (B30-104, B30-106, SM01.
     }
     assert.match(report, /\binference\b/i, "report must say inferred attribution is an inference");
   });
+
+  it("reports counts for each attribution label, including empty groups", (t) => {
+    const full = profile(t, [...BASE_INPUTS, ...hostLog("claude-code", "claude-code.jsonl")]);
+    assert.match(full.report, /Attribution rows: bound 1, inferred 1, unattributed 1\./);
+    const empty = profile(t, BASE_INPUTS);
+    assert.match(empty.report, /Attribution rows: bound 0, inferred 0, unattributed 0\./);
+  });
 });
 
 describe("journey profiler: host normalization and unavailable markers (B30-105, SM01.X2, SEIT-HOSTNORM-*)", () => {
+  it("reports an observed zero cache-read total as measured", (t) => {
+    const p = profile(t, [...BASE_INPUTS, ...hostLog("claude-code", "claude-code-malformed.jsonl")]);
+    const row = oneRow(p.json, { model: "model-d" });
+    assert.equal(num(row.metrics.cache_read_tokens, "observed cache reads"), 0);
+    assert.equal(run(["validate", path.join(p.out, "profile.json")]).status, 0);
+  });
+
   it("reports Codex per-call usage once or not at all, never a guessed or double-counted number", (t) => {
     const p = profile(t, [...BASE_INPUTS, ...hostLog("codex", "codex.jsonl")]).json;
     const codex = rows(p, { harness: "codex" });
@@ -361,5 +393,18 @@ describe("journey profiler: staged sanitized export (B30-112, B30-123, SM01.T6, 
     assert.ok(strings.has("reviewer"), "participation is identified by role");
     assertNoLeak({ "export.json": first }, [...CANARIES, ...INTERNAL, "claude"], "export");
     assert.equal(readFileSync(path.join(p.out, "profile.json"), "utf8"), p.bytes, "export must not change the private profile");
+  });
+
+  it("uses the same export-local alias for a journey and its participation", (t) => {
+    const p = profile(t, [...BASE_INPUTS, ...hostLog("claude-code", "claude-code.jsonl")]);
+    const out = path.join(tempRoot(t), "export");
+    const result = run(["export", "--profile", path.join(p.out, "profile.json"), "--out", out]);
+    assert.equal(result.status, 0, result.stderr);
+    const bytes = readFileSync(path.join(out, "export.json"), "utf8");
+    const staged = JSON.parse(bytes);
+    const aliases = new Set(staged.journeys.map((row) => row.journey));
+    assert.equal(aliases.size, 2);
+    assert.ok(aliases.has(staged.participation.find((row) => row.role === "reviewer").journey));
+    assertNoLeak({ export: bytes }, ["jrn-alpha", "jrn-beta"], "public journey aliases");
   });
 });

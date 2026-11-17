@@ -3,9 +3,10 @@
  * Deterministic DoD Manifest renderer: double-render, escaping, missing/stale
  * views, N/A, append-only closeout, sanitized SVG/PNG, unsafe rejection.
  */
-import { after, before, describe, it } from "node:test";
+import { after, describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { execFileSync, spawnSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import {
   existsSync,
   mkdirSync,
@@ -931,45 +932,32 @@ function renderOutcome(render, doc, assetRoot) {
 }
 
 describe("SEIT-B30-524 content parity and artwork", () => {
-  let baselineRender;
+  // SHA-256 of the normalized content from the pre-restyle renderer at 9fdf4d0.
+  const baseline = {
+    ready: "e8f63354f4ccf695bad1e54db25dff1f7aa8d1177951aec8b1239b9515ed74d1",
+    "manifest-complete.json": "b5b0417a1266d84f598937836038808d995be59d362eed5a1387bfabc839e06c",
+    "manifest-reference-index.json": "5d945b06b7a0c5ab2101d91cdc862db1b37a09984c9b55bb790312bb2731cbc3",
+    empty: "6a2b5960dfde949875f29fecc8c9ae9a2ab3ae62d7a53d988d732de190d19510",
+    missing: "82ffb06e1304842d7e5e00f3ef9e7a8356a7813b18d016fddc60874a5306e960",
+  };
 
-  before(async () => {
-    const dir = tempDir();
-    mkdirSync(path.join(dir, "tools"), { recursive: true });
-    mkdirSync(path.join(dir, "templates"), { recursive: true });
-    writeFileSync(
-      path.join(dir, "tools/render-dod-manifest.mjs"),
-      execFileSync("git", ["show", "9fdf4d0:tools/render-dod-manifest.mjs"], { cwd: ROOT })
-    );
-    writeFileSync(
-      path.join(dir, "templates/dod-manifest-v1.html"),
-      execFileSync("git", ["show", "9fdf4d0:templates/dod-manifest-v1.html"], { cwd: ROOT })
-    );
-    const mod = await import(pathToFileURL(path.join(dir, "tools/render-dod-manifest.mjs")).href);
-    baselineRender = (doc, opts) => mod.renderDodManifest(doc, opts);
-  });
-
-  function assertSameContent(doc, assetRoot) {
-    const base = renderOutcome(baselineRender, doc, assetRoot);
-    const next = renderOutcome(renderDodManifest, doc, assetRoot);
-    assert.equal(next.code, base.code);
-    const baseProjection = contentProjection(base.html);
-    const nextProjection = contentProjection(next.html);
-    assert.ok(nextProjection.alts.every((alt) => alt === ""));
-    delete baseProjection.alts;
-    delete nextProjection.alts;
-    assert.deepEqual(nextProjection, baseProjection);
+  function assertSameContent(name, doc, assetRoot, expectedCode = null) {
+    const result = renderOutcome(renderDodManifest, doc, assetRoot);
+    assert.equal(result.code, expectedCode, name);
+    const { alts, ...projection } = contentProjection(result.html);
+    assert.ok(alts.every((alt) => alt === ""), name);
+    assert.equal(createHash("sha256").update(JSON.stringify(projection)).digest("hex"), baseline[name], name);
   }
 
   it("keeps visible text, headings, tables, links, and labels equal to the 1.0.1 renderer", () => {
     const dir = tempDir();
     const doc = { dod_manifest: baseManifest({ models: [boundSvgModel()] }) };
     writeFixture(dir, doc);
-    assertSameContent(doc, dir);
+    assertSameContent("ready", doc, dir);
 
     for (const name of ["manifest-complete.json", "manifest-reference-index.json"]) {
       const fixture = JSON.parse(readFileSync(path.join(ROOT, "test/fixtures", name), "utf8"));
-      assertSameContent(fixture, dir);
+      assertSameContent(name, fixture, dir);
     }
 
     const empty = {
@@ -987,14 +975,14 @@ describe("SEIT-B30-524 content parity and artwork", () => {
         authority: [],
       }),
     };
-    assertSameContent(empty, dir);
+    assertSameContent("empty", empty, dir);
 
     const missing = {
       dod_manifest: baseManifest({
         models: [boundSvgModel({ id: "MODEL-FIX-MISSING", view: { format: "svg", path: "views/missing.svg" } })],
       }),
     };
-    assertSameContent(missing, dir);
+    assertSameContent("missing", missing, dir, "MISSING_VIEW");
   });
 
   it("embeds Bearing artwork in the file and loads nothing from the network", () => {

@@ -338,7 +338,9 @@ function attribute(call, leases, receipts) {
   }
   const unique = [];
   for (const item of bound) {
-    if (!unique.some((other) => other.journey === item.journey)) unique.push(item);
+    if (!unique.some((other) => other.journey === item.journey && other.role === item.role && other.stage === item.stage)) {
+      unique.push(item);
+    }
   }
   if (unique.length === 1) return { attribution: "bound", journey: unique[0].journey, role: unique[0].role, stage: unique[0].stage };
   if (unique.length > 1) return { attribution: "unattributed", journey: null, role: null, stage: null };
@@ -355,8 +357,7 @@ function sumField(calls, key) {
     if (typeof call[key] !== "number") return unavail("host_field_absent");
     total += call[key];
   }
-  // Schema rejects 0: a missing counter is unavailable, and a zero sum cannot be stored as a number.
-  return total > 0 ? num(total) : unavail("non_positive");
+  return total >= 0 ? num(total) : unavail("negative_counter");
 }
 
 function usageRows(calls, harness) {
@@ -424,7 +425,9 @@ function cohortOf(rows, docs, events) {
     else fresh += value;
   }
   const completed = docs.filter((doc) => doc.journey?.status === "complete").length;
-  const merged = new Set(events.filter((event) => ids.has(event.journey) && event.kind === "merge" && event.verdict === "PASS" && event.slice).map((event) => event.slice)).size;
+  const merged = new Set(events
+    .filter((event) => ids.has(event.journey) && event.kind === "merge" && event.verdict === "PASS" && event.slice)
+    .map((event) => JSON.stringify([event.journey, event.slice]))).size;
   const ratio = (denominator, reason) => {
     if (denominator <= 0) return unavail(reason);
     if (incomplete || !(fresh > 0)) return unavail(incomplete ? "attributed_usage_incomplete" : "no_attributed_usage");
@@ -450,7 +453,10 @@ function renderReport(profile) {
   const metricText = (metrics) => Object.entries(metrics)
     .map(([key, metric]) => (metric.value === "unavailable" ? `${key} unavailable (${metric.reason})` : `${key} ${metric.value}`))
     .join(", ");
-  const lines = ["# Journey profile", "", "Inferred attribution is an inference.", "", "## Usage"];
+  const counts = { bound: 0, inferred: 0, unattributed: 0 };
+  for (const row of profile.usage) counts[row.attribution]++;
+  const labels = Object.entries(counts).map(([label, count]) => `${label} ${count}`).join(", ");
+  const lines = ["# Journey profile", "", "Inferred attribution is an inference.", `Attribution rows: ${labels}.`, "", "## Usage"];
   for (const row of profile.usage) {
     lines.push(`- ${row.attribution} ${row.journey ?? "none"} ${row.role ?? "none"} ${row.stage ?? "none"} ${row.harness} ${row.model ?? "none"} ${metricText(row.metrics)}`);
   }
@@ -561,11 +567,13 @@ function stageCmd(bag) {
 function exportCmd(bag) {
   const profile = readJson(one(bag, "profile"));
   assertProfile(profile);
+  const journeyIds = [...new Set(profile.journeys.map((row) => row.journey))].sort();
+  const aliases = new Map(journeyIds.map((id, index) => [id, `journey-${index + 1}`]));
   const staged = {
     participation: profile.usage
       .filter((row) => typeof row.role === "string")
-      .map((row) => ({ role: row.role, stage: row.stage, attribution: row.attribution, journey: row.journey })),
-    journeys: profile.journeys.map((journey) => ({ journey: journey.journey, metrics: journey.metrics })),
+      .map((row) => ({ role: row.role, stage: row.stage, attribution: row.attribution, journey: aliases.get(row.journey) ?? null })),
+    journeys: profile.journeys.map((row) => ({ journey: aliases.get(row.journey), metrics: row.metrics })),
     cohort: profile.cohort,
     owner_ask_rate: profile.owner_ask_rate,
   };
