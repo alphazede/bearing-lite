@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/alphazede/bearing-lite/schemas/journey-profile.schema.json",
   "title": "Bearing Lite journey profile",
-  "description": "Private opt-in journey profile. A missing host counter is the unavailable marker; a numeric value is a real measurement and is greater than zero.",
+  "description": "Private opt-in journey profile. A missing host counter is the unavailable marker. A measured token total can be zero.",
   "type": "object",
   "additionalProperties": false,
   "required": ["inputs", "hosts", "usage", "journeys", "cohort", "owner_ask_rate", "diagnostics"],
@@ -17,16 +17,30 @@
             "value": {"type": "number", "exclusiveMinimum": 0}
           }
         },
+        {"$ref": "#/$defs/unavailableMetric"}
+      ]
+    },
+    "tokenMetric": {
+      "oneOf": [
         {
           "type": "object",
           "additionalProperties": false,
-          "required": ["value", "reason"],
+          "required": ["value"],
           "properties": {
-            "value": {"const": "unavailable"},
-            "reason": {"type": "string", "minLength": 1}
+            "value": {"type": "number", "minimum": 0}
           }
-        }
+        },
+        {"$ref": "#/$defs/unavailableMetric"}
       ]
+    },
+    "unavailableMetric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "reason"],
+      "properties": {
+        "value": {"const": "unavailable"},
+        "reason": {"type": "string", "minLength": 1}
+      }
     },
     "host": {
       "oneOf": [
@@ -81,8 +95,8 @@
             "required": ["model_calls", "fresh_tokens", "cache_read_tokens"],
             "properties": {
               "model_calls": {"$ref": "#/$defs/metric"},
-              "fresh_tokens": {"$ref": "#/$defs/metric"},
-              "cache_read_tokens": {"$ref": "#/$defs/metric"}
+              "fresh_tokens": {"$ref": "#/$defs/tokenMetric"},
+              "cache_read_tokens": {"$ref": "#/$defs/tokenMetric"}
             }
           }
         }
