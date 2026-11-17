@@ -19,9 +19,12 @@ function local(root, relative) {
 /** Visible root plan binding, including when the host reports a child working directory. */
 function binding(cwd, input) {
   const current = input ? require("./task-binding.cjs").binding(input) : null;
-  let root = fs.realpathSync(cwd);
+  let root;
+  try { root = fs.realpathSync(cwd); } catch (e) { if (current) throw e; return null; }
   for (;;) {
-    const plans = fs.readdirSync(root, { withFileTypes: true })
+    let entries;
+    try { entries = fs.readdirSync(root, { withFileTypes: true }); } catch (e) { if (current) throw e; return null; }
+    const plans = entries
       .filter(e => e.isFile() && /\.(md|markdown)$/i.test(e.name)).map(e => e.name).sort();
     const found = [];
     let assurancePending = false;
