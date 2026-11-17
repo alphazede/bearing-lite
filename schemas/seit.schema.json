@@ -79,6 +79,26 @@
           "type": "integer",
           "minimum": 1,
           "description": "Optional. Expected wall-clock seconds this case adds to the gate on its resource group. Engine-backed cases declare it."
+        },
+        "oracle_source": {
+          "$ref": "#/$defs/contentfulString",
+          "description": "Optional. The independently justified source of the expected result (requirement/specification, published standard clause or known vector, approved design contract or invariant, fixed fixture or golden output, independently derived mathematical expectation, or externally observable state). Never derived by reimplementing or calling the production logic under test."
+        },
+        "property_based": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Optional. Property-based testing applicability for this case. Optional-by-applicability, never globally mandatory; record the rationale either way.",
+          "properties": {
+            "applicability": {
+              "type": "string",
+              "enum": ["applicable", "not_applicable"],
+              "description": "Whether a property-based claim suits this case."
+            },
+            "rationale": {
+              "$ref": "#/$defs/contentfulString",
+              "description": "Why the case is applicable or not applicable."
+            }
+          }
         }
       }
     }

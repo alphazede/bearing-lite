@@ -21,16 +21,22 @@ JSON, or harness locations here.
 ## Expected results and independent oracles
 
 An oracle is the independently justified basis for expected behavior. Identify
-its source in the existing `expected_result` or `pass_fail_rule` text; use
-`negative_or_failure_case` to name a plausible wrong behavior the case rejects.
-This guidance adds no schema or receipt fields.
+its source in the case's `oracle_source` field, or in the existing
+`expected_result` or `pass_fail_rule` text; use `negative_or_failure_case` to
+name a plausible wrong behavior the case rejects. This guidance adds no
+receipt fields.
 
-Use a requirement, specification, independently worked example, published
-constant, external contract, or independently justified property. Computed
-expectations are valid when that basis is independent. Calling the production
-helper to calculate its own expected result, or copying its formula without
-independent justification, is circular. Missing justification remains an
-evidence gap; do not invent a requirement or expected value to fill it.
+Use a requirement, specification, published standard clause or known vector,
+approved design contract or invariant, fixed fixture or golden output,
+independently worked example, published constant, external contract,
+independently derived mathematical expectation, or independently justified
+property. Computed expectations are valid when that basis is independent.
+Calling the production helper to calculate its own expected result, or copying
+its formula without independent justification, is circular. Missing
+justification remains an evidence gap; do not invent a requirement or
+expected value to fill it. When no independent oracle can be defined for a
+case, record that limitation explicitly in the case's SEIT entry and choose
+another verification strategy; do not silently accept a circular assertion.
 
 For executable tests, exercise an interface and assert observable behavior,
 state, output, effects, or failure. Finding implementation strings, tokens,
@@ -55,6 +61,18 @@ For agent instructions, a deterministic check of the final emitted prompt can
 verify its intentional text interface. It cannot establish that a model obeys
 it; when interpretation matters, evaluate it with matching/non-matching forward
 tasks during development. This introduces no live-model CI requirement or extra review round.
+
+## Property-based testing applicability
+
+For each test claim, evaluate property-based applicability before fixing
+examples: a meaningful invariant, a sufficiently large or combinatorial input
+domain, meaningful boundary or error space, or state-transition properties
+poorly covered by fixed examples. When applicable, declare a property-based
+method in the case's `property_based` field with its `applicability` and
+`rationale`, using the target repository's existing ecosystem/tooling.
+Property-based testing is optional-by-applicability, not globally mandatory:
+when not applicable, record the rationale and rely on fixed examples. The
+declared invariant must trace to a requirement, design, or standard source.
 
 Adapted from the [no-mistakes test-quality guidance](https://github.com/kunchenguid/no-mistakes/blob/ce5376cf90cffc0e8e20070bccc319475609d94d/skills/no-mistakes/SKILL.md#test-quality-rule).
 The existing method allocation, authorship, coverage and authority rules apply.

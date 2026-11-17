@@ -238,6 +238,109 @@ describe("test-expectations-and-coverage-reuse", () => {
     );
   });
 
+  it("TEX-16 the oracle source list covers the issue's independent bases and a SEIT-recorded fallback", () => {
+    const text = flat(readShipped(CASE_REF));
+    assertContracts(
+      text,
+      {
+        "published standard clause or known vector": /published standard clause[^.]*known vector/,
+        "approved design contract or invariant": /approved design contract[^.]*invariant/,
+        "fixed fixture or golden output": /fixed fixture[^.]*golden output/,
+        "independently derived mathematical expectation":
+          /independently derived mathematical expectation/,
+        "no independent oracle is recorded explicitly in SEIT":
+          /no independent oracle[^.]*explicitly[^.]*seit|explicitly[^.]*seit[^.]*no independent oracle/,
+        "choose another verification strategy": /choose another verification strategy/,
+        "never silently accept a circular assertion": /(do not|never) silently accept[^.]*circular/,
+      },
+      CASE_REF
+    );
+  });
+
+  it("TEX-17 the Test Implementer never mirrors production logic to compute an expectation", () => {
+    const text = flat(readShipped(TDD_REF));
+    assertContracts(
+      text,
+      {
+        "expectations come from the allocated oracle source":
+          /(expectations?|expected (result|value)s?)[^.]*allocated oracle source|allocated oracle source[^.]*expectations?/,
+        "never reimplement the production algorithm":
+          /(never|do not)[^.]*reimplement[^.]*production (algorithm|logic)/,
+        "never mirror production logic to compute the expected result":
+          /(never|do not)[^.]*mirror[^.]*production logic[^.]*expected/,
+        "use the oracle source instead": /oracle source/,
+      },
+      TDD_REF
+    );
+  });
+
+  it("TEX-18 Planning Test Engineer evaluates property-based applicability without making it mandatory", () => {
+    const text = teSurface();
+    assertContracts(
+      text,
+      {
+        "evaluate property-based applicability per claim":
+          /(evaluat(e|es|ing)|determines?|decides?)[^.]*property-based[^.]*applicability/,
+        "meaningful invariant criterion": /meaningful invariant/,
+        "large or combinatorial input domain criterion":
+          /(large|combinatorial) (input |)domain/,
+        "boundary or error space criterion": /(boundary|error) space/,
+        "state-transition properties poorly covered by examples":
+          /state[- ]transition[^.]*poorly covered by (fixed )?examples/,
+        "use the repository's existing tooling": /existing (ecosystem|tooling)/,
+        "optional by applicability, not globally mandatory":
+          /optional-by-applicability[^.]*not (globally )?mandatory|not (globally )?mandatory[^.]*optional-by-applicability/,
+        "record the rationale": /record[^.]*rationale/,
+      },
+      `${TE_SKILL} + ${CASE_REF}`
+    );
+  });
+
+  it("TEX-19 Assurance rejects circular, mirrored, unrun, or untied claims as typed gaps", () => {
+    // A green run does not prove the oracle is independent: an expectation
+    // computed by calling the production helper (or copying its formula)
+    // passes while sharing the same defect. That tautology must be rejected.
+    const tautological = flat(
+      "expected_result: value returned by calling the production helper computeTotal on the same inputs"
+    );
+    assert.match(tautological, /production helper compute(total|Total)/);
+    const text = teSurface();
+    assertContracts(
+      text,
+      {
+        "assurance rejects circularly derived expectations": /circularly derived/,
+        "assurance rejects tests mirroring implementation logic":
+          /mirror(s|ing)? implementation logic/,
+        "assurance rejects a declared property claim that was not run":
+          /(declared|property-based)[^.]*claim[^.]*not run|not run[^.]*declared/,
+        "assurance rejects invariants untied to a requirement/design/standard source":
+          /(untied|not tied|not be tied)[^.]*requirement[^.]*design[^.]*standard|requirement[^.]*design[^.]*standard[^.]*tied/,
+        "typed verification gap, never PASS": /(typed verification gap|typed gap)[^.]*not pass/,
+      },
+      `${TE_SKILL} + ${CASE_REF}`
+    );
+  });
+
+  it("TEX-20 SEIT declares optional oracle-source and property-based applicability fields", () => {
+    const schema = JSON.parse(readShipped("schemas/seit.schema.json"));
+    const proof = schema.$defs.proofCase;
+    assert.ok(proof && typeof proof === "object", "seit schema must declare proofCase");
+    assert.ok(
+      proof.properties && typeof proof.properties.oracle_source === "object",
+      "proofCase must declare an optional oracle_source field"
+    );
+    assert.ok(
+      proof.properties.property_based && typeof proof.properties.property_based === "object",
+      "proofCase must declare an optional property_based field"
+    );
+    const required = Array.isArray(proof.required) ? proof.required : [];
+    assert.ok(!required.includes("oracle_source"), "oracle_source must not be globally mandatory");
+    assert.ok(!required.includes("property_based"), "property_based must not be globally mandatory");
+    const pb = proof.properties.property_based.properties;
+    assert.ok(pb && pb.applicability, "property_based must declare applicability");
+    assert.ok(pb && pb.rationale, "property_based must declare rationale");
+  });
+
   it("TEX-15 new references resolve every local link and carry no private identifiers", () => {
     for (const rel of [CASE_REF, TDD_REF]) {
       assertLocalLinksResolve(rel);
