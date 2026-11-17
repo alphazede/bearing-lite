@@ -20,6 +20,7 @@
 - `register-precheck` accepts any uppercase-prefix case ID (for example `VCASE-`) in explicit verification-case fields and resolves it against SEIT. Free-text `VERIFICATION` prose keeps the original narrow recognition. ([PR #241](https://github.com/alphazede/bearing-lite/pull/241), fixes [#227](https://github.com/alphazede/bearing-lite/issues/227))
 - The final freeze can record a post-approval planning correction in an append-only `journey_settings.planning_corrections` list, with its own review, repair and closing candidate, without rewriting round-1 provenance. ([PR #242](https://github.com/alphazede/bearing-lite/pull/242), fixes [#226](https://github.com/alphazede/bearing-lite/issues/226))
 - Shipped hooks are audited (keep or quiet-unless-gated, with reasons) in `docs/architecture/hook-audit.md`. Advisory closeout and git-sync stay silent on a second stop, including Cursor `loop_count` re-entry, and stop advice never auto-continues. ([PR #244](https://github.com/alphazede/bearing-lite/pull/244), closes [#139](https://github.com/alphazede/bearing-lite/issues/139))
+- The native harness suite derives the packaged skill count from `skills/` instead of hard-coding 16, and checks that the compatibility matrix states the same count. ([PR #250](https://github.com/alphazede/bearing-lite/pull/250))
 
 ## [2.0.3](https://github.com/alphazede/bearing-lite/releases/tag/v2.0.3) - 2026-10-28
 
