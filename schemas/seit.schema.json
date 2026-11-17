@@ -82,7 +82,10 @@
         },
         "oracle_source": {
           "$ref": "#/$defs/contentfulString",
-          "description": "Optional. The independently justified source of the expected result (requirement/specification, published standard clause or known vector, approved design contract or invariant, fixed fixture or golden output, independently derived mathematical expectation, or externally observable state). Never derived by reimplementing or calling the production logic under test."
+          "description": "Optional. The independently justified source of the expected result (requirement/specification, published standard clause or known vector, approved design contract or invariant, fixed fixture or golden output, independently derived mathematical expectation, or externally observable state). Never derived by reimplementing or calling the production logic under test.",
+          "not": {
+            "pattern": "[Pp]roduction\\s+(helper|code|function|logic|algorithm|path)|[Rr]eimplement[^.]*[Pp]roduction|[Mm]irror[^.]*[Pp]roduction|[Cc]op(y|ied)[^.]*formula"
+          }
         },
         "property_based": {
           "type": "object",
