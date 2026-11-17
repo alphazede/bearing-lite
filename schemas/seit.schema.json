@@ -84,7 +84,7 @@
           "$ref": "#/$defs/contentfulString",
           "description": "Optional. The independently justified source of the expected result (requirement/specification, published standard clause or known vector, approved design contract or invariant, fixed fixture or golden output, independently derived mathematical expectation, or externally observable state). Never derived by reimplementing or calling the production logic under test.",
           "not": {
-            "pattern": "[Pp]roduction\\s+(helper|code|function|logic|algorithm|path)|[Rr]eimplement[^.]*[Pp]roduction|[Mm]irror[^.]*[Pp]roduction|[Cc]op(y|ied)[^.]*formula"
+            "pattern": "(?:^|[.;:])(?:(?!\\b(?:[Nn][Oo][Tt]|[Nn][Ee][Vv][Ee][Rr])\\b)[^.])*(?:(?:[Cc]omput(?:e|ed|es|ing)\\b|[Dd]eriv(?:e|ed|es|ing)\\b|[Oo]btain(?:s|ed|ing)?\\b|[Gg]enerat(?:e|ed|es|ing)\\b|[Cc]all(?:ing|ed|s)?\\b|[Rr]un(?:ning|s)?\\b|[Rr]eimplement(?:s|ed|ing)?\\b|[Mm]irror(?:s|ed|ing)?\\b|[Cc]op(?:y|ies|ied|ying)\\b)(?:(?!\\b(?:[Nn][Oo][Tt]|[Nn][Ee][Vv][Ee][Rr])\\b)[^.])*\\b[Pp]roduction\\b|\\b[Ee]xpected\\b(?:(?!\\b(?:[Nn][Oo][Tt]|[Nn][Ee][Vv][Ee][Rr])\\b)[^.])*\\b[Pp]roduction\\b(?:(?!\\b(?:[Nn][Oo][Tt]|[Nn][Ee][Vv][Ee][Rr])\\b)[^.])*\\b(?:[Oo]utput|[Rr]esult|[Vv]alue)\\b)"
           }
         },
         "property_based": {

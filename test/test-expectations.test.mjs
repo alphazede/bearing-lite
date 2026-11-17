@@ -335,6 +335,33 @@ describe("test-expectations-and-coverage-reuse", () => {
     assert.equal(tautVerdict.outcome, "REJECT", "shipped validation must reject tautological oracle_source");
     assert.equal(tautVerdict.reason, "circular_oracle_source", "typed rejection must name circular oracle");
     assert.equal(controlVerdict.outcome, "PASS", "shipped validation must accept independent oracle_source");
+    const neutralOracles = [
+      "Requirement REQ-7; independent of production code",
+      "Golden output captured before the production algorithm changed",
+      "Published vector; not derived from production logic",
+      "never derived from production logic",
+    ];
+    for (const neutral of neutralOracles) {
+      assert.equal(
+        oracleRe.test(neutral),
+        false,
+        `shipped validation must accept neutral or negated oracle_source: ${neutral}`
+      );
+    }
+    const derivationOracles = [
+      "computed by calling the production helper computeTotal",
+      "expected = production helper output",
+      "reimplements the production algorithm",
+      "copied formula from production",
+      "derived from the production code path",
+    ];
+    for (const derivation of derivationOracles) {
+      assert.equal(
+        oracleRe.test(derivation),
+        true,
+        `shipped validation must reject derivation oracle_source: ${derivation}`
+      );
+    }
     const text = teSurface();
     assertContracts(
       text,
