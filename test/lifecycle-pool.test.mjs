@@ -353,6 +353,23 @@ describe("lifecycle-pool", () => {
     rmSync(lockDir, { recursive: true, force: true });
   });
 
+  it("lock: EEXIST thrown by the locked work surfaces once and releases the lock", async () => {
+    const repo = track(await makeRepo());
+    const pool = track(mkdtempSync(path.join(tmpdir(), "poolstate-")));
+    mkdirSync(path.join(pool, "leases"), { recursive: true });
+    // Owner sanitization maps both "a/b" and "a_b" to leases/a_b.json, but
+    // lease lookup compares raw owners, so leasing "a_b" reaches the
+    // exclusive lease write which must fail with EEXIST.
+    const colliding = path.join(pool, "leases", "a_b.json");
+    writeFileSync(colliding, JSON.stringify({ owner: "a/b", pid: process.pid, ts: Date.now(), repo, worktree: null, branch: "feat/collide-owner", released: false, branchOnly: true }));
+    const e = await cliFail(["lease", "--pool", pool, "--repo", repo, "--owner", "a_b", "--branch", "feat/collide", "--branch-only"]);
+    const out = `${e.stdout ?? ""}${e.stderr ?? ""}`;
+    assert.match(out, /EEXIST/);
+    assert.doesNotMatch(out, /lock timeout/i);
+    assert.equal(existsSync(path.join(pool, ".lock")), false);
+    assert.equal(JSON.parse(readFileSync(colliding, "utf8")).owner, "a/b");
+  });
+
   it("233-08 plan is validated before mutation; nothing deleted on refusal", async () => {
     const repo = track(await makeRepo());
     const pool = track(mkdtempSync(path.join(tmpdir(), "poolstate-")));
