@@ -779,6 +779,13 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     const metadata = readFileSync(metadataPath, "utf8");
     assert.match(metadata, /allow_implicit_invocation:\s*false/);
     assert.match(metadata, /\$bearing-lite/);
+    // R214-1: the discoverable orchestrator alias is a separate Codex
+    // registration and must carry the same explicit-invocation policy.
+    const orchestratorPath = path.join(SKILLS_DIR, "orchestrator", "agents", "openai.yaml");
+    assert.ok(existsSync(orchestratorPath), "orchestrator alias must publish Codex activation metadata");
+    const orchestratorMetadata = readFileSync(orchestratorPath, "utf8");
+    assert.match(orchestratorMetadata, /allow_implicit_invocation:\s*false/);
+    assert.match(orchestratorMetadata, /\$orchestrator/);
   });
 
   it("negative: missing role fails with typed diagnostic", () => {
