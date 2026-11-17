@@ -1,0 +1,17 @@
+{
+  "schema_version": "1",
+  "schema": "bearing-lite/authority",
+  "id": "AUTH-FX",
+  "state": "approved",
+  "subject": { "plan": "fixture" },
+  "repositories": [{ "name": "demo" }],
+  "baseline": { "demo": "0000000000000000000000000000000000000000" },
+  "granting_owner_decisions": ["DEC-FX-01"],
+  "allowed": { "scope": ["fixture plan"], "actions": ["edit write set", "run tests", "local commit"], "paths": ["demo: src/", "demo: test/"] },
+  "prohibited": { "scope": [], "actions": ["OWNER-ONLY-publish-release", "OWNER-ONLY-push-main"], "paths": ["demo: secrets/"] },
+  "role_grants": [{ "role": "Implementer", "actions": ["edit write set"] }],
+  "effective": true,
+  "expiry_conditions": ["fixture closes"],
+  "supersedes": [],
+  "approval_receipt": { "decision": "DEC-FX-01" }
+}

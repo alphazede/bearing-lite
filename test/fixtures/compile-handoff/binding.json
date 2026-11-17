@@ -1,0 +1,36 @@
+{
+  "selection": { "profile": "fixture", "source": "catalog" },
+  "snapshot": {
+    "roles": {
+      "implementer": {
+        "enabled": true,
+        "primary": { "harness": "Fixture Harness", "model": "fixture-model-impl", "reasoning": "high" },
+        "ordered_fallbacks": [
+          { "harness": "Fallback Harness B", "model": "fixture-model-fb-b", "reasoning": "high" },
+          { "harness": "Fallback Harness A", "model": "fixture-model-fb-a", "reasoning": "medium" }
+        ]
+      },
+      "test_implementer": {
+        "enabled": true,
+        "primary": { "harness": "Fixture Harness", "model": "fixture-model-ti", "reasoning": "medium" },
+        "ordered_fallbacks": []
+      },
+      "reviewer": {
+        "enabled": true,
+        "primary": { "harness": "Review Harness", "model": "fixture-model-review", "reasoning": "high" },
+        "ordered_fallbacks": [],
+        "cadence": "phase"
+      },
+      "fellow": {
+        "enabled": true,
+        "primary": { "harness": "Fellow Harness", "model": "fixture-model-fellow", "reasoning": "max" },
+        "ordered_fallbacks": []
+      }
+    },
+    "review": { "coverage_assist": { "enabled": true, "required": true }, "ocr_execution_mode": "delegate" },
+    "deterministic_verification": { "reverify": { "enabled": true } },
+    "development_strategy": { "mode": "tdd" }
+  },
+  "snapshot_digest": "1111111111111111111111111111111111111111111111111111111111111111",
+  "resolved": { "development_strategy.mode": "tdd" }
+}

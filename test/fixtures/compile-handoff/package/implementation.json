@@ -1,0 +1,61 @@
+{
+  "schema_version": "1",
+  "artifact": "implementation-plan",
+  "source_baseline": { "demo": "0000000000000000000000000000000000000000" },
+  "journey_settings": {},
+  "profile_freeze": { "binding": "binding.json" },
+  "waves": [
+    { "id": "W1", "name": "Fixture wave", "slice_ids": ["S1", "S2"], "exit_command_ids": ["CMD-FX-UNIT"] }
+  ],
+  "dependencies": [],
+  "slices": [
+    {
+      "id": "S1",
+      "role": "Implementer",
+      "goal": "GOAL-S1: the parser returns one record per input line.",
+      "type": "implementation",
+      "requirement_ids": ["FX-001"],
+      "design_ids": ["DES-FX1"],
+      "seit_proof_rows": ["SEIT-FX-1"],
+      "design_lenses": ["OOPDSA Implementation Design"],
+      "model_route": { "harness": "Fixture Harness", "model": "fixture-model-impl", "route": "primary" },
+      "reasoning_level": { "effort": "high" },
+      "review_path": { "reviewer": "fixture reviewer", "cadence": "phase" },
+      "write_set": ["demo: src/parser.mjs", "demo: test/fixtures/parser/"],
+      "expected_files": [
+        "demo: src/parser.mjs",
+        "demo: test/fixtures/parser/one-line.txt",
+        "demo: test/fixtures/parser-evil/escape.txt",
+        "demo: test/fixtures/parser/../../../outside/escape.txt",
+        "demo: outside/escape.txt",
+        "other-repo: src/parser.mjs"
+      ],
+      "command_ids": ["CMD-FX-UNIT"],
+      "stop_condition": "Stop when CMD-FX-UNIT exits 0.",
+      "human_decision": null,
+      "authority_id": "AUTH-FX",
+      "work_class": "judgement"
+    },
+    {
+      "id": "S2",
+      "role": "Implementer",
+      "goal": "GOAL-S2: the formatter prints one record per output line.",
+      "type": "implementation",
+      "requirement_ids": ["FX-002"],
+      "design_ids": ["DES-FX2"],
+      "seit_proof_rows": ["SEIT-FX-2"],
+      "design_lenses": ["OOPDSA Implementation Design"],
+      "model_route": { "harness": "Fixture Harness", "model": "fixture-model-impl", "route": "primary" },
+      "reasoning_level": { "effort": "high" },
+      "review_path": { "reviewer": "fixture reviewer", "cadence": "phase" },
+      "write_set": ["demo: src/formatter.mjs"],
+      "expected_files": ["demo: src/formatter.mjs"],
+      "command_ids": ["CMD-FX-UNIT"],
+      "stop_condition": "Stop when CMD-FX-UNIT exits 0.",
+      "human_decision": null,
+      "authority_id": "AUTH-FX",
+      "work_class": "judgement"
+    }
+  ],
+  "traceability": { "notes": "CANARY-RAW-HISTORY-b30308: planning discussion that must never reach a packet." }
+}
