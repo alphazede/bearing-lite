@@ -1,0 +1,21 @@
+{
+  "schema_version": "1",
+  "kind": "receipt",
+  "status": "VERIFIED",
+  "candidate_ref": "slice/alpha",
+  "candidate_revision": "rev-alpha-1",
+  "claim_id": "claim-1",
+  "backend": "fixture-backend",
+  "backend_version": "1",
+  "command_configuration": {
+    "command": "run --token CANARY-SECRET-b30103-7f3a9c2e"
+  },
+  "evidence_digest": "0000000000000000000000000000000000000000000000000000000000000000",
+  "authority": "assurance",
+  "produced_by": {
+    "role": "reviewer",
+    "identity": "fixture-reviewer",
+    "session": "sess-bound-1"
+  },
+  "stage": "review"
+}

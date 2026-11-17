@@ -1,0 +1,2 @@
+{"sessionId": "sess-other-1", "cwd": "/work/alpha", "timestamp": "2026-11-10T10:40:00Z", "model": "model-o", "text": "CANARY-PROMPT-b30103-summarize-the-plan", "usage": {"input_tokens": 70, "output_tokens": 30}}
+{"sessionId": "sess-other-1", "cwd": "/work/alpha", "timestamp": "2026-11-10T10:41:00Z", "model": "model-o", "tool": {"input": "CANARY-TOOL-b30103-cat-private-file", "output": "CANARY-SECRET-b30103-7f3a9c2e"}, "usage": {"input_tokens": 5, "output_tokens": 5}}

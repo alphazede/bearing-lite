@@ -1,0 +1,26 @@
+{
+  "schema_version": "1",
+  "journey": {
+    "id": "jrn-off",
+    "title": "fixture journey jrn-off",
+    "status": "complete",
+    "planning_repository": "fixture-plans"
+  },
+  "checkout_lease": {
+    "journey": "jrn-off",
+    "controller": "fixture-controller",
+    "repository": "fixture-repo",
+    "checkout": "/work/alpha",
+    "branch": "slice/alpha",
+    "candidate_revision": "rev-off-1",
+    "acquired_at": "2026-11-10T10:00:00Z",
+    "generation": 1,
+    "state": "released",
+    "released_at": "2026-11-10T12:00:00Z",
+    "release_reason": "integrated"
+  },
+  "decisions": [],
+  "open_decisions": [],
+  "planning_receipts": [],
+  "profile_selection": {}
+}
