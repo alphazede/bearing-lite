@@ -17,6 +17,7 @@ Read and act as `../bearing-lite/SKILL.md` (Bearing Orchestrator). That file
 is the one canonical owner of lifecycle sequencing, owner communication,
 frozen profile dispatch, direct versus coordinated execution, and closeout.
 All `references/` contracts it cites remain under `../bearing-lite/references/`.
+Received duties D1 to D9 and D11 are in `../bearing-lite/references/coordinator-migration.md`; do not copy that table here.
 
 ## Match and non-match
 
