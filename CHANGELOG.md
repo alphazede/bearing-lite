@@ -5,6 +5,7 @@
 ### Fixed
 
 - The assurance-dispatch hook no longer denies every Bash call when the session working directory is missing or unreadable and no task binding resolved. Bound assurance stays fail-closed. ([PR #238](https://github.com/alphazede/bearing-lite/pull/238), fixes [#229](https://github.com/alphazede/bearing-lite/issues/229))
+- `register-precheck` accepts any uppercase-prefix case ID (for example `VCASE-`) in explicit verification-case fields and resolves it against SEIT. Free-text `VERIFICATION` prose keeps the original narrow recognition. ([PR #241](https://github.com/alphazede/bearing-lite/pull/241), fixes [#227](https://github.com/alphazede/bearing-lite/issues/227))
 
 ## [2.0.3](https://github.com/alphazede/bearing-lite/releases/tag/v2.0.3) - 2026-10-28
 
