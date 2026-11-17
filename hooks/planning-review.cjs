@@ -94,6 +94,9 @@ function evaluatePlanningReview(input) {
   if (!manifestGenerated(input)) {
     return { outcome: "NEEDS_MORE_EVIDENCE", reason: "manifest_not_generated" };
   }
+  if (input.correction_id !== undefined && !nonempty(input.correction_id)) {
+    return { outcome: "OWNER_AMENDMENT_REQUIRED", reason: "correction_id_invalid" };
+  }
   // #69: a specification Journey gates its requirement register at planning;
   // existence on disk is checked by hooks/plan-package.cjs at the freeze.
   if (

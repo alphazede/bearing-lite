@@ -511,47 +511,55 @@ function checkManifestProjection(implementation) {
  * sessions or reviewer identities; one explicit repair links that reviewed
  * candidate to closure.
  */
-function checkPlanningWave(implementation, manifestDigest, stage = "final", dir, inputDigests) {
-  const wave = implementation?.journey_settings?.planning_wave;
-  if (!wave || typeof wave !== "object") return [{ code: "planning_wave_missing" }];
+function checkWaveRecord(wave, { expectedDigest, isLatest, stage = "final", dir, inputDigests, correctionId = null }) {
+  if (!wave || typeof wave !== "object" || Array.isArray(wave)) {
+    return [{ code: "planning_wave_missing", ...(correctionId ? { correction_id: correctionId } : {}) }];
+  }
   const sessions = planningSessionsVerdict({ required_sessions: wave.required_sessions, sessions: [] });
-  if (sessions?.reason === "planning_sessions_invalid") return [{ code: "planning_sessions_invalid" }];
+  if (sessions?.reason === "planning_sessions_invalid") {
+    return [{ code: "planning_sessions_invalid", ...(correctionId ? { correction_id: correctionId } : {}) }];
+  }
   if (wave.review_requested !== undefined && typeof wave.review_requested !== "boolean") {
-    return [{ code: "planning_wave_review_request_invalid", recorded: wave.review_requested }];
+    return [{ code: "planning_wave_review_request_invalid", recorded: wave.review_requested, ...(correctionId ? { correction_id: correctionId } : {}) }];
   }
   if (stage === "draft") return [];
   const findings = [];
+  const push = (finding) => findings.push(correctionId ? { ...finding, correction_id: correctionId } : finding);
   if (!Array.isArray(wave.sessions)) {
-    findings.push({ code: "planning_wave_sessions_incomplete" });
+    push({ code: "planning_wave_sessions_incomplete" });
   }
   if (!Number.isInteger(wave.repairs) || wave.repairs < 0 || wave.repairs > REVIEW_POLICY.aggregated_repairs_max) {
-    findings.push({ code: "planning_wave_repair_limit", recorded: wave.repairs ?? null });
+    push({ code: "planning_wave_repair_limit", recorded: wave.repairs ?? null });
   }
   if (wave.closure !== REVIEW_POLICY.post_repair_gate) {
-    findings.push({ code: "planning_wave_closure_missing", recorded: wave.closure ?? null });
+    push({ code: "planning_wave_closure_missing", recorded: wave.closure ?? null });
   }
-  if (!manifestDigest || wave.candidate_digest !== manifestDigest) {
-    findings.push({ code: "planning_wave_candidate_mismatch", recorded: wave.candidate_digest ?? null, actual: manifestDigest });
+  if (isLatest) {
+    if (!expectedDigest || wave.candidate_digest !== expectedDigest) {
+      push({ code: "planning_wave_candidate_mismatch", recorded: wave.candidate_digest ?? null, actual: expectedDigest });
+    }
+  } else if (typeof wave.candidate_digest !== "string" || !/^[0-9a-f]{64}$/.test(wave.candidate_digest)) {
+    push({ code: "planning_wave_candidate_mismatch", recorded: wave.candidate_digest ?? null, actual: expectedDigest });
   }
   if (wave.review_requested === false) {
     // Unrequested review is recorded, never dispatched or forged.
-    if (wave.reviews !== 0) findings.push({ code: "planning_wave_review_count", recorded: wave.reviews ?? null });
-    if (wave.repairs !== 0) findings.push({ code: "planning_wave_repair_limit", recorded: wave.repairs ?? null });
+    if (wave.reviews !== 0) push({ code: "planning_wave_review_count", recorded: wave.reviews ?? null });
+    if (wave.repairs !== 0) push({ code: "planning_wave_repair_limit", recorded: wave.repairs ?? null });
     if (wave.review_receipt !== undefined || wave.repair !== undefined) {
-      findings.push({ code: "planning_wave_review_invalid", reason: "unrequested_review_evidence" });
+      push({ code: "planning_wave_review_invalid", reason: "unrequested_review_evidence" });
     }
     const closing = wave.closing_candidate;
     if (!sameCandidate(closing, closing) || closing.candidate_digest !== wave.candidate_digest) {
-      findings.push({ code: "planning_wave_candidate_mismatch", recorded: closing ?? null, actual: manifestDigest });
-    } else if (Array.isArray(wave.sessions) && planningSessionsVerdict(wave, closing, inputDigests)) {
-      findings.push({ code: "planning_wave_sessions_incomplete" });
+      push({ code: "planning_wave_candidate_mismatch", recorded: closing ?? null, actual: expectedDigest });
+    } else if (Array.isArray(wave.sessions) && planningSessionsVerdict(wave, closing, isLatest ? inputDigests : wave.input_digests)) {
+      push({ code: "planning_wave_sessions_incomplete" });
     }
     return findings;
   }
   if (wave.reviews !== REVIEW_POLICY.review_rounds) {
-    findings.push({ code: "planning_wave_review_count", recorded: wave.reviews ?? null });
+    push({ code: "planning_wave_review_count", recorded: wave.reviews ?? null });
   }
-  const invalidReview = (reason) => findings.push({ code: "planning_wave_review_invalid", reason });
+  const invalidReview = (reason) => push({ code: "planning_wave_review_invalid", reason });
   const ref = wave.review_receipt;
   let review;
   if (!ref || typeof ref.path !== "string" || !ref.path || !/^[0-9a-f]{64}$/.test(ref.sha256)) {
@@ -579,20 +587,22 @@ function checkPlanningWave(implementation, manifestDigest, stage = "final", dir,
       result = { outcome: "FAIL", reason: "receipt_invalid" };
     }
     if (result.outcome !== "PASS") invalidReview(result.reason);
-    else if (!review.receipts.every((receipt) => ["ACCEPT", "PASS", "REPAIR_REQUIRED"].includes(receipt.verdict))) {
+    else if (correctionId === null ? review.correction_id !== undefined : review.correction_id !== correctionId) {
+      invalidReview("correction_id_mismatch");
+    } else if (!review.receipts.every((receipt) => ["ACCEPT", "PASS", "REPAIR_REQUIRED"].includes(receipt.verdict))) {
       invalidReview("reviewer_receipt_pending");
     }
     // Keep the original review and specialist provenance, even after repair.
     if (!isDeepStrictEqual(wave.required_sessions, review.planning_wave?.required_sessions) ||
         !isDeepStrictEqual(wave.sessions, review.planning_wave?.sessions)) {
-      findings.push({ code: "planning_wave_session_provenance_mismatch" });
+      push({ code: "planning_wave_session_provenance_mismatch" });
     }
     if (planningSessionsVerdict(wave, review.candidate, review.input_digests)) {
-      findings.push({ code: "planning_wave_sessions_incomplete" });
+      push({ code: "planning_wave_sessions_incomplete" });
     }
     const closing = wave.closing_candidate;
     if (!sameCandidate(closing, closing) || closing.candidate_digest !== wave.candidate_digest) {
-      findings.push({ code: "planning_wave_candidate_mismatch", recorded: closing ?? null, actual: manifestDigest });
+      push({ code: "planning_wave_candidate_mismatch", recorded: closing ?? null, actual: expectedDigest });
     }
     const repair = wave.repair;
     if (Number(review.aggregated_repairs || 0) !== 0 ||
@@ -600,10 +610,53 @@ function checkPlanningWave(implementation, manifestDigest, stage = "final", dir,
         (wave.repairs === 0 ? !sameCandidate(closing, review.candidate) || repair !== undefined :
           !sameCandidate(repair?.from_candidate, review.candidate) ||
           !sameCandidate(repair?.to_candidate, closing) || repair?.deterministic_gate !== "PASS")) {
-      findings.push({ code: "planning_wave_repair_lineage_invalid" });
+      push({ code: "planning_wave_repair_lineage_invalid" });
     }
   } else if (review !== undefined) {
     invalidReview("receipt_invalid");
+  }
+  return findings;
+}
+
+function checkPlanningWave(implementation, manifestDigest, stage = "final", dir, inputDigests) {
+  const wave = implementation?.journey_settings?.planning_wave;
+  const corrections = implementation?.journey_settings?.planning_corrections;
+  if (corrections !== undefined && !Array.isArray(corrections)) {
+    return [{ code: "planning_corrections_invalid" }];
+  }
+  const hasCorrections = Array.isArray(corrections) && corrections.length > 0;
+  const findings = checkWaveRecord(wave, {
+    expectedDigest: hasCorrections ? wave?.candidate_digest : manifestDigest,
+    isLatest: !hasCorrections,
+    stage,
+    dir,
+    inputDigests,
+    correctionId: null,
+  });
+  if (!hasCorrections) return findings;
+  const seenIds = new Set();
+  let prevClosing = wave?.closing_candidate;
+  for (let i = 0; i < corrections.length; i++) {
+    const corr = corrections[i];
+    const id = typeof corr?.correction_id === "string" && corr.correction_id.trim().length > 0 ? corr.correction_id : null;
+    if (!corr || typeof corr !== "object" || Array.isArray(corr) || !id || seenIds.has(id)) {
+      findings.push({ code: "planning_corrections_invalid", index: i, correction_id: id });
+      continue;
+    }
+    seenIds.add(id);
+    if (stage === "final" ? !sameCandidate(corr.from_candidate, prevClosing) : !sameCandidate(corr.from_candidate, corr.from_candidate)) {
+      findings.push({ code: "planning_correction_lineage_invalid", correction_id: id });
+    }
+    const isLatest = i === corrections.length - 1;
+    findings.push(...checkWaveRecord(corr, {
+      expectedDigest: isLatest ? manifestDigest : corr.candidate_digest,
+      isLatest,
+      stage,
+      dir,
+      inputDigests,
+      correctionId: id,
+    }));
+    prevClosing = corr.closing_candidate;
   }
   return findings;
 }
