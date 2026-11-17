@@ -430,6 +430,20 @@
               "description": "Deterministic file selection and rule resolution for the Reviewer. It finds no defects and produces no verdict. enabled and required are independent: required has force when both are true."
             }
           }
+        },
+        "assurance_repair": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "enabled"
+          ],
+          "description": "Optional Assurance Test Engineer bounded test-side repair preauthorization. When true, the parent may record a repair_transition for one same-session test-side repair; when absent or false, assurance behaves exactly as today (FAIL with findings, no repair).",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "When true, the frozen profile preauthorizes one bounded same-session repair of proven test-side defects per assurance round, reusing the Reviewer repair_transition contract. Absent or false means no repair authority."
+            }
+          }
         }
       }
     }

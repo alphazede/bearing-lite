@@ -233,7 +233,7 @@ function evaluateTddTestImplementerRoute(input) {
  * TDD missing/disabled/malformed Test Implementer fails closed with no snapshot or digest.
  * Digest is canonical JSON of selected entries with fallback order; excludes cadence, route, and authority.
  * @param {{ profile?: object }} [input]
- * @returns {{ snapshot: { roles: object, review?: object, deterministic_verification?: object }, digest: string } | { outcome: string, onboard: boolean }}
+ * @returns {{ snapshot: { roles: object, review?: object, deterministic_verification?: object, assurance_repair?: object }, digest: string } | { outcome: string, onboard: boolean }}
  */
 function freezeSelectedRoutes(input) {
   const profile = (input && input.profile) || {};
@@ -251,6 +251,10 @@ function freezeSelectedRoutes(input) {
   if (isPlainObject(profile.deterministic_verification)) {
     snapshot.deterministic_verification = deepCopy(profile.deterministic_verification);
     material.deterministic_verification = snapshot.deterministic_verification;
+  }
+  if (isPlainObject(profile.assurance_repair)) {
+    snapshot.assurance_repair = deepCopy(profile.assurance_repair);
+    material.assurance_repair = snapshot.assurance_repair;
   }
   if (Array.isArray(profile.holds)) {
     snapshot.holds = deepCopy(profile.holds);

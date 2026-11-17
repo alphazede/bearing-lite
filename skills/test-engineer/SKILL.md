@@ -49,6 +49,8 @@ Integration Engineer execution assessment.
 6. Verify cited standards and clauses. Return the smallest missing proof and
    check the report against observed evidence. Preserve the candidate; do not
    weaken tests, repair product behavior, or infer user acceptance while evaluating.
+   When the frozen profile preauthorizes it, fix proven test-side defects via
+   `repair_transition` per `references/assurance-repair.md`; otherwise `FAIL`.
 
 ## Return and boundaries
 
