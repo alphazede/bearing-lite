@@ -1,0 +1,7 @@
+interface:
+  display_name: "Orchestrator"
+  short_description: "Coordinate a Bearing lifecycle wave as Orchestrator"
+  default_prompt: "Use $orchestrator only when the owner explicitly requests Bearing for that mode. Coordinate the approved multi-packet wave through its end boundary without duplicating canonical orchestration policy. Preserve owner-selected agents and review cadence. Unrequested review stays inactive."
+
+policy:
+  allow_implicit_invocation: false

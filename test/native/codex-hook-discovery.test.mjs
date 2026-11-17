@@ -192,6 +192,29 @@ describe("Codex native hook discovery for the installed candidate (D1)", () => {
     for (const d of skillDirs) {
       assert.equal(sha256(path.join(installedRoot, "skills", d, "SKILL.md")), sha256(path.join(ROOT, "skills", d, "SKILL.md")), `installed skill ${d} differs`);
     }
+    // R214-1: Codex registers the alias separately. Both entry points must be
+    // listed, and the alias must carry its own Codex interface (proof that
+    // skills/orchestrator/agents/openai.yaml was parsed). On 1f0e6ff the
+    // alias had no interface, so the default (:true) implicit invocation
+    // applied instead of the canonical allow_implicit_invocation: false.
+    const byName = Object.fromEntries(ourSkills.map((k) => [k.name, k]));
+    assert.ok(byName["bearing-lite:bearing-lite"], "Codex must list the canonical bearing-lite entry point");
+    assert.ok(byName["bearing-lite:orchestrator"], "Codex must list the orchestrator alias entry point");
+    assert.match(
+      byName["bearing-lite:bearing-lite"].interface?.defaultPrompt ?? "",
+      /\$bearing-lite/,
+      "canonical entry point must carry its Codex default prompt"
+    );
+    assert.match(
+      byName["bearing-lite:orchestrator"].interface?.defaultPrompt ?? "",
+      /\$orchestrator/,
+      "orchestrator alias must carry its own Codex default prompt from agents/openai.yaml"
+    );
+    const aliasMetaInstalled = path.join(installedRoot, "skills", "orchestrator", "agents", "openai.yaml");
+    const aliasMetaSource = path.join(ROOT, "skills", "orchestrator", "agents", "openai.yaml");
+    assert.ok(existsSync(aliasMetaInstalled), "installed artifact must ship skills/orchestrator/agents/openai.yaml");
+    assert.equal(sha256(aliasMetaInstalled), sha256(aliasMetaSource), "installed orchestrator metadata differs from candidate");
+    assert.match(readFileSync(aliasMetaInstalled, "utf8"), /allow_implicit_invocation:\s*false/, "installed orchestrator metadata must disable implicit invocation");
     assert.deepEqual(
       ours.map(pick).sort((a, b) => sortKey(a).localeCompare(sortKey(b))),
       expectedHooks().sort((a, b) => sortKey(a).localeCompare(sortKey(b))),
