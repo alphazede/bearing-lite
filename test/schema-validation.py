@@ -1166,6 +1166,42 @@ def cases() -> list[tuple[str, str, str, object, str]]:
             proof_cases=[complete_proof(
                 oracle_source="Expected value obtained by calling the production helper computeTotal on the same inputs.")]
         ), "reject"),
+        ("SEIT-EMV-021", "seit_proof_neutral_independent_production_code", "seit", complete_seit(
+            proof_cases=[complete_proof(
+                oracle_source="Requirement REQ-7; independent of production code")]
+        ), "accept"),
+        ("SEIT-EMV-021", "seit_proof_neutral_golden_output_before_algorithm_change", "seit", complete_seit(
+            proof_cases=[complete_proof(
+                oracle_source="Golden output captured before the production algorithm changed")]
+        ), "accept"),
+        ("SEIT-EMV-021", "seit_proof_negated_not_derived_from_production_logic", "seit", complete_seit(
+            proof_cases=[complete_proof(
+                oracle_source="Published vector; not derived from production logic")]
+        ), "accept"),
+        ("SEIT-EMV-021", "seit_proof_never_derived_from_production_logic", "seit", complete_seit(
+            proof_cases=[complete_proof(
+                oracle_source="never derived from production logic")]
+        ), "accept"),
+        ("SEIT-EMV-021", "seit_proof_computed_by_calling_production_helper", "seit", complete_seit(
+            proof_cases=[complete_proof(
+                oracle_source="computed by calling the production helper computeTotal")]
+        ), "reject"),
+        ("SEIT-EMV-021", "seit_proof_expected_equals_production_helper_output", "seit", complete_seit(
+            proof_cases=[complete_proof(
+                oracle_source="expected = production helper output")]
+        ), "reject"),
+        ("SEIT-EMV-021", "seit_proof_reimplements_production_algorithm", "seit", complete_seit(
+            proof_cases=[complete_proof(
+                oracle_source="reimplements the production algorithm")]
+        ), "reject"),
+        ("SEIT-EMV-021", "seit_proof_copied_formula_from_production", "seit", complete_seit(
+            proof_cases=[complete_proof(
+                oracle_source="copied formula from production")]
+        ), "reject"),
+        ("SEIT-EMV-021", "seit_proof_derived_from_production_code_path", "seit", complete_seit(
+            proof_cases=[complete_proof(
+                oracle_source="derived from the production code path")]
+        ), "reject"),
         # Property-based applicability: applicable and justified
         # non-applicable both validate; unknown applicability rejects.
         ("SEIT-EMV-021", "seit_proof_applicable_property_based", "seit", complete_seit(
