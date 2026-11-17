@@ -68,12 +68,12 @@ Plugin `@alphazede/bearing-lite` 2.0.3, source revision
 `codex-cli 0.169.0` with pinned release target `0.162.1`: native tests run
 at 0.169.0 are recorded as compatibility evidence, not pinned qualification.
 Claude Code `2.1.326` installed the marketplace artifact and inventoried
-16 skills plus the `SessionStart, PreToolUse, Stop, SubagentStop` hook
+17 skills plus the `SessionStart, PreToolUse, Stop, SubagentStop` hook
 events; a disposable profile reported `Not logged in`, so no hook event
-could be fired. Muse Code `1.4.23 (1.4.23-R8977.1)` installed all 16
+could be fired. Muse Code `1.4.23 (1.4.23-R8977.1)` installed all 17
 skills per-skill and accepted the portable bundle with a recorded package
 digest and an empty hook list. AGY `1.5.10` reported its version to the suite;
-its copy install registered 16 skills and 0 hooks while the documented symlink
+its copy install registered 17 skills and 0 hooks while the documented symlink
 root was refused. Cursor Agent `2026.11.13-eacade1` required
 authentication even for marketplace listing; Copilot CLI and Pi binaries
 are absent on this machine (Copilot's shipped shim reports itself missing).

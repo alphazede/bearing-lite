@@ -20,7 +20,7 @@
  *   TC-MUSE-ISC-01 / TC-MUSE-PLUG-01
  *                 per-skill install and portable-bundle install, skill discovery, hooks []
  *   TC-AGY-DISC-01 / TC-AGY-SYMLINK-01
- *                 copy install + validate (16 skills, 0 hooks); documented symlink path FAIL
+ *                 copy install + validate (N skills, 0 hooks); documented symlink path FAIL
  *   TC-CURSOR-UNAVAIL-01 / TC-COPILOT-CLI-UNAVAIL-01 / TC-PI-UNAVAIL-01
  *                 disposable profiles cannot authenticate (or the binary is absent): the
  *                 blocker is recorded as UNAVAILABLE, never PASS
@@ -63,6 +63,8 @@ function skillDirs(pkgDir) {
     .map((d) => d.name)
     .sort();
 }
+
+const N = skillDirs(ROOT).length;
 
 function revision(env) {
   const r = spawnSync("git", ["rev-parse", "HEAD"], { cwd: ROOT, env, encoding: "utf8", timeout: 10_000 });
@@ -141,7 +143,10 @@ describe("TC-PACK-01 packed distributable identity", () => {
     t.diagnostic(`plugin ${PKG.name}@${PKG.version} revision ${shared.rev}`);
     t.diagnostic(`distributable sha256 ${shared.tzSha}; OS ${shared.os}`);
     const files = shared.skills;
-    assert.equal(files.length, 16, "packaged skill count changed; update matrix");
+    assert.equal(files.length, N, "packaged skill count changed; update matrix");
+    const stated = [...readFileSync(path.join(ROOT, "docs", "harness-compatibility.md"), "utf8").matchAll(/(\d+)\s+skills/g)].map((m) => Number(m[1]));
+    assert.ok(stated.length >= 1 && stated.every((count) => count === N),
+      `docs/harness-compatibility.md must state packaged skill count ${N}, saw ${stated.join(", ") || "none"}`);
     for (const f of ["plugin.json", "hooks/hooks.json", "hooks/assurance-dispatch.cjs", "profiles.json"]) {
       assert.ok(existsSync(path.join(shared.pkg, f)), `packed file missing: ${f}`);
       assert.equal(sha256(path.join(shared.pkg, f)), sha256(path.join(ROOT, f)), `${f} differs from checkout`);
@@ -392,7 +397,7 @@ function freshClaude(t) {
 }
 
 describe("Claude Code (TC-CLAUDE-DISC-01)", () => {
-  it("installs the packed artifact, registers 16 skills and 4 hook events", (t) => {
+  it(`installs the packed artifact, registers ${N} skills and 4 hook events`, (t) => {
     const fx = freshClaude(t);
     const ver = run(CLAUDE, ["--version"], { env: fx.env });
     t.diagnostic(`claude ${ver.stdout.trim() || `exit ${ver.status}`}; OS ${shared.os}`);
@@ -417,7 +422,7 @@ describe("Claude Code (TC-CLAUDE-DISC-01)", () => {
     assert.ok(existsSync(path.join(installedRoot, "skills", "bearing-lite", "references", "assurance-policy.md")),
       "bearing-lite referenced resource assurance-policy.md missing from installed artifact");
     const details = ok(CLAUDE, ["plugin", "details", "bearing-lite"], { env: fx.env, cwd: fx.repo });
-    assert.match(details, /Skills \(16\)/, "details must inventory 16 packaged skills");
+    assert.match(details, new RegExp(`Skills \\(${N}\\)`), `details must inventory ${N} packaged skills`);
     assert.match(details, /Hooks \(4\)\s+SessionStart, PreToolUse, Stop, SubagentStop/,
       "details must register the four supported hook events");
     const validated = ok(CLAUDE, ["plugin", "validate", fx.mkt], { env: fx.env, cwd: fx.repo });
@@ -471,10 +476,10 @@ describe("Muse Code (TC-MUSE-ISC-01, TC-MUSE-PLUG-01)", () => {
     t.diagnostic("skills install+discovery PASS; hooks UNSUPPORTED on the skills-only path (no hook surface)");
   });
 
-  it("portable bundle install records identity, 16 skills, no hooks", (t) => {
+  it(`portable bundle install records identity, ${N} skills, no hooks`, (t) => {
     const fx = freshMuse(t);
     const validate = jsonTail(ok(MUSE, ["plugins", "validate", shared.pkg, "--json"], { env: fx.env, cwd: fx.repo }), "{");
-    assert.equal(validate.capabilities.skills.length, 16, "bundle validate must find 16 skills");
+    assert.equal(validate.capabilities.skills.length, N, `bundle validate must find ${N} skills`);
     assert.deepEqual(validate.capabilities.hooks, [], "portable bundle declares no Muse hooks");
     const installed = jsonTail(ok(MUSE, ["plugins", "install", shared.pkg, "--json"], { env: fx.env, cwd: fx.repo }), "{");
     assert.equal(installed.installed.id, "bearing-lite");
@@ -485,7 +490,7 @@ describe("Muse Code (TC-MUSE-ISC-01, TC-MUSE-PLUG-01)", () => {
     const list = jsonTail(ok(MUSE, ["plugins", "list", "--json"], { env: fx.env, cwd: fx.repo }), "{");
     const entry = (list.plugins || []).find((p) => p.plugin.id === "bearing-lite");
     assert.ok(entry && entry.active, "bundle must be listed active in disposable profile");
-    assert.equal(entry.plugin.capabilities.skills.length, 16);
+    assert.equal(entry.plugin.capabilities.skills.length, N);
     assert.deepEqual(entry.plugin.capabilities.hooks, []);
     t.diagnostic(`bundle install PASS; package_sha256 ${installed.installed.package_sha256.slice(0, 16)} sight; hooks UNSUPPORTED`);
   });
@@ -514,7 +519,7 @@ function agyVersion(t, fx) {
 }
 
 describe("AGY (TC-AGY-DISC-01, TC-AGY-SYMLINK-01)", () => {
-  it("copy install of packed payload registers 16 skills and 0 hooks", (t) => {
+  it(`copy install of packed payload registers ${N} skills and 0 hooks`, (t) => {
     const fx = freshAgy(t);
     agyVersion(t, fx);
     const root = path.join(fx.dir, "install-root");
@@ -525,7 +530,7 @@ describe("AGY (TC-AGY-DISC-01, TC-AGY-SYMLINK-01)", () => {
     const list = jsonTail(ok(AGY, ["plugin", "list", "--json"], { env: fx.env, cwd: fx.repo }), "[");
     assert.ok(list.some((p) => p.name === "bearing-lite"), `plugin not listed: ${JSON.stringify(list).slice(0, 300)}`);
     const validated = jsonTail(ok(AGY, ["plugin", "validate", root, "--json"], { env: fx.env, cwd: fx.repo }), "{");
-    assert.equal(validated.components.skills, 16, "validate must find 16 packaged skills");
+    assert.equal(validated.components.skills, N, `validate must find ${N} packaged skills`);
     assert.equal(validated.components.hooks, 0, "AGY is skills-only: validate must report 0 hooks");
     const installedSkill = path.join(fx.home, ".gemini", "config", "plugins", "bearing-lite", "skills", "intake", "SKILL.md");
     assert.ok(existsSync(installedSkill), "installed skill missing");
