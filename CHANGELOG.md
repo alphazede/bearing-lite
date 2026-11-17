@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Planning and Assurance Test Engineer guidance for a selected behavior-not-implementation test-suite audit, including the loss-proof reduction record.
+
 ## [2.1.0](https://github.com/alphazede/bearing-lite/releases/tag/v2.1.0) - 2026-11-17
 
 ### Added

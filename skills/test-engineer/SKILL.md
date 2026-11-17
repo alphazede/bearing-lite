@@ -28,7 +28,7 @@ Integration Engineer execution assessment.
    Engineer's pending case bindings; no author drafts SEIT first. Cover every relevant
    flow, state transition, illegal transition, trust boundary, and failure path
    from the Integration Engineer Boundary/Data-Flow Contract when applicable.
-   Every case carries independently justified expectations per `references/verification-case.md`.
+   Every case carries independently justified expectations per `references/verification-case.md`. A selected test audit follows `references/test-audit.md`.
 2. Select methods, proof cases, commands, evidence, and pass/fail criteria. Map applicable enabled frozen `deterministic_verification.additional_tools` into SEIT commands with their pass rules and expected evidence; selection alone does not execute them.
    User-path cases reuse `references/real-app-verification.md`; invariant, ordering, safety, or exhaustive-input questions may use `references/formal-analysis.md`.
    Reference registered requirements and preserve published-standard clauses. Evaluate property-based applicability for each claim per `references/verification-case.md` and record the rationale.
@@ -48,7 +48,7 @@ Integration Engineer execution assessment.
    diagnostic-only and cannot satisfy independent assurance. Reject as typed gaps, not PASS, expectations circularly derived from the candidate implementation, tests mirroring implementation logic, declared property claims not run, and invariants untied to a requirement, design, or standard source.
 6. Verify cited standards and clauses. Return the smallest missing proof and
    check the report against observed evidence. Preserve the candidate; do not
-   weaken tests, repair product behavior, or infer user acceptance while evaluating.
+   weaken tests, rewrite an audited suite, repair product behavior, or infer user acceptance while evaluating. Selected audit reports follow `references/test-audit.md`.
    When the frozen profile preauthorizes it, fix proven test-side defects via
    `repair_transition` per `references/assurance-repair.md`; otherwise `FAIL`.
 
