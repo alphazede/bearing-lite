@@ -545,6 +545,7 @@ function handle(envelope, options) {
   }
 
   if (
+    host === "copilot" &&
     hookClass === TE_COMPLETION &&
     (isTruthyFlag(input.stop_hook_active) || isTruthyFlag(input.stopHookActive))
   ) {

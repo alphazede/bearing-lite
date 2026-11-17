@@ -397,8 +397,9 @@ describe("te-host stop never auto-continues except on deny (#139)", () => {
     }
   });
 
-  // Claude/Codex: a re-fired stop after a deny must terminate quietly.
-  it("te-host Claude and Codex stop re-entry is quiet and never re-runs the evaluator", () => {
+  // Native hosts re-evaluate on re-entry: stopping twice must not skip the
+  // blocking completion gate. Only Copilot re-entry terminates quietly.
+  it("te-host Claude and Codex stop re-entry re-runs the evaluator and blocks again", () => {
     const dir = teWorkspace("reentry");
     for (const hostName of ["claude-code", "codex"]) {
       const before = teCalls(dir).length;
@@ -406,10 +407,26 @@ describe("te-host stop never auto-continues except on deny (#139)", () => {
         envelope("claude-stop.json", dir, { stop_hook_active: true }),
         { selected: true, host: hostName }
       );
-      assert.equal(teCalls(dir).length, before, `${hostName} must not re-enter`);
-      assert.notEqual(response.decision, "block", hostName);
-      assert.deepEqual(teHost.toWire(response), {}, hostName);
+      assert.equal(
+        teCalls(dir).length,
+        before + 1,
+        `${hostName} must re-evaluate on re-entry`
+      );
+      assert.equal(response.hookSpecificOutput.verdict, "DENY_RECEIPT_REQUIRED", hostName);
+      assert.equal(teHost.toWire(response).decision, "block", hostName);
     }
+  });
+
+  it("te-host Copilot stop re-entry is quiet and never re-runs the evaluator", () => {
+    const dir = teWorkspace("reentry-copilot");
+    const before = teCalls(dir).length;
+    const response = teHost.handle(
+      envelope("claude-stop.json", dir, { stop_hook_active: true }),
+      { selected: true, host: "copilot" }
+    );
+    assert.equal(teCalls(dir).length, before, "copilot must not re-enter");
+    assert.notEqual(response.decision, "block", "copilot");
+    assert.deepEqual(teHost.toWire(response), {}, "copilot");
   });
 });
 
