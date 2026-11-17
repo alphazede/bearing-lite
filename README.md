@@ -166,7 +166,7 @@ omits `$schema`. The portable source is not changed.
 
 `node --test test/native/codex-hook-discovery.test.mjs` is the native proof: it
 installs the prepared artifact into a disposable Codex home and checks that
-Codex lists all seven `hooks/hooks.json` registrations and every packaged skill
+Codex lists all eight `hooks/hooks.json` registrations and every packaged skill
 when enabled, and no Bearing hook when disabled. It proves registration only,
 not that a hook runs or denies anything. Release smoke must still show a
 positive hook invocation and an allowed and a denied write-lock case; the
