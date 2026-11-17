@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- The final freeze can record a post-approval planning correction in an append-only `journey_settings.planning_corrections` list, with its own review, repair and closing candidate, without rewriting round-1 provenance. ([PR #240](https://github.com/alphazede/bearing-lite/pull/240), fixes [#226](https://github.com/alphazede/bearing-lite/issues/226))
+
 ## [2.0.3](https://github.com/alphazede/bearing-lite/releases/tag/v2.0.3) - 2026-10-28
 
 ### Added
