@@ -1,0 +1,11 @@
+{
+  "schema_version": "1",
+  "artifact": "seit",
+  "procedures_and_commands": [
+    { "id": "CMD-FX-UNIT", "repo": "demo", "status": "existing gate", "command": "node --test test/fx-unit.test.mjs", "pass_rule": "exit 0", "evidence": "TAP output" }
+  ],
+  "proof_cases": [
+    { "id": "SEIT-FX-1", "requirement_id": "FX-001", "command_id": "CMD-FX-UNIT", "method": "test", "pass_fail_rule": "PASS-FX-1: three input lines yield three records.", "observable_evidence": "EVIDENCE-FX-1: record count in TAP output" },
+    { "id": "SEIT-FX-2", "requirement_id": "FX-002", "command_id": "CMD-FX-UNIT", "method": "test", "pass_fail_rule": "PASS-FX-2: three records print three lines.", "observable_evidence": "EVIDENCE-FX-2: printed line count in TAP output" }
+  ]
+}
