@@ -6,7 +6,7 @@ const CLASSES = ['verification', 'ears', 'glossary', 'reference', 'decision', 'c
 // binding for the Test Engineer, never an invented ID. The `final` stage (the
 // default) requires every case ID, and resolves it against SEIT when supplied.
 const STAGES = ['requirements', 'final'];
-const CASE_ID = /\b(?:SEIT|VC|CASE|TEST)-[A-Z0-9.-]*[A-Z0-9]\b/g;
+const CASE_ID = /\b[A-Z][A-Z0-9]*-[A-Z0-9.-]*[A-Z0-9]\b/g;
 
 // Parse only requirement fields, including multiline text and relation VALUEs.
 function parseRegister(text) {
