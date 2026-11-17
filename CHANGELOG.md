@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [2.1.0](https://github.com/alphazede/bearing-lite/releases/tag/v2.1.0) - 2026-11-17
+
 ### Added
 
 - Opt-in native real-harness acceptance suite (`test/native/harness-acceptance.test.mjs`) and a versioned compatibility matrix (`docs/harness-compatibility.md`) that separates install, discovery, advisory and blocking evidence and labels unverified capabilities explicitly. ([PR #245](https://github.com/alphazede/bearing-lite/pull/245), closes [#92](https://github.com/alphazede/bearing-lite/issues/92))
