@@ -23,7 +23,8 @@ test('209 native Codex installed plugin denies excess before harmless provider-l
   const tmp = mkdtempSync(path.join(tmpdir(), `bearing-native-dispatch-${process.pid}-${process.hrtime.bigint()}-`));
   const home = path.join(tmp, 'home'), codexHome = path.join(tmp, 'codex-home'), repo = path.join(tmp, 'repo');
   for (const d of [home, codexHome, repo]) mkdirSync(d);
-  const env = { PATH: process.env.PATH || '', HOME: home, CODEX_HOME: codexHome, LANG: 'C.UTF-8', TMPDIR: tmp };
+  const env = { PATH: process.env.PATH || '', HOME: home, XDG_CONFIG_HOME: path.join(tmp, 'xdg'), CODEX_HOME: codexHome, LANG: 'C.UTF-8', TMPDIR: tmp };
+  mkdirSync(env.XDG_CONFIG_HOME, { recursive: true });
   const groups = new Set();
   const run = (cmd, args) => {
     const p = spawnSync(cmd, args, { cwd: repo, env, detached: process.platform !== 'win32', stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8', timeout: Math.max(1, deadline - Date.now()) });
