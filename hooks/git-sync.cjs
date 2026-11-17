@@ -131,7 +131,10 @@ function isTruthyFlag(value) {
 function isStopReentry(input, eventName) {
   const event = String(eventName || "").replace(/[_\-\s]/g, "").toLowerCase();
   if (event !== "stop" && event !== "subagentstop") return false;
-  return isTruthyFlag(input.stop_hook_active) || isTruthyFlag(input.stopHookActive);
+  if (isTruthyFlag(input.stop_hook_active) || isTruthyFlag(input.stopHookActive)) return true;
+  // Cursor signals a stop re-entry after a real follow-up with loop_count (#139).
+  const loops = Number(input.loop_count ?? input.loopCount);
+  return Number.isFinite(loops) && loops >= 1;
 }
 
 function formatAdvice(facts) {
