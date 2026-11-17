@@ -149,7 +149,8 @@ describe("Codex native hook discovery for the installed candidate (D1)", () => {
     repo = path.join(tmp, "repo");
     for (const d of [home, codexHome, repo]) mkdirSync(d, { recursive: true });
     writeFileSync(path.join(repo, "README.md"), "fixture\n");
-    env = { PATH: process.env.PATH ?? "", HOME: home, CODEX_HOME: codexHome, LANG: "C.UTF-8", TMPDIR: tmp };
+    env = { PATH: process.env.PATH ?? "", HOME: home, XDG_CONFIG_HOME: path.join(tmp, "xdg"), CODEX_HOME: codexHome, LANG: "C.UTF-8", TMPDIR: tmp };
+    mkdirSync(env.XDG_CONFIG_HOME, { recursive: true });
 
     const version = spawnSync(CODEX, ["--version"], { env, stdio: ["ignore", "pipe", "pipe"], encoding: "utf8", timeout: CALL_TIMEOUT_MS });
     assert.ok(!version.error && version.status === 0,

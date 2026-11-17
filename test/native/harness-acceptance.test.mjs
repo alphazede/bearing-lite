@@ -14,6 +14,8 @@
  *                 the native tool return), disabled-plugin negative control
  *   TC-CODEX-FAIL-01..03
  *                 missing hook file / failing hook / malformed hook response: session survives
+ *   TC-CODEX-HOOKS-01 installed artifact carries all 5 declared hook scripts;
+ *                 SessionStart/Stop/SubagentStop effects stay UNVERIFIED
  *   TC-CLAUDE-DISC-01  marketplace install, registered skills/hooks, referenced resources
  *   TC-MUSE-ISC-01 / TC-MUSE-PLUG-01
  *                 per-skill install and portable-bundle install, skill discovery, hooks []
@@ -62,8 +64,8 @@ function skillDirs(pkgDir) {
     .sort();
 }
 
-function revision() {
-  const r = spawnSync("git", ["rev-parse", "HEAD"], { cwd: ROOT, encoding: "utf8", timeout: 10_000 });
+function revision(env) {
+  const r = spawnSync("git", ["rev-parse", "HEAD"], { cwd: ROOT, env, encoding: "utf8", timeout: 10_000 });
   return r.status === 0 ? r.stdout.trim() : "unavailable";
 }
 
@@ -100,29 +102,34 @@ const shared = {};
 /** One disposable root for the whole file; harness homes live underneath. */
 before(() => {
   shared.tmp = mkdtempSync(path.join(os.tmpdir(), `bearing-92-${process.pid}-${process.hrtime.bigint()}-`));
-  shared.rev = revision();
-  shared.os = `${process.platform}-${process.arch} ${os.release()}`;
   shared.home = path.join(shared.tmp, "home");
   for (const d of [shared.home]) mkdirSync(d, { recursive: true });
-  const env = { PATH: process.env.PATH ?? "", HOME: shared.home, LANG: "C.UTF-8", TMPDIR: shared.tmp };
+  const env = { PATH: process.env.PATH ?? "", HOME: shared.home, XDG_CONFIG_HOME: path.join(shared.tmp, "xdg"), LANG: "C.UTF-8", TMPDIR: shared.tmp };
+  mkdirSync(env.XDG_CONFIG_HOME, { recursive: true });
   shared.envRoot = env;
+  shared.rev = revision(env);
+  shared.os = `${process.platform}-${process.arch} ${os.release()}`;
 
-  // TC-PACK-01: pack the actual distributable and extract it. Only the host
-  // manifest overlays (never shipped by npm) are copied from the checkout.
-  const packed = spawnSync("npm", ["pack", "--ignore-scripts", "--json"], {
-    cwd: ROOT, encoding: "utf8", timeout: 60_000,
+  // TC-PACK-01: pack the actual distributable into this run's disposable dir
+  // (two concurrent runs never share a tarball name) and extract it. Only
+  // the host manifest overlays (never shipped by npm) are copied from the checkout.
+  const packed = spawnSync("npm", ["pack", "--ignore-scripts", "--json", "--pack-destination", shared.tmp], {
+    cwd: ROOT, env, encoding: "utf8", timeout: 60_000,
   });
   assert.equal(packed.status, 0, `ENVIRONMENT_FAILURE: npm pack: ${packed.stderr}`);
   const report = JSON.parse(packed.stdout)[0];
   assert.equal(report.name, PKG.name);
   assert.equal(report.version, PKG.version);
-  const tgz = path.join(ROOT, report.filename);
+  const tgz = path.join(shared.tmp, path.basename(report.filename));
   shared.tzSha = sha256(tgz);
   shared.pkg = path.join(shared.tmp, "pkg");
   mkdirSync(shared.pkg);
-  const x = spawnSync("tar", ["xzf", tgz, "-C", shared.pkg, "--strip-components=1"], { encoding: "utf8", timeout: 60_000 });
-  assert.equal(x.status, 0, `ENVIRONMENT_FAILURE: tar extract: ${x.stderr}`);
-  rmSync(tgz, { force: true });
+  try {
+    const x = spawnSync("tar", ["xzf", tgz, "-C", shared.pkg, "--strip-components=1"], { env, encoding: "utf8", timeout: 60_000 });
+    assert.equal(x.status, 0, `ENVIRONMENT_FAILURE: tar extract: ${x.stderr}`);
+  } finally {
+    rmSync(tgz, { force: true });
+  }
   shared.skills = skillDirs(shared.pkg);
   assert.ok(shared.skills.length >= 15, `expected >=15 packaged skills, got ${shared.skills.length}`);
 });
@@ -149,11 +156,42 @@ describe("TC-PACK-01 packed distributable identity", () => {
 
 // --- Codex helpers ---------------------------------------------------------
 
+/** Every script the installed hooks/hooks.json declares, resolved under installedRoot. */
+function declaredHookScripts(installedRoot) {
+  const manifest = JSON.parse(readFileSync(path.join(installedRoot, "hooks", "hooks.json"), "utf8"));
+  const scripts = new Set();
+  for (const groups of Object.values(manifest.hooks)) {
+    for (const group of groups) {
+      for (const h of group.hooks) {
+        scripts.add(h.command.replace("node ", "").replaceAll("${CLAUDE_PLUGIN_ROOT}", installedRoot).trim());
+      }
+    }
+  }
+  return [...scripts].sort();
+}
+
+/** The four non-dispatch hook scripts: present and byte-identical to the packed artifact. */
+const OTHER_HOOK_SCRIPTS = [
+  "hooks/com.anthropic.claude-code/host.cjs",
+  "hooks/te-host.cjs",
+  "hooks/orchestrator-write-lock.cjs",
+  "hooks/git-sync.cjs",
+];
+
+function assertOtherHookScripts(fx, when) {
+  for (const rel of OTHER_HOOK_SCRIPTS) {
+    const installed = path.join(fx.installedRoot, rel);
+    assert.ok(existsSync(installed), `installed hook script missing ${when}: ${rel}`);
+    assert.equal(sha256(installed), sha256(path.join(shared.pkg, rel)), `installed hook script differs from packed artifact ${when}: ${rel}`);
+  }
+}
+
 function freshCodex(t, label) {
   const dir = path.join(shared.tmp, `codex-${label}`);
   const home = path.join(dir, "home"), codexHome = path.join(dir, "codex-home"), repo = path.join(dir, "repo");
   for (const d of [home, codexHome, repo]) mkdirSync(d, { recursive: true });
-  const env = { PATH: process.env.PATH ?? "", HOME: home, CODEX_HOME: codexHome, LANG: "C.UTF-8", TMPDIR: dir };
+  const env = { PATH: process.env.PATH ?? "", HOME: home, XDG_CONFIG_HOME: path.join(dir, "xdg"), CODEX_HOME: codexHome, LANG: "C.UTF-8", TMPDIR: dir };
+  mkdirSync(env.XDG_CONFIG_HOME, { recursive: true });
   const check = run(CODEX, ["--version"], { env });
   assert.ok(!check.error && check.status === 0,
     `ENVIRONMENT_FAILURE: required native prerequisite '${CODEX}' unavailable (${check.error?.message ?? `status ${check.status}`}); install Codex CLI or set BEARING_CODEX_BIN`);
@@ -166,10 +204,12 @@ function freshCodex(t, label) {
   assert.ok(existsSync(installedRoot), `codex plugin add did not create ${installedRoot}`);
   assert.equal(sha256(path.join(installedRoot, "hooks", "assurance-dispatch.cjs")),
     sha256(path.join(shared.pkg, "hooks", "assurance-dispatch.cjs")), "installed hook bytes differ from packed artifact");
+  assertOtherHookScripts({ installedRoot }, "at install");
   return { env, codexHome, repo, installedRoot };
 }
 
 async function writeLoopbackExec(t, fx, { ids, prompt, timeoutMs = 90_000 }) {
+  assertOtherHookScripts(fx, "before native exec");
   const { env, repo } = fx;
   const marker = path.join(repo, "launches.txt");
   const sentinel = path.join(repo, "sentinel.cjs");
@@ -226,6 +266,7 @@ async function writeLoopbackExec(t, fx, { ids, prompt, timeoutMs = 90_000 }) {
       child.on("close", (code, signal) => { clearTimeout(timer); resolve({ code, signal }); });
     });
     assert.equal(exit.code, 0, `native exit=${exit.code} signal=${exit.signal}; ${stderr.slice(-1500)}; events ${stdout.slice(-1500)}`);
+    assertOtherHookScripts(fx, "after native exec");
     const record = existsSync(path.join(repo, "task-record.json"))
       ? JSON.parse(readFileSync(path.join(repo, "task-record.json"), "utf8")) : null;
     return {
@@ -312,13 +353,35 @@ describe("Codex native execution (TC-CODEX-EXEC-01)", () => {
   });
 });
 
+describe("Codex installed hook scripts (TC-CODEX-HOOKS-01)", () => {
+  it("installed artifact carries every hook script hooks.json declares", (t) => {
+    const fx = freshCodex(t, "hooks");
+    const scripts = declaredHookScripts(fx.installedRoot);
+    assert.equal(scripts.length, 5, `expected 5 distinct declared hook scripts, got ${scripts.length}`);
+    for (const rel of ["hooks/assurance-dispatch.cjs", ...OTHER_HOOK_SCRIPTS]) {
+      const installed = path.join(fx.installedRoot, rel);
+      assert.ok(existsSync(installed), `declared hook script missing: ${rel}`);
+      assert.equal(sha256(installed), sha256(path.join(shared.pkg, rel)), `installed hook script differs from packed artifact: ${rel}`);
+    }
+    for (const f of readdirSync(path.join(fx.installedRoot, "skills", "bearing-lite", "references"))) {
+      const rel = path.join("skills", "bearing-lite", "references", f);
+      assert.equal(sha256(path.join(fx.installedRoot, rel)), sha256(path.join(shared.pkg, rel)),
+        `installed referenced resource differs from packed artifact: ${f}`);
+    }
+    assert.ok(existsSync(path.join(fx.installedRoot, "skills", "bearing-lite", "references", "assurance-policy.md")),
+      "bearing-lite referenced resource assurance-policy.md missing from installed artifact");
+    t.diagnostic("TC-CODEX-HOOKS-01 PASS: all 5 declared hook scripts present and byte-identical; SessionStart/Stop/SubagentStop effects remain UNVERIFIED (unexercised beyond PreToolUse dispatch)");
+  });
+});
+
 // --- Claude Code ------------------------------------------------------------
 
 function freshClaude(t) {
   const dir = path.join(shared.tmp, "claude");
   const home = path.join(dir, "home"), repo = path.join(dir, "repo");
   for (const d of [home, repo]) mkdirSync(d, { recursive: true });
-  const env = { PATH: process.env.PATH ?? "", HOME: home, LANG: "C.UTF-8", TMPDIR: dir };
+  const env = { PATH: process.env.PATH ?? "", HOME: home, XDG_CONFIG_HOME: path.join(dir, "xdg"), LANG: "C.UTF-8", TMPDIR: dir };
+  mkdirSync(env.XDG_CONFIG_HOME, { recursive: true });
   // Disposable marketplace: packed payload + .claude-plugin host manifest overlay.
   const mkt = path.join(dir, "marketplace");
   cpSync(shared.pkg, mkt, { recursive: true });
@@ -344,6 +407,15 @@ describe("Claude Code (TC-CLAUDE-DISC-01)", () => {
       sha256(path.join(shared.pkg, "skills", "intake", "SKILL.md")), "installed skill differs from packed artifact");
     assert.equal(sha256(path.join(installedRoot, "hooks", "hooks.json")),
       sha256(path.join(shared.pkg, "hooks", "hooks.json")), "installed hooks differ from packed artifact");
+    // Referenced resources the skills point at must be installed with the
+    // plugin; usage elsewhere is byte-compared, so a missing resource fails.
+    for (const f of readdirSync(path.join(installedRoot, "skills", "bearing-lite", "references"))) {
+      const rel = path.join("skills", "bearing-lite", "references", f);
+      assert.equal(sha256(path.join(installedRoot, rel)), sha256(path.join(shared.pkg, rel)),
+        `installed referenced resource differs from packed artifact: ${f}`);
+    }
+    assert.ok(existsSync(path.join(installedRoot, "skills", "bearing-lite", "references", "assurance-policy.md")),
+      "bearing-lite referenced resource assurance-policy.md missing from installed artifact");
     const details = ok(CLAUDE, ["plugin", "details", "bearing-lite"], { env: fx.env, cwd: fx.repo });
     assert.match(details, /Skills \(16\)/, "details must inventory 16 packaged skills");
     assert.match(details, /Hooks \(4\)\s+SessionStart, PreToolUse, Stop, SubagentStop/,
@@ -352,7 +424,7 @@ describe("Claude Code (TC-CLAUDE-DISC-01)", () => {
     for (const needle of ["assurance-dispatch.cjs", "orchestrator-write-lock.cjs", "te-host.cjs", "git-sync.cjs"]) {
       assert.ok(validated.includes(needle), `validate must declare hook ${needle}`);
     }
-    t.diagnostic("install+discovery PASS; skill load PASS (16 skills, resources byte-identical); hook declarations validated at install time");
+    t.diagnostic("install+discovery PASS; referenced resources byte-identical in installed artifact; skill invocation UNVERIFIED (disposable profile not logged in); hook declarations validated at install time");
   });
 
   it("native event execution is UNAVAILABLE without operator credentials", (t) => {
@@ -425,13 +497,26 @@ function freshAgy(t) {
   const dir = path.join(shared.tmp, "agy");
   const home = path.join(dir, "home"), repo = path.join(dir, "repo");
   for (const d of [home, repo]) mkdirSync(d, { recursive: true });
-  const env = { PATH: process.env.PATH ?? "", HOME: home, LANG: "C.UTF-8", TMPDIR: dir };
+  const env = { PATH: process.env.PATH ?? "", HOME: home, XDG_CONFIG_HOME: path.join(dir, "xdg"), LANG: "C.UTF-8", TMPDIR: dir };
+  mkdirSync(env.XDG_CONFIG_HOME, { recursive: true });
   return { env, home, repo, dir };
+}
+
+/** AGY has no skip surface: a missing binary fails the case, never skips. */
+function agyVersion(t, fx) {
+  const ver = run(AGY, ["--version"], { env: fx.env });
+  assert.ok(!ver.error && ver.status === 0,
+    `ENVIRONMENT_FAILURE: required native prerequisite '${AGY}' unavailable (${ver.error?.message ?? `status ${ver.status}`})`);
+  const version = ver.stdout.trim();
+  assert.match(version, /^\d+\.\d+\.\d+/, `agy --version must report a semver, got: ${version.slice(0, 80)}`);
+  t.diagnostic(`agy ${version}; OS ${shared.os}`);
+  return version;
 }
 
 describe("AGY (TC-AGY-DISC-01, TC-AGY-SYMLINK-01)", () => {
   it("copy install of packed payload registers 16 skills and 0 hooks", (t) => {
     const fx = freshAgy(t);
+    agyVersion(t, fx);
     const root = path.join(fx.dir, "install-root");
     mkdirSync(path.join(root, "skills"), { recursive: true });
     cpSync(path.join(ROOT, ".agy", "plugin.json"), path.join(root, "plugin.json"));
@@ -446,11 +531,16 @@ describe("AGY (TC-AGY-DISC-01, TC-AGY-SYMLINK-01)", () => {
     assert.ok(existsSync(installedSkill), "installed skill missing");
     assert.equal(sha256(installedSkill), sha256(path.join(shared.pkg, "skills", "intake", "SKILL.md")),
       "installed skill differs from packed artifact");
+    const installedResource = path.join(fx.home, ".gemini", "config", "plugins", "bearing-lite", "skills", "bearing-lite", "references", "assurance-policy.md");
+    assert.ok(existsSync(installedResource), "installed referenced resource missing");
+    assert.equal(sha256(installedResource), sha256(path.join(shared.pkg, "skills", "bearing-lite", "references", "assurance-policy.md")),
+      "installed referenced resource differs from packed artifact");
     t.diagnostic(`install+discovery PASS; skill load PASS; hooks UNSUPPORTED (validate hooks=0). install out: ${installOut.trim().split("\n").filter(Boolean).slice(-2).join(" | ").slice(0, 300)}`);
   });
 
   it("documented symlink install FAILS natively on this build", (t) => {
     const fx = freshAgy(t);
+    agyVersion(t, fx);
     const root = path.join(fx.dir, "symlink-root");
     mkdirSync(root, { recursive: true });
     cpSync(path.join(ROOT, ".agy", "plugin.json"), path.join(root, "plugin.json"));
@@ -470,7 +560,8 @@ describe("unavailable or unverifiable rows (#92 honest recording)", () => {
     const dir = path.join(shared.tmp, "cursor");
     const home = path.join(dir, "home"), repo = path.join(dir, "repo");
     for (const d of [home, repo]) mkdirSync(d, { recursive: true });
-    const env = { PATH: process.env.PATH ?? "", HOME: home, LANG: "C.UTF-8", TMPDIR: dir };
+    const env = { PATH: process.env.PATH ?? "", HOME: home, XDG_CONFIG_HOME: path.join(dir, "xdg"), LANG: "C.UTF-8", TMPDIR: dir };
+    mkdirSync(env.XDG_CONFIG_HOME, { recursive: true });
     const ver = run(CURSOR, ["--version"], { env });
     t.diagnostic(`cursor-agent ${ver.stdout.trim() || `exit ${ver.status} ${ver.stderr.slice(0, 120)}`}`);
     const r = run(CURSOR, ["plugin", "marketplace", "list"], { env, cwd: repo });
@@ -485,8 +576,9 @@ describe("unavailable or unverifiable rows (#92 honest recording)", () => {
   });
 
   it("TC-COPILOT-CLI-UNAVAIL-01 copilot CLI binary absent on this host", (t) => {
-    const env = { PATH: process.env.PATH ?? "", HOME: path.join(shared.tmp, "copilot-home"), LANG: "C.UTF-8", TMPDIR: shared.tmp };
+    const env = { PATH: process.env.PATH ?? "", HOME: path.join(shared.tmp, "copilot-home"), XDG_CONFIG_HOME: path.join(shared.tmp, "copilot-xdg"), LANG: "C.UTF-8", TMPDIR: shared.tmp };
     mkdirSync(env.HOME, { recursive: true });
+    mkdirSync(env.XDG_CONFIG_HOME, { recursive: true });
     const r = run("copilot", ["plugin", "marketplace", "list"], { cwd: shared.tmp, env });
     const out = r.stdout + r.stderr;
     if (r.error) {
@@ -498,8 +590,9 @@ describe("unavailable or unverifiable rows (#92 honest recording)", () => {
   });
 
   it("TC-PI-UNAVAIL-01 pi binary absent on this host", (t) => {
-    const env = { PATH: process.env.PATH ?? "", HOME: path.join(shared.tmp, "pi-home"), LANG: "C.UTF-8", TMPDIR: shared.tmp };
+    const env = { PATH: process.env.PATH ?? "", HOME: path.join(shared.tmp, "pi-home"), XDG_CONFIG_HOME: path.join(shared.tmp, "pi-xdg"), LANG: "C.UTF-8", TMPDIR: shared.tmp };
     mkdirSync(env.HOME, { recursive: true });
+    mkdirSync(env.XDG_CONFIG_HOME, { recursive: true });
     const r = run("pi", ["--version"], { cwd: shared.tmp, env });
     assert.ok(r.error, "pi must be absent for this record; if pi appears, re-probe the Pi row");
     t.diagnostic(`TC-PI-UNAVAIL-01 UNAVAILABLE: binary ${r.error.code ?? r.error.message}`);
