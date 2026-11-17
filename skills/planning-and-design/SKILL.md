@@ -38,8 +38,7 @@ choose for the owner.
    Prioritize prerequisite work and parallel ready work; avoid overloaded batches.
 4. Assemble `implementation.json` and the DoD Manifest. Copy specialist-owned
    decisions faithfully per `../bearing-lite/references/planning-assembly.md`;
-   choose no new roles or capability defaults. Record `planning_wave` with the
-   declared enabled sessions and `review_requested`.
+   choose no new roles or capability defaults. Record `planning_wave` (`required_sessions`, `review_requested`); append post-approval corrections to `planning_corrections` without mutating round 1.
 5. Check your own final package: run the register precheck at its final stage with
    `--seit`, every pending binding completed, then `plan-package.cjs draft`. Repair
    your owned artifacts in-session and rerun affected checks. Missing specialist

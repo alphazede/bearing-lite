@@ -190,4 +190,19 @@ describe("model-neutral planning review", () => {
     }
     assert.match(mapping, /cannot derive that nested record safely/);
   });
+
+  it("accepts one correction review and still HALTs a second review inside the same correction (#226)", () => {
+    assert.deepEqual(
+      core.evaluatePlanningReview(review({ correction_id: "corr-1", round_number: 1, completed_rounds: 1 })),
+      { outcome: "PASS", reason: "repair_gate_passed" }
+    );
+    assert.deepEqual(
+      core.evaluatePlanningReview(review({ correction_id: "corr-1", round_number: 2, completed_rounds: 2 })),
+      { outcome: "HALT", reason: "review_round_limit" }
+    );
+    assert.deepEqual(
+      core.evaluatePlanningReview(review({ correction_id: "" })),
+      { outcome: "OWNER_AMENDMENT_REQUIRED", reason: "correction_id_invalid" }
+    );
+  });
 });
