@@ -1,0 +1,42 @@
+{
+  "_source": "S10T synthetic fixtures. Option meanings are the dispatch-classification labels recorded in the plan evidence decision-d-labels/d1-2-ultra.json (repair_bug_route, repair_lifecycle, not_repair). The packet is synthetic (SEIT-B30-241: no real packet text). The systemone wire shape below is the contract the in-test driver enforces (DEC-17, boundary contract F06 data_contract).",
+  "systemone": {
+    "request": {
+      "model": "<configured model_id>",
+      "state": { "trusted": "<object: code-computed tool facts and the label-to-meaning mapping>", "untrusted": "<object, dispatch classification and pre-packet sharpen only: packet text as written>" },
+      "questions": [
+        { "id": "<string>", "options": ["yes", "no"], "text": "companion fit question: does any option fit" },
+        { "id": "<string>", "options": ["<neutral label>", "..."], "criteria": { "<neutral label>": "<string>" } }
+      ]
+    },
+    "response": { "answers": { "<question id>": { "<option>": "<probability in [0,1]>" } } },
+    "rejections": { "criteria_as_array": 422 }
+  },
+  "options": {
+    "repair_bug_route": "Defect fix dispatched on the bug-triager route",
+    "repair_lifecycle": "Repair of lifecycle planning work inside the frozen profile",
+    "not_repair": "Planned slice work that is not a defect fix"
+  },
+  "meaning_words": ["repair_bug_route", "repair_lifecycle", "not_repair", "triager", "defect", "lifecycle", "planned"],
+  "packet": "ROLE: Implementer\nObjective: fix the off-by-one in hooks/ready-set.cjs:42 reported by the W2 gate.\nWrite set: hooks/ready-set.cjs; test/ready-set.test.mjs\nNote: PACKET-CANARY-5521 <b>as written</b> & \"quoted\" path C:\\tmp\\x\n",
+  "rule_rows": [
+    { "facts": { "bug_route_declaration": "bug-triager" }, "meaning": "repair_bug_route" },
+    { "facts": { "bug_route_declaration": "frozen-lifecycle-profile" }, "meaning": "repair_lifecycle" },
+    { "facts": { "bug_route_declaration": "not-a-bug" }, "meaning": "not_repair" }
+  ],
+  "trace_facts": {
+    "gate_results": [
+      { "gate": "build", "passed": true },
+      { "gate": "types_lint", "passed": false },
+      { "gate": "mutation", "passed": false },
+      { "gate": "reviewer", "passed": true }
+    ],
+    "budgets": [
+      { "name": "invocation", "spent": 3 },
+      { "name": "review", "spent": 1 },
+      { "name": "repair", "spent": 1 }
+    ],
+    "deadline": "2026-11-18T00:00:00Z",
+    "checked_at": "2026-11-17T12:00:00Z"
+  }
+}
