@@ -7,6 +7,7 @@ const CLASSES = ['verification', 'ears', 'glossary', 'reference', 'decision', 'c
 // default) requires every case ID, and resolves it against SEIT when supplied.
 const STAGES = ['requirements', 'final'];
 const CASE_ID = /\b[A-Z][A-Z0-9]*-[A-Z0-9.-]*[A-Z0-9]\b/g;
+const FREE_TEXT_CASE_ID = /\b(?:SEIT|VC|CASE|TEST)-[A-Z0-9.-]*[A-Z0-9]\b/g;
 
 // Parse only requirement fields, including multiline text and relation VALUEs.
 function parseRegister(text) {
@@ -79,8 +80,13 @@ function checkRegister({ register, technicalPlan, registerPath = 'register.sdoc'
     if (uid === '<missing>') add('reference', uid, registerPath, row.line, 'Missing UID');
     const fields = names => row.fields.filter(f => names.includes(f.name));
     const method = fields(['VERIFICATION_METHOD']).some(f => /\b(test|inspection|analysis|demonstration|evaluation)\b/i.test(f.value));
-    const caseFields = fields(['VERIFICATION_CASE', 'VERIFICATION_CASES', 'VERIFICATION_CASE_ID', 'VERIFICATION']);
-    const caseIds = caseFields.flatMap(f => [...f.value.matchAll(CASE_ID)].map(m => m[0]));
+    const explicitCaseFields = fields(['VERIFICATION_CASE', 'VERIFICATION_CASES', 'VERIFICATION_CASE_ID']);
+    const freeTextCaseFields = fields(['VERIFICATION']);
+    const caseFields = [...explicitCaseFields, ...freeTextCaseFields];
+    const caseIds = [
+      ...explicitCaseFields.flatMap(f => [...f.value.matchAll(CASE_ID)].map(m => m[0])),
+      ...freeTextCaseFields.flatMap(f => [...f.value.matchAll(FREE_TEXT_CASE_ID)].map(m => m[0])),
+    ];
     if (!method) add('verification', uid, registerPath, row.line, 'Require verification method and bound case ID');
     else if (!caseIds.length && stage === 'requirements') {
       pending.push({ uid, binding: 'verification_case', owner: 'test_engineer', location: `${registerPath}:${row.line}`, blocks: 'final_assembly' });
