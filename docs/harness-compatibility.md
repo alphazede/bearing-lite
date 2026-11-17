@@ -62,8 +62,8 @@ blocker changes, the matching test fails until the row is re-probed.
 ## Last run evidence (2026-11-17, Ubuntu 26.04, Linux 7.0.0-43-generic x64)
 
 Plugin `@alphazede/bearing-lite` 2.0.3, source revision
-`0421caf45a6986542c71d3b10f70a21e8f47fa7e`, distributable sha256
-`ba3a14b045b4b136d335e860c33772d74567b0f2aebe42ae38d9d370e536fab2`
+`bea35c40d9c28042d1545771de64f593044ad81a` (main) with the packaged-skill-count fix applied, distributable sha256
+`90ad1f6e23b6e9c1d32e00a316875db1f2bb4da8e81fce04cbb50877c1ff5dc6`
 (`npm pack` tarball; installed copies byte-compared against it). Codex
 `codex-cli 0.169.0` with pinned release target `0.162.1`: native tests run
 at 0.169.0 are recorded as compatibility evidence, not pinned qualification.
