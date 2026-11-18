@@ -17,15 +17,15 @@ The compiler reads frozen records and writes one JSON object to stdout. It does 
 | CLI input | Frozen record | What is copied |
 | --- | --- | --- |
 | `--plan`/`implementation.json` pinned by `--implementation-sha256` | selected slice: role, wave, goal, write set, command ids, proof-row ids, authority id | identity, objective, write set |
-| `--plan`/`seit.json` | proof cases and existing commands named by that slice | acceptance and command strings |
+| `--plan`/`seit.json` pinned by `--seit-sha256` | proof cases and existing commands named by that slice | digest, acceptance and command strings |
 | `--authority` pinned by `--authority-sha256` | envelope id, `effective`, prohibited actions | authority id and owner-only actions |
 | `--binding` pinned by `--binding-sha256` | `snapshot.roles[<role>]`, `review`, `deterministic_verification` | route and capabilities |
 | `--candidate` | caller-supplied candidate revision | `identity.candidate_revision` |
 | `--slice` | assignment id already selected by the Orchestrator | which slice is projected |
 
-The role skill path is `skills/<role_key>/SKILL.md`, derived from the slice role name (`Implementer` becomes `implementer`). The compiler does not open that file and does not choose a role. A `fellow` route is not selected for the assignee.
+The skill path follows the Prompt role index. For example, the Test Implementer uses its own frozen route and the shared Implementer skill. The compiler includes the ordered fallback conditions and returns a gap for a disabled or missing route.
 
-AMENDMENT: F04 names a package digest and a lease generation. The frozen S08T CLI pins only the authority file, the binding file, and `implementation.json`. The compiler follows that CLI. `seit.json` is read from the same `--plan` directory and has no separate digest flag.
+Use the SEIT digest from the approved package or its recorded amendment. The checked-launch crossing owns aggregate package and lease validation. The compiler pins the exact source files it reads.
 
 ## Write set and expected files
 

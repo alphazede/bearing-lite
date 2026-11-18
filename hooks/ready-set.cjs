@@ -1,6 +1,6 @@
 "use strict";
 
-// Topological filter over a frozen wave of at most 128 slices. O(V+E) plus one pass over write-set entries.
+// Filter the frozen wave in order. Directory scopes compare against occupied paths.
 const IN_FLIGHT = new Set(["RESERVED", "DISPATCHED", "CHECKING"]);
 const OCCUPIES = new Set(["RESERVED", "DISPATCHED", "CHECKING", "HELD"]);
 
@@ -25,7 +25,7 @@ function conflict(index, slice) {
     if (entry.endsWith("/")) {
       for (const [file, by] of index.files) if (file.startsWith(entry)) return by;
       for (const dir of index.dirs) {
-        if (dir.path !== entry && (entry.startsWith(dir.path) || dir.path.startsWith(entry))) return dir.by;
+        if (entry.startsWith(dir.path) || dir.path.startsWith(entry)) return dir.by;
       }
     } else {
       if (index.files.has(entry)) return index.files.get(entry);
@@ -41,7 +41,11 @@ function evaluate(input) {
   const busy = new Set(Array.isArray(input && input.busy_resources) ? input.busy_resources : []);
   const ids = new Set(slices.map(slice => slice.id));
   const index = { files: new Map(), dirs: [] };
-  for (const slice of slices) if (OCCUPIES.has(assignments[slice.id])) occupy(index, slice);
+  for (const slice of slices) {
+    if (!OCCUPIES.has(assignments[slice.id])) continue;
+    occupy(index, slice);
+    for (const group of groups(slice)) busy.add(group);
+  }
   const ready = [];
   const excluded = [];
   for (const slice of slices) {
@@ -54,7 +58,7 @@ function evaluate(input) {
     else if (pending.has(slice.id)) cause = "pending";
     else {
       for (const dep of deps(slice)) {
-        if (!ids.has(dep)) { cause = "missing dependency"; by = dep; break; }
+        if (!ids.has(dep) && !Object.hasOwn(assignments, dep)) { cause = "missing dependency"; by = dep; break; }
         if (assignments[dep] !== "COMPLETED") { cause = "dependency"; by = dep; break; }
       }
       if (!cause) {
@@ -72,6 +76,7 @@ function evaluate(input) {
     } else {
       ready.push(slice.id);
       occupy(index, slice);
+      for (const group of groups(slice)) busy.add(group);
     }
   }
   return { ready, excluded };

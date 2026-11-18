@@ -829,6 +829,7 @@ function waveView(dir, waveId) {
     work_class: slice.work_class ?? null,
     depends_on: slice.depends_on ?? null,
     write_set: slice.write_set ?? [],
+    ...(Array.isArray(slice.resource_groups) ? { resource_groups: slice.resource_groups } : {}),
     commands: resolve(slice.id, [...(slice.command_ids || []), ...(slice.post_step_command_ids || [])]),
   }));
   const exitIds = Array.isArray(wave.exit_command_ids)

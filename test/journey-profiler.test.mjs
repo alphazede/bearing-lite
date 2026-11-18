@@ -56,6 +56,23 @@ const ALL_HOSTS = [
   ...UNQUALIFIED.flatMap((h) => hostLog(h, "other-host.jsonl")),
 ];
 
+it("does not qualify a host from an empty controlled log and zero claimed totals", (t) => {
+  const dir = tempRoot(t);
+  const log = path.join(dir, "empty.jsonl");
+  const qualification = path.join(dir, "qualification.json");
+  writeFileSync(log, "");
+  writeFileSync(qualification, JSON.stringify({
+    harness: "claude-code",
+    controlled_session_log: "empty.jsonl",
+    host_reported: { fresh_tokens: 0, cache_read_tokens: 0 },
+  }));
+  const { json } = profile(t, [...BASE_INPUTS, ...hostLog("claude-code", "claude-code.jsonl")],
+    ["--host-qualification", `claude-code=${qualification}`]);
+  assert.equal(json.hosts["claude-code"].status, "unavailable");
+  assert.ok(json.usage.length > 0);
+  for (const row of json.usage) assertUnavailable(row.metrics.fresh_tokens, "empty control log");
+});
+
 function profile(t, inputs, extra = []) {
   const out = path.join(tempRoot(t), "out");
   const r = run(["profile", ...inputs, "--as-of", AS_OF, "--out", out, ...extra]);

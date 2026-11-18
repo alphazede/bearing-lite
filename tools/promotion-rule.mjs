@@ -15,11 +15,21 @@ const REASON_ORDER = [
 ];
 
 const hasOwn = (obj, key) => Object.prototype.hasOwnProperty.call(obj, key);
-const finite = (value) => typeof value === "number" && Number.isFinite(value);
-const asRuns = (value) => (Array.isArray(value) ? value : []);
+const nonnegative = (value) => Number.isFinite(value) && value >= 0;
+const count = (value) => Number.isSafeInteger(value) && value >= 0;
+const text = (value) => typeof value === "string" && value.trim().length > 0;
+
+function asRuns(value, reasons) {
+  if (!Array.isArray(value)) return [];
+  return value.filter((run) => {
+    if (recordObject(run) && text(run.task) && count(run.repetition)) return true;
+    reasons.add("missing_evidence");
+    return false;
+  });
+}
 
 function pairKey(run) {
-  return `${String(run.task)}\0${String(run.repetition)}`;
+  return JSON.stringify([run.task, run.repetition]);
 }
 
 function indexRuns(runs) {
@@ -46,24 +56,28 @@ function median(values) {
 }
 
 function perSlice(run) {
-  if (!finite(run.fresh_tokens) || !finite(run.integrated_slices) || run.integrated_slices <= 0) return null;
+  if (!nonnegative(run.fresh_tokens) || !count(run.integrated_slices) || run.integrated_slices === 0) return null;
   return run.fresh_tokens / run.integrated_slices;
 }
 
-function add(sum, value) {
-  return sum + (finite(value) ? value : 0);
+function add(sum, value, valid, reasons) {
+  if (!valid(value)) {
+    reasons.add("missing_evidence");
+    return null;
+  }
+  return sum === null ? null : sum + value;
 }
 
-function armStats(runs) {
+function armStats(runs, reasons) {
   let errors = 0;
   let elapsed_ms = 0;
   let owner_asks = 0;
   const ratios = [];
   let complete = runs.length > 0;
   for (const run of runs) {
-    errors = add(errors, run.errors);
-    elapsed_ms = add(elapsed_ms, run.elapsed_ms);
-    owner_asks = add(owner_asks, run.owner_asks);
+    errors = add(errors, run.errors, count, reasons);
+    elapsed_ms = add(elapsed_ms, run.elapsed_ms, nonnegative, reasons);
+    owner_asks = add(owner_asks, run.owner_asks, count, reasons);
     const ratio = perSlice(run);
     if (ratio === null) complete = false;
     else ratios.push(ratio);
@@ -79,7 +93,11 @@ function armStats(runs) {
 }
 
 function recordObject(value) {
-  return value !== null && typeof value === "object" ? value : null;
+  return value !== null && typeof value === "object" && !Array.isArray(value) ? value : null;
+}
+
+function validResults(record, valid) {
+  return recordObject(record) && Object.values(record).every(valid);
 }
 
 function comparePairs(baseline, candidate, reasons) {
@@ -101,7 +119,8 @@ function comparePairs(baseline, candidate, reasons) {
     if (!candRun) continue;
     const baseGates = recordObject(baseRun.gates);
     const candGates = recordObject(candRun.gates);
-    if (!baseGates || !candGates) {
+    const gateResult = (value) => value === "PASS" || value === "FAIL";
+    if (!validResults(baseGates, gateResult) || !validResults(candGates, gateResult)) {
       reasons.add("missing_evidence");
       gatesOk = false;
     } else {
@@ -117,7 +136,8 @@ function comparePairs(baseline, candidate, reasons) {
     }
     const baseDefects = recordObject(baseRun.seeded_defects);
     const candDefects = recordObject(candRun.seeded_defects);
-    if (!baseDefects || !candDefects) {
+    const defectResult = (value) => typeof value === "boolean";
+    if (!validResults(baseDefects, defectResult) || !validResults(candDefects, defectResult)) {
       reasons.add("missing_evidence");
       seededOk = false;
     } else {
@@ -139,7 +159,7 @@ function violationsOk(runs, reasons) {
   let ok = runs.length > 0;
   for (const run of runs) {
     const violations = recordObject(run.violations);
-    if (!violations || !finite(violations.authority) || !finite(violations.write_set)) {
+    if (!violations || !count(violations.authority) || !count(violations.write_set)) {
       reasons.add("missing_evidence");
       ok = false;
     } else if (violations.authority !== 0 || violations.write_set !== 0) {
@@ -173,14 +193,18 @@ function comparable(baseline, candidate, reasons) {
 
 function requiredEvidence(runs, reasons) {
   for (const run of runs) {
-    if (!Array.isArray(run.required_evidence)) continue;
+    if (run.required_evidence === undefined) continue;
+    if (!Array.isArray(run.required_evidence) || !run.required_evidence.every(text)) {
+      reasons.add("missing_evidence");
+      continue;
+    }
     const evidence = recordObject(run.evidence) ?? {};
     for (const item of run.required_evidence) {
       if (item === "calibration") {
         const calibration = recordObject(evidence.calibration);
         if (!calibration) reasons.add("missing_evidence");
         else if (calibration.qualified !== true) reasons.add("unqualified_calibration");
-      } else if (evidence[item] == null) {
+      } else if (!hasOwn(evidence, item) || evidence[item] == null) {
         reasons.add("missing_evidence");
       }
     }
@@ -198,12 +222,12 @@ function publishArm(arm) {
 }
 
 export function evaluatePromotion(input = {}) {
-  const baseline = asRuns(input.baseline);
-  const candidate = asRuns(input.candidate);
   const reasons = new Set();
+  const baseline = asRuns(input?.baseline, reasons);
+  const candidate = asRuns(input?.candidate, reasons);
   const pairs = comparePairs(baseline, candidate, reasons);
-  const baseArm = armStats(baseline);
-  const candArm = armStats(candidate);
+  const baseArm = armStats(baseline, reasons);
+  const candArm = armStats(candidate, reasons);
   const terms = {
     gates_preserved: { satisfied: pairs.gatesOk },
     seeded_defects_found: { satisfied: pairs.seededOk },

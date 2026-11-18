@@ -15,7 +15,7 @@ After opt-in, bind the session/task in the project plan per `templates/task.md`;
 ## Modes
 
 - **Planning Orchestrator:** owns context, specialist dispatch, final plan/design, owner agreement, and the written handoff; does not dispatch implementation.
-- **Implementation Orchestrator:** consumes the handoff, checks authority/candidate, dispatches the duties in `references/coordinator-migration.md`.
+- **Implementation Orchestrator:** checks handoff and follows `references/coordinator-migration.md` for direct and frozen Coordinator waves.
 
 1. **Intake:** use `../intake/SKILL.md` to confirm repository and task location. Reuse confirmed inputs; ask only on material ambiguity.
 2. **Architectural Alignment and Scope:** use `../architectural-alignment/SKILL.md`

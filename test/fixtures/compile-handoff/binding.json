@@ -6,8 +6,8 @@
         "enabled": true,
         "primary": { "harness": "Fixture Harness", "model": "fixture-model-impl", "reasoning": "high" },
         "ordered_fallbacks": [
-          { "harness": "Fallback Harness B", "model": "fixture-model-fb-b", "reasoning": "high" },
-          { "harness": "Fallback Harness A", "model": "fixture-model-fb-a", "reasoning": "medium" }
+          { "condition": "Primary unavailable", "harness": "Fallback Harness B", "model": "fixture-model-fb-b", "reasoning": "high" },
+          { "condition": "Earlier routes unavailable", "harness": "Fallback Harness A", "model": "fixture-model-fb-a", "reasoning": "medium" }
         ]
       },
       "test_implementer": {

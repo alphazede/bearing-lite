@@ -18,7 +18,7 @@
 // fallback mechanics (N07) are proven by the decision-adapter suites.
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { createRequire } from "node:module";
@@ -104,20 +104,26 @@ describe("B30-510 orchestration resilience (SEIT-B30-510)", () => {
     assert.deepEqual(states(file), COMPLETE);
   });
 
-  it("2. decision failure: a failed decision leaves the rules-only journey running and the record intact", (t) => {
+  it("2. decision failure: the scheduler continues independent work and preserves the caller's failure record", (t) => {
     const decisions = [{ type: "dispatch_classification", outcome: "error", detail: "driver returned 500" }];
     const file = journey(t, { decisions });
-    assert.deepEqual(runJourney(file), [["S1", "S2"], ["S3"]]);
+    const pending = [{ slice: "S1" }];
+    const waiting = rs().evaluate({ slices: SLICES, assignments: states(file), pending });
+    assert.deepEqual(waiting.ready, ["S2"]);
+    assert.deepEqual(waiting.excluded.find((row) => row.slice === "S1"), { slice: "S1", cause: "pending" });
+    finish(file, "S2", dispatch(file, "S2"));
+    assert.deepEqual(runJourney(file), [["S1"], ["S3"]]);
     assert.deepEqual(states(file), COMPLETE);
     assert.deepEqual(JSON.parse(readFileSync(file, "utf8")).decisions, decisions, "decision record preserved");
   });
 
-  it("3. decision timeout fallback: a timed-out decision falls back to the rules-only result within bounded time", (t) => {
+  it("3. decision timeout fallback: once the caller clears a pending decision, readiness matches the rules-only path", (t) => {
     const decisions = [{ type: "dispatch_classification", outcome: "timeout", fallback: "rules" }];
     const file = journey(t, { decisions });
-    const started = Date.now();
+    const held = rs().evaluate({ slices: SLICES, assignments: states(file), pending: [{ slice: "S1" }] });
+    assert.deepEqual(held.ready, ["S2"]);
+    assert.deepEqual(ready(file), ready(journey(t)));
     assert.deepEqual(runJourney(file), [["S1", "S2"], ["S3"]], "same order as the rules-only path");
-    assert.ok(Date.now() - started < 10000, "journey never waits on the decision engine");
     assert.deepEqual(states(file), COMPLETE);
     assert.deepEqual(JSON.parse(readFileSync(file, "utf8")).decisions, decisions);
   });
@@ -213,7 +219,7 @@ describe("B30-510 orchestration resilience (SEIT-B30-510)", () => {
     assert.deepEqual(s1.filter((o) => o === "PASS").length, 1, JSON.stringify(results));
     assert.equal(dr().read(file, key("S1")).attempts.length, 1);
     assert.equal(dr().read(file, key("S2")).attempts.length, 1);
-    assert.equal(existsSync(file + ".lock"), false, "lock released");
+    assert.deepEqual(readdirSync(path.dirname(file)), [path.basename(file)]);
   });
 
   it("9. bounded escalation: one review round and one repair per boundary; no automatic re-review", (t) => {
@@ -237,7 +243,7 @@ describe("B30-510 orchestration resilience (SEIT-B30-510)", () => {
     const file = journey(t);
     assert.deepEqual(runJourney(file), [["S1", "S2"], ["S3"]]);
     assert.deepEqual(states(file), COMPLETE);
-    assert.equal(existsSync(file + ".lock"), false);
+    assert.deepEqual(readdirSync(path.dirname(file)), [path.basename(file)]);
   });
 });
 

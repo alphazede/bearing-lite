@@ -65,6 +65,7 @@ function args(f, slice, over = {}) {
     "--binding": f.binding,
     "--binding-sha256": sha256(readFileSync(f.binding)),
     "--implementation-sha256": sha256(readFileSync(f.implementation)),
+    "--seit-sha256": sha256(readFileSync(f.seit)),
     ...over,
   };
   return Object.entries(a).flatMap(([k, v]) => (v === undefined ? [] : [k, v]));
@@ -143,6 +144,7 @@ describe("positive path (F04, SM05.T1-T2, B30-306)", () => {
         authority_sha256: json.identity.authority_sha256,
         binding_sha256: json.identity.binding_sha256,
         implementation_sha256: json.identity.implementation_sha256,
+        seit_sha256: json.identity.seit_sha256,
       },
       {
         slice: "S1",
@@ -153,6 +155,7 @@ describe("positive path (F04, SM05.T1-T2, B30-306)", () => {
         authority_sha256: sha256(readFileSync(f.authority)),
         binding_sha256: sha256(readFileSync(f.binding)),
         implementation_sha256: sha256(readFileSync(f.implementation)),
+        seit_sha256: sha256(readFileSync(f.seit)),
       },
     );
   });
@@ -316,6 +319,44 @@ describe("required fields (SEIT-B30-327, SM05.X5, B30-409)", () => {
 });
 
 describe("frozen identity and authority (SM05.X1, SM05.X2, F04 failure_recovery)", () => {
+  it("refuses a command change after the SEIT was pinned", (t) => {
+    const f = fixture(t);
+    const frozen = sha256(readFileSync(f.seit));
+    mutate(f.seit, (seit) => { seit.procedures_and_commands[0].command = "echo changed-fixture"; });
+    assertGap(f, "S1", "seit", { "--seit-sha256": frozen });
+  });
+
+  it("refuses an independently pinned record with the wrong shape", (t) => {
+    const f = fixture(t);
+    writeJson(f.authority, null);
+    assertGap(f, "S1", "authority");
+  });
+
+  it("does not compile a disabled frozen route", (t) => {
+    const f = fixture(t);
+    mutate(f.binding, (b) => { b.snapshot.roles.implementer.enabled = false; });
+    assertGap(f, "S1", "route");
+  });
+
+  it("refuses private fields outside the frozen route and capability contract", (t) => {
+    const f = fixture(t);
+    mutate(f.binding, (b) => { b.snapshot.roles.implementer.primary.detail = "fixture-private-note"; });
+    assertGap(f, "S1", "route");
+    mutate(f.binding, (b) => {
+      delete b.snapshot.roles.implementer.primary.detail;
+      b.snapshot.review.coverage_assist.detail = "fixture-private-note";
+    });
+    assertGap(f, "S1", "binding");
+  });
+
+  it("a Test Implementer uses its frozen route and the canonical Implementer skill", (t) => {
+    const f = fixture(t);
+    mutate(f.implementation, (impl) => { slice(impl, "S1").role = "Test Implementer"; });
+    const { json } = ready(f);
+    assert.match(json.sections[0].body, /skills\/implementer\/SKILL\.md/);
+    assert.deepEqual(json.route, readJson(f.binding).snapshot.roles.test_implementer);
+  });
+
   it("authority digest mismatch is a gap", (t) => {
     const f = fixture(t);
     assertGap(f, "S1", "authority", { "--authority-sha256": "0".repeat(64) });
@@ -373,7 +414,11 @@ describe("handoff schema (SEIT-B30-306, closed schema)", () => {
     spawnSync("python3", ["-I", "-c", "import json,sys,jsonschema;s=json.load(open(sys.argv[1]));jsonschema.Draft202012Validator.check_schema(s);jsonschema.Draft202012Validator(s).validate(json.load(open(sys.argv[2])))", SCHEMA, file], { encoding: "utf8" });
   it("a compiled packet validates; an injected authority field does not", { skip: !hasJsonschema && "python3 jsonschema not installed" }, (t) => {
     const f = fixture(t);
+    mutate(f.binding, (b) => {
+      for (const fallback of b.snapshot.roles.implementer.ordered_fallbacks) fallback.condition = "verified unavailable";
+    });
     const { json } = ready(f);
+    assert.match(json.sections[0].body, /verified unavailable/);
     const good = path.join(f.root, "packet.json");
     writeJson(good, json);
     const ok = validate(good);

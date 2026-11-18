@@ -110,12 +110,11 @@ function assertRoleOnly(text, doc, where) {
   return staged;
 }
 
-function assertNoStage(t, res, token, name) {
+function assertNoStage(res, token, name) {
   assert.notEqual(res.result.status, 0, `${name}: unsafe projection must not exit 0`);
   assert.equal(res.staged, null, `${name}: no export.json may be staged`);
-  for (const file of readdirSync(res.dir, { recursive: true })) {
-    assert.equal(String(file).endsWith(".tmp"), false, `${name}: left partial staged file ${file}`);
-  }
+  assert.deepEqual(readdirSync(res.dir).sort(), existsSync(res.out) ? ["profile.json", "staged"] : ["profile.json"]);
+  if (existsSync(res.out)) assert.deepEqual(readdirSync(res.out), [], `${name}: left staging artifacts`);
   assert.equal(`${res.result.stdout}${res.result.stderr}`.includes(token), false, `${name}: diagnostics echo ${token}`);
   assert.equal(readFileSync(res.profilePath, "utf8"), res.profileBytes, `${name}: private source must be retained unchanged`);
 }
@@ -163,7 +162,7 @@ describe("journey profiler export: negative crossings of F03 and TB02 on fresh s
       const doc = privateProfile(t);
       mutate(doc);
       const res = exportDoc(t, doc);
-      assertNoStage(t, res, token, name);
+      assertNoStage(res, token, name);
       assert.match(res.result.stderr, /unsafe_projection|invalid/, name);
     });
   }
@@ -181,7 +180,7 @@ describe("journey profiler export: negative crossings of F03 and TB02 on fresh s
       mutate(doc);
       const res = exportDoc(t, doc);
       // Allowlist projection: either the invalid profile is refused, or the field is not projected.
-      if (res.result.status !== 0) assertNoStage(t, res, token, name);
+      if (res.result.status !== 0) assertNoStage(res, token, name);
       else {
         assert.equal(res.staged.includes(token), false, `${name}: staged ${token}`);
         assert.equal(res.result.stdout.includes(token), false, `${name}: printed ${token}`);

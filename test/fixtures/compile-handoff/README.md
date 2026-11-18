@@ -19,11 +19,11 @@ into a fresh `mkdtemp` root and works on the copy.
 node tools/compile-handoff.mjs --plan <dir> --slice <id> --candidate <rev>
   --authority <file> --authority-sha256 <hex>
   --binding <file> --binding-sha256 <hex>
-  --implementation-sha256 <hex>
+  --implementation-sha256 <hex> --seit-sha256 <hex>
 ```
 
 The `*-sha256` flags are the expected byte digests of the frozen inputs
-(`<plan>/implementation.json` for `--implementation-sha256`).
+(`<plan>/implementation.json` and `<plan>/seit.json` for the corresponding pins).
 
 Success: exit 0, stdout is one JSON packet with `outcome: "PACKET_READY"`, valid
 against `schemas/handoff.schema.json`, byte-identical for identical inputs. The
@@ -32,7 +32,7 @@ compiler writes nothing (stdout only) and starts no process.
 Packet fields read by the tests:
 
 - `identity`: `slice`, `wave`, `role`, `candidate_revision`, `authority_id`,
-  `authority_sha256`, `binding_sha256`, `implementation_sha256`.
+  `authority_sha256`, `binding_sha256`, `implementation_sha256`, `seit_sha256`.
 - `write_set`: the recorded slice `write_set`, exactly (same entries, same order).
 - `expected_files[]`: `{path, inside_write_set}` for each `expected_files` entry,
   guidance only. An entry is inside when it has the same `<repo>: ` prefix and its

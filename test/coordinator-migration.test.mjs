@@ -17,7 +17,8 @@
 //   - prose states: the Coordinator stays available until every duty and
 //     profile proof passes (X1); a frozen legacy route is never silently
 //     rewritten (X2); one owner per duty, never run both owners (X3); the
-//     Implementation Orchestrator alone dispatches, schedules and escalates (B30-303).
+//     direct waves have one Implementation Orchestrator (B30-303), with frozen
+//     legacy Coordinator ownership honored until the recorded handover.
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
@@ -252,8 +253,11 @@ describe("SM04.X1-X3 and B30-303: removal blocked, legacy routes kept, one owner
     assert.match(flatText(text), /never run both/i);
   });
 
-  it("B30-303 the Implementation Orchestrator alone dispatches, schedules and escalates", () => {
-    assert.match(flatText(readShipped(REF)), /Implementation Orchestrator alone/i);
+  it("B30-303 direct and explicitly delegated waves each have one controller", () => {
+    const text = flatText(readShipped(REF));
+    assert.match(text, /direct wave[^.]*Implementation Orchestrator/i);
+    assert.match(text, /frozen assignment[^.]*enabled Coordinator[^.]*retains its wave duties/i);
+    assert.match(rows(readShipped(REF)).get("D5")?.[0] ?? "", /changed paths[^.]*recorded write set/i);
   });
 });
 
