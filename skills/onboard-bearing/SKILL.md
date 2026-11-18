@@ -1,10 +1,11 @@
 ---
 name: onboard-bearing
 description: >
-  Guided first-run and later configuration of profiles.json. Use for
-  explicit profile setup or configuration change. Do not
-  use to infer settings, store credentials, or write during ordinary
-  Lifecycles.
+  Create, edit, or migrate a Bearing profile or catalog setting on explicit
+  owner request. Use for guided first-profile setup and targeted configuration
+  changes in profiles.json. Ordinary task dispatch, installing a skill, and a
+  missing profile do not authorize catalog writes. Collect route choices from
+  the owner and keep credentials outside the catalog.
 ---
 
 # onboard-bearing
@@ -19,9 +20,10 @@ Explain each active role from its sibling `SKILL.md` (`mbse` and
 `integration_engineer` execution only, with their legacy planning sessions
 removed and refused) and catalog-level `fellow` from
 `../bearing-lite/references/consultation.md`. Targeted edits skip the tour.
-Recommend without selecting or writing unless explicitly instructed; preserve
-unaddressed values. Bearing never fills, suggests, ranks, or characterizes any
-harness, model, or reasoning level—the owner supplies every route identity.
+Explain settings without selecting or writing unless explicitly instructed.
+Preserve unaddressed values. The owner supplies every
+harness, model, and reasoning level. Bearing never fills, suggests, ranks, or
+characterizes route identities.
 Loop: classify → choices → editable preview → validate → atomic save →
 validate readback → optional consented launch probe → return.
 
@@ -54,9 +56,12 @@ validate readback → optional consented launch probe → return.
    `roles.requirements_engineer`, `roles.systems_modeler`,
    `roles.test_engineer.sessions.planning`, and
    `roles.integration_engineer.sessions.planning` are removed and refused.
+   If a former `roles.fellow` appears, follow the
+   [catalog Fellow migration](references/catalog-contract.md#move-a-former-profile-fellow)
+   on explicit request.
 3. For guided first-profile setup, follow `references/guided-first-profile.md`
-   (local CLI presence with consent before model queries; per-harness discovery
-   or manual entry with separate labels `tool found`, `model offered`,
+   (optional presence check for an owner-named tool, owner-supplied route
+   identities, and separate labels `tool found`, `model offered`,
    `launch tested`; role/profile usage explanation; editable one-row-per-change
    preview; opt-in launch probe with consent per run; copyable next request).
    Ask settings one at a time in the ordered checklist below within scope, with
@@ -153,6 +158,11 @@ validate readback → optional consented launch probe → return.
      confirm `READY`/`VALID` and preserved extension keys.
 
 ## Return and recovery
+For a request outside setup, targeted edits, or explicit migration, return
+`NO_MATCH` and leave the catalog untouched. After cancellation, stop the
+interview and leave it untouched. After detecting a concurrent edit, return
+`NEEDS_MORE_EVIDENCE`; reclassify from disk on the owner's next request.
+
 Return `READY`, `MIGRATION_REQUIRED`, `no_named_profiles`, `NEEDS_MORE_EVIDENCE`,
 or `OWNER_DECISION_REQUIRED` with verdict, candidate_ref, changed_paths, tests,
 findings, and blocker, reporting `catalog_valid`, `strategy_readiness`, and

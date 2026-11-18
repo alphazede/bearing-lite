@@ -109,11 +109,11 @@ Minimal valid catalog example (single profile, one enabled author, empty fallbac
 | `no_named_profiles` (`missing_user_catalog`) | No user `profiles.json`; ask before creating. |
 | `READY` / `VALID` (`profiles: {}`) | Valid empty catalog; ask for a new profile name to create one. |
 | `READY` (`retired_role_ignored: coordinator`) | Legacy `roles.coordinator` ignored for new waves; Implementation Orchestrator owns new waves (R11, R17). |
-| `MIGRATION_REQUIRED` (`legacy_lineups_present`, `legacy_lineups_field`, `retired_role:plan_integrator`, `retired_role:planning_and_design`) | Stop ordinary setup and run explicit migration (below). |
+| `MIGRATION_REQUIRED` (`legacy_lineups_present`, `legacy_lineups_field`, `retired_role:plan_integrator`, `retired_role:planning_and_design`, `catalog_fellow_migration`) | Stop ordinary setup and run the matching migration on explicit request. |
 | `NEEDS_MORE_EVIDENCE` (`home_unresolved`, `packaged_catalog_alias`, `duplicate_raw_json_key`, `catalog_not_json`, `invalid_schema_version`, `profiles_not_object`, `invalid_profile_name`, `profile_name_collision`, `dangling_default`, `malformed_fellow`, `retired_role:*`, `removed_role:*`, `removed_session:*`) | Report exact reason and path; never overwrite malformed bytes automatically. Require explicit owner repair or removal of the invalid entry. |
 | `OWNER_DECISION_REQUIRED` (TDD `test_implementer` or `implementer` missing/disabled/malformed) | Catalog loads `READY`, but freeze/dispatch stops until the owner supplies both enabled TDD authors (R12). |
 
-## 4. Migration when `lineups.json` or retired keys exist (R11, R15)
+## Migration
 
 1. Validate `lineups.json` semantically (schema version, non-empty roles/routes).
    Never treat `lineups.json` as live configuration.
@@ -123,8 +123,8 @@ Minimal valid catalog example (single profile, one enabled author, empty fallbac
    - `Light Implementer` -> `roles.light_implementer`
    - `Test Engineer` planning-phase -> `roles.integration_test.sessions.planning`;
      implementation-phase -> `roles.test_engineer.sessions.assurance`
-   - `Explorer` -> `roles.coordinator` (preserved only as ignored legacy data for
-     frozen journeys; never scheduled on new waves)
+   - `Explorer` -> no new catalog route. Show the owner the legacy entry and
+     retain any existing frozen Coordinator binding on its pinned runtime.
    - `Surveyor` -> never auto-assigned to `integration_engineer.sessions.execution`;
      ask the owner only if execution assessment is enabled.
    - `tdd` missing `test_implementer` -> ask the owner; never copy from another role.
@@ -138,6 +138,16 @@ Minimal valid catalog example (single profile, one enabled author, empty fallbac
    `profiles.json` atomically, validate readback (`validate-profiles.mjs` +
    `evaluateCatalogState` + `freezeSelectedRoutes`), and **only then** remove
    `lineups.json`.
+
+### Move a former profile Fellow
+
+Show the owner the affected profiles and any existing top-level `fellow`.
+Ask which exact route to keep catalog-wide, or whether to omit it. Reuse an
+existing route only when the owner expressly selects it. If selected, copy its
+primary `harness`, `model`, and `reasoning`, and preserve its fallback order
+and conditions. Preview that top-level change and removal of the obsolete
+`roles.fellow` entries together. Save only after approval, with the normal
+candidate validation and readback. Leave every unrelated field intact.
 
 ## 5. First-task planning and handoff links (R06, R13, R17)
 

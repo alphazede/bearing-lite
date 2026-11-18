@@ -63,6 +63,45 @@ function writeHomeCatalog(dir, bytes, filename = "profiles.json") {
 }
 
 describe("Alphazedehq#586 onboarding R01-R22 and guided first-profile path", () => {
+  it("refuses invalid retained fields on a disabled additional tool", () => {
+    const raw = JSON.stringify({ schema_version: 1, profiles: { Work: {
+      roles: {},
+      deterministic_verification: { additional_tools: [{ name: "Lint", enabled: false, command: 42 }] },
+    } } });
+    const cli = runValidator(["--stdin"], raw);
+    assert.equal(cli.status, 1);
+    assert.equal(cli.json.catalog_valid, false);
+    assert.equal(profilesHook.validateCatalog({ raw }).catalog_valid, false);
+  });
+
+  it("requires an exact named profile and validates the catalog before freezing", () => {
+    const catalog = { schema_version: 1, profiles: { Work: { roles: {} } } };
+    for (const profile of ["Missing", "work", "constructor"]) {
+      const refused = profilesHook.freezeSelectedRoutes({ profile, catalog });
+      assert.equal(refused.outcome, "OWNER_DECISION_REQUIRED");
+      assert.equal(refused.snapshot, undefined);
+    }
+    assert.deepEqual(profilesHook.freezeSelectedRoutes({ profile: "Work", catalog }).snapshot, { roles: {} });
+    catalog.fellow = { harness: "placeholder" };
+    const invalid = profilesHook.freezeSelectedRoutes({ profile: "Work", catalog });
+    assert.equal(invalid.outcome, "OWNER_DECISION_REQUIRED");
+    assert.equal(invalid.snapshot, undefined);
+    catalog.fellow = { harness: "h", model: "m", reasoning: "r", ordered_fallbacks: [] };
+    const frozen = profilesHook.freezeSelectedRoutes({
+      profile: "Work", catalog, fellow: { ...catalog.fellow, model: "override" },
+    });
+    assert.deepEqual(frozen.snapshot.fellow, catalog.fellow);
+  });
+
+  it("classifies former Fellow routes for explicit catalog migration", (t) => {
+    const raw = JSON.stringify({ schema_version: 1, profiles: { Work: {
+      roles: { fellow: { enabled: true, primary: { harness: "h", model: "m", reasoning: "r" }, ordered_fallbacks: [] } },
+    } } });
+    const { home } = writeHomeCatalog(tempDir(t, "former-fellow"), raw);
+    assert.equal(profilesHook.evaluateCatalogState({ env: { HOME: home } }).outcome, "MIGRATION_REQUIRED");
+    assert.equal(profilesHook.validateCatalog({ raw }).outcome, "MIGRATION_REQUIRED");
+    assert.equal(runValidator(["--stdin"], raw).json.outcome, "MIGRATION_REQUIRED");
+  });
   it("R04: ships synced profiles.schema.json inside skills/onboard-bearing and runs standalone in a skills-only copy", (t) => {
     const rootSchema = readFileSync(path.join(ROOT, "schemas/profiles.schema.json"), "utf8");
     const skillSchema = readFileSync(path.join(ONBOARD_DIR, "references/profiles.schema.json"), "utf8");
@@ -384,7 +423,7 @@ describe("Alphazedehq#586 onboarding R01-R22 and guided first-profile path", () 
     assert.ok(Buffer.byteLength(skill, "utf8") <= 12_000);
 
     // Zero model guidance / ranking / tiers / Fellow cost framing.
-    assert.match(allOnboarding, /never fills, suggests, ranks, or characterizes/i);
+    assert.match(allOnboarding, /never fills, suggests, ranks, or\s+characterizes/i);
     assert.doesNotMatch(allOnboarding, /\|\s*tier\s*\||\b(?:cheapest|strongest|recommended)\s+model\b|\bmodel\s+tier\b/i);
     assert.doesNotMatch(guided, /premium calls|dominate an economy/i);
 
@@ -405,12 +444,11 @@ describe("Alphazedehq#586 onboarding R01-R22 and guided first-profile path", () 
       "correction-loop.md",
       "assurance_repair.enabled",
       "orchestrator-delegation",
-      "codex debug models",
-      "agy models",
-      "pi --list-models",
     ]) {
       assert.ok(allOnboarding.includes(phrase), `onboarding docs must cover ${phrase}`);
     }
+    assert.match(guided, /owner supplies their model\s+ID and reasoning setting/);
+    assert.doesNotMatch(guided, /debug models|--list-models|\bagy2\b/);
 
     // Offline failure fixtures:
     // 1. Zero-CLI / shim-only: candidate validation of an empty catalog stays valid without creating profiles.

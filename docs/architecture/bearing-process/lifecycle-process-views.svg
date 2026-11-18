@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1312 2856" role="img" aria-labelledby="process-views-title process-views-desc">
   <title id="process-views-title">Bearing Delivery Lifecycle process views</title>
-  <desc id="process-views-desc">Prepared projection of the approved overview, planning, and implementation process diagrams. Not a SysML semantic model. Overview: Five sequential stages across the software development lifecycle: 01 Work Intake, 02 Lifecycle Planning, 03 Owner Authorization Gate, 04 Lifecycle Implementation, and 05 Completed Result and Evidence. A feedback loop returns requested changes from Owner Authorization back to Planning, an aggregate repair loop operates within in-wave implementation, and a correction path returns findings from Lifecycle-completion system validation to the responsible Implementer. Deployment and release remain under separate authority. Planning: Planning runs in dependency order: Intake and combined Architectural Alignment and Scope in the controller; Requirements Engineer authors and self-checks requirements; Systems Modeler returns placement evidence; Integration Engineer planning authors the boundary contract; Planning Test Engineer binds SEIT to requirement IDs; the existing Planning Orchestrator authors final plan/design and assembles the package, validates allocations and bindings, runs only requested planning review, obtains owner confirmation, and writes the handoff. Only enabled specialists needed by the task run; independent ready work runs concurrently. A feedback loop returns named changes to the responsible author in its assignment. Implementation: Implementation lifecycle showing two distinct operational zones: Zone A comprises the repeating declared work-unit loop (01 Baseline Input, 02 Work-Unit Realization with distinct Test Implementer, Product Implementer, and Light Implementer roles, 03 In-Wave V&amp;V and Defect Review with owner-requested ATE and Reviewer, plus an authorized in-wave repair loop). Zone B comprises the distinct Lifecycle-completion gate (04 Lifecycle-Completion System Validation by owner-requested Integration Engineer execution, at Lifecycle cadence by default, with a correction path back to Implementers) and 05 Closeout and Evidence Handover. Production release remains under separate authority. Systems Modeler Transfer Function: Proposed architecture under Requirements System issue 107 defining F(bound SDoc, owner-approved model decisions, viewpoints, stable IDs, SysML v2 profile, brand profile) -&gt; (SysML v2, HTML). The governed Requirements System transfer-function boundary encapsulates model skeleton construction, tailored SSC-G-101-2023 v1.1 structure and layout rules, native model semantic validation with a closed typed-findings feedback loop, and the SysON/Sirius graphics engine performing automated diagram layout and rendering under agreed style guides and registered brand visual identity. The engine does not invent architecture or grant approval. Outputs are canonical SysML v2 and human-readable HTML views consumed by the Bearing Definition of Done Manifest, preserving canonical SDoc as the requirements authority.</desc>
+  <desc id="process-views-desc">Prepared projection of the approved overview, planning, and implementation process diagrams. Not a SysML semantic model. Overview: Five sequential stages across the software development lifecycle: 01 Work Intake, 02 Lifecycle Planning, 03 Owner Authorization Gate, 04 Lifecycle Implementation, and 05 Completed Result and Evidence. A feedback loop returns requested changes from Owner Authorization back to Planning, an aggregate repair loop operates within in-wave implementation, and a correction path returns findings from Lifecycle-completion system validation to the responsible Implementer. Deployment and release remain under separate authority. Planning: Planning runs in dependency order: Intake and combined Architectural Alignment and Scope in the controller; MBSE and Integration and Test run in parallel from frozen requirement IDs, titles, and decisions. MBSE authors and checks requirements and returns modeling and placement evidence. Integration and Test authors boundaries, assembly, and SEIT proof cases; the existing Planning Orchestrator authors final plan/design and assembles the package, validates allocations and bindings, runs only requested planning review, obtains owner confirmation, and writes the handoff. Only enabled specialists needed by the task run; independent ready work runs concurrently. The Orchestrator records verified binding fixes during assembly and routes changes of meaning to the owning author. Implementation: Implementation lifecycle showing two distinct operational zones: Zone A comprises the repeating declared work-unit loop (01 Baseline Input, 02 Work-Unit Realization with distinct Test Implementer, Product Implementer, and Light Implementer roles, 03 In-Wave V&amp;V and Defect Review with owner-requested ATE and Reviewer, plus an authorized in-wave repair loop). Zone B comprises the distinct Lifecycle-completion gate (04 Lifecycle-Completion System Validation by owner-requested Integration Engineer execution, at Lifecycle cadence by default, with a correction path back to Implementers) and 05 Closeout and Evidence Handover. Production release remains under separate authority. Modeling Transfer Function: Proposed architecture under Requirements System issue 107 defining F(bound SDoc, owner-approved model decisions, viewpoints, stable IDs, SysML v2 profile, brand profile) -&gt; (SysML v2, HTML). The governed Requirements System transfer-function boundary encapsulates model skeleton construction, tailored SSC-G-101-2023 v1.1 structure and layout rules, native model semantic validation with a closed typed-findings feedback loop, and the SysON/Sirius graphics engine performing automated diagram layout and rendering under agreed style guides and registered brand visual identity. The engine does not invent architecture or grant approval. Outputs are canonical SysML v2 and human-readable HTML views consumed by the Bearing Definition of Done Manifest, preserving canonical SDoc as the requirements authority.</desc>
   <rect x="0" y="0" width="1312" height="2856" fill="#090d16" />
   <g font-family="Segoe UI, Helvetica Neue, Arial, sans-serif">
     <g id="panel-overview">
@@ -116,8 +116,8 @@
               <rect x="230" y="150" width="270" height="42" rx="6" fill="#151b3c" stroke="#2e336b" stroke-width="1" />
               <rect x="238" y="158" width="16" height="16" rx="3" fill="#312e81" />
               <text x="246" y="170" fill="#a5b4fc" font-size="9" font-weight="800" text-anchor="middle">2</text>
-              <text x="260" y="165" fill="#f8fafc" font-size="10" font-weight="700">Requirements &amp; Acceptance</text>
-              <text x="260" y="178" fill="#cbd5e1" font-size="8.5">Requirements Engineer authors, checks &amp; repairs</text>
+              <text x="260" y="165" fill="#f8fafc" font-size="10" font-weight="700">Frozen specialist inputs</text>
+              <text x="260" y="178" fill="#cbd5e1" font-size="8.5">Requirement IDs, titles, and decisions</text>
 
               
               <rect x="230" y="196" width="270" height="142" rx="6" fill="#121735" stroke="#6366f1" stroke-width="1.2" stroke-dasharray="4 3" />
@@ -125,16 +125,16 @@
               <text x="244" y="213" fill="#a5b4fc" font-size="8" font-weight="700">SPECIALISTS: ENABLED AND NEEDED</text>
 
               <rect x="236" y="222" width="258" height="30" rx="4" fill="#182046" stroke="#2e336b" stroke-width="1" />
-              <text x="244" y="235" fill="#f8fafc" font-size="9.5" font-weight="700">Systems Modeler</text>
-              <text x="244" y="247" fill="#cbd5e1" font-size="7.6">Structural views, behavioral models &amp; SysON transfer function</text>
+              <text x="244" y="235" fill="#f8fafc" font-size="9.5" font-weight="700">MBSE</text>
+              <text x="244" y="247" fill="#cbd5e1" font-size="7.6">Requirements, model views, and placement evidence</text>
 
               <rect x="236" y="256" width="258" height="36" rx="4" fill="#182046" stroke="#2e336b" stroke-width="1" />
-              <text x="244" y="269" fill="#f8fafc" font-size="9.5" font-weight="700">Integration Engineer planning</text>
-              <text x="244" y="280" fill="#cbd5e1" font-size="8">Compatibility, interfaces, assembly order, stubs, rollback &amp; recovery</text>
+              <text x="244" y="269" fill="#f8fafc" font-size="9.5" font-weight="700">Integration and Test</text>
+              <text x="244" y="280" fill="#cbd5e1" font-size="8">Interfaces, assembly, recovery, and paired proof cases</text>
 
               <rect x="236" y="296" width="258" height="32" rx="4" fill="#182046" stroke="#2e336b" stroke-width="1" />
-              <text x="244" y="309" fill="#f8fafc" font-size="9.5" font-weight="700">Planning Test Engineer</text>
-              <text x="244" y="321" fill="#cbd5e1" font-size="8">SEIT cases bind existing requirement IDs</text>
+              <text x="244" y="309" fill="#f8fafc" font-size="9.5" font-weight="700">Parallel specialist planning</text>
+              <text x="244" y="321" fill="#cbd5e1" font-size="8">Both roles start from the frozen inputs</text>
 
               <rect x="230" y="342" width="270" height="34" rx="6" fill="#151b3c" stroke="#2e336b" stroke-width="1" />
               <rect x="238" y="349" width="16" height="16" rx="3" fill="#312e81" />
@@ -336,7 +336,7 @@
       <g transform="translate(16,730)">
             <title id="planning-diagram-title">Bearing Delivery Lifecycle Planning Process Detail Diagram</title>
             <desc id="planning-diagram-desc">
-              Planning runs in dependency order: Intake and combined Architectural Alignment and Scope in the controller; Requirements Engineer authors and self-checks requirements; Systems Modeler returns placement evidence; Integration Engineer planning authors the boundary contract; Planning Test Engineer binds SEIT to requirement IDs; the existing Planning Orchestrator authors final plan/design and assembles the package, validates allocations and bindings, runs only requested planning review, obtains owner confirmation, and writes the handoff. Only enabled specialists needed by the task run; independent ready work runs concurrently. A feedback loop returns named changes to the responsible author in its assignment.
+              Planning runs in dependency order: Intake and combined Architectural Alignment and Scope in the controller; MBSE and Integration and Test run in parallel from frozen requirement IDs, titles, and decisions. MBSE authors and checks requirements and returns modeling and placement evidence. Integration and Test authors boundaries, assembly, and SEIT proof cases; the existing Planning Orchestrator authors final plan/design and assembles the package, validates allocations and bindings, runs only requested planning review, obtains owner confirmation, and writes the handoff. Only enabled specialists needed by the task run; independent ready work runs concurrently. The Orchestrator records verified binding fixes during assembly and routes changes of meaning to the owning author.
             </desc>
 
             <defs>
@@ -436,10 +436,10 @@
               <rect x="285" y="154" width="305" height="52" rx="6" fill="#151b3c" stroke="#2e336b" stroke-width="1" />
               <rect x="293" y="161" width="18" height="18" rx="3" fill="#312e81" />
               <text x="302" y="174" fill="#a5b4fc" font-size="9.5" font-weight="800" text-anchor="middle">4</text>
-              <text x="319" y="169" fill="#f8fafc" font-size="10.5" font-weight="700">Requirements &amp; Acceptance Analysis</text>
-              <text x="319" y="182" fill="#a5b4fc" font-size="9">Requirements Engineer · if enabled and needed</text>
-              <text x="319" y="193" fill="#cbd5e1" font-size="8">Authors requirements; checks and repairs own output</text>
-              <text x="319" y="202" fill="#94a3b8" font-size="7.5">Case IDs and placements are later owned bindings</text>
+              <text x="319" y="169" fill="#f8fafc" font-size="10.5" font-weight="700">Frozen specialist inputs</text>
+              <text x="319" y="182" fill="#a5b4fc" font-size="9">Orchestrator freezes the IDs, titles, and decisions</text>
+              <text x="319" y="193" fill="#cbd5e1" font-size="8">Both roles receive the same frozen inputs</text>
+              <text x="319" y="202" fill="#94a3b8" font-size="7.5">The Orchestrator reconciles bindings during assembly</text>
 
               
               <rect x="285" y="212" width="305" height="160" rx="6" fill="#121735" stroke="#6366f1" stroke-width="1.3" stroke-dasharray="4 3" />
@@ -447,19 +447,19 @@
               <text x="300" y="230" fill="#a5b4fc" font-size="8.5" font-weight="700">SPECIALISTS: ENABLED AND NEEDED</text>
 
               <rect x="293" y="238" width="289" height="34" rx="4" fill="#182046" stroke="#2e336b" stroke-width="1" />
-              <text x="301" y="249" fill="#f8fafc" font-size="9.5" font-weight="700">5 · Systems Modeler</text>
-              <text x="301" y="259" fill="#cbd5e1" font-size="7.6">Structural decomposition, behavioral models &amp; interface boundaries</text>
+              <text x="301" y="249" fill="#f8fafc" font-size="9.5" font-weight="700">MBSE · runs in parallel</text>
+              <text x="301" y="259" fill="#cbd5e1" font-size="7.6">Requirements, model views, and placement evidence</text>
               <text x="301" y="268" fill="#a5b4fc" font-size="7.2" font-weight="600">Requirements System Transfer Function (SysON Engine) -&gt; Page 04</text>
 
               <rect x="293" y="276" width="289" height="46" rx="4" fill="#182046" stroke="#2e336b" stroke-width="1" />
-              <text x="301" y="289" fill="#f8fafc" font-size="9.5" font-weight="700">6 · Integration Engineer planning</text>
-              <text x="301" y="301" fill="#a5b4fc" font-size="8.5">Compatibility, interfaces, assembly strategy &amp; order</text>
-              <text x="301" y="313" fill="#cbd5e1" font-size="7.8">Readiness, V&amp;V handoffs, anomaly handling, rollback &amp; recovery planning</text>
+              <text x="301" y="289" fill="#f8fafc" font-size="9.5" font-weight="700">Integration and Test · runs in parallel</text>
+              <text x="301" y="301" fill="#a5b4fc" font-size="8.5">Boundary contract, interfaces, assembly, and SEIT</text>
+              <text x="301" y="313" fill="#cbd5e1" font-size="7.8">Proof cases use frozen requirement IDs</text>
 
               <rect x="293" y="326" width="289" height="38" rx="4" fill="#251b0a" stroke="#d97706" stroke-width="1" />
               <polygon points="301,334 307,344 295,344" fill="#fde68a" />
               <text x="313" y="339" fill="#fde68a" font-size="8" font-weight="700">DATA DEPENDENCIES</text>
-              <text x="301" y="352" fill="#cbd5e1" font-size="7.5">Requirements → Modeler → Integration → Test planning</text>
+              <text x="301" y="352" fill="#cbd5e1" font-size="7.5">Frozen inputs → Parallel specialists → Final design</text>
               <text x="301" y="361" fill="#94a3b8" font-size="7.2">Independent ready work runs concurrently; inactive roles skipped</text>
 
               <rect x="285" y="378" width="305" height="24" rx="4" fill="#312e81" />
@@ -467,7 +467,6 @@
             </g>
 
             
-            <path d="M 582 295 C 610 295, 610 140, 630 140" fill="none" stroke="#a5b4fc" stroke-width="1.8" stroke-dasharray="4 3" marker-end="url(#planning-arrow-cyan)" />
 
             
             <path d="M 600 240 L 620 240" stroke="#38bdf8" stroke-width="2.5" fill="none" marker-end="url(#planning-arrow-cyan)" />
@@ -482,10 +481,10 @@
               <rect x="630" y="108" width="255" height="56" rx="6" fill="#0d2328" stroke="#155e5b" stroke-width="1" />
               <rect x="638" y="115" width="18" height="18" rx="3" fill="#0f3b46" />
               <text x="647" y="128" fill="#5eead4" font-size="9.5" font-weight="800" text-anchor="middle">7</text>
-              <text x="664" y="123" fill="#f8fafc" font-size="10.5" font-weight="700">V&amp;V Planning (SEIT)</text>
-              <text x="664" y="136" fill="#5eead4" font-size="9">Planning Test Engineer · if enabled and needed</text>
-              <text x="664" y="148" fill="#cbd5e1" font-size="8.2">Proof cases bound to existing requirement IDs</text>
-              <text x="664" y="159" fill="#94a3b8" font-size="7.8">Authors and self-checks SEIT; no product tests</text>
+              <text x="664" y="123" fill="#f8fafc" font-size="10.5" font-weight="700">Specialist returns</text>
+              <text x="664" y="136" fill="#5eead4" font-size="9">MBSE and Integration and Test</text>
+              <text x="664" y="148" fill="#cbd5e1" font-size="8.2">Requirements, placements, boundaries, and SEIT</text>
+              <text x="664" y="159" fill="#94a3b8" font-size="7.8">Both authors check and repair their own artifacts</text>
 
               <rect x="630" y="170" width="255" height="56" rx="6" fill="#0d2328" stroke="#155e5b" stroke-width="1" />
               <rect x="638" y="177" width="18" height="18" rx="3" fill="#0f3b46" />
@@ -594,7 +593,7 @@
             </g>
 
             <text x="20" y="615" fill="#cbd5e1" font-size="9.5" font-weight="600">
-              Intake → Alignment &amp; Scope → Requirements → Modeler → IE → TE → final plan/design → owner → handoff
+              Intake → Alignment &amp; Scope → parallel MBSE and Integration and Test → final plan/design → owner → handoff
             </text>
           
       </g>
@@ -915,11 +914,11 @@
     <g id="panel-transfer-function">
       <rect x="8" y="2118" width="1296" height="730" rx="10" fill="#090d16" stroke="#233554" stroke-width="1.2" />
       <rect x="20" y="2126" width="310" height="22" rx="4" fill="#312e81" stroke="#6366f1" stroke-width="1" />
-      <text x="175" y="2141" fill="#a5b4fc" font-size="11" font-weight="700" text-anchor="middle">Systems Modeler · Transfer Function Detail</text>
+      <text x="175" y="2141" fill="#a5b4fc" font-size="11" font-weight="700" text-anchor="middle">Modeling Transfer Function Detail</text>
       <rect x="340" y="2126" width="270" height="22" rx="4" fill="#251b0a" stroke="#d97706" stroke-width="1" />
       <text x="475" y="2141" fill="#fde68a" font-size="9" font-weight="700" text-anchor="middle">PROPOSED ARCHITECTURE · ISSUE #107</text>
       <g transform="translate(16,2154)">
-            <title id="tf-diagram-title">Systems Modeler Requirements System Transfer Function Detail Diagram</title>
+            <title id="tf-diagram-title">Requirements System Transfer Function Detail Diagram</title>
             <desc id="tf-diagram-desc">
               Detailed architecture view of the Requirements System transfer function proposed under issue 107. Inputs (bound SDoc candidate, owner-approved model decisions, viewpoints, stable IDs, SysML v2 style profile, and registered brand profile) enter the governed Requirements System transfer function boundary. Inside the boundary, the model skeleton is constructed and tailored SSC-G-101-2023 v1.1 rules applied; native semantic validation performs syntax, semantic, interface, and traceability checks with a closed typed-findings feedback loop; once checks pass, the SysON/Eclipse Sirius graphics engine performs automated diagram layout and rendering under agreed style guides and registered brand visual identity. The engine does not invent architecture or grant approval. Outputs are canonical SysML v2 and human-readable HTML views consumed by the Bearing Definition of Done Manifest.
             </desc>
@@ -1171,7 +1170,7 @@
                 <path d="M 379 473 A 3 3 0 1 0 379 479" fill="none" stroke="#fda4af" stroke-width="1.2" stroke-linecap="round" />
                 <path d="M 379 471 L 379 474 L 376 474" fill="none" stroke="#fda4af" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
                 <text x="390" y="473" fill="#fda4af" font-size="8" font-weight="800">TYPED FINDINGS FEEDBACK LOOP (CLOSED CORRECTION)</text>
-                <text x="390" y="484" fill="#cbd5e1" font-size="7.2">Blocking findings return to model-creator / Systems Modeler · no candidate output emitted</text>
+                <text x="390" y="484" fill="#cbd5e1" font-size="7.2">Blocking findings return to model author · no candidate output emitted</text>
               </g>
 
               <!-- BOTTOM GOVERNED SUMMARY -->
@@ -1216,9 +1215,9 @@
 
               <rect x="1005" y="366" width="245" height="74" rx="6" fill="#151b3c" stroke="#2e336b" stroke-width="1" />
               <text x="1015" y="380" fill="#a5b4fc" font-size="9" font-weight="700">Downstream Planning Roles</text>
-              <text x="1015" y="393" fill="#cbd5e1" font-size="7.8">Integration Engineer planning:</text>
+              <text x="1015" y="393" fill="#cbd5e1" font-size="7.8">Integration and Test planning:</text>
               <text x="1015" y="404" fill="#94a3b8" font-size="7.3">Interface compatibility, assembly order &amp; recovery</text>
-              <text x="1015" y="416" fill="#cbd5e1" font-size="7.8">Planning Test Engineer (SEIT):</text>
+              <text x="1015" y="416" fill="#cbd5e1" font-size="7.8">Integration and Test SEIT:</text>
               <text x="1015" y="427" fill="#94a3b8" font-size="7.3">Binds proof cases to model elements &amp; views</text>
 
               <rect x="1005" y="446" width="245" height="98" rx="6" fill="#0a2521" stroke="#115e59" stroke-width="1" />

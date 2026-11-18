@@ -17,12 +17,11 @@ independent assurance (`../test-engineer/SKILL.md`) and execution assessment
 
 ## Inputs and match
 
-- **Inputs:** confirmed requirements, architecture/model evidence, proposed
-  interfaces, existing contracts, versions, constraints, applicable standards,
-  candidate bindings, authorized output paths, and Test Engineering / Integration
-  Engineering method skills. Supply inputs before the Orchestrator's final
-  design; do not require that later artifact first. Missing method behavior is a
-  typed gap.
+- **Inputs:** frozen requirement IDs and titles, confirmed decisions,
+  architecture and available model evidence, proposed interfaces, constraints,
+  source bindings, authorized paths, and the Test Engineering and Integration
+  Engineering methods. Start from these inputs at specialist dispatch.
+  Unavailable methods or insufficient criteria for a proof case are typed gaps.
 - **Non-match:** authoring product tests, implementing missing behavior,
   revising requirements, Reviewer defect adjudication, or running independent
   Assurance Test Engineer / Integration Engineer execution evaluations.
@@ -42,15 +41,20 @@ independent assurance (`../test-engineer/SKILL.md`) and execution assessment
    `../test-engineer/references/shared-machine-tests.md`: required
    engine/server/browser tests need five consecutive and one two-copy concurrent
    pass, or the stricter repository rule, before assembly.
-3. **Author `seit.json` and V&V claims:** author `seit.json` from requirements
-   and interface/boundary inputs, binding each case to an existing requirement
-   ID and completing MBSE's pending case bindings; no author drafts SEIT first.
+3. **Author `seit.json` and V&V claims:** start with the frozen requirement
+   skeleton, decisions, and interface and boundary inputs. Bind each case to
+   a frozen requirement ID and return those links for assembly. Where a case
+   depends on an unsettled requirement detail, record the pending detail and
+   its owner so the Orchestrator can reconcile it after both returns.
    For security controls covered by `catalog/controls/` (schema
    `schemas/control-catalogue.schema.json`), **select and parameterize** the
    entry's `positive_case` and `negative_case` into `seit.json`
    `proof_cases[]` (recording the selection in `selected_controls` with
    `control_id`, `requirement_id`, `positive_case_id`, `negative_case_id`, and
-   `parameters`) instead of authoring both cases from zero.
+   `parameters`) instead of authoring both cases from zero. To render the
+   requirement and paired cases, pass one selection JSON object on stdin to
+   `node <plugin root>/hooks/plan-package.cjs control`. An exit 1 reports a
+   selection gap; an exit 0 returns the rendered artifacts without writing them.
    Cover every relevant flow, state transition, illegal transition, trust
    boundary, and failure path from the Boundary/Data-Flow Contract when
    applicable. Every case carries independently justified expectations per

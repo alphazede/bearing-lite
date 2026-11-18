@@ -8,8 +8,9 @@ import { boundHook, withTask } from "./task-opt-in-fixture.mjs";
  */
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, readFileSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { existsSync, readFileSync, mkdirSync, mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { createRequire } from "node:module";
+import { createHash } from "node:crypto";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -19,6 +20,45 @@ const require = createRequire(import.meta.url);
 const LOCK = path.join(ROOT, "hooks/orchestrator-write-lock.cjs");
 
 describe("#112 orchestrator write-set lock", () => {
+  it("lets the bound Orchestrator refresh exact source hashes and case bindings before review", (t) => {
+    const cwd = mkdtempSync(path.join(os.tmpdir(), "mechanical-binding-"));
+    t.after(() => rmSync(cwd, { recursive: true, force: true }));
+    const lock = boundHook(require(LOCK));
+    mkdirSync(path.join(cwd, "docs/coe"), { recursive: true });
+    const plan = "docs/plans/example";
+    mkdirSync(path.join(cwd, plan), { recursive: true });
+    writeFileSync(path.join(cwd, "task-opt-in.md"),
+      `# Active task\n### task_id: hook-test-task\n- status: IN_PROGRESS\n- plan_dir: ${plan}\n`);
+    const register = "docs/coe/register.sdoc";
+    const design = `${plan}/design.md`;
+    const seit = `${plan}/seit.json`;
+    const oldHash = "0".repeat(64);
+    const content = "# Approved design\n";
+    const newHash = createHash("sha256").update(content).digest("hex");
+    writeFileSync(path.join(cwd, design), content);
+    writeFileSync(path.join(cwd, register), "[REQUIREMENT]\nUID: REQ-1\nVERIFICATION_CASE_ID: pending\n[/REQUIREMENT]\n");
+    writeFileSync(path.join(cwd, plan, "implementation.json"), JSON.stringify({ journey_settings: { requirement_register: register } }));
+    writeFileSync(path.join(cwd, seit), JSON.stringify({
+      source_baseline: { planning_inputs: [{ path: design, sha256: oldHash }] },
+      proof_cases: [{ id: "CASE-1", requirement_id: "REQ-1" }, { id: "CASE-2", requirement_id: "REQ-2" }],
+    }, null, 2));
+
+    const decision = (file, before, after, role = "orchestrator") => lock.handle({
+      cwd, role, hook_event_name: "PreToolUse", tool_name: "apply_patch",
+      tool_input: { command: `*** Begin Patch\n*** Update File: ${file}\n@@\n-${before}\n+${after}\n*** End Patch` },
+    }, { host: "codex", role }).hookSpecificOutput.verdict;
+    const hashLine = (digest) => `        "sha256": "${digest}"`;
+    assert.equal(decision(seit, hashLine(oldHash), hashLine(newHash)), "ALLOW");
+    assert.equal(decision(register, "VERIFICATION_CASE_ID: pending", "VERIFICATION_CASE_ID: CASE-1"), "ALLOW");
+    assert.equal(decision(seit, hashLine(oldHash), hashLine("1".repeat(64))), "DENY_DISPATCH");
+    assert.equal(decision(seit, `        "path": "${design}",`, '        "path": "plan.md",'), "DENY_DISPATCH");
+    assert.equal(decision(register, "VERIFICATION_CASE_ID: pending", "VERIFICATION_CASE_ID: CASE-2"), "DENY_DISPATCH");
+    assert.equal(decision(seit, hashLine(oldHash), hashLine(newHash), "reviewer"), "DENY_DISPATCH");
+
+    writeFileSync(path.join(cwd, ".bearing-round.lock"), JSON.stringify({ plan_dir: ".", candidate: "frozen" }));
+    assert.equal(decision(seit, hashLine(oldHash), hashLine(newHash)), "DENY_DISPATCH");
+    assert.equal(decision(register, "VERIFICATION_CASE_ID: pending", "VERIFICATION_CASE_ID: CASE-1"), "DENY_DISPATCH");
+  });
   it("ships hooks/orchestrator-write-lock.cjs", () => {
     assert.ok(existsSync(LOCK), "hooks/orchestrator-write-lock.cjs must exist");
   });

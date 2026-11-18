@@ -483,6 +483,9 @@ function evaluateCatalogState(input) {
       return { outcome: "NEEDS_MORE_EVIDENCE", reason: "invalid_profile_name", path: profilesPath };
     }
     const profile = profiles[name];
+    if (isPlainObject(profile?.roles) && Object.hasOwn(profile.roles, "fellow")) {
+      return { outcome: "MIGRATION_REQUIRED", reason: "catalog_fellow_migration", profile: name, path: profilesPath };
+    }
     const retired = retiredRoleKeys(profile);
     const planning = retired.find((key) => RETIRED_PLANNING_ROUTE_KEYS.has(key));
     if (planning) {
@@ -766,6 +769,11 @@ function validateProfileEntry(name, profile, errors, diagnostics, preservedExten
         errors.push(`${prefix}.roles.${roleKey}: retired planning route requires migration`);
         continue;
       }
+      if (roleKey === "fellow") {
+        onMigration("catalog_fellow_migration");
+        errors.push(`${prefix}.roles.fellow: migrate to the catalog-level fellow after owner confirmation`);
+        continue;
+      }
       if (RETIRED_ROLE_KEYS.has(roleKey)) {
         errors.push(`${prefix}.roles.${roleKey}: retired role key`);
         continue;
@@ -899,11 +907,11 @@ function validateProfileEntry(name, profile, errors, diagnostics, preservedExten
                 !nonEmpty(tool.name) || typeof tool.enabled !== "boolean") {
               errors.push(`${prefix}.deterministic_verification.additional_tools[${i}]: invalid entry`);
             } else if (
-              tool.enabled === true &&
-              (!nonEmpty(tool.command) || !nonEmpty(tool.pass) || !nonEmpty(tool.evidence))
+              ["command", "pass", "evidence"].some((key) =>
+                (tool.enabled === true || Object.hasOwn(tool, key)) && !nonEmpty(tool[key]))
             ) {
               errors.push(
-                `${prefix}.deterministic_verification.additional_tools[${i}]: enabled entry requires command, pass, and evidence`
+                `${prefix}.deterministic_verification.additional_tools[${i}]: command, pass, and evidence must be non-blank strings when present or enabled`
               );
             }
           }
@@ -1080,20 +1088,30 @@ function evaluateStrategyReadiness(input) {
  * Also returns separate non-digest `lifecycle_settings` and `settings_digest` (R10) for fields outside the route digest.
  * TDD missing/disabled/malformed Test Implementer or Product Implementer fails closed with no snapshot or digest (R12).
  * Digest is canonical JSON of selected entries with fallback order; excludes cadence, route, and authority.
- * @param {{ profile?: object | string, catalog?: object, fellow?: object, selection_source?: string }} [input]
+ * @param {{ profile?: object | string, catalog?: object, fellow?: object, selection_source?: string, allowedExtensionPaths?: string[] }} [input]
  * @returns {{ snapshot: object, digest: string, lifecycle_settings: object, settings_digest: string } | { outcome: string, onboard: boolean, missing_role?: string }}
  */
 function freezeSelectedRoutes(input) {
   const catalog = isPlainObject(input && input.catalog) ? input.catalog : null;
-  const profile =
-    input && isPlainObject(input.profile)
-      ? input.profile
-      : catalog &&
-          typeof (input && input.profile) === "string" &&
-          isPlainObject(catalog.profiles) &&
-          isPlainObject(catalog.profiles[input.profile])
-        ? catalog.profiles[input.profile]
-        : {};
+  const selection = input?.profile;
+  if (typeof selection === "string") {
+    if (!isPlainObject(catalog?.profiles) || !Object.hasOwn(catalog.profiles, selection)) {
+      return { outcome: "OWNER_DECISION_REQUIRED", onboard: true, reason: "named_profile_not_found" };
+    }
+    const validation = validateCatalog({
+      raw: JSON.stringify(catalog),
+      allowedExtensionPaths: input.allowedExtensionPaths,
+    });
+    if (!validation.catalog_valid) {
+      return {
+        outcome: "OWNER_DECISION_REQUIRED", onboard: true, reason: validation.reason, error: validation.errors[0],
+      };
+    }
+  }
+  const profile = typeof selection === "string" ? catalog.profiles[selection] : isPlainObject(selection) ? selection : {};
+  if (isPlainObject(profile.roles) && Object.hasOwn(profile.roles, "fellow")) {
+    return { outcome: "OWNER_DECISION_REQUIRED", onboard: true, reason: "catalog_fellow_migration" };
+  }
   const removed = removedPlanningEntries(profile);
   if (removed.length) {
     return {
@@ -1110,12 +1128,11 @@ function freezeSelectedRoutes(input) {
   const roles = isPlainObject(profile.roles) ? deepCopy(profile.roles) : {};
   const snapshot = { roles };
   const material = { ...roles };
-  const fellow = isPlainObject(input && input.fellow)
-    ? input.fellow
-    : catalog && isPlainObject(catalog.fellow)
-      ? catalog.fellow
-      : null;
-  if (fellow) {
+  const fellow = catalog ? catalog.fellow : input?.fellow;
+  if (fellow !== undefined) {
+    if (!isWellFormedFellowRoute(fellow)) {
+      return { outcome: "OWNER_DECISION_REQUIRED", onboard: true, reason: "malformed_fellow" };
+    }
     snapshot.fellow = deepCopy(fellow);
     material.fellow = snapshot.fellow;
   }

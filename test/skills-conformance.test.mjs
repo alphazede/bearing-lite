@@ -416,6 +416,15 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     }
   });
 
+  it("onboarding matches explicit first-profile setup and stays dormant for frozen execution", () => {
+    const body = readFileSync(path.join(SKILLS_DIR, "onboard-bearing", "SKILL.md"), "utf8");
+    const verdict = validateSkillDocument("onboard-bearing", body);
+    assert.equal(verdict.ok, true);
+    assert.equal(activationMatches("onboard-bearing", verdict.description, "Create my first Bearing profile"), true);
+    assert.equal(activationMatches("onboard-bearing", verdict.description,
+      "Use my saved team to implement this API change."), false);
+  });
+
   it("router requires explicit Bearing invocation and owns the Journey conversation", () => {
     const routerPath = path.join(SKILLS_DIR, "bearing-lite", "SKILL.md");
     const router = readFileSync(routerPath, "utf8");

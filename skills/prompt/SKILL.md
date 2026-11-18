@@ -46,7 +46,7 @@ independent review also requires the owner's requested scope and cadence.
    packet with "nothing else changed"; record every fix and changed path in the
    return (while machine-checked `correction-delta.cjs` register-row snapshots
    remain bounded to their named UIDs).
-5. Include the selected loop only. Requirements Engineer owns its requirements-
+5. Include the selected loop only. MBSE owns its requirements-
    quality pass and self-repairs. Other authors check and repair their own outputs.
    Evaluators report without repairing the candidate while evaluating; Light
    Implementer executes the exact command and returns failure without repair.

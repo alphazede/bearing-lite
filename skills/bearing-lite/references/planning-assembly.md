@@ -107,8 +107,8 @@ This is the default dependency order, not a requirement to enable every role:
    authorized repair allowance and rerun affected deterministic checks.
    Otherwise record planning review as not requested; do not add a reviewer.
 5. **Owner confirmation and handoff:** obtain the execution authority required
-   for the exact package, complete its declared final checks, write `handoff.md`,
-   and recommend a new Implementation Orchestrator session.
+   for the exact package, complete its declared final checks, and write
+   `handoff.md`. Apply the approved clean-session choice.
 
 Skip inactive roles without creating substitute sessions. Record actual input
 dependencies: independent work may run in parallel once its inputs exist, while
@@ -257,6 +257,19 @@ mechanically; do not invent technical decisions or V&V claims. When applying
 purely mechanical ID or hash binding fixes during assembly, record each edit in
 the edit record; any change of meaning returns to its owning author.
 
+Before review, record the checkout-relative package directory as
+`- plan_dir: <directory>` in the bound, in-progress task block. From the
+checkout root, the Orchestrator can update one existing binding line per edit
+in that package. Refresh a `seit.json` planning-input SHA-256
+from the named Markdown source in that plan directory. Complete a pending
+`VERIFICATION_CASE_ID` line in the registered SDoc using cases already in
+`seit.json` for that same requirement. Ask MBSE at dispatch to write
+`VERIFICATION_CASE_ID: pending` where a case ID will arrive later. Preserve
+established cases and source paths. Use a single-line Edit or native
+apply_patch with one context-free `@@` hunk containing the exact removed
+and added lines. Record the path, field, before and after values, source
+and candidate. A refused edit remains a gap in the assembly return.
+
 Generate `implementation.json` with `review_rounds` and a `planning_wave` that
 declares exactly the enabled specialist sessions this task needed (possibly none)
 and records `review_requested` as the owner chose. Post-approval planning
@@ -303,5 +316,6 @@ handoff check in `hooks/closeout.cjs` with `journey` (`mode: "handoff"`); a
 history coverage gap refuses the handoff until its recorder transcribes the listed
 decisions, authority events, and landings: Orchestrator when Scribe is omitted or
 disabled, otherwise the existing Scribe session on its frozen cadence (see
-`resume.md`). Recommend a new Implementation Orchestrator session; do not launch
-it automatically or repeat settled planning.
+`resume.md`). Follow the approved clean-session choice in
+`journey_settings.planning_to_implementation_clean_session`. The owner opens
+the fresh session when selected. Implementation resumes from the handoff.

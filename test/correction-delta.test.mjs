@@ -137,7 +137,7 @@ test('matching named delta uses bounded correction procedure; unresolved intent 
   // The exact-text / re-gate closure rules live in the correction loop the
   // Planning Orchestrator's final planning procedure links.
   const loop = readFileSync(new URL('../skills/planning-and-design/references/correction-loop.md', import.meta.url), 'utf8');
-  assert.match(loop, /exact_text[\s\S]*without another Requirements Engineer gate/);
+  assert.match(loop, /exact_text[\s\S]*without another MBSE gate/);
   assert.match(loop, /mechanical verification receipt/);
   const report = readFileSync(new URL('../skills/mbse/references/gate-report.md', import.meta.url), 'utf8');
   assert.match(report, /finding_type/);

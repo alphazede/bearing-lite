@@ -617,6 +617,11 @@ function validate(opts) {
             errors.push(`${pfx}.roles.${rk}: retired planning route requires migration`);
             continue;
           }
+          if (rk === "fellow") {
+            if (!migrationReason) migrationReason = "catalog_fellow_migration";
+            errors.push(`${pfx}.roles.fellow: migrate to the catalog-level fellow after owner confirmation`);
+            continue;
+          }
           if (RETIRED_ROLE_KEYS.has(rk)) {
             errors.push(`${pfx}.roles.${rk}: retired role key`);
             continue;
@@ -708,7 +713,8 @@ function validate(opts) {
                 const nonEmpty = (v) => typeof v === "string" && /\S/.test(v);
                 if (!isClosedPlainObject(t, ["name", "enabled", "command", "pass", "evidence"]) ||
                     !nonEmpty(t.name) || typeof t.enabled !== "boolean" ||
-                    (t.enabled === true && (!nonEmpty(t.command) || !nonEmpty(t.pass) || !nonEmpty(t.evidence)))) {
+                    ["command", "pass", "evidence"].some((key) =>
+                      (t.enabled === true || Object.hasOwn(t, key)) && !nonEmpty(t[key]))) {
                   errors.push(`${pfx}.deterministic_verification.additional_tools[${i}]: invalid tool entry`);
                 }
               }

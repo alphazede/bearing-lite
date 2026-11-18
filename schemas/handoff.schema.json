@@ -99,17 +99,15 @@
     "capabilities": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["review", "deterministic_verification"],
       "properties": {
         "review": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["coverage_assist", "ocr_execution_mode"],
           "properties": {
             "coverage_assist": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["enabled", "required"],
+              "required": ["enabled"],
               "properties": {
                 "enabled": {"type": "boolean"},
                 "required": {"type": "boolean"}
@@ -121,8 +119,24 @@
         "deterministic_verification": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["reverify"],
           "properties": {
+            "additional_tools": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["name", "enabled"],
+                "if": { "properties": { "enabled": { "const": true } }, "required": ["enabled"] },
+                "then": { "required": ["command", "pass", "evidence"] },
+                "properties": {
+                  "name": { "type": "string", "pattern": "\\S" },
+                  "enabled": { "type": "boolean" },
+                  "command": { "type": "string", "pattern": "\\S" },
+                  "pass": { "type": "string", "pattern": "\\S" },
+                  "evidence": { "type": "string", "pattern": "\\S" }
+                }
+              }
+            },
             "reverify": {
               "type": "object",
               "additionalProperties": false,

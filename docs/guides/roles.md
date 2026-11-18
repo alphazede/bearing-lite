@@ -10,10 +10,8 @@ authority differs.
 | Orchestrator (Planning mode) | Owner conversation, lease, sequencing, specialist dispatch, final plan/design and assembly, requested planning review, handoff |
 | Intake | Repository and plan-directory confirmation |
 | Architectural Alignment and Scope | Workspace map, architecture extract, and one owner question at a time until shared understanding; runs in the Orchestrator session |
-| Requirements Engineer | Authors requirements and runs its own quality pass and repairs |
-| Systems Modeler | Modeling mode, prepared views, and placement receipt |
-| Integration Engineer (planning) | Plans how components fit together: interfaces, compatibility, assembly order, failure handling, rollback, and validation strategy |
-| Test Engineer (planning) | SEIT and proof cases bound to requirement IDs |
+| MBSE | Authors and checks requirements, chooses modeling mode, and returns views and placement evidence |
+| Integration and Test | Authors the boundary contract, assembly sequence, recovery plan, and SEIT cases bound to requirement IDs |
 | Scribe | Event side lane by its configured cadence; cannot activate authority |
 
 Every specialist is optional and runs only when enabled in the profile and
@@ -34,10 +32,10 @@ a dispatched role.
 | Reviewer | Independent defect review. Default cadence `phase`. |
 | Integration Engineer (execution) | Assesses the assembled system against the approved plan and requirements; reports evidence and gaps without repairing product code. Default cadence `lifecycle`. |
 
-Integration Engineer planning and execution are independently configurable:
-enable either, both, or neither. Each enabled session has its own harness, model,
-reasoning, and ordered fallbacks; execution also has a cadence. Enabling an
-assessment session does not itself request that assessment for a task.
+Planning sessions, assurance, and execution assessment are independently
+configurable. You supply each enabled session's harness, model, reasoning,
+and fallback order. Assurance and execution also have a cadence. Request an
+assessment separately when you want it for a task.
 
 Cadence values are `slice`, `phase`, or `lifecycle`. Owner Authority is never
 an agent role.
@@ -49,7 +47,7 @@ an agent role.
 | SDLC | Software development lifecycle: requirements, planning/design, implementation, verification, and delivery. |
 | Profile / agent lineup | Saved choices for roles, sessions, agents, and settings in `profiles.json`. |
 | Harness | The application or CLI that runs an agent. |
-| Session | One assignment or mode of a role, such as Integration Engineer planning or execution. |
+| Session | One assignment of a role, such as Integration Engineer execution. |
 | Slice | One bounded unit of implementation with an outcome, write set, and checks. |
 | Wave | Dependency-ready work grouped for coordinated execution and integration. |
 | Cadence | The selected boundary for requested review or assessment, such as per slice, phase, or lifecycle. Scribe cadence separately uses event, phase, or lifecycle. |

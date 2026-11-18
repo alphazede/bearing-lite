@@ -31,9 +31,9 @@ cost. The owner supplies every harness, model, and reasoning identity.
    - `VALID` with existing profiles: distinguish creating a new key, editing an
      existing key, or replacing an existing key. Never overwrite an existing key
      without explicit confirmation.
-   - `MIGRATION_REQUIRED` (`lineups.json`, embedded `lineups`, or retired
-     `plan_integrator` / `planning_and_design`): stop starter setup and run the
-     explicit migration workflow (`references/catalog-contract.md#migration`).
+   - `MIGRATION_REQUIRED` (legacy lineup, retired planning route, or former
+     profile Fellow): stop starter setup and use the corresponding
+     [migration procedure](catalog-contract.md#migration) on explicit request.
    - `INVALID` (`duplicate_raw_json_key`, `catalog_not_json`,
      `invalid_schema_version`, `profile_name_collision`, `dangling_default`,
      `malformed_fellow`, removed rc.1 roles/sessions, or schema errors): report
@@ -44,36 +44,19 @@ cost. The owner supplies every harness, model, and reasoning identity.
 4. Honor an already-supplied request or mode immediately (e.g. a named target
    edit skips the starter tour).
 
-## Step 1 — Discover tools by local presence and ask consent
+## Step 1 — Collect the owner's route choices
 
-1. **Local presence first (read-only):** inspect which supported CLI binaries
-   are present on `PATH` (without reading credentials, triggering installs, or
-   making network/account calls). Distinguish a real executable from a missing
-   CLI, a dead shim (e.g., `copilot` exiting 127), or an editor-only UI.
-2. **Ask consent before any query:** show which tools were found locally and ask
-   which tools Bearing may use and whether Bearing may run a read-only local
-   model-listing command where supported. Zero usable tools is a valid stopping
-   point—stop cleanly without inventing a profile.
-3. **Per-harness model discovery or manual entry:** only for owner-consented
-   tools:
-   - **Codex:** `codex debug models` (or `--bundled` offline) lists local
-     candidate IDs; does not establish account entitlement or effort.
-   - **Cursor Agent CLI:** `agent models` / `agent --list-models` requires
-     sign-in; if unauthenticated or unavailable, report "installed, account list
-     unavailable" and use manual entry.
-   - **AGY:** `agy models` (bounded timeout, preserving exact wrapper/command
-     name such as `agy` vs `agy2`); fall back to manual entry on timeout/error.
-   - **Muse Code:** `muse model-profile show <model> --effort <tier>` inspects a
-     known model ID only (no enumerate-all command) -> use manual entry.
-   - **Pi:** `pi --list-models` when `pi` is installed.
-   - **Claude Code, DeepCode, editor-only integrations (Cursor editor, GitHub
-     Copilot in VS Code):** no non-interactive list command -> manual entry
-     ("enter the model ID you already use").
-4. **Keep three labels separate — never merge them:**
-   - `tool found`: local executable presence (or shim / editor-only / absent)
-   - `model offered`: discovered candidate list vs owner-supplied manual entry
-   - `launch tested`: `not tested` until an explicitly consented per-run launch
-     probe runs and succeeds for that exact `(harness/route, model, reasoning)`
+Ask the owner for the tool they intend to use. With consent, check that exact
+CLI executable on `PATH` without launching it. The owner supplies their model
+ID and reasoning setting. If they have no route to supply, offer to defer that
+role or end setup. Carry these observations into the preview:
+
+- `tool found` records whether the named executable was present, or that the
+  check was skipped.
+- `model offered` records whether the owner confirmed that their host offered
+  the supplied ID. A manually entered ID may remain unconfirmed.
+- `launch tested` starts at `not tested` and changes only after a successful
+  separately consented probe of the exact named route.
 
 ## Step 2 — Explain roles, profiles, and how a saved profile is used
 

@@ -7,7 +7,7 @@ planning are planning inputs consumed before assembly. They are not this loop.
 Author-known exact-text deltas return to their owner at the next in-wave
 reconciliation under `planning-assembly.md#author-known-deltas-221` and use
 step 3's mechanical check without spending this round.
-Ordinary Requirements Engineer self-quality checks and author repairs happen
+Ordinary MBSE self-quality checks and author repairs happen
 inside its initial assignment; they are not a separate review or this repair round.
 The parent records authority and receipts. Each author repairs its owned content; the Planning Orchestrator repairs final
 planning/design and assembly. Author-known reconciliation carries a zero
@@ -55,10 +55,10 @@ allowance and selected route; authorize any extra invocation explicitly.
    only with new evidence or a new hypothesis inside the existing authority.
 5. Record the JSON mechanical verification receipt, including candidate identity,
    changed/named UID sets, cross-reference PASS, and external lint evidence.
-   Close `closed_uids` without another Requirements Engineer gate in any round.
+   Close `closed_uids` without another MBSE gate in any round.
    `DELTA_APPLIED` means mechanical closure, never independent assurance or approval.
    `regate_uids` (`requires_regate`) are applied in the one repair and close by
-   deterministic closure, never by another Requirements Engineer review inside the
+   deterministic closure, never by another MBSE review inside the
    wave. A mixed delta closes exact-text rows first and spends the one round for
    the remaining rows. `REQUIRES_REGATE` reserves that round; persist the returned
    count once. Recheck dependent references mechanically; new semantic defects
