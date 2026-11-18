@@ -150,6 +150,9 @@ undefined term and fails the gate.
 9. Plans may contain at most 128 slices, manifests, write paths, and commands.
    Aim for at most 500 estimated tokens per slice plus manifest; split larger
    packets when practical.
+10. Keep one plan per phase: split multi-phase work into separate phase plans
+   rather than combining multiple phases into one `implementation.json` and DoD
+   Manifest.
 
 ## Optional binding sections
 

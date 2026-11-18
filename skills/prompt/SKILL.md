@@ -41,7 +41,11 @@ independent review also requires the owner's requested scope and cadence.
    are protected actions, genuine owner decisions, and binding authority conflicts
    the agent cannot resolve, never plumbing inside its authority. The controller
    verifies changed paths after return. When an agent stops or bounces, revise the
-   packet first; do not blame the agent for following it.
+   packet first; do not blame the agent for following it. For a delta packet, let
+   the author fix its own defects found in the delta rather than constraining the
+   packet with "nothing else changed"; record every fix and changed path in the
+   return (while machine-checked `correction-delta.cjs` register-row snapshots
+   remain bounded to their named UIDs).
 5. Include the selected loop only. Requirements Engineer owns its requirements-
    quality pass and self-repairs. Other authors check and repair their own outputs.
    Evaluators report without repairing the candidate while evaluating; Light

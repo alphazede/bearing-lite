@@ -34,34 +34,43 @@ This is the default dependency order, not a requirement to enable every role:
 
 1. **Planning Orchestrator:** confirm Intake, combined Architectural Alignment
    and Scope, the selected profile, required deliverables, and existing evidence.
-2. **Requirements Engineer, if enabled and needed:** author requirements and
-   acceptance criteria from the confirmed Alignment/Scope context and existing
-   architecture; run its own quality pass, repairs, and recheck (register precheck
-   at `--stage requirements`). Later SEIT case IDs and Modeler placements are
-   recorded pending bindings with named owners, not prerequisites for `READY`.
-3. **Systems Modeler, if enabled and needed:** use those requirements, current
-   architecture, and existing contracts to supply placement/model evidence.
-   Do not require the later integration plan as an input to this earlier step.
-4. **Integration Engineer planning, if enabled and needed:** consume requirements,
-   architecture, model evidence, and proposed interfaces; author the boundary contract,
-   recovery, and validation steps with expected evidence.
-5. **Planning Test Engineer, if enabled and needed:** consume requirements,
-   architecture, proposed interfaces, and applicable boundary/model evidence;
-   author the test/validation plan, SEIT, and proof cases bound to the existing
-   requirement IDs. Do not write product tests.
-6. **Planning Orchestrator — final Planning and Design:** synthesize the completed
-   inputs into the technical plan and `design.md`, copy the confirmed quantity
+   At specialist dispatch, freeze the **requirement skeleton (UIDs and titles)**
+   and **active decisions**; never amend decisions mid-wave while specialists
+   are running—any needed decision change waits for assembly.
+2. **`mbse` (`roles.mbse.sessions.planning`) and `integration_test` (`roles.integration_test.sessions.planning`), if enabled and needed — start in parallel:**
+   both launch concurrently from the frozen requirement skeleton (UIDs and
+   titles), frozen decisions, and confirmed Alignment/Scope context:
+   - **`mbse` (`roles.mbse.sessions.planning`):** author full requirement
+     statements and acceptance criteria from the confirmed Alignment/Scope
+     context and frozen requirement skeleton, running its own quality pass,
+     repairs, and recheck (register precheck at `--stage requirements` where
+     applicable; later SEIT case IDs are recorded pending bindings, not
+     prerequisites for `READY`), and supply the modeling mode, placement receipt
+     (current flow, candidate placements with `file:line`, constraints, and
+     requirement-to-component mappings), and view metadata with traceability.
+   - **`integration_test` (`roles.integration_test.sessions.planning`):** consume
+     the frozen requirement skeleton (UIDs and titles), frozen decisions,
+     architecture, and proposed interfaces; author `seit.json` (verification
+     cases, boundary/data-flow contract, assembly/recovery strategy, integration
+     steps and order, validation steps with expected evidence, resource groups,
+     expected gate cost, and selected verification claims) bound to the frozen
+     requirement UIDs. Do not write product tests.
+   Pending cross-artifact bindings are reconciled at assembly; do not serialize
+   `mbse` and `integration_test` into sequential specialist gates.
+3. **Planning Orchestrator — final Planning and Design:** synthesize the completed
+   inputs into the technical plan and `design.md` (keeping **one plan per phase**;
+   split multi-phase work into separate phase plans), copy the confirmed quantity
    table into its glossary, allocate against the placement receipt, then assemble
    the implementation graph and Manifest. Validate every required allocation and
    case binding (final-stage `hooks/register-precheck.cjs` with `--seit`) and
    cross-artifact coverage; pending bindings block assembly until completed.
    This final planning step runs in the existing controller, not another agent.
-7. **Requested planning review:** after the complete final plan/design and assembly,
+4. **Requested planning review:** after the complete final plan/design and assembly,
    run the profile-enabled Reviewer only when the owner requested review at this
    boundary. Review the exact stable package; address findings only within the
    authorized repair allowance and rerun affected deterministic checks.
    Otherwise record planning review as not requested; do not add a reviewer.
-8. **Owner confirmation and handoff:** obtain the execution authority required
+5. **Owner confirmation and handoff:** obtain the execution authority required
    for the exact package, complete its declared final checks, write `handoff.md`,
    and recommend a new Implementation Orchestrator session.
 
@@ -104,32 +113,37 @@ All specialist dispatch remains subject to the enabled selected profile and task
 
 | Owner | Consumes | Produces |
 | --- | --- | --- |
-| Requirements Engineer, when needed | confirmed scope, source contracts, standards | requirements/register and acceptance criteria, checked and repaired by its author |
-| Systems Modeler, when enabled and needed | architecture, requirements, existing contracts | model views and placement evidence in its single selected assignment |
-| Integration Engineer planning, when enabled and needed | requirements, architecture/models, proposed interfaces | Boundary/Data-Flow Contract, assembly strategy, recovery, and validation steps with expected evidence |
-| Planning Test Engineer, when enabled and needed | requirements, architecture/interfaces, boundary/model evidence | authored and self-checked `seit.json`, proof cases, resource groups, expected gate cost, and selected verification claims |
-| Planning Orchestrator | selected specialists' completed inputs and confirmed context | final technical plan, `design.md`, `implementation.json`, DoD Manifest projection, and `handoff.md` |
+| `mbse` (`roles.mbse.sessions.planning`), when enabled and needed | confirmed scope, frozen requirement skeleton (UIDs and titles), frozen decisions, source contracts, standards | checked and repaired requirements/register and acceptance criteria, modeling mode, placement receipt, and view metadata with traceability |
+| `integration_test` (`roles.integration_test.sessions.planning`), when enabled and needed | confirmed scope, frozen requirement skeleton (UIDs and titles), frozen decisions, architecture/interfaces | authored and self-checked `seit.json`, proof cases, boundary/data-flow contract, integration steps/order, recovery, resource groups, expected gate cost, and selected verification claims |
+| Planning Orchestrator | selected specialists' completed inputs and confirmed context | final technical plan (one plan per phase), `design.md`, `implementation.json`, DoD Manifest projection, and `handoff.md` |
 
-Start each selected author once when its required inputs are ready. Requirements
-precede dependent specialist work; final planning/design follows their inputs.
-Run independent work concurrently;
-serialize real input dependencies, overlapping writes, or shared mutable resources.
+Freeze the requirement skeleton (UIDs and titles) and active decisions at
+specialist dispatch so `mbse` and `integration_test` start in parallel once their
+required inputs are ready; final planning/design follows their completed inputs.
+Needed decision changes surfaced during the specialist wave wait for assembly
+rather than amending frozen decisions mid-wave.
 Authors inspect and repair their own drafts in their assignment, folding all
 known corrections into their first return. Mechanical register prechecks belong
-to the requirements author; do not add a separate quality-check agent or wait
-for an independent requirements verdict. No correction loops in planning: never
-relaunch a returned specialist for author-known fixes—the Planning Orchestrator
-applies remaining author-known fixes during assembly. Only end-of-planning
+to the requirements author (`mbse`); do not add a separate quality-check agent or wait
+for an independent requirements verdict. No correction loops in planning and a
+zero author-known relaunch budget (`0` relaunches): never relaunch a returned
+specialist for author-known fixes. During assembly, the Planning Orchestrator
+may apply purely mechanical ID and hash binding fixes itself, recording each edit
+in an edit record, while any change of meaning returns to the owning author
+under an authorized return rather than silent rewrite. Only end-of-planning
 review findings on specialist-owned content return to that author as a named delta.
 
 ### Author-known deltas (#221)
 
-No correction loops in planning (#578): specialists fold known corrections into
-their first return, and the Planning Orchestrator applies any remaining
-author-known fixes during assembly instead of relaunching specialists.
+No correction loops in planning (#578, #581): specialists fold known corrections
+into their first return, and author-known reconciliation counts against a budget
+of zero relaunches (`0` relaunches). During assembly, the Planning Orchestrator
+applies purely mechanical ID and hash binding fixes itself with an edit record,
+instead of relaunching returned specialists, while changes of meaning return to
+the owning author (`mbse` or `integration_test`) under an authorized return.
 Sometimes an author working on its own artifact finds an exact correction that
-belongs in another role's artifact. One example is a Test Engineer who finds a
-wrong value in the implementation graph while authoring `seit.json`. That
+belongs in another role's artifact. One example is `integration_test` finding a
+wrong value in a shared contract while authoring `seit.json`. That
 correction is an author-known delta, not a review finding. It is reconciled at
 the next reconciliation inside the wave rather than relaunching returned
 specialists. It never waits for the end-of-wave review.
@@ -138,32 +152,47 @@ specialists. It never waits for the end-of-wave review.
   return that names the delta. Apply or route the delta before dispatching any session
   that consumes the affected artifact, and in every case before final
   assembly, freeze, or review dispatch.
-- **Routing:** deltas on the Orchestrator's own final plan, design, graph, or
-  Manifest are applied in its existing session. A delta on specialist-owned
-  content goes into that author's open assignment only if that assignment has
-  not yet returned. Once a specialist has returned, never relaunch it for
-  author-known deltas: the Planning Orchestrator applies remaining author-known
-  fixes during assembly (closing `exact_text` rows mechanically with
-  `hooks/correction-delta.cjs` where applicable, without reopening or
-  relaunching the specialist).
+- **Routing and mechanical-fix rule:** deltas on the Orchestrator's own final
+  plan, design, graph, or Manifest are applied in its existing session. A delta
+  on specialist-owned content goes into that author's open assignment only if
+  that assignment has not yet returned; any delta packet lets the author fix its
+  own defects found in the delta (never forbid self-repair with "nothing else
+  changed"). Once a specialist has returned, never relaunch it for author-known
+  deltas (zero relaunch budget): the Planning Orchestrator may apply purely
+  mechanical ID and hash binding fixes itself during assembly (and close
+  `exact_text` rows mechanically with `hooks/correction-delta.cjs` where
+  applicable), recording each edit in an edit record (file, target ID/field,
+  change, reason, and candidate). Any change of meaning returns to the owning
+  author (`mbse` or `integration_test`) under an authorized return rather than
+  silent Orchestrator rewriting or an unbudgeted author-known relaunch.
 - **Bindings:** refresh cross-artifact sha256 bindings once, after all deltas
   at that reconciliation are applied, not after each edit.
-- **Budget:** these deltas spend no `max_assurance_rounds`, no planning-review
+- **Budget:** author-known reconciliation counts against a budget of zero
+  relaunches (fold into the author's first return or an Orchestrator mechanical
+  ID/hash fix); these deltas spend no `max_assurance_rounds`, no planning-review
   round, and no repair. The one review and one repair stay reserved for
   findings the requested review discovers.
 - **Planning inputs, not the repair:** a specialist finding on another author's artifact,
   including one that changes meaning, rationale, verification, or allocation,
-  and owner-added scope during planning are planning inputs. An open owning
-  assignment—or the Planning Orchestrator during assembly when the specialist
-  has already returned—consumes them before assembly, without relaunching
-  specialists. They start no review round, they are not
-  `requires_regate`, and the repair allowance stays 1. Only findings from the
-  single end-of-planning review follow the correction loop. A delta
-  raised after the unit's review round opens joins that round's one aggregate
+  owner-added scope, and needed decision changes during planning are
+  planning inputs. An open owning assignment—or the Planning Orchestrator during
+  assembly when the specialist has already returned for mechanical ID/hash
+  binding fixes with an edit record, while meaning changes return to the owning
+  author under an authorized return—consumes them before assembly, without
+  relaunching specialists for author-known fixes; needed decision changes wait
+  for assembly rather than amending frozen decisions mid-wave. They start no review round, they are not `requires_regate`, and the repair allowance stays 1.
+  Only findings from the single end-of-planning review follow the correction loop.
+  A delta raised after the unit's review round opens joins that round's one aggregate
   repair. Neither the delta label nor the reconciliation label can renew a
   spent allowance (`owner-stops.md` class C).
 
 ## Efficient task planning
+
+- Keep **one plan per phase**: split multi-phase work into separate phase plans
+  rather than combining multiple phases into one plan and multiplying
+  cross-artifact bindings. Any scope decision that drops an acceptance item is
+  always an owner question box (`OWNER_DECISION_REQUIRED`), even under delegation
+  (`owner-stops.md`).
 
 - Give each slice one coherent outcome with a bounded write set, acceptance,
   commands, dependencies, selected author, recovery, and expected evidence.
@@ -186,9 +215,11 @@ specialists. It never waits for the end-of-wave review.
 ## Assembly, evidence, and handoff
 
 Cross-check IDs, references, dependency edges, write ownership, required evidence,
-rollback/recovery, boundary coverage, and selected capability bindings. Copy the
-Integration Engineer's `boundary_contract` and the Test Engineer's SEIT/verification
-selections mechanically; do not invent technical decisions or V&V claims.
+rollback/recovery, boundary coverage, and selected capability bindings. Copy
+`integration_test`'s `boundary_contract` and SEIT/verification selections
+mechanically; do not invent technical decisions or V&V claims. When applying
+purely mechanical ID or hash binding fixes during assembly, record each edit in
+the edit record; any change of meaning returns to its owning author.
 
 Generate `implementation.json` with `review_rounds` and a `planning_wave` that
 declares exactly the enabled specialist sessions this task needed (possibly none)
