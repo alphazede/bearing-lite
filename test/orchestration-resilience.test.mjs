@@ -212,13 +212,13 @@ describe("B30-510 orchestration resilience (SEIT-B30-510)", () => {
 
   it("8. no duplicate dispatch: two concurrent dispatchers on one ready set record one attempt", async (t) => {
     const file = journey(t);
-    dr(); rs(); // fail by name before spawning if a module is missing
-    const start = String(Date.now() + 400);
-    const results = await Promise.all([runChild(file, start), runChild(file, start)]);
-    const s1 = results.map((r) => r.S1.outcome);
-    assert.deepEqual(s1.filter((o) => o === "PASS").length, 1, JSON.stringify(results));
-    assert.equal(dr().read(file, key("S1")).attempts.length, 1);
-    assert.equal(dr().read(file, key("S2")).attempts.length, 1);
+    const snapshot = ready(file).ready;
+    assert.deepEqual(snapshot, ["S1", "S2"]);
+    const results = await Promise.all([runChild(file, snapshot), runChild(file, snapshot)]);
+    for (const slice of snapshot) {
+      assert.deepEqual(results.map((result) => result[slice]?.outcome).sort(), ["HOLD", "PASS"], JSON.stringify(results));
+      assert.equal(dr().read(file, key(slice)).attempts.length, 1);
+    }
     assert.deepEqual(readdirSync(path.dirname(file)), [path.basename(file)]);
   });
 
@@ -247,26 +247,22 @@ describe("B30-510 orchestration resilience (SEIT-B30-510)", () => {
   });
 });
 
-// Child dispatcher: waits for a shared start instant, evaluates the ready set and reserves every ready slice.
+// Both dispatchers reserve from the same snapshot, even when one process starts later.
 const CHILD = `
-const [dispatchPath, readyPath, file, start, slicesJson] = process.argv.slice(1);
+const [dispatchPath, file, readyJson] = process.argv.slice(1);
 const dr = require(dispatchPath);
-const rs = require(readyPath);
-const slices = JSON.parse(slicesJson);
 const key = (slice) => ({ journey: "J1", wave: "W3", slice, role: "implementer", generation: 1 });
-while (Date.now() < Number(start)) {}
-const assignments = Object.fromEntries(slices.map((s) => [s.id, dr.read(file, key(s.id)).state]));
 const out = {};
-for (const slice of rs.evaluate({ slices, assignments }).ready) {
+for (const slice of JSON.parse(readyJson)) {
   out[slice] = dr.transition(file, { type: "reserve", key: key(slice), candidate_revision: "${REV}", route: "primary",
     routes: ["primary"], launch_digest: "d".repeat(64), lease: { generation: 1, branch: "slice/" + slice },
     limits: { invocation: 2, review: 1, repair: 1 }, authorized: true });
 }
 process.stdout.write(JSON.stringify(out));
 `;
-function runChild(file, start) {
+function runChild(file, snapshot) {
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, ["-e", CHILD, DISPATCH, READY, file, start, JSON.stringify(SLICES)], { stdio: ["ignore", "pipe", "pipe"] });
+    const child = spawn(process.execPath, ["-e", CHILD, DISPATCH, file, JSON.stringify(snapshot)], { stdio: ["ignore", "pipe", "pipe"] });
     let out = "", err = "";
     child.stdout.on("data", (d) => (out += d));
     child.stderr.on("data", (d) => (err += d));
