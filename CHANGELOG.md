@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [3.0.0-rc.1] - 2026-11-18
+
 ### Added
 
 - Bearing 3.0 batch 4: Coordinator role retired (its duties now live in the Implementation Orchestrator text; pinned legacy journeys keep their owner); public role-level replay report; decision adapter sends keyed systemone requests and reads ChoiceAnswer responses. ([#256](https://github.com/alphazede/bearing-lite/pull/256))
@@ -9,16 +11,6 @@
 - Bearing 3.0 batch 2: profiler host qualification from controlled-session totals and role-only export; optional Fellow profile route; dispatch recovery record and ready-set evaluator; deterministic handoff compiler and closed handoff schema; Coordinator duty migration to receiving components; replay-based promotion rule; wave 1 baseline rerun on observed runs. ([#254](https://github.com/alphazede/bearing-lite/pull/254))
 - Planning and Assurance Test Engineer guidance for a selected behavior-not-implementation test-suite audit, including the loss-proof reduction record.
 - Bearing 3.0 wave 1: opt-in journey profiler (`tools/journey-profiler.mjs`, `schemas/journey-profile.schema.json`) with atomic output and public-code export; restyled DoD Manifest review sheet with Bearing artwork; Systems Modeler findings and DoD Manifest model entries; prompt audit, decision taxonomy, host-limit matrix, Pstack capability matrix and acknowledgements, and the wave 1 baseline under `docs/architecture/`. ([#253](https://github.com/alphazede/bearing-lite/pull/253))
-
-### Fixed
-
-- Planning findings and owner-added scope are consumed before assembly; only end-of-planning review findings use the repair round.
-- `test/task-opt-in.test.mjs` no longer changes result when the caller environment carries `BEARING_ROLE`.
-
-## [2.1.0](https://github.com/alphazede/bearing-lite/releases/tag/v2.1.0) - 2026-11-17
-
-### Added
-
 - Opt-in native real-harness acceptance suite (`test/native/harness-acceptance.test.mjs`) and a versioned compatibility matrix (`docs/harness-compatibility.md`) that separates install, discovery, advisory and blocking evidence and labels unverified capabilities explicitly. ([PR #245](https://github.com/alphazede/bearing-lite/pull/245), closes [#92](https://github.com/alphazede/bearing-lite/issues/92))
 - An explicitly named `orchestrator` skill that forwards to the canonical Bearing Orchestrator (`bearing-lite`), with matching explicit-invocation metadata and native discovery evidence for Codex and Claude Code. ([PR #246](https://github.com/alphazede/bearing-lite/pull/246), closes [#214](https://github.com/alphazede/bearing-lite/issues/214))
 - `tools/lifecycle-pool.mjs`: a bounded worktree pool with exclusive leases, safe reclamation of merged worktrees (no `--force`), owner-registered test-artifact cleanup that preserves shared caches, dry-run, recovery, thresholds and reclaimed-bytes accounting, wired into Coordinator and storage-lifecycle guidance. ([PR #247](https://github.com/alphazede/bearing-lite/pull/247), closes [#233](https://github.com/alphazede/bearing-lite/issues/233))
@@ -32,6 +24,8 @@
 
 ### Fixed
 
+- Planning findings and owner-added scope are consumed before assembly; only end-of-planning review findings use the repair round.
+- `test/task-opt-in.test.mjs` no longer changes result when the caller environment carries `BEARING_ROLE`.
 - The assurance-dispatch hook no longer denies every Bash call when the session working directory is missing or unreadable and no task binding resolved. Bound assurance stays fail-closed. ([PR #238](https://github.com/alphazede/bearing-lite/pull/238), fixes [#229](https://github.com/alphazede/bearing-lite/issues/229))
 - `register-precheck` accepts any uppercase-prefix case ID (for example `VCASE-`) in explicit verification-case fields and resolves it against SEIT. Free-text `VERIFICATION` prose keeps the original narrow recognition. ([PR #241](https://github.com/alphazede/bearing-lite/pull/241), fixes [#227](https://github.com/alphazede/bearing-lite/issues/227))
 - The final freeze can record a post-approval planning correction in an append-only `journey_settings.planning_corrections` list, with its own review, repair and closing candidate, without rewriting round-1 provenance. ([PR #242](https://github.com/alphazede/bearing-lite/pull/242), fixes [#226](https://github.com/alphazede/bearing-lite/issues/226))
