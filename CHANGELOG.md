@@ -5,6 +5,7 @@
 ### Fixed
 
 - `sanitizeSvg` in `tools/render-dod-manifest.mjs` skips XML comments after whitespace or text between SVG elements while keeping all other sanitizer refusals unchanged. (Alphazedehq#575)
+- `plan-package` `checkWorkClass` inspects slices (`slices` and `waves[].slices`) only, so `dod_manifest.tasks` rows with `work_class: light` are not flagged as light slices. (Alphazedehq#576)
 
 ## [3.0.0-rc.1] - 2026-11-18
 
