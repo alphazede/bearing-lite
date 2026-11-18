@@ -215,6 +215,11 @@ model is smaller. When the Orchestrator is only waiting or dispatching, use
 the route the owner selected for a smaller model, and do not lower that
 route's selected reasoning effort.
 
-Only the Orchestrator consults the Fellow. The procedure is
-`consultation.md`. The Fellow route is frozen with the profile like every
-other role.
+Only the Orchestrator consults the Fellow (`consultation.md`), whatever profile
+is selected. `fellow` is an optional Bearing-level route at the top level of
+`profiles.json` beside `profiles` (`{ harness, model, reasoning,
+ordered_fallbacks }`, with optional `condition` on each fallback entry), not a
+key under `roles`. Every freeze copies catalog `fellow` unchanged into
+`snapshot.fellow` and binds it into the configuration digest; when the catalog
+omits `fellow`, `snapshot.fellow` is absent and the Orchestrator proceeds
+without Fellow consultation.

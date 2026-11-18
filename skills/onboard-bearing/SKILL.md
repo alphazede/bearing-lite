@@ -34,7 +34,7 @@ Loop: obtain explicit choices → validate → save authorized fields → valida
    route also returns `MIGRATION_REQUIRED`: final planning/design is the Planning
    Orchestrator's own procedure. On explicit request, show and remove only that key;
    preserve every other role, model, fallback, and capability; never copy its route.
-3. Ask settings one at a time within the requested scope, with no preselected value; skip supplied or unchanged choices: named role/session
+3. Ask settings one at a time within the requested scope, with no preselected value; skip supplied or unchanged choices: the optional Bearing-level Fellow route once at the top level of `profiles.json` beside `profiles` (`fellow`: `{ harness, model, reasoning, ordered_fallbacks }` with optional `condition` per fallback, explained from `../bearing-lite/references/consultation.md`, never placed under profile `roles`; omitting it is valid and skips Fellow consultation), named role/session
    routes and fallbacks, session enablement, development strategy,
    planning review, assurance cadence, Scribe cadence, concurrency, clean-session, holds, and
    optional Reverify. When `development_strategy.mode` is `tdd`, collect Test

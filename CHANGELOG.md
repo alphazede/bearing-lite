@@ -10,6 +10,9 @@
 ### Changed
 
 - Prohibit planning correction loops: specialists fold known corrections into their first return, the Planning Orchestrator applies remaining author-known fixes during assembly without relaunching specialists, and `correction-delta` `exact_text_mismatch` errors name `requires_regate` for non-text field changes. (Alphazedehq#578)
+### Changed
+
+- Move the optional Fellow route from per-profile `roles` to the top-level catalog `fellow` envelope so every frozen binding carries `snapshot.fellow` regardless of selected profile. (Alphazedehq#579)
 
 ## [3.0.0-rc.1] - 2026-11-18
 
