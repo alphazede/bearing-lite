@@ -4,7 +4,7 @@
 
 ### Added
 
-- Bearing 3.0 batch 2: profiler host qualification from controlled-session totals and role-only export; optional Fellow profile route; dispatch recovery record and ready-set evaluator; deterministic handoff compiler and closed handoff schema; Coordinator duty migration to receiving components; replay-based promotion rule; wave 1 baseline rerun on observed runs. ([#PR](https://github.com/alphazede/bearing-lite/pulls))
+- Bearing 3.0 batch 2: profiler host qualification from controlled-session totals and role-only export; optional Fellow profile route; dispatch recovery record and ready-set evaluator; deterministic handoff compiler and closed handoff schema; Coordinator duty migration to receiving components; replay-based promotion rule; wave 1 baseline rerun on observed runs. ([#254](https://github.com/alphazede/bearing-lite/pull/254))
 - Planning and Assurance Test Engineer guidance for a selected behavior-not-implementation test-suite audit, including the loss-proof reduction record.
 - Bearing 3.0 wave 1: opt-in journey profiler (`tools/journey-profiler.mjs`, `schemas/journey-profile.schema.json`) with atomic output and public-code export; restyled DoD Manifest review sheet with Bearing artwork; Systems Modeler findings and DoD Manifest model entries; prompt audit, decision taxonomy, host-limit matrix, Pstack capability matrix and acknowledgements, and the wave 1 baseline under `docs/architecture/`. ([#253](https://github.com/alphazede/bearing-lite/pull/253))
 
