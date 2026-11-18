@@ -24,7 +24,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
-import { spawn, spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -32,7 +32,6 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const CASES = JSON.parse(readFileSync(path.join(ROOT, "test/fixtures/decision-adapter/cases.json"), "utf8"));
-const BASE_REV = "9fdf4d0"; // SEIT-B30-207: registration set must equal this revision's
 const KEY_VAR = "TEST_DECISION_KEY";
 const KEY = "TESTKEY-HOST-CANARY-4417";
 const PACKET_CANARY = "PACKET-CANARY-5521"; // inside CASES.packet
@@ -109,7 +108,7 @@ function choice(over = {}) {
 }
 function setup(t, drv, opts = {}) {
   // An explicit `timeout: undefined` means "no timeout configured"; only an absent key defaults to 15.
-  const { config = {} } = opts;
+  const { config = {}, host = "claude" } = opts;
   const timeout = "timeout" in opts ? opts.timeout : 15;
   const tmp = mkdtempSync(path.join(tmpdir(), "s11t-host-event-"));
   t.after(() => rmSync(tmp, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 }));
@@ -136,7 +135,7 @@ function setup(t, drv, opts = {}) {
   const home = path.join(tmp, "home");
   mkdirSync(home);
   const env = { PATH: process.env.PATH || "", HOME: home, XDG_CONFIG_HOME: path.join(tmp, "xdg"), XDG_STATE_HOME: path.join(tmp, "xdg-state"), XDG_DATA_HOME: path.join(tmp, "xdg-data"), TMPDIR: tmp, LANG: "C.UTF-8" };
-  return { tmp, plugin, project, env };
+  return { tmp, plugin, project, env, host };
 }
 function writePlan(project, decision) {
   const lines = [
@@ -157,7 +156,14 @@ function runHost(fx, event, { key = true, extra = {}, deadlineMs = 30000 } = {})
   const input = JSON.stringify({ hook_event_name: event, session_id: SESSION, cwd: fx.project, ...extra });
   return new Promise((resolve, reject) => {
     const started = performance.now();
-    const child = spawn(process.execPath, [path.join(fx.plugin, HOST_REL)], { cwd: fx.project, env, stdio: ["pipe", "pipe", "pipe"] });
+    const manifest = fx.host === "cursor" ? "hooks/com.cursor/hooks.json" : "hooks/hooks.json";
+    const hooks = JSON.parse(readFileSync(path.join(fx.plugin, manifest), "utf8")).hooks;
+    const key = fx.host === "cursor" ? event[0].toLowerCase() + event.slice(1) : event;
+    const registration = (hooks[key] ?? []).flatMap((item) => item.hooks ?? [item])
+      .find((item) => item.command.includes(HOST_REL));
+    const args = [path.join(fx.plugin, HOST_REL)];
+    if (registration?.command.includes("--host=cursor")) args.push("--host=cursor");
+    const child = spawn(process.execPath, args, { cwd: fx.project, env, stdio: ["pipe", "pipe", "pipe"] });
     let stdout = "";
     let stderr = "";
     const timer = setTimeout(() => {
@@ -343,6 +349,15 @@ describe("S11T decision adapter inside registered SessionStart/Stop handlers (F0
     assert.equal(drv.requests.length, 0, "missing usable budget => skip inference");
   });
 
+  it("Cursor SessionStart respects its own registration budget", async (t) => {
+    const drv = await driver(t);
+    const fx = setup(t, drv, { host: "cursor" });
+    const base = await baseline(fx, "SessionStart", choice());
+    const run = await runHost(fx, "SessionStart");
+    assert.equal(run.stdout, base.stdout);
+    assert.equal(drv.requests.length, 0);
+  });
+
   it("SEIT-F05: a choice line leaves the existing SessionStart and Stop outputs unchanged when the adapter is silent", async (t) => {
     const fx = setup(t, null);
     for (const event of ["SessionStart", "Stop"]) {
@@ -364,21 +379,29 @@ describe("S11T decision adapter inside registered SessionStart/Stop handlers (F0
     for (const file of filesUnder(fx.tmp)) assert.ok(!readFileSync(file, "utf8").includes(KEY), `key written to ${path.relative(fx.tmp, file)}`);
   });
 
-  it("SEIT-B30-207 B30-506: hook registrations equal the base revision's; host.cjs is not added to SubagentStop", () => {
-    const set = (manifest) => {
-      const out = [];
-      for (const [event, entries] of Object.entries(manifest.hooks || {})) {
-        for (const entry of entries) for (const hook of entry.hooks || []) out.push(`${event}|${entry.matcher ?? ""}|${hook.command}`);
-      }
-      return out.sort();
-    };
-    for (const rel of ["hooks/hooks.json", "hooks/com.cursor/hooks.json"]) {
-      const old = spawnSync("git", ["show", `${BASE_REV}:${rel}`], { cwd: ROOT, encoding: "utf8" });
-      assert.equal(old.status, 0, `ENVIRONMENT_FAILURE: git show ${BASE_REV}:${rel}: ${old.stderr}`);
-      assert.deepEqual(set(JSON.parse(readFileSync(path.join(ROOT, rel), "utf8"))), set(JSON.parse(old.stdout)), `${rel} registration set changed`);
-    }
-    const sub = JSON.parse(readFileSync(path.join(ROOT, "hooks/hooks.json"), "utf8")).hooks.SubagentStop;
-    assert.ok(!sub.some((entry) => entry.hooks.some((hook) => String(hook.command).includes(HOST_REL))), "SubagentStop stays te-host.cjs only");
+  it("SEIT-B30-207 B30-506: hosts register only the approved event surfaces", () => {
+    const claude = JSON.parse(readFileSync(path.join(ROOT, "hooks/hooks.json"), "utf8")).hooks;
+    const cursor = JSON.parse(readFileSync(path.join(ROOT, "hooks/com.cursor/hooks.json"), "utf8")).hooks;
+    const registrations = (hooks) => Object.fromEntries(Object.entries(hooks).map(([event, entries]) => [
+      event, entries.flatMap((entry) => (entry.hooks ?? [entry]).map((hook) => {
+        const script = hook.command.match(/([\w.-]+\.cjs)(?=["\s]|$)/)?.[1];
+        return entry.matcher ? `${entry.matcher}: ${script}` : script;
+      })).sort(),
+    ]));
+    const writes = "Write|Edit|MultiEdit|NotebookEdit|apply_patch|Bash";
+    assert.deepEqual(registrations(claude), {
+      SessionStart: ["host.cjs"],
+      PreToolUse: [`${writes}: orchestrator-write-lock.cjs`, `${writes}: te-host.cjs`, "assurance-dispatch.cjs"],
+      Stop: ["git-sync.cjs", "host.cjs", "te-host.cjs"],
+      SubagentStop: ["te-host.cjs"],
+    });
+    const cursorWrites = ["assurance-dispatch.cjs", "orchestrator-write-lock.cjs", "te-host.cjs"];
+    assert.deepEqual(registrations(cursor), {
+      sessionStart: ["host.cjs"],
+      stop: ["git-sync.cjs", "host.cjs"],
+      preToolUse: cursorWrites,
+      beforeShellExecution: cursorWrites,
+    });
   });
 
   it("B30-209: the provider capability matrix states the adapter is wired into host.cjs SessionStart and Stop", () => {

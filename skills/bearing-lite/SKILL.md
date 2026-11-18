@@ -28,8 +28,9 @@ After opt-in, bind the session/task in the project plan per `templates/task.md`;
    before Product Implementer. Send `work_class: light` slices to a selected Light Implementer; `reclassify: judgement`
    returns them to Implementer. Honor dependencies, commands, and write sets; use
    `../coordinator/SKILL.md` only for a justified profile-enabled coordination role.
-5. **Review:** dispatch owner-requested review immediately when each frozen task, phase,
-   or lifecycle boundary passes deterministic checks; never re-ask or defer it. An independent evaluator is a reviewer.
+5. **Review:** dispatch owner-requested review when its recorded task, phase,
+   rolling batch, or lifecycle boundary passes deterministic checks. Use the
+   latest approved cadence. An independent evaluator is a reviewer.
    Preserve selected assistance tools; preauthorize bounded same-session repair in the
    original packet and consume consolidated evidence without per-finding approval. Add no quality agents.
 6. **Landing and closeout:** land each closed unit (`references/task-state.md#landing-a-closed-unit`); check deliverables and evidence. Distinguish

@@ -85,9 +85,10 @@ delivery, not assurance: it never opens or reopens a review.
 Keep this context on coordination, owner decisions, dispatch and synthesis.
 There is no context-size ceiling that forces a handoff.
 
-A background event that changes no decision gets no reply. Wait for the whole
-batch. When consuming a specialist return, use the author's deterministic
-checker and a candidate-digest comparison, and report one line. Before
+A background event that changes no decision gets no reply. Consume completion
+events that unlock dependencies as they arrive. For a specialist return, use
+the author's deterministic checker, compare the candidate digest, and report
+one line. Before
 composing a packet, follow `pre-packet.md`; use the handoff compiler instead
 of writing the packet by hand. Side work runs outside this context on an
 approved lighter model where that model is adequate. Waiting and dispatch use

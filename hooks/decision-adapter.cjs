@@ -19,9 +19,7 @@ function agent(outcome, meaning) {
 function canon(value) {
   if (Array.isArray(value)) return value.map(canon);
   if (value && typeof value === "object") {
-    const out = {};
-    for (const key of Object.keys(value).sort()) out[key] = canon(value[key]);
-    return out;
+    return Object.fromEntries(Object.keys(value).sort().map((key) => [key, canon(value[key])]));
   }
   return value;
 }
@@ -38,7 +36,8 @@ function remainingMs(budget) {
   if (!budget) return 0;
   const { total_ms, elapsed_ms, reserve_ms } = budget;
   if (typeof total_ms !== "number" || typeof elapsed_ms !== "number" || typeof reserve_ms !== "number") return 0;
-  return total_ms - elapsed_ms - reserve_ms;
+  const remaining = total_ms - elapsed_ms - reserve_ms;
+  return Number.isFinite(remaining) ? Math.max(0, remaining) : 0;
 }
 
 function loadConfig(file) {
@@ -132,9 +131,8 @@ function parseAnswers(text, questions) {
   return out;
 }
 
-function withLock(recordFile, fn) {
+function withLock(recordFile, deadline, fn) {
   const lock = recordFile + ".lock";
-  const deadline = Date.now() + 5000;
   let held = false;
   let tmp;
   try {
@@ -144,19 +142,13 @@ function withLock(recordFile, fn) {
         held = true;
       } catch (error) {
         if (error.code !== "EEXIST" || Date.now() >= deadline) throw error;
-        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 5);
+        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, Math.min(5, Math.max(0, deadline - Date.now())));
       }
     }
-    let doc = {};
-    try {
-      doc = JSON.parse(fs.readFileSync(recordFile, "utf8"));
-    } catch (error) {
-      if (error.code !== "ENOENT") throw error;
-    }
-    if (!doc || typeof doc !== "object" || Array.isArray(doc)) throw new Error("decision record");
+    const doc = readRecord(recordFile);
     const result = fn(doc);
     tmp = `${recordFile}.${process.pid}.${crypto.randomUUID()}.tmp`;
-    fs.writeFileSync(tmp, JSON.stringify(doc, null, 2) + "\n");
+    fs.writeFileSync(tmp, JSON.stringify(doc, null, 2) + "\n", { mode: 0o600 });
     fs.renameSync(tmp, recordFile);
     tmp = null;
     return result;
@@ -166,13 +158,25 @@ function withLock(recordFile, fn) {
   }
 }
 
+function readRecord(recordFile) {
+  let doc = {};
+  try {
+    doc = JSON.parse(fs.readFileSync(recordFile, "utf8"));
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+  }
+  if (!doc || typeof doc !== "object" || Array.isArray(doc)) throw new Error("decision record");
+  return doc;
+}
+
 function rows(doc) {
   if (!Array.isArray(doc.advisory_decisions)) doc.advisory_decisions = [];
   return doc.advisory_decisions;
 }
 
 function reuseKey(id) {
-  return id.decision_point + "\n" + id.evidence_revision + "\n" + id.state_digest;
+  const parts = [id.decision_point, id.evidence_revision, id.state_digest];
+  return parts.slice(0, 2).some((part) => part.includes("\n")) ? JSON.stringify(parts) : parts.join("\n");
 }
 
 function noteReuse(doc, entry) {
@@ -191,36 +195,42 @@ function reusable(doc, id) {
   return hit && REUSE.has(hit.outcome) ? hit : null;
 }
 
-function append(recordFile, entry, id) {
+function append(recordFile, deadline, entry, claimId) {
   if (!recordFile) return;
-  withLock(recordFile, (doc) => {
-    const list = rows(doc);
-    if (id) {
-      doc.advisory_decisions = list.filter((row) => !(row.outcome === "PENDING" && row.decision_point === id.decision_point && row.evidence_revision === id.evidence_revision && row.state_digest === id.state_digest));
+  withLock(recordFile, deadline, (doc) => {
+    if (claimId) {
+      const list = rows(doc);
+      const pending = list.findIndex((row) => row.claim_id === claimId && row.outcome === "PENDING");
+      if (pending === -1) return;
+      list.splice(pending, 1);
     }
     pushEntry(doc, entry);
   });
 }
 
-function claim(recordFile, id) {
-  return withLock(recordFile, (doc) => {
-    const list = rows(doc);
+function claim(recordFile, id, deadline) {
+  return withLock(recordFile, deadline, (doc) => {
     const hit = reusable(doc, id);
     if (hit) {
       pushEntry(doc, { ...id, outcome: "REUSED", meaning: hit.meaning });
       return { kind: "return", result: agent("REUSED", hit.meaning) };
     }
-    if (list.some((row) => row.outcome === "PENDING" && row.decision_point === id.decision_point && row.evidence_revision === id.evidence_revision && row.state_digest === id.state_digest)) {
-      return { kind: "wait" };
+    const list = rows(doc);
+    const pending = list.findIndex((row) => row.outcome === "PENDING" && reuseKey(row) === reuseKey(id));
+    if (pending !== -1) {
+      if (list[pending].expires_at > Date.now()) return { kind: "wait" };
+      list.splice(pending, 1);
     }
-    pushEntry(doc, { ...id, outcome: "PENDING" });
-    return { kind: "own" };
+    const claimId = crypto.randomUUID();
+    pushEntry(doc, { ...id, outcome: "PENDING", claim_id: claimId, expires_at: deadline });
+    return { kind: "own", claimId };
   });
 }
 
 async function post(url, key, body, ms) {
   const response = await fetch(url, {
     method: "POST",
+    redirect: "error",
     headers: { "content-type": "application/json", authorization: "Bearer " + key },
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(ms),
@@ -231,16 +241,17 @@ async function post(url, key, body, ms) {
 
 async function waitFor(recordFile, id, deadline) {
   while (Date.now() < deadline) {
-    const found = withLock(recordFile, (doc) => {
-      const hit = reusable(doc, id);
-      if (!hit) return null;
-      pushEntry(doc, { ...id, outcome: "REUSED", meaning: hit.meaning });
+    const doc = readRecord(recordFile);
+    const hit = reusable(doc, id);
+    if (hit) {
+      append(recordFile, deadline, { ...id, outcome: "REUSED", meaning: hit.meaning });
       return agent("REUSED", hit.meaning);
-    });
-    if (found) return found;
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    }
+    if (!rows(doc).some((row) => row.outcome === "PENDING" &&
+        row.expires_at > Date.now() && reuseKey(row) === reuseKey(id))) break;
+    await new Promise((resolve) => setTimeout(resolve, Math.min(20, Math.max(0, deadline - Date.now()))));
   }
-  append(recordFile, { ...id, outcome: "SILENT_FALLBACK" }, id);
+  append(recordFile, deadline, { ...id, outcome: "SILENT_FALLBACK" });
   return agent("SILENT_FALLBACK");
 }
 
@@ -263,21 +274,22 @@ function interpret(answers, labels, calibration) {
 }
 
 async function decideInner(input, ctx) {
+  const budgetMs = remainingMs(ctx.budget);
+  const deadline = Date.now() + budgetMs;
   const decision_point = typeof input.decision_point === "string" ? input.decision_point : "";
   const evidence_revision = typeof input.evidence_revision === "string" ? input.evidence_revision : "";
   const rule = DECISION_RULES.find((row) => row.decision_type === input.decision_type && sameFacts(row.facts, input.facts));
   if (rule) {
-    append(ctx.record_file, { decision_point, evidence_revision, outcome: "RULE", meaning: rule.meaning });
+    append(ctx.record_file, deadline, { decision_point, evidence_revision, outcome: "RULE", meaning: rule.meaning });
     return agent("RULE", rule.meaning);
   }
   const silent = () => {
-    append(ctx.record_file, { decision_point, evidence_revision, outcome: "SILENT_FALLBACK" });
+    append(ctx.record_file, deadline, { decision_point, evidence_revision, outcome: "SILENT_FALLBACK" });
     return agent("SILENT_FALLBACK");
   };
   if (ctx.enabled === false || !ELIGIBLE.has(input.decision_type)) return silent();
   const cfg = loadConfig(ctx.config_file);
   const key = cfg ? process.env[cfg.key_variable_name] : "";
-  const budgetMs = remainingMs(ctx.budget);
   if (!cfg || typeof key !== "string" || key.length === 0 || budgetMs <= 0) return silent();
 
   const built = buildState(input);
@@ -286,25 +298,28 @@ async function decideInner(input, ctx) {
     evidence_revision,
     state_digest: digestOf(input, cfg, ctx.calibration && ctx.calibration[input.decision_type]),
   };
-  const claimed = claim(ctx.record_file, id);
+  const claimed = claim(ctx.record_file, id, deadline);
   if (claimed.kind === "return") return claimed.result;
-  if (claimed.kind === "wait") return waitFor(ctx.record_file, id, Date.now() + budgetMs);
+  if (claimed.kind === "wait") return waitFor(ctx.record_file, id, deadline);
 
   let text = null;
   try {
-    text = await post(cfg.base_url, key, { model: cfg.model_id, state: built.state, questions: built.questions }, Math.max(1, Math.floor(budgetMs)));
+    const remaining = Math.floor(deadline - Date.now());
+    if (remaining > 0) {
+      text = await post(cfg.base_url, key, { model: cfg.model_id, state: built.state, questions: built.questions }, remaining);
+    }
   } catch {
     text = null;
   }
   const answers = text ? parseAnswers(text, built.questions) : null;
   if (!answers) {
-    append(ctx.record_file, { ...id, outcome: "SILENT_FALLBACK" }, id);
+    append(ctx.record_file, deadline, { ...id, outcome: "SILENT_FALLBACK" }, claimed.claimId);
     return agent("SILENT_FALLBACK");
   }
   const judged = interpret(answers, built.labels, ctx.calibration && ctx.calibration[input.decision_type]);
   const entry = { ...id, outcome: judged.outcome, probabilities: answers };
   if (judged.meaning) entry.meaning = judged.meaning;
-  append(ctx.record_file, entry, id);
+  append(ctx.record_file, deadline, entry, claimed.claimId);
   return agent(judged.outcome, judged.meaning);
 }
 

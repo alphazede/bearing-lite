@@ -186,10 +186,8 @@ adapter call site.
 
 The handler calls the adapter only when that registration supplies a
 positive timeout. Claude Code and Codex `hooks/hooks.json` entries do.
-Cursor `sessionStart` registers `host.cjs` with no timeout and without
-`--host=cursor`, so the handler reads the Claude registration timeout.
-Cursor `stop` passes `--host=cursor` and declares no timeout, so inference
-is skipped. AGY, Pi, DeepCode, and Muse Code register no command hook that
+Cursor passes `--host=cursor` for `sessionStart` and `stop`. Neither
+registration declares a timeout, so the handler skips inference on both. AGY, Pi, DeepCode, and Muse Code register no command hook that
 can invoke the adapter.
 
 A returned proposal is advisory context on `SessionStart` only. `Stop`
