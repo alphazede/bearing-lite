@@ -216,14 +216,25 @@ function checkDuplicateGates(root, findings = [], loc = "root") {
   return findings;
 }
 
-function sliceIndex(implementation) {
+function sliceNodes(implementation) {
+  const nodes = new Set();
+  walk({ slices: implementation?.slices, waves: implementation?.waves }, (node) => {
+    if (!Array.isArray(node.slices)) return;
+    for (const slice of node.slices) {
+      if (slice && typeof slice === "object" && !Array.isArray(slice)) nodes.add(slice);
+    }
+  });
+  return nodes;
+}
+
+function sliceIndex(nodes) {
   const byId = new Map();
-  walk(implementation, (node) => {
-    if (typeof node.id !== "string" || typeof node.role !== "string") return;
+  for (const node of nodes) {
+    if (typeof node.id !== "string" || typeof node.role !== "string") continue;
     const list = byId.get(node.id) || [];
     list.push(node);
     byId.set(node.id, list);
-  });
+  }
   return byId;
 }
 
@@ -242,21 +253,21 @@ function receiptIds(root) {
   return ids;
 }
 
-function stepRefs(node) {
+function stepRefs(node, isSlice = false) {
   const refs = [];
-  for (const key of ["integration_step", "integration_step_id", "step_id", "step"]) {
+  const scalarKeys = isSlice
+    ? ["integration_step", "integration_step_id", "step_id", "step"]
+    : ["integration_step", "integration_step_id"];
+  for (const key of scalarKeys) {
     if (typeof node[key] === "string") refs.push(node[key]);
   }
-  if (Array.isArray(node.requires)) {
-    for (const item of node.requires) {
-      if (typeof item === "string") refs.push(item);
-      else if (item && typeof item.id === "string") refs.push(item.id);
-    }
-  }
-  if (Array.isArray(node.integration_steps)) {
-    for (const item of node.integration_steps) {
-      if (typeof item === "string") refs.push(item);
-      else if (item && typeof item.id === "string") refs.push(item.id);
+  if (isSlice) {
+    for (const key of ["requires", "integration_steps"]) {
+      if (!Array.isArray(node[key])) continue;
+      for (const item of node[key]) {
+        if (typeof item === "string") refs.push(item);
+        else if (item && typeof item.id === "string") refs.push(item.id);
+      }
     }
   }
   return refs;
@@ -266,12 +277,17 @@ function semanticKey(node) {
   return [node.activity, node.kind, node.role, node.exit].filter((v) => typeof v === "string").join("|");
 }
 
-/** #121: referenced integration-step exits must map to one semantic slice or a preserved receipt. */
+/**
+ * #121/#577: referenced integration-step exits must map to one semantic slice or a preserved receipt.
+ * Generic keys (`step`, `step_id`, `requires`, `integration_steps`) are scoped to slice nodes;
+ * `integration_step` / `integration_step_id` also resolve on integration entry conditions.
+ */
 function checkIntegrationStepRefs(implementation, findings = []) {
-  const slices = sliceIndex(implementation);
+  const nodes = sliceNodes(implementation);
+  const slices = sliceIndex(nodes);
   const receipts = receiptIds(implementation);
   walk(implementation, (node) => {
-    for (const ref of stepRefs(node)) {
+    for (const ref of stepRefs(node, nodes.has(node))) {
       if (receipts.has(ref)) continue;
       const hits = slices.get(ref) || [];
       const keys = new Set(hits.map(semanticKey));
