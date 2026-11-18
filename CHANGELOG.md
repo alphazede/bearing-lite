@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- `sanitizeSvg` in `tools/render-dod-manifest.mjs` skips XML comments after whitespace or text between SVG elements while keeping all other sanitizer refusals unchanged. (Alphazedehq#575)
+
 ## [3.0.0-rc.1] - 2026-11-18
 
 ### Added

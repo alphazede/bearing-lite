@@ -661,6 +661,28 @@ describe("S3 DoD Manifest template, schema, and renderer", () => {
     unsafe('<svg xmlns="http://www.w3.org/2000/svg"><text>A &amp B</text></svg>');
   });
 
+  it("skips XML comments after whitespace and between SVG elements while keeping refusals unchanged", () => {
+    assert.equal(
+      sanitizeSvg('<svg xmlns="http://www.w3.org/2000/svg"><!-- c --><g/></svg>'),
+      '<svg xmlns="http://www.w3.org/2000/svg"><g /></svg>'
+    );
+    assert.equal(
+      sanitizeSvg('<svg xmlns="http://www.w3.org/2000/svg">\n  <!-- c -->\n  <g/>\n</svg>'),
+      '<svg xmlns="http://www.w3.org/2000/svg">\n  \n  <g />\n</svg>'
+    );
+    assert.equal(
+      sanitizeSvg('<!-- head -->\n<svg xmlns="http://www.w3.org/2000/svg"><text>A<!-- mid -->B</text></svg>'),
+      '\n<svg xmlns="http://www.w3.org/2000/svg"><text>AB</text></svg>'
+    );
+    for (const bad of [
+      '<svg xmlns="http://www.w3.org/2000/svg">\n  <!-- unterminated</svg>',
+      '<svg xmlns="http://www.w3.org/2000/svg">\n  <1bad/></svg>',
+      '<svg xmlns="http://www.w3.org/2000/svg">\n  <!-- c --><script>alert(1)</script></svg>',
+    ]) {
+      assert.throws(() => sanitizeSvg(bad), (err) => err.code === "UNSAFE_ASSET");
+    }
+  });
+
   it("prints the frozen-input binding contract used by S3L", () => {
     const text = bindingRequirement("MODEL-BDL-001");
     assert.match(text, /MODEL-BDL-001/);
