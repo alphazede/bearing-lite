@@ -47,17 +47,17 @@ describe("F1: the Planning Orchestrator authors final plan/design in its own ses
   it("the controller still cannot author specialist-owned requirements or SEIT", () => {
     const seit = write("orchestrator", ARTIFACTS.seit);
     assert.equal(seit.verdict, "DENY_DISPATCH");
-    assert.equal(seit.owner, "test_engineer");
+    assert.equal(seit.owner, "integration_test");
     const register = write("orchestrator", "docs/coe/register.sdoc");
     assert.equal(register.verdict, "DENY_DISPATCH");
-    assert.equal(register.owner, "requirements_engineer");
+    assert.equal(register.owner, "mbse");
   });
 
   it("no deny path dispatches a separate Planning and Design author", () => {
     const denials = [
       write("", ARTIFACTS.design, { agent_id: "child" }),
       write("coordinator", ARTIFACTS.technical_plan),
-      write("requirements_engineer", ARTIFACTS.design),
+      write("mbse", ARTIFACTS.technical_plan),
       write("planning_and_design", ARTIFACTS.design),
     ];
     for (const result of denials) {
@@ -68,14 +68,19 @@ describe("F1: the Planning Orchestrator authors final plan/design in its own ses
 });
 
 describe("specialist ownership is preserved", () => {
-  it("requirements, test, and modeler authors keep only their own outputs", () => {
-    assert.equal(write("requirements_engineer", "docs/coe/register.sdoc").verdict, "ALLOW");
-    assert.equal(write("requirements_engineer", ARTIFACTS.design).verdict, "DENY_DISPATCH");
-    assert.equal(write("test_engineer.planning", ARTIFACTS.seit).verdict, "ALLOW");
-    assert.equal(write("test_engineer.planning", ARTIFACTS.design).verdict, "DENY_DISPATCH");
-    assert.equal(write("systems_modeler", ARTIFACTS.design).verdict, "ALLOW");
-    assert.equal(write("systems_modeler", ARTIFACTS.technical_plan).verdict, "DENY_DISPATCH");
-    assert.equal(write("integration_engineer.planning", ARTIFACTS.design).verdict, "DENY_DISPATCH");
+  it("MBSE and Integration and Test keep only their own outputs; removed planning keys are refused", () => {
+    assert.equal(write("mbse", "docs/coe/register.sdoc").verdict, "ALLOW");
+    assert.equal(write("mbse", ARTIFACTS.design).verdict, "ALLOW");
+    assert.equal(write("mbse", ARTIFACTS.technical_plan).verdict, "DENY_DISPATCH");
+    assert.equal(write("mbse", ARTIFACTS.seit).verdict, "DENY_DISPATCH");
+    assert.equal(write("integration_test.planning", ARTIFACTS.seit).verdict, "ALLOW");
+    assert.equal(write("integration_test.planning", ARTIFACTS.design).verdict, "DENY_DISPATCH");
+    assert.equal(write("test_engineer", ARTIFACTS.seit).verdict, "DENY_DISPATCH");
+    assert.equal(write("integration_engineer", ARTIFACTS.design).verdict, "DENY_DISPATCH");
+    for (const removed of ["requirements_engineer", "systems_modeler", "test_engineer.planning", "integration_engineer.planning"]) {
+      assert.equal(write(removed, ARTIFACTS.design).verdict, "DENY_DISPATCH", removed);
+      assert.equal(write(removed, ARTIFACTS.seit).verdict, "DENY_DISPATCH", removed);
+    }
   });
 
   it("Coordinator keeps wave assembly but cannot author specialist content or the handoff", () => {

@@ -43,8 +43,8 @@ authority, or explicit owner choice starts fresh.
 
 On resume the Planning Orchestrator continues its own final Planning and Design
 in the controller session from durable artifacts; it does not dispatch a separate
-design author. Specialist-owned content stays with its author: requirements with
-the Requirements Engineer and `seit.json` with the Planning Test Engineer. A
+design author. Specialist-owned content stays with its author: requirements and
+models with MBSE and `seit.json` with Integration and Test. A
 missing specialist deliverable is returned to its enabled owner as a named delta
 or surfaced as a typed gap, never drafted by the Orchestrator.
 

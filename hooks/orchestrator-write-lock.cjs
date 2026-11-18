@@ -108,26 +108,25 @@ function ownerFor(rel, root) {
     n.includes("/docs/coe/") ||
     /(?:^|\/)docs\/coe(?:\/|$)/.test(n)
   ) {
-    return "requirements_engineer";
+    return "mbse";
   }
   const artifact = planningArtifact(n, root);
   return artifact ? PLANNING_WRITERS[artifact][0] : null;
 }
 
 /**
- * #195 bound planning authors. Each planning artifact may be written only by
+ * #195/#580 bound planning authors. Each planning artifact may be written only by
  * these roles; any other Lifecycle control or specialist role (Coordinator
  * included) is refused. Execution roles stay under the slice write-set check.
  * Final Planning and Design is the Planning Orchestrator's own procedure, so
  * the controller (role `orchestrator`, or a role-less non-subagent session)
- * authors the technical plan and design.md; the Systems Modeler may write its
- * design views. SEIT stays Test Engineer content and the requirements library
- * stays Requirements Engineer content.
+ * authors the technical plan and design.md; MBSE may write its design views
+ * and requirements library. SEIT stays Integration and Test content.
  */
 const PLANNING_WRITERS = Object.freeze({
   technical_plan: ["orchestrator"],
-  "design.md": ["orchestrator", "systems_modeler"],
-  "seit.json": ["test_engineer"],
+  "design.md": ["orchestrator", "mbse"],
+  "seit.json": ["integration_test"],
   "implementation.json": ["orchestrator", "coordinator"],
   dod_manifest: ["orchestrator", "coordinator"],
   "handoff.md": ["orchestrator"],
@@ -138,12 +137,18 @@ const PLANNING_WRITERS = Object.freeze({
  * allowance; their work belongs to the existing Planning Orchestrator.
  */
 const RETIRED_PLANNING_ROLES = new Set(["plan_integrator", "planning_and_design"]);
+const REMOVED_MERGED_PLANNING_ROLES = new Map([
+  ["requirements_engineer", "mbse"],
+  ["systems_modeler", "mbse"],
+  ["test_engineer.planning", "integration_test"],
+  ["integration_engineer.planning", "integration_test"],
+]);
 const ORCHESTRATOR_RETURN =
   "Return the result to the existing Planning Orchestrator; do not launch another controller or author.";
 const BOUND_CHECKED_ROLES = new Set([
   "coordinator",
-  "systems_modeler",
-  "requirements_engineer",
+  "mbse",
+  "integration_test",
   "test_engineer",
   "integration_engineer",
   "reviewer",
@@ -183,7 +188,7 @@ function planningArtifact(rel, root) {
   return Object.hasOwn(PLANNING_WRITERS, b) ? b : null;
 }
 
-/** Session suffixes (`test_engineer.planning`) bind to their catalog role. */
+/** Session suffixes (`integration_test.planning`) bind to their catalog role. */
 function baseRole(role) {
   const i = role.indexOf(".");
   return i >= 0 ? role.slice(0, i) : role;
@@ -788,6 +793,16 @@ function evaluate(input) {
       reason: `retired_role:${base}: final planning/design is the Planning Orchestrator's own procedure. ${ORCHESTRATOR_RETURN} (bearing-lite v${hookVersion()})`,
       owner: "orchestrator",
       dispatch: ORCHESTRATOR_RETURN,
+    };
+  }
+  const mergedOwner = REMOVED_MERGED_PLANNING_ROLES.get(role) || REMOVED_MERGED_PLANNING_ROLES.get(base);
+  if (mergedOwner) {
+    const dispatch = dispatchFor(mergedOwner);
+    return {
+      verdict: DENY_DISPATCH,
+      reason: `removed_role:${role}: replaced by ${mergedOwner}. ${dispatch} (bearing-lite v${hookVersion()})`,
+      owner: mergedOwner,
+      dispatch,
     };
   }
   // The planning handoff is controller-owned, ahead of any repair allowance.

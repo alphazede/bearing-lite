@@ -22,9 +22,9 @@ const mutants = [
   ['planning subsection scope', 'skills/planning-and-design/references/oopdsa-design.md', 'oopdsa-design-lens.test.mjs',
     s => s.slice(0, s.indexOf('1. **Requirements trace.**')) + s.slice(s.indexOf('A trivial plan')) + '\n'
       + s.slice(s.indexOf('1. **Requirements trace.**'), s.indexOf('A trivial plan')), /missing subsections/],
-  ['typed-gap stopping', 'skills/requirements-engineer/references/quality-gate.md', 'requirements-corrections.test.mjs',
+  ['typed-gap stopping', 'skills/mbse/references/quality-gate.md', 'requirements-corrections.test.mjs',
     s => s.replace('a typed gap\nprevents progress, or ', ''), /typed gap stops corrections/],
-  ['publication routing', 'skills/requirements-engineer/references/quality-gate.md', 'requirements-corrections.test.mjs',
+  ['publication routing', 'skills/mbse/references/quality-gate.md', 'requirements-corrections.test.mjs',
     s => s.replace('validate, review, or publish the register', 'validate, or review the register'), /publication typed-gap routing/],
   ['tier-local rebaseline', 'skills/planning-and-design/references/program-planning.md', 'program-planning.test.mjs',
     s => s.replace('1 local ruling;', '1 local ruling and rebaseline without owner approval;'), /tier 1 must not rebaseline/],

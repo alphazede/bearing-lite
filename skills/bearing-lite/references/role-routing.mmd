@@ -4,11 +4,9 @@ flowchart TD
     P -->|Intake| IN[Intake in controller]
     P -->|Architectural Alignment and Scope| AA[Combined alignment and scope in controller]
     IN & AA -->|recorded context and decisions| R
-    P -->|enabled and needed specialists, data-dependency order| RE[Requirements Engineer authors and self-checks]
-    RE -->|requirements| SM[Systems Modeler placement receipt]
-    RE & SM -->|requirements and models| IEP[Integration Engineer planning boundary contract]
-    RE & IEP -->|requirements and interfaces| TEP[Planning Test Engineer SEIT bound to requirement IDs]
-    RE & SM & IEP & TEP -->|completed inputs; inactive roles skipped| PD[Orchestrator final Planning and Design and assembly in controller]
+    P -->|enabled and needed specialists, data-dependency order| MBSE[MBSE authors requirements, self-checks, and returns placement evidence]
+    MBSE -->|requirements and models| IT[Integration and Test authors boundary contract and SEIT bound to requirement IDs]
+    MBSE & IT -->|completed inputs; inactive roles skipped| PD[Orchestrator final Planning and Design and assembly in controller]
     PD -->|only when owner requested| PR[Requested planning review]
     PD -->|review not requested: recorded| I{Owner confirmation}
     PR --> I

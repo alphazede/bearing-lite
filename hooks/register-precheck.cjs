@@ -1,10 +1,10 @@
 'use strict';
 
 const CLASSES = ['verification', 'ears', 'glossary', 'reference', 'decision', 'citation'];
-// Stage-aware binding (F4): the Requirements Engineer runs the `requirements`
-// stage before SEIT exists, so a missing case ID is an explicitly owned pending
-// binding for the Test Engineer, never an invented ID. The `final` stage (the
-// default) requires every case ID, and resolves it against SEIT when supplied.
+// Stage-aware binding (F4/#580): MBSE runs the `requirements` stage before
+// SEIT exists, so a missing case ID is an explicitly owned pending binding for
+// Integration and Test (`integration_test`), never an invented ID. The `final`
+// stage (the default) requires every case ID, and resolves it against SEIT when supplied.
 const STAGES = ['requirements', 'final'];
 const CASE_ID = /\b[A-Z][A-Z0-9]*-[A-Z0-9.-]*[A-Z0-9]\b/g;
 const FREE_TEXT_CASE_ID = /\b(?:SEIT|VC|CASE|TEST)-[A-Z0-9.-]*[A-Z0-9]\b/g;
@@ -89,7 +89,7 @@ function checkRegister({ register, technicalPlan, registerPath = 'register.sdoc'
     ];
     if (!method) add('verification', uid, registerPath, row.line, 'Require verification method and bound case ID');
     else if (!caseIds.length && stage === 'requirements') {
-      pending.push({ uid, binding: 'verification_case', owner: 'test_engineer', location: `${registerPath}:${row.line}`, blocks: 'final_assembly' });
+      pending.push({ uid, binding: 'verification_case', owner: 'integration_test', location: `${registerPath}:${row.line}`, blocks: 'final_assembly' });
     } else if (!caseIds.length) add('verification', uid, registerPath, row.line, 'Require verification method and bound case ID');
     else if (seitIds) {
       for (const id of caseIds) if (!seitIds.has(id)) add('verification', uid, registerPath, caseFields[0].line, `Bound case ID not found in SEIT: ${id}`);

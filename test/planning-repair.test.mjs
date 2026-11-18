@@ -15,7 +15,7 @@ const { freeze } = require("../hooks/plan-package.cjs");
 const { evaluatePlanningReview } = require("../hooks/planning-review.cjs");
 const corpus = JSON.parse(readFileSync(new URL("./fixtures/planning-repair-package.json", import.meta.url)));
 const sha = bytes => createHash("sha256").update(bytes).digest("hex");
-const names = ["requirements_engineer", "integration_engineer", "test_engineer"];
+const names = ["mbse", "integration_test"];
 const copy = value => structuredClone(value);
 
 function fixture(t, { adoptEarlierInputs = false } = {}) {
@@ -177,10 +177,10 @@ for (const stage of ["draft", "final"]) test(`F4 N/A cannot hide open material g
   fx.doc.boundary_contract.gaps = [];
   assert.deepEqual(fx.run(stage).findings, []);
 });
-test("F5 every named active authority consumes failing RE findings without a PASS prerequisite", () => {
+test("F5 every named active authority consumes failing MBSE findings without a PASS prerequisite", () => {
   const read = rel => readFileSync(path.join(ROOT, rel), "utf8");
-  assert.doesNotMatch(read("skills/requirements-engineer/SKILL.md"), /a passing register pre-check receipt/);
-  assert.doesNotMatch(read("skills/requirements-engineer/references/precheck.md"), /consumes a passing receipt/);
+  assert.doesNotMatch(read("skills/mbse/SKILL.md"), /a passing register pre-check receipt/);
+  assert.doesNotMatch(read("skills/mbse/references/precheck.md"), /consumes a passing receipt/);
   assert.doesNotMatch(read("skills/bearing-lite/references/task-state.md"), /mappings are still finalized only after the Requirements\s+Engineer passes/);
   assert.doesNotMatch(read("skills/planning-and-design/references/artifact-grammar.md"), /Requirements Engineer gates it/);
 });

@@ -85,12 +85,31 @@ function checkWorkClass(node, findings = []) {
   return findings;
 }
 
-/** #80: Requirements Engineer is planning-only and never a Lifecycle implementation slice. */
+/** #80/#580: MBSE and Integration and Test are planning-only and never a Lifecycle implementation slice. */
+const PLANNING_ONLY_ROLE_PREFIXES = Object.freeze([
+  "MBSE",
+  "Integration and Test",
+  "Requirements Engineer",
+  "Systems Modeler",
+]);
+
+function isPlanningOnlySliceRole(role) {
+  if (typeof role !== "string") return false;
+  const trimmed = role.trim();
+  const normalized = trimmed.toLowerCase().replace(/[\s-]+/g, "_");
+  if (["mbse", "integration_test", "requirements_engineer", "systems_modeler"].includes(normalized)) {
+    return true;
+  }
+  return PLANNING_ONLY_ROLE_PREFIXES.some(
+    (prefix) => trimmed === prefix || trimmed.startsWith(prefix + " ") || trimmed.startsWith(prefix + "/") || trimmed.startsWith(prefix + ".")
+  );
+}
+
 function checkPlanningRoles(node, findings = []) {
   if (Array.isArray(node)) node.forEach((item) => checkPlanningRoles(item, findings));
   else if (node && typeof node === "object") {
     const isSlice = typeof node.id === "string" || Array.isArray(node.command_ids);
-    if (isSlice && typeof node.role === "string" && node.role.startsWith("Requirements Engineer")) {
+    if (isSlice && isPlanningOnlySliceRole(node.role)) {
       findings.push({
         code: "planning_role_in_lifecycle",
         step: typeof node.id === "string" ? node.id : null,
@@ -686,7 +705,7 @@ function checkPlanningWave(implementation, manifestDigest, stage = "final", dir,
 }
 
 /**
- * #155: the Planning Integration Engineer's Boundary/Data-Flow Contract,
+ * #155: Integration and Test's Boundary/Data-Flow Contract,
  * copied into implementation.json from design.md and the System Catalog (no
  * sixth artifact). Either a not-applicable rationale, or flows with owned
  * source and sink, path, transformations, side effects, contract authority,

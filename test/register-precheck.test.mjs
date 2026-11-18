@@ -67,11 +67,11 @@ const stageCheck = (stage, register = unbound(), extra = {}) => checkRegister({
   register, technicalPlan: workspaceContext, registerPath: 'draft.sdoc', planPath: 'workspace.md',
   files: { 'evidence.txt': read('evidence.txt') }, stage, ...extra,
 });
-test('requirements stage records a Test Engineer-owned pending case binding instead of requiring an invented ID', () => {
+test('requirements stage records an Integration and Test pending case binding instead of requiring an invented ID', () => {
   const receipt = stageCheck('requirements');
   assert.equal(receipt.outcome, 'PASS', JSON.stringify(receipt.findings));
   assert.equal(receipt.stage, 'requirements');
-  assert.deepEqual(receipt.pending_bindings.map(p => [p.uid, p.binding, p.owner, p.blocks]), [['REG-1', 'verification_case', 'test_engineer', 'final_assembly']]);
+  assert.deepEqual(receipt.pending_bindings.map(p => [p.uid, p.binding, p.owner, p.blocks]), [['REG-1', 'verification_case', 'integration_test', 'final_assembly']]);
 });
 test('requirements stage still requires a verification method and every other quality class', () => {
   const noMethod = stageCheck('requirements', unbound().replace('VERIFICATION_METHOD: test', 'VERIFICATION_METHOD:'));

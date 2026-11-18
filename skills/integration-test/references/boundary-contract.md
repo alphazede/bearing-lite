@@ -1,23 +1,22 @@
 # Boundary/Data-Flow Contract (planning session)
 
-The Planning Integration Engineer owns cross-component interaction
-completeness for the proposed change: data paths, state and protocol behavior
-including illegal transitions, and trust boundaries. Architectural Alignment maps the existing
-topology; this session decides how the change crosses it; the Systems Modeler
-owns formal views; the Planning Test Engineer turns the result into SEIT cases;
-the Implementer receives defined contracts and never invents missing
-integration behavior. The execution session's independence and Lifecycle-end
-assessment are unchanged.
+Integration and Test (planning) owns cross-component interaction completeness
+for the proposed change: data paths, state and protocol behavior including
+illegal transitions, and trust boundaries. Architectural Alignment maps the
+existing topology; this session decides how the change crosses it; MBSE owns
+formal views; Integration and Test turns the result into SEIT cases; the
+Implementer receives defined contracts and never invents missing integration
+behavior. The independent Integration Engineer execution session's Lifecycle-end
+assessment (`../../integration-engineer/SKILL.md`) is unchanged.
 
 ## Where it lives
 
 No sixth canonical planning artifact. Return the authored boundary inputs to the
-Planning Orchestrator. It places them
-in final `design.md` (interfaces and boundaries), the optional System Catalog,
-and model views as applicable, then copies them into `implementation.json`
-`boundary_contract`, which `hooks/plan-package.cjs` checks at both freezes.
-Distinguish observed repository evidence (`evidence: "observed"`) from proposed
-design (`"proposed"`).
+Planning Orchestrator. It places them in final `design.md` (interfaces and
+boundaries), the optional System Catalog, and model views as applicable, then
+copies them into `implementation.json` `boundary_contract`, which
+`hooks/plan-package.cjs` checks at both freezes. Distinguish observed repository
+evidence (`evidence: "observed"`) from proposed design (`"proposed"`).
 
 ## Contents, as applicable
 
@@ -30,8 +29,8 @@ design (`"proposed"`).
   `{from, event, to, output}` (current state + input -> next state + output or
   error), `illegal_transitions` as `{from, event, handling}`, optional
   `ordering` (handshakes, timeouts, reset, privilege prerequisites), `model`
-  (the Systems Modeler model id when formal modeling is needed) or
-  `model_na_reason`, and `seit_rows`.
+  (the MBSE model id when formal modeling is needed) or `model_na_reason`, and
+  `seit_rows`.
 - `trust_boundaries[]`: `id`, `crossing` (authentication, authorization,
   cryptographic, process/container, network zone, hardware/firmware,
   privilege level, tenant or data ownership), `enforcement` (the validating

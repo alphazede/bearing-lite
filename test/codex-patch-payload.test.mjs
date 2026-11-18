@@ -113,7 +113,7 @@ describe("Codex apply_patch payload: orchestrator write lock (D4)", () => {
 
   it("allows the captured native apply_patch for the owning role", () => {
     const ws = workspace("owner");
-    const out = runLock(nativeEnvelope(ws), "systems_modeler");
+    const out = runLock(nativeEnvelope(ws), "mbse");
     assert.ok(!denied(out), JSON.stringify(out));
   });
 
@@ -148,7 +148,7 @@ describe("Codex apply_patch payload: orchestrator write lock (D4)", () => {
 
   it("allows the captured native Move onto design.md for the owning role", () => {
     const ws = workspace("move-owner");
-    assert.ok(!denied(runLock(moveEnvelope(ws), "systems_modeler")));
+    assert.ok(!denied(runLock(moveEnvelope(ws), "mbse")));
   });
 
   // IR-F1: native apply_patch (codex-cli 0.162.1) trims leading whitespace on hunk headers and

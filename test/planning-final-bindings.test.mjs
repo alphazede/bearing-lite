@@ -128,8 +128,8 @@ test("no-review closure adopts unchanged consumed inputs without rewriting the o
   const fx = fixture(t);
   fx.put("notes.md", "Changed notes outside the specialist's consumed inputs.\n");
   const { closing } = fx.refresh();
-  const source = { session: "requirements_engineer", ...fx.initial.closing, verdict: "READY", inputs: [fx.initial.inputs[0]], adopted_to: closing };
-  fx.wave.required_sessions = ["requirements_engineer"];
+  const source = { session: "mbse", ...fx.initial.closing, verdict: "READY", inputs: [fx.initial.inputs[0]], adopted_to: closing };
+  fx.wave.required_sessions = ["mbse"];
   fx.wave.sessions = [source];
   const original = structuredClone(source);
   assert.equal(fx.run().outcome, "PASS");
@@ -141,8 +141,8 @@ test("no-review adoption rejects changed consumed inputs even with a forged reco
   const fx = fixture(t);
   fx.put("plan.md", read("./fixtures/register-precheck/plan.md") + "Changed consumed plan.\n");
   const { closing } = fx.refresh();
-  fx.wave.required_sessions = ["requirements_engineer"];
-  fx.wave.sessions = [{ session: "requirements_engineer", ...fx.initial.closing, verdict: "READY", inputs: [fx.initial.inputs[0]], adopted_to: closing }];
+  fx.wave.required_sessions = ["mbse"];
+  fx.wave.sessions = [{ session: "mbse", ...fx.initial.closing, verdict: "READY", inputs: [fx.initial.inputs[0]], adopted_to: closing }];
   fx.wave.input_digests = fx.initial.inputs;
   const result = fx.run();
   rejects(result);
@@ -152,8 +152,8 @@ test("no-review adoption rejects changed consumed inputs even with a forged reco
 test("no-review adoption never trusts recorded hashes over changed bytes", t => {
   const fx = fixture(t);
   const closing = fx.initial.closing;
-  fx.wave.required_sessions = ["requirements_engineer"];
-  fx.wave.sessions = [{ session: "requirements_engineer", ...closing, candidate_revision: "earlier", verdict: "READY", inputs: [fx.initial.inputs[0]], adopted_to: closing }];
+  fx.wave.required_sessions = ["mbse"];
+  fx.wave.sessions = [{ session: "mbse", ...closing, candidate_revision: "earlier", verdict: "READY", inputs: [fx.initial.inputs[0]], adopted_to: closing }];
   fx.put("plan.md", "Changed without refreshing the manifest.\n");
   const result = fx.run();
   rejects(result);

@@ -967,13 +967,14 @@ function renderOutcome(render, doc, assetRoot) {
 }
 
 describe("SEIT-B30-524 content parity and artwork", () => {
-  // SHA-256 of the normalized content from the pre-restyle renderer at 9fdf4d0.
+  // SHA-256 of the normalized content from the pre-restyle renderer at 9fdf4d0
+  // (updated for #580 MBSE role rename in tools/render-dod-manifest.mjs).
   const baseline = {
-    ready: "e8f63354f4ccf695bad1e54db25dff1f7aa8d1177951aec8b1239b9515ed74d1",
-    "manifest-complete.json": "b5b0417a1266d84f598937836038808d995be59d362eed5a1387bfabc839e06c",
+    ready: "8287adb19c55f5933e8840c3fcccfa140dca21e559f0d5a02a24ee438b09c08a",
+    "manifest-complete.json": "5393f1903a242d13f49b6be59ec7b7f4a3b09c776b85e374ad9e693d01c0dd96",
     "manifest-reference-index.json": "5d945b06b7a0c5ab2101d91cdc862db1b37a09984c9b55bb790312bb2731cbc3",
     empty: "6a2b5960dfde949875f29fecc8c9ae9a2ab3ae62d7a53d988d732de190d19510",
-    missing: "82ffb06e1304842d7e5e00f3ef9e7a8356a7813b18d016fddc60874a5306e960",
+    missing: "d323dc07b33308cf2da2b3d337f80486678899270532ccae5493306ad0aa6f89",
   };
 
   function assertSameContent(name, doc, assetRoot, expectedCode = null) {

@@ -1,58 +1,42 @@
 ---
 name: integration-engineer
 description: >
-  Author selected integration planning inputs, or perform explicitly requested
-  independent assessment of an integrated candidate. Use the enabled configured
-  planning or execution session only. Do not implement missing behavior, rewrite
-  requirements, write product tests, or activate an undeclared assessment.
+  Perform explicitly requested independent assessment of an integrated candidate
+  (`roles.integration_engineer.sessions.execution`). Do not use for planning
+  boundary or assembly authorship (use integration-test), implementing missing
+  behavior, rewriting requirements, writing product tests, or activating an
+  undeclared assessment.
 ---
 
 # Integration Engineer
 
-Planning and execution are distinct selected sessions with different authority.
-Each assignment runs once on its frozen route and actual input dependencies.
-
-## Planning loop
-
-1. Consume confirmed requirements, architecture/model evidence, proposed
-   interfaces, versions, constraints, and authorized output paths. Supply inputs
-   before the Orchestrator's final design; do not require that later artifact first.
-2. Define owned source and sink, data paths, transformations, side effects,
-   state/protocol order and illegal transitions, trust enforcement, and recovery
-   under existing contracts per `references/boundary-contract.md`. Distinguish
-   observed facts from proposals; give a justified not-applicable disposition
-   when no cross-boundary change exists.
-3. Define assembly order, entry criteria, compatibility, configuration identity,
-   rollback/recovery, anomalies, and validation steps with expected evidence.
-   State per-wave `added_gate_seconds` and `resource_groups`; parallelize checks
-   that share no resource. Follow `../test-engineer/references/shared-machine-tests.md`.
-4. Self-check boundary and assembly completeness against requirements and sources.
-   Repair your own contract/strategy in this assignment, recheck, and fold all
-   known corrections into this first return to the Planning Orchestrator (do not
-   defer fixes for a planning correction relaunch; the Orchestrator applies any
-   remaining author-known fixes during assembly). Required engine/server/browser
-   tests need five consecutive and one two-copy concurrent pass, or the stricter
-   repository rule, before assembly. Do not add another planning or
-   quality-check agent.
+Independent execution assessment role (`roles.integration_engineer.sessions.execution`);
+planning boundary and assembly authorship lives in `../integration-test/SKILL.md`.
+Run once on the frozen route and actual candidate dependencies when requested
+for the declared boundary.
 
 ## Execution loop
 
-1. Run only when profile-enabled and owner-requested for the declared boundary (dispatched when it closes),
-   in a fresh session independent of author identity/ancestry. Bind the exact integrated candidate,
-   approved outcome, SEIT, and authorized checks.
-2. Run the planned system-level checks and assess compatibility and evidence.
-   Check the report against observed results; report the smallest material gap.
-   Hand the candidate on with the runnable build, the real-app verification
-   procedure in `../test-engineer/references/real-app-verification.md`, and
-   applicable formal-analysis artifacts and code correspondence from
+1. Run only when profile-enabled (`roles.integration_engineer.sessions.execution`)
+   and owner-requested for the declared boundary (dispatched when it closes), in
+   a fresh session independent of author identity/ancestry. Bind the exact
+   integrated candidate, approved outcome, SEIT, and authorized checks.
+2. Run the planned system-level checks and assess compatibility and evidence
+   against `../test-engineer/references/shared-machine-tests.md`. Check the
+   report against observed results; report the smallest material gap. Hand the
+   candidate on with the runnable build, the real-app verification procedure in
+   `../test-engineer/references/real-app-verification.md`, and applicable
+   formal-analysis artifacts and code correspondence from
    `../test-engineer/references/formal-analysis.md`. Procedure availability or
    a model pass is not assurance; a model pass is not whole-system assurance.
-   Do not modify or repair the product while assessing it. Deterministic receipts
-   from this role remain diagnostic; they do not self-certify assurance.
+   Do not modify or repair the product while assessing it. Deterministic receipts from this role remain
+   diagnostic; they do not self-certify assurance.
 3. Preserve candidate/source bindings. Missing Integration Engineering method
    capability is a typed gap. Add no automatic review or extra invocation.
 
-Return `CANDIDATE_READY`, `GAPS`, or `OWNER_DECISION_REQUIRED` with session, verdict,
-candidate_ref, changed_paths, tests, findings, and blocker, plus gaps and next action. Material interface, contract,
-trust, ownership, or recovery gaps remain visible and block dependent work.
-Never weaken tests, invent behavior, revise requirements, or grant owner-only approval.
+Return `CANDIDATE_READY`, `GAPS`, or `OWNER_DECISION_REQUIRED` with session,
+verdict, candidate_ref, changed_paths, tests, findings, and blocker,
+plus gaps and next action. Material interface, contract, trust, ownership, or
+recovery gaps remain visible and block dependent work.
+Never weaken tests, invent behavior, revise requirements, or grant owner-only
+approval.

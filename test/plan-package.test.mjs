@@ -76,33 +76,47 @@ describe("plan-package (#77 light slices)", () => {
   });
 });
 
-describe("plan-package (#80 planning-only roles)", () => {
-  it("rejects Requirements Engineer slices and permits execution roles", () => {
+describe("plan-package (#80/#580 planning-only roles)", () => {
+  it("rejects MBSE and Integration and Test slices and permits execution/assurance roles", () => {
     const assigned = (role) => ({ waves: [{ slices: [{ id: "S1.2", role }] }] });
-    assert.deepEqual(checkPlanningRoles(assigned("Requirements Engineer / planning")), [
-      { code: "planning_role_in_lifecycle", step: "S1.2", role: "Requirements Engineer / planning" },
+    assert.deepEqual(checkPlanningRoles(assigned("MBSE / planning")), [
+      { code: "planning_role_in_lifecycle", step: "S1.2", role: "MBSE / planning" },
+    ]);
+    assert.deepEqual(checkPlanningRoles(assigned("Integration and Test / planning")), [
+      { code: "planning_role_in_lifecycle", step: "S1.2", role: "Integration and Test / planning" },
     ]);
     assert.deepEqual(checkPlanningRoles(assigned("Test Engineer")), []);
+    assert.deepEqual(checkPlanningRoles(assigned("Integration Engineer")), []);
   });
-  it("flags a Requirements Engineer slice that has no id", () => {
+  it("flags an MBSE or Integration and Test slice that has no id", () => {
     assert.deepEqual(
-      checkPlanningRoles({ slices: [{ role: "Requirements Engineer", command_ids: [] }] }),
-      [{ code: "planning_role_in_lifecycle", step: null, role: "Requirements Engineer" }]
+      checkPlanningRoles({ slices: [{ role: "MBSE", command_ids: [] }] }),
+      [{ code: "planning_role_in_lifecycle", step: null, role: "MBSE" }]
+    );
+    assert.deepEqual(
+      checkPlanningRoles({ slices: [{ role: "Integration and Test", command_ids: [] }] }),
+      [{ code: "planning_role_in_lifecycle", step: null, role: "Integration and Test" }]
     );
   });
-  it("accepts Requirements Engineer planning-route records and still rejects slices", () => {
+  it("accepts MBSE and Integration and Test planning-route records and still rejects slices", () => {
     const routes = {
       planning_assignments: [
         {
-          role: "Requirements Engineer / planning",
+          role: "MBSE / planning",
           primary: "Codex CLI / gpt-5.6-sol / medium",
           fallbacks: ["Claude Code / Sonnet / high", "Grok Build / harness default"],
+          effective_route: "Codex CLI / gpt-5.6-sol / medium",
+        },
+        {
+          role: "Integration and Test / planning",
+          primary: "Codex CLI / gpt-5.6-sol / medium",
+          fallbacks: [],
           effective_route: "Codex CLI / gpt-5.6-sol / medium",
         },
       ],
       lineup: [
         {
-          role: "Requirements Engineer",
+          role: "MBSE",
           session: "planning",
           configured_primary: "Codex CLI / gpt-5.6-sol / medium",
           effective_route: "Codex CLI / gpt-5.6-sol / medium",
@@ -114,9 +128,9 @@ describe("plan-package (#80 planning-only roles)", () => {
     assert.deepEqual(
       checkPlanningRoles({
         ...routes,
-        waves: [{ slices: [{ id: "S1.2", role: "Requirements Engineer / planning" }] }],
+        waves: [{ slices: [{ id: "S1.2", role: "MBSE / planning" }] }],
       }),
-      [{ code: "planning_role_in_lifecycle", step: "S1.2", role: "Requirements Engineer / planning" }]
+      [{ code: "planning_role_in_lifecycle", step: "S1.2", role: "MBSE / planning" }]
     );
   });
 });
@@ -445,7 +459,7 @@ describe("plan-package (#153 complete manifest projection)", () => {
 });
 
 describe("plan-package (#226 post-approval correction round)", () => {
-  const names = ["requirements_engineer", "integration_engineer", "test_engineer"];
+  const names = ["mbse", "integration_test"];
   const corpus = JSON.parse(readFileSync(new URL("./fixtures/planning-repair-package.json", import.meta.url)));
 
   function setupCorrectionFixture() {
@@ -525,7 +539,7 @@ describe("plan-package (#226 post-approval correction round)", () => {
       candidate_revision: "r2",
       candidate_digest: sha(c1Inputs.map((x) => x.sha256).join("\n")),
     };
-    // requirements_engineer re-ran on changed plan.md; integration_engineer & test_engineer also returned for r2
+    // mbse re-ran on changed plan.md; integration_test also returned for r2
     const c1Sessions = names.map((session) => ({
       session,
       ...c1Reviewed,

@@ -35,27 +35,19 @@
       ],
       "planning_wave": {
         "required_sessions": [
-          "requirements_engineer",
-          "integration_engineer",
-          "test_engineer"
+          "mbse",
+          "integration_test"
         ],
         "sessions": [
           {
-            "session": "requirements_engineer",
+            "session": "mbse",
             "candidate_ref": "plan",
             "verdict": "READY",
             "candidate_revision": "r1",
             "candidate_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
           },
           {
-            "session": "integration_engineer",
-            "candidate_ref": "plan",
-            "verdict": "READY",
-            "candidate_revision": "r1",
-            "candidate_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
-          },
-          {
-            "session": "test_engineer",
+            "session": "integration_test",
             "candidate_ref": "plan",
             "verdict": "READY",
             "candidate_revision": "r1",
@@ -180,7 +172,7 @@
       "open_items": []
     },
     "responsibility_and_change_authority": {
-      "author": "Planning Test Engineer",
+      "author": "Integration and Test",
       "change_authority": "owner-approved planning artifacts",
       "publication_not_implied": true
     },

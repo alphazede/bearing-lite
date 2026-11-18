@@ -227,6 +227,8 @@ RETIRED_ROLE_KEYS = (
     "navigator",
     "park_ranger",
     "validator",
+    "requirements_engineer",
+    "systems_modeler",
 )
 
 
@@ -532,7 +534,7 @@ def planning_contract_implementation(
         {"unit_id": "planning", "unit_kind": "planning", **row},
         {"unit_id": SYN_WAVE, "unit_kind": "wave", **row, **(rounds or {})},
     ]
-    sessions = ["requirements_engineer", "integration_engineer", "test_engineer"]
+    sessions = ["mbse", "integration_test"]
     doc["journey_settings"]["planning_wave"] = {
         "required_sessions": sessions,
         "sessions": [{"session": name, "candidate_ref": "plan", "candidate_revision": SYN_REV, "candidate_digest": SYN_DIGEST, "verdict": "READY"} for name in sessions],
@@ -627,7 +629,7 @@ def complete_seit(**overrides: object) -> dict:
             "open_items": [],
         },
         "responsibility_and_change_authority": {
-            "author": "Planning Test Engineer",
+            "author": "Integration and Test",
             "change_authority": "owner-approved planning artifacts",
             "publication_not_implied": True,
         },
@@ -1288,17 +1290,37 @@ def cases() -> list[tuple[str, str, str, object, str]]:
             wave={"repairs": 2}
         ), "reject"),
         ("SEIT-EMV-022", "implementation_planning_wave_unknown_session", "implementation", planning_contract_implementation(
-            wave={"required_sessions": ["requirements_engineer", "integration_engineer", "test_engineer", "scribe"]}
+            wave={"required_sessions": ["mbse", "integration_test", "scribe"]}
         ), "reject"),
         # F2 repair: optional specialists and owner-requested-only planning review.
         ("SEIT-EMV-022", "implementation_planning_wave_retired_design_session", "implementation", planning_contract_implementation(
-            wave={"required_sessions": ["planning_and_design", "integration_engineer", "test_engineer"]}
+            wave={"required_sessions": ["planning_and_design", "integration_test"]}
         ), "reject"),
+        ("SEIT-EMV-022", "implementation_planning_corrections_rc2_sessions_accepted", "implementation",
+            planning_contract_implementation() | {
+                "journey_settings": planning_contract_implementation()["journey_settings"] | {
+                    "planning_corrections": [{
+                        "correction_id": "corr-1",
+                        "from_candidate": {"candidate_ref": "plan", "candidate_revision": "r1", "candidate_digest": SYN_DIGEST},
+                        "required_sessions": ["mbse", "integration_test"],
+                    }]
+                }
+            }, "accept"),
+        ("SEIT-EMV-022", "implementation_planning_corrections_removed_session_rejected", "implementation",
+            planning_contract_implementation() | {
+                "journey_settings": planning_contract_implementation()["journey_settings"] | {
+                    "planning_corrections": [{
+                        "correction_id": "corr-1",
+                        "from_candidate": {"candidate_ref": "plan", "candidate_revision": "r1", "candidate_digest": SYN_DIGEST},
+                        "required_sessions": ["requirements_engineer"],
+                    }]
+                }
+            }, "reject"),
         ("SEIT-EMV-022", "implementation_planning_wave_no_specialists_unreviewed", "implementation", unreviewed_planning_implementation([]), "accept"),
         ("SEIT-EMV-022", "implementation_planning_wave_unreviewed_with_receipt", "implementation",
-            unreviewed_planning_implementation(["test_engineer"], {"review_receipt": {"path": "gate-evidence/planning-review.json", "sha256": SYN_DIGEST}}), "reject"),
+            unreviewed_planning_implementation(["integration_test"], {"review_receipt": {"path": "gate-evidence/planning-review.json", "sha256": SYN_DIGEST}}), "reject"),
         ("SEIT-EMV-022", "implementation_planning_wave_unreviewed_with_review_count", "implementation",
-            unreviewed_planning_implementation(["test_engineer"], {"reviews": 1}), "reject"),
+            unreviewed_planning_implementation(["integration_test"], {"reviews": 1}), "reject"),
         ("SEIT-EMV-022", "implementation_planning_wave_review_request_not_boolean", "implementation",
             planning_contract_implementation(wave={"review_requested": "no"}), "reject"),
         ("SEIT-EMV-022", "implementation_boundary_contract_flow_without_sink", "implementation", planning_contract_implementation(
@@ -1537,44 +1559,56 @@ def profiles_cases() -> list[tuple[str, str, object, str, str | None]]:
     execution = profile_session_route(cadence="lifecycle")
     disabled_execution = profile_session_route(enabled=False, cadence="lifecycle")
     out.extend([
-        ("SEIT-BDL-002", "systems_modeler_execution_session_rejected", catalog_with_role_sessions(
-            "systems_modeler", {"execution": execution}
+        ("SEIT-BDL-002", "mbse_execution_session_rejected", catalog_with_role_sessions(
+            "mbse", {"execution": execution}
         ), "reject", None),
-        ("SEIT-BDL-002", "systems_modeler_assurance_session_rejected", catalog_with_role_sessions(
-            "systems_modeler", {"assurance": assurance}
+        ("SEIT-BDL-002", "mbse_assurance_session_rejected", catalog_with_role_sessions(
+            "mbse", {"assurance": assurance}
         ), "reject", None),
-        ("SEIT-BDL-002", "systems_modeler_planning_and_execution_rejected", catalog_with_role_sessions(
-            "systems_modeler", {"planning": planning, "execution": execution}
+        ("SEIT-BDL-002", "mbse_planning_and_execution_rejected", catalog_with_role_sessions(
+            "mbse", {"planning": planning, "execution": execution}
         ), "reject", None),
-        ("SEIT-BDL-002", "requirements_engineer_execution_session_rejected", catalog_with_role_sessions(
-            "requirements_engineer", {"execution": execution}
+        ("SEIT-BDL-002", "integration_test_execution_session_rejected", catalog_with_role_sessions(
+            "integration_test", {"execution": execution}
         ), "reject", None),
-        ("SEIT-BDL-002", "requirements_engineer_assurance_session_rejected", catalog_with_role_sessions(
-            "requirements_engineer", {"assurance": assurance}
+        ("SEIT-BDL-002", "integration_test_assurance_session_rejected", catalog_with_role_sessions(
+            "integration_test", {"assurance": assurance}
+        ), "reject", None),
+        ("SEIT-BDL-002", "requirements_engineer_role_rejected", catalog_with_role_sessions(
+            "requirements_engineer", {"planning": planning}
+        ), "reject", None),
+        ("SEIT-BDL-002", "systems_modeler_role_rejected", catalog_with_role_sessions(
+            "systems_modeler", {"planning": planning}
         ), "reject", None),
         ("SEIT-BDL-002", "test_engineer_execution_session_rejected", catalog_with_role_sessions(
             "test_engineer", {"execution": execution}
         ), "reject", None),
-        ("SEIT-BDL-002", "test_engineer_planning_and_execution_rejected", catalog_with_role_sessions(
-            "test_engineer", {"planning": planning, "execution": execution}
+        ("SEIT-BDL-002", "test_engineer_planning_session_rejected", catalog_with_role_sessions(
+            "test_engineer", {"planning": planning}
+        ), "reject", None),
+        ("SEIT-BDL-002", "test_engineer_planning_and_assurance_rejected", catalog_with_role_sessions(
+            "test_engineer", {"planning": planning, "assurance": assurance}
         ), "reject", None),
         ("SEIT-BDL-002", "integration_engineer_assurance_session_rejected", catalog_with_role_sessions(
             "integration_engineer", {"assurance": assurance}
         ), "reject", None),
-        ("SEIT-BDL-002", "integration_engineer_planning_and_assurance_rejected", catalog_with_role_sessions(
-            "integration_engineer", {"planning": planning, "assurance": assurance}
+        ("SEIT-BDL-002", "integration_engineer_planning_session_rejected", catalog_with_role_sessions(
+            "integration_engineer", {"planning": planning}
+        ), "reject", None),
+        ("SEIT-BDL-002", "integration_engineer_planning_and_execution_rejected", catalog_with_role_sessions(
+            "integration_engineer", {"planning": planning, "execution": execution}
         ), "reject", None),
         ("SEIT-BDL-002", "omitted_sessioned_roles_accepted", catalog_omitting_roles(
-            "systems_modeler",
-            "requirements_engineer",
+            "mbse",
+            "integration_test",
             "test_engineer",
             "integration_engineer",
         ), "accept", None),
-        ("SEIT-BDL-002", "systems_modeler_planning_explicitly_disabled", catalog_with_role_sessions(
-            "systems_modeler", {"planning": disabled_planning}
+        ("SEIT-BDL-002", "mbse_planning_explicitly_disabled", catalog_with_role_sessions(
+            "mbse", {"planning": disabled_planning}
         ), "accept", None),
-        ("SEIT-BDL-002", "requirements_engineer_planning_explicitly_disabled", catalog_with_role_sessions(
-            "requirements_engineer", {"planning": disabled_planning}
+        ("SEIT-BDL-002", "integration_test_planning_explicitly_disabled", catalog_with_role_sessions(
+            "integration_test", {"planning": disabled_planning}
         ), "accept", None),
         ("SEIT-BDL-002", "test_engineer_assurance_explicitly_disabled", catalog_with_role_sessions(
             "test_engineer", {"assurance": disabled_assurance}
@@ -1582,14 +1616,8 @@ def profiles_cases() -> list[tuple[str, str, object, str, str | None]]:
         ("SEIT-BDL-002", "integration_engineer_execution_explicitly_disabled", catalog_with_role_sessions(
             "integration_engineer", {"execution": disabled_execution}
         ), "accept", None),
-        ("SEIT-BDL-002", "test_engineer_planning_only_omits_assurance", catalog_with_role_sessions(
-            "test_engineer", {"planning": planning}
-        ), "accept", None),
-        ("SEIT-BDL-002", "integration_engineer_planning_only_omits_execution", catalog_with_role_sessions(
-            "integration_engineer", {"planning": planning}
-        ), "accept", None),
         ("SEIT-BDL-002", "sessioned_planning_primary_missing_harness", catalog_with_role_sessions(
-            "systems_modeler",
+            "mbse",
             {
                 "planning": {
                     "enabled": True,

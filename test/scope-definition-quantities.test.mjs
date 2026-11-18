@@ -140,7 +140,7 @@ describe("scope-definition quantity table and conditional typing", () => {
     const template = readFileSync(path.join(ROOT, "skills/architectural-alignment/templates/workspace.md"), "utf8");
     assert.match(template, /### Quantity definitions/);
     assert.match(template, /`DEC-<id>`/);
-    const precheck = readFileSync(path.join(ROOT, "skills/requirements-engineer/references/precheck.md"), "utf8");
+    const precheck = readFileSync(path.join(ROOT, "skills/mbse/references/precheck.md"), "utf8");
     assert.match(precheck, /--stage requirements/);
     assert.match(precheck, /### Quantity definitions/);
     assert.doesNotMatch(precheck, /Copy the Scope\s+Definition quantity-definitions table/);

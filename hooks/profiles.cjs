@@ -32,6 +32,16 @@ const RETIRED_ROLE_KEYS = new Set([
   "park-ranger",
   "validator",
 ]);
+const REMOVED_PLANNING_ROLE_MESSAGES = Object.freeze({
+  requirements_engineer:
+    "roles.requirements_engineer is removed; use roles.mbse.sessions.planning instead",
+  systems_modeler:
+    "roles.systems_modeler is removed; use roles.mbse.sessions.planning instead",
+  "test_engineer.planning":
+    "roles.test_engineer.sessions.planning is removed; use roles.integration_test.sessions.planning instead (keep test_engineer.sessions.assurance)",
+  "integration_engineer.planning":
+    "roles.integration_engineer.sessions.planning is removed; use roles.integration_test.sessions.planning instead (keep integration_engineer.sessions.execution)",
+});
 
 function isPlainObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -64,6 +74,27 @@ function readJson(file) {
 function retiredRoleKeys(profile) {
   if (!isPlainObject(profile) || !isPlainObject(profile.roles)) return [];
   return Object.keys(profile.roles).filter((key) => RETIRED_ROLE_KEYS.has(key));
+}
+
+function removedPlanningEntries(profile) {
+  if (!isPlainObject(profile) || !isPlainObject(profile.roles)) return [];
+  const roles = profile.roles;
+  const found = [];
+  for (const key of ["requirements_engineer", "systems_modeler"]) {
+    if (Object.hasOwn(roles, key)) {
+      found.push({ reason: `removed_role:${key}`, error: REMOVED_PLANNING_ROLE_MESSAGES[key] });
+    }
+  }
+  for (const role of ["test_engineer", "integration_engineer"]) {
+    const sessions = isPlainObject(roles[role]) && isPlainObject(roles[role].sessions)
+      ? roles[role].sessions
+      : null;
+    if (sessions && Object.hasOwn(sessions, "planning")) {
+      const key = `${role}.planning`;
+      found.push({ reason: `removed_session:${key}`, error: REMOVED_PLANNING_ROLE_MESSAGES[key] });
+    }
+  }
+  return found;
 }
 
 /**
@@ -126,6 +157,16 @@ function evaluateCatalogState(input) {
       return {
         outcome: "NEEDS_MORE_EVIDENCE",
         reason: "retired_role:" + retired[0],
+        path: profilesPath,
+      };
+    }
+    const removed = removedPlanningEntries(profile);
+    if (removed.length) {
+      return {
+        outcome: "NEEDS_MORE_EVIDENCE",
+        reason: removed[0].reason,
+        error: removed[0].error,
+        profile: name,
         path: profilesPath,
       };
     }
@@ -256,6 +297,15 @@ function freezeSelectedRoutes(input) {
           isPlainObject(catalog.profiles[input.profile])
         ? catalog.profiles[input.profile]
         : {};
+  const removed = removedPlanningEntries(profile);
+  if (removed.length) {
+    return {
+      outcome: "OWNER_DECISION_REQUIRED",
+      onboard: true,
+      reason: removed[0].reason,
+      error: removed[0].error,
+    };
+  }
   const classified = evaluateTddTestImplementerRoute({ profile, action: "freeze" });
   if (classified.outcome === "OWNER_DECISION_REQUIRED") {
     return failClosedTddRoute();

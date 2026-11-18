@@ -1,8 +1,8 @@
 # Register pre-check
 
-The Requirements Engineer runs this mechanical check during its own authoring
-assignment on the candidate register and available context. It complements the
-semantic self requirements-quality pass; it does not introduce a separate checker.
+MBSE runs this mechanical check during its own authoring assignment on the
+candidate register and available context. It complements the semantic self
+requirements-quality pass; it does not introduce a separate checker.
 
 ```sh
 node hooks/register-precheck.cjs --stage requirements <draft.sdoc> <workspace.md> <repository-root>
@@ -10,14 +10,14 @@ node hooks/register-precheck.cjs --stage requirements <draft.sdoc> <workspace.md
 
 ## Stages
 
-- `--stage requirements` (Requirements Engineer): the context input is the
-  confirmed Alignment/Scope `workspace.md` with its recorded `DEC-*` decisions
-  and quantity-definitions table. A row with a verification method but no case ID
-  is reported in `pending_bindings` with `owner: test_engineer` and
+- `--stage requirements` (MBSE): the context input is the confirmed
+  Alignment/Scope `workspace.md` with its recorded `DEC-*` decisions and
+  quantity-definitions table. A row with a verification method but no case ID is
+  reported in `pending_bindings` with `owner: integration_test` and
   `blocks: final_assembly`; it is not a finding and never an invented ID. Every
   other class (method, EARS, glossary, reference, decision, citation) still fails.
-- `final` (the default; Planning Orchestrator during assembly, after the Test
-  Engineer bound cases to existing requirement IDs): the context input is the
+- `final` (the default; Planning Orchestrator during assembly, after Integration
+  and Test bound cases to existing requirement IDs): the context input is the
   final technical plan. Every row needs a case ID; add `--seit <seit.json>` to
   require each ID to resolve to a SEIT `proof_cases[].id`. Pending bindings fail.
   Final `plan-package.cjs` freeze enforces this directly whenever a register is
@@ -75,8 +75,8 @@ Locations identify field starts; document findings use `<register>` or `<plan>`.
 - `citation`: repository-relative `file.ext:line` names a missing file,
   line zero, or a line beyond EOF. A final newline is not an extra line.
 
-The Requirements Engineer inspects the candidate-bound receipt as part of its
-own self-quality pass, fixes applicable findings, and checks semantic concerns
-that the mechanical checker cannot decide. Workspace `lint-sdoc.py --profile
-library` evidence remains separate; this plugin neither requires that executable
-universally nor shells out to it. Missing required workspace lint is a typed gap.
+MBSE inspects the candidate-bound receipt as part of its own self-quality pass,
+fixes applicable findings, and checks semantic concerns that the mechanical
+checker cannot decide. Workspace `lint-sdoc.py --profile library` evidence
+remains separate; this plugin neither requires that executable universally nor
+shells out to it. Missing required workspace lint is a typed gap.

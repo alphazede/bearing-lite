@@ -29,7 +29,7 @@
 - Confirmation evidence: `<decision-source-or-still-pending>`
 - Open, deferred, inapplicable, or blocked items: `<status-and-owner-or-reason>`
 
-Final decision batch (`references/decision-batch.md`); the Requirements Engineer
+Final decision batch (`references/decision-batch.md`); MBSE
 uses this section as its precheck context before any technical plan exists.
 
 | ID | Confirmed decision | Conditional type |

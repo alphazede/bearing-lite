@@ -61,7 +61,7 @@ test('explicit current task retains active ownership, correct task selection and
   const cwd = fixture(t); plan(cwd);
   assert.match(host.handle(event(cwd)).hookSpecificOutput.additionalContext, /context_ready/);
   assert.equal(lock.evaluate({ ...event(cwd), paths: ['seit.json'] }).verdict, 'DENY_DISPATCH');
-  assert.equal(lock.evaluate({ ...event(cwd), role: 'test_engineer', paths: ['seit.json'] }).verdict, 'ALLOW');
+  assert.equal(lock.evaluate({ ...event(cwd), role: 'integration_test', paths: ['seit.json'] }).verdict, 'ALLOW');
   const native = input => {
     const run = spawnSync(process.execPath, [path.join(ROOT, 'hooks/orchestrator-write-lock.cjs'), '--host=codex'], {
       input: JSON.stringify({ ...event(cwd), hook_event_name: 'PreToolUse', tool_name: 'Edit', tool_input: { file_path: path.join(cwd, 'seit.json') }, ...input }),
@@ -72,7 +72,7 @@ test('explicit current task retains active ownership, correct task selection and
     return JSON.parse(run.stderr);
   };
   assert.equal(native({}).hookSpecificOutput.permissionDecision, 'deny');
-  assert.notEqual(native({ role: 'test_engineer' }).hookSpecificOutput.permissionDecision, 'deny');
+  assert.notEqual(native({ role: 'integration_test' }).hookSpecificOutput.permissionDecision, 'deny');
   assert.deepEqual(host.handle({ ...event(cwd), hook_event_name: 'Stop', stop_hook_active: true }), {});
   assert.deepEqual(sync.handle({ ...event(cwd), hook_event_name: 'Stop', stop_hook_active: true }), {});
   mkdirSync(path.join(cwd, 'child'));

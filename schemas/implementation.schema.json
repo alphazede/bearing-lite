@@ -527,10 +527,8 @@
               "items": {
                 "type": "string",
                 "enum": [
-                  "requirements_engineer",
-                  "systems_modeler",
-                  "integration_engineer",
-                  "test_engineer"
+                  "mbse",
+                  "integration_test"
                 ]
               }
             },
@@ -659,10 +657,8 @@
                 "items": {
                   "type": "string",
                   "enum": [
-                    "requirements_engineer",
-                    "systems_modeler",
-                    "integration_engineer",
-                    "test_engineer"
+                    "mbse",
+                    "integration_test"
                   ]
                 }
               },
@@ -747,7 +743,7 @@
     "boundary_contract": {
       "type": "object",
       "additionalProperties": true,
-      "description": "#155: Planning Integration Engineer Boundary/Data-Flow Contract copied from design.md and the System Catalog (no sixth artifact): not_applicable with a reason, or flows, state_machines, trust_boundaries, and gaps. hooks/plan-package.cjs checks completeness and blocks on an unresolved gap.",
+      "description": "#155: Integration and Test planning Boundary/Data-Flow Contract copied from design.md and the System Catalog (no sixth artifact): not_applicable with a reason, or flows, state_machines, trust_boundaries, and gaps. hooks/plan-package.cjs checks completeness and blocks on an unresolved gap.",
       "properties": {
         "not_applicable": { "type": "boolean" },
         "reason": { "type": "string", "minLength": 1 },

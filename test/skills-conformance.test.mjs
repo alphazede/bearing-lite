@@ -18,7 +18,8 @@ const IMPL_ORCH = [path.join(SKILLS_DIR, "bearing-lite", "SKILL.md"), ...readdir
 
 const ROUTER = "bearing-lite";
 const PLANNING = [
-  "requirements-engineer",
+  "mbse",
+  "integration-test",
   "scope-definition",
   "architectural-alignment",
   "intake",
@@ -30,7 +31,6 @@ const ACTIVE_ROLES = [
   "reviewer",
   "test-engineer",
   "scribe",
-  "systems-modeler",
   "integration-engineer",
   "onboard-bearing",
 ];
@@ -50,6 +50,9 @@ const RETIRED_SOURCE_SKILLS = [
   "map-the-route",
   // S20 retired the Coordinator; its duties live in the Implementation Orchestrator text.
   "coordinator",
+  // #580 merged requirements-engineer + systems-modeler into mbse.
+  "requirements-engineer",
+  "systems-modeler",
 ];
 const HQ_METHOD_SKILLS = [
   "requirements-engineering",
@@ -562,14 +565,27 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     }
   });
 
-  it("one Test Engineer role names Planning and Assurance sessions", () => {
+  it("Test Engineer keeps only Assurance; MBSE and Integration and Test own planning and state plan-package rules", () => {
     const skillPath = path.join(SKILLS_DIR, "test-engineer", "SKILL.md");
     assert.ok(existsSync(skillPath), "test-engineer/SKILL.md must exist");
     const text = readFileSync(skillPath, "utf8");
-    assert.match(text, /Planning Test Engineer/);
     assert.match(text, /Assurance Test Engineer/);
+    assert.match(text, /\.\.\/integration-test\/SKILL\.md/);
     assert.match(text, /retires Validator|replaces Validator|absent from active roles/i);
     assert.match(text, /published[- ]standard/);
+    const ieText = readFileSync(path.join(SKILLS_DIR, "integration-engineer", "SKILL.md"), "utf8");
+    assert.match(ieText, /integration_engineer\.sessions\.execution/);
+    assert.match(ieText, /\.\.\/integration-test\/SKILL\.md/);
+    assert.doesNotMatch(ieText, /## Planning loop/);
+    for (const name of ["mbse", "integration-test"]) {
+      const body = readFileSync(path.join(SKILLS_DIR, name, "SKILL.md"), "utf8");
+      assert.match(body, /plan-package\.cjs/, `${name} must state plan-package.cjs rules`);
+      assert.match(body, /procedure\.actor === slice\.role|actor.*slice\.role/i, `${name} must state actor equals role`);
+      assert.match(body, /work_class:\s*"light"/, `${name} must state light-slice rule`);
+      for (const key of ["integration_steps", "step", "requires"]) {
+        assert.match(body, new RegExp(`\`${key}\``), `${name} must state reserved key ${key}`);
+      }
+    }
   });
 
   it("split Implementer separates Test Implementer from Product Implementer and neither self-certifies", () => {
@@ -991,12 +1007,12 @@ describe("shared-machine test standard", () => {
       /error and the engine log tail/i, /slowest tests/i, /qualified gate run/i]) {
       assert.match(text.replace(/\s+/g, " "), rule);
     }
-    for (const skill of ["planning-and-design", "test-engineer", "integration-engineer"]) {
+    for (const skill of ["planning-and-design", "test-engineer", "integration-engineer", "integration-test"]) {
       const body = readFileSync(path.join(SKILLS_DIR, skill, "SKILL.md"), "utf8");
       assert.match(body, /shared-machine-tests\.md/, `${skill} must require the standard`);
     }
-    const integration = readFileSync(path.join(SKILLS_DIR, "integration-engineer", "SKILL.md"), "utf8");
-    assert.match(integration.replace(/\s+/g, " "), /five consecutive and one two-copy concurrent pass, or the stricter repository rule/);
+    const integrationTest = readFileSync(path.join(SKILLS_DIR, "integration-test", "SKILL.md"), "utf8");
+    assert.match(integrationTest.replace(/\s+/g, " "), /five consecutive and one two-copy concurrent pass, or the stricter repository rule/);
     const grammar = readFileSync(path.join(SKILLS_DIR, "planning-and-design", "references", "artifact-grammar.md"), "utf8");
     for (const field of ["resource_group", "expected_gate_seconds", "added_gate_seconds", "resource_groups"]) {
       assert.match(grammar, new RegExp(`\`${field}\``), `artifact grammar must name ${field}`);

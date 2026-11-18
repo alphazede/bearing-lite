@@ -38,7 +38,7 @@ global failure. Assurance packets consume frozen `deterministic_verification`
 from the Lifecycle snapshot, never the live catalog. Reverify identity stays
 `reverify`; a generic backend name must not stand in for an absent binding.
 Profile `reverify.enabled` records user configuration;
-availability does not select Reverify for every task. Planning Test Engineer
+availability does not select Reverify for every task. Integration and Test (planning)
 selects it on an applicable binary-level SEIT claim; Planning Orchestrator copies
 that selection and must not invent V&V.
 

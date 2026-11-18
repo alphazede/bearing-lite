@@ -3,8 +3,8 @@
 Use this optional analysis path when a named requirement or intended-use risk
 calls for invariant, ordering, safety, or exhaustive-input reasoning. It adds
 no universal PR gate and no extra role, and grants no exemption from repository
-tool-acquisition policy. The Test Engineer owns the [V&V case](verification-case.md)
-and evidence; the Systems Modeler retains semantic modeling authority.
+tool-acquisition policy. Integration and Test (planning) and Assurance Test Engineer own the [V&V case](verification-case.md)
+and evidence; MBSE retains semantic modeling authority.
 
 ## Select one question
 

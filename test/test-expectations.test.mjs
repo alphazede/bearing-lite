@@ -17,13 +17,14 @@ import {
 } from "./skill-contract-fixture.mjs";
 
 const TE_SKILL = "skills/test-engineer/SKILL.md";
+const IT_SKILL = "skills/integration-test/SKILL.md";
 const CASE_REF = "skills/test-engineer/references/verification-case.md";
 const SHARED_REF = "skills/test-engineer/references/shared-machine-tests.md";
 const IMPL_SKILL = "skills/implementer/SKILL.md";
 const TDD_REF = "skills/implementer/references/tdd.md";
 
-/** Test Engineer surface: the skill plus its verification-case reference. */
-const teSurface = () => flat(readIfShipped(TE_SKILL) + "\n" + readIfShipped(CASE_REF));
+/** Test Engineer + Integration and Test surface: the skills plus verification-case reference. */
+const teSurface = () => flat(readIfShipped(TE_SKILL) + "\n" + readIfShipped(IT_SKILL) + "\n" + readIfShipped(CASE_REF));
 
 describe("test-expectations-and-coverage-reuse", () => {
   it("TEX-01 verification-case reference ships and the Test Engineer links it", () => {
