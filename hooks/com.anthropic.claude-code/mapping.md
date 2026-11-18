@@ -176,6 +176,28 @@ Standalone explicitly selected/required TE is independent. Explicit bound
 Bearing session binding; missing dispatch declarations block only the current
 explicitly bound task that requires assurance, never an unrelated old label.
 
+## Decision adapter
+
+`hooks/decision-adapter.cjs` runs inside the already registered
+`host.cjs` handlers for `SessionStart` and `Stop` only. No new hook event
+is registered. `hooks/te-host.cjs` owns `SubagentStop` and does not call
+the adapter. `PreToolUse` follows a model tool request, so it is not an
+adapter call site.
+
+The handler calls the adapter only when that registration supplies a
+positive timeout. Claude Code and Codex `hooks/hooks.json` entries do.
+Cursor `sessionStart` registers `host.cjs` with no timeout and without
+`--host=cursor`, so the handler reads the Claude registration timeout.
+Cursor `stop` passes `--host=cursor` and declares no timeout, so inference
+is skipped. AGY, Pi, DeepCode, and Muse Code register no command hook that
+can invoke the adapter.
+
+A returned proposal is advisory context on `SessionStart` only. `Stop`
+stays silent so the turn does not continue. Timeout, error, or a missing
+key leaves the existing host response unchanged. Native invocation is
+unverified. The versioned cells are in
+[harness-compatibility.md](../../docs/harness-compatibility.md).
+
 ## Orchestrator write-set lock
 
 For an explicitly bound current task, `hooks/orchestrator-write-lock.cjs`

@@ -15,12 +15,14 @@
  */
 
 const fs = require("node:fs");
+const os = require("node:os");
 const path = require("node:path");
 
 const activation = require("../activation.cjs");
 const { binding } = require("../task-binding.cjs");
 const closeout = require("../closeout.cjs");
 const cursorStop = require("../cursor-stop.cjs");
+const decisionAdapter = require("../decision-adapter.cjs");
 
 const HOST = "com.anthropic.claude-code";
 const COVERAGE = Object.freeze({
@@ -403,7 +405,95 @@ function handle(input) {
   return toHostResponse(eventName, evaluateForHost(eventName, derived, parsed));
 }
 
-function main() {
+// Hosted replies measured under 450 ms. Leave that reserve so cleanup finishes inside the registration timeout.
+const RESPONSE_RESERVE_MS = 450;
+const ADAPTER_EVENTS = new Set(["SessionStart", "Stop"]);
+
+function hostTimeoutSeconds(eventName) {
+  const cursor = process.argv.includes("--host=cursor");
+  let manifest;
+  try {
+    const file = path.join(__dirname, "..", cursor ? "com.cursor/hooks.json" : "hooks.json");
+    manifest = JSON.parse(fs.readFileSync(file, "utf8"));
+  } catch {
+    return undefined;
+  }
+  const key = cursor ? { SessionStart: "sessionStart", Stop: "stop" }[eventName] : eventName;
+  const entries = manifest.hooks && manifest.hooks[key];
+  if (!Array.isArray(entries)) return undefined;
+  for (const entry of entries) {
+    const hooks = Array.isArray(entry.hooks) ? entry.hooks : [entry];
+    for (const hook of hooks) {
+      if (!String(hook.command || "").includes("com.anthropic.claude-code/host.cjs")) continue;
+      return hook.timeout;
+    }
+  }
+  return undefined;
+}
+
+function decisionChoice(task) {
+  const raw = task && task.decision_choice;
+  if (typeof raw !== "string" || !raw.trim()) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    return isPlainObject(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function decisionRecordFile() {
+  const root = process.env.XDG_STATE_HOME || path.join(os.homedir(), ".local", "state");
+  const dir = path.join(root, "bearing-lite");
+  fs.mkdirSync(dir, { recursive: true });
+  return path.join(dir, "advisory-decisions.json");
+}
+
+async function applyAdapter(rawInput, response, enteredAt) {
+  let parsed = rawInput;
+  if (typeof parsed === "string") {
+    try {
+      parsed = JSON.parse(parsed);
+    } catch {
+      return response;
+    }
+  }
+  if (!isPlainObject(parsed)) return response;
+  const eventName = canonicalizeEvent(parsed.hook_event_name || parsed.hookEventName);
+  if (!ADAPTER_EVENTS.has(eventName) || isStopReentry(parsed, eventName)) return response;
+  const bound = binding(parsed);
+  if (!bound) return response;
+  const input = decisionChoice(bound.task);
+  if (!input) return response;
+  const timeout = hostTimeoutSeconds(eventName);
+  if (typeof timeout !== "number" || !(timeout > 0)) return response;
+  const result = await decisionAdapter.decide(input, {
+    config_file: path.join(__dirname, "..", "decision-backend.json"),
+    record_file: decisionRecordFile(),
+    budget: {
+      total_ms: timeout * 1000,
+      elapsed_ms: performance.now() - enteredAt,
+      reserve_ms: RESPONSE_RESERVE_MS,
+    },
+  });
+  // Claude/Codex Stop has no advice field that does not continue the turn.
+  if (eventName !== "SessionStart" || !result || typeof result.meaning !== "string" || !result.meaning) {
+    return response;
+  }
+  const inner = isPlainObject(response.hookSpecificOutput) ? response.hookSpecificOutput : {};
+  const prior = typeof inner.additionalContext === "string" ? inner.additionalContext : "";
+  return {
+    ...response,
+    hookSpecificOutput: {
+      ...inner,
+      hookEventName: inner.hookEventName || "SessionStart",
+      additionalContext: prior ? prior + "\n" + result.meaning : result.meaning,
+    },
+  };
+}
+
+async function main() {
+  const enteredAt = performance.now();
   let raw = "";
   try {
     raw = readStdinSync();
@@ -421,6 +511,11 @@ function main() {
   }
 
   let response = handle(trimmed);
+  try {
+    response = await applyAdapter(trimmed, response, enteredAt);
+  } catch {
+    // A failed advisory call leaves the existing host response unchanged.
+  }
   response = cursorStop.projectStop(response);
   process.stdout.write(JSON.stringify(response) + "\n");
   process.exit(0);
