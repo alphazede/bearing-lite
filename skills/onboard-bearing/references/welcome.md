@@ -14,20 +14,21 @@ welcome verbatim to the user:
 Then ask this opening question and wait for the user's choice, without a
 preselected answer:
 
-> How would you like to begin: guided onboarding, configure an existing agent lineup, recommended Lite setup, or Full setup?
+> How would you like to begin: guided onboarding, configure an existing profile in profiles.json (not legacy lineups.json), recommended Lite setup, or Full setup?
 
-Here, an agent lineup means role/session assignments in `profiles.json`;
-it does not reactivate the legacy `lineups.json` file.
+Here, configuring an existing profile (sometimes called an agent lineup) means
+editing role/session assignments in `profiles.json`; it never reads,
+activates, or recreates the legacy `lineups.json` file.
 
 | Choice | What the agent does |
 | --- | --- |
 | Guided onboarding | Explain the available choices and configure the requested profile one setting at a time. |
-| Configure an existing agent lineup | Show the relevant current assignments; change only what the user requests. |
-| Recommended Lite setup | Propose `single_implementer` for code and tests, task-needed requirements/test planning, and minimal additional specialists or coordination. Reuse adequate existing planning evidence. |
+| Configure an existing profile in profiles.json (not lineups.json) | Show the relevant current assignments in `profiles.json`; change only what the user requests. |
+| Recommended Lite setup | Propose `single_implementer` for code and tests, task-needed `mbse` and `integration_test` planning, and minimal additional specialists. Reuse adequate existing planning evidence. |
 | Full setup | Walk through all configurable roles and sessions, development strategy, capabilities, and cadence so the user can select the support they need. |
 
-Lite and Full are configuration starting points, not runtime modes or fixed model
-lineups. Show the proposed roles and settings before accepting a starting point;
+Lite and Full are configuration starting points, not runtime modes, fixed model
+lineups, or legacy `lineups.json` presets. Show the proposed roles and settings before accepting a starting point;
 do not select harnesses, models, reasoning, fallbacks, or enable optional roles
 without the user's explicit choices. Both retain required evidence and gates.
 Configuring review or assessment does not request it for a task. Dispatch still

@@ -215,11 +215,13 @@ Validate the new profile, then remove `lineups.json`.
 
 ## Route effort and Fellow
 
-Select an orchestrator model and reasoning effort from the task and from
-observed results. Never lower that effort automatically because the selected
-model is smaller. When the Orchestrator is only waiting or dispatching, use
-the route the owner selected for a smaller model, and do not lower that
-route's selected reasoning effort.
+The Orchestrator has no configurable route in `profiles.json`: its model and
+reasoning effort are the session the owner opens, and any adjustment for
+lighter tasks or waiting/dispatching work comes from the session the owner
+opens. Never lower any configured route's selected reasoning effort
+automatically because the selected model is smaller. When the Orchestrator
+needs stronger advice or a second opinion from a lighter opened session, it
+consults the optional catalog-level `fellow` (`consultation.md`).
 
 Only the Orchestrator consults the Fellow (`consultation.md`), whatever profile
 is selected. `fellow` is an optional Bearing-level route at the top level of
