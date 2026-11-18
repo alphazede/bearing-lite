@@ -17,8 +17,7 @@ const read = (rel) => readFileSync(path.join(ROOT, rel), "utf8");
 const assembly = read("skills/bearing-lite/references/planning-assembly.md");
 const taskState = read("skills/bearing-lite/references/task-state.md");
 const routing = read("skills/bearing-lite/references/role-routing.mmd");
-const modeler = read("skills/systems-modeler/SKILL.md");
-const requirements = read("skills/requirements-engineer/SKILL.md");
+const mbse = read("skills/mbse/SKILL.md");
 const pdSkill = read("skills/planning-and-design/SKILL.md");
 const allocationInputs = read("skills/planning-and-design/references/allocation-inputs.md");
 
@@ -30,25 +29,26 @@ describe("CMD-STAGE-ORDER-01 acyclic planning dependencies (SEIT-STAGE-ORDER-01)
     assert.ok(skel >= 0 && par > skel && pd > par, "frozen skeleton -> parallel mbse & integration_test -> final P&D");
   });
 
-  it("the Requirements Engineer does not wait on later placements, SEIT, or final design", () => {
-    assert.doesNotMatch(requirements, /Consume selected placement evidence before allocating/);
-    assert.match(requirements, /Do not wait for later Modeler placements, SEIT, or final design/);
-    assert.match(requirements, /--stage requirements/);
+  it("MBSE does not wait on later SEIT or final design", () => {
+    assert.doesNotMatch(mbse, /Consume selected placement evidence before allocating/);
+    assert.match(mbse, /Do not wait for later SEIT or final design/);
+    assert.match(mbse, /--stage requirements/);
   });
 
-  it("task-state text and role-routing diagram agree: no Modeler pass before the register draft", () => {
+  it("task-state text and role-routing diagram agree: MBSE precedes Integration and Test and final Planning and Design", () => {
     assert.doesNotMatch(taskState, /contextual pass[\s\S]{0,400}before the first register draft/);
     assert.match(taskState, /placement receipt/);
     assert.doesNotMatch(routing, /Systems Modeler contextual pass/);
-    assert.ok(routing.indexOf("Requirements Engineer") < routing.indexOf("Systems Modeler"));
-    assert.ok(routing.indexOf("Systems Modeler") < routing.indexOf("final Planning and Design"));
+    assert.ok(routing.indexOf("MBSE") >= 0);
+    assert.ok(routing.indexOf("MBSE") < routing.indexOf("Integration and Test"));
+    assert.ok(routing.indexOf("Integration and Test") < routing.indexOf("final Planning and Design"));
   });
 
-  it("systems modeler covers flow, placements, and constraints from the requirements", () => {
-    assert.match(modeler, /current flow/);
-    assert.match(modeler, /candidate placements with `file:line`/);
-    assert.match(modeler, /constraints/);
-    assert.match(modeler, /placement receipt/);
+  it("MBSE covers flow, placements, and constraints from the requirements", () => {
+    assert.match(mbse, /current flow/);
+    assert.match(mbse, /candidate placements with `file:line`/);
+    assert.match(mbse, /constraints/);
+    assert.match(mbse, /placement receipt/);
   });
 
   it("final allocation consumes the placement receipt, cites it, and gaps when unavailable", () => {

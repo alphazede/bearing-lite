@@ -4,8 +4,9 @@ flowchart TD
     P -->|Intake| IN[Intake in controller]
     P -->|Architectural Alignment and Scope| AA[Combined alignment and scope in controller]
     IN & AA -->|recorded context and decisions| R
-    P -->|enabled and needed specialists, data-dependency order| MBSE[MBSE authors requirements, self-checks, and returns placement evidence]
-    MBSE -->|requirements and models| IT[Integration and Test authors boundary contract and SEIT bound to requirement IDs]
+    P -->|frozen requirement skeleton; enabled specialists start in parallel| MBSE[MBSE authors requirements, self-checks, and returns placement evidence]
+    P -->|frozen requirement skeleton| IT[Integration and Test authors boundary contract and SEIT bound to requirement IDs]
+    MBSE -.->|requirement text and models as they land| IT
     MBSE & IT -->|completed inputs; inactive roles skipped| PD[Orchestrator final Planning and Design and assembly in controller]
     PD -->|only when owner requested| PR[Requested planning review]
     PD -->|review not requested: recorded| I{Owner confirmation}
