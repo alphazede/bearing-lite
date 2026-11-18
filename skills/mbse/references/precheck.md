@@ -1,8 +1,9 @@
 # Register pre-check
 
-MBSE runs this mechanical check during its own authoring assignment on the
-candidate register and available context. It complements the semantic self
-requirements-quality pass; it does not introduce a separate checker.
+MBSE runs only its own artifact checker during its authoring assignment on the
+candidate register and available context—never the full repository gate (which
+runs once at assembly). It complements the semantic self requirements-quality
+pass; it does not introduce a separate checker.
 
 ```sh
 node hooks/register-precheck.cjs --stage requirements <draft.sdoc> <workspace.md> <repository-root>
@@ -32,8 +33,9 @@ Exit 0 / `outcome: PASS` is a clean mechanical receipt; exit 1 carries findings
 for the author to repair and recheck in-run, and exit 2 is invalid invocation.
 Bind receipts to the actual candidate, stage, and unchanged input bytes. Rerun
 affected checks after a register, context, SEIT, or cited source changes. A
-path-only receipt is not proof of freshness. Preserve stdout, source identities,
-and actual lint evidence; do not invent receipt digests or imply the CLI ran an
+path-only receipt is not proof of freshness. Return digests, commands, and exit
+codes rather than narrative logs (keep full stdout/lint outputs in on-disk
+receipt files if needed); do not invent receipt digests or imply the CLI ran an
 external linter. The exported `checkRegister` is pure and accepts `stage` and
 `seitCaseIds`.
 

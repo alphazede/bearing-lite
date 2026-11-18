@@ -7,6 +7,7 @@
 ## Requested Outcome and Scope
 - Outcome: `<owner-requested-outcome>`
 - Affected flow and boundaries: `<bounded-scope>`
+- Process tier: `<light | standard | full>` (`<risk-rule basis>`)
 
 ## Mapped Inputs
 | Source | What it establishes | Observed revision or content digest |
@@ -54,9 +55,11 @@ uses this section as its precheck context before any technical plan exists.
 - `<unknown or none observed>`
 
 ## Map Freshness
+- Prior map: `<path to reused previous repository-map.md or none>`
 - Observation: `<date-and-current-revision-for-traceability>`
 - Recorded root, plan directory, and requested scope match confirmed inputs.
 - Source bindings above match current evidence; relevant committed, staged,
   unstaged, and untracked changes were checked: `<evidence>`.
-- A clean Git status alone does not establish freshness. Reuse unchanged context;
-  refresh affected mappings when relevant sources or requested scope change.
+- A clean Git status alone does not establish freshness. Reuse the previous
+  `repository-map.md` when fresh; refresh affected mappings only when relevant
+  sources or requested scope change.

@@ -52,13 +52,19 @@ independent review also requires the owner's requested scope and cadence.
    Implementer executes the exact command and returns failure without repair.
 6. Controllers wait on completion events, wake on responses, and consume each
    result once. Never poll or add automatic fan-out, reviews, or agent invocations.
-7. Name the repository gate first and require its exit code; author-selected
-   criteria and focused commands supplement it, never replace it, and a VERIFY list
-   without it is incomplete. Give expected results and evidence per acceptance item.
-   Required missing/not-run proof is a gap. Include time/call
-   limits only when supplied; invent no deadline, round count, or reasoning level.
-   Require one negative check per named trust boundary. A passing return is invalid
-   while an acceptance item is unmet or unmapped in its acceptance-to-evidence table.
+7. For implementation and assurance packets, name the repository gate first and
+   require its exit code; author-selected criteria and focused commands
+   supplement it, never replace it, and a VERIFY list without it is incomplete.
+   For planning specialist packets (`mbse`, `integration_test`), run only that
+   specialist's own artifact checker; never run the repository gate in a
+   specialist packet—the repository gate runs once at assembly. Give expected
+   results and evidence per acceptance item; return digests, commands, and exit
+   codes, not narrative logs. Required missing/not-run proof is a gap. Every
+   packet carries a time target and "at the limit, return what you have and list
+   the gaps"; include call limits only when supplied, and invent no round
+   count or reasoning level. Require one negative check per named trust boundary.
+   A passing return is invalid while an acceptance item is unmet or unmapped in
+   its acceptance-to-evidence table.
 8. Use the selected role's exact typed outcomes and genuine stop conditions.
 
 ## Packet template
@@ -69,8 +75,8 @@ STATE / INPUTS: <candidate, source bindings, dependencies, known facts>
 OBJECTIVE / ACCEPTANCE: <one outcome; numbered observable conditions>
 AUTHORITY: <permitted actions; binding owner/session, role, repository and contribution limits; expected files as a guide; protected boundaries>
 LOOP: <one selected loop, its self-checks, and repair boundary>
-VERIFY: <repository gate first with exit code, focused checks, expected results, acceptance-to-evidence table>
-RETURN / STOP: <compact receipt: verdict, candidate_ref, changed_paths, tests, findings, blocker; remaining work and genuine stops>
+VERIFY: <for implementation/assurance: repository gate first with exit code and focused checks; for planning specialists: own artifact checker only (repository gate runs once at assembly); expected results, acceptance-to-evidence table>
+RETURN / STOP: <time target and "at the limit, return what you have and list the gaps"; compact receipt: verdict, candidate_ref, changed_paths, tests (digests, commands, exit codes; not narrative logs), findings, blocker; remaining work and genuine stops>
 ```
 
 Intake, combined Alignment/Scope, final Planning and Design, and explicit profile

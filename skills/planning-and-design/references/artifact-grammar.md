@@ -153,6 +153,12 @@ undefined term and fails the gate.
 10. Keep one plan per phase: split multi-phase work into separate phase plans
    rather than combining multiple phases into one `implementation.json` and DoD
    Manifest.
+11. Record the process tier (`light` — Orchestrator plus one author — `standard`,
+   or `full`) chosen by the stated risk rule in
+   `../../bearing-lite/references/planning-assembly.md`; in `light` tier,
+   omit unneeded requirements registers, models, and specialist sessions
+   (`required_sessions: []`). Record verification evidence as digests,
+   commands, and exit codes, not narrative logs.
 
 ## Optional binding sections
 

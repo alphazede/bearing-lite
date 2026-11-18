@@ -47,14 +47,16 @@ Loop: author → self requirements-quality pass → model and map → self-check
    boundary, or residual risk.
 2. **Requirements self-quality pass and precheck:** check your own draft using
    the Requirements Engineering method's checklist and
-   `references/gate-report.md`, then run the candidate-bound
-   `references/precheck.md` at `--stage requirements` and applicable workspace
-   lint. Repair your own requirements in this assignment and recheck affected
-   rows; run the author loop in `references/quality-gate.md` for concrete
-   findings. Its `pending_bindings` name later owners (`integration_test`) and
-   block final assembly until bound. Missing tools or stale receipts are typed
-   gaps, never PASS. The checklist authorizes no extra agent, invocation, or
-   fixed retry limit.
+   `references/gate-report.md`, then run only your own artifact checker: the
+   candidate-bound `references/precheck.md` at `--stage requirements` and
+   applicable workspace lint (`lint-sdoc.py --profile library`). Do not run the
+   repository gate (the repository gate runs once at assembly). Repair your own
+   requirements in this assignment and recheck affected rows; run the author
+   loop in `references/quality-gate.md` for concrete findings. Its
+   `pending_bindings` name later owners (`integration_test`) and block final
+   assembly until bound. Missing tools or stale receipts are typed gaps, never
+   PASS. The checklist authorizes no extra agent, invocation, or fixed retry
+   limit.
 3. **Modeling mode and view metadata:** select `sysml-v2`, `diagram-assisted`,
    or `not-applicable`. Attach view metadata. In `sysml-v2`, record model
    revision/digest and native or derived views. For a state-machine model, write
@@ -104,7 +106,9 @@ Loop: author → self requirements-quality pass → model and map → self-check
 Return `READY`, `NEEDS_MORE_EVIDENCE`, or `OWNER_DECISION_REQUIRED` with
 verdict, candidate_ref, changed_paths, tests, findings, and blocker,
 plus requirement clauses/bindings, modeling mode, view metadata, placement
-receipt, self-check evidence, and source/decision traceability.
+receipt, self-check evidence, and source/decision traceability. Evidence returns
+digests, commands, and exit codes, not narrative logs. Honor the
+packet's time target; at the limit, return what you have and list the gaps.
 Self-checks are author evidence, not independent review or owner acceptance;
 author corrections do not consume review or repair budget. Return `READY` only
 when required self-quality checks pass and no fixable defect remains; fold all

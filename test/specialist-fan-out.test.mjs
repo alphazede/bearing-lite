@@ -39,10 +39,12 @@ describe("#168 retired specialist fan-out stays retired", () => {
     }
   });
 
-  it("Prompt carries limits only when supplied and adds no automatic fan-out or invocations", () => {
+  it("Prompt carries time target and supplied call limits without automatic fan-out or TIME BUDGET", () => {
     const prompt = read("skills/prompt/SKILL.md");
     assert.doesNotMatch(prompt, /^TIME BUDGET/m);
-    assert.match(prompt, /time\/call\s+limits only when supplied/);
+    assert.match(prompt, /time target/i);
+    assert.match(prompt, /at the limit, return what you have and list the gaps/);
+    assert.match(prompt, /call limits only when supplied/);
     assert.match(prompt, /Never poll or add automatic fan-out, reviews, or agent invocations/);
     assert.match(prompt, /within supplied authority and canonical role and repository\s+rules/);
     assert.match(

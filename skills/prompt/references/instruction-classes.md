@@ -23,6 +23,10 @@ boundary.
 | VERIFY | `security-independence` |
 | RETURN / STOP | `required-outcome-evidence` |
 
-Required compliance and security verification remain binding. The repository
-gate and its exit code, independence requirements, and negative checks for
-named trust boundaries stay in force.
+Required compliance and security verification remain binding. Implementation and
+assurance packets keep the repository gate and its exit code, independence
+requirements, and negative checks for named trust boundaries; planning specialist
+packets run only their own artifact checker while the repository gate runs once
+at assembly. Evidence returns digests, commands, and exit codes, not narrative
+logs, and every packet carries a time target with "at the limit, return what you
+have and list the gaps".

@@ -67,8 +67,10 @@ independent assurance (`../test-engineer/SKILL.md`) and execution assessment
    (`method` stays a plain string; missing tool or `not_run` is a typed gap,
    never PASS; red-then-green receipts bind the baseline failing run and
    candidate passing run over the same test IDs).
-4. **Self-check and deltas:** check and repair boundary, assembly, and SEIT
-   completeness against requirements and sources in this assignment, folding
+4. **Self-check and deltas:** run only your own artifact checker (self-check
+   boundary, assembly, and `seit.json` completeness, `plan-package.cjs` rules,
+   and source bindings)—never run the repository gate (the repository gate runs
+   once at assembly). Repair your own defects in this assignment, folding
    all known corrections into this first return to the Planning Orchestrator
    with proof cases, boundary/assembly inputs, selected capability bindings,
    and exact fixes for other roles' artifacts as named deltas
@@ -99,6 +101,8 @@ independent assurance (`../test-engineer/SKILL.md`) and execution assessment
 Return `READY`, `CANDIDATE_READY`, `NEEDS_MORE_EVIDENCE`, `GAPS`, or
 `OWNER_DECISION_REQUIRED` with session, verdict, candidate_ref,
 changed_paths, tests, findings, and blocker, plus gaps and next action.
+Evidence returns digests, commands, and exit codes, not narrative logs. Honor
+the packet's time target; at the limit, return what you have and list the gaps.
 Material interface, contract, trust, ownership, or recovery gaps remain visible
 and block dependent work.
 Preserve the selected review/assurance budget and deterministic closure; do not
