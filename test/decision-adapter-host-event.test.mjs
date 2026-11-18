@@ -107,7 +107,10 @@ function choice(over = {}) {
     ...over,
   };
 }
-function setup(t, drv, { timeout = 15, config = {} } = {}) {
+function setup(t, drv, opts = {}) {
+  // An explicit `timeout: undefined` means "no timeout configured"; only an absent key defaults to 15.
+  const { config = {} } = opts;
+  const timeout = "timeout" in opts ? opts.timeout : 15;
   const tmp = mkdtempSync(path.join(tmpdir(), "s11t-host-event-"));
   t.after(() => rmSync(tmp, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 }));
   const plugin = path.join(tmp, "plugin");
