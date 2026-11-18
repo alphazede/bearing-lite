@@ -28,7 +28,6 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { boundHook } from "./task-opt-in-fixture.mjs";
 import { ROOT, readShipped, assertLocalLinksResolve } from "./skill-contract-fixture.mjs";
-import { validateSkillDocument } from "./skills-conformance.test.mjs";
 
 const require = createRequire(import.meta.url);
 const hook = (rel) => require(path.join(ROOT, rel));
@@ -233,9 +232,8 @@ describe("SM04.T2 receiving behaviour proven per duty (B30-218, SEIT-B30-218)", 
 });
 
 describe("SM04.X1-X3 and B30-303: removal blocked, legacy routes kept, one owner per duty (SEIT-SM04-X)", () => {
-  it("SM04.X1 the Coordinator skill stays shipped and valid until every proof passes", () => {
-    const text = readShipped("skills/coordinator/SKILL.md");
-    assert.equal(validateSkillDocument("coordinator", text).ok, true);
+  // SM04.X1 skill-presence half removed by S20: coordinator-retirement.test.mjs:64 now requires the skill absent.
+  it("SM04.X1 the reference keeps the Coordinator available until every proof passes", () => {
     assert.match(flatText(readShipped(REF)), /Coordinator[^.]*\b(stays|remains) available\b[^.]*\buntil\b/i);
   });
 

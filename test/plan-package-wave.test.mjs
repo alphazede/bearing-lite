@@ -2,7 +2,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
@@ -95,8 +95,11 @@ describe("plan-package wave view (#190)", () => {
     assert.match(usage.stderr, /usage: .*wave <plan dir> <wave id>/);
   });
 
-  it("the coordinator skill names the wave read, verbatim launch, blocking wait, and exit order", () => {
-    const skill = readFileSync(path.join(ROOT, "skills/coordinator/SKILL.md"), "utf8");
+  it("the Implementation Orchestrator names the wave read, verbatim launch, blocking wait, and exit order", () => {
+    const refs = path.join(ROOT, "skills/bearing-lite/references");
+    const skill = [path.join(ROOT, "skills/bearing-lite/SKILL.md"), ...readdirSync(refs).filter((n) => n.endsWith(".md")).map((n) => path.join(refs, n))]
+      .map((f) => readFileSync(f, "utf8"))
+      .join("\n");
     assert.match(skill, /hooks\/plan-package\.cjs wave <plan dir> <wave id>/);
     assert.match(skill, /Launch with the packet's frozen-route form unchanged/);
     assert.match(skill, /Subscribe to native response\s+notifications; wait and wake on each agent return/);

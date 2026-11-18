@@ -7,7 +7,7 @@ import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(import.meta.url);
@@ -257,16 +257,17 @@ describe("CMD-HANDOFF-01 role-handoff (SEIT-HANDOFF-01)", () => {
       path.join(ROOT, "skills/bearing-lite/SKILL.md"),
       "utf8"
     );
-    const coordinator = readFileSync(
-      path.join(ROOT, "skills/coordinator/SKILL.md"),
-      "utf8"
-    );
+    const refs = path.join(ROOT, "skills/bearing-lite/references");
+    // Retired Coordinator's escalation duty (D9) lives in the Implementation Orchestrator text.
+    const implOrch = [path.join(ROOT, "skills/bearing-lite/SKILL.md"), ...readdirSync(refs).filter((n) => n.endsWith(".md")).map((n) => path.join(refs, n))]
+      .map((f) => readFileSync(f, "utf8"))
+      .join("\n");
     const assembly = readFileSync(path.join(ROOT, "skills/bearing-lite/references/planning-assembly.md"), "utf8");
     const taskState = readFileSync(path.join(ROOT, "skills/bearing-lite/references/task-state.md"), "utf8");
     assert.match(router, /references\/planning-assembly\.md/);
     assert.match(taskState, /parent controller is the Orchestrator on a direct packet/);
     assert.match(assembly, /`OWNER_DECISION_REQUIRED` naming the candidate and count/);
-    assert.match(coordinator, /Failed repair\s+or scope drift returns to the Orchestrator/);
+    assert.match(implOrch, /Failed repair\s+or scope drift returns to the Orchestrator/);
     assert.doesNotMatch(
       router,
       /only when Navigator|requires Navigator to bound|inherited from Bearing's Navigator/i

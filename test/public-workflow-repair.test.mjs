@@ -30,7 +30,7 @@ const mutants = [
     s => s.replace('1 local ruling;', '1 local ruling and rebaseline without owner approval;'), /tier 1 must not rebaseline/],
   ['storage prohibition polarity', 'skills/bearing-lite/references/storage-lifecycle.md', 'workflow-delivery.test.mjs',
     s => s.replace('Keep this bounded to assigned\npaths, never a whole-workspace purge.', 'Perform a whole-workspace purge.'), /bounded to assigned paths, no whole-workspace purge/],
-  ['method substitution polarity', 'skills/coordinator/references/wave-operations.md', 'workflow-delivery.test.mjs',
+  ['method substitution polarity', 'skills/bearing-lite/references/wave-operations.md', 'workflow-delivery.test.mjs',
     s => s.replace('never silently substituted\nwith another method', 'silently substituted\nwith another method'), /missing method must never substitute/],
 ];
 for (const [name, source, suite, mutate, failure] of mutants) test(`F02 named oracle rejects ${name}`, t => {

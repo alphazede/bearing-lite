@@ -11,6 +11,10 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SKILLS_DIR = path.join(ROOT, "skills");
 const LITE_REF_DIR = path.join(SKILLS_DIR, "bearing-lite", "references");
+/** Implementation Orchestrator text: router skill plus its references (receiving component per coordinator-migration.md). */
+const IMPL_ORCH = [path.join(SKILLS_DIR, "bearing-lite", "SKILL.md"), ...readdirSync(LITE_REF_DIR).filter((n) => n.endsWith(".md")).sort().map((n) => path.join(LITE_REF_DIR, n))]
+  .map((file) => readFileSync(file, "utf8"))
+  .join("\n");
 
 const ROUTER = "bearing-lite";
 const PLANNING = [
@@ -23,7 +27,6 @@ const PLANNING = [
 const ACTIVE_ROLES = [
   "implementer",
   "light-implementer",
-  "coordinator",
   "reviewer",
   "test-engineer",
   "scribe",
@@ -45,6 +48,8 @@ const RETIRED_SOURCE_SKILLS = [
   "set-bearings",
   "repository-fit",
   "map-the-route",
+  // S20 retired the Coordinator; its duties live in the Implementation Orchestrator text.
+  "coordinator",
 ];
 const HQ_METHOD_SKILLS = [
   "requirements-engineering",
@@ -325,31 +330,25 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     }
   });
 
-  it("Coordinator owns proven-independent lanes; Orchestrator owns sequencing", () => {
-    const coordinator = readFileSync(path.join(SKILLS_DIR, "coordinator", "SKILL.md"), "utf8");
+  it("Implementation Orchestrator launches ready independent packets and owns sequencing", () => {
+    const implOrch = IMPL_ORCH;
     const router = readFileSync(path.join(SKILLS_DIR, "bearing-lite", "SKILL.md"), "utf8");
     const taskState = readFileSync(path.join(SKILLS_DIR, "bearing-lite", "references", "task-state.md"), "utf8");
-    assert.match(coordinator, /Launch every ready independent\s+packet/);
-    assert.match(coordinator, /never force a Coordinator or nest another/);
-    assert.doesNotMatch(coordinator, /Trail Boss|Sub-Explorer|trail-boss|sub-explorer/);
+    assert.match(implOrch, /Launch every ready independent\s+packet/);
+    assert.doesNotMatch(implOrch, /Trail Boss|Sub-Explorer|trail-boss|sub-explorer/);
     assert.match(taskState, /Orchestrator alone writes cross-wave dependencies and Lifecycle-wide sequencing/);
     assert.doesNotMatch(router, /Trail Boss|Sub-Explorer|trail-boss|sub-explorer/);
     assert.ok(!existsSync(path.join(SKILLS_DIR, "navigator", "SKILL.md")));
   });
 
   it("Coordinator match/non-match states the one-wave activation predicate", () => {
-    const coordinator = readFileSync(path.join(SKILLS_DIR, "coordinator", "SKILL.md"), "utf8");
     const router = readFileSync(path.join(SKILLS_DIR, "bearing-lite", "SKILL.md"), "utf8");
     const onboard = readFileSync(path.join(SKILLS_DIR, "onboard-bearing", "SKILL.md"), "utf8");
     const reviewer = readFileSync(path.join(SKILLS_DIR, "reviewer", "SKILL.md"), "utf8");
     const taskState = readFileSync(path.join(SKILLS_DIR, "bearing-lite", "references", "task-state.md"), "utf8");
-    assert.match(coordinator, /only when enabled in the selected\s+profile and assigned that wave/);
     assert.match(onboard, /two or more proven-independent packets/);
     assert.match(onboard, /shared wave evidence/);
     assert.match(onboard, /aggregate repair\s+ownership/);
-    assert.match(coordinator, /roles\.coordinator\.enabled/);
-    assert.match(coordinator, /makes the role available, not mandatory/);
-    assert.match(coordinator, /Direct\s+packets stay with the Orchestrator; never force a Coordinator/);
     assert.match(taskState, /A wave that needs Coordinator while the route is omitted or disabled is a typed capability gap, not silent Orchestrator substitution/);
     assert.match(router, /needed Coordinator[\s\S]{0,80}omitted or disabled, is a typed capability gap, not substitution/);
     assert.match(taskState, /Direct packets never dispatch Coordinator/);
@@ -363,12 +362,10 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     assert.doesNotMatch(reviewer, /the coordinator then runs deterministic verification/);
   });
 
-  it("S09T migrated duties: the Implementation Orchestrator receives D1-D9 and D11 while the Coordinator stays available", () => {
+  it("S09T migrated duties: the Implementation Orchestrator receives D1-D9 and D11", () => {
     // B30-218, B30-303, SEIT-SM04-T: receiving text lands before removal (DES-F09).
-    const coordinator = readFileSync(path.join(SKILLS_DIR, "coordinator", "SKILL.md"), "utf8");
     const reviewer = readFileSync(path.join(SKILLS_DIR, "reviewer", "SKILL.md"), "utf8").replace(/\s+/g, " ");
     const migration = path.join(LITE_REF_DIR, "coordinator-migration.md");
-    assert.equal(validateSkillDocument("coordinator", coordinator).ok, true, "Coordinator stays shipped in W3 (SM04.X1)");
     assert.ok(existsSync(migration), "skills/bearing-lite/references/coordinator-migration.md must ship");
     // D8: either declared controller dispatches at the frozen boundary.
     assert.match(reviewer, /assigned wave controller[^.]*dispatches review[^.]*frozen boundary/);
@@ -386,7 +383,6 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
   it("matching activation cases succeed for representative roles", () => {
     const cases = [
       ["implementer", "implement packet with write-set change as implementer"],
-      ["coordinator", "orchestrate wave of implementer packets as coordinator"],
       ["intake", "intake choose repo workspace"],
       ["onboard-bearing", "configure profiles.json onboard-bearing setup"],
     ];
@@ -413,16 +409,6 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
         activationMatches("reviewer", reviewerV.description, "validate the plan structure quickly"),
         false,
         "reviewer must stay dormant for name-similar non-match"
-      );
-    }
-    const coordinator = readFileSync(path.join(SKILLS_DIR, "coordinator", "SKILL.md"), "utf8");
-    const coordinatorV = validateSkillDocument("coordinator", coordinator);
-    assert.equal(coordinatorV.ok, true);
-    if (coordinatorV.ok) {
-      assert.equal(
-        activationMatches("coordinator", coordinatorV.description, "do some repository work"),
-        false,
-        "coordinator must stay dormant for broad wording"
       );
     }
   });
@@ -474,7 +460,7 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
   });
 
   it("execution roles revalidate the visible checkout lease at wave-scoped boundaries", () => {
-    const coordinator = readFileSync(path.join(SKILLS_DIR, "coordinator", "SKILL.md"), "utf8");
+    const implOrch = IMPL_ORCH;
     const implementer = readFileSync(path.join(SKILLS_DIR, "implementer", "SKILL.md"), "utf8");
     const identity =
       /Revalidate the visible checkout\s+lease against the\s+approved Lifecycle,\s+repository, checkout\/worktree, branch,\s+candidate revision,\s+generation,\s+and active state/;
@@ -482,27 +468,27 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
       /Released, stale-generation,\s+forged, or\s+branch\/HEAD-drifted leases fail closed/;
     const waveScoped = /at wave start, after\s+(?:detected\s+)?drift, and before commit/;
     for (const [name, text] of [
-      ["coordinator", coordinator],
+      ["implementation-orchestrator", implOrch],
       ["implementer", implementer],
     ]) {
       assert.match(text, identity, `${name} must revalidate the full lease identity`);
       assert.match(text, waveScoped, `${name} must revalidate at wave-scoped boundaries`);
       assert.match(text, failClosed, `${name} must fail closed on drifted or forged leases`);
     }
-    assert.match(coordinator, /without\s+another generation or duplicate dispatch/);
+    assert.match(implOrch, /without\s+another generation or duplicate dispatch/);
     assert.match(implementer, /return WAITING_ON without writing/);
     assert.doesNotMatch(implementer, /every mutation/);
   });
 
   it("recorded Journey lineup snapshot outranks later global-default edits", () => {
     const router = readFileSync(path.join(SKILLS_DIR, "bearing-lite", "SKILL.md"), "utf8");
-    const coordinator = readFileSync(path.join(SKILLS_DIR, "coordinator", "SKILL.md"), "utf8");
+    const implOrch = IMPL_ORCH;
     const implementer = readFileSync(path.join(SKILLS_DIR, "implementer", "SKILL.md"), "utf8");
     const profilesRef = readFileSync(path.join(LITE_REF_DIR, "profiles.md"), "utf8");
     assert.match(router, /Preserve the recorded profile; use `references\/profiles\.md` for authorized amendments/);
     assert.match(profilesRef, /Later catalog edits do not mutate the frozen snapshot copy or its digest/);
     assert.match(profilesRef, /dated owner-confirmed visible amendment/);
-    assert.match(coordinator, /Use frozen selections, not live defaults/);
+    assert.match(implOrch, /Use frozen selections, not live defaults/);
     for (const [name, text] of [
       ["implementer", implementer],
     ]) {
@@ -521,7 +507,7 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
 
   it("Bearing Lite permits one review and one repair without re-review", () => {
     const router = readFileSync(path.join(SKILLS_DIR, "bearing-lite", "SKILL.md"), "utf8");
-    const coordinator = readFileSync(path.join(SKILLS_DIR, "coordinator", "SKILL.md"), "utf8");
+    const implOrch = IMPL_ORCH;
     const assembly = readFileSync(path.join(LITE_REF_DIR, "planning-assembly.md"), "utf8");
     const taskState = readFileSync(path.join(LITE_REF_DIR, "task-state.md"), "utf8");
     assert.match(router, /references\/planning-assembly\.md/);
@@ -529,11 +515,11 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     assert.match(assembly, /one review may authorize one repair/);
     assert.match(assembly, /`OWNER_DECISION_REQUIRED` naming the candidate and count/);
     assert.doesNotMatch(router, /Navigator/);
-    assert.match(coordinator, /max_assurance_rounds and assurance_rounds/, "coordinator must honor the Lite bound and visible count");
-    assert.match(coordinator, /assurance-policy\.md/);
-    assert.match(coordinator, /Failed repair\s+or scope drift returns to the Orchestrator/);
-    assert.match(coordinator, /without automatic rereview or budget reset/);
-    assert.match(coordinator, /Authorized repair closes by\s+deterministic checks/);
+    assert.match(implOrch, /max_assurance_rounds and assurance_rounds/, "Implementation Orchestrator must honor the Lite bound and visible count");
+    assert.match(implOrch, /assurance-policy\.md/);
+    assert.match(implOrch, /Failed repair\s+or scope drift returns to the Orchestrator/);
+    assert.match(implOrch, /without automatic rereview or budget reset/);
+    assert.match(implOrch, /Authorized repair closes by\s+deterministic checks/);
     assert.match(taskState, /`COMPLETE` is terminal for Bearing assurance/);
     assert.match(taskState, /deployment[\s\S]*does not reopen review/i);
   });
@@ -641,7 +627,7 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
       path.join(SKILLS_DIR, "planning-and-design", "references", "artifact-grammar.md"),
       "utf8"
     );
-    const coordinator = readFileSync(path.join(SKILLS_DIR, "coordinator", "SKILL.md"), "utf8");
+    const implOrch = IMPL_ORCH;
     const task = readFileSync(
       path.join(SKILLS_DIR, "bearing-lite", "templates", "task.md"),
       "utf8"
@@ -660,7 +646,7 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     for (const [name, text] of [
       ["artifact-grammar", grammar],
       ["planning-and-design", planning],
-      ["coordinator", coordinator],
+      ["implementation-orchestrator", implOrch],
       ["task-template", task],
       ["README", readme],
     ]) {
@@ -731,7 +717,7 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
 
   it("same-wave continuation, compact receipts, and at-end-only assurance are stated", () => {
     const router = readFileSync(path.join(SKILLS_DIR, "bearing-lite", "SKILL.md"), "utf8");
-    const coordinator = readFileSync(path.join(SKILLS_DIR, "coordinator", "SKILL.md"), "utf8");
+    const implOrch = IMPL_ORCH;
     const implementer = readFileSync(path.join(SKILLS_DIR, "implementer", "SKILL.md"), "utf8");
     const reviewer = readFileSync(path.join(SKILLS_DIR, "reviewer", "SKILL.md"), "utf8");
     const integration = readFileSync(path.join(SKILLS_DIR, "integration-engineer", "SKILL.md"), "utf8");
@@ -740,16 +726,16 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
       /verdict,\s*candidate_ref,\s*changed_paths,\s*tests,\s*findings,\s*and blocker/;
     const routing = readFileSync(path.join(LITE_REF_DIR, "role-routing.mmd"), "utf8");
     assert.match(routing, /may continue in-wave/);
-    assert.match(coordinator, /Resume from the wave receipt/);
-    assert.match(coordinator, /once per\s+wave/);
+    assert.match(implOrch, /Resume from the wave receipt/);
+    assert.match(implOrch, /once per\s+wave/);
     assert.match(implementer, /Continue this assignment while identity, authority, route, and generation hold/);
-    assert.match(coordinator, /do not reread accepted artifacts or redispatch\s+completed work/);
+    assert.match(implOrch, /do not reread accepted artifacts or redispatch\s+completed work/);
     assert.ok(!existsSync(path.join(SKILLS_DIR, "navigator", "SKILL.md")));
     assert.ok(!existsSync(path.join(SKILLS_DIR, "surveyor", "SKILL.md")));
     /** @type {Array<[string, string]>} */
     const compactRoles = [
       ["implementer", implementer],
-      ["coordinator", coordinator],
+      ["implementation-orchestrator", implOrch],
       ["reviewer", reviewer],
       ["integration-engineer", integration],
     ];
@@ -848,7 +834,6 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
   const LITE_REF = path.join(SKILLS_DIR, "bearing-lite", "references");
   const CADENCE_GOVERNED = Object.freeze({
     "bearing-lite/SKILL.md": path.join(SKILLS_DIR, "bearing-lite", "SKILL.md"),
-    "coordinator/SKILL.md": path.join(SKILLS_DIR, "coordinator", "SKILL.md"),
     "reviewer/SKILL.md": path.join(SKILLS_DIR, "reviewer", "SKILL.md"),
     "test-engineer/SKILL.md": path.join(SKILLS_DIR, "test-engineer", "SKILL.md"),
     "bearing-lite/templates/task.md": path.join(SKILLS_DIR, "bearing-lite", "templates", "task.md"),
@@ -890,10 +875,6 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
         /`max_assurance_rounds` is\s+1 per Journey/,
         /materially changed new Journey resets review allowance/,
       ],
-      "coordinator/SKILL.md": [
-        /Dispatch declared assurance only at-end/,
-        /defer assurance to the Router's final\s+Journey boundary/,
-      ],
       "reviewer/SKILL.md": [
         /any boundary other than at-end/,
         /Do not\s+review or repair that Journey again/,
@@ -924,6 +905,10 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
         `${label} must not declare a per-slice assurance round`
       );
     }
+    // Superseded Coordinator wording must not reappear in its receiving component.
+    for (const pattern of [/Dispatch declared assurance only at-end/, /defer assurance to the Router's final\s+Journey boundary/]) {
+      assert.doesNotMatch(IMPL_ORCH, pattern, `Implementation Orchestrator keeps superseded assurance text ${pattern}`);
+    }
     // The planning-cadence occurrences stay untouched and out of this scan.
     for (const exempt of CADENCE_EXEMPT) {
       assert.ok(
@@ -936,13 +921,13 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
 
   it("T-LITE-15 / W12-R5: role text agrees with the declared phase or wave unit", () => {
     // Approved rewrite: the Orchestrator states the unit budget through its linked
-    // planning-assembly reference; Coordinator and Test Engineer defer to the
+    // planning-assembly reference; Implementation Orchestrator and Test Engineer defer to the
     // assurance policy, which carries the canonical per-unit numbers.
     const assembly = readFileSync(path.join(LITE_REF_DIR, "planning-assembly.md"), "utf8");
     const policyText = readFileSync(path.join(LITE_REF_DIR, "assurance-policy.md"), "utf8");
     for (const [label, file] of Object.entries(CADENCE_GOVERNED)) {
       const text = label === "bearing-lite/SKILL.md" ? assembly : readFileSync(file, "utf8");
-      if (label === "coordinator/SKILL.md" || label === "test-engineer/SKILL.md") continue;
+      if (label === "test-engineer/SKILL.md") continue;
       assert.match(
         text,
         /declared (phase or wave|wave or phase)/i,
@@ -952,8 +937,8 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     assert.match(policyText, /One review round per declared cadence unit/);
     assert.match(policyText, /at most one aggregate repair/);
     assert.match(policyText, /The next distinct declared phase or wave carries its own budget/);
-    const coordinatorText = readFileSync(path.join(SKILLS_DIR, "coordinator", "SKILL.md"), "utf8");
-    assert.match(coordinatorText, /max_assurance_rounds and assurance_rounds; use\s+`\.\.\/bearing-lite\/references\/assurance-policy\.md`/);
+    const coordinatorText = IMPL_ORCH; // receiving component of the retired Coordinator (D8)
+    assert.match(coordinatorText, /max_assurance_rounds and assurance_rounds; use\s+`(?:(?:\.\.\/bearing-lite\/)?references\/)?assurance-policy\.md`/);
     assert.match(coordinatorText, /closes by\s+deterministic checks, without automatic rereview or budget reset/);
     const testEngineerText = readFileSync(path.join(SKILLS_DIR, "test-engineer", "SKILL.md"), "utf8");
     assert.match(testEngineerText, /Preserve the selected review\/assurance budget and deterministic closure/);

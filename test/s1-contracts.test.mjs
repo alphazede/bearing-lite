@@ -5,7 +5,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync, mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -200,20 +200,18 @@ describe("S1 profiles, migration, resume, and role/session contracts", () => {
     assert.doesNotMatch(scope, /Cap discovery at depth 4 and 200 paths/);
   });
 
-  it("Implementer, Reviewer, and Coordinator skills carry approved names after rename", () => {
+  it("Implementer and Reviewer skills carry approved names; retired Coordinator duties live in the Implementation Orchestrator", () => {
     const implementer = readFileSync(path.join(SKILLS, "implementer", "SKILL.md"), "utf8");
     const reviewer = readFileSync(path.join(SKILLS, "reviewer", "SKILL.md"), "utf8");
-    const coordinator = readFileSync(path.join(SKILLS, "coordinator", "SKILL.md"), "utf8");
+    const implOrch = [path.join(SKILLS, "bearing-lite", "SKILL.md"), ...readdirSync(path.join(SKILLS, "bearing-lite", "references")).filter((n) => n.endsWith(".md")).map((n) => path.join(SKILLS, "bearing-lite", "references", n))].map((f) => readFileSync(f, "utf8")).join("\n");
     assert.match(implementer, /^name: implementer$/m);
     assert.match(reviewer, /^name: reviewer$/m);
-    assert.match(coordinator, /^name: coordinator$/m);
     assert.match(implementer, /Test Implementer/);
     assert.match(implementer, /must not weaken independently authored tests/i);
     assert.match(implementer, /Neither.*self-certif/i);
     assert.match(implementer, /published standard/);
     assert.match(implementer, /recorded Lifecycle snapshot/);
-    assert.match(coordinator, /Launch every ready independent\s+packet/);
-    assert.match(coordinator, /never force a Coordinator or nest another/);
+    assert.match(implOrch, /Launch every ready independent\s+packet/);
     assert.match(reviewer, /`ACCEPT`, `ACCEPT_WITH_FINDINGS`, and `BLOCK` are terminal/);
     assert.match(reviewer, /`REPAIR_REQUIRED`\s+permits bounded correction/);
   });
