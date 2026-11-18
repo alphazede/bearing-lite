@@ -1,0 +1,78 @@
+{
+  "schema_version": "1",
+  "id": "CTRL-SEC-NFTABLES-ONEWAY",
+  "title": "One-way stateful nftables firewall rule",
+  "domain": "security",
+  "summary": "Enforces unidirectional connection initiation from a source zone to a destination zone/port via stateful nftables rules while dropping unsolicited reverse traffic.",
+  "tags": ["network", "firewall", "nftables", "boundary"],
+  "parameters": {
+    "table_name": {
+      "type": "string",
+      "required": true,
+      "description": "nftables family and table name enforcing the rule.",
+      "example": "inet filter"
+    },
+    "source_zone": {
+      "type": "string",
+      "required": true,
+      "description": "Originating interface, subnet, or zone permitted to initiate connections.",
+      "example": "wg0"
+    },
+    "destination_zone": {
+      "type": "string",
+      "required": true,
+      "description": "Target interface, subnet, or zone receiving initiated connections.",
+      "example": "eth0"
+    },
+    "protocol": {
+      "type": "string",
+      "required": true,
+      "enum": ["tcp", "udp"],
+      "description": "Transport protocol permitted in the forward direction.",
+      "example": "tcp"
+    },
+    "destination_port": {
+      "type": "integer",
+      "required": true,
+      "description": "Destination port number permitted in the forward direction.",
+      "example": 443
+    }
+  },
+  "requirement": {
+    "uid_prefix": "REQ-SEC-NFT-ONEWAY",
+    "title": "One-way nftables rule from {{source_zone}} to {{destination_zone}} ({{protocol}}/{{destination_port}})",
+    "statement": "While nftables policy {{table_name}} is active, the host firewall shall permit stateful {{protocol}} traffic initiated from {{source_zone}} to {{destination_zone}} port {{destination_port}} and drop unsolicited {{protocol}} traffic initiated from {{destination_zone}} to {{source_zone}}.",
+    "rationale": "Enforces a unidirectional trust boundary between {{source_zone}} and {{destination_zone}} so untrusted peers in {{destination_zone}} cannot initiate sessions into {{source_zone}}.",
+    "verification_method": "test"
+  },
+  "positive_case": {
+    "id_suffix": "POS",
+    "kind": "verification",
+    "method": "test",
+    "preconditions": [
+      "nftables ruleset {{table_name}} is loaded and active.",
+      "A listener is reachable in {{destination_zone}} on {{protocol}} port {{destination_port}}."
+    ],
+    "stimulus_or_procedure": "Initiate a {{protocol}} session from {{source_zone}} to {{destination_zone}} port {{destination_port}} and exchange a response over the established or related flow.",
+    "expected_result": "Forward packets and established/related return packets succeed; the nftables allow rule counter in {{table_name}} increments.",
+    "observable_evidence": "Session completion receipt from {{source_zone}} to {{destination_zone}}:{{destination_port}} and nft list table {{table_name}} counter increment.",
+    "pass_fail_rule": "PASS iff {{source_zone}} completes {{protocol}}/{{destination_port}} exchange with {{destination_zone}} and receives established/related replies; FAIL otherwise.",
+    "negative_or_failure_case": "Paired negative case: unsolicited {{protocol}} initiation from {{destination_zone}} toward {{source_zone}} is dropped by {{table_name}}.",
+    "oracle_source": "Netfilter and nftables stateful connection tracking (ct state established,related accept; default drop) policy specification."
+  },
+  "negative_case": {
+    "id_suffix": "NEG",
+    "kind": "verification",
+    "method": "test",
+    "preconditions": [
+      "nftables ruleset {{table_name}} is loaded and active.",
+      "No prior established conntrack entry exists from {{source_zone}} for the test tuple."
+    ],
+    "stimulus_or_procedure": "Send an unsolicited {{protocol}} initiation packet from {{destination_zone}} toward {{source_zone}} (including targeting port {{destination_port}}).",
+    "expected_result": "Packet is dropped by {{table_name}}, no session is established in {{source_zone}}, and the drop counter increments.",
+    "observable_evidence": "Connection refusal/timeout from {{destination_zone}} to {{source_zone}} and nft list table {{table_name}} drop counter delta.",
+    "pass_fail_rule": "PASS iff unsolicited reverse {{protocol}} initiation from {{destination_zone}} to {{source_zone}} is dropped with zero accepted packets; FAIL if any reverse initiation succeeds.",
+    "negative_or_failure_case": "Fails if {{table_name}} permits reverse-initiated {{protocol}} traffic or lacks a drop policy for {{destination_zone}} to {{source_zone}}.",
+    "oracle_source": "Netfilter and nftables hook default-drop policy evaluation contract."
+  }
+}

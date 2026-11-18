@@ -1,0 +1,70 @@
+{
+  "schema_version": "1",
+  "id": "CTRL-SEC-LUKS",
+  "title": "LUKS2 disk encryption at rest",
+  "domain": "security",
+  "summary": "Encrypts a persistent block device with LUKS2 so data at rest remains unreadable without an authorized key slot.",
+  "tags": ["storage", "encryption", "luks2", "at-rest"],
+  "parameters": {
+    "device_path": {
+      "type": "string",
+      "required": true,
+      "description": "Target block device or partition encrypted with LUKS2.",
+      "example": "/dev/nvme0n1p2"
+    },
+    "mapper_name": {
+      "type": "string",
+      "required": true,
+      "description": "Device-mapper target name when unlocked.",
+      "example": "cryptroot"
+    },
+    "cipher": {
+      "type": "string",
+      "required": false,
+      "default": "aes-xts-plain64",
+      "description": "Symmetric cipher specification recorded in the LUKS2 header."
+    },
+    "key_slot_policy": {
+      "type": "string",
+      "required": false,
+      "default": "tpm2-with-recovery-passphrase",
+      "description": "Authorized LUKS2 key-slot enrollment policy."
+    }
+  },
+  "requirement": {
+    "uid_prefix": "REQ-SEC-LUKS",
+    "title": "LUKS2 disk encryption for {{device_path}}",
+    "statement": "While persistent data is stored on {{device_path}}, the storage subsystem shall encrypt the volume with LUKS2 mapped at {{mapper_name}} using cipher {{cipher}} and key-slot policy {{key_slot_policy}}.",
+    "rationale": "Prevents offline disclosure or tampering of data at rest on {{device_path}} if storage media is removed or accessed without an unlocked key slot.",
+    "verification_method": "test"
+  },
+  "positive_case": {
+    "id_suffix": "POS",
+    "kind": "verification",
+    "method": "test",
+    "preconditions": [
+      "Target device {{device_path}} is provisioned and initialized with a LUKS2 header.",
+      "Cipher {{cipher}} and key-slot policy {{key_slot_policy}} are configured."
+    ],
+    "stimulus_or_procedure": "Inspect the LUKS2 header on {{device_path}}, unlock the volume to {{mapper_name}} using an enrolled credential under {{key_slot_policy}}, and verify active dm-crypt mapping.",
+    "expected_result": "LUKS2 header on {{device_path}} reports version 2 with cipher {{cipher}}, active key slots match {{key_slot_policy}}, and /dev/mapper/{{mapper_name}} is active for read-write mount.",
+    "observable_evidence": "cryptsetup luksDump {{device_path}} output confirming LUKS2 and {{cipher}}, plus dmsetup status {{mapper_name}} reporting an active crypt target.",
+    "pass_fail_rule": "PASS iff luksDump confirms LUKS2 with {{cipher}} and {{key_slot_policy}}, and {{mapper_name}} unlocks and reports an active crypt mapping; FAIL otherwise.",
+    "negative_or_failure_case": "Paired negative case: unlocking {{device_path}} with an unauthorized credential or mounting the raw unencrypted block device fails closed.",
+    "oracle_source": "Linux dm-crypt and LUKS2 on-disk header specification and cryptsetup luksDump / dmsetup status interface contracts."
+  },
+  "negative_case": {
+    "id_suffix": "NEG",
+    "kind": "verification",
+    "method": "test",
+    "preconditions": [
+      "Target device {{device_path}} is locked and /dev/mapper/{{mapper_name}} is absent."
+    ],
+    "stimulus_or_procedure": "Attempt to unlock {{device_path}} into {{mapper_name}} using an invalid passphrase/key, and attempt to mount {{device_path}} directly without unlocking LUKS.",
+    "expected_result": "Both unlock with an invalid credential and direct raw mount of {{device_path}} fail; /dev/mapper/{{mapper_name}} is not created and plaintext filesystem metadata is unreadable.",
+    "observable_evidence": "Non-zero exit status and key-rejection error from cryptsetup open on {{device_path}}, absent /dev/mapper/{{mapper_name}}, and failed direct mount.",
+    "pass_fail_rule": "PASS iff invalid unlock and direct raw mount both fail and {{mapper_name}} remains absent; FAIL if any unauthorized unlock or plaintext read succeeds.",
+    "negative_or_failure_case": "Fails if {{device_path}} accepts an invalid credential, falls back to unencrypted mount, or exposes unencrypted filesystem signatures.",
+    "oracle_source": "Linux dm-crypt / LUKS2 key-slot authentication specification and mount(2) filesystem signature refusal behavior."
+  }
+}

@@ -45,6 +45,14 @@ Loop: author → self requirements-quality pass → model and map → self-check
    meanings from Architectural Alignment and Scope; raise actual owner
    decisions; do not ask discoverable facts or choose a new scope, trust
    boundary, or residual risk.
+   For standard security controls (for example LUKS disk encryption, one-way
+   nftables rules, AppArmor MAC, or vTPM attestation), **select and
+   parameterize** the matching entry from `catalog/controls/` (validated by
+   `schemas/control-catalogue.schema.json`) instead of authoring its requirement
+   from zero: supply all required `parameters`, instantiate the entry's
+   `requirement` bound to the active `REQ-*` UID and decision trace, and leave
+   the paired positive/negative SEIT case IDs as pending bindings for
+   `integration_test` during `--stage requirements`.
 2. **Requirements self-quality pass and precheck:** check your own draft using
    the Requirements Engineering method's checklist and
    `references/gate-report.md`, then run only your own artifact checker: the

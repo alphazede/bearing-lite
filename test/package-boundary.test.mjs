@@ -22,6 +22,7 @@ const APPROVED_FILES_ALLOWLIST = [
   "LICENSE-APACHE",
   "profiles.json",
   "schemas/",
+  "catalog/",
   "templates/",
   "tools/",
   "com.github.copilot/",

@@ -1,0 +1,71 @@
+{
+  "schema_version": "1",
+  "id": "CTRL-SEC-VTPM",
+  "title": "Virtual TPM PCR-bound sealing and attestation",
+  "domain": "security",
+  "summary": "Binds sealed secrets and attestation quotes to expected TPM 2.0 PCR measurements via a virtual TPM device.",
+  "tags": ["vtpm", "tpm2", "attestation", "sealing"],
+  "parameters": {
+    "tpm_device": {
+      "type": "string",
+      "required": true,
+      "description": "Virtual TPM resource-manager device path.",
+      "example": "/dev/tpmrm0"
+    },
+    "pcr_bank": {
+      "type": "string",
+      "required": false,
+      "default": "sha256",
+      "enum": ["sha256", "sha384"],
+      "description": "TPM 2.0 PCR hash algorithm bank."
+    },
+    "expected_pcr_indices": {
+      "type": "string",
+      "required": true,
+      "description": "Comma-separated PCR indices bound to the sealing or attestation policy.",
+      "example": "0,2,7"
+    },
+    "sealed_object_purpose": {
+      "type": "string",
+      "required": true,
+      "description": "Protected secret or attestation operation governed by the vTPM policy.",
+      "example": "LUKS2 volume key unsealing"
+    }
+  },
+  "requirement": {
+    "uid_prefix": "REQ-SEC-VTPM",
+    "title": "Virtual TPM PCR binding for {{sealed_object_purpose}} on {{tpm_device}}",
+    "statement": "When performing {{sealed_object_purpose}}, the platform shall bind secrets and attestation quotes to {{pcr_bank}} PCRs {{expected_pcr_indices}} via vTPM device {{tpm_device}}.",
+    "rationale": "Prevents secret unsealing or attestation acceptance when boot, firmware, or measured runtime state deviates from the authorized baseline.",
+    "verification_method": "test"
+  },
+  "positive_case": {
+    "id_suffix": "POS",
+    "kind": "verification",
+    "method": "test",
+    "preconditions": [
+      "vTPM device {{tpm_device}} is attached and initialized.",
+      "{{pcr_bank}} PCRs {{expected_pcr_indices}} match the expected measured baseline."
+    ],
+    "stimulus_or_procedure": "Read {{pcr_bank}} PCRs {{expected_pcr_indices}} from {{tpm_device}}, generate a signed quote, and execute {{sealed_object_purpose}} against the baseline PCR policy.",
+    "expected_result": "vTPM {{tpm_device}} returns a valid {{pcr_bank}} quote over PCRs {{expected_pcr_indices}}, signature verification passes, and {{sealed_object_purpose}} succeeds.",
+    "observable_evidence": "tpm2_pcrread and tpm2_quote output on {{tpm_device}} covering {{pcr_bank}} PCRs {{expected_pcr_indices}}, verified signature, and successful {{sealed_object_purpose}}.",
+    "pass_fail_rule": "PASS iff {{tpm_device}} quote verifies over {{pcr_bank}} PCRs {{expected_pcr_indices}} and {{sealed_object_purpose}} succeeds under baseline measurements; FAIL otherwise.",
+    "negative_or_failure_case": "Paired negative case: extending any PCR in {{expected_pcr_indices}} causes {{sealed_object_purpose}} unseal or quote verification to fail.",
+    "oracle_source": "TCG TPM 2.0 Library Specification (TPM2_Quote, TPM2_Unseal, and PCR policy authorization)."
+  },
+  "negative_case": {
+    "id_suffix": "NEG",
+    "kind": "verification",
+    "method": "test",
+    "preconditions": [
+      "vTPM device {{tpm_device}} is attached with a policy bound to {{pcr_bank}} PCRs {{expected_pcr_indices}}."
+    ],
+    "stimulus_or_procedure": "Extend one PCR in {{expected_pcr_indices}} on {{tpm_device}} with a non-baseline measurement and attempt {{sealed_object_purpose}} unseal or quote verification.",
+    "expected_result": "vTPM {{tpm_device}} rejects the policy with TPM_RC_POLICY_FAIL (or quote verification rejects the PCR mismatch) without releasing secret material.",
+    "observable_evidence": "Non-zero exit status with TPM_RC_POLICY_FAIL or PCR-mismatch rejection on {{tpm_device}} and zero secret material released.",
+    "pass_fail_rule": "PASS iff altered {{pcr_bank}} PCR in {{expected_pcr_indices}} causes policy rejection and blocks {{sealed_object_purpose}}; FAIL if unseal or attestation succeeds.",
+    "negative_or_failure_case": "Fails if {{sealed_object_purpose}} succeeds despite tampered PCRs in {{expected_pcr_indices}} or missing {{tpm_device}}.",
+    "oracle_source": "TCG TPM 2.0 Library Specification TPM_RC_POLICY_FAIL PCR mismatch semantics."
+  }
+}

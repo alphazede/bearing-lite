@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Add reusable planning security control catalogue (`catalog/controls/` and `schemas/control-catalogue.schema.json`) with LUKS, one-way nftables, AppArmor, and vTPM seed entries, selection/parameterization guidance in `skills/mbse/` and `skills/integration-test/`, and `plan-package.cjs` selection validation. (Alphazedehq#584)
+
 ### Fixed
 
 - `sanitizeSvg` in `tools/render-dod-manifest.mjs` skips XML comments after whitespace or text between SVG elements while keeping all other sanitizer refusals unchanged. (Alphazedehq#575)

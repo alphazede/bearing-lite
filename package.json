@@ -38,6 +38,7 @@
     "LICENSE-APACHE",
     "profiles.json",
     "schemas/",
+    "catalog/",
     "templates/",
     "tools/",
     "com.github.copilot/"
