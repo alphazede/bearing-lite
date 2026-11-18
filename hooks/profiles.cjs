@@ -110,7 +110,8 @@ function evaluateCatalogState(input) {
     if (!NAME_PATTERN.test(name)) {
       return { outcome: "NEEDS_MORE_EVIDENCE", reason: "invalid_profile_name", path: profilesPath };
     }
-    const retired = retiredRoleKeys(profiles[name]);
+    const profile = profiles[name];
+    const retired = retiredRoleKeys(profile);
     const planning = retired.find((key) => RETIRED_PLANNING_ROUTE_KEYS.has(key));
     if (planning) {
       return {
@@ -130,7 +131,7 @@ function evaluateCatalogState(input) {
     }
     // B30-219 soft compatibility: a legacy Coordinator route never blocks the
     // catalog; it is reported once and otherwise ignored (F09, SM04 COMPATIBLE).
-    if (isPlainObject(profiles[name].roles) && "coordinator" in profiles[name].roles) {
+    if (isPlainObject(profile?.roles) && Object.hasOwn(profile.roles, "coordinator")) {
       diagnostics.push({ code: "retired_role_ignored", role: "coordinator", profile: name });
     }
   }
@@ -288,7 +289,7 @@ function evaluateCoordinatorRetirement(input) {
   for (const entry of journeys) {
     if (!isPlainObject(entry) || !isPlainObject(entry.journey)) continue;
     const status = entry.journey.status;
-    if (status === "complete" || status === "closed") continue;
+    if (status === "complete" || status === "closed" || status === "cancelled") continue;
     const snapshot =
       isPlainObject(entry.profile_selection) && isPlainObject(entry.profile_selection.snapshot)
         ? entry.profile_selection.snapshot

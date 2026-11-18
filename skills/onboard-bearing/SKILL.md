@@ -43,13 +43,11 @@ Loop: obtain explicit choices → validate → save authorized fields → valida
    returns `OWNER_DECISION_REQUIRED` with an onboard prompt; must ask for the missing
    Test Implementer and never copies or invents a route from Product Implementer,
    Test Engineer, Light Implementer, or a retired role.
-   `single_implementer` stays valid with no `test_implementer` field. Enabling Coordinator adds value only for a one-wave need
-   (two or more proven-independent packets, shared wave evidence, or aggregate repair
-   ownership); permit an explicit disabled choice. A disabled Coordinator on a true direct packet is not a capability gap. Declining Reverify or its
+   `single_implementer` stays valid with no `test_implementer` field. The Implementation Orchestrator owns coordination for independent packets, shared wave evidence and aggregate repair ownership. Existing Coordinator routes are ignored for new work. Preserve frozen legacy assignments as described in `../bearing-lite/references/coordinator-migration.md`. Declining Reverify or its
    download persists `deterministic_verification.reverify.enabled: false` for that named profile. Ask whether
    coverage assist (`review.coverage_assist`) is enabled and required; an explicit
    disabled choice is not a gap; its provider, model and credentials stay in its tooling. Use `references/verification-tools.md` to explain OCR, Reverify, and other optional testing tools and collect explicit choices.
-   For requested delegation configuration, use `../bearing-lite/references/owner-stops.md#coordinator-escalation-and-delegation`: explain Coordinator local decisions and two-attempt escalation; store `orchestrator-delegation` in holds, disabled unless explicitly enabled. Explain that enabled mode needs scoped task authority, exclusions and expiry, preserves protected actions and review/repair limits, and carries frozen decision holds into packets.
+   For a requested bounded delegation hold, use `../bearing-lite/references/owner-stops.md`. Store `orchestrator-delegation` in holds, disabled unless explicitly enabled. Enabled mode needs scoped task authority, exclusions and expiry, preserves protected actions and review/repair limits, and carries frozen decision holds into packets.
 4. Explain Orchestrator transcription as the default when Scribe is omitted/disabled; an enabled Scribe uses one persistent Lifecycle session and resumes from its receipt after a genuine reset. Preserve explicit personal preferences. Every specialist role is optional. Save explicit enabled/disabled choices;
    configuring a Reviewer does not request review for a task. Write only authorized
    choices atomically; validate schema readback. Store no credentials or unrequested backups.

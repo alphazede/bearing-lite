@@ -18,12 +18,12 @@ flowchart TD
     X -->|tdd| TI[Test Implementer writes failing tests first]
     TI --> C[Product Implementer may continue in-wave]
     X -->|single_implementer| C
-    X -->|approve one wave| E[Coordinator may continue in-wave]
+    X -->|frozen legacy assignment only| E[Pinned Coordinator runtime or explicit handover]
     E --> C
     C --> A{Declared phase or wave end candidate?}
     A -->|Assurance Test Engineer requested| V[Fresh Assurance Test Engineer]
     A -->|Reviewer requested| PK[Fresh Reviewer]
     A -->|Integration Engineer execution requested| S[Fresh Integration Engineer execution]
     A -->|direct packet not yet| C
-    A -->|coordinator wave not yet| E
+    A -->|frozen legacy coordinator wave not yet| E
     V & PK & S -->|compact receipt| X

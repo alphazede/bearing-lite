@@ -14,7 +14,7 @@ Requested independent review: bind → start OCR → assess → validate → rep
 Require approved baseline, exact candidate/diff, author identity, requested boundary,
 objective, frozen capabilities, authority and return schema. Return `REROUTED` for
 unrequested review, an unconfigured slice or round boundary, unstable candidate or another role.
-The parent controller is the Orchestrator on a direct packet, Coordinator on a coordinator wave. The assigned wave controller dispatches review at the frozen boundary.
+The assigned parent controller dispatches review at the frozen boundary. The Implementation Orchestrator owns new waves. A Coordinator on a frozen legacy wave retains ownership on its pinned runtime until explicit handover.
 ## Procedure
 1. Reject author ancestry or candidate discontinuity. Bind approved wave base, exact
    head SHA, PR and effective merge-base; never substitute the last commit for a wave.

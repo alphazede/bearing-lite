@@ -33,9 +33,9 @@ dependencies, not serial barriers: independent ready work runs in parallel.
    `handoff.md` and recommends a new Implementation Orchestrator session.
 9. **Implementation**: under `tdd` the Test Implementer runs before the
    Product Implementer; under `single_implementer` one Implementer writes
-   code and tests. Direct packets never dispatch **Coordinator**; the
-   Orchestrator is the parent controller. Coordinator continues only when the
-   approved graph has a one-wave need. Light Implementer takes mechanical slices.
+   code and tests. The Implementation Orchestrator owns new waves. Frozen
+   legacy Coordinator work continues on its pinned runtime or after explicit
+   handover. Light Implementer takes mechanical slices.
 10. **Test Engineer assurance**, **Reviewer**, and **Integration Engineer
     execution** run only when requested, at the configured cadence (defaults
     `phase`, `phase`, `lifecycle`).

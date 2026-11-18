@@ -130,7 +130,7 @@ describe("orchestrator-skill #214", () => {
     // Dispatch / stop evidence is the shipped wording itself; losing any of
     // these clauses fails here before classification runs.
     assert.match(text, /coordinating an approved multi-packet wave through its end boundary/i);
-    assert.match(text, /coordinator\/SKILL\.md.*runs\s+only\s+for\s+a\s+justified\s+profile-enabled\s+one-wave\s+need/s);
+    assert.match(text, /Implementation Orchestrator owns new waves and follows the linked migration\s+procedure for frozen legacy Coordinator assignments/s);
     assert.match(text, /Stop here and route onward; do not orchestrate\./);
     assert.match(text, /implementing one assigned bounded packet/i);
     assert.equal(
@@ -176,7 +176,7 @@ describe("orchestrator-skill #214", () => {
     // behavior change to the single policy owner and must fail here.
     assert.match(canon, /only\s+when the owner explicitly requests Bearing/);
     assert.match(canon, /Do not activate for\s+ordinary work/);
-    assert.match(canon, /coordinator\/SKILL\.md` only for a justified/);
+    assert.match(canon, /frozen legacy Coordinator assignment, use its pinned runtime or obtain an explicit handover/);
     assert.match(canon, /unrequested review stays inactive/i);
     assert.match(canon, /Launch each selected agent assignment once/);
     assert.match(canon, /Never replay completed stages/);

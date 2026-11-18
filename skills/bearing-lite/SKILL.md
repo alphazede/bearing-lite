@@ -10,12 +10,12 @@ description: >
 # Bearing Orchestrator
 
 Coordinate planning, implementation, verification, validation and delivery. Preserve scope, agents, authority and evidence.
-Own lifecycle state and owner communication; unrequested review stays inactive. Resolve Coordinator escalations using `references/owner-stops.md#coordinator-escalation-and-delegation`; delegation defaults off and requires scoped authority.
+Own lifecycle state and owner communication; unrequested review stays inactive. Resolve wave escalations using `references/owner-stops.md`.
 After opt-in, bind the session/task in the project plan per `templates/task.md`; installation, old plans, or role names never activate hooks. On resume, follow `references/resume.md` first; continue the recorded mode and next unfinished action.
 ## Modes
 
 - **Planning Orchestrator:** owns context, specialist dispatch, final plan/design, owner agreement, and the written handoff; does not dispatch implementation.
-- **Implementation Orchestrator:** checks handoff and follows `references/coordinator-migration.md` for direct and frozen Coordinator waves.
+- **Implementation Orchestrator:** checks handoff and follows `references/coordinator-migration.md` for wave duties and frozen legacy assignments.
 
 1. **Intake:** use `../intake/SKILL.md` to confirm repository and task location. Reuse confirmed inputs; ask only on material ambiguity.
 2. **Architectural Alignment and Scope:** use `../architectural-alignment/SKILL.md`
@@ -26,8 +26,7 @@ After opt-in, bind the session/task in the project plan per `templates/task.md`;
    planning review after assembly, before owner confirmation/handoff.
 4. **Implementation:** consume the handoff; in selected TDD run the frozen Test Implementer (`roles.test_implementer`)
    before Product Implementer. Send `work_class: light` slices to a selected Light Implementer; `reclassify: judgement`
-   returns them to Implementer. Honor dependencies, commands, and write sets; use
-   `../coordinator/SKILL.md` only for a justified profile-enabled coordination role.
+   returns them to Implementer. Honor dependencies, commands, and write sets. The Implementation Orchestrator owns new waves. For a frozen legacy Coordinator assignment, use its pinned runtime or obtain an explicit handover before continuing.
 5. **Review:** dispatch the owner-requested review immediately after the
    recorded boundary passes deterministic checks. Use the latest approved
    cadence: task, phase, rolling batch, or lifecycle. A recorded request
@@ -55,7 +54,7 @@ Consume each response once and dispatch newly ready work. Never poll logs, proce
 status, or worktrees, or use timers/sleep loops for periodic “still running” checks.
 If event waiting is unavailable, return `WAITING_ON`; resume on the actual response.
 Use `references/task-state.md` for state integrity, `references/resume.md` for resume and Scribe coverage, and `references/owner-stops.md` for authority/intent stops. Never replay completed stages or change routes.
-Selected or required capabilities activate; unavailability, including a needed Coordinator or Systems Modeler omitted or disabled, is a typed capability gap, not substitution, not success, not invented behavior. Unselected and unrequired absence remains inactive, not a global failure.
+Selected or required capabilities activate; unavailability, including a needed Systems Modeler omitted or disabled, is a typed capability gap, not substitution, not success, not invented behavior. Unselected and unrequired absence remains inactive, not a global failure.
 Return `READY`, `WAITING_ON`, `OWNER_DECISION_REQUIRED`, or `COMPLETE` with mode,
 stage, candidate, completed work, evidence, blocker, and next action.
 Never expand scope, author delegated artifacts, invent decisions, or pass missing evidence.

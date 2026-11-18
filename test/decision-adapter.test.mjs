@@ -55,7 +55,10 @@ const CALIBRATION = { dispatch_classification: CAL, post_run_trace_review: CAL, 
 
 // ---------- local systemone driver (port 0, logs every request) ----------
 const isFit = (q) => Array.isArray(q.options) && q.options.length === 2 && q.options.includes("yes") && q.options.includes("no");
-const questionsOf = (body) => ({ fit: body.questions.find(isFit), choice: body.questions.find((q) => !isFit(q)) });
+const questionsOf = (body) => {
+  const questions = Object.entries(body.questions).map(([id, q]) => ({ id, options: Object.keys(q.criteria) }));
+  return { fit: questions.find(isFit), choice: questions.find((q) => !isFit(q)) };
+};
 function hasArrayCriteria(node) {
   if (!node || typeof node !== "object") return false;
   if (!Array.isArray(node) && Array.isArray(node.criteria)) return true;
@@ -334,7 +337,7 @@ describe("rules first, no model call for a deterministic decision", () => {
     };
     walk(body.state.trusted);
     assert.deepEqual(found, expected, "trusted state carries the code-computed values");
-    for (const q of body.questions) {
+    for (const q of Object.values(body.questions)) {
       assert.doesNotMatch(JSON.stringify(q), /\b(count|how many|sum|add|total|compare|earlier|later|before|after)\b/i, "no question delegates arithmetic or dates");
     }
   });
@@ -342,6 +345,24 @@ describe("rules first, no model call for a deterministic decision", () => {
 
 // ---------- systemone shape, fit question, labels, state (TB04) ----------
 describe("one systemone request: fit first, neutral labels, separated state", () => {
+  it("SEIT-B30-221: the hosted record wire contract yields calibrated advice", async (t) => {
+    const drv = await driver(t);
+    const { ctx } = setup(t, drv);
+    drv.set((body) => {
+      const questions = body.questions;
+      if (!questions || Array.isArray(questions) || Object.keys(questions).length !== 2) return { status: 422 };
+      for (const q of Object.values(questions)) {
+        if (q.type !== "choice" || !q.instructions || !q.criteria || Array.isArray(q.criteria)) return { status: 422 };
+      }
+      const response = answer(body);
+      return { body: { answers: Object.fromEntries(Object.entries(response.answers)
+        .map(([id, probabilities]) => [id, { type: "choice", probabilities }])) } };
+    });
+    const advice = await decide(dispatchInput(), ctx);
+    assert.equal(advice.outcome, "ADVISED");
+    assert.equal(advice.meaning, "repair_lifecycle");
+  });
+
   it("SEIT-B30-221: one shared state, typed questions, criteria as a record; exactly one probability per option is read", async (t) => {
     const drv = await driver(t);
     const { ctx } = setup(t, drv);
@@ -350,8 +371,8 @@ describe("one systemone request: fit first, neutral labels, separated state", ()
     const body = drv.body();
     assert.equal(typeof body.state, "object");
     assert.ok(!Array.isArray(body.state) && !("states" in body), "one shared state");
-    assert.ok(Array.isArray(body.questions) && body.questions.length === 2, "typed questions");
-    for (const q of body.questions) assert.ok(typeof q.id === "string" && Array.isArray(q.options), "question has id and options");
+    assert.ok(!Array.isArray(body.questions) && Object.keys(body.questions).length === 2, "keyed questions");
+    for (const q of Object.values(body.questions)) assert.equal(q.type, "choice", "typed choice question");
     assert.equal(hasArrayCriteria(body), false);
     const crit = [];
     const walk = (n) => n && typeof n === "object" && Object.entries(n).forEach(([k, v]) => (k === "criteria" ? crit.push(v) : walk(v)));

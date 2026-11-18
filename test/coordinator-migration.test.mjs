@@ -233,8 +233,8 @@ describe("SM04.T2 receiving behaviour proven per duty (B30-218, SEIT-B30-218)", 
 
 describe("SM04.X1-X3 and B30-303: removal blocked, legacy routes kept, one owner per duty (SEIT-SM04-X)", () => {
   // SM04.X1 skill-presence half removed by S20: coordinator-retirement.test.mjs:64 now requires the skill absent.
-  it("SM04.X1 the reference keeps the Coordinator available until every proof passes", () => {
-    assert.match(flatText(readShipped(REF)), /Coordinator[^.]*\b(stays|remains) available\b[^.]*\buntil\b/i);
+  it("SM04.X1 removal follows the duty and profile proofs", () => {
+    assert.match(flatText(readShipped(REF)), /Before removal, verify every duty and profile proof/i);
   });
 
   it("SM04.X2 the reference forbids silently rewriting a frozen legacy route", () => {
@@ -251,10 +251,10 @@ describe("SM04.X1-X3 and B30-303: removal blocked, legacy routes kept, one owner
     assert.match(flatText(text), /never run both/i);
   });
 
-  it("B30-303 direct and explicitly delegated waves each have one controller", () => {
+  it("B30-303 new and frozen legacy waves each have one controller", () => {
     const text = flatText(readShipped(REF));
-    assert.match(text, /direct wave[^.]*Implementation Orchestrator/i);
-    assert.match(text, /frozen assignment[^.]*enabled Coordinator[^.]*retains its wave duties/i);
+    assert.match(text, /Implementation Orchestrator alone[^.]*new waves/i);
+    assert.match(text, /frozen assignment[^.]*enabled legacy Coordinator[^.]*retains that owner on its pinned runtime until an explicit handover/i);
     assert.match(rows(readShipped(REF)).get("D5")?.[0] ?? "", /changed paths[^.]*recorded write set/i);
   });
 });

@@ -35,8 +35,8 @@ The project's human-readable plan is the only task-state record. Diagrams explai
 
 ## Ownership rules
 
-- One parent controller writes each task block and its transitions. The parent controller is the Orchestrator on a direct packet and the Coordinator on a coordinator wave.
-- Orchestrator alone writes cross-wave dependencies and Lifecycle-wide sequencing. Direct packets never dispatch Coordinator. `roles.coordinator.enabled` means the route is available, not that every packet gets a Coordinator. A wave that needs Coordinator while the route is omitted or disabled is a typed capability gap, not silent Orchestrator substitution.
+- One parent controller writes each task block and its transitions. The parent controller is the Orchestrator on a direct packet or new wave. On a frozen legacy coordinator wave, the Coordinator retains ownership on its pinned runtime until explicit handover.
+- Orchestrator alone writes cross-wave dependencies and Lifecycle-wide sequencing. Direct packets never dispatch Coordinator. New waves also use the Implementation Orchestrator regardless of legacy catalog entries. A frozen legacy assignment without its pinned runtime or explicit handover is a typed capability gap.
 - Workers and assurance roles return handoffs; they do not race plan edits.
 - Candidate authors never provide their own Assurance Test Engineer, Reviewer, or Integration Engineer execution verdict. Implementer must not self-certify.
 - Waiting on a prerequisite consumes no correction attempt. Record corrections as evidence, not a fixed attempt cap. Preserve any owner-supplied allowance; identical retries without new evidence are invalid.
@@ -50,8 +50,7 @@ delivery, not assurance: it never opens or reopens a review.
 
 - **When:** a declared wave or phase, or a direct packet, is closed once its
   deterministic checks pass and any owner-requested review round has closed
-  through its deterministic gate. The parent controller (Coordinator on a
-  coordinator wave, Orchestrator on a direct packet) lands it before reporting
+  through its deterministic gate. The parent controller lands it before reporting
   the unit `READY` or `COMPLETE`. A unit is not landed while its requested
   review is pending.
 - **Commit:** revalidate the wave receipt at `commit`, then commit the closed

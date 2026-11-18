@@ -186,7 +186,7 @@ Site: `hooks/planning-review.cjs`. Trigger: each review evaluation, count unmeas
 
 ## Coordinator duty inventory
 
-One receiving component per duty. The Coordinator text is still the current owner. Removal is a later slice. D10 is profile compatibility, not one of the migrated duties, and is listed so it is not mistaken for a second owner of D1 to D9 or D11.
+One receiving component per duty. The source column records the former Coordinator procedure. The Implementation Orchestrator owns those duties for new waves. Frozen legacy assignments require their pinned runtime or an explicit handover. D10 is profile compatibility, not one of the migrated duties, and is listed so it is not mistaken for a second owner of D1 to D9 or D11.
 
 | Duty | Receiver | Current owner | Enforcement today |
 | --- | --- | --- | --- |

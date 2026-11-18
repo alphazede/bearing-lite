@@ -31,7 +31,7 @@ the lifecycle, profile, role states, reasoning, cadence, and plan together; no
 pre-planning profile or route-review gate is allowed.
 
 ```markdown
-- lifecycle: <direct packet | coordinator wave | orchestrated waves>
+- lifecycle: <direct packet | orchestrated waves>
 - review_cadence: phase
 - choice_basis: <proposed recommendation and reason; owner-approved at integrated review>
 - profile_snapshot: <named implementation/assurance instances plus the planning_review binding below>
@@ -199,8 +199,7 @@ Neither self-certifies.
 required assurance against Bearing Lite `max_assurance_rounds`. A repair or
 replacement candidate does not reset it; the next distinct declared phase or
 wave carries its own budget. The parent
-controller writes the count before dispatch: Orchestrator on a direct packet,
-Coordinator on a coordinator wave. If the review permits correction, use at
+controller writes the count before dispatch. If the review permits correction, use at
 most the one authorized review-directed repair, run deterministic parent-controller
 verification (consume applicable repaired-candidate results; no redundant rerun),
 and close the gate without another review. A failed repair or
@@ -221,4 +220,4 @@ review. Any source or candidate change during deployment is separately scoped.
 
 ## Single-writer reminder
 
-Only the parent controller updates this block after rereading it. The parent controller is the Orchestrator on a direct packet and the Coordinator on a coordinator wave. Implementer, Test Engineer, Reviewer, and Integration Engineer execution return compact receipts (`verdict`, `candidate_ref`, `changed_paths`, `tests`, `findings`, `blocker`); the parent controller records transitions. Workers do not edit the plan. Implementer must not self-certify. Orchestrator alone changes cross-wave dependencies or global sequencing. Update `implementation.json` and the DoD Manifest once per wave, plus owner-decision or blocker changes. Direct packets never dispatch Coordinator.
+Only the parent controller updates this block after rereading it. The parent controller is the Orchestrator on a direct packet or new wave. A Coordinator on a frozen legacy wave keeps ownership on its pinned runtime until explicit handover. Implementer, Test Engineer, Reviewer, and Integration Engineer execution return compact receipts (`verdict`, `candidate_ref`, `changed_paths`, `tests`, `findings`, `blocker`); the parent controller records transitions. Workers do not edit the plan. Implementer must not self-certify. Orchestrator alone changes cross-wave dependencies or global sequencing. Update `implementation.json` and the DoD Manifest once per wave, plus owner-decision or blocker changes. Direct packets never dispatch Coordinator.
