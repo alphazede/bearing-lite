@@ -29,11 +29,13 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
+import { once } from "node:events";
 import { spawn } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { createRequire } from "node:module";
+import { boundHook } from "./task-opt-in-fixture.mjs";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -42,7 +44,7 @@ const require = createRequire(import.meta.url);
 // Loaded per test so a missing module fails each case by name (expected-red baseline).
 const adapter = () => require(path.join(ROOT, "hooks/decision-adapter.cjs"));
 const transition = require(path.join(ROOT, "hooks/transition-order.cjs"));
-const { check: writeSetCheck } = require(path.join(ROOT, "hooks/write-set-check.cjs"));
+const writeLock = boundHook(require(path.join(ROOT, "hooks/orchestrator-write-lock.cjs")));
 const CASES = JSON.parse(readFileSync(path.join(FIX, "cases.json"), "utf8"));
 const KEY_VAR = "TEST_DECISION_KEY";
 const KEY = "TESTKEY-CANARY-9931";
@@ -119,7 +121,7 @@ async function driver(t) {
       const send = () => {
         if (res.destroyed) return;
         const text = out.text ?? JSON.stringify(out.body ?? {});
-        res.writeHead(out.status ?? 200, { "content-type": "application/json" }).end(text);
+        res.writeHead(out.status ?? 200, { "content-type": "application/json", ...out.headers }).end(text);
       };
       if (out.delayMs) setTimeout(send, out.delayMs).unref();
       else send();
@@ -596,6 +598,82 @@ describe("decision record and reuse", () => {
     assert.equal(drv.requests.length, 1, "one combined call; pending identity reused");
   });
 
+  it("bounded fallback while the decision record is busy", async (t) => {
+    const { ctx, record_file } = setup(t, null);
+    mkdirSync(record_file + ".lock");
+    const started = performance.now();
+    const result = await decide(dispatchInput(), {
+      ...ctx, budget: { total_ms: 200, elapsed_ms: 0, reserve_ms: 50 },
+    });
+    assert.equal(result.outcome, "SILENT_FALLBACK");
+    assert.ok(performance.now() - started < 1000, "contention must not outlive the host budget");
+  });
+
+  it("exact rule matching includes every JSON fact", async (t) => {
+    const { ctx } = setup(t, null);
+    const facts = { ...CASES.rule_rows[0].facts, role: "implementer" };
+    assert.equal((await disabled(dispatchInput({ facts }), ctx)).outcome, "RULE");
+    const extra = JSON.parse('{"__proto__":{"note":"extra fact"}}');
+    assert.equal((await disabled(dispatchInput({ facts: { ...facts, ...extra } }), ctx)).outcome, "SILENT_FALLBACK");
+  });
+
+  it("a short-budget duplicate leaves the active decision available to a later caller", async (t) => {
+    const drv = await driver(t);
+    const { ctx } = setup(t, drv);
+    const input = dispatchInput();
+    let requested;
+    const arrived = new Promise((resolve) => { requested = resolve; });
+    drv.set((body) => {
+      requested();
+      return { delayMs: 650, body: answer(body) };
+    });
+    const first = decide(input, ctx);
+    await arrived;
+    const short = await decide(input, { ...ctx, budget: { total_ms: 75, elapsed_ms: 0, reserve_ms: 0 } });
+    assert.equal(short.outcome, "SILENT_FALLBACK");
+    const third = decide(input, ctx);
+    assert.equal((await first).outcome, "ADVISED");
+    assert.equal((await third).outcome, "REUSED");
+    assert.equal(drv.requests.length, 1);
+  });
+
+  it("a decision can be retried after its claimant exits", { timeout: 5000 }, async (t) => {
+    const drv = await driver(t);
+    const { dir, ctx } = setup(t, drv);
+    const input = dispatchInput();
+    let requested;
+    const arrived = new Promise((resolve) => { requested = resolve; });
+    drv.set(() => {
+      requested();
+      return { delayMs: 10_000 };
+    });
+    const job = path.join(dir, "interrupted.json");
+    writeFileSync(job, JSON.stringify({
+      input, ctx: { ...ctx, budget: { total_ms: 650, elapsed_ms: 0, reserve_ms: 0 } },
+    }));
+    const child = spawn(process.execPath, [path.join(FIX, "run-decide.cjs"), job, path.join(dir, "unused.json")],
+      { stdio: "ignore" });
+    t.after(() => child.kill("SIGKILL"));
+    const exited = once(child, "exit");
+    await arrived;
+    child.kill("SIGKILL");
+    await exited;
+    await new Promise((resolve) => setTimeout(resolve, 650));
+    drv.set((body) => ({ body: answer(body) }));
+    assert.equal((await decide(input, ctx)).outcome, "ADVISED");
+    assert.equal(drv.requests.length, 2);
+  });
+
+  it("fallback on backend redirect keeps the packet within the configured endpoint", async (t) => {
+    const drv = await driver(t);
+    const other = await driver(t);
+    drv.set(() => ({ status: 307, headers: { location: other.url } }));
+    const { ctx } = setup(t, drv);
+    assert.equal((await decide(dispatchInput(), ctx)).outcome, "SILENT_FALLBACK");
+    assert.equal(drv.requests.length, 1);
+    assert.equal(other.requests.length, 0);
+  });
+
   it("SEIT-SM02-T ->RECORDED: rule, reuse, advice, no-proposal and fallback outcomes are each recorded privately", async (t) => {
     const drv = await driver(t);
     const { ctx, record_file } = setup(t, drv);
@@ -676,7 +754,9 @@ describe("probabilities, key and packet never reach agents or logs", () => {
 // ---------- deterministic authority (B30-210, TB05) ----------
 describe("advisory only: deterministic gates keep final authority", () => {
   const gates = {
-    "write-set violation": () => writeSetCheck(tmpdir(), ["decision-adapter-absent-file.txt"]).outcome,
+    "write-set violation": (advice) => writeLock.evaluate({
+      role: "orchestrator", paths: ["docs/plans/example/seit.json"], advice,
+    }).verdict,
     "missing receipt": (advice) => transition.evaluate({ from_state: "IN_PROGRESS", to_state: "EVIDENCE_READY", prerequisites_met: false, missing_step: "receipt", advice }).outcome,
     "owner hold": (advice) => transition.evaluate({ action_kind: "owner_stop_check", owner_stop: { class: "C", blocking: true, evidence_ref: "hold-1" }, advice }).outcome,
     "assurance required": (advice) => transition.evaluate({ from_state: "ACCEPTANCE", to_state: "COMPLETE", required_assurance: ["reviewer"], assurance_completed: [], advice }).outcome,
@@ -692,7 +772,7 @@ describe("advisory only: deterministic gates keep final authority", () => {
       assertAgentSafe(on);
       assert.equal(on.outcome, "ADVISED", "opposite action proposed");
       assert.equal(gate(on), gate(off), "gate outcome unchanged by the proposal");
-      assert.ok(["FAIL", "REROUTE", "BLOCK"].includes(gate(on)), `the gate still refuses (${gate(on)})`);
+      assert.ok(["FAIL", "REROUTE", "BLOCK", "DENY_DISPATCH"].includes(gate(on)), `the gate still refuses (${gate(on)})`);
     });
   }
 });
