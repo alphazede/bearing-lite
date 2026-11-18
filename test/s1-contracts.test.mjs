@@ -279,3 +279,139 @@ describe("S1 profiles, migration, resume, and role/session contracts", () => {
     assert.match(reviewer, /`REPAIR_REQUIRED`\s+permits bounded correction/);
   });
 });
+
+describe("onboard-bearing rc.2 checklist, validation, and wording (Alphazedehq#582)", () => {
+  it("provides an ordered checklist covering every schema key, Fellow, and the rc.2 merged role shape with no keyless questions", () => {
+    const schema = JSON.parse(readFileSync(path.join(ROOT, "schemas/profiles.schema.json"), "utf8"));
+    const onboard = readFileSync(path.join(SKILLS, "onboard-bearing", "SKILL.md"), "utf8");
+
+    // Verify schema still defines the top-level and profile keys onboard-bearing must cover.
+    assert.equal(Object.hasOwn(schema.properties, "fellow"), true);
+    assert.equal(Object.hasOwn(schema.properties, "defaults"), true);
+    assert.equal(Object.hasOwn(schema.$defs.profile.properties, "assurance_repair"), true);
+
+    // Merged rc.2 role shape (Alphazedehq#580 + amendment) and catalog Fellow (Alphazedehq#579).
+    for (const pattern of [
+      /ordered checklist/i,
+      /fellow/,
+      /defaults\.planning/,
+      /defaults\.implementation/,
+      /roles\.mbse\.sessions\.planning/,
+      /roles\.integration_test\.sessions\.planning/,
+      /roles\.test_engineer\.sessions\.assurance/,
+      /roles\.integration_engineer\.sessions\.execution/,
+      /roles\.implementer/,
+      /roles\.test_implementer/,
+      /roles\.light_implementer/,
+      /roles\.reviewer/,
+      /roles\.scribe/,
+      /development_strategy\.mode/,
+      /planning_to_implementation_clean_session/,
+      /concurrency\.dispatch_ready_independent_work/,
+      /concurrency\.preserve_order_for_dependencies_interfaces_write_overlap_and_shared_mutable_resources/,
+      /review\.coverage_assist/,
+      /deterministic_verification\.reverify\.enabled/,
+      /deterministic_verification\.additional_tools/,
+      /assurance_repair\.enabled/,
+      /orchestrator-delegation/,
+    ]) {
+      assert.match(onboard, pattern, `onboard-bearing SKILL.md must cover ${pattern}`);
+    }
+
+    // Legacy planning keys are refused; no separate planning session on Integration Engineer or Test Engineer.
+    assert.doesNotMatch(onboard, /Integration Engineer's separate planning and execution sessions/);
+    assert.match(onboard, /requirements_engineer.*systems_modeler[\s\S]{0,120}refused/i);
+    assert.match(onboard, /test_engineer\.sessions\.planning[\s\S]{0,120}integration_engineer\.sessions\.planning[\s\S]{0,120}refused/i);
+
+    // Item 7: no planning review question (or any setting without a schema key).
+    assert.doesNotMatch(onboard, /,\s*planning review,/i);
+    assert.match(onboard, /no key in `schemas\/profiles\.schema\.json`|without a schema key/i);
+  });
+
+  it("names hooks/profiles.cjs validation functions and preserves host-extension-owned keys", () => {
+    const onboard = readFileSync(path.join(SKILLS, "onboard-bearing", "SKILL.md"), "utf8");
+    const verTools = readFileSync(
+      path.join(SKILLS, "onboard-bearing", "references", "verification-tools.md"),
+      "utf8"
+    );
+
+    assert.match(onboard, /hooks\/profiles\.cjs/);
+    assert.match(onboard, /evaluateCatalogState/);
+    assert.match(onboard, /freezeSelectedRoutes/);
+    assert.match(onboard, /host extension/i);
+    assert.match(onboard, /preserv(?:e|ing)[\s\S]{0,80}host[- ]extension/i);
+    assert.match(verTools, /hooks\/profiles\.cjs/);
+
+    // Real hooks/profiles.cjs evaluation and freeze tolerate host-extension keys without stripping.
+    const dir = mkdtempSync(path.join(tmpdir(), "bearing-ext-keys-"));
+    try {
+      const home = path.join(dir, "home");
+      const catalogDir = path.join(home, ".agents", "bearing-lite");
+      mkdirSync(catalogDir, { recursive: true });
+      const catalog = {
+        schema_version: 1,
+        host_extension_meta: { owner: "ext-test", version: 1 },
+        fellow: {
+          harness: "h-fellow",
+          model: "m-fellow",
+          reasoning: "r-fellow",
+          ordered_fallbacks: [],
+        },
+        profiles: {
+          "ext-profile": {
+            ext_routing: { route_id: "ext-1" },
+            roles: {
+              implementer: {
+                enabled: true,
+                primary: { harness: "h-a", model: "m-a", reasoning: "r-a" },
+                ordered_fallbacks: [],
+              },
+            },
+            development_strategy: { mode: "single_implementer" },
+          },
+        },
+      };
+      writeFileSync(path.join(catalogDir, "profiles.json"), JSON.stringify(catalog));
+      const state = profilesHook.evaluateCatalogState({ env: { HOME: home } });
+      assert.equal(state.outcome, "READY");
+      const frozen = profilesHook.freezeSelectedRoutes({
+        profile: catalog.profiles["ext-profile"],
+        catalog,
+      });
+      assert.ok(frozen.snapshot && typeof frozen.digest === "string");
+      assert.deepEqual(frozen.snapshot.fellow, catalog.fellow);
+      assert.deepEqual(catalog.host_extension_meta, { owner: "ext-test", version: 1 });
+      assert.deepEqual(catalog.profiles["ext-profile"].ext_routing, { route_id: "ext-1" });
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("profiles.md Route effort and Fellow reflects the opened session and catalog Fellow", () => {
+    const profiles = readFileSync(
+      path.join(SKILLS, "bearing-lite", "references", "profiles.md"),
+      "utf8"
+    );
+    const section = profiles.split(/^## Route effort and Fellow$/m)[1] ?? "";
+    assert.ok(section.length > 0, "profiles.md must have Route effort and Fellow section");
+    assert.doesNotMatch(section, /the route the owner selected for a smaller model/);
+    assert.match(section, /session the owner opens/i);
+    assert.match(section, /catalog(?:-level)?\s+`?fellow`?|optional Bearing-level/i);
+    assert.match(section, /snapshot\.fellow/);
+  });
+
+  it("welcome.md lineup wording explicitly names profiles.json and rules out lineups.json", () => {
+    const welcome = readFileSync(
+      path.join(SKILLS, "onboard-bearing", "references", "welcome.md"),
+      "utf8"
+    );
+    const questionLine = welcome
+      .split("\n")
+      .find((line) => line.startsWith("> How would you like to begin:"));
+    assert.ok(questionLine, "welcome.md must keep the opening question");
+    assert.match(questionLine, /profiles\.json/);
+    assert.match(questionLine, /not\s+(?:legacy\s+)?lineups\.json/i);
+    assert.match(welcome, /\|\s*Configure an existing[^|]*profiles\.json[^|]*\|/);
+    assert.match(welcome, /mbse[\s\S]{0,40}integration_test/);
+  });
+});

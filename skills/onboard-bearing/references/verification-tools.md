@@ -77,5 +77,7 @@ Example fields for a user-confirmed repository test command:
 }
 ```
 
-The example is not a preselected command. Validate against the profile schema
-and save only explicit choices. Existing profiles without this list remain valid.
+The example is not a preselected command. Validate Bearing Lite fields against
+the profile schema and run `evaluateCatalogState` and `freezeSelectedRoutes`
+from `hooks/profiles.cjs`, preserving any unaddressed or host-extension-owned
+keys, and save only explicit choices. Existing profiles without this list remain valid.
