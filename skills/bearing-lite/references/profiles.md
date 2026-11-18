@@ -203,3 +203,15 @@ onboard-bearing asks which route to assign. Migration asks for a missing Test
 Implementer route only in `tdd`; it never copies or invents `test_implementer` from Product
 Implementer, Test Engineer, Light Implementer, or a retired role.
 Validate the new profile, then remove `lineups.json`.
+
+## Route effort and Fellow
+
+Select an orchestrator model and reasoning effort from the task and from
+observed results. Never lower that effort automatically because the selected
+model is smaller. When the Orchestrator is only waiting or dispatching, use
+the route the owner selected for a smaller model, and do not lower that
+route's selected reasoning effort.
+
+Only the Orchestrator consults the Fellow. The procedure is
+`consultation.md`. The Fellow route is frozen with the profile like every
+other role.

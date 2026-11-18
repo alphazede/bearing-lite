@@ -49,6 +49,10 @@ choice not to review is recorded. Never forge a receipt or add a reviewer.
 aggregated repair; a further `requires_regate` finding returns
 `NEEDS_OWNER_DECISION`. Details: `planning-assembly.md`.
 
+When the owner requests comprehension, adversarial-specification or
+semantic-readiness checks, they run inside this existing review. They add no
+stop, role, review cycle or reviewer fan-out.
+
 When review is requested, the Planning Orchestrator writes the separate
 Lifecycle binding in the approved profile snapshot. It lists unique abstract `slot_id` values, each slot's owner-selected
 `primary_route_ref`, and ordered `fallback_route_refs`. Each receipt records a

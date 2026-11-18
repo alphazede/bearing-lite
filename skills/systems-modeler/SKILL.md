@@ -24,7 +24,11 @@ models/views → recheck → return. Final Orchestrator design follows these inp
 
 1. Select `sysml-v2`, `diagram-assisted`, or `not-applicable`. Attach
    view metadata. In `sysml-v2`, record model revision/digest and native
-   or derived views.
+   or derived views. For a state-machine model, write each rule the owner
+   accepts as a named invariant and label states and transitions in the
+   reader's words. Keep a view readable at a glance; merge only states that
+   behave alike and break no different rule, and list hidden transitions in
+   the view's omissions.
 2. Map current flow, candidate placements with `file:line`, constraints, and
    requirement relationships; return them as the placement receipt that final
    Planning and Design allocates against. Self-check model quality, source identities,

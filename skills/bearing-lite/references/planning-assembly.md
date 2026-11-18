@@ -7,8 +7,10 @@ tags: [bearing, planning]
 # Planning dispatch and assembly
 
 The Planning Orchestrator owns coordination, final planning/design, and package
-assembly in its current session. Selected specialists own their inputs. No extra
-planning controller or final-design author is needed. Reuse completed work.
+assembly in its current session. It keeps research, fact-finding, owner
+interviewing, architectural alignment, scope and plan synthesis. Selected
+specialists own their inputs. No extra planning controller or final-design
+author is needed. Reuse completed work.
 
 ## Inputs and ownership
 
@@ -84,7 +86,9 @@ not permission to start repeated polling or duplicate an invocation.
 ## Implementation order after the handoff
 
 1. The Implementation Orchestrator consumes the approved handoff, validates its
-   candidate and authority, and schedules dependency-ready implementation slices.
+   candidate and authority, executes the frozen plan without redoing planning,
+   and schedules dependency-ready implementation slices. The pace rules are in
+   `coordinator-migration.md`.
 2. In selected `tdd` mode, the configured Test Implementer writes the authorized
    tests and records the expected baseline failure before Product Implementer runs.
 3. Product Implementer writes the behavior against those tests. In selected

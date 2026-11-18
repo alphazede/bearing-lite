@@ -42,14 +42,20 @@ One profile-enabled assignment and invocation. Extra runs or route changes need 
    For a verified contract defect, establish the smallest failing regression first.
    Follow the red/repair/green ordering in `references/tdd.md`.
 3. Make the smallest change that satisfies the packet inside the write set.
+   Remove authorized dead code, redundant validators and empty references
+   before adding. Propagate an approved redesign through every reference it
+   touches. Keep one source per decision. Select the implementation and
+   validation techniques inside this assignment; do not delegate that work.
    For a published standard, verify its cited document and clause before changing
    code; neighbouring behavior is not the authority. When the packet carries a
    design lens, follow its rows per `../planning-and-design/references/oopdsa-design.md`.
 4. Product/combined Implementer: run assigned checks, inspect results, repair your
-   own defects in this assignment, recheck, and return. At-end review never removes
+   own defects in this assignment, recheck, and return. Suspect the observation
+   method before the system. Script the check and keep its output visible. At-end review never removes
    deterministic testing or grants independent-review identity; diagnostic verification receipts never satisfy an assurance gate. Report results against the mutation, changed-line coverage, and red-then-green claim types with the target repository's own tool; a declared gate with a missing tool or a `not_run` outcome is a typed gap, never PASS. Every red-then-green receipt binds the baseline failing run and the candidate passing run over the same test ids; author gate-chain receipts are diagnostic and cannot satisfy an assurance gate.
 5. Preserve unrelated work. Return only the compact receipt. Stop on acceptance,
-   authority boundary, design gap, or exhausted correction.
+   authority boundary, design gap, or exhausted correction. When a needed file
+   is outside the recorded write set, stop and return that need to the Orchestrator.
 
 ## Return and recovery
 

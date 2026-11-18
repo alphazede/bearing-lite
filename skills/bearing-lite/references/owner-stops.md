@@ -9,10 +9,12 @@ extra role, review gate, approval checkpoint, or scope to resolve uncertainty.
 | --- | --- | --- |
 | A | Existing policy | Apply the cited rule and record a dated execution receipt. A real policy conflict is a C boundary decision. |
 | B | Approved fallback | Verify unavailability under the frozen fallback condition; activate the next eligible approved route and record evidence. Changing the profile or fallback condition is C. |
-| C | Bound, scope, policy conflict, or a second planning-gate correction round | Ask for the smallest amendment when it blocks ready work. Never reset a spent bound. Role or session changes and labels such as reconciliation, delta, or refresh cannot renew a spent allowance. After the planning wave's one `requires_regate` correction round, a further round is this class; the default is to apply the specialist's exact proposed text, verify it mechanically, and list the residual at the integrated gate. |
+| C | Bound, scope, policy conflict, or a second planning-gate correction round | Ask for the smallest amendment when it blocks ready work. Never reset a spent bound. Role or session changes and labels such as reconciliation, delta, or refresh cannot renew a spent allowance. After the planning wave's one `requires_regate` correction round, a further round is this class; the default is to apply the specialist's exact proposed text, verify it mechanically, and list the residual at the integrated gate. A conflict between two owner records follows the later approved artifact and is recorded, not asked. Repair rounds continue until deterministic gates pass; only review rounds are capped at one. |
 | D | Continue approved work | Use the effective continuation grant; never ask again while its conditions hold. Missing or expired authority is F. |
 | E | Integrated plan approval | Present the package once for approval or change; execution waits for explicit approval. |
 | F | Authority reserved to the owner | Ask only when the action is not already expressly authorized. Owner holds remain effective until explicitly lifted. |
+
+When reporting to the owner, open with one sentence naming what waits on them, or that nothing does. For each pending call give the decision, your pick, the evidence, and the risk in about 30 words. Leave out hashes, paths and commands unless the owner needs one to act.
 
 Orchestrator records source-backed decisions, receipts, ledger snapshots, and history
 by default. When the selected profile enables Scribe, that role owns transcription

@@ -12,15 +12,18 @@ In `design.md`, after `## Interface Option Check`, Planning and Design writes
 and reuse existing components first.
 
 1. **Requirements trace.** One line per requirement or `CONTRACT-*` ID: its owning module, class or function.
-2. **Ownership and boundaries.** State holders, permitted mutators and component interfaces. Name the reused abstraction, or why a new one removes real duplication.
+2. **Ownership and boundaries.** State holders, permitted mutators and component interfaces. Name the reused abstraction, or why a new one removes real duplication, branches or invalid states.
 3. **Pattern and plain-code decisions.** Patterns used, simpler options rejected and frameworks, layers or class hierarchies deliberately omitted.
-4. **Data structures and algorithms.** For each hot path: structure, key, access pattern, time/space complexity, required input size and where current cost was measured (or mark it unmeasured).
-5. **Edge cases and invariants.** Empty, duplicate, boundary, ordering and failure cases, with each typed result.
+4. **Data structures and algorithms.** For each hot path: structure, key, access pattern, time/space complexity, required input size and where current cost was measured (or mark it unmeasured). For stateful logic, name the structure that holds the domain rule (a state machine, a closed set of variants, a lookup table or a typed record) and the invalid states it prevents. Apply this when the change adds another branch to an existing chain or a flag that must stay in step with another flag; keep plain code when the logic is local and unlikely to grow. Name the state-and-types method for invalid-state prevention, boundary parsing, schema-derived types and exhaustive branches. Do not copy that method here. Shared engineering methods stay named from the private skills tree; this reference adds no shared-skills repository.
+5. **Edge cases and invariants.** Empty, duplicate, boundary, ordering and failure cases, with each typed result. For a state-changing command, state what a second run, or a rerun after a crash at any step, leaves behind.
 6. **SEIT proof obligations.** The SEIT row proving each invariant and each complexity bound that matters.
 
 A trivial plan writes `oopdsa_skip: trivial - <reason>` instead. Each non-trivial
 slice in `implementation.json` lists `OOPDSA Implementation Design` in `design_lenses`
 and its owned `CONTRACT-*` or requirement IDs.
+When a change affects a component, design that component's model as a whole
+first, schedule removals before additions, and deliver the smallest complete
+change in waves. Keep one source of truth per decision.
 
 ## Packet: carry the rows
 
