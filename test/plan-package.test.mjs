@@ -55,6 +55,25 @@ describe("plan-package (#77 light slices)", () => {
     ]);
     assert.deepEqual(checkWorkClass({ waves: [{ slices: [{ id: "S1.2", role: "Crewmate", command_ids: [] }] }] }), []);
   });
+  it("ignores dod_manifest.tasks rows with work_class: light while still flagging light slices (#576)", () => {
+    const doc = {
+      slices: [{ id: "S1.1", role: "Light Implementer", work_class: "light", command_ids: ["CMD-1"] }],
+      dod_manifest: {
+        tasks: [
+          { id: "S1.1", role: "Light Implementer", work_class: "light" },
+          { id: "S1.2", role: "Implementer", work_class: "light" },
+        ],
+      },
+    };
+    assert.deepEqual(checkWorkClass(doc), []);
+    assert.deepEqual(
+      checkWorkClass({
+        slices: [{ id: "S1.3", role: "Light Implementer", work_class: "light", command_ids: [] }],
+        dod_manifest: doc.dod_manifest,
+      }),
+      [{ code: "light_slice_without_command", step: "S1.3" }]
+    );
+  });
 });
 
 describe("plan-package (#80 planning-only roles)", () => {

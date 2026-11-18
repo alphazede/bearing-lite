@@ -71,14 +71,17 @@ function checkRoles(seit, implementation) {
 
 /** #77: a light slice must run at least one command and be routed to the Light Implementer. */
 function checkWorkClass(node, findings = []) {
-  if (Array.isArray(node)) node.forEach((item) => checkWorkClass(item, findings));
-  else if (node && typeof node === "object") {
-    if (node.work_class === "light" && typeof node.id === "string") {
-      if (!(node.command_ids || []).length) findings.push({ code: "light_slice_without_command", step: node.id });
-      if (node.role !== "Light Implementer") findings.push({ code: "light_slice_role", step: node.id, role: node.role });
+  if (!node || typeof node !== "object" || Array.isArray(node)) return findings;
+  walk({ slices: node.slices, waves: node.waves }, (entry) => {
+    if (!Array.isArray(entry.slices)) return;
+    for (const slice of entry.slices) {
+      if (!slice || typeof slice !== "object") continue;
+      if (slice.work_class === "light" && typeof slice.id === "string") {
+        if (!(slice.command_ids || []).length) findings.push({ code: "light_slice_without_command", step: slice.id });
+        if (slice.role !== "Light Implementer") findings.push({ code: "light_slice_role", step: slice.id, role: slice.role });
+      }
     }
-    for (const value of Object.values(node)) checkWorkClass(value, findings);
-  }
+  });
   return findings;
 }
 
