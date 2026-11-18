@@ -20,10 +20,17 @@ After opt-in, bind the session/task in the project plan per `templates/task.md`;
 1. **Intake:** use `../intake/SKILL.md` to confirm repository and task location. Reuse confirmed inputs; ask only on material ambiguity.
 2. **Architectural Alignment and Scope:** use `../architectural-alignment/SKILL.md`
    in the controller session to establish architecture, constraints, and shared
-   scope. Own the workspace and map; add no second scope stage or agent.
-3. **Planning:** coordinate profile-enabled specialists, then author final plan/design
-   and assemble the package using `references/planning-assembly.md`. Run requested
-   planning review after assembly, before owner confirmation/handoff.
+   scope. Reuse the previous `repository-map.md` after a freshness check,
+   refreshing only stale or newly affected parts. Own the workspace and map; add
+   no second scope stage or agent.
+3. **Planning:** select the process tier (`light` — Orchestrator plus one author —
+   `standard`, or `full`) by the stated risk rule in
+   `references/planning-assembly.md`, coordinate only the profile-enabled
+   specialists required by that tier and task, then author final plan/design and
+   assemble the package using `references/planning-assembly.md`. Specialists run
+   only their own artifact checker; the repository gate runs once at assembly, and
+   evidence returns digests, commands, and exit codes, not narrative logs. Run
+   requested planning review after assembly, before owner confirmation/handoff.
 4. **Implementation:** consume the handoff; in selected TDD run the frozen Test Implementer (`roles.test_implementer`)
    before Product Implementer. Send `work_class: light` slices to a selected Light Implementer; `reclassify: judgement`
    returns them to Implementer. Honor dependencies, commands, and write sets. The Implementation Orchestrator owns new waves. For a frozen legacy Coordinator assignment, use its pinned runtime or obtain an explicit handover before continuing.
@@ -46,7 +53,8 @@ Handoff and closeout pass `journey` to `hooks/closeout.cjs`; untranscribed decis
 ## Dispatch and recovery
 
 Preserve the recorded profile; use `references/profiles.md` for authorized amendments.
-Launch each selected agent assignment once. Extra invocations, retries, repairs,
+Launch each selected agent assignment once. Every packet carries a time target
+and "at the limit, return what you have and list the gaps". Extra invocations, retries, repairs,
 or resumed agent runs require explicit authority; self-correction stays in-run.
 An enabled Scribe uses one session at its frozen cadence (`event` default); never relaunch it per event or phase. When disabled or omitted, Orchestrator records history.
 Register native completion notifications at dispatch. Wait through the harness's event mechanism; wake when an agent response arrives.

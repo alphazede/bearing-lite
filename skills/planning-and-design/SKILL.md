@@ -13,13 +13,17 @@ Controller procedure, not a configured specialist role or extra invocation. Use 
 
 ## Inputs and loop
 
-Consume confirmed alignment/scope, the frozen requirement skeleton (UIDs and
-titles) and frozen decisions established at specialist dispatch, requirements
-and definitions, `mbse` (`roles.mbse.sessions.planning`) architecture/model
-inputs, `integration_test` (`roles.integration_test.sessions.planning`) boundary,
-assembly, and SEIT contracts, evidence, selected routes/capabilities, cadence,
-authority, and repository rules. `mbse` and `integration_test` start in parallel
-from the frozen requirement skeleton and decisions; any needed decision change
+Consume confirmed alignment/scope (including the chosen process tier: `light` —
+Orchestrator plus one author — `standard`, or `full`), the frozen requirement
+skeleton (UIDs and titles) and frozen decisions established at specialist
+dispatch, requirements and definitions, `mbse` (`roles.mbse.sessions.planning`)
+architecture/model inputs, `integration_test`
+(`roles.integration_test.sessions.planning`) boundary, assembly, and SEIT
+contracts, evidence, selected routes/capabilities, cadence, authority, and
+repository rules. `mbse` and `integration_test` start in parallel from the
+frozen requirement skeleton and decisions when required by the process tier and
+task; in `light` tier, skip unneeded specialist sessions (`required_sessions: []`)
+and keep the package proportional to the work. Any needed decision change
 surfaced mid-wave waits for assembly rather than amending decisions mid-wave.
 Reuse adequate sources for inactive roles; expose missing required inputs rather
 than inventing them.
@@ -48,8 +52,11 @@ owner question box (`OWNER_DECISION_REQUIRED`), even under delegation.
 4. Assemble `implementation.json` and the DoD Manifest (one plan per phase). Copy specialist-owned
    decisions faithfully per `../bearing-lite/references/planning-assembly.md`;
    choose no new roles or capability defaults. Record `planning_wave` (`required_sessions`, `review_requested`); append post-approval corrections to `planning_corrections` without mutating round 1.
-5. Check your own final package: run the register precheck at its final stage with
-   `--seit`, every pending binding completed, then `plan-package.cjs draft`. Repair
+5. Check your own final package: run the repository gate once at assembly
+   alongside the register precheck at its final stage with `--seit`, every
+   pending binding completed, and `plan-package.cjs draft` (planning specialists
+   run only their own artifact checker, never the repository gate). Record
+   evidence as digests, commands, and exit codes, not narrative logs. Repair
    your owned artifacts in-session and rerun affected checks. Under the zero
    author-known relaunch budget (`0` relaunches), apply purely mechanical ID and
    hash binding fixes in-session and record each edit in an edit record; never
@@ -66,8 +73,10 @@ owner question box (`OWNER_DECISION_REQUIRED`), even under delegation.
 ## Return and recovery
 
 Return `READY`, `REROUTE_SCOPE_DEFINITION`, `WAITING_ON`, or
-`OWNER_DECISION_REQUIRED` with candidate, paths, checks, open items, and next
-action. An authorized named delta packet applies named findings only, through
+`OWNER_DECISION_REQUIRED` with candidate, paths, checks (digests, commands, and
+exit codes, not narrative logs), open items, and next
+action. Every packet dispatched carries a time target and "at the limit, return
+what you have and list the gaps". An authorized named delta packet applies named findings only, through
 `references/correction-loop.md` and `hooks/correction-delta.cjs`, within its
 existing authority and allowance; specialist-owned rows return to their author,
 and delta packets let the author fix its own defects found in the delta (never

@@ -87,7 +87,10 @@ There is no context-size ceiling that forces a handoff.
 A background event that changes no decision gets no reply. Consume completion
 events that unlock dependencies as they arrive. For a specialist return, use
 the author's deterministic checker, compare the candidate digest, and report
-one line. Before
+one line; evidence returns digests, commands, and exit codes, not narrative logs.
+Planning specialists run only their own artifact checker while the repository
+gate runs once at assembly. Every packet carries a time target and "at the limit,
+return what you have and list the gaps". Before
 composing a packet, follow `pre-packet.md`; use the handoff compiler instead
 of writing the packet by hand. Side work runs outside this context on an
 approved lighter model where that model is adequate. Waiting and dispatch use
@@ -117,10 +120,13 @@ generation-bound checkout lease before any planning write or dispatch.
 ## Planning stage order
 
 Planning runs Intake → combined Architectural Alignment and Scope (in the
-Orchestrator controller session; the legacy Scope Definition name forwards to it
-and never starts another stage) → the enabled specialists the task needs, in
-data-dependency order: MBSE → Integration and Test → the Planning
-Orchestrator's own final Planning and Design and assembly → requested planning
+Orchestrator controller session, reusing the previous `repository-map.md` after a
+freshness check; the legacy Scope Definition name forwards to it
+and never starts another stage) → the enabled specialists the task and chosen
+process tier (`light` — Orchestrator plus one author — `standard`, or `full`)
+need, in data-dependency order: MBSE → Integration and Test → the Planning
+Orchestrator's own final Planning and Design and assembly (where the repository
+gate runs once) → requested planning
 review → owner confirmation → `handoff.md`. Independent ready work runs in
 parallel; inactive roles are skipped. MBSE completes its own quality pass and
 modeling from confirmed Alignment/Scope context and returns a placement receipt

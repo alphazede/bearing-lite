@@ -38,10 +38,11 @@ an unresolved fixable requirement defect as a ready draft.
 
 ## Bounded author return
 
-Verdict block first: verdict, candidate_ref, exact changed paths, the stage
-precheck receipt with its `pending_bindings`, and the workspace
-`lint-sdoc.py --profile library` receipt when that lint applies (a missing
-required lint is a typed gap).
+Verdict block first: verdict, candidate_ref, exact changed paths, and the stage
+precheck and `lint-sdoc.py --profile library` receipts (when that lint applies;
+a missing required lint is a typed gap) reported as digests, commands, and exit
+codes—not narrative logs. Honor the packet's time target; at the limit, return
+what you have and list the gaps.
 
 Failing rows first, one section per row still failing after self-repair, each
 with UID, checklist item, evidence, and the exact corrected text or the owner

@@ -36,7 +36,9 @@ for the declared boundary.
 
 Return `CANDIDATE_READY`, `GAPS`, or `OWNER_DECISION_REQUIRED` with session,
 verdict, candidate_ref, changed_paths, tests, findings, and blocker,
-plus gaps and next action. Material interface, contract, trust, ownership, or
+plus gaps and next action. Evidence returns digests, commands, and exit codes,
+not narrative logs. Honor the packet's time target; at the limit, return
+what you have and list the gaps. Material interface, contract, trust, ownership, or
 recovery gaps remain visible and block dependent work.
 Never weaken tests, invent behavior, revise requirements, or grant owner-only
 approval.

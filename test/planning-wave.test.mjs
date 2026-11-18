@@ -537,3 +537,135 @@ describe("Alphazedehq#581 planning process rules", () => {
     }
   });
 });
+
+describe("Alphazedehq#583 planning speed rules", () => {
+  const prompt = read("skills/prompt/SKILL.md").replace(/\s+/g, " ");
+  const roleLoops = read("skills/prompt/references/role-loops.md").replace(/\s+/g, " ");
+  const instrClasses = read("skills/prompt/references/instruction-classes.md").replace(/\s+/g, " ");
+  const router = read("skills/bearing-lite/SKILL.md").replace(/\s+/g, " ");
+  const assembly = read("skills/bearing-lite/references/planning-assembly.md").replace(/\s+/g, " ");
+  const taskState = read("skills/bearing-lite/references/task-state.md").replace(/\s+/g, " ");
+  const prePacket = read("skills/bearing-lite/references/pre-packet.md").replace(/\s+/g, " ");
+  const taskTpl = read("skills/bearing-lite/templates/task.md").replace(/\s+/g, " ");
+  const pd = read("skills/planning-and-design/SKILL.md").replace(/\s+/g, " ");
+  const grammar = read("skills/planning-and-design/references/artifact-grammar.md").replace(/\s+/g, " ");
+  const align = read("skills/architectural-alignment/SKILL.md").replace(/\s+/g, " ");
+  const workspaceTpl = read("skills/architectural-alignment/templates/workspace.md").replace(/\s+/g, " ");
+  const mbse = read("skills/mbse/SKILL.md").replace(/\s+/g, " ");
+  const mbsePrecheck = read("skills/mbse/references/precheck.md").replace(/\s+/g, " ");
+  const mbseReport = read("skills/mbse/references/gate-report.md").replace(/\s+/g, " ");
+  const itSkill = read("skills/integration-test/SKILL.md").replace(/\s+/g, " ");
+  const teSkill = read("skills/test-engineer/SKILL.md").replace(/\s+/g, " ");
+  const ieSkill = read("skills/integration-engineer/SKILL.md").replace(/\s+/g, " ");
+
+  it("(1) runs repository gate once at assembly while planning specialists run only their own artifact checker", () => {
+    for (const [name, text] of [
+      ["prompt", prompt],
+      ["role-loops", roleLoops],
+      ["instruction-classes", instrClasses],
+      ["bearing-lite", router],
+      ["planning-assembly", assembly],
+      ["task-state", taskState],
+      ["pre-packet", prePacket],
+      ["task.md", taskTpl],
+      ["planning-and-design", pd],
+    ]) {
+      assert.match(text, /repository gate runs once at assembly|run the repository gate once at assembly|repository gate runs once/i, name);
+      assert.match(text, /only (?:its|their|that specialist's) own artifact checker/i, name);
+    }
+    for (const [name, text] of [
+      ["mbse", mbse],
+      ["mbse/precheck", mbsePrecheck],
+      ["integration-test", itSkill],
+    ]) {
+      assert.match(text, /only (?:your|its) own artifact checker/i, name);
+      assert.match(text, /repository gate[\s\S]{0,60}once at assembly/i, name);
+    }
+  });
+
+  it("(2) requires evidence returns to report digests, commands, and exit codes rather than narrative logs", () => {
+    for (const [name, text] of [
+      ["prompt", prompt],
+      ["role-loops", roleLoops],
+      ["instruction-classes", instrClasses],
+      ["bearing-lite", router],
+      ["planning-assembly", assembly],
+      ["task-state", taskState],
+      ["pre-packet", prePacket],
+      ["task.md", taskTpl],
+      ["planning-and-design", pd],
+      ["artifact-grammar", grammar],
+      ["mbse", mbse],
+      ["mbse/precheck", mbsePrecheck],
+      ["mbse/gate-report", mbseReport],
+      ["integration-test", itSkill],
+      ["test-engineer", teSkill],
+      ["integration-engineer", ieSkill],
+    ]) {
+      assert.match(text, /digests?, commands?, and exit codes/i, name);
+      assert.match(text, /not narrative logs|rather than narrative logs/i, name);
+    }
+  });
+
+  it("(4) defines light (orchestrator plus one author), standard, and full process tiers chosen by a stated risk rule", () => {
+    assert.match(assembly, /## Process tiers and stated risk rule/);
+    for (const [name, text] of [
+      ["bearing-lite", router],
+      ["planning-assembly", assembly],
+      ["task-state", taskState],
+      ["task.md", taskTpl],
+      ["architectural-alignment", align],
+      ["planning-and-design", pd],
+      ["artifact-grammar", grammar],
+    ]) {
+      assert.match(text, /light[^.]{0,60}Orchestrator plus one author/i, name);
+      assert.match(text, /\bstandard\b/i, name);
+      assert.match(text, /\bfull\b/i, name);
+    }
+    for (const [name, text] of [
+      ["bearing-lite", router],
+      ["planning-assembly", assembly],
+      ["task.md", taskTpl],
+      ["architectural-alignment", align],
+      ["artifact-grammar", grammar],
+    ]) {
+      assert.match(text, /stated risk rule/i, name);
+    }
+    assert.match(workspaceTpl, /Process tier:\s*`?<light \| standard \| full>`?/);
+  });
+
+  it("(5) requires every packet to carry a time target and the limit-return gap rule", () => {
+    for (const [name, text] of [
+      ["prompt", prompt],
+      ["role-loops", roleLoops],
+      ["instruction-classes", instrClasses],
+      ["bearing-lite", router],
+      ["planning-assembly", assembly],
+      ["task-state", taskState],
+      ["pre-packet", prePacket],
+      ["task.md", taskTpl],
+      ["planning-and-design", pd],
+      ["mbse", mbse],
+      ["mbse/gate-report", mbseReport],
+      ["integration-test", itSkill],
+      ["test-engineer", teSkill],
+      ["integration-engineer", ieSkill],
+    ]) {
+      assert.match(text, /time target/i, name);
+      assert.match(text, /at the limit, return what you have and list the gaps/i, name);
+    }
+  });
+
+  it("(7) requires Alignment to reuse the previous repository-map.md after a freshness check", () => {
+    for (const [name, text] of [
+      ["bearing-lite", router],
+      ["planning-assembly", assembly],
+      ["task-state", taskState],
+      ["architectural-alignment", align],
+      ["workspace.md", workspaceTpl],
+    ]) {
+      assert.match(text, /reus(?:e|ing) the previous `repository-map\.md`/i, name);
+      assert.match(text, /freshness/i, name);
+    }
+  });
+});

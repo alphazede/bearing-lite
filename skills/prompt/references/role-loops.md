@@ -17,8 +17,8 @@ invocations and role transitions require their existing explicit authority.
 | --- | --- | --- |
 | Planning Orchestrator | Confirm context/scope → dispatch enabled, needed specialists as their inputs become ready → wait/wake on responses → final plan/design and self-check → assembly validating allocations, case bindings, and coverage → requested planning review (else record not requested) → owner confirmation → Scribe-coverage handoff check → handoff | [Orchestrator](../../bearing-lite/SKILL.md) |
 | Implementation Orchestrator | Consume handoff → select ready work → dispatch enabled roles → wait/wake on responses → integrate and verify → requested review → deliver | [Orchestrator](../../bearing-lite/SKILL.md) |
-| MBSE | Author requirements from confirmed Alignment/Scope context → self requirements-quality pass and `--stage requirements` precheck → select modeling mode, attach views, and map placements → self-check → repair own requirements and views → recheck → return quality and placement evidence with owned pending bindings | [MBSE](../../mbse/SKILL.md) |
-| Integration and Test | Consume requirements and architecture/model evidence → define Boundary/Data-Flow Contract and assembly inputs → choose V&V methods and author SEIT/proof cases bound to existing requirement IDs → self-check → repair own contract, strategy, and SEIT → return | [Integration and Test](../../integration-test/SKILL.md) |
+| MBSE | Author requirements from confirmed Alignment/Scope context → run only own artifact checker (`--stage requirements` precheck and applicable register/workspace lint; no repository gate) and self requirements-quality pass → select modeling mode, attach views, and map placements → self-check → repair own requirements and views → recheck → return digests, commands, exit codes, quality, and placement evidence with owned pending bindings | [MBSE](../../mbse/SKILL.md) |
+| Integration and Test | Consume requirements and architecture/model evidence → define Boundary/Data-Flow Contract and assembly inputs → choose V&V methods and author SEIT/proof cases bound to existing requirement IDs → run only own artifact checker (self-check contract, strategy, and `seit.json`; no repository gate) → repair own artifacts → return digests, commands, and exit codes | [Integration and Test](../../integration-test/SKILL.md) |
 | Test Implementer | Consume behavior contract → author tests/fixtures → check test validity → prove expected baseline failure → repair test defects in scope → recheck → return | [Implementer](../../implementer/SKILL.md) |
 | Product Implementer | Consume tests/contract → implement → run checks → inspect evidence → repair own defects → recheck → return | [Implementer](../../implementer/SKILL.md) |
 | Combined Implementer | Establish regression evidence → author tests and product → check both → repair in scope → recheck → return | [Implementer](../../implementer/SKILL.md) |
@@ -52,10 +52,15 @@ These are not additional dispatched specialist roles:
 
 ## Conditions that remain with the caller
 
-Specialists are optional and must be enabled in the frozen selected profile and
+Specialists are optional, governed by the selected process tier (`light`,
+`standard`, or `full`), and must be enabled in the frozen selected profile and
 needed by the task. Review/independent evaluation also needs the owner's requested
 scope/cadence. Missing prerequisites return typed gaps; an inactive role is never
 a reason to invent another role or take over its authorship. Use actual dependency
-edges to parallelize ready work. Test implementation follows planning/handoff;
-TDD orders Test Implementer before Product Implementer. No loop authorizes polling,
-automatic fan-out, a fixed attempt count, or an extra invocation.
+edges to parallelize ready work. Planning specialists run only their own artifact
+checker while the repository gate runs once at assembly. Every packet carries a
+time target and "at the limit, return what you have and list the gaps"; evidence
+returns digests, commands, and exit codes, not narrative logs. Test
+implementation follows planning/handoff; TDD orders Test Implementer before
+Product Implementer. No loop authorizes polling, automatic fan-out, a fixed
+attempt count, or an extra invocation.

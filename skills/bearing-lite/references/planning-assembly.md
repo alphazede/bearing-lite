@@ -28,42 +28,78 @@ author or evidence, surface the exact gap for an owner decision. Do not invent
 an agent, take over specialist authorship, or label missing work complete.
 Retired-role configurations need explicit migration preserving selected identities.
 
+## Process tiers and stated risk rule
+
+Select the smallest process tier whose risk rule covers every risk factor
+established in Alignment/Scope (unless the owner explicitly specifies a tier):
+
+- **`light` (Orchestrator plus one author):** localized, reversible, or
+  mechanical/setup/tooling/docs work with no new or changed trust boundary,
+  stateful protocol, persisted schema, cross-component contract, or
+  requirements-register authoring. Planning stays in the Orchestrator
+  (`required_sessions: []`, no separate requirements register, SysML/formal
+  model, or specialist fan-out); execution uses one author (Implementer or
+  Light Implementer).
+- **`standard`:** moderate-risk multi-module feature or behavioral change within
+  settled architecture and contracts without new trust boundaries, protocol
+  state machines, multi-wave coordination, or specification-register authoring.
+  Dispatch only the enabled specialist(s) the work needs (for example
+  `integration_test` for SEIT/boundary updates, or `mbse` only when new
+  requirements or placements are needed; skip unneeded specialists).
+- **`full`:** high-risk or specification-grade work — touches trust boundaries
+  (auth, authorization, crypto, privilege, tenant/data isolation), irreversible
+  or high-impact state/money/data loss, new or changed stateful protocols or
+  concurrency contracts, multi-wave architecture, or specification-register
+  authoring (`journey_type: specification`). Runs the full enabled planning wave
+  (`mbse` and `integration_test` in parallel from the frozen requirement
+  skeleton) and full declared execution/assurance cadence.
+
 ## Planning order
 
 This is the default dependency order, not a requirement to enable every role:
 
 1. **Planning Orchestrator:** confirm Intake, combined Architectural Alignment
-   and Scope, the selected profile, required deliverables, and existing evidence.
-   At specialist dispatch, freeze the **requirement skeleton (UIDs and titles)**
+   and Scope (reusing the previous `repository-map.md` after a freshness check),
+   the selected profile, chosen process tier (`light`, `standard`, or `full`),
+   required deliverables, and existing evidence.
+   At specialist dispatch (in `standard` or `full` tier), freeze the
+   **requirement skeleton (UIDs and titles)**
    and **active decisions**; never amend decisions mid-wave while specialists
    are running—any needed decision change waits for assembly.
 2. **`mbse` (`roles.mbse.sessions.planning`) and `integration_test` (`roles.integration_test.sessions.planning`), if enabled and needed — start in parallel:**
    both launch concurrently from the frozen requirement skeleton (UIDs and
-   titles), frozen decisions, and confirmed Alignment/Scope context:
+   titles), frozen decisions, and confirmed Alignment/Scope context, with a time
+   target and `"at the limit, return what you have and list the gaps"` in every
+   packet. Each specialist runs only its own artifact checker (never the
+   repository gate) and returns digests, commands, and exit codes, not narrative
+   logs:
    - **`mbse` (`roles.mbse.sessions.planning`):** author full requirement
      statements and acceptance criteria from the confirmed Alignment/Scope
      context and frozen requirement skeleton, running its own quality pass,
-     repairs, and recheck (register precheck at `--stage requirements` where
-     applicable; later SEIT case IDs are recorded pending bindings, not
-     prerequisites for `READY`), and supply the modeling mode, placement receipt
-     (current flow, candidate placements with `file:line`, constraints, and
-     requirement-to-component mappings), and view metadata with traceability.
+     repairs, and recheck (register precheck at `--stage requirements` and
+     applicable register/workspace lint only; later SEIT case IDs are recorded
+     pending bindings, not prerequisites for `READY`), and supply the modeling
+     mode, placement receipt (current flow, candidate placements with
+     `file:line`, constraints, and requirement-to-component mappings), and view
+     metadata with traceability.
    - **`integration_test` (`roles.integration_test.sessions.planning`):** consume
      the frozen requirement skeleton (UIDs and titles), frozen decisions,
      architecture, and proposed interfaces; author `seit.json` (verification
      cases, boundary/data-flow contract, assembly/recovery strategy, integration
      steps and order, validation steps with expected evidence, resource groups,
      expected gate cost, and selected verification claims) bound to the frozen
-     requirement UIDs. Do not write product tests.
+     requirement UIDs, running only its own SEIT/boundary artifact self-checks.
+     Do not write product tests.
    Pending cross-artifact bindings are reconciled at assembly; do not serialize
    `mbse` and `integration_test` into sequential specialist gates.
 3. **Planning Orchestrator — final Planning and Design:** synthesize the completed
    inputs into the technical plan and `design.md` (keeping **one plan per phase**;
    split multi-phase work into separate phase plans), copy the confirmed quantity
    table into its glossary, allocate against the placement receipt, then assemble
-   the implementation graph and Manifest. Validate every required allocation and
-   case binding (final-stage `hooks/register-precheck.cjs` with `--seit`) and
-   cross-artifact coverage; pending bindings block assembly until completed.
+   the implementation graph and Manifest. Run the repository gate once at assembly
+   alongside final-stage `hooks/register-precheck.cjs` with `--seit` and
+   cross-artifact coverage checks; pending bindings block assembly until
+   completed.
    This final planning step runs in the existing controller, not another agent.
 4. **Requested planning review:** after the complete final plan/design and assembly,
    run the profile-enabled Reviewer only when the owner requested review at this
@@ -260,7 +296,9 @@ a selected or required capability that is unavailable is a typed capability gap.
 When planning is complete and the owner agreement required for execution is
 recorded, write `handoff.md` with exact artifact paths/digests, decisions and
 authority, selected routes/capabilities, candidate/worktree, assignments, commands,
-evidence, review status, blockers, and next action. Before writing it, run the
+evidence (digests, commands, and exit codes, not narrative logs), review status,
+blockers, and next action. Every dispatched packet carries a time target and
+"at the limit, return what you have and list the gaps". Before writing `handoff.md`, run the
 handoff check in `hooks/closeout.cjs` with `journey` (`mode: "handoff"`); a
 history coverage gap refuses the handoff until its recorder transcribes the listed
 decisions, authority events, and landings: Orchestrator when Scribe is omitted or

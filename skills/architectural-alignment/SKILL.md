@@ -14,6 +14,8 @@ The Orchestrator runs this once in its controller session, owning `workspace.md`
 and `repository-map.md`. Establish architectural fit and shared scope before design.
 Use the requested outcome, confirmed repository and plan directory, prior owner
 decisions, source evidence, and repository rules. Run after Intake is confirmed.
+Reuse the previous `repository-map.md` after a freshness check (refreshing only
+stale or newly affected entries instead of rediscovering unchanged subsystems).
 Completed alignment is not repeated unless relevant source changes invalidate
 its map or the requested scope changes. Reuse confirmed scope and current evidence.
 
@@ -21,19 +23,26 @@ its map or the requested scope changes. Reuse confirmed scope and current eviden
 
 1. Verify the exact root, repository identity, plan directory, and requested
    scope. Conflicting identity returns `BLOCKED`; never invent a sibling path.
-2. Verify source bindings and scoped committed, staged, unstaged, and relevant
-   untracked changes. Compare recorded revisions and content digests with current
-   inputs; a clean Git status alone does not prove freshness. Refresh affected
-   context only. Missing bindings require fresh evidence.
-3. Read canonical architecture, relevant manifests, instructions, entry points,
-   tests, and ownership records; follow evidence into `docs/`, `src/`, and `lib/`.
-   Use BRAN with native policy; otherwise report `bran_status: unavailable`.
+2. Check for an existing or previous `repository-map.md` and verify source
+   bindings and scoped committed, staged, unstaged, and relevant untracked
+   changes. Compare recorded revisions and content digests with current
+   inputs; a clean Git status alone does not prove freshness. When fresh, reuse
+   the previous `repository-map.md` and refresh affected entries only rather than
+   launching search agents to remap the whole repository. Missing bindings
+   require fresh evidence.
+3. Read only unmapped or stale canonical architecture, relevant manifests,
+   instructions, entry points, tests, and ownership records; follow evidence
+   into `docs/`, `src/`, and `lib/` only where the previous map is missing or
+   stale. Use BRAN with native policy; otherwise report `bran_status: unavailable`.
    Bound discovery to the authorized task and affected flows. Never ask the
    owner for a fact tools can establish, or invent architecture or commands.
 4. Map components, interfaces, data flow, ownership, constraints, and trust
-   boundaries with sources. Explain where the requested work fits; distinguish
-   facts, inferences, and gaps. Do not design missing architecture, activate a
-   specialist automatically, or choose material changes or risk for the owner.
+   boundaries with sources. Select the process tier (`light` — Orchestrator plus
+   one author — `standard`, or `full`) by the stated risk rule in
+   `../bearing-lite/references/planning-assembly.md`. Explain where the requested
+   work fits; distinguish facts, inferences, and gaps. Do not design missing architecture,
+   activate a specialist automatically, or choose material changes
+   or risk for the owner.
 5. Track material outcome, scope, authority, risk, and acceptance decisions as
    dependency-ordered branches. Ask exactly one question whose prerequisites are
    settled, give the recommended answer and material alternatives, then wait.

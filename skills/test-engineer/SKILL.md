@@ -56,7 +56,9 @@ assessment.
 ## Return and boundaries
 
 Assurance returns `PASS`, `NEEDS_MORE_EVIDENCE`, or `FAIL` with verdict,
-candidate_ref, changed_paths, tests, findings, and blocker.
+candidate_ref, changed_paths, tests, findings, and blocker. Evidence returns
+digests, commands, and exit codes, not narrative logs. Honor the packet's time
+target; at the limit, return what you have and list the gaps.
 Preserve the selected review/assurance budget and deterministic closure; do not
 add a review, repair round, fan-out agent, or new invocation automatically.
 Never implement, self-certify, grant owner-only approval, or silently change
