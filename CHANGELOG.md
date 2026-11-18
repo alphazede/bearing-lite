@@ -4,7 +4,7 @@
 
 ### Added
 
-- Bearing 3.0 batch 4: Coordinator role retired (its duties now live in the Implementation Orchestrator text; pinned legacy journeys keep their owner); public role-level replay report; decision adapter sends keyed systemone requests and reads ChoiceAnswer responses. ([#PR](https://github.com/alphazede/bearing-lite/pulls))
+- Bearing 3.0 batch 4: Coordinator role retired (its duties now live in the Implementation Orchestrator text; pinned legacy journeys keep their owner); public role-level replay report; decision adapter sends keyed systemone requests and reads ChoiceAnswer responses. ([#256](https://github.com/alphazede/bearing-lite/pull/256))
 - Bearing 3.0 batch 3: advisory decision adapter with pinned hosted backend and consultation return, called from the registered SessionStart and Stop handlers; approved #237 public skill updates (coordinate-only Orchestrator, dependency-ordered dispatch, rolling batch review, owner-record conflicts follow the later approved artifact, skill size cap removed). ([#255](https://github.com/alphazede/bearing-lite/pull/255))
 - Bearing 3.0 batch 2: profiler host qualification from controlled-session totals and role-only export; optional Fellow profile route; dispatch recovery record and ready-set evaluator; deterministic handoff compiler and closed handoff schema; Coordinator duty migration to receiving components; replay-based promotion rule; wave 1 baseline rerun on observed runs. ([#254](https://github.com/alphazede/bearing-lite/pull/254))
 - Planning and Assurance Test Engineer guidance for a selected behavior-not-implementation test-suite audit, including the loss-proof reduction record.
