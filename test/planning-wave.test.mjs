@@ -501,3 +501,39 @@ describe("B30-525 planning inputs stay out of the end-review repair (DEC-33)", (
     assert.equal(second.correction_rounds, 1);
   });
 });
+
+describe("Alphazedehq#581 planning process rules", () => {
+  const assembly = read("skills/bearing-lite/references/planning-assembly.md").replace(/\s+/g, " ");
+  const pd = read("skills/planning-and-design/SKILL.md").replace(/\s+/g, " ");
+  const alloc = read("skills/planning-and-design/references/allocation-inputs.md").replace(/\s+/g, " ");
+  const grammar = read("skills/planning-and-design/references/artifact-grammar.md").replace(/\s+/g, " ");
+  const router = read("skills/bearing-lite/SKILL.md").replace(/\s+/g, " ");
+  const ownerStops = read("skills/bearing-lite/references/owner-stops.md").replace(/\s+/g, " ");
+
+  it("enforces mechanical ID/hash fix edit record, zero author-known relaunches, and meaning changes to author", () => {
+    for (const [name, text] of [["planning-assembly", assembly], ["planning-and-design", pd]]) {
+      assert.match(text, /purely mechanical ID and hash binding fixes/i, name);
+      assert.match(text, /edit record/i, name);
+      assert.match(text, /change of meaning returns to the owning (?:author|specialist)/i, name);
+      assert.match(text, /zero.*relaunch/i, name);
+    }
+  });
+
+  it("freezes requirement skeleton (UIDs and titles) and decisions at dispatch for parallel mbse and integration_test", () => {
+    for (const [name, text] of [["planning-assembly", assembly], ["planning-and-design", pd], ["allocation-inputs", alloc]]) {
+      assert.match(text, /requirement skeleton \(UIDs and titles\)/, name);
+      assert.match(text, /mbse[\s\S]{0,80}integration_test[\s\S]{0,80}in parallel/i, name);
+      assert.match(text, /waits for assembly/i, name);
+    }
+    assert.match(assembly, /freeze the \*\*requirement skeleton \(UIDs and titles\)\*\* and \*\*active decisions\*\*/);
+  });
+
+  it("requires one plan per phase and owner question box on scope cuts dropping acceptance items even under delegation", () => {
+    for (const [name, text] of [["planning-assembly", assembly], ["planning-and-design", pd], ["artifact-grammar", grammar]]) {
+      assert.match(text, /one plan per phase/i, name);
+    }
+    for (const [name, text] of [["bearing-lite", router], ["owner-stops", ownerStops], ["planning-and-design", pd]]) {
+      assert.match(text, /drops an acceptance item[\s\S]{0,80}owner question box[\s\S]{0,80}even under delegation/i, name);
+    }
+  });
+});

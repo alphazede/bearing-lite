@@ -14,6 +14,7 @@
 
 - Move the optional Fellow route from per-profile `roles` to the top-level catalog `fellow` envelope so every frozen binding carries `snapshot.fellow` regardless of selected profile. (Alphazedehq#579)
 - Merge planning specialist roles into MBSE (`roles.mbse.sessions.planning`) and Integration and Test (`roles.integration_test.sessions.planning`), remove `requirements_engineer`, `systems_modeler`, and the planning sessions of `test_engineer` and `integration_engineer`, keep `test_engineer.sessions.assurance` and `integration_engineer.sessions.execution`, and document `plan-package.cjs` slice rules in both new planning skills. (Alphazedehq#580)
+- Freeze requirement skeletons (UIDs and titles) and active decisions at specialist dispatch so `mbse` and `integration_test` start in parallel, apply a zero author-known relaunch budget with Orchestrator mechanical ID/hash edit records (returning meaning changes to the author), let delta packets fix defects found in the delta, require an owner question box for scope cuts dropping acceptance items even under delegation, and split plans one per phase. (Alphazedehq#581)
 
 ## [3.0.0-rc.1] - 2026-11-18
 

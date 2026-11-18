@@ -58,3 +58,4 @@ Selected or required capabilities activate; unavailability, including a needed M
 Return `READY`, `WAITING_ON`, `OWNER_DECISION_REQUIRED`, or `COMPLETE` with mode,
 stage, candidate, completed work, evidence, blocker, and next action.
 Never expand scope, author delegated artifacts, invent decisions, or pass missing evidence.
+Any scope decision that drops an acceptance item is an owner question box (`OWNER_DECISION_REQUIRED`), even under delegation.

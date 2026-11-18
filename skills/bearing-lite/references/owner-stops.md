@@ -56,7 +56,11 @@ Lifecycle requires an explicit owner amendment, never a live-catalog reload.
 Delegation does not authorize material scope or architecture changes, conflicting
 requirements with unresolved owner intent, protected actions, owner holds, model or
 harness substitutions, review activation, or expanded/spent review and repair
-budgets. Those remain owner decisions unless separately expressly authorized.
+budgets. Those remain owner decisions unless separately expressly authorized. Any
+scope decision that drops an acceptance item (including deferred workloads,
+migration, or cutover) is always an owner question box
+(`OWNER_DECISION_REQUIRED`, Class C), even under delegation; never cut
+acceptance scope silently.
 It does not approve the final plan or activate a lifecycle. Without delegated
 authority, apply normal A–F handling above; routine approved continuation stays local.
 

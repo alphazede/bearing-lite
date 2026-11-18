@@ -144,3 +144,16 @@ test('matching named delta uses bounded correction procedure; unresolved intent 
   assert.match(report, /exact_text/);
   assert.match(report, /requires_regate/);
 });
+
+test('delta packets let the author fix its own defects found in the delta (Alphazedehq#581)', () => {
+  for (const rel of [
+    '../skills/prompt/SKILL.md',
+    '../skills/planning-and-design/SKILL.md',
+    '../skills/planning-and-design/references/correction-loop.md',
+    '../skills/bearing-lite/references/planning-assembly.md',
+  ]) {
+    const text = readFileSync(new URL(rel, import.meta.url), 'utf8').replace(/\s+/g, ' ');
+    assert.match(text, /delta packet[\s\S]{0,80}fix its own defects found in the delta/i, rel);
+    assert.match(text, /(?:never|rather than)[^.]{0,80}nothing else changed/i, rel);
+  }
+});

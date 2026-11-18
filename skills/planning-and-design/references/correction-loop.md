@@ -9,21 +9,29 @@ reconciliation under `planning-assembly.md#author-known-deltas-221` and use
 step 3's mechanical check without spending this round.
 Ordinary Requirements Engineer self-quality checks and author repairs happen
 inside its initial assignment; they are not a separate review or this repair round.
-The parent records authority and receipts. Each author repairs its owned content;
-the Planning Orchestrator repairs final planning/design and assembly. Preserve
-the existing allowance and selected route; authorize any extra invocation explicitly.
+The parent records authority and receipts. Each author repairs its owned content; the Planning Orchestrator repairs final
+planning/design and assembly. Author-known reconciliation carries a zero
+relaunch budget (`0` relaunches): during assembly, the Planning Orchestrator may
+apply purely mechanical ID and hash binding fixes itself, recording each edit in
+an edit record, while any change of meaning returns to the owning author (`mbse`
+or `integration_test`) under an authorized return. Preserve the existing
+allowance and selected route; authorize any extra invocation explicitly.
 
 1. Freeze the complete before snapshot and candidate identity. Aggregate named
    findings to one per UID. Dispatch only those findings in a delta packet.
-   An `exact_text` finding supplies the complete corrected statement verbatim
-   and changes wording only; semantic, rationale, verification, allocation,
-   glossary-definition, or reference changes are `requires_regate`.
-2. Apply only the named findings. Copy exact text directly, without paraphrasing.
-   Retain all other row fields. Export the complete after snapshot using the same
-   projection as before; include every governed register, AC, and RISK row,
-   every non-text field, and all outgoing reference targets. Do not hand-select
-   changed rows or omit fields. Snapshot extraction belongs to the workspace;
-   the plugin does not parse or persist a requirement register.
+   Delta packets let the author fix its own defects found in the delta (never
+   constrain a delta packet with "nothing else changed" to block self-repair);
+   record any additional defect fixed in the return. An `exact_text` finding
+   supplies the complete corrected statement verbatim and changes wording only;
+   semantic, rationale, verification, allocation, glossary-definition, or
+   reference changes are `requires_regate`.
+2. Apply the named findings. Copy exact text directly, without paraphrasing.
+   Retain all other row fields. For the `hooks/correction-delta.cjs` register-row
+   check, export the complete after snapshot using the same projection as before;
+   include every governed register, AC, and RISK row, every non-text field, and
+   all outgoing reference targets. Do not hand-select changed rows or omit fields.
+   Snapshot extraction belongs to the workspace; the plugin does not parse or
+   persist a requirement register.
 3. Run `node <plugin root>/hooks/correction-delta.cjs <input.json>`.
    The pure export is `evaluateCorrectionDelta(input)`. JSON input fields:
    - `candidate_ref`: nonempty identity of the frozen corrected candidate.
