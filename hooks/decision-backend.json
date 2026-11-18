@@ -1,0 +1,6 @@
+{
+  "protocol": "systemone",
+  "base_url": "https://api.liquid.ai/decisions/v1/systemone",
+  "model_id": "d1.2-ultra",
+  "key_variable_name": "LIQUID_API_KEY"
+}
