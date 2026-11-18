@@ -64,8 +64,11 @@ machine-readable JSON sidecar file, never prose.
 A row that remains open carries one machine-readable finding:
 `{uid, finding_type, checklist_item, evidence, corrected_text?}`, where
 `finding_type` is exactly `exact_text` (wording-only, complete verbatim corrected
-statement) or `requires_regate` (any other correction or uncertainty). An
-authorized named correction consumes them per
+statement) or `requires_regate` (any other correction or uncertainty). Fold all
+known corrections into this first return without expecting a planning
+correction relaunch; during planning assembly the Planning Orchestrator applies
+any remaining exact fixes, and an authorized end-of-planning review repair
+consumes typed open rows per
 `../../planning-and-design/references/correction-loop.md`.
 
 `READY` requires all assigned quality checks to pass with no fixable defect

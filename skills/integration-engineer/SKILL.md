@@ -27,10 +27,13 @@ Each assignment runs once on its frozen route and actual input dependencies.
    State per-wave `added_gate_seconds` and `resource_groups`; parallelize checks
    that share no resource. Follow `../test-engineer/references/shared-machine-tests.md`.
 4. Self-check boundary and assembly completeness against requirements and sources.
-   Repair your own contract/strategy in this assignment, recheck, and return to
-   the Planning Orchestrator. Required engine/server/browser tests need five
-   consecutive and one two-copy concurrent pass, or the stricter repository rule,
-   before assembly. Do not add another planning or quality-check agent.
+   Repair your own contract/strategy in this assignment, recheck, and fold all
+   known corrections into this first return to the Planning Orchestrator (do not
+   defer fixes for a planning correction relaunch; the Orchestrator applies any
+   remaining author-known fixes during assembly). Required engine/server/browser
+   tests need five consecutive and one two-copy concurrent pass, or the stricter
+   repository rule, before assembly. Do not add another planning or
+   quality-check agent.
 
 ## Execution loop
 
