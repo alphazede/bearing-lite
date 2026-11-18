@@ -6,6 +6,10 @@ tags: [bearing, planning]
 
 # Final Decision Batch
 
+Open alignment with two sentences restating the owner's goal and the problem
+it solves, then ask only the decisions code and documents cannot answer:
+intent, preference, scope and skill choices, listed per issue.
+
 The final batch carries every confirmed decision plus the definitions those
 decisions depend on. Record it in `workspace.md` (`templates/workspace.md`):
 each decision as a `DEC-*` row and the quantity-definitions table under

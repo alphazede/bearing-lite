@@ -37,6 +37,13 @@ justification remains an evidence gap; do not invent a requirement or
 expected value to fill it. When no independent oracle can be defined for a
 case, record that limitation explicitly in the case's SEIT entry and choose
 another verification strategy; do not silently accept a circular assertion.
+Two other patterns also leave a test unable to fail: an assertion loose enough
+that wrong output matches it, and an assertion that reads back data the test
+built without passing it through the code under test. A case asserting that an
+event does not happen needs a sibling case where the trigger is present and the
+event does happen, so the absence check can fail. Assert the error kind or code
+that callers branch on; assert message text only where an operator reads that
+message as the contract.
 
 For executable tests, exercise an interface and assert observable behavior,
 state, output, effects, or failure. Finding implementation strings, tokens,

@@ -50,6 +50,8 @@ one line each: UID, checklist item, correction.
 
 Then a one-line-per-row PASS table (`| UID | PASS | note |`).
 Never write a prose section or heading for a PASS row.
+Every pass reports added, merged and removed counts, with a reason for each
+addition.
 
 Then owner questions, then decision coverage as a compact list
 of uncovered IDs only (`uncovered: none` when empty).

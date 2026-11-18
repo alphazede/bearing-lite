@@ -76,6 +76,25 @@ delivery, not assurance: it never opens or reopens a review.
   configured recorder transcribes it before handoff or closeout.
   `hooks/reconcile.cjs` observes merges through `merge` events. It never
   performs them.
+- **Closeout lesson:** apply `reflect-correct.md` when the unit lands. A test
+  or documentation lesson edits through normal review. A new guard or hook
+  goes to the owner.
+
+## Orchestrator context
+
+Keep this context on coordination, owner decisions, dispatch and synthesis.
+There is no context-size ceiling that forces a handoff.
+
+A background event that changes no decision gets no reply. Wait for the whole
+batch. When consuming a specialist return, use the author's deterministic
+checker and a candidate-digest comparison, and report one line. Before
+composing a packet, follow `pre-packet.md`; use the handoff compiler instead
+of writing the packet by hand. Side work runs outside this context on an
+approved lighter model where that model is adequate. Waiting and dispatch use
+the owner-selected route in `profiles.md` and do not lower its reasoning effort.
+ketchup-video and automate-me stay optional skills outside Bearing core. They
+never change a frozen profile. How, Why and Benchmark Checklist stay optional
+and are not forced into every task.
 
 ## Checkout lease
 

@@ -2,6 +2,8 @@
 
 On a direct wave, the Implementation Orchestrator alone dispatches, schedules and escalates. If the frozen assignment explicitly delegates a wave to an enabled Coordinator, that Coordinator retains its wave duties and reports to the Implementation Orchestrator. Keep one owner per duty. Never run both owners.
 
+Execute the frozen plan. Do not redo planning. Land each wave as soon as its integrated gates pass. Gap work is its own pull request. Dispatch by dependency across waves, up to the agent cap the owner set for the Lifecycle. Do not start a planning role during implementation. An Implementer fixes a plan gap inside its write set and records one amendment line. Run gates once on the integrated candidate. Review rolls by batch.
+
 The Coordinator stays available until every duty and profile proof passes. Never silently rewrite a frozen legacy route.
 
 | Duty | Receiving owner | Component |

@@ -25,6 +25,9 @@ a formal proof. Do not silently switch the allocated method. Distinguish missing
 evidence (`NEEDS_EVIDENCE`), unavailable tooling (`UNAVAILABLE`), and an
 authority or preparation blocker (a typed gap). Read-only analysis needs read
 authority; writing artifacts and scratch mutations need write authority.
+In a TLA+ model, name each action in `Next` so traces read as steps, add an
+explicit no-op step for correct end states so they are not reported as deadlock,
+and keep constants small enough for the search to finish.
 
 ## Record correspondence and rerun procedure
 
@@ -45,6 +48,8 @@ On a relevant code change, inspect correspondence before advancing that
 confirmed revision and rerunning. A solver pass on a stale abstraction is not
 candidate evidence. Intended behavior changes follow existing requirement and
 design authority; do not weaken properties to obtain a pass.
+Keep the run short enough to repeat on every change to the covered code. Keep
+the recorded bounds; report any reduction and its reason.
 
 ## Exercise and interpret
 
@@ -63,6 +68,8 @@ can remain failing for the same documented finding. Never erase it or modify
 product behavior without authority. A procedure not exercised this way remains
 `NEEDS_EVIDENCE`. Use the existing evidence-driven correction bound and
 stop without a new hypothesis; clean owned scratch resources after failures.
+When the check misses the break, repair the procedure or the model; never
+adjust the break until it is caught.
 
 Distinguish a real implementation violation from a faulty abstraction,
 unsupported assumption, bound exhaustion, timeout, or tool/environment error.
@@ -70,6 +77,31 @@ Explain a counterexample as source-level actions in order. Correct a modeling
 error only with code evidence; a product violation follows the repository's
 bug-triage route within existing authority. A timeout or incomplete search is
 not a proved property. Use the existing outcome vocabulary.
+
+## Maintain after code changes
+
+1. Read the confirmed revision; if none is recorded, use the last commit that
+   changed the verification files and say so. Run the check once before any
+   edit and record the result; a pass here shows only that the old description
+   still holds.
+2. Read every change to covered code since that revision, including commit
+   messages, renamed, split or moved code, and new code that writes the guarded
+   state. Classify each change as no effect on the model (checked against the
+   model, not the message), a description that no longer matches the code, a
+   promise changed on purpose with cited evidence, or a promise possibly broken.
+3. Update the model or harness from the code before rerunning, never toward a
+   passing result. Change a property only for an intended promise change, and
+   record the old wording, the new wording and the evidence.
+4. Replay each counterexample against the real code step by step. A step the
+   code cannot take is a modeling error to fix and report. A fully possible
+   path is a defect, reported with its introducing commit and harm and routed
+   to bug triage.
+5. Report each check as `PASS` with no correspondence change, `PASS` with the
+   correspondence delta, `FAIL` for a defect (which can follow an update), or
+   `NEEDS_EVIDENCE` or `UNAVAILABLE` when blocked. Name the commits read and
+   which failures were drift and which were defects. Leave the confirmed
+   revision unchanged for a blocked check, and ship verification updates
+   separately from any product fix.
 
 ## Handoff and maintenance
 

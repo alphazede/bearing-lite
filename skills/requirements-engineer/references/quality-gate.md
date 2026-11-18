@@ -5,6 +5,24 @@ author here. Do not merge checklist concerns into the authoring method. Do
 not persist outside approved draft authority. Do not choose models. Do not
 write product tests. This gate is a procedure, not a register.
 
+## Requirement bounds
+
+Apply these bounds to every new or changed row. Owner decisions amend an
+existing row before a new row is added.
+
+- One requirement per observable outcome per component.
+- The row traces to an issue acceptance item, an owner decision or a contract
+  element, and states what breaks if the row is missing.
+- Skill text and guidance wording are slice acceptance items checked by
+  inspection. They are not requirements.
+- Do not restate an existing rule, requirement, schema or policy.
+- An experimental feature keeps only its outcome and its promotion gate.
+- Do not write a requirement an outside observer cannot check.
+- Do not add a row for a feature that was not selected.
+- The observable result contains at most one "and".
+- Every pass reports how many rows were added, merged and removed, with a
+  reason for each addition.
+
 ## Preconditions
 
 - Candidate statement plus the authoring fields from the method skill
@@ -18,7 +36,7 @@ gap and write nothing.
 
 1. Load every checklist row. Skipping a row is `FAIL` unless the record
    marks `N/A` with a scope reason.
-2. For each row, apply the named check type to the candidate and record
+2. For each row, apply the named check type and the Requirement bounds to the candidate and record
    `PASS`, `FAIL`, or `N/A`.
 3. On `FAIL`, record the row's typed failure and the evidence string. Do not
    invent a new failure code.

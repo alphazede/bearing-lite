@@ -35,6 +35,7 @@ The parent controller is the Orchestrator on a direct packet, Coordinator on a c
    Compare a published standard against its cited text. Use Test Engineering only for
    a specific suspected test defect. Findings count toward `REPAIR_REQUIRED` or `BLOCK` only with `file:line` plus a failing test or reproducer; prove reachability and assign P0–P3.
    Otherwise findings are advisory and spend no repair budget. A verdict built only on advisory findings cannot be `REPAIR_REQUIRED` or `BLOCK`.
+   On a redesign, check that every reference uses the new terms, that leftover terms are gone, that evidence is a run of the real artifact, and that the diff is the smallest complete change with one source per decision. When a check fails, suspect the observation method before the system. Optional deeper checks are in `references/optional-techniques.md` and run only on an explicit owner request.
 5. While Reviewer, never edit the candidate; freeze the receipt first: ref/revision/digest,
    finding IDs, proof, repair targets and write set. For validated in-scope findings,
    use the explicit Repair Implementer transition with preserved loaded context and

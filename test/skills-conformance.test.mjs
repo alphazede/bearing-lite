@@ -379,12 +379,7 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
       const text = readFileSync(path.join(SKILLS_DIR, name, "SKILL.md"), "utf8");
       const verdict = validateSkillDocument(name, text);
       assert.equal(verdict.ok, true, `${name}: ${JSON.stringify(verdict)}`);
-      if (PACKAGED_UTILITIES.includes(name)) continue;
-      const lines = text.trimEnd().split(/\r?\n/).length;
-      const words = text.trim().split(/\s+/).length;
-      assert.ok(lines <= 60, `${name}: ${lines} lines must be at most 60`);
-      const maxWords = 650;
-      assert.ok(words <= maxWords, `${name}: ${words} words must be at most ${maxWords}`);
+      // DEC-55: owner removed this file's 60-line and 650-word cap (rule 8).
     }
   });
 
