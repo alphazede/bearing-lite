@@ -243,6 +243,54 @@ describe("plan-package (#121 freeze guards)", () => {
     assert.deepEqual(checkIntegrationStepRefs(mapped), []);
   });
 
+  it("ignores requires, step, and integration_steps outside slices while keeping slice checks (#577)", () => {
+    const { checkIntegrationStepRefs } = require(path.join(ROOT, "hooks/plan-package.cjs"));
+    const nonSliceRefs = {
+      slices: [
+        {
+          id: "S1",
+          role: "Implementer",
+          requires: ["INT-3"],
+          integration_steps: ["INT-3"],
+          evidence: { step: "verify", requires: ["non-slice-req"], integration_steps: ["non-slice-step"] },
+        },
+        { id: "INT-3", role: "Integration Engineer", activity: "assemble" },
+      ],
+      dod_manifest: {
+        definition_of_done: [
+          { criterion: "Tests pass", requires: ["node >= 20"], step: "gate", integration_steps: ["outside-step"] },
+        ],
+        tasks: [
+          { id: "S1", role: "Implementer", requires: ["AC-1"], step: "implement", integration_steps: ["task-note"] },
+        ],
+      },
+      evidence: [{ note: "field note", step: "check", step_id: "note-1", requires: ["doc"], integration_steps: ["ev-1"] }],
+    };
+    assert.deepEqual(checkIntegrationStepRefs(nonSliceRefs), []);
+
+    const unresolvedSlice = {
+      slices: [
+        {
+          id: "S1",
+          role: "Implementer",
+          integration_step: "INT-MISSING",
+          step: "STEP-MISSING",
+          requires: ["REQ-MISSING"],
+          integration_steps: ["LIST-MISSING"],
+        },
+      ],
+    };
+    assert.deepEqual(
+      checkIntegrationStepRefs(unresolvedSlice).map((f) => [f.code, f.step]),
+      [
+        ["unresolved_integration_step", "INT-MISSING"],
+        ["unresolved_integration_step", "STEP-MISSING"],
+        ["unresolved_integration_step", "REQ-MISSING"],
+        ["unresolved_integration_step", "LIST-MISSING"],
+      ]
+    );
+  });
+
   it("fails a one-character live hash corruption and ignores historical maps", () => {
     const { checkFrozenHashes } = require(path.join(ROOT, "hooks/plan-package.cjs"));
     const repo = mkdtempSync(path.join(os.tmpdir(), "plan-hash-"));
