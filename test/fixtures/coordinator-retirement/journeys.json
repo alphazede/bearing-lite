@@ -1,0 +1,237 @@
+{
+  "active-legacy-coordinator": {
+    "schema_version": "1",
+    "journey": {
+      "id": "journey-active-legacy",
+      "title": "journey-active-legacy",
+      "status": "implementation",
+      "planning_repository": "example/repo"
+    },
+    "checkout_lease": {
+      "journey": "journey-active-legacy",
+      "controller": "orchestrator",
+      "repository": "example/repo",
+      "checkout": "checkout",
+      "branch": "main",
+      "candidate_revision": "0000000",
+      "acquired_at": "2026-11-01T00:00:00Z",
+      "generation": 1,
+      "state": "active"
+    },
+    "decisions": [],
+    "open_decisions": [],
+    "planning_receipts": [],
+    "profile_selection": {
+      "profile": "legacy",
+      "snapshot": {
+        "roles": {
+          "implementer": {
+            "enabled": true,
+            "primary": {
+              "harness": "harness-a",
+              "model": "model-a",
+              "reasoning": "reasoning-a"
+            },
+            "ordered_fallbacks": [
+              {
+                "condition": "condition-first",
+                "harness": "harness-b",
+                "model": "model-b",
+                "reasoning": "reasoning-b"
+              },
+              {
+                "condition": "condition-second",
+                "harness": "harness-c",
+                "model": "model-c",
+                "reasoning": "reasoning-c"
+              }
+            ]
+          },
+          "coordinator": {
+            "enabled": true,
+            "primary": {
+              "harness": "harness-a",
+              "model": "model-a",
+              "reasoning": "reasoning-a"
+            },
+            "ordered_fallbacks": []
+          }
+        }
+      }
+    }
+  },
+  "complete-legacy-coordinator": {
+    "schema_version": "1",
+    "journey": {
+      "id": "journey-complete-legacy",
+      "title": "journey-complete-legacy",
+      "status": "complete",
+      "planning_repository": "example/repo"
+    },
+    "checkout_lease": {
+      "journey": "journey-complete-legacy",
+      "controller": "orchestrator",
+      "repository": "example/repo",
+      "checkout": "checkout",
+      "branch": "main",
+      "candidate_revision": "0000000",
+      "acquired_at": "2026-11-01T00:00:00Z",
+      "generation": 1,
+      "state": "active"
+    },
+    "decisions": [],
+    "open_decisions": [],
+    "planning_receipts": [],
+    "profile_selection": {
+      "profile": "legacy",
+      "snapshot": {
+        "roles": {
+          "implementer": {
+            "enabled": true,
+            "primary": {
+              "harness": "harness-a",
+              "model": "model-a",
+              "reasoning": "reasoning-a"
+            },
+            "ordered_fallbacks": [
+              {
+                "condition": "condition-first",
+                "harness": "harness-b",
+                "model": "model-b",
+                "reasoning": "reasoning-b"
+              },
+              {
+                "condition": "condition-second",
+                "harness": "harness-c",
+                "model": "model-c",
+                "reasoning": "reasoning-c"
+              }
+            ]
+          },
+          "coordinator": {
+            "enabled": true,
+            "primary": {
+              "harness": "harness-a",
+              "model": "model-a",
+              "reasoning": "reasoning-a"
+            },
+            "ordered_fallbacks": []
+          }
+        }
+      }
+    }
+  },
+  "active-coordinator-disabled": {
+    "schema_version": "1",
+    "journey": {
+      "id": "journey-active-disabled",
+      "title": "journey-active-disabled",
+      "status": "implementation",
+      "planning_repository": "example/repo"
+    },
+    "checkout_lease": {
+      "journey": "journey-active-disabled",
+      "controller": "orchestrator",
+      "repository": "example/repo",
+      "checkout": "checkout",
+      "branch": "main",
+      "candidate_revision": "0000000",
+      "acquired_at": "2026-11-01T00:00:00Z",
+      "generation": 1,
+      "state": "active"
+    },
+    "decisions": [],
+    "open_decisions": [],
+    "planning_receipts": [],
+    "profile_selection": {
+      "profile": "legacy",
+      "snapshot": {
+        "roles": {
+          "implementer": {
+            "enabled": true,
+            "primary": {
+              "harness": "harness-a",
+              "model": "model-a",
+              "reasoning": "reasoning-a"
+            },
+            "ordered_fallbacks": [
+              {
+                "condition": "condition-first",
+                "harness": "harness-b",
+                "model": "model-b",
+                "reasoning": "reasoning-b"
+              },
+              {
+                "condition": "condition-second",
+                "harness": "harness-c",
+                "model": "model-c",
+                "reasoning": "reasoning-c"
+              }
+            ]
+          },
+          "coordinator": {
+            "enabled": false,
+            "primary": {
+              "harness": "harness-a",
+              "model": "model-a",
+              "reasoning": "reasoning-a"
+            },
+            "ordered_fallbacks": []
+          }
+        }
+      }
+    }
+  },
+  "active-no-coordinator": {
+    "schema_version": "1",
+    "journey": {
+      "id": "journey-active-direct",
+      "title": "journey-active-direct",
+      "status": "implementation",
+      "planning_repository": "example/repo"
+    },
+    "checkout_lease": {
+      "journey": "journey-active-direct",
+      "controller": "orchestrator",
+      "repository": "example/repo",
+      "checkout": "checkout",
+      "branch": "main",
+      "candidate_revision": "0000000",
+      "acquired_at": "2026-11-01T00:00:00Z",
+      "generation": 1,
+      "state": "active"
+    },
+    "decisions": [],
+    "open_decisions": [],
+    "planning_receipts": [],
+    "profile_selection": {
+      "profile": "legacy",
+      "snapshot": {
+        "roles": {
+          "implementer": {
+            "enabled": true,
+            "primary": {
+              "harness": "harness-a",
+              "model": "model-a",
+              "reasoning": "reasoning-a"
+            },
+            "ordered_fallbacks": [
+              {
+                "condition": "condition-first",
+                "harness": "harness-b",
+                "model": "model-b",
+                "reasoning": "reasoning-b"
+              },
+              {
+                "condition": "condition-second",
+                "harness": "harness-c",
+                "model": "model-c",
+                "reasoning": "reasoning-c"
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

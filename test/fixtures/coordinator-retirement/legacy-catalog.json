@@ -1,0 +1,1337 @@
+{
+  "schema_version": 1,
+  "profiles": {
+    "legacy-coord-on-repair-absent": {
+      "roles": {
+        "implementer": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": [
+            {
+              "condition": "condition-first",
+              "harness": "harness-b",
+              "model": "model-b",
+              "reasoning": "reasoning-b"
+            },
+            {
+              "condition": "condition-second",
+              "harness": "harness-c",
+              "model": "model-c",
+              "reasoning": "reasoning-c"
+            }
+          ]
+        },
+        "light_implementer": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": []
+        },
+        "coordinator": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": []
+        },
+        "reviewer": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": [],
+          "cadence": "phase"
+        },
+        "scribe": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": [],
+          "cadence": "event"
+        },
+        "systems_modeler": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            }
+          }
+        },
+        "test_engineer": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            },
+            "assurance": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": [],
+              "cadence": "phase"
+            }
+          }
+        },
+        "integration_engineer": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            },
+            "execution": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-b",
+                "model": "model-b",
+                "reasoning": "reasoning-b"
+              },
+              "ordered_fallbacks": [],
+              "cadence": "lifecycle"
+            }
+          }
+        },
+        "requirements_engineer": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            }
+          }
+        }
+      },
+      "development_strategy": {
+        "mode": "single_implementer"
+      },
+      "planning_to_implementation_clean_session": false,
+      "concurrency": {
+        "dispatch_ready_independent_work": true,
+        "preserve_order_for_dependencies_interfaces_write_overlap_and_shared_mutable_resources": true
+      },
+      "deterministic_verification": {
+        "reverify": {
+          "enabled": false
+        }
+      }
+    },
+    "legacy-coord-on-repair-off": {
+      "roles": {
+        "implementer": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": [
+            {
+              "condition": "condition-first",
+              "harness": "harness-b",
+              "model": "model-b",
+              "reasoning": "reasoning-b"
+            },
+            {
+              "condition": "condition-second",
+              "harness": "harness-c",
+              "model": "model-c",
+              "reasoning": "reasoning-c"
+            }
+          ]
+        },
+        "light_implementer": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": []
+        },
+        "coordinator": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": []
+        },
+        "reviewer": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": [],
+          "cadence": "phase"
+        },
+        "scribe": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": [],
+          "cadence": "event"
+        },
+        "systems_modeler": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            }
+          }
+        },
+        "test_engineer": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            },
+            "assurance": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": [],
+              "cadence": "phase"
+            }
+          }
+        },
+        "integration_engineer": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            },
+            "execution": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-b",
+                "model": "model-b",
+                "reasoning": "reasoning-b"
+              },
+              "ordered_fallbacks": [],
+              "cadence": "lifecycle"
+            }
+          }
+        },
+        "requirements_engineer": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            }
+          }
+        }
+      },
+      "development_strategy": {
+        "mode": "single_implementer"
+      },
+      "planning_to_implementation_clean_session": false,
+      "concurrency": {
+        "dispatch_ready_independent_work": true,
+        "preserve_order_for_dependencies_interfaces_write_overlap_and_shared_mutable_resources": true
+      },
+      "deterministic_verification": {
+        "reverify": {
+          "enabled": false
+        }
+      },
+      "assurance_repair": {
+        "enabled": false
+      }
+    },
+    "legacy-coord-on-repair-on": {
+      "roles": {
+        "implementer": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": [
+            {
+              "condition": "condition-first",
+              "harness": "harness-b",
+              "model": "model-b",
+              "reasoning": "reasoning-b"
+            },
+            {
+              "condition": "condition-second",
+              "harness": "harness-c",
+              "model": "model-c",
+              "reasoning": "reasoning-c"
+            }
+          ]
+        },
+        "light_implementer": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": []
+        },
+        "coordinator": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": []
+        },
+        "reviewer": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": [],
+          "cadence": "phase"
+        },
+        "scribe": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": [],
+          "cadence": "event"
+        },
+        "systems_modeler": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            }
+          }
+        },
+        "test_engineer": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            },
+            "assurance": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": [],
+              "cadence": "phase"
+            }
+          }
+        },
+        "integration_engineer": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            },
+            "execution": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-b",
+                "model": "model-b",
+                "reasoning": "reasoning-b"
+              },
+              "ordered_fallbacks": [],
+              "cadence": "lifecycle"
+            }
+          }
+        },
+        "requirements_engineer": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            }
+          }
+        }
+      },
+      "development_strategy": {
+        "mode": "single_implementer"
+      },
+      "planning_to_implementation_clean_session": false,
+      "concurrency": {
+        "dispatch_ready_independent_work": true,
+        "preserve_order_for_dependencies_interfaces_write_overlap_and_shared_mutable_resources": true
+      },
+      "deterministic_verification": {
+        "reverify": {
+          "enabled": false
+        }
+      },
+      "assurance_repair": {
+        "enabled": true
+      }
+    },
+    "legacy-coord-off-repair-absent": {
+      "roles": {
+        "implementer": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": [
+            {
+              "condition": "condition-first",
+              "harness": "harness-b",
+              "model": "model-b",
+              "reasoning": "reasoning-b"
+            },
+            {
+              "condition": "condition-second",
+              "harness": "harness-c",
+              "model": "model-c",
+              "reasoning": "reasoning-c"
+            }
+          ]
+        },
+        "light_implementer": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": []
+        },
+        "coordinator": {
+          "enabled": false,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": []
+        },
+        "reviewer": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": [],
+          "cadence": "phase"
+        },
+        "scribe": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": [],
+          "cadence": "event"
+        },
+        "systems_modeler": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            }
+          }
+        },
+        "test_engineer": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            },
+            "assurance": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": [],
+              "cadence": "phase"
+            }
+          }
+        },
+        "integration_engineer": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            },
+            "execution": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-b",
+                "model": "model-b",
+                "reasoning": "reasoning-b"
+              },
+              "ordered_fallbacks": [],
+              "cadence": "lifecycle"
+            }
+          }
+        },
+        "requirements_engineer": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            }
+          }
+        }
+      },
+      "development_strategy": {
+        "mode": "single_implementer"
+      },
+      "planning_to_implementation_clean_session": false,
+      "concurrency": {
+        "dispatch_ready_independent_work": true,
+        "preserve_order_for_dependencies_interfaces_write_overlap_and_shared_mutable_resources": true
+      },
+      "deterministic_verification": {
+        "reverify": {
+          "enabled": false
+        }
+      }
+    },
+    "legacy-coord-off-repair-off": {
+      "roles": {
+        "implementer": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": [
+            {
+              "condition": "condition-first",
+              "harness": "harness-b",
+              "model": "model-b",
+              "reasoning": "reasoning-b"
+            },
+            {
+              "condition": "condition-second",
+              "harness": "harness-c",
+              "model": "model-c",
+              "reasoning": "reasoning-c"
+            }
+          ]
+        },
+        "light_implementer": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": []
+        },
+        "coordinator": {
+          "enabled": false,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": []
+        },
+        "reviewer": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": [],
+          "cadence": "phase"
+        },
+        "scribe": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": [],
+          "cadence": "event"
+        },
+        "systems_modeler": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            }
+          }
+        },
+        "test_engineer": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            },
+            "assurance": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": [],
+              "cadence": "phase"
+            }
+          }
+        },
+        "integration_engineer": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            },
+            "execution": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-b",
+                "model": "model-b",
+                "reasoning": "reasoning-b"
+              },
+              "ordered_fallbacks": [],
+              "cadence": "lifecycle"
+            }
+          }
+        },
+        "requirements_engineer": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            }
+          }
+        }
+      },
+      "development_strategy": {
+        "mode": "single_implementer"
+      },
+      "planning_to_implementation_clean_session": false,
+      "concurrency": {
+        "dispatch_ready_independent_work": true,
+        "preserve_order_for_dependencies_interfaces_write_overlap_and_shared_mutable_resources": true
+      },
+      "deterministic_verification": {
+        "reverify": {
+          "enabled": false
+        }
+      },
+      "assurance_repair": {
+        "enabled": false
+      }
+    },
+    "legacy-coord-off-repair-on": {
+      "roles": {
+        "implementer": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": [
+            {
+              "condition": "condition-first",
+              "harness": "harness-b",
+              "model": "model-b",
+              "reasoning": "reasoning-b"
+            },
+            {
+              "condition": "condition-second",
+              "harness": "harness-c",
+              "model": "model-c",
+              "reasoning": "reasoning-c"
+            }
+          ]
+        },
+        "light_implementer": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": []
+        },
+        "coordinator": {
+          "enabled": false,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": []
+        },
+        "reviewer": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": [],
+          "cadence": "phase"
+        },
+        "scribe": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": [],
+          "cadence": "event"
+        },
+        "systems_modeler": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            }
+          }
+        },
+        "test_engineer": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            },
+            "assurance": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": [],
+              "cadence": "phase"
+            }
+          }
+        },
+        "integration_engineer": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            },
+            "execution": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-b",
+                "model": "model-b",
+                "reasoning": "reasoning-b"
+              },
+              "ordered_fallbacks": [],
+              "cadence": "lifecycle"
+            }
+          }
+        },
+        "requirements_engineer": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            }
+          }
+        }
+      },
+      "development_strategy": {
+        "mode": "single_implementer"
+      },
+      "planning_to_implementation_clean_session": false,
+      "concurrency": {
+        "dispatch_ready_independent_work": true,
+        "preserve_order_for_dependencies_interfaces_write_overlap_and_shared_mutable_resources": true
+      },
+      "deterministic_verification": {
+        "reverify": {
+          "enabled": false
+        }
+      },
+      "assurance_repair": {
+        "enabled": true
+      }
+    },
+    "legacy-coord-absent-repair-absent": {
+      "roles": {
+        "implementer": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": [
+            {
+              "condition": "condition-first",
+              "harness": "harness-b",
+              "model": "model-b",
+              "reasoning": "reasoning-b"
+            },
+            {
+              "condition": "condition-second",
+              "harness": "harness-c",
+              "model": "model-c",
+              "reasoning": "reasoning-c"
+            }
+          ]
+        },
+        "light_implementer": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": []
+        },
+        "reviewer": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": [],
+          "cadence": "phase"
+        },
+        "scribe": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": [],
+          "cadence": "event"
+        },
+        "systems_modeler": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            }
+          }
+        },
+        "test_engineer": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            },
+            "assurance": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": [],
+              "cadence": "phase"
+            }
+          }
+        },
+        "integration_engineer": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            },
+            "execution": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-b",
+                "model": "model-b",
+                "reasoning": "reasoning-b"
+              },
+              "ordered_fallbacks": [],
+              "cadence": "lifecycle"
+            }
+          }
+        },
+        "requirements_engineer": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            }
+          }
+        }
+      },
+      "development_strategy": {
+        "mode": "single_implementer"
+      },
+      "planning_to_implementation_clean_session": false,
+      "concurrency": {
+        "dispatch_ready_independent_work": true,
+        "preserve_order_for_dependencies_interfaces_write_overlap_and_shared_mutable_resources": true
+      },
+      "deterministic_verification": {
+        "reverify": {
+          "enabled": false
+        }
+      }
+    },
+    "legacy-coord-absent-repair-off": {
+      "roles": {
+        "implementer": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": [
+            {
+              "condition": "condition-first",
+              "harness": "harness-b",
+              "model": "model-b",
+              "reasoning": "reasoning-b"
+            },
+            {
+              "condition": "condition-second",
+              "harness": "harness-c",
+              "model": "model-c",
+              "reasoning": "reasoning-c"
+            }
+          ]
+        },
+        "light_implementer": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": []
+        },
+        "reviewer": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": [],
+          "cadence": "phase"
+        },
+        "scribe": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": [],
+          "cadence": "event"
+        },
+        "systems_modeler": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            }
+          }
+        },
+        "test_engineer": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            },
+            "assurance": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": [],
+              "cadence": "phase"
+            }
+          }
+        },
+        "integration_engineer": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            },
+            "execution": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-b",
+                "model": "model-b",
+                "reasoning": "reasoning-b"
+              },
+              "ordered_fallbacks": [],
+              "cadence": "lifecycle"
+            }
+          }
+        },
+        "requirements_engineer": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            }
+          }
+        }
+      },
+      "development_strategy": {
+        "mode": "single_implementer"
+      },
+      "planning_to_implementation_clean_session": false,
+      "concurrency": {
+        "dispatch_ready_independent_work": true,
+        "preserve_order_for_dependencies_interfaces_write_overlap_and_shared_mutable_resources": true
+      },
+      "deterministic_verification": {
+        "reverify": {
+          "enabled": false
+        }
+      },
+      "assurance_repair": {
+        "enabled": false
+      }
+    },
+    "legacy-coord-absent-repair-on": {
+      "roles": {
+        "implementer": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": [
+            {
+              "condition": "condition-first",
+              "harness": "harness-b",
+              "model": "model-b",
+              "reasoning": "reasoning-b"
+            },
+            {
+              "condition": "condition-second",
+              "harness": "harness-c",
+              "model": "model-c",
+              "reasoning": "reasoning-c"
+            }
+          ]
+        },
+        "light_implementer": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": []
+        },
+        "reviewer": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": [],
+          "cadence": "phase"
+        },
+        "scribe": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a"
+          },
+          "ordered_fallbacks": [],
+          "cadence": "event"
+        },
+        "systems_modeler": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            }
+          }
+        },
+        "test_engineer": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            },
+            "assurance": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": [],
+              "cadence": "phase"
+            }
+          }
+        },
+        "integration_engineer": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            },
+            "execution": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-b",
+                "model": "model-b",
+                "reasoning": "reasoning-b"
+              },
+              "ordered_fallbacks": [],
+              "cadence": "lifecycle"
+            }
+          }
+        },
+        "requirements_engineer": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            }
+          }
+        }
+      },
+      "development_strategy": {
+        "mode": "single_implementer"
+      },
+      "planning_to_implementation_clean_session": false,
+      "concurrency": {
+        "dispatch_ready_independent_work": true,
+        "preserve_order_for_dependencies_interfaces_write_overlap_and_shared_mutable_resources": true
+      },
+      "deterministic_verification": {
+        "reverify": {
+          "enabled": false
+        }
+      },
+      "assurance_repair": {
+        "enabled": true
+      }
+    }
+  }
+}
