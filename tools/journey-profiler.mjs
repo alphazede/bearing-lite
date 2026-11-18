@@ -12,8 +12,8 @@ const require = createRequire(import.meta.url);
 const { ownerWaitMetrics } = require("../hooks/owner-stops.cjs");
 const SCHEMA_PATH = fileURLToPath(new URL("../schemas/journey-profile.schema.json", import.meta.url));
 const PUBLIC_ROLES = new Set([
-  "coordinator", "fellow", "implementer", "integration-engineer", "light-implementer",
-  "onboard-bearing", "orchestrator", "prompt", "reviewer", "scribe", "systems-modeler", "test-engineer",
+  "coordinator", "fellow", "implementer", "integration-engineer", "integration-test", "light-implementer",
+  "mbse", "onboard-bearing", "orchestrator", "prompt", "reviewer", "scribe", "test-engineer",
 ]);
 const PUBLIC_STAGES = new Set(["assurance", "implementation", "planning", "review"]);
 const PUBLIC_REASONS = new Set([

@@ -29,7 +29,12 @@ describe("S1 profiles, migration, resume, and role/session contracts", () => {
     assert.equal(fixture.schema_version, 1);
     assert.equal(typeof fixture.schema_version, "number");
     const alpha = fixture.profiles["fixture-alpha"];
-    assert.equal(alpha.roles.test_engineer.sessions.planning.enabled, true);
+    assert.equal(alpha.roles.mbse.sessions.planning.enabled, true);
+    assert.equal(alpha.roles.integration_test.sessions.planning.enabled, true);
+    assert.equal("requirements_engineer" in alpha.roles, false);
+    assert.equal("systems_modeler" in alpha.roles, false);
+    assert.equal("planning" in alpha.roles.test_engineer.sessions, false);
+    assert.equal("planning" in alpha.roles.integration_engineer.sessions, false);
     assert.equal(alpha.roles.test_engineer.sessions.assurance.cadence, "phase");
     assert.equal(alpha.roles.integration_engineer.sessions.execution.cadence, "lifecycle");
     assert.equal(alpha.roles.reviewer.cadence, "phase");
@@ -148,6 +153,64 @@ describe("S1 profiles, migration, resume, and role/session contracts", () => {
       const onboard = readFileSync(path.join(SKILLS, "onboard-bearing", "SKILL.md"), "utf8");
       assert.match(onboard, /roles\.plan_integrator/);
       assert.match(onboard, /never copy/i);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("refuses removed rc.1 planning roles/sessions with a clear error and freezes rc.2 roles (Alphazedehq#580)", () => {
+    const dir = mkdtempSync(path.join(tmpdir(), "bearing-profiles-580-"));
+    try {
+      const home = path.join(dir, "home");
+      const catalogDir = path.join(home, ".agents", "bearing-lite");
+      mkdirSync(catalogDir, { recursive: true });
+      const fixture = JSON.parse(readFileSync(path.join(ROOT, "test/fixtures/profiles-populated.example.json"), "utf8"));
+      const [name] = Object.keys(fixture.profiles);
+      const route = { enabled: true, primary: { harness: "h", model: "m", reasoning: "r" }, ordered_fallbacks: [] };
+
+      // Valid rc.2 profile (mbse, integration_test, test_engineer.assurance, integration_engineer.execution) loads READY and freezes.
+      writeFileSync(path.join(catalogDir, "profiles.json"), JSON.stringify(fixture));
+      assert.equal(profilesHook.evaluateCatalogState({ env: { HOME: home } }).outcome, "READY");
+      const frozen = profilesHook.freezeSelectedRoutes({ profile: fixture.profiles[name], catalog: fixture });
+      assert.ok(frozen.snapshot && frozen.digest, JSON.stringify(frozen));
+      assert.ok(frozen.snapshot.roles.mbse?.sessions?.planning);
+      assert.ok(frozen.snapshot.roles.integration_test?.sessions?.planning);
+      assert.ok(frozen.snapshot.roles.test_engineer?.sessions?.assurance);
+      assert.ok(frozen.snapshot.roles.integration_engineer?.sessions?.execution);
+
+      // Refused role keys: requirements_engineer and systems_modeler.
+      for (const oldKey of ["requirements_engineer", "systems_modeler"]) {
+        const bad = structuredClone(fixture);
+        bad.profiles[name].roles[oldKey] = { sessions: { planning: structuredClone(route) } };
+        writeFileSync(path.join(catalogDir, "profiles.json"), JSON.stringify(bad));
+        const verdict = profilesHook.evaluateCatalogState({ env: { HOME: home } });
+        assert.equal(verdict.outcome, "NEEDS_MORE_EVIDENCE", oldKey);
+        assert.equal(verdict.reason, `removed_role:${oldKey}`);
+        assert.match(verdict.error, new RegExp(`roles\\.${oldKey} is removed.*roles\\.mbse\\.sessions\\.planning`));
+        const freezeVerdict = profilesHook.freezeSelectedRoutes({ profile: bad.profiles[name] });
+        assert.equal(freezeVerdict.outcome, "OWNER_DECISION_REQUIRED", oldKey);
+        assert.equal(freezeVerdict.snapshot, undefined);
+        assert.equal(freezeVerdict.digest, undefined);
+        assert.equal(freezeVerdict.reason, `removed_role:${oldKey}`);
+        assert.match(freezeVerdict.error, new RegExp(`roles\\.${oldKey} is removed`));
+      }
+
+      // Refused planning sessions on test_engineer and integration_engineer.
+      for (const role of ["test_engineer", "integration_engineer"]) {
+        const bad = structuredClone(fixture);
+        bad.profiles[name].roles[role].sessions.planning = structuredClone(route);
+        writeFileSync(path.join(catalogDir, "profiles.json"), JSON.stringify(bad));
+        const verdict = profilesHook.evaluateCatalogState({ env: { HOME: home } });
+        assert.equal(verdict.outcome, "NEEDS_MORE_EVIDENCE", role);
+        assert.equal(verdict.reason, `removed_session:${role}.planning`);
+        assert.match(verdict.error, new RegExp(`roles\\.${role}\\.sessions\\.planning is removed.*roles\\.integration_test\\.sessions\\.planning`));
+        const freezeVerdict = profilesHook.freezeSelectedRoutes({ profile: bad.profiles[name] });
+        assert.equal(freezeVerdict.outcome, "OWNER_DECISION_REQUIRED", role);
+        assert.equal(freezeVerdict.snapshot, undefined);
+        assert.equal(freezeVerdict.digest, undefined);
+        assert.equal(freezeVerdict.reason, `removed_session:${role}.planning`);
+        assert.match(freezeVerdict.error, new RegExp(`roles\\.${role}\\.sessions\\.planning is removed`));
+      }
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

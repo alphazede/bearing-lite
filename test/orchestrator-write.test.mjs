@@ -53,7 +53,7 @@ test("AC-146.02 envelope-subagent-role", () => {
     const response = lock.handle({
       hook_event_name: "PreToolUse",
       agent_id: "child-1",
-      assigned_role: "test_engineer",
+      assigned_role: "integration_test",
       tool_input: { file_path: "docs/plans/example/seit.json" },
     });
     assert.equal(response.hookSpecificOutput.verdict, "ALLOW");
@@ -84,7 +84,7 @@ test("AC-146.02 remaining locked artifact guard", () => {
     paths: ["docs/plans/example/seit.json"],
   });
   assert.equal(result.verdict, "DENY_DISPATCH");
-  assert.equal(result.owner, "test_engineer");
+  assert.equal(result.owner, "integration_test");
 });
 
 test("W2-F4 role-less subagent cannot write architectural-alignment artifacts", () => {
@@ -103,7 +103,7 @@ test("W2-F4 role-less subagent cannot write architectural-alignment artifacts", 
 test("W2-F5 subagent assigned_role overrides inherited process role", () => {
   withoutBearingRole(() => {
     const response = lock.handle({
-      hook_event_name: "PreToolUse", agent_id: "child-1", assigned_role: "test_engineer",
+      hook_event_name: "PreToolUse", agent_id: "child-1", assigned_role: "integration_test",
       tool_input: { file_path: "docs/plans/example/seit.json" },
     }, { role: "orchestrator" });
     assert.equal(response.hookSpecificOutput.verdict, "ALLOW");

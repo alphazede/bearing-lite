@@ -1,15 +1,15 @@
 ---
 type: agent-reference
-title: Requirements Author Self-Quality Pass and Return
-tags: [bearing, requirements]
+title: MBSE Requirements Author Self-Quality Pass and Return
+tags: [bearing, requirements, mbse]
 ---
 
 # Self requirements-quality pass
 
-The Requirements Engineer authors the requirements, then checks its own draft
-using the selected Requirements Engineering method's authoring/checklist/quality
-criteria. This is one assignment with distinct drafting and checking activities;
-it is not a second agent, an independent review, or a new invocation.
+MBSE authors the requirements, then checks its own draft using the selected
+Requirements Engineering method's authoring/checklist/quality criteria. This is
+one assignment with distinct drafting and checking activities; it is not a
+second agent, an independent review, or a new invocation.
 
 ## Check and repair
 
@@ -24,10 +24,10 @@ Use the method's semantic checklist; mechanical lint alone does not prove qualit
 
 Inputs are the confirmed Alignment/Scope workspace, its decision batch and
 quantity table, and existing architecture. Do not wait for, invent, or cite later
-outputs: SEIT case IDs belong to the Planning Test Engineer and component
-placements to the Systems Modeler and final Planning and Design. Run the register
-precheck at `--stage requirements` (see `precheck.md`); its `pending_bindings`
-name those owners and block final assembly until they are completed.
+outputs: SEIT case IDs belong to Integration and Test (planning) and final
+component allocations to Planning and Design. Run the register precheck at
+`--stage requirements` (see `precheck.md`); its `pending_bindings` name
+`integration_test` and block final assembly until they are completed.
 
 Inspect the findings, repair your own permitted requirements, and recheck
 affected rows and references in this invocation. Imported method guidance does

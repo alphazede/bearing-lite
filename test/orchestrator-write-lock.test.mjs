@@ -2,7 +2,7 @@ import { boundHook, withTask } from "./task-opt-in-fixture.mjs";
 /**
  * #112 Orchestrator write-set lock: the Orchestrator controller (no role or
  * BEARING_ROLE=orchestrator) authors final plan/design and assembly but cannot
- * write specialist-owned content such as SEIT (BEARING_ROLE=test_engineer) or
+ * write specialist-owned content such as SEIT (BEARING_ROLE=integration_test) or
  * the requirements library. Detection cases below use seit.json as the
  * Orchestrator-denied artifact.
  */
@@ -29,8 +29,8 @@ describe("#112 orchestrator write-set lock", () => {
       paths: ["docs/plans/example/seit.json"],
     });
     assert.equal(result.verdict, "DENY_DISPATCH");
-    assert.match(String(result.reason), /test_engineer/);
-    assert.match(String(result.dispatch), /BEARING_ROLE=test_engineer/);
+    assert.match(String(result.reason), /integration_test/);
+    assert.match(String(result.dispatch), /BEARING_ROLE=integration_test/);
   });
 
   it("allows the Orchestrator controller to author final design and the technical plan (F1)", () => {
@@ -44,10 +44,10 @@ describe("#112 orchestrator write-set lock", () => {
     }
   });
 
-  it("allows BEARING_ROLE=test_engineer to write seit.json", () => {
+  it("allows BEARING_ROLE=integration_test to write seit.json", () => {
     const lock = boundHook(require(LOCK));
     const result = lock.evaluate({
-      role: "test_engineer",
+      role: "integration_test",
       paths: ["docs/plans/example/seit.json"],
     });
     assert.equal(result.verdict, "ALLOW");
@@ -83,7 +83,7 @@ describe("#112 orchestrator write-set lock", () => {
       tool_input: { patch: "*** Update File: seit.json\n@@\n+x\n" },
     });
     assert.equal(result.verdict, "DENY_DISPATCH");
-    assert.match(String(result.reason), /test_engineer/);
+    assert.match(String(result.reason), /integration_test/);
   });
 
   it("denies file/filename keys that name a locked artifact", () => {
@@ -232,7 +232,7 @@ describe("#112 orchestrator write-set lock", () => {
     try {
       const allowed = lock.handle({
         hook_event_name: "PreToolUse",
-        assigned_role: "test_engineer",
+        assigned_role: "integration_test",
         tool_input: { file_path: "seit.json" },
       });
       assert.equal(allowed.hookSpecificOutput.verdict, "ALLOW");

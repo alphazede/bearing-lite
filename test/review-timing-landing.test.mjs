@@ -16,6 +16,7 @@ const ROUTER = read("skills/bearing-lite/SKILL.md");
 // Retired Coordinator duties (D8 review dispatch, landing) live in the Implementation Orchestrator text.
 const IMPL_ORCH = ["skills/bearing-lite/SKILL.md", ...markdownIn("skills/bearing-lite/references")].map(readShipped).join("\n");
 const INTEGRATION = read("skills/integration-engineer/SKILL.md");
+const INTEGRATION_TEST = read("skills/integration-test/SKILL.md");
 const TEST_ENGINEER = read("skills/test-engineer/SKILL.md");
 const ASSURANCE = read("skills/bearing-lite/references/assurance-policy.md");
 const ASSEMBLY = read("skills/bearing-lite/references/planning-assembly.md");
@@ -82,8 +83,8 @@ describe("#221 author-known deltas return to their owner at reconciliation", () 
     assert.match(OWNER_STOPS, /reconciliation,\s*delta,\s*or refresh cannot renew a spent allowance/i);
   });
 
-  it("the correction loop and Test Engineer point at the rule", () => {
+  it("the correction loop and Integration and Test point at the rule", () => {
     assert.match(CORRECTION, /planning-assembly\.md#author-known-deltas-221/);
-    assert.match(TEST_ENGINEER, /planning-assembly\.md#author-known-deltas-221/);
+    assert.match(INTEGRATION_TEST, /planning-assembly\.md#author-known-deltas-221/);
   });
 });

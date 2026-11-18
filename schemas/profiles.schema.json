@@ -304,9 +304,6 @@
           "minProperties": 1,
           "additionalProperties": false,
           "properties": {
-            "planning": {
-              "$ref": "#/$defs/route"
-            },
             "assurance": {
               "$ref": "#/$defs/assuranceSession"
             }
@@ -326,9 +323,6 @@
           "minProperties": 1,
           "additionalProperties": false,
           "properties": {
-            "planning": {
-              "$ref": "#/$defs/route"
-            },
             "execution": {
               "$ref": "#/$defs/assuranceSession"
             }
@@ -365,7 +359,10 @@
             "scribe": {
               "$ref": "#/$defs/scribeRoute"
             },
-            "systems_modeler": {
+            "mbse": {
+              "$ref": "#/$defs/sessionedRole"
+            },
+            "integration_test": {
               "$ref": "#/$defs/sessionedRole"
             },
             "test_engineer": {
@@ -373,9 +370,6 @@
             },
             "integration_engineer": {
               "$ref": "#/$defs/integrationEngineerRole"
-            },
-            "requirements_engineer": {
-              "$ref": "#/$defs/sessionedRole"
             }
           }
         },

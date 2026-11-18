@@ -13,6 +13,7 @@
 ### Changed
 
 - Move the optional Fellow route from per-profile `roles` to the top-level catalog `fellow` envelope so every frozen binding carries `snapshot.fellow` regardless of selected profile. (Alphazedehq#579)
+- Merge planning specialist roles into MBSE (`roles.mbse.sessions.planning`) and Integration and Test (`roles.integration_test.sessions.planning`), remove `requirements_engineer`, `systems_modeler`, and the planning sessions of `test_engineer` and `integration_engineer`, keep `test_engineer.sessions.assurance` and `integration_engineer.sessions.execution`, and document `plan-package.cjs` slice rules in both new planning skills. (Alphazedehq#580)
 
 ## [3.0.0-rc.1] - 2026-11-18
 

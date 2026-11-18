@@ -1357,7 +1357,7 @@ export function renderDodManifest(doc, opts = {}) {
     ? naBlock("Model inventory", modelsParsed.reason)
     : renderTable(
         "cap-model",
-        "System-model inventory. Systems Modeler owns semantics; this page only projects prepared views.",
+        "System-model inventory. MBSE owns semantics; this page only projects prepared views.",
         ["ID", "Mode", "Source", "Digest", "Viewpoint", "Trace", "Limitation", "Render"],
         modelRows
       );

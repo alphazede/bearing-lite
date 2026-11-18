@@ -1,6 +1,6 @@
 # TDD regression sequence
 
-Use after the [Test Engineer](../../test-engineer/SKILL.md) selects `test`.
+Use after [Integration and Test](../../integration-test/SKILL.md) selects `test` (or [Test Engineer](../../test-engineer/SKILL.md) in assurance).
 The frozen assignment decides combined or separate authorship; this sequence
 never changes roles, models, capabilities, or review cadence.
 
@@ -39,7 +39,7 @@ paths. Serialize that feature's red/repair/green sequence. Independent features
 may progress concurrently within the selected capacity and resource constraints.
 
 If an executable regression is impractical, describe the exact missing fact
-or resource to the Test Engineer. The Test Engineer may allocate another justified
+or resource to Integration and Test (planning) or the Assurance Test Engineer, which may allocate another justified
 V&V method under existing authority. A source inspection or manual reproduction
 can provide useful evidence, but does not satisfy a required executable red/green
 claim. Keep that gap visible; cost alone never cancels required proof or security coverage.

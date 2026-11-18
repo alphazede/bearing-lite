@@ -13,7 +13,7 @@ intent, preference, scope and skill choices, listed per issue.
 The final batch carries every confirmed decision plus the definitions those
 decisions depend on. Record it in `workspace.md` (`templates/workspace.md`):
 each decision as a `DEC-*` row and the quantity-definitions table under
-`### Quantity definitions`. The Requirements Engineer uses that section as its
+`### Quantity definitions`. MBSE uses that section as its
 precheck context; final Planning and Design copies the table into the plan's
 `## Glossary`; neither redefines it.
 

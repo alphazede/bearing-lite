@@ -17,9 +17,10 @@ copy peer text, runtimes, state stores, or authority assumptions.
 | Implementer | Spec Kit implement step | bounded execution after approved planning; split Test Implementer versus Product Implementer |
 | Scribe | event side lane | transcribes; cannot activate authority |
 | Planning Orchestrator | Spec Kit tasks gate | reconciles five artifacts; generates implementation.json and DoD Manifest input |
-| Systems Modeler | MBSE view selection | after requirements; before design finalization |
-| Integration Engineer | assembly method | dual planning and execution sessions; execution replaces Surveyor |
-| Test Engineer | Spec Kit gate | Planning and Assurance sessions; Validator absent from active roles |
+| MBSE | MBSE requirements and view selection | authors requirements, self-checks, selects modeling mode, and returns placement evidence |
+| Integration and Test | Spec Kit gate and assembly planning | planning session authoring Boundary/Data-Flow Contract, assembly strategy, and `seit.json` |
+| Integration Engineer | assembly execution | execution session assessing the integrated candidate; replaces Surveyor |
+| Test Engineer | Spec Kit gate | Assurance session (`test_engineer.sessions.assurance`); Validator absent from active roles |
 | Reviewer | LangChain reviewer subagent | independent defect review with a typed return |
 | onboard-bearing | first-run setup | explicit one-setting-at-a-time profile writes; no credentials |
 

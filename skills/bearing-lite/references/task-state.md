@@ -119,17 +119,16 @@ generation-bound checkout lease before any planning write or dispatch.
 Planning runs Intake → combined Architectural Alignment and Scope (in the
 Orchestrator controller session; the legacy Scope Definition name forwards to it
 and never starts another stage) → the enabled specialists the task needs, in
-data-dependency order: Requirements Engineer → Systems Modeler → Integration
-Engineer planning → Planning Test Engineer → the Planning Orchestrator's own
-final Planning and Design and assembly → requested planning review → owner
-confirmation → `handoff.md`. Independent ready work runs in parallel; inactive
-roles are skipped. The Requirements Engineer completes its own quality pass from
-confirmed Alignment/Scope context; a selected Systems Modeler then returns a
-placement receipt that final Planning and Design allocates against (see
+data-dependency order: MBSE → Integration and Test → the Planning
+Orchestrator's own final Planning and Design and assembly → requested planning
+review → owner confirmation → `handoff.md`. Independent ready work runs in
+parallel; inactive roles are skipped. MBSE completes its own quality pass and
+modeling from confirmed Alignment/Scope context and returns a placement receipt
+that final Planning and Design allocates against (see
 `../../planning-and-design/references/allocation-inputs.md`); a selected or
-required but unavailable Systems Modeler is a typed capability gap, never silent
-allocation. The Test Engineer binds SEIT cases to existing requirement IDs, and
-final assembly blocks until every pending binding is complete.
+required but unavailable MBSE route is a typed capability gap, never silent
+allocation. Integration and Test binds SEIT cases to existing requirement IDs,
+and final assembly blocks until every pending binding is complete.
 
 
 ## Bound assurance launch accounting

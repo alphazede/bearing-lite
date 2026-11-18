@@ -1,6 +1,6 @@
 # Verification case fields
 
-Planning and execution case record for the Test Engineer. These are case
+Planning (Integration and Test) and assurance (Assurance Test Engineer) case record. These are case
 fields, not a hook path or receipt schema. Do not add receipt bytes, outcome
 JSON, or harness locations here.
 
@@ -122,13 +122,13 @@ product test path.
 | analysis | `analysis_object`, `analysis_technique`, `analysis_product` | none |
 | inspection | `inspection_article`, `inspection_criteria`, `inspection_record` | none |
 | demonstration | `demonstration_scenario`, `observed_behavior` | none |
-| test | `test_article`, `stimulus`, `measured_response`, `test_environment` | the Test Implementer authors the executable test after the Test Engineer selects `test` |
+| test | `test_article`, `stimulus`, `measured_response`, `test_environment` | the Test Implementer authors the executable test after Integration and Test selects `test` |
 | evaluation | `evaluation_subject`, `intended_use`, `evaluator` | none |
 
 ## Branches
 
-- If `method` is `test`, stop authoring Test Engineer case fields and hand executable-test
-  work to the Test Implementer. The Test Engineer does not become the test-writing method.
+- If `method` is `test`, stop authoring V&V case fields and hand executable-test
+  work to the Test Implementer. Neither Integration and Test nor Assurance Test Engineer becomes the test-writing method.
 - If `method` is not `test`, produce the method-specific evidence only.
 - If no observable behavior changed, `NO_TEST_REQUIRED` may close the case.
   If observable behavior changed, `NO_TEST_REQUIRED` is invalid.

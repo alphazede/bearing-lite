@@ -124,7 +124,7 @@ describe("#205 one planning wave, one consolidated review", () => {
     candidate,
     plan_dir: MANIFEST,
     dod_manifest: { output_name: "plan-dod-manifest.html" },
-    planning_wave: planningSessions(candidate, ["requirements_engineer", "systems_modeler", "integration_engineer", "test_engineer"]),
+    planning_wave: planningSessions(candidate, ["mbse", "integration_test"]),
     reviewer_slots: [{ slot_id: "slot-a", primary_route_ref: "route-a", fallback_route_refs: [] }],
     round_number: 1,
     completed_rounds: 1,
@@ -144,7 +144,7 @@ describe("#205 one planning wave, one consolidated review", () => {
       }, verdict);
     }
     const ready = review().planning_wave;
-    ready.sessions[2].verdict = "CANDIDATE_READY"; // Integration Engineer planning vocabulary
+    ready.sessions[1].verdict = "CANDIDATE_READY"; // Integration and Test planning vocabulary
     assert.deepEqual(evaluatePlanningReview(review({ planning_wave: ready, completed_rounds: 0 })), {
       outcome: "NEEDS_MORE_EVIDENCE", reason: "review_round_pending",
     });
@@ -156,7 +156,7 @@ describe("#205 one planning wave, one consolidated review", () => {
     const missing = review().planning_wave;
     missing.sessions.pop();
     const pending = review().planning_wave;
-    pending.sessions[2].verdict = "WAITING_ON";
+    pending.sessions[1].verdict = "WAITING_ON";
     const stale = review().planning_wave;
     stale.sessions[0].candidate_ref = "older-plan";
     for (const planning_wave of [undefined, missing, pending, stale]) {
@@ -172,11 +172,15 @@ describe("#205 one planning wave, one consolidated review", () => {
   it("rejects an unknown, duplicate, or incomplete session declaration", () => {
     const declared = (names) => ({ ...planningSessions(candidate, names) });
     for (const planning_wave of [
-      declared(["integration_engineer", "test_engineer", "scribe"]),
-      declared(["planning_and_design", "integration_engineer"]), // retired: the controller's own procedure
+      declared(["integration_test", "scribe"]),
+      declared(["planning_and_design", "integration_test"]), // retired: the controller's own procedure
+      declared(["requirements_engineer"]), // removed in #580
+      declared(["systems_modeler"]), // removed in #580
+      declared(["test_engineer"]), // planning session removed in #580
+      declared(["integration_engineer"]), // planning session removed in #580
       declared(["plan_integrator"]),
-      { ...declared(["integration_engineer", "test_engineer"]),
-        required_sessions: ["integration_engineer", "test_engineer", "test_engineer"] },
+      { ...declared(["mbse", "integration_test"]),
+        required_sessions: ["mbse", "integration_test", "integration_test"] },
     ]) {
       assert.deepEqual(evaluatePlanningReview(review({ planning_wave })), {
         outcome: "OWNER_AMENDMENT_REQUIRED", reason: "planning_sessions_invalid",
@@ -237,7 +241,7 @@ describe("F2: optional specialists and owner-requested planning review", () => {
   };
 
   it("accepts any subset of enabled specialists, including none, without a review the owner did not request", () => {
-    for (const names of [[], ["test_engineer"], ["requirements_engineer", "systems_modeler"], ["integration_engineer", "test_engineer"]]) {
+    for (const names of [[], ["integration_test"], ["mbse"], ["mbse", "integration_test"]]) {
       const result = freeze(planPackage(unreviewed(names)).dir);
       assert.deepEqual(result.findings, [], JSON.stringify(names));
     }
@@ -247,7 +251,7 @@ describe("F2: optional specialists and owner-requested planning review", () => {
     const MANIFEST = temp("planning-wave-optional-");
     writeFileSync(path.join(MANIFEST, "plan-dod-manifest.html"), "<!doctype html><title>DoD</title>");
     const candidate = { candidate_ref: "plan", candidate_revision: "r1", candidate_digest: "d1" };
-    for (const names of [[], ["requirements_engineer"]]) {
+    for (const names of [[], ["mbse"]]) {
       const result = evaluatePlanningReview({
         candidate, plan_dir: MANIFEST, dod_manifest: { output_name: "plan-dod-manifest.html" },
         planning_wave: planningSessions(candidate, names),
@@ -259,13 +263,13 @@ describe("F2: optional specialists and owner-requested planning review", () => {
   });
 
   const failClosed = [
-    ["a declared session that did not return", unreviewed(["requirements_engineer", "test_engineer"], { sessions: [] }), "planning_wave_sessions_incomplete"],
+    ["a declared session that did not return", unreviewed(["mbse", "integration_test"], { sessions: [] }), "planning_wave_sessions_incomplete"],
     ["a declared session still pending", (doc, digest) => {
-      unreviewed(["test_engineer"])(doc, digest);
+      unreviewed(["integration_test"])(doc, digest);
       doc.journey_settings.planning_wave.sessions[0].verdict = "WAITING_ON";
     }, "planning_wave_sessions_incomplete"],
     ["a session bound to a stale candidate", (doc, digest) => {
-      unreviewed(["test_engineer"])(doc, digest);
+      unreviewed(["integration_test"])(doc, digest);
       doc.journey_settings.planning_wave.sessions[0].candidate_revision = "older";
     }, "planning_wave_sessions_incomplete"],
     ["a forged review count", unreviewed([], { reviews: 1 }), "planning_wave_review_count"],
@@ -415,24 +419,24 @@ describe("#157 DoD Manifest shows the per-unit round plan", () => {
 
 describe("skills declare the planning wave without a mid-wave Requirements Engineer gate", () => {
   const router = read("skills/bearing-lite/SKILL.md");
-  const engineer = read("skills/requirements-engineer/SKILL.md");
-  const modeler = read("skills/systems-modeler/SKILL.md");
+  const mbse = read("skills/mbse/SKILL.md");
   const allocation = read("skills/planning-and-design/references/allocation-inputs.md");
   const planning = read("skills/planning-and-design/SKILL.md");
   const loop = read("skills/planning-and-design/references/correction-loop.md");
   const wave = read("skills/bearing-lite/references/planning-assembly.md");
+  const itSkill = read("skills/integration-test/SKILL.md");
   const ie = read("skills/integration-engineer/SKILL.md");
-  const boundary = read("skills/integration-engineer/references/boundary-contract.md");
+  const boundary = read("skills/integration-test/references/boundary-contract.md");
 
   it("removes the mid-wave gate wording and ordering", () => {
     assert.equal(existsSync(path.join(ROOT, "skills/plan-integrator")), false, "Plan Integrator is retired");
     assert.doesNotMatch(wave, /after the Requirements Engineer passes/);
     assert.doesNotMatch(router, /before every Requirements Engineer dispatch/);
-    assert.doesNotMatch(engineer, /quality gate after Scope Definition|before the Systems Modeler finalizes/);
-    assert.doesNotMatch(modeler, /until the Requirements Engineer passes|after the Requirements Engineer passes/);
+    assert.doesNotMatch(mbse, /quality gate after Scope Definition|before the Systems Modeler finalizes/);
+    assert.doesNotMatch(mbse, /until the Requirements Engineer passes|after the Requirements Engineer passes/);
     assert.doesNotMatch(allocation, /after the Requirements Engineer passes/);
     assert.doesNotMatch(planning, /two evidence-changing correction rounds|third re-gate/);
-    assert.doesNotMatch(engineer, /first two correction rounds|third re-gate/);
+    assert.doesNotMatch(mbse, /first two correction rounds|third re-gate/);
   });
   it("declares planning as a wave with the implementation-wave budget", () => {
     assert.match(wave, /planning wave/i);
@@ -443,9 +447,9 @@ describe("skills declare the planning wave without a mid-wave Requirements Engin
     assert.match(wave, /coverage_assist/);
     assert.match(loop, /integer 0–1/);
   });
-  it("assigns boundary completeness to the Planning Integration Engineer", () => {
-    assert.match(ie, /references\/boundary-contract\.md/);
-    for (const term of [/source and sink/, /illegal transitions/, /trust boundar/, /authority/, /Systems Modeler/, /not-applicable/, /sixth/]) {
+  it("assigns boundary completeness to Integration and Test planning", () => {
+    assert.match(itSkill, /references\/boundary-contract\.md/);
+    for (const term of [/source and sink/, /illegal transitions/, /trust boundar/, /authority/, /MBSE/, /not-applicable/, /sixth/]) {
       assert.match(boundary, term);
     }
     assert.match(ie, /independent/);
@@ -476,7 +480,7 @@ describe("B30-525 planning inputs stay out of the end-review repair (DEC-33)", (
     assert.match(opening, /planning-assembly\.md#author-known-deltas-221/);
 
     const { dir } = planPackage((doc, digest) => {
-      doc.journey_settings.planning_wave = unreviewedPlanningWave(digest, ["test_engineer"]);
+      doc.journey_settings.planning_wave = unreviewedPlanningWave(digest, ["integration_test"]);
     });
     assert.deepEqual(freeze(dir).findings, []);
     const wave = JSON.parse(readFileSync(path.join(dir, "implementation.json"), "utf8")).journey_settings.planning_wave;

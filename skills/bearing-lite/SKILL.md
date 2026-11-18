@@ -54,7 +54,7 @@ Consume each response once and dispatch newly ready work. Never poll logs, proce
 status, or worktrees, or use timers/sleep loops for periodic “still running” checks.
 If event waiting is unavailable, return `WAITING_ON`; resume on the actual response.
 Use `references/task-state.md` for state integrity, `references/resume.md` for resume and Scribe coverage, and `references/owner-stops.md` for authority/intent stops. Never replay completed stages or change routes.
-Selected or required capabilities activate; unavailability, including a needed Systems Modeler omitted or disabled, is a typed capability gap, not substitution, not success, not invented behavior. Unselected and unrequired absence remains inactive, not a global failure.
+Selected or required capabilities activate; unavailability, including a needed MBSE route omitted or disabled, is a typed capability gap, not substitution, not success, not invented behavior. Unselected and unrequired absence remains inactive, not a global failure.
 Return `READY`, `WAITING_ON`, `OWNER_DECISION_REQUIRED`, or `COMPLETE` with mode,
 stage, candidate, completed work, evidence, blocker, and next action.
 Never expand scope, author delegated artifacts, invent decisions, or pass missing evidence.

@@ -22,7 +22,7 @@ harness, account, or agent identity.
   "terminal_outcomes": ["HALT", "OWNER_AMENDMENT_REQUIRED"],
   "planning_unit_id": "planning",
   "planning_sessions_required": [],
-  "planning_sessions_optional": ["requirements_engineer", "systems_modeler", "integration_engineer", "test_engineer"],
+  "planning_sessions_optional": ["mbse", "integration_test"],
   "planning_session_ready_verdicts": ["READY", "CANDIDATE_READY"],
   "planning_review": "owner_requested_only",
   "requires_regate_rounds_max": 1
@@ -34,9 +34,9 @@ implementation wave. No specialist session is unconditionally required: the
 wave declares in `required_sessions` exactly the profile-enabled specialist
 sessions this task needs (possibly none). Final Planning and Design is the
 Planning Orchestrator's own procedure, never a session. Every declared session
-must return `READY` (`CANDIDATE_READY` for Integration Engineer planning) for
+must return `READY` (`CANDIDATE_READY` for Integration and Test planning) for
 the planning candidate before review or the final freeze; a pending or
-incomplete return, including an unrepaired Requirements Engineer self-check,
+incomplete return, including an unrepaired MBSE self-check,
 stays a typed gap. Required artifacts are still checked by the freeze.
 
 Planning review runs only when the owner requested it at this boundary

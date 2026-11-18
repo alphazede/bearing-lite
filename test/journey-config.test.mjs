@@ -18,9 +18,9 @@ const ROLES = [
   "Test Engineer",
   "Scribe",
   "Planning Orchestrator",
-  "Systems Modeler",
+  "MBSE",
+  "Integration and Test",
   "Integration Engineer",
-  "Requirements Engineer",
 ];
 
 describe("Lifecycle profile defaults", () => {

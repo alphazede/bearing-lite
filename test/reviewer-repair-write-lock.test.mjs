@@ -266,7 +266,7 @@ describe("#206 no valid recorded transition, no repair authority", () => {
 
   it("keeps the round record parent-owned: no reviewer or implementer may forge it", () => {
     const root = checkout({ omit: ["record"] });
-    for (const role of ["reviewer", "repair_implementer", "implementer", "systems_modeler"]) {
+    for (const role of ["reviewer", "repair_implementer", "implementer", "mbse"]) {
       denied(verdict(claudeEdit(root, ".bearing-round.lock"), role), /only the parent controller/);
       const shell = { hook_event_name: "PreToolUse", session_id: REVIEWER, cwd: root, tool_name: "Bash",
         tool_input: { command: "echo '{}' > .bearing-round.lock" } };
@@ -281,7 +281,7 @@ describe("#206 no valid recorded transition, no repair authority", () => {
 describe("#206 unchanged guards", () => {
   it("keeps bound authors, orchestrator denial, and host fallbacks unchanged", () => {
     const root = checkout();
-    assert.equal(verdict(claudeEdit(root, LISTED[0]), "systems_modeler").verdict, "ALLOW");
+    assert.equal(verdict(claudeEdit(root, LISTED[0]), "mbse").verdict, "ALLOW");
     denied(verdict(claudeEdit(root, LISTED[0]), "planning_and_design"), /retired_role:planning_and_design/);
     denied(verdict(claudeEdit(root, LISTED[1]), "integration_engineer"), /bound authors/);
     denied(verdict(claudeEdit(root, LISTED[1]), "orchestrator"), /Orchestrator cannot write/);

@@ -22,7 +22,7 @@ const PLANNING_REVIEW_POLICY = Object.freeze({
   terminal_outcomes: ["HALT", "OWNER_AMENDMENT_REQUIRED"],
   planning_unit_id: "planning",
   planning_sessions_required: [],
-  planning_sessions_optional: ["requirements_engineer", "systems_modeler", "integration_engineer", "test_engineer"],
+  planning_sessions_optional: ["mbse", "integration_test"],
   planning_session_ready_verdicts: ["READY", "CANDIDATE_READY"],
   planning_review: "owner_requested_only",
   requires_regate_rounds_max: 1,

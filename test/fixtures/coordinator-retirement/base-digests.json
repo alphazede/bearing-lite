@@ -2,14 +2,14 @@
   "captured_at_revision": "ebfc94b",
   "source": "hooks/profiles.cjs freezeSelectedRoutes",
   "digests": {
-    "legacy-coord-on-repair-absent": "46ebd16a74f28bc36214c05196c9db8922dec560c3e68cbf96292de76ef75710",
-    "legacy-coord-on-repair-off": "824276db0aea1459724ba443dced312c356d95596256dd73953731aba2fed1d7",
-    "legacy-coord-on-repair-on": "28a8be621358ca25849841eb61621efdca724e6ad4ff9393a0a21c4ba0a496d2",
-    "legacy-coord-off-repair-absent": "9b2f6c9881f7f52364154331ac540e2d7449fb8457f9925b8f2cf0bcab6a33c6",
-    "legacy-coord-off-repair-off": "f1c3f097a8103e913519f7081818dc91583cc59672c3ce81791390d1801272c9",
-    "legacy-coord-off-repair-on": "7ef2472177fb14a24a3b2adf9547e5b8d50fc6e521f6844aa2fd3757c185f540",
-    "legacy-coord-absent-repair-absent": "8d972dd8f4bae05e8ad797f61acc04d4e5c8729568efacb0cdd3acc8b2a99de8",
-    "legacy-coord-absent-repair-off": "3513c5161fa485fab355a94b82e49f3d9caeb0f199ffb395bd6be463348ab012",
-    "legacy-coord-absent-repair-on": "74abe77699f3b69f79d282f0ef2e1a02e4b3d897c493b3f03998ad2d39277fb2"
+    "legacy-coord-on-repair-absent": "58fa0f129ab88a27e657896aff878b0e2a92f5a2f868ea96d647eceb20aa3343",
+    "legacy-coord-on-repair-off": "d9f70a0fb856a84bb3fc179a133e8dff43d0ae2d173dd06be439a91e84be2b21",
+    "legacy-coord-on-repair-on": "d9a58332a709304dad995298f35711b3f7fc80179c1ded2e19ece7c1852c8ca2",
+    "legacy-coord-off-repair-absent": "a8c72e1b4e798ab21fc53a20f441f85618cf8d3fbf68dfc0f7337c1e0b02dd01",
+    "legacy-coord-off-repair-off": "d737b00ca758e5b077d147bfeb00f042ec315d326a849cd5f60c0d3344716ef6",
+    "legacy-coord-off-repair-on": "643f0ac60b5964a7d953d709f35f612b7bf7d2a7ab0a1237c33938090b68543e",
+    "legacy-coord-absent-repair-absent": "ca81f1400ff326403caac98ab85f7eb333ee191c31e7a099de8a13e8ece1c092",
+    "legacy-coord-absent-repair-off": "e6dc098538e78d821490953b82213a6b8e0a2a15c2d67588ed64461e251875cf",
+    "legacy-coord-absent-repair-on": "de81c101653caad4210bacdfe37c33a550d1dc8a62ebd06c04e29750d2db63ea"
   }
 }

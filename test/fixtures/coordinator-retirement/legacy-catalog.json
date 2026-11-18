@@ -63,7 +63,20 @@
           "ordered_fallbacks": [],
           "cadence": "event"
         },
-        "systems_modeler": {
+        "mbse": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            }
+          }
+        },
+        "integration_test": {
           "sessions": {
             "planning": {
               "enabled": true,
@@ -78,15 +91,6 @@
         },
         "test_engineer": {
           "sessions": {
-            "planning": {
-              "enabled": true,
-              "primary": {
-                "harness": "harness-a",
-                "model": "model-a",
-                "reasoning": "reasoning-a"
-              },
-              "ordered_fallbacks": []
-            },
             "assurance": {
               "enabled": true,
               "primary": {
@@ -101,15 +105,6 @@
         },
         "integration_engineer": {
           "sessions": {
-            "planning": {
-              "enabled": true,
-              "primary": {
-                "harness": "harness-a",
-                "model": "model-a",
-                "reasoning": "reasoning-a"
-              },
-              "ordered_fallbacks": []
-            },
             "execution": {
               "enabled": true,
               "primary": {
@@ -119,19 +114,6 @@
               },
               "ordered_fallbacks": [],
               "cadence": "lifecycle"
-            }
-          }
-        },
-        "requirements_engineer": {
-          "sessions": {
-            "planning": {
-              "enabled": true,
-              "primary": {
-                "harness": "harness-a",
-                "model": "model-a",
-                "reasoning": "reasoning-a"
-              },
-              "ordered_fallbacks": []
             }
           }
         }
@@ -212,7 +194,20 @@
           "ordered_fallbacks": [],
           "cadence": "event"
         },
-        "systems_modeler": {
+        "mbse": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            }
+          }
+        },
+        "integration_test": {
           "sessions": {
             "planning": {
               "enabled": true,
@@ -227,15 +222,6 @@
         },
         "test_engineer": {
           "sessions": {
-            "planning": {
-              "enabled": true,
-              "primary": {
-                "harness": "harness-a",
-                "model": "model-a",
-                "reasoning": "reasoning-a"
-              },
-              "ordered_fallbacks": []
-            },
             "assurance": {
               "enabled": true,
               "primary": {
@@ -250,15 +236,6 @@
         },
         "integration_engineer": {
           "sessions": {
-            "planning": {
-              "enabled": true,
-              "primary": {
-                "harness": "harness-a",
-                "model": "model-a",
-                "reasoning": "reasoning-a"
-              },
-              "ordered_fallbacks": []
-            },
             "execution": {
               "enabled": true,
               "primary": {
@@ -268,19 +245,6 @@
               },
               "ordered_fallbacks": [],
               "cadence": "lifecycle"
-            }
-          }
-        },
-        "requirements_engineer": {
-          "sessions": {
-            "planning": {
-              "enabled": true,
-              "primary": {
-                "harness": "harness-a",
-                "model": "model-a",
-                "reasoning": "reasoning-a"
-              },
-              "ordered_fallbacks": []
             }
           }
         }
@@ -364,7 +328,20 @@
           "ordered_fallbacks": [],
           "cadence": "event"
         },
-        "systems_modeler": {
+        "mbse": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            }
+          }
+        },
+        "integration_test": {
           "sessions": {
             "planning": {
               "enabled": true,
@@ -379,15 +356,6 @@
         },
         "test_engineer": {
           "sessions": {
-            "planning": {
-              "enabled": true,
-              "primary": {
-                "harness": "harness-a",
-                "model": "model-a",
-                "reasoning": "reasoning-a"
-              },
-              "ordered_fallbacks": []
-            },
             "assurance": {
               "enabled": true,
               "primary": {
@@ -402,15 +370,6 @@
         },
         "integration_engineer": {
           "sessions": {
-            "planning": {
-              "enabled": true,
-              "primary": {
-                "harness": "harness-a",
-                "model": "model-a",
-                "reasoning": "reasoning-a"
-              },
-              "ordered_fallbacks": []
-            },
             "execution": {
               "enabled": true,
               "primary": {
@@ -420,19 +379,6 @@
               },
               "ordered_fallbacks": [],
               "cadence": "lifecycle"
-            }
-          }
-        },
-        "requirements_engineer": {
-          "sessions": {
-            "planning": {
-              "enabled": true,
-              "primary": {
-                "harness": "harness-a",
-                "model": "model-a",
-                "reasoning": "reasoning-a"
-              },
-              "ordered_fallbacks": []
             }
           }
         }
@@ -516,7 +462,20 @@
           "ordered_fallbacks": [],
           "cadence": "event"
         },
-        "systems_modeler": {
+        "mbse": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            }
+          }
+        },
+        "integration_test": {
           "sessions": {
             "planning": {
               "enabled": true,
@@ -531,15 +490,6 @@
         },
         "test_engineer": {
           "sessions": {
-            "planning": {
-              "enabled": true,
-              "primary": {
-                "harness": "harness-a",
-                "model": "model-a",
-                "reasoning": "reasoning-a"
-              },
-              "ordered_fallbacks": []
-            },
             "assurance": {
               "enabled": true,
               "primary": {
@@ -554,15 +504,6 @@
         },
         "integration_engineer": {
           "sessions": {
-            "planning": {
-              "enabled": true,
-              "primary": {
-                "harness": "harness-a",
-                "model": "model-a",
-                "reasoning": "reasoning-a"
-              },
-              "ordered_fallbacks": []
-            },
             "execution": {
               "enabled": true,
               "primary": {
@@ -572,19 +513,6 @@
               },
               "ordered_fallbacks": [],
               "cadence": "lifecycle"
-            }
-          }
-        },
-        "requirements_engineer": {
-          "sessions": {
-            "planning": {
-              "enabled": true,
-              "primary": {
-                "harness": "harness-a",
-                "model": "model-a",
-                "reasoning": "reasoning-a"
-              },
-              "ordered_fallbacks": []
             }
           }
         }
@@ -665,7 +593,20 @@
           "ordered_fallbacks": [],
           "cadence": "event"
         },
-        "systems_modeler": {
+        "mbse": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            }
+          }
+        },
+        "integration_test": {
           "sessions": {
             "planning": {
               "enabled": true,
@@ -680,15 +621,6 @@
         },
         "test_engineer": {
           "sessions": {
-            "planning": {
-              "enabled": true,
-              "primary": {
-                "harness": "harness-a",
-                "model": "model-a",
-                "reasoning": "reasoning-a"
-              },
-              "ordered_fallbacks": []
-            },
             "assurance": {
               "enabled": true,
               "primary": {
@@ -703,15 +635,6 @@
         },
         "integration_engineer": {
           "sessions": {
-            "planning": {
-              "enabled": true,
-              "primary": {
-                "harness": "harness-a",
-                "model": "model-a",
-                "reasoning": "reasoning-a"
-              },
-              "ordered_fallbacks": []
-            },
             "execution": {
               "enabled": true,
               "primary": {
@@ -721,19 +644,6 @@
               },
               "ordered_fallbacks": [],
               "cadence": "lifecycle"
-            }
-          }
-        },
-        "requirements_engineer": {
-          "sessions": {
-            "planning": {
-              "enabled": true,
-              "primary": {
-                "harness": "harness-a",
-                "model": "model-a",
-                "reasoning": "reasoning-a"
-              },
-              "ordered_fallbacks": []
             }
           }
         }
@@ -817,7 +727,20 @@
           "ordered_fallbacks": [],
           "cadence": "event"
         },
-        "systems_modeler": {
+        "mbse": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            }
+          }
+        },
+        "integration_test": {
           "sessions": {
             "planning": {
               "enabled": true,
@@ -832,15 +755,6 @@
         },
         "test_engineer": {
           "sessions": {
-            "planning": {
-              "enabled": true,
-              "primary": {
-                "harness": "harness-a",
-                "model": "model-a",
-                "reasoning": "reasoning-a"
-              },
-              "ordered_fallbacks": []
-            },
             "assurance": {
               "enabled": true,
               "primary": {
@@ -855,15 +769,6 @@
         },
         "integration_engineer": {
           "sessions": {
-            "planning": {
-              "enabled": true,
-              "primary": {
-                "harness": "harness-a",
-                "model": "model-a",
-                "reasoning": "reasoning-a"
-              },
-              "ordered_fallbacks": []
-            },
             "execution": {
               "enabled": true,
               "primary": {
@@ -873,19 +778,6 @@
               },
               "ordered_fallbacks": [],
               "cadence": "lifecycle"
-            }
-          }
-        },
-        "requirements_engineer": {
-          "sessions": {
-            "planning": {
-              "enabled": true,
-              "primary": {
-                "harness": "harness-a",
-                "model": "model-a",
-                "reasoning": "reasoning-a"
-              },
-              "ordered_fallbacks": []
             }
           }
         }
@@ -960,7 +852,20 @@
           "ordered_fallbacks": [],
           "cadence": "event"
         },
-        "systems_modeler": {
+        "mbse": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            }
+          }
+        },
+        "integration_test": {
           "sessions": {
             "planning": {
               "enabled": true,
@@ -975,15 +880,6 @@
         },
         "test_engineer": {
           "sessions": {
-            "planning": {
-              "enabled": true,
-              "primary": {
-                "harness": "harness-a",
-                "model": "model-a",
-                "reasoning": "reasoning-a"
-              },
-              "ordered_fallbacks": []
-            },
             "assurance": {
               "enabled": true,
               "primary": {
@@ -998,15 +894,6 @@
         },
         "integration_engineer": {
           "sessions": {
-            "planning": {
-              "enabled": true,
-              "primary": {
-                "harness": "harness-a",
-                "model": "model-a",
-                "reasoning": "reasoning-a"
-              },
-              "ordered_fallbacks": []
-            },
             "execution": {
               "enabled": true,
               "primary": {
@@ -1016,19 +903,6 @@
               },
               "ordered_fallbacks": [],
               "cadence": "lifecycle"
-            }
-          }
-        },
-        "requirements_engineer": {
-          "sessions": {
-            "planning": {
-              "enabled": true,
-              "primary": {
-                "harness": "harness-a",
-                "model": "model-a",
-                "reasoning": "reasoning-a"
-              },
-              "ordered_fallbacks": []
             }
           }
         }
@@ -1100,7 +974,20 @@
           "ordered_fallbacks": [],
           "cadence": "event"
         },
-        "systems_modeler": {
+        "mbse": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            }
+          }
+        },
+        "integration_test": {
           "sessions": {
             "planning": {
               "enabled": true,
@@ -1115,15 +1002,6 @@
         },
         "test_engineer": {
           "sessions": {
-            "planning": {
-              "enabled": true,
-              "primary": {
-                "harness": "harness-a",
-                "model": "model-a",
-                "reasoning": "reasoning-a"
-              },
-              "ordered_fallbacks": []
-            },
             "assurance": {
               "enabled": true,
               "primary": {
@@ -1138,15 +1016,6 @@
         },
         "integration_engineer": {
           "sessions": {
-            "planning": {
-              "enabled": true,
-              "primary": {
-                "harness": "harness-a",
-                "model": "model-a",
-                "reasoning": "reasoning-a"
-              },
-              "ordered_fallbacks": []
-            },
             "execution": {
               "enabled": true,
               "primary": {
@@ -1156,19 +1025,6 @@
               },
               "ordered_fallbacks": [],
               "cadence": "lifecycle"
-            }
-          }
-        },
-        "requirements_engineer": {
-          "sessions": {
-            "planning": {
-              "enabled": true,
-              "primary": {
-                "harness": "harness-a",
-                "model": "model-a",
-                "reasoning": "reasoning-a"
-              },
-              "ordered_fallbacks": []
             }
           }
         }
@@ -1243,7 +1099,20 @@
           "ordered_fallbacks": [],
           "cadence": "event"
         },
-        "systems_modeler": {
+        "mbse": {
+          "sessions": {
+            "planning": {
+              "enabled": true,
+              "primary": {
+                "harness": "harness-a",
+                "model": "model-a",
+                "reasoning": "reasoning-a"
+              },
+              "ordered_fallbacks": []
+            }
+          }
+        },
+        "integration_test": {
           "sessions": {
             "planning": {
               "enabled": true,
@@ -1258,15 +1127,6 @@
         },
         "test_engineer": {
           "sessions": {
-            "planning": {
-              "enabled": true,
-              "primary": {
-                "harness": "harness-a",
-                "model": "model-a",
-                "reasoning": "reasoning-a"
-              },
-              "ordered_fallbacks": []
-            },
             "assurance": {
               "enabled": true,
               "primary": {
@@ -1281,15 +1141,6 @@
         },
         "integration_engineer": {
           "sessions": {
-            "planning": {
-              "enabled": true,
-              "primary": {
-                "harness": "harness-a",
-                "model": "model-a",
-                "reasoning": "reasoning-a"
-              },
-              "ordered_fallbacks": []
-            },
             "execution": {
               "enabled": true,
               "primary": {
@@ -1299,19 +1150,6 @@
               },
               "ordered_fallbacks": [],
               "cadence": "lifecycle"
-            }
-          }
-        },
-        "requirements_engineer": {
-          "sessions": {
-            "planning": {
-              "enabled": true,
-              "primary": {
-                "harness": "harness-a",
-                "model": "model-a",
-                "reasoning": "reasoning-a"
-              },
-              "ordered_fallbacks": []
             }
           }
         }

@@ -1,8 +1,8 @@
 # Requirement quality gate
 
 Run this gate after authoring and after the method's checklist. Do not
-author here. Do not merge checklist concerns into the authoring method. Do
-not persist outside approved draft authority. Do not choose models. Do not
+author here. Do not merge checklist concerns into the authoring method.
+Do not persist outside approved draft authority. Do not choose models. Do not
 write product tests. This gate is a procedure, not a register.
 
 ## Requirement bounds
@@ -65,7 +65,7 @@ this method creates no additional review checkpoint.
 ## Record
 
 ```text
-gate: requirements-engineer/quality-gate
+gate: mbse/quality-gate
 candidate_id: <id>
 checklist: <method checklist name>
 verdict: PASS | FAIL | TYPED_GAP | BLOCKED
@@ -85,4 +85,4 @@ rows:
 | --- | --- | --- |
 | TYPED_GAP_PERSISTENCE | write, revise, validate, review, or publish the register | the register host workflow |
 | TYPED_GAP_MODEL | choose a model or harness | the lifecycle controller |
-| TYPED_GAP_TEST_CODE | write product tests | the Test Engineer |
+| TYPED_GAP_TEST_CODE | write product tests | the Test Implementer / Implementer |

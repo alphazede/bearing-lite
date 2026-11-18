@@ -16,9 +16,9 @@ import {
   readShipped,
 } from "./skill-contract-fixture.mjs";
 
-const RE_SKILL = "skills/requirements-engineer/SKILL.md";
-const GATE_REF = "skills/requirements-engineer/references/quality-gate.md";
-const REPORT_REF = "skills/requirements-engineer/references/gate-report.md";
+const RE_SKILL = "skills/mbse/SKILL.md";
+const GATE_REF = "skills/mbse/references/quality-gate.md";
+const REPORT_REF = "skills/mbse/references/gate-report.md";
 
 const reSurface = () => flat(readIfShipped(RE_SKILL) + "\n" + readIfShipped(GATE_REF));
 
@@ -132,7 +132,7 @@ describe("requirements-author-corrections", () => {
     assertContracts(
       skill,
       {
-        "author, self-check, repair, recheck loop": /author → self requirements-quality pass → repair own requirements → recheck → return/,
+        "author, self-check, repair, recheck loop": /author → self requirements-quality pass → model and map → self-check → repair own requirements and views → recheck → return/,
         "self-checks are author evidence": /self-checks are author evidence, not independent review/,
       },
       RE_SKILL

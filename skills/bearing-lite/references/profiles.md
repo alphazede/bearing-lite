@@ -35,12 +35,15 @@ and not newly scheduled; they remain in frozen snapshots unchanged.
 
 Catalog entries assign nested role/session routes for Product Implementer
 (`implementer`), Test Implementer (`test_implementer`), Light
-Implementer, Reviewer, Test Engineer, Scribe, Systems Modeler,
-Integration Engineer, and Requirements Engineer. Every specialist role is
-optional; configuration alone does not request independent review. Systems
-Modeler has a planning session; Test Engineer has planning and assurance
-sessions; Integration Engineer has planning and execution sessions. Each
-session can be enabled or disabled. Cadence keys attach to
+Implementer, Reviewer, Scribe, MBSE (`mbse`), Integration and Test
+(`integration_test`), Test Engineer (`test_engineer`), and Integration Engineer
+(`integration_engineer`). Every specialist role is optional; configuration
+alone does not request independent review. MBSE and Integration and Test each
+have a `planning` session; Test Engineer has an `assurance` session only (its
+`planning` session is removed and refused); Integration Engineer has an
+`execution` session only (its `planning` session is removed and refused).
+`requirements_engineer` and `systems_modeler` role keys are removed and refused
+with no alias. Each session can be enabled or disabled. Cadence keys attach to
 `test_engineer.assurance`, `reviewer`, and `integration_engineer.execution`
 with values `slice`, `phase`, or `lifecycle`. Defaults are `phase`, `phase`,
 and `lifecycle`. `scribe.cadence` is `event` (default: after each owner
@@ -104,7 +107,10 @@ as follows even when the schema cannot express the check:
 - Defaults keys must resolve exactly. Unresolved defaults fail closed.
 - Invalid structure or name fails closed on both load and save.
 - Reject active Surveyor, Explorer, Crewmate, Navigator, Park Ranger, or
-  Validator role keys, and retired planning route keys until migrated.
+  Validator role keys, retired planning route keys (`plan_integrator`,
+  `planning_and_design`), removed role keys (`requirements_engineer`,
+  `systems_modeler`), and removed planning sessions (`test_engineer.sessions.planning`,
+  `integration_engineer.sessions.planning`).
 
 Refuse named selection or save on any of those failures. Do not invent a
 fallback profile and do not read packaged bytes as user data.
@@ -199,7 +205,7 @@ preselected value. An approved Lifecycle may freeze an override in
 Migration preserves meaning from `planned_planning_assignments` and
 `implementation_assignments`. Map Crewmate to Implementer, Explorer to
 Coordinator, Park Ranger to Reviewer, Light Implementer unchanged, Test
-Engineer planning-phase rows to `test_engineer.planning` and
+Engineer planning-phase rows to `integration_test.planning`, and
 implementation-phase rows to `test_engineer.assurance`. Do not auto-assign
 Integration Engineer execution from Surveyor; if that optional session is enabled,
 onboard-bearing asks which route to assign. Migration asks for a missing Test
