@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/alphazede/bearing-lite/schemas/decision.schema.json",
+  "title": "Advisory decision",
+  "$defs": {
+    "agent_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["outcome"],
+      "properties": {
+        "outcome": {
+          "type": "string",
+          "enum": ["RULE", "REUSED", "ADVISED", "NO_PROPOSAL", "SILENT_FALLBACK"]
+        },
+        "meaning": { "type": "string", "maxLength": 64 },
+        "status": { "type": "string", "maxLength": 64 },
+        "evidence_ids": {
+          "type": "array",
+          "maxItems": 32,
+          "items": { "type": "string", "maxLength": 128 }
+        },
+        "decision_point": { "type": "string", "maxLength": 256 },
+        "evidence_revision": { "type": "string", "maxLength": 128 }
+      }
+    },
+    "consultation_return": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["addressee", "guidance"],
+      "properties": {
+        "addressee": { "type": "string", "const": "original_agent", "maxLength": 32 },
+        "guidance": { "type": "string", "maxLength": 2000 },
+        "notes": {
+          "type": "array",
+          "maxItems": 8,
+          "items": { "type": "string", "maxLength": 500 }
+        }
+      }
+    }
+  }
+}
