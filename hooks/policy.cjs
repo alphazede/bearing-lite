@@ -66,4 +66,24 @@ const ASSURANCE_BUDGET_POLICY = Object.freeze({
     "next_distinct_declared_phase_or_wave_present_in_the_frozen_declaration",
 });
 
-module.exports = { PLANNING_REVIEW_POLICY, ASSURANCE_BUDGET_POLICY };
+// Published rule table for the decision adapter (B30-202). Facts are matched
+// exactly; a hit never calls the backend.
+const DECISION_RULES = Object.freeze([
+  Object.freeze({
+    decision_type: "dispatch_classification",
+    facts: Object.freeze({ role: "implementer", bug_route_declaration: "bug-triager" }),
+    meaning: "repair_bug_route",
+  }),
+  Object.freeze({
+    decision_type: "dispatch_classification",
+    facts: Object.freeze({ role: "implementer", bug_route_declaration: "frozen-lifecycle-profile" }),
+    meaning: "repair_lifecycle",
+  }),
+  Object.freeze({
+    decision_type: "dispatch_classification",
+    facts: Object.freeze({ role: "implementer", bug_route_declaration: "not-a-bug" }),
+    meaning: "not_repair",
+  }),
+]);
+
+module.exports = { PLANNING_REVIEW_POLICY, ASSURANCE_BUDGET_POLICY, DECISION_RULES };
