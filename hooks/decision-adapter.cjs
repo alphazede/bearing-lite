@@ -171,15 +171,24 @@ function rows(doc) {
   return doc.advisory_decisions;
 }
 
+function reuseKey(id) {
+  return id.decision_point + "\n" + id.evidence_revision + "\n" + id.state_digest;
+}
+
+function noteReuse(doc, entry) {
+  if (!entry.state_digest || !REUSE.has(entry.outcome)) return;
+  if (!doc.advisory_index || typeof doc.advisory_index !== "object" || Array.isArray(doc.advisory_index)) doc.advisory_index = {};
+  doc.advisory_index[reuseKey(entry)] = { outcome: entry.outcome, meaning: entry.meaning };
+}
+
+function pushEntry(doc, entry) {
+  rows(doc).push(entry);
+  noteReuse(doc, entry);
+}
+
 function reusable(doc, id) {
-  const list = doc.advisory_decisions || [];
-  for (let i = list.length - 1; i >= 0; i--) {
-    const row = list[i];
-    if (row.decision_point === id.decision_point && row.evidence_revision === id.evidence_revision && row.state_digest === id.state_digest && REUSE.has(row.outcome)) {
-      return row;
-    }
-  }
-  return null;
+  const hit = doc.advisory_index && doc.advisory_index[reuseKey(id)];
+  return hit && REUSE.has(hit.outcome) ? hit : null;
 }
 
 function append(recordFile, entry, id) {
@@ -189,7 +198,7 @@ function append(recordFile, entry, id) {
     if (id) {
       doc.advisory_decisions = list.filter((row) => !(row.outcome === "PENDING" && row.decision_point === id.decision_point && row.evidence_revision === id.evidence_revision && row.state_digest === id.state_digest));
     }
-    doc.advisory_decisions.push(entry);
+    pushEntry(doc, entry);
   });
 }
 
@@ -198,13 +207,13 @@ function claim(recordFile, id) {
     const list = rows(doc);
     const hit = reusable(doc, id);
     if (hit) {
-      list.push({ ...id, outcome: "REUSED", meaning: hit.meaning });
+      pushEntry(doc, { ...id, outcome: "REUSED", meaning: hit.meaning });
       return { kind: "return", result: agent("REUSED", hit.meaning) };
     }
     if (list.some((row) => row.outcome === "PENDING" && row.decision_point === id.decision_point && row.evidence_revision === id.evidence_revision && row.state_digest === id.state_digest)) {
       return { kind: "wait" };
     }
-    list.push({ ...id, outcome: "PENDING" });
+    pushEntry(doc, { ...id, outcome: "PENDING" });
     return { kind: "own" };
   });
 }
@@ -225,7 +234,7 @@ async function waitFor(recordFile, id, deadline) {
     const found = withLock(recordFile, (doc) => {
       const hit = reusable(doc, id);
       if (!hit) return null;
-      rows(doc).push({ ...id, outcome: "REUSED", meaning: hit.meaning });
+      pushEntry(doc, { ...id, outcome: "REUSED", meaning: hit.meaning });
       return agent("REUSED", hit.meaning);
     });
     if (found) return found;
