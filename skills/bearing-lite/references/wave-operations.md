@@ -23,4 +23,4 @@ owner, a reason, and a release event. Do not remove another wave's files, and a
 child `COMPLETE` is not permission to delete integration evidence. The
 Orchestrator guarantees cleanup by running the storage `recover` command in
 finally, cancellation, and restart paths (see
-`../../bearing-lite/references/storage-lifecycle.md`).
+`storage-lifecycle.md`).

@@ -30,9 +30,12 @@ and validates a semantically equivalent `profiles.json`, and removes
 
 ## Configurable roles
 
+The Coordinator role is retired. Existing `roles.coordinator` entries are ignored
+and not newly scheduled; they remain in frozen snapshots unchanged.
+
 Catalog entries assign nested role/session routes for Product Implementer
 (`implementer`), Test Implementer (`test_implementer`), Light
-Implementer, Coordinator, Reviewer, Test Engineer, Scribe, Systems Modeler,
+Implementer, Reviewer, Test Engineer, Scribe, Systems Modeler,
 Integration Engineer, and Requirements Engineer. Every specialist role is
 optional; configuration alone does not request independent review. Systems
 Modeler has a planning session; Test Engineer has planning and assurance
