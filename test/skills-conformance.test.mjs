@@ -974,7 +974,13 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     }
     // Owner-requested review/assurance is dispatched as soon as its frozen boundary passes (#222).
     const router = readFileSync(path.join(SKILLS_DIR, "bearing-lite", "SKILL.md"), "utf8");
-    assert.match(router, /dispatch owner-requested review immediately when each frozen task, phase,\s+or lifecycle boundary passes deterministic checks; never re-ask or defer it/);
+    const review = router.match(/\*\*Review:\*\*([^]*?)(?=\n\d+\. \*\*)/)?.[1] ?? "";
+    assert.match(review, /owner-requested review/);
+    assert.match(review, /immediately after\s+the\s+recorded boundary passes deterministic checks/);
+    for (const cadence of ["task", "phase", "rolling batch", "lifecycle"]) {
+      assert.ok(review.includes(cadence), `The approved cadence must cover ${cadence}`);
+    }
+    assert.match(review, /requires no further approval/);
     assert.match(coordinatorText, /When they pass, immediately dispatch the profile-enabled review or assurance\s+the owner requested for this boundary in the frozen plan; never re-ask or defer it/);
     assert.match(assembly, /per declared phase or wave-end/);
     // The separate pre-dispatch planning gate is still not folded in.
