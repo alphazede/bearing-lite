@@ -239,14 +239,23 @@ function evaluateTddTestImplementerRoute(input) {
 }
 
 /**
- * Deep-copy selected routes, capabilities, and fallback order; bind a SHA-256 digest of that copy.
+ * Deep-copy selected routes, capabilities, fallback order, and optional catalog Fellow; bind a SHA-256 digest of that copy.
  * TDD missing/disabled/malformed Test Implementer fails closed with no snapshot or digest.
  * Digest is canonical JSON of selected entries with fallback order; excludes cadence, route, and authority.
- * @param {{ profile?: object }} [input]
- * @returns {{ snapshot: { roles: object, review?: object, deterministic_verification?: object, assurance_repair?: object }, digest: string } | { outcome: string, onboard: boolean }}
+ * @param {{ profile?: object | string, catalog?: object, fellow?: object }} [input]
+ * @returns {{ snapshot: { roles: object, fellow?: object, review?: object, deterministic_verification?: object, assurance_repair?: object, holds?: object[] }, digest: string } | { outcome: string, onboard: boolean }}
  */
 function freezeSelectedRoutes(input) {
-  const profile = (input && input.profile) || {};
+  const catalog = isPlainObject(input && input.catalog) ? input.catalog : null;
+  const profile =
+    input && isPlainObject(input.profile)
+      ? input.profile
+      : catalog &&
+          typeof (input && input.profile) === "string" &&
+          isPlainObject(catalog.profiles) &&
+          isPlainObject(catalog.profiles[input.profile])
+        ? catalog.profiles[input.profile]
+        : {};
   const classified = evaluateTddTestImplementerRoute({ profile, action: "freeze" });
   if (classified.outcome === "OWNER_DECISION_REQUIRED") {
     return failClosedTddRoute();
@@ -254,6 +263,15 @@ function freezeSelectedRoutes(input) {
   const roles = isPlainObject(profile.roles) ? deepCopy(profile.roles) : {};
   const snapshot = { roles };
   const material = { ...roles };
+  const fellow = isPlainObject(input && input.fellow)
+    ? input.fellow
+    : catalog && isPlainObject(catalog.fellow)
+      ? catalog.fellow
+      : null;
+  if (fellow) {
+    snapshot.fellow = deepCopy(fellow);
+    material.fellow = snapshot.fellow;
+  }
   if (isPlainObject(profile.review)) {
     snapshot.review = deepCopy(profile.review);
     material.review = snapshot.review;

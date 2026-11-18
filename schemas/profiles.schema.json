@@ -40,6 +40,9 @@
           "minLength": 1
         }
       }
+    },
+    "fellow": {
+      "$ref": "#/$defs/fellow"
     }
   },
   "$defs": {
@@ -91,6 +94,64 @@
         "reasoning": {
           "type": "string",
           "minLength": 1
+        }
+      }
+    },
+    "fellowFallback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "harness",
+        "model",
+        "reasoning"
+      ],
+      "properties": {
+        "condition": {
+          "type": "string",
+          "minLength": 1
+        },
+        "harness": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reasoning": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "fellow": {
+      "type": "object",
+      "description": "Optional Bearing-level Fellow route at the catalog envelope, consulted only by the Orchestrator regardless of selected profile.",
+      "additionalProperties": false,
+      "required": [
+        "harness",
+        "model",
+        "reasoning",
+        "ordered_fallbacks"
+      ],
+      "properties": {
+        "harness": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reasoning": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ordered_fallbacks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/fellowFallback"
+          }
         }
       }
     },
@@ -296,9 +357,6 @@
               "$ref": "#/$defs/route"
             },
             "coordinator": {
-              "$ref": "#/$defs/route"
-            },
-            "fellow": {
               "$ref": "#/$defs/route"
             },
             "reviewer": {

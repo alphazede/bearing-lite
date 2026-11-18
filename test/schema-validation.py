@@ -1620,6 +1620,45 @@ def profiles_cases() -> list[tuple[str, str, object, str, str | None]]:
         ("SEIT-BDL-002", "assurance_repair_without_enabled_rejected", assurance_repair_missing_enabled(), "reject", None),
         ("SEIT-BDL-002", "assurance_repair_unknown_field_rejected", assurance_repair_unknown_key(), "reject", None),
     ])
+
+    fellow_route = {
+        "harness": "harness-fellow",
+        "model": "model-fellow",
+        "reasoning": "reasoning-fellow",
+        "ordered_fallbacks": [
+            {
+                "condition": "condition-fellow-first",
+                "harness": "harness-fellow-b",
+                "model": "model-fellow-b",
+                "reasoning": "reasoning-fellow-b",
+            },
+            {
+                "harness": "harness-fellow-c",
+                "model": "model-fellow-c",
+                "reasoning": "reasoning-fellow-c",
+            },
+        ],
+    }
+    catalog_with_fellow = complete_user_catalog(fellow=copy.deepcopy(fellow_route))
+    catalog_with_fellow_empty_fb = complete_user_catalog(
+        fellow={**copy.deepcopy(fellow_route), "ordered_fallbacks": []}
+    )
+    catalog_with_roles_fellow = complete_user_catalog()
+    catalog_with_roles_fellow["profiles"]["fixture-alpha"]["roles"]["fellow"] = profile_session_route()
+    fellow_missing_model = copy.deepcopy(fellow_route)
+    del fellow_missing_model["model"]
+    fellow_extra_enabled = {**copy.deepcopy(fellow_route), "enabled": True}
+    fellow_fb_missing_harness = copy.deepcopy(fellow_route)
+    del fellow_fb_missing_harness["ordered_fallbacks"][0]["harness"]
+
+    out.extend([
+        ("SEIT-BDL-002", "catalog_top_level_fellow_accepted", catalog_with_fellow, "accept", None),
+        ("SEIT-BDL-002", "catalog_top_level_fellow_empty_fallbacks_accepted", catalog_with_fellow_empty_fb, "accept", None),
+        ("SEIT-BDL-002", "catalog_roles_fellow_rejected", catalog_with_roles_fellow, "reject", None),
+        ("SEIT-BDL-002", "catalog_top_level_fellow_missing_model_rejected", complete_user_catalog(fellow=fellow_missing_model), "reject", None),
+        ("SEIT-BDL-002", "catalog_top_level_fellow_extra_enabled_rejected", complete_user_catalog(fellow=fellow_extra_enabled), "reject", None),
+        ("SEIT-BDL-002", "catalog_top_level_fellow_fallback_missing_harness_rejected", complete_user_catalog(fellow=fellow_fb_missing_harness), "reject", None),
+    ])
     return out
 
 
