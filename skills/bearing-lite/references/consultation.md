@@ -24,6 +24,8 @@ route defined at the top level of `profiles.json` and copied unchanged into
 every frozen binding (`snapshot.fellow`), whatever profile is selected. If the
 catalog omits `fellow`, `snapshot.fellow` is absent and the Orchestrator
 proceeds without Fellow consultation. The Orchestrator keeps the final call.
+The owner supplies its route. To configure it, use
+[onboard-bearing](../../onboard-bearing/SKILL.md).
 
 Consult at four checkpoints: before a major decision, with options and a
 leaning already in hand; when stuck after two genuine attempts, on unexplained

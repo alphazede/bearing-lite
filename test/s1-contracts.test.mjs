@@ -80,7 +80,7 @@ describe("S1 profiles, migration, resume, and role/session contracts", () => {
   it("onboard-bearing asks one setting at a time and never infers writes", () => {
     const text = readFileSync(path.join(SKILLS, "onboard-bearing", "SKILL.md"), "utf8");
     assert.match(text, /one setting at a time/);
-    assert.match(text, /Recommend without selecting or writing unless explicitly instructed/);
+    assert.match(text, /without selecting or writing unless explicitly instructed/);
     assert.match(text, /MIGRATION_REQUIRED/);
     assert.match(text, /Integration Engineer execution/);
     assert.match(text, /reverify\.enabled: false/);

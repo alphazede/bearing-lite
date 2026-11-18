@@ -446,6 +446,29 @@ describe("handoff schema (SEIT-B30-306, closed schema)", () => {
   const hasJsonschema = spawnSync("python3", ["-c", "import jsonschema"]).status === 0;
   const validate = (file) =>
     spawnSync("python3", ["-I", "-c", "import json,sys,jsonschema;s=json.load(open(sys.argv[1]));jsonschema.Draft202012Validator.check_schema(s);jsonschema.Draft202012Validator(s).validate(json.load(open(sys.argv[2])))", SCHEMA, file], { encoding: "utf8" });
+  it("validates packets that preserve optional onboarding capabilities", { skip: !hasJsonschema && "python3 jsonschema not installed" }, (t) => {
+    const f = fixture(t);
+    const packet = path.join(f.root, "packet.json");
+    for (const capabilities of [
+      {},
+      { review: { coverage_assist: { enabled: false } } },
+      { deterministic_verification: { additional_tools: [
+        { name: "Unit", enabled: true, command: "node --test", pass: "exit 0", evidence: "TAP" },
+        { name: "Lint", enabled: false },
+      ] } },
+    ]) {
+      mutate(f.binding, ({ snapshot }) => {
+        delete snapshot.review;
+        delete snapshot.deterministic_verification;
+        Object.assign(snapshot, capabilities);
+      });
+      const { json } = ready(f);
+      assert.deepEqual(json.capabilities, capabilities);
+      writeJson(packet, json);
+      const result = validate(packet);
+      assert.equal(result.status, 0, result.stderr);
+    }
+  });
   it("a compiled packet validates; an injected authority field does not", { skip: !hasJsonschema && "python3 jsonschema not installed" }, (t) => {
     const f = fixture(t);
     mutate(f.binding, (b) => {

@@ -64,7 +64,7 @@ optional derived export and is never authority.
    artifact: a draft `.sdoc` path (Markdown sections are not lint-checkable),
    recorded as `implementation.json` `journey_settings.journey_type:
    specification` plus `journey_settings.requirement_register`. The freeze
-   fails without an existing register. The Requirements Engineer self-checks at
+   fails without an existing register. MBSE self-checks at
    the requirements stage with later case bindings pending. Final freeze runs
    the strict register precheck against the bound technical plan and actual
    SEIT; pending or unresolved case IDs and unreadable inputs block assembly.
@@ -207,7 +207,7 @@ not a reference index. Source references accompany content; they never replace i
   no writes; omitted fields do not.
 - Documentation carries a named `surface` / `path` / `id` and `impact`, or explicit
   `not_applicable: true` with a non-empty `reason`. Unspecified rows alone fail.
-- Systems Modeler selection is projected as `models[].mode`. `diagram-assisted`
+- MBSE's modeling selection is projected as `models[].mode`. `diagram-assisted`
   and `sysml-v2` require a `view` or `views` binding with `format: svg|png` and
   `path`, or SVG `inline` content. Append-only `closeout.model_views` bindings
   keyed by `model_id` also qualify. N/A cannot override these modes. The renderer

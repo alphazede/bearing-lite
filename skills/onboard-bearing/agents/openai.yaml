@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bearing Onboarding"
+  short_description: "Set up or edit a named Bearing profile"
+  default_prompt: "Use $onboard-bearing to set up or edit a Bearing profile. Collect my route choices and preview changes before saving."

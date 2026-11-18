@@ -1,7 +1,10 @@
 # Named profile catalog
 
-Candidate procedure for the user-owned JSON catalog. It is not a staged
-profile or route-review gate. Selection is not an authority grant.
+Use this reference to read and select user-owned profiles. For explicitly
+requested setup or edits, use [onboard-bearing](../../onboard-bearing/SKILL.md)
+and its [guided setup](../../onboard-bearing/references/guided-first-profile.md).
+Selection grants no execution authority. This is not a staged
+profile or route-review gate.
 
 ## Location
 
@@ -44,7 +47,8 @@ have a `planning` session; Test Engineer has an `assurance` session only (its
 `execution` session only (its `planning` session is removed and refused).
 `requirements_engineer` and `systems_modeler` role keys are removed and refused
 with no alias. Each session can be enabled or disabled. Cadence keys attach to
-`test_engineer.assurance`, `reviewer`, and `integration_engineer.execution`
+`roles.test_engineer.sessions.assurance`, `roles.reviewer`, and
+`roles.integration_engineer.sessions.execution`
 with values `slice`, `phase`, or `lifecycle`. Defaults are `phase`, `phase`,
 and `lifecycle`. `scribe.cadence` is `event` (default: after each owner
 decision, authority event, or landing), `phase`, or `lifecycle`; handoff and
@@ -52,7 +56,7 @@ closeout check history coverage at every Scribe cadence. Scribe is optional:
 when omitted or disabled, Orchestrator records history; when enabled, reuse one
 persistent Lifecycle session for all events and batches. The Light Implementer takes only slices whose `work_class`
 is `light` (criteria in `skills/light-implementer`); it has its own primary
-and fallbacks, usually a lighter and cheaper route. Surveyor, Explorer,
+and fallbacks supplied by the owner. Surveyor, Explorer,
 Crewmate, Navigator, Park Ranger, and Validator are not profile roles;
 existing plans that still assign them use the compatibility diagnostics and
 treat the assignment as unused. Never fill agent, model, or reasoning values
@@ -191,20 +195,23 @@ with no `test_implementer` field; a present Test Implementer route is
 ignored.
 
 Selecting, freezing, dispatching, or migrating a `tdd` profile with a
-missing, disabled, or malformed `test_implementer` route returns
+missing, disabled, or malformed `test_implementer` or `implementer` route returns
 `OWNER_DECISION_REQUIRED` and an onboard prompt. Never copy from Product
 Implementer (`roles.implementer`), Test Engineer (`test_engineer`), Light
 Implementer (`light_implementer`), or a retired role.
 
 `planning_to_implementation_clean_session` is an explicit boolean with no
-preselected value. An approved Lifecycle may freeze an override in
-`implementation.json`.
+preselected value. At planning selection, carry the frozen
+`lifecycle_settings` and `settings_digest` with the binding. Set
+`journey_settings.planning_to_implementation_clean_session` from the profile
+or the approved task override in `implementation.json`.
 
 ## Migration
 
 Migration preserves meaning from `planned_planning_assignments` and
-`implementation_assignments`. Map Crewmate to Implementer, Explorer to
-Coordinator, Park Ranger to Reviewer, Light Implementer unchanged, Test
+`implementation_assignments`. Map Crewmate to Implementer, Park Ranger to
+Reviewer, and keep Light Implementer unchanged. Report Explorer as retired
+and retain any already-frozen Coordinator assignment on its pinned runtime. Map Test
 Engineer planning-phase rows to `integration_test.planning`, and
 implementation-phase rows to `test_engineer.assurance`. Do not auto-assign
 Integration Engineer execution from Surveyor; if that optional session is enabled,
@@ -212,18 +219,16 @@ onboard-bearing asks which route to assign. Migration asks for a missing Test
 Implementer route only in `tdd`; it never copies or invents `test_implementer` from Product
 Implementer, Test Engineer, Light Implementer, or a retired role.
 Validate the new profile, then remove `lineups.json`.
+For obsolete `roles.fellow` entries, follow
+[catalog Fellow migration](../../onboard-bearing/references/catalog-contract.md#move-a-former-profile-fellow).
 
 ## Route effort and Fellow
 
-The Orchestrator has no configurable route in `profiles.json`: its model and
-reasoning effort are the session the owner opens, and any adjustment for
-lighter tasks or waiting/dispatching work comes from the session the owner
-opens. Never lower any configured route's selected reasoning effort
-automatically because the selected model is smaller. When the Orchestrator
-needs stronger advice or a second opinion from a lighter opened session, it
-consults the optional catalog-level `fellow` (`consultation.md`).
+The Orchestrator uses the session the owner opens. The owner supplies all
+harness, model, and reasoning identities, including the optional
+catalog-level `fellow` route.
 
-Only the Orchestrator consults the Fellow (`consultation.md`), whatever profile
+Only the Orchestrator [consults the Fellow](consultation.md), whatever profile
 is selected. `fellow` is an optional Bearing-level route at the top level of
 `profiles.json` beside `profiles` (`{ harness, model, reasoning,
 ordered_fallbacks }`, with optional `condition` on each fallback entry), not a

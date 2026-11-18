@@ -12,6 +12,8 @@ description: >
 Coordinate planning, implementation, verification, validation and delivery. Preserve scope, agents, authority and evidence.
 Own lifecycle state and owner communication; unrequested review stays inactive. Resolve wave escalations using `references/owner-stops.md`.
 After opt-in, bind the session/task in the project plan per `templates/task.md`; installation, old plans, or role names never activate hooks. On resume, follow `references/resume.md` first; continue the recorded mode and next unfinished action.
+Use the [catalog reference](references/profiles.md) to select a profile. An
+explicit setup or catalog-edit request uses [onboard-bearing](../onboard-bearing/SKILL.md).
 ## Modes
 
 - **Planning Orchestrator:** owns context, specialist dispatch, final plan/design, owner agreement, and the written handoff; does not dispatch implementation.
@@ -35,8 +37,9 @@ After opt-in, bind the session/task in the project plan per `templates/task.md`;
    before Product Implementer. Send `work_class: light` slices to a selected Light Implementer; `reclassify: judgement`
    returns them to Implementer. Honor dependencies, commands, and write sets. The Implementation Orchestrator owns new waves. For a frozen legacy Coordinator assignment, use its pinned runtime or obtain an explicit handover before continuing.
 5. **Review:** dispatch the owner-requested review immediately after the
-   recorded boundary passes deterministic checks. Use the latest approved
-   cadence: task, phase, rolling batch, or lifecycle. A recorded request
+   recorded boundary passes deterministic checks. Use the approved
+   slice, phase, or lifecycle cadence for the selected review. The approved
+   task plan supplies task and rolling batch boundaries. A recorded request
    requires no further approval. An independent evaluator is a reviewer.
    Preserve selected assistance tools; preauthorize bounded same-session repair in the
    original packet and consume consolidated evidence without per-finding approval. Add no quality agents.
@@ -47,7 +50,10 @@ After opt-in, bind the session/task in the project plan per `templates/task.md`;
 
 Write `handoff.md` using the Prompt skill (`../prompt/SKILL.md`) in the confirmed plan directory when planning is complete. Include exact plan paths and digests, scope, owner decisions and authority,
 selected models/harnesses/capabilities, candidate and worktree, assignments and write sets, commands, evidence, review status, blockers, and the next action.
-Recommend a new Implementation Orchestrator session with this handoff; never launch it automatically. Continuing here is an owner choice.
+Honor the approved `planning_to_implementation_clean_session` setting. When
+true, recommend a new Implementation Orchestrator session with this handoff.
+When false, continue from the durable handoff here. Resolve an unset choice
+during integrated owner confirmation. The owner opens a fresh session.
 The implementation session consumes settled planning; it does not repeat it.
 Handoff and closeout pass `journey` to `hooks/closeout.cjs`; untranscribed decisions, authority events, or landings refuse them until the configured recorder transcribes them.
 ## Dispatch and recovery

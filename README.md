@@ -36,8 +36,8 @@ stays reviewable, portable, and bounded without pinning a provider?
 ## Answer
 
 Use the Bearing Delivery Lifecycle: Intake → Architectural Alignment and Scope →
-Requirements Engineer → Systems Modeler → Integration Engineer planning →
-Planning Test Engineer → Orchestrator final Planning and Design and assembly →
+parallel MBSE and Integration and Test planning → Orchestrator final Planning
+and Design and assembly →
 requested planning review → owner confirmation → written handoff → bounded
 implementation (Test Implementer before Product Implementer under `tdd`, or one
 Implementer for code and tests), then any requested Test Engineer assurance,
@@ -64,10 +64,10 @@ If Bearing Lite helps keep a long agent task scoped and reviewable,
 ## Onboarding
 
 1. Install the plugin or copy `skills/` into a host skills directory.
-2. Run **onboard-bearing**. It classifies your catalog first, asks one setting at a time
-   (or runs the guided first-profile walkthrough), never selects,
-   ranks, or writes a value without an explicit instruction, and preserves every
-   unaddressed existing value and host-extension key.
+2. Run **onboard-bearing** for [guided setup or a targeted edit](docs/guides/onboarding.md).
+   It classifies the catalog first and asks one setting at a time. You supply
+   all harness, model, and reasoning choices. The skill previews the approved
+   edits and preserves unaddressed settings and host-extension keys.
 3. Configure named role and session routes (including both `test_implementer`
    and `implementer` independently for `tdd`), optional catalog-level `fellow`,
    fallbacks, development strategy (`single_implementer` or `tdd`), assurance
@@ -95,8 +95,7 @@ prefers, or falls back to `lineups.json`.
 Some agent harnesses may stall after delegated work completes. Before
 restarting the task, check whether the assigned agent is still active and
 avoid duplicate dispatch. Wait/status reliability varies by host and route;
-use a host-native status check when one exists. Missing expensive models or
-wrappers do not make a route ineligible.
+use a host-native status check when one exists.
 
 ## Quick start
 
@@ -118,9 +117,10 @@ complete five-artifact package (`<lifecycle-topic>-technical-plan.md`,
 `design.md`, `seit.json`, `implementation.json`, and
 `<plan-name>-dod-manifest.html`) with proposed route, profile, role states,
 reasoning, and cadence. A planning review runs only when requested; one
-integrated owner confirmation approves or changes that package, and the
-written `handoff.md` starts a new Implementation Orchestrator session, with
-visible Markdown task state over those JSON authorities.
+integrated owner confirmation approves or changes that package. The
+Orchestrator writes `handoff.md` with the visible task state. The approved
+clean-session setting determines whether implementation continues here or
+in a fresh Implementation Orchestrator session.
 
 ## Install
 
@@ -265,9 +265,8 @@ register hooks. That path remains first-class. See
 
 1. **Fill only missing planning stages:** Intake → Architectural Alignment and Scope.
 2. **Dispatch enabled specialists in data-dependency order** once material intent
-   is settled: Requirements Engineer (with its own quality pass), Systems Modeler,
-   Integration Engineer planning, and Planning Test Engineer; independent ready
-   work runs in parallel. The Planning Orchestrator then authors the final
+   is settled. MBSE and Integration and Test start in parallel from the frozen
+   requirement IDs and titles. The Planning Orchestrator then authors the final
    technical plan and `design.md` and assembles `implementation.json` and the
    Definition of Done Manifest; specialists keep requirements and `seit.json`.
    Design fixes owners, structures, and bounds per slice lens; programs add
@@ -326,16 +325,16 @@ authorize a transition.
 | **Architectural Alignment and Scope** | controller | Architectural fit, workspace map, and owner-confirmed scope |
 | **Scope Definition** | compatibility | Forwards to the combined skill; no separate stage or agent |
 | **Planning and Design** | controller procedure | The Orchestrator's own final plan/design and assembly; not a dispatched or configured role |
-| **Requirements Engineer** | planning | Authors requirements and runs its own quality pass and repairs; later case bindings stay owned by the Test Engineer |
-| **Systems Modeler** | planning | After requirements; placement receipt for final design |
+| **MBSE** | planning | Authors and checks requirements, chooses modeling mode, and returns view metadata and a placement receipt |
+| **Integration and Test** | planning | Authors the boundary contract, assembly sequence, and SEIT proof cases |
 | **Coordinator** | retired (legacy only) | Retired for new waves (`roles.coordinator` ignored); frozen legacy waves keep their pinned runtime until handover |
 | **Test Implementer** | implementation | TDD test-first author (`roles.test_implementer`); tests and approved fixtures only |
 | **Product Implementer** | implementation | Product write set under `tdd` (`roles.implementer`); combined author under `single_implementer`. Neither self-certifies |
 | **Light Implementer** | implementation | `work_class: light` slices only |
 | **Scribe** | planning and implementation | Transcribes; cannot activate authority |
-| **Test Engineer** | planning and assurance sessions | Planning Test Engineer authors V&V; Assurance Test Engineer assesses the candidate. Default assurance cadence: `phase` |
+| **Test Engineer** | assurance | The Assurance Test Engineer independently verifies and validates the candidate. Default cadence is `phase` |
 | **Reviewer** | implementation review | Independent defect review. Default cadence: `phase` |
-| **Integration Engineer** | planning and execution sessions | Planning owns assembly strategy; execution owns final system-level validation. Default execution cadence: `lifecycle` |
+| **Integration Engineer** | execution | Independently assesses the integrated candidate. Default cadence is `lifecycle` |
 | **Owner Authority** | human decision | Never an agent role |
 | **onboard-bearing** | configuration | One-setting-at-a-time profile writes; no credentials |
 

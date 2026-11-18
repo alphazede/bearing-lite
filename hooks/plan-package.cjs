@@ -71,52 +71,30 @@ function checkRoles(seit, implementation) {
 
 /** #77: a light slice must run at least one command and be routed to the Light Implementer. */
 function checkWorkClass(node, findings = []) {
-  if (!node || typeof node !== "object" || Array.isArray(node)) return findings;
-  walk({ slices: node.slices, waves: node.waves }, (entry) => {
-    if (!Array.isArray(entry.slices)) return;
-    for (const slice of entry.slices) {
-      if (!slice || typeof slice !== "object") continue;
-      if (slice.work_class === "light" && typeof slice.id === "string") {
-        if (!(slice.command_ids || []).length) findings.push({ code: "light_slice_without_command", step: slice.id });
-        if (slice.role !== "Light Implementer") findings.push({ code: "light_slice_role", step: slice.id, role: slice.role });
-      }
+  for (const slice of sliceNodes(node)) {
+    if (slice.work_class === "light" && typeof slice.id === "string") {
+      if (!(slice.command_ids || []).length) findings.push({ code: "light_slice_without_command", step: slice.id });
+      if (slice.role !== "Light Implementer") findings.push({ code: "light_slice_role", step: slice.id, role: slice.role });
     }
-  });
+  }
   return findings;
 }
 
 /** #80/#580: MBSE and Integration and Test are planning-only and never a Lifecycle implementation slice. */
-const PLANNING_ONLY_ROLE_PREFIXES = Object.freeze([
-  "MBSE",
-  "Integration and Test",
-  "Requirements Engineer",
-  "Systems Modeler",
-]);
-
 function isPlanningOnlySliceRole(role) {
-  if (typeof role !== "string") return false;
-  const trimmed = role.trim();
-  const normalized = trimmed.toLowerCase().replace(/[\s-]+/g, "_");
-  if (["mbse", "integration_test", "requirements_engineer", "systems_modeler"].includes(normalized)) {
-    return true;
-  }
-  return PLANNING_ONLY_ROLE_PREFIXES.some(
-    (prefix) => trimmed === prefix || trimmed.startsWith(prefix + " ") || trimmed.startsWith(prefix + "/") || trimmed.startsWith(prefix + ".")
-  );
+  return typeof role === "string" &&
+    /^(?:mbse|integration[ _-]+(?:and[ _-]+)?test|requirements[ _-]+engineer|systems[ _-]+modeler)(?:$|[\s/.])/i.test(role.trim());
 }
 
 function checkPlanningRoles(node, findings = []) {
-  if (Array.isArray(node)) node.forEach((item) => checkPlanningRoles(item, findings));
-  else if (node && typeof node === "object") {
-    const isSlice = typeof node.id === "string" || Array.isArray(node.command_ids);
-    if (isSlice && isPlanningOnlySliceRole(node.role)) {
+  for (const slice of sliceNodes(node)) {
+    if (isPlanningOnlySliceRole(slice.role)) {
       findings.push({
         code: "planning_role_in_lifecycle",
-        step: typeof node.id === "string" ? node.id : null,
-        role: node.role,
+        step: typeof slice.id === "string" ? slice.id : null,
+        role: slice.role,
       });
     }
-    for (const value of Object.values(node)) checkPlanningRoles(value, findings);
   }
   return findings;
 }
@@ -237,12 +215,13 @@ function checkDuplicateGates(root, findings = [], loc = "root") {
 
 function sliceNodes(implementation) {
   const nodes = new Set();
-  walk({ slices: implementation?.slices, waves: implementation?.waves }, (node) => {
-    if (!Array.isArray(node.slices)) return;
+  const waves = Array.isArray(implementation?.waves) ? implementation.waves : [];
+  for (const node of [implementation, ...waves]) {
+    if (!Array.isArray(node?.slices)) continue;
     for (const slice of node.slices) {
       if (slice && typeof slice === "object" && !Array.isArray(slice)) nodes.add(slice);
     }
-  });
+  }
   return nodes;
 }
 
@@ -305,21 +284,29 @@ function checkIntegrationStepRefs(implementation, findings = []) {
   const nodes = sliceNodes(implementation);
   const slices = sliceIndex(nodes);
   const receipts = receiptIds(implementation);
-  walk(implementation, (node) => {
-    for (const ref of stepRefs(node, nodes.has(node))) {
-      if (receipts.has(ref)) continue;
-      const hits = slices.get(ref) || [];
-      const keys = new Set(hits.map(semanticKey));
-      if (!hits.length || keys.size !== 1) {
-        findings.push({
-          code: "unresolved_integration_step",
-          step: ref,
-          matches: hits.length,
-          colliding_semantics: keys.size > 1,
-        });
+  const refs = [...nodes].flatMap((slice) => stepRefs(slice, true));
+  const waves = Array.isArray(implementation?.waves) ? implementation.waves : [];
+  for (const section of [implementation, implementation?.integration, ...waves]) {
+    const conditions = section?.entry_conditions;
+    if (conditions && typeof conditions === "object") {
+      for (const row of Object.values(conditions)) {
+        if (row && typeof row === "object") refs.push(...stepRefs(row));
       }
     }
-  });
+  }
+  for (const ref of refs) {
+    if (receipts.has(ref)) continue;
+    const hits = slices.get(ref) || [];
+    const keys = new Set(hits.map(semanticKey));
+    if (!hits.length || keys.size !== 1) {
+      findings.push({
+        code: "unresolved_integration_step",
+        step: ref,
+        matches: hits.length,
+        colliding_semantics: keys.size > 1,
+      });
+    }
+  }
   return findings;
 }
 
@@ -927,9 +914,8 @@ function checkSelectedControls(implementation, seit, { catalogDir } = {}) {
   ].filter(([, value]) => value !== undefined);
   if (!sources.length) return [];
   const catalogue = loadControlCatalogue(catalogDir);
-  const seitCases = Array.isArray(seit?.proof_cases)
-    ? new Map(seit.proof_cases.filter((row) => isNonEmptyStr(row?.id)).map((row) => [row.id, row]))
-    : null;
+  const proofCases = Array.isArray(seit?.proof_cases) ? seit.proof_cases : [];
+  const seitCases = new Map(proofCases.filter((row) => isNonEmptyStr(row?.id)).map((row) => [row.id, row]));
   const findings = [];
   for (const [source, list] of sources) {
     const seenReqIds = new Set();
@@ -956,22 +942,20 @@ function checkSelectedControls(implementation, seit, { catalogDir } = {}) {
       }
       const rendered = parameterizeControl(control, selection);
       for (const f of rendered.findings) findings.push({ ...f, source });
-      if (seitCases) {
-        for (const caseId of [selection.positive_case_id, selection.negative_case_id]) {
-          if (!isNonEmptyStr(caseId)) continue;
-          const proof = seitCases.get(caseId);
-          if (!proof) {
-            findings.push({ code: "control_case_unresolved", source, control_id: controlId, case_id: caseId });
-          } else if (isNonEmptyStr(selection.requirement_id) && proof.requirement_id !== selection.requirement_id) {
-            findings.push({
-              code: "control_case_requirement_mismatch",
-              source,
-              control_id: controlId,
-              case_id: caseId,
-              expected: selection.requirement_id,
-              actual: proof.requirement_id ?? null,
-            });
-          }
+      for (const caseId of [selection.positive_case_id, selection.negative_case_id]) {
+        if (!isNonEmptyStr(caseId)) continue;
+        const proof = seitCases.get(caseId);
+        if (!proof) {
+          findings.push({ code: "control_case_unresolved", source, control_id: controlId, case_id: caseId });
+        } else if (isNonEmptyStr(selection.requirement_id) && proof.requirement_id !== selection.requirement_id) {
+          findings.push({
+            code: "control_case_requirement_mismatch",
+            source,
+            control_id: controlId,
+            case_id: caseId,
+            expected: selection.requirement_id,
+            actual: proof.requirement_id ?? null,
+          });
         }
       }
     }
@@ -1085,7 +1069,26 @@ module.exports = {
   freeze,
 };
 
-if (require.main === module && process.argv[2] === "wave") {
+if (require.main === module && process.argv[2] === "control") {
+  let result;
+  try {
+    const selection = JSON.parse(fs.readFileSync(0, "utf8"));
+    const control = loadControlCatalogue().get(selection?.control_id);
+    if (control) {
+      const rendered = parameterizeControl(control, selection);
+      result = rendered.ok
+        ? { outcome: "PASS", requirement: rendered.requirement, positive_case: rendered.positive_case,
+          negative_case: rendered.negative_case, findings: [] }
+        : { outcome: "FAIL", findings: rendered.findings };
+    } else {
+      result = { outcome: "FAIL", findings: [{ code: "unknown_control_id" }] };
+    }
+  } catch {
+    result = { outcome: "FAIL", findings: [{ code: "control_input_unreadable" }] };
+  }
+  process.stdout.write(JSON.stringify(result, null, 2) + "\n");
+  process.exitCode = result.outcome === "PASS" ? 0 : 1;
+} else if (require.main === module && process.argv[2] === "wave") {
   const [dir, waveId] = process.argv.slice(3);
   if (!dir || !waveId) {
     process.stderr.write("usage: node hooks/plan-package.cjs wave <plan dir> <wave id>\n");

@@ -1,7 +1,7 @@
 /** #70 / #73: Map the Route freeze checks. */
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { createHash } from "node:crypto";
 import os from "node:os";
@@ -11,8 +11,16 @@ import { planningContract } from "./planning-contract-fixture.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(import.meta.url);
-const { checkRoles, checkWorkClass, checkPlanningRoles, verifyDigests, freeze } = require(path.join(ROOT, "hooks/plan-package.cjs"));
+const { checkRoles, verifyDigests, freeze } = require(path.join(ROOT, "hooks/plan-package.cjs"));
 const sha = (s) => createHash("sha256").update(s).digest("hex");
+
+function draftFindings(t, implementation, match) {
+  const dir = mkdtempSync(path.join(os.tmpdir(), "plan-package-draft-"));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  writeFileSync(path.join(dir, "implementation.json"), JSON.stringify(implementation));
+  writeFileSync(path.join(dir, "seit.json"), "{}");
+  return freeze(dir, { stage: "draft" }).findings.filter((finding) => match.test(finding.code));
+}
 
 const seit = (actor) => ({
   procedures_and_commands: [{ id: "PROC-RERUN", ...(actor ? { actor } : {}) }],
@@ -46,7 +54,8 @@ describe("plan-package (#73 actor/role consistency)", () => {
 });
 
 describe("plan-package (#77 light slices)", () => {
-  it("a light slice without a command or with another role is a finding", () => {
+  it("a light slice without a command or with another role is a finding", (t) => {
+    const checkWorkClass = (doc) => draftFindings(t, doc, /^light_slice_/);
     const light = (extra) => ({ waves: [{ slices: [{ id: "S1.1", role: "Light Implementer", work_class: "light", ...extra }] }] });
     assert.deepEqual(checkWorkClass(light({ command_ids: ["CMD-1"] })), []);
     assert.deepEqual(checkWorkClass(light({ command_ids: [] })), [{ code: "light_slice_without_command", step: "S1.1" }]);
@@ -55,7 +64,8 @@ describe("plan-package (#77 light slices)", () => {
     ]);
     assert.deepEqual(checkWorkClass({ waves: [{ slices: [{ id: "S1.2", role: "Crewmate", command_ids: [] }] }] }), []);
   });
-  it("ignores dod_manifest.tasks rows with work_class: light while still flagging light slices (#576)", () => {
+  it("ignores dod_manifest.tasks rows with work_class: light while still flagging light slices (#576)", (t) => {
+    const checkWorkClass = (doc) => draftFindings(t, doc, /^light_slice_/);
     const doc = {
       slices: [{ id: "S1.1", role: "Light Implementer", work_class: "light", command_ids: ["CMD-1"] }],
       dod_manifest: {
@@ -77,7 +87,20 @@ describe("plan-package (#77 light slices)", () => {
 });
 
 describe("plan-package (#80/#580 planning-only roles)", () => {
-  it("rejects MBSE and Integration and Test slices and permits execution/assurance roles", () => {
+  it("checks real slice slots and ignores planning-shaped notes", (t) => {
+    const implementation = {
+      waves: [{ notes: { slices: [{ id: "note", role: "Implementer", work_class: "light" }] } }],
+      evidence: [{ id: "evidence", role: "MBSE", integration_step: "note-link" }],
+      slices: [{ id: "real", role: "mbse.planning" }],
+      integration: { entry_conditions: [{ id: "gate", integration_step: "missing" }] },
+    };
+    assert.deepEqual(draftFindings(t, implementation, /light_slice|planning_role|integration_step/), [
+      { code: "planning_role_in_lifecycle", step: "real", role: "mbse.planning" },
+      { code: "unresolved_integration_step", step: "missing", matches: 0, colliding_semantics: false },
+    ]);
+  });
+  it("rejects MBSE and Integration and Test slices and permits execution/assurance roles", (t) => {
+    const checkPlanningRoles = (doc) => draftFindings(t, doc, /^planning_role_in_lifecycle$/);
     const assigned = (role) => ({ waves: [{ slices: [{ id: "S1.2", role }] }] });
     assert.deepEqual(checkPlanningRoles(assigned("MBSE / planning")), [
       { code: "planning_role_in_lifecycle", step: "S1.2", role: "MBSE / planning" },
@@ -88,7 +111,8 @@ describe("plan-package (#80/#580 planning-only roles)", () => {
     assert.deepEqual(checkPlanningRoles(assigned("Test Engineer")), []);
     assert.deepEqual(checkPlanningRoles(assigned("Integration Engineer")), []);
   });
-  it("flags an MBSE or Integration and Test slice that has no id", () => {
+  it("flags an MBSE or Integration and Test slice that has no id", (t) => {
+    const checkPlanningRoles = (doc) => draftFindings(t, doc, /^planning_role_in_lifecycle$/);
     assert.deepEqual(
       checkPlanningRoles({ slices: [{ role: "MBSE", command_ids: [] }] }),
       [{ code: "planning_role_in_lifecycle", step: null, role: "MBSE" }]
@@ -98,28 +122,29 @@ describe("plan-package (#80/#580 planning-only roles)", () => {
       [{ code: "planning_role_in_lifecycle", step: null, role: "Integration and Test" }]
     );
   });
-  it("accepts MBSE and Integration and Test planning-route records and still rejects slices", () => {
+  it("accepts MBSE and Integration and Test planning-route records and still rejects slices", (t) => {
+    const checkPlanningRoles = (doc) => draftFindings(t, doc, /^planning_role_in_lifecycle$/);
     const routes = {
       planning_assignments: [
         {
           role: "MBSE / planning",
-          primary: "Codex CLI / gpt-5.6-sol / medium",
-          fallbacks: ["Claude Code / Sonnet / high", "Grok Build / harness default"],
-          effective_route: "Codex CLI / gpt-5.6-sol / medium",
+          primary: "fixture-harness / fixture-model / fixture-effort",
+          fallbacks: ["fixture-fallback / fixture-model / fixture-effort"],
+          effective_route: "fixture-harness / fixture-model / fixture-effort",
         },
         {
           role: "Integration and Test / planning",
-          primary: "Codex CLI / gpt-5.6-sol / medium",
+          primary: "fixture-harness / fixture-model / fixture-effort",
           fallbacks: [],
-          effective_route: "Codex CLI / gpt-5.6-sol / medium",
+          effective_route: "fixture-harness / fixture-model / fixture-effort",
         },
       ],
       lineup: [
         {
           role: "MBSE",
           session: "planning",
-          configured_primary: "Codex CLI / gpt-5.6-sol / medium",
-          effective_route: "Codex CLI / gpt-5.6-sol / medium",
+          configured_primary: "fixture-harness / fixture-model / fixture-effort",
+          effective_route: "fixture-harness / fixture-model / fixture-effort",
           status: "READY",
         },
       ],
@@ -235,8 +260,8 @@ describe("plan-package (#121 freeze guards)", () => {
     );
   });
 
-  it("rejects an integration-step id that collides with a different activity", () => {
-    const { checkIntegrationStepRefs } = require(path.join(ROOT, "hooks/plan-package.cjs"));
+  it("rejects an integration-step id that collides with a different activity", (t) => {
+    const checkIntegrationStepRefs = (doc) => draftFindings(t, doc, /^unresolved_integration_step$/);
     const impl = {
       waves: [
         {
@@ -257,8 +282,8 @@ describe("plan-package (#121 freeze guards)", () => {
     assert.deepEqual(checkIntegrationStepRefs(mapped), []);
   });
 
-  it("ignores requires, step, and integration_steps outside slices while keeping slice checks (#577)", () => {
-    const { checkIntegrationStepRefs } = require(path.join(ROOT, "hooks/plan-package.cjs"));
+  it("ignores requires, step, and integration_steps outside slices while keeping slice checks (#577)", (t) => {
+    const checkIntegrationStepRefs = (doc) => draftFindings(t, doc, /^unresolved_integration_step$/);
     const nonSliceRefs = {
       slices: [
         {

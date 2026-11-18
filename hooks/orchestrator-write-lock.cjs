@@ -12,6 +12,7 @@
 const crypto = require("node:crypto");
 const fs = require("node:fs");
 const path = require("node:path");
+const { isDeepStrictEqual } = require("node:util");
 
 const ALLOW = "ALLOW";
 const DENY_DISPATCH = "DENY_DISPATCH";
@@ -771,13 +772,112 @@ function collectPaths(input) {
   return [...out];
 }
 
+function singleLineEdit(body, root, target) {
+  const input = body.tool_input || {};
+  const namesTarget = (name) => name === target || name === path.join(root, target);
+  if (body.tool_name === "Edit" && namesTarget(input.file_path) &&
+      (input.replace_all === undefined || input.replace_all === false) &&
+      [input.old_string, input.new_string].every((line) => typeof line === "string" && !/[\r\n]/.test(line))) {
+    return [input.old_string, input.new_string];
+  }
+  if (!/^apply_?patch$/i.test(body.tool_name || "") || typeof input.command !== "string") return null;
+  const lines = input.command.replace(/\n$/, "").split("\n");
+  const [begin, header, hunk, removed, added, end] = lines;
+  const operation = header?.match(/^\*\*\* Update File: (.+)$/);
+  if (lines.length !== 6 || begin !== "*** Begin Patch" || !operation || !namesTarget(operation[1]) ||
+      hunk !== "@@" || !removed.startsWith("-") || !added.startsWith("+") ||
+      /\r/.test(removed + added) || end !== "*** End Patch") return null;
+  return [removed.slice(1), added.slice(1)];
+}
+
+function readAssemblyFile(root, name) {
+  const rel = typeof name === "string" && insideRoot(root, name);
+  if (!rel) return null;
+  const file = path.join(root, rel);
+  if (fs.realpathSync(file) !== file || !fs.lstatSync(file).isFile()) return null;
+  return fs.readFileSync(file);
+}
+
+function refreshesSourceHash(root, plan, before, after, oldLine, newLine) {
+  const previous = JSON.parse(before);
+  const proposed = JSON.parse(after);
+  const inputs = previous.source_baseline?.planning_inputs;
+  if (!Array.isArray(inputs)) return false;
+  const row = inputs.find((entry, i) => entry?.sha256 !== proposed.source_baseline?.planning_inputs?.[i]?.sha256);
+  if (!row || typeof row.path !== "string" || !/^[a-f0-9]{64}$/.test(row.sha256) ||
+      path.dirname(path.resolve(root, row.path)) !== plan || !/\.md$/i.test(row.path)) return false;
+  const source = readAssemblyFile(root, row.path);
+  if (!source) return false;
+  const sha256 = crypto.createHash("sha256").update(source).digest("hex");
+  if (sha256 === row.sha256 || !oldLine.includes(row.sha256) || newLine !== oldLine.replace(row.sha256, sha256)) return false;
+  row.sha256 = sha256;
+  return isDeepStrictEqual(previous, proposed);
+}
+
+function resolvesRegisterCases(root, plan, target, before, lineNumber, newLine) {
+  const implementation = JSON.parse(readAssemblyFile(root, path.join(plan, "implementation.json")));
+  const register = implementation.journey_settings?.requirement_register;
+  if (typeof register !== "string" || insideRoot(root, register) !== target) return false;
+  const { parseRegister } = require("./register-precheck.cjs");
+  const row = parseRegister(before).find((item) => item.fields.some((field) => field.line === lineNumber));
+  const binding = row?.fields.find((field) => field.line === lineNumber);
+  if (!binding || !/^VERIFICATION_CASE(?:S|_ID)?$/.test(binding.name)) return false;
+  const uid = row.fields.find((field) => field.name === "UID")?.value.trim();
+  const prefix = `${binding.name}:`;
+  if (!uid || !newLine.startsWith(prefix)) return false;
+  const parseIds = (text) => text.trim().split(/[ \t,]+/);
+  const validId = (id) => /^[A-Z][A-Z0-9]*-[A-Z0-9.-]*[A-Z0-9]$/.test(id);
+  const existing = binding.value.trim();
+  const oldIds = existing && existing !== "pending" ? parseIds(existing) : [];
+  const ids = parseIds(newLine.slice(prefix.length));
+  if (binding.value.includes("\n") || oldIds.some((id) => !validId(id)) ||
+      !ids.every(validId) || new Set(ids).size !== ids.length) return false;
+  const seit = JSON.parse(readAssemblyFile(root, path.join(plan, "seit.json")));
+  if (!Array.isArray(seit.proof_cases)) return false;
+  const matches = (id) => {
+    const cases = seit.proof_cases.filter((test) => test?.id === id);
+    return cases.length === 1 && cases[0].requirement_id === uid;
+  };
+  return ids.every(matches) && oldIds.every((id) => !matches(id) || ids.includes(id));
+}
+
+/** Permit only exact, evidence-derived bindings in the active plan before freeze. */
+function assemblyBindingAllowed(body, root, rel, active) {
+  if (active.task.status !== "IN_PROGRESS" || fs.existsSync(path.join(root, ROUND_RECORD)) ||
+      !["Edit", "apply_patch", "ApplyPatch", "applypatch"].includes(body.tool_name)) return false;
+  const planDir = presentString(active.task.plan_dir);
+  if (!planDir || path.isAbsolute(planDir) || (planDir !== "." && !insideRoot(root, planDir))) return false;
+  const target = insideRoot(root, rel);
+  const edit = target && singleLineEdit(body, root, target);
+  if (!edit || edit[0] === edit[1]) return false;
+  const plan = path.resolve(root, planDir);
+  try {
+    const content = readAssemblyFile(root, target);
+    if (!content) return false;
+    const before = content.toString("utf8");
+    const lines = before.split("\n");
+    const [oldLine, newLine] = edit;
+    const index = lines.indexOf(oldLine);
+    if (index < 0 || index !== lines.lastIndexOf(oldLine)) return false;
+    if (body.tool_name === "Edit" && before.indexOf(oldLine) !== before.lastIndexOf(oldLine)) return false;
+    if (path.join(root, target) === path.join(plan, "seit.json")) {
+      lines[index] = newLine;
+      return refreshesSourceHash(root, plan, before, lines.join("\n"), oldLine, newLine);
+    }
+    return target.endsWith(".sdoc") && resolvesRegisterCases(root, plan, target, before, index + 1, newLine);
+  } catch {
+    return false;
+  }
+}
+
 /**
  * @param {unknown} input
  * @returns {{ verdict: string, reason: string, owner?: string, dispatch?: string }}
  */
 function evaluate(input) {
   const body = isPlainObject(input) ? input : {};
-  if (!require("./task-binding.cjs").binding(body)) return { verdict: ALLOW, reason: "ordinary_unbound_work" };
+  const active = require("./task-binding.cjs").binding(body);
+  if (!active) return { verdict: ALLOW, reason: "ordinary_unbound_work" };
   const role = normalizeRole(body.role || body.BEARING_ROLE);
   // An in-process subagent carries agent_id; a role-less subagent is never
   // the Orchestrator, while a role-less session without agent_id is.
@@ -839,6 +939,9 @@ function evaluate(input) {
     // role, or a role-less session that is not an in-process subagent.
     if (owner === "architectural_alignment" && (role === "orchestrator" || !agentId)) continue;
     if (owner === "orchestrator" && (role === "orchestrator" || !agentId)) continue;
+    if (isController && !agentId && paths.length === 1 && assemblyBindingAllowed(body, root, rel, active)) {
+      return { verdict: ALLOW, reason: "verified_assembly_binding" };
+    }
     const dispatch = dispatchFor(owner);
     const delta =
       body.finding === true || owner === "orchestrator"

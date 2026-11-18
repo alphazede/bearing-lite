@@ -108,7 +108,7 @@ const DEEP_COUPLING_PATTERNS = [
 /** The approved compact prompt frontmatter has a content-bound exemption; every privacy/security pattern still applies. */
 const TRUSTED_PUBLIC_PROMPT_SKILL = "skills/prompt/SKILL.md";
 const TRUSTED_PUBLIC_PROMPT_SKILL_SHA256 =
-  "2ba707b7256a30bb7493fddc7fc624f2f4daca59679291a2d673e3f81f5a2ec8";
+  "fbb4f6905751f4a02904bae79a0141bd015c0a39c59b0f2a4159420744dbf1df";
 
 /**
  * @param {string} content
@@ -569,24 +569,24 @@ describe("CMD-PUBLIC-01 public-boundary (SEIT-PUBLIC-01, SEIT-MODEL-01, SEIT-IND
     assert.doesNotMatch(install, /Writes product/);
   });
 
-  it("public lifecycle docs preserve combined scope and requirements-first final planning", () => {
+  it("public lifecycle docs place parallel specialist planning after combined scope and before final design", () => {
     for (const rel of [
       "README.md",
       "docs/architecture/bearing-delivery-lifecycle.md",
       "docs/guides/lifecycle.md",
     ]) {
       const text = readFileSync(path.join(ROOT, rel), "utf8").replace(/\s+/g, " ");
-      assert.match(text, /Intake[\s\S]*Architectural Alignment and Scope[\s\S]*Requirements Engineer[\s\S]*Systems Modeler[\s\S]*Integration Engineer planning[\s\S]*Planning Test Engineer[\s\S]*final Planning and Design/, rel);
+      assert.match(text, /Intake\s*→\s*Architectural Alignment and Scope\s*→\s*parallel MBSE and Integration and Test planning\s*→\s*Orchestrator final Planning and Design/, rel);
       assert.match(text, /(?:requested planning review|planning review[^.]*only when)/, rel);
-      assert.doesNotMatch(text, /dispatches the \*\*Planning Orchestrator|frozen `planning_and_design` route/, rel);
+      assert.doesNotMatch(text, /dispatches the \*\*Planning Orchestrator|frozen `planning_and_design` route|Planning Test Engineer|Systems Modeler/, rel);
     }
     const svg = readFileSync(path.join(ROOT, "docs/architecture/bearing-process/lifecycle-process-views.svg"), "utf8");
-    assert.match(svg, /Intake → Alignment &amp; Scope → Requirements → Modeler → IE → TE → final plan\/design → owner → handoff/);
+    assert.match(svg, /Intake → Alignment &amp; Scope → parallel MBSE and Integration and Test → final plan\/design → owner → handoff/);
     assert.match(svg, /SPECIALISTS: ENABLED AND NEEDED/);
-    assert.doesNotMatch(svg, /order[^<]*unsettled|Planning Test Engineer \(Iterative\)/);
+    assert.doesNotMatch(svg, /order[^<]*unsettled|Planning Test Engineer|Systems Modeler/);
   });
 
-  it("public docs keep one Integration Engineer and one Test Engineer with named sessions", () => {
+  it("public docs keep planning, assurance, and execution on their distinct roles", () => {
     const readme = readFileSync(path.join(ROOT, "README.md"), "utf8");
     const spec = readFileSync(
       path.join(ROOT, "docs/architecture/bearing-delivery-lifecycle.md"),
@@ -596,10 +596,10 @@ describe("CMD-PUBLIC-01 public-boundary (SEIT-PUBLIC-01, SEIT-MODEL-01, SEIT-IND
       ["README", readme],
       ["specification", spec],
     ]) {
-      assert.match(text, /Integration Engineer/, name);
-      assert.match(text, /planning and execution sessions|planning session[\s\S]{0,80}execution session/i, name);
-      assert.match(text, /Test Engineer/, name);
-      assert.match(text, /planning and assurance sessions|Planning Test Engineer[\s\S]{0,80}Assurance Test Engineer/i, name);
+      assert.match(text, /\| \*{0,2}MBSE\*{0,2} \| planning \|/, name);
+      assert.match(text, /\| \*{0,2}Integration and Test\*{0,2} \| planning \|/, name);
+      assert.match(text, /\| \*{0,2}Integration Engineer\*{0,2} \| execution \|/, name);
+      assert.match(text, /\| \*{0,2}Test Engineer\*{0,2} \| assurance \|/, name);
       assert.match(text, /`slice`, `phase`, or `lifecycle`|slice, phase, or lifecycle/, name);
       assert.doesNotMatch(text, /\|\s*\*\*Validator\*\*/);
     }
