@@ -48,7 +48,13 @@ describe("#112 orchestrator write-set lock", () => {
       tool_input: { command: `*** Begin Patch\n*** Update File: ${file}\n@@\n-${before}\n+${after}\n*** End Patch` },
     }, { host: "codex", role }).hookSpecificOutput.verdict;
     const hashLine = (digest) => `        "sha256": "${digest}"`;
+    const edit = (replace_all) => lock.handle({
+      cwd, role: "orchestrator", hook_event_name: "PreToolUse", tool_name: "Edit",
+      tool_input: { file_path: path.join(cwd, seit), old_string: hashLine(oldHash), new_string: hashLine(newHash), replace_all },
+    }, { host: "claude-code", role: "orchestrator" }).hookSpecificOutput.verdict;
     assert.equal(decision(seit, hashLine(oldHash), hashLine(newHash)), "ALLOW");
+    assert.equal(edit(false), "ALLOW");
+    assert.equal(edit(true), "DENY_DISPATCH");
     assert.equal(decision(register, "VERIFICATION_CASE_ID: pending", "VERIFICATION_CASE_ID: CASE-1"), "ALLOW");
     assert.equal(decision(seit, hashLine(oldHash), hashLine("1".repeat(64))), "DENY_DISPATCH");
     assert.equal(decision(seit, `        "path": "${design}",`, '        "path": "plan.md",'), "DENY_DISPATCH");

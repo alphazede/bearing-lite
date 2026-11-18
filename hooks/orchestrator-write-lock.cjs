@@ -842,13 +842,12 @@ function resolvesRegisterCases(root, plan, target, before, lineNumber, newLine) 
 }
 
 /** Permit only exact, evidence-derived bindings in the active plan before freeze. */
-function assemblyBindingAllowed(body, root, rel, active) {
+function assemblyBindingAllowed(body, root, target, active) {
   if (active.task.status !== "IN_PROGRESS" || fs.existsSync(path.join(root, ROUND_RECORD)) ||
       !["Edit", "apply_patch", "ApplyPatch", "applypatch"].includes(body.tool_name)) return false;
   const planDir = presentString(active.task.plan_dir);
   if (!planDir || path.isAbsolute(planDir) || (planDir !== "." && !insideRoot(root, planDir))) return false;
-  const target = insideRoot(root, rel);
-  const edit = target && singleLineEdit(body, root, target);
+  const edit = singleLineEdit(body, root, target);
   if (!edit || edit[0] === edit[1]) return false;
   const plan = path.resolve(root, planDir);
   try {
@@ -939,7 +938,9 @@ function evaluate(input) {
     // role, or a role-less session that is not an in-process subagent.
     if (owner === "architectural_alignment" && (role === "orchestrator" || !agentId)) continue;
     if (owner === "orchestrator" && (role === "orchestrator" || !agentId)) continue;
-    if (isController && !agentId && paths.length === 1 && assemblyBindingAllowed(body, root, rel, active)) {
+    const target = insideRoot(root, rel);
+    if (isController && !agentId && target && paths.every((name) => insideRoot(root, name) === target) &&
+        assemblyBindingAllowed(body, root, target, active)) {
       return { verdict: ALLOW, reason: "verified_assembly_binding" };
     }
     const dispatch = dispatchFor(owner);
