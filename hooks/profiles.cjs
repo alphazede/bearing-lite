@@ -105,15 +105,17 @@ function evaluateCatalogState(input) {
   if (!isPlainObject(profiles)) {
     return { outcome: "NEEDS_MORE_EVIDENCE", reason: "profiles_not_object", path: profilesPath };
   }
+  const diagnostics = [];
   for (const name of Object.keys(profiles)) {
     if (!NAME_PATTERN.test(name)) {
       return { outcome: "NEEDS_MORE_EVIDENCE", reason: "invalid_profile_name", path: profilesPath };
     }
     const retired = retiredRoleKeys(profiles[name]);
-    if (retired.length && RETIRED_PLANNING_ROUTE_KEYS.has(retired[0])) {
+    const planning = retired.find((key) => RETIRED_PLANNING_ROUTE_KEYS.has(key));
+    if (planning) {
       return {
         outcome: "MIGRATION_REQUIRED",
-        reason: "retired_role:" + retired[0],
+        reason: "retired_role:" + planning,
         profile: name,
         migration: RETIRED_PLANNING_MIGRATION,
         path: profilesPath,
@@ -126,8 +128,15 @@ function evaluateCatalogState(input) {
         path: profilesPath,
       };
     }
+    // B30-219 soft compatibility: a legacy Coordinator route never blocks the
+    // catalog; it is reported once and otherwise ignored (F09, SM04 COMPATIBLE).
+    if (isPlainObject(profiles[name].roles) && "coordinator" in profiles[name].roles) {
+      diagnostics.push({ code: "retired_role_ignored", role: "coordinator", profile: name });
+    }
   }
-  return { outcome: "READY", reason: "profiles_live", path: profilesPath };
+  const ready = { outcome: "READY", reason: "profiles_live", path: profilesPath };
+  if (diagnostics.length) ready.diagnostics = diagnostics;
+  return ready;
 }
 
 const DIGEST_EXCLUDED_KEYS = new Set(["cadence", "route", "authority"]);
@@ -266,12 +275,42 @@ function freezeSelectedRoutes(input) {
   };
 }
 
+/**
+ * Removal-readiness check (B30-219, SM04.X2): an active journey whose frozen
+ * snapshot still enables the Coordinator holds retirement until it runs on a
+ * pinned runtime or is explicitly handed over. Never rewrites journey records.
+ * @param {{ journeys?: object[] }} [input]
+ * @returns {{ outcome: string, journeys: { id: *, required: string }[] }}
+ */
+function evaluateCoordinatorRetirement(input) {
+  const journeys = input && Array.isArray(input.journeys) ? input.journeys : [];
+  const held = [];
+  for (const entry of journeys) {
+    if (!isPlainObject(entry) || !isPlainObject(entry.journey)) continue;
+    const status = entry.journey.status;
+    if (status === "complete" || status === "closed") continue;
+    const snapshot =
+      isPlainObject(entry.profile_selection) && isPlainObject(entry.profile_selection.snapshot)
+        ? entry.profile_selection.snapshot
+        : {};
+    const roles = isPlainObject(snapshot.roles) ? snapshot.roles : {};
+    const coordinator = roles.coordinator;
+    if (isPlainObject(coordinator) && coordinator.enabled === true) {
+      held.push({ id: entry.journey.id, required: "pinned_runtime_or_handover" });
+    }
+  }
+  return held.length
+    ? { outcome: "LEGACY_JOURNEY_ACTIVE", journeys: held }
+    : { outcome: "READY", journeys: [] };
+}
+
 function packagedCatalogBytes() {
   return PACKAGED_BYTES;
 }
 
 module.exports = {
   evaluateCatalogState,
+  evaluateCoordinatorRetirement,
   evaluateTddTestImplementerRoute,
   freezeSelectedRoutes,
   packagedCatalogBytes,

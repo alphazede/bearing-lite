@@ -17,7 +17,6 @@ invocations and role transitions require their existing explicit authority.
 | --- | --- | --- |
 | Planning Orchestrator | Confirm context/scope → dispatch enabled, needed specialists as their inputs become ready → wait/wake on responses → final plan/design and self-check → assembly validating allocations, case bindings, and coverage → requested planning review (else record not requested) → owner confirmation → Scribe-coverage handoff check → handoff | [Orchestrator](../../bearing-lite/SKILL.md) |
 | Implementation Orchestrator | Consume handoff → select ready work → dispatch enabled roles → wait/wake on responses → integrate and verify → requested review → deliver | [Orchestrator](../../bearing-lite/SKILL.md) |
-| Coordinator | Consume approved wave → dispatch ready independent assignments → wait/wake on returns → integrate evidence → run wave checks → return | [Coordinator](../../coordinator/SKILL.md) |
 | Requirements Engineer | Author requirements from confirmed Alignment/Scope context → self requirements-quality pass and `--stage requirements` precheck → repair own requirements → recheck → return quality evidence with owned pending bindings | [Requirements Engineer](../../requirements-engineer/SKILL.md) |
 | Systems Modeler | Consume requirements/context → model and map → self-check → repair own models/views → recheck → return | [Systems Modeler](../../systems-modeler/SKILL.md) |
 | Integration Engineer planning | Consume requirements/architecture/interfaces → define boundary and assembly inputs → self-check → repair own contract/strategy → return | [Integration Engineer](../../integration-engineer/SKILL.md) |
@@ -50,7 +49,7 @@ These are not additional dispatched specialist roles:
   return its bounded packet; never dispatch itself or another agent.
 - [Storage lifecycle and landing](../../bearing-lite/references/storage-lifecycle.md):
   land coherent outcomes and maintain worktree, output, and evidence storage.
-- [Wave operations](../../coordinator/references/wave-operations.md): keep the
+- [Wave operations](../../bearing-lite/references/wave-operations.md): keep the
   wave task graph, name method skills in packets, and hand storage to the Orchestrator.
 
 ## Conditions that remain with the caller
