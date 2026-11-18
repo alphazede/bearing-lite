@@ -1,0 +1,15 @@
+{
+  "captured_at_revision": "ebfc94b",
+  "source": "hooks/profiles.cjs freezeSelectedRoutes",
+  "digests": {
+    "legacy-coord-on-repair-absent": "46ebd16a74f28bc36214c05196c9db8922dec560c3e68cbf96292de76ef75710",
+    "legacy-coord-on-repair-off": "824276db0aea1459724ba443dced312c356d95596256dd73953731aba2fed1d7",
+    "legacy-coord-on-repair-on": "28a8be621358ca25849841eb61621efdca724e6ad4ff9393a0a21c4ba0a496d2",
+    "legacy-coord-off-repair-absent": "9b2f6c9881f7f52364154331ac540e2d7449fb8457f9925b8f2cf0bcab6a33c6",
+    "legacy-coord-off-repair-off": "f1c3f097a8103e913519f7081818dc91583cc59672c3ce81791390d1801272c9",
+    "legacy-coord-off-repair-on": "7ef2472177fb14a24a3b2adf9547e5b8d50fc6e521f6844aa2fd3757c185f540",
+    "legacy-coord-absent-repair-absent": "8d972dd8f4bae05e8ad797f61acc04d4e5c8729568efacb0cdd3acc8b2a99de8",
+    "legacy-coord-absent-repair-off": "3513c5161fa485fab355a94b82e49f3d9caeb0f199ffb395bd6be463348ab012",
+    "legacy-coord-absent-repair-on": "74abe77699f3b69f79d282f0ef2e1a02e4b3d897c493b3f03998ad2d39277fb2"
+  }
+}
