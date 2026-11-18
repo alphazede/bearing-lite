@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [3.0.0-rc.2] - 2026-11-18
+
 ### Added
 
 - Add reusable planning security control catalogue (`catalog/controls/` and `schemas/control-catalogue.schema.json`) with LUKS, one-way nftables, AppArmor, and vTPM seed entries, selection/parameterization guidance in `skills/mbse/` and `skills/integration-test/`, and `plan-package.cjs` selection validation. (Alphazedehq#584)
