@@ -633,18 +633,18 @@ export function sanitizeSvg(raw) {
   let sawSvg = false;
   const open = [];
   while (i < input.length) {
-    if (input.startsWith("<!--", i)) {
-      const end = input.indexOf("-->", i + 4);
-      if (end < 0) throw new RenderError("UNSAFE_ASSET", "Unterminated SVG comment.");
-      i = end + 3;
-      continue;
-    }
     const lt = input.indexOf("<", i);
     if (lt < 0) {
       if (input.slice(i).trim()) out.push(esc(decodeSvgXmlValue(input.slice(i), "text")));
       break;
     }
     if (lt > i) out.push(esc(decodeSvgXmlValue(input.slice(i, lt), "text")));
+    if (input.startsWith("<!--", lt)) {
+      const end = input.indexOf("-->", lt + 4);
+      if (end < 0) throw new RenderError("UNSAFE_ASSET", "Unterminated SVG comment.");
+      i = end + 3;
+      continue;
+    }
     if (input.startsWith("</", lt)) {
       const m = /^<\/([A-Za-z][\w:-]*)\s*>/.exec(input.slice(lt));
       if (!m) throw new RenderError("UNSAFE_ASSET", "Malformed SVG end tag.");
