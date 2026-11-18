@@ -5,6 +5,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { markdownIn, readShipped } from "./skill-contract-fixture.mjs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -12,7 +13,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (rel) => readFileSync(path.join(ROOT, rel), "utf8");
 
 const ROUTER = read("skills/bearing-lite/SKILL.md");
-const COORDINATOR = read("skills/coordinator/SKILL.md");
+// Retired Coordinator duties (D8 review dispatch, landing) live in the Implementation Orchestrator text.
+const IMPL_ORCH = ["skills/bearing-lite/SKILL.md", ...markdownIn("skills/bearing-lite/references")].map(readShipped).join("\n");
 const INTEGRATION = read("skills/integration-engineer/SKILL.md");
 const TEST_ENGINEER = read("skills/test-engineer/SKILL.md");
 const ASSURANCE = read("skills/bearing-lite/references/assurance-policy.md");
@@ -24,7 +26,7 @@ const TASK_TEMPLATE = read("skills/bearing-lite/templates/task.md");
 
 describe("#222 owner-requested review runs at its declared boundary", () => {
   it("no executing skill asks for a second per-boundary request", () => {
-    for (const [name, text] of [["router", ROUTER], ["coordinator", COORDINATOR], ["integration", INTEGRATION], ["assembly", ASSEMBLY]]) {
+    for (const [name, text] of [["router", ROUTER], ["implementation-orchestrator", IMPL_ORCH], ["integration", INTEGRATION], ["assembly", ASSEMBLY]]) {
       assert.doesNotMatch(text, /explicitly requested at (this|the declared|the chosen) boundary/, name);
       assert.doesNotMatch(text, /dispatch only when explicitly requested/, name);
     }
@@ -35,7 +37,7 @@ describe("#222 owner-requested review runs at its declared boundary", () => {
     assert.match(ASSURANCE, /frozen\s+request is the dispatch authority for every declared boundary/);
     assert.match(ASSURANCE, /never waits for a later wave, batches several units into one\s+review, or defers the review to lifecycle end/);
     assert.match(ASSURANCE, /A session the owner did not request stays inactive/);
-    assert.match(COORDINATOR, /immediately dispatch the profile-enabled review or assurance/);
+    assert.match(IMPL_ORCH, /immediately dispatch the profile-enabled review or assurance/);
     assert.match(ASSEMBLY, /dispatch the independent review\/assurance the owner requested for it in the frozen\s+plan at once/);
   });
 
@@ -57,10 +59,10 @@ describe("#223 closed units are landed", () => {
   });
 
   it("controllers and authority point at the landing rule", () => {
-    for (const [name, text] of [["router", ROUTER], ["coordinator", COORDINATOR], ["assembly", ASSEMBLY], ["owner-stops", OWNER_STOPS]]) {
+    for (const [name, text] of [["router", ROUTER], ["implementation-orchestrator", IMPL_ORCH], ["assembly", ASSEMBLY], ["owner-stops", OWNER_STOPS]]) {
       assert.match(text, /task-state\.md#landing-a-closed-unit/, name);
     }
-    assert.match(COORDINATOR, /merge only under express authority/);
+    assert.match(IMPL_ORCH, /merge only under express authority/);
     assert.match(OWNER_STOPS, /includes `merge` only when the\s+owner chooses to delegate merge/);
   });
 });

@@ -2,8 +2,9 @@
  * workflow-and-delivery-efficiency: method-skill routing inside packets,
  * one durable task graph, native completion events instead of polling, and
  * the worktree/artifact storage lifecycle through coherent landing.
- * The controller surface is the Orchestrator and Coordinator skills, their
+ * The controller surface is the Implementation Orchestrator skill, its
  * references, and the role-loop index; the contract may live in any of them.
+ * S20 retired the Coordinator; its wave duties moved to this surface.
  */
 import { describe, it } from "node:test";
 import {
@@ -16,17 +17,14 @@ import {
 } from "./skill-contract-fixture.mjs";
 
 const ORCH_SKILL = "skills/bearing-lite/SKILL.md";
-const COORD_SKILL = "skills/coordinator/SKILL.md";
 const ROLE_LOOPS = "skills/prompt/references/role-loops.md";
 
 /** Every shipped controller file the workflow contract may live in. */
 function controllerFiles() {
   return [
     ORCH_SKILL,
-    COORD_SKILL,
     ROLE_LOOPS,
     ...markdownIn("skills/bearing-lite/references"),
-    ...markdownIn("skills/coordinator/references"),
   ];
 }
 
@@ -66,7 +64,7 @@ describe("workflow-and-delivery-efficiency", () => {
   });
 
   it("WD-03 completion is consumed from native events once, without polling or timer loops", () => {
-    for (const rel of [ORCH_SKILL, COORD_SKILL]) {
+    for (const rel of [ORCH_SKILL]) {
       assertContracts(
         flat(readShipped(rel)),
         {
