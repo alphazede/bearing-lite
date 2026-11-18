@@ -173,6 +173,15 @@ FORBIDDEN_PROOF_ALIASES = ("evidence", "pass_fail")
 PROFILES_SCHEMA_NAME = "profiles.schema.json"
 VERIFICATION_SCHEMA_NAME = "verification.schema.json"
 VERIFICATION_MISSING_SCHEMA = f"missing schemas/{VERIFICATION_SCHEMA_NAME}"
+CONTROL_CATALOGUE_SCHEMA_NAME = "control-catalogue.schema.json"
+CONTROL_CATALOGUE_MISSING_SCHEMA = f"missing schemas/{CONTROL_CATALOGUE_SCHEMA_NAME}"
+CONTROL_CATALOGUE_DIR = ROOT / "catalog" / "controls"
+EXPECTED_SEED_CONTROLS = (
+    "CTRL-SEC-LUKS",
+    "CTRL-SEC-NFTABLES-ONEWAY",
+    "CTRL-SEC-APPARMOR",
+    "CTRL-SEC-VTPM",
+)
 VERIFICATION_REQUEST_FIELDS = (
     "schema_version",
     "kind",
@@ -315,6 +324,12 @@ def load_schemas() -> dict[str, dict | None]:
             out["verification"] = json.load(fh)
     else:
         out["verification"] = None
+    catalogue_path = SCHEMAS_DIR / CONTROL_CATALOGUE_SCHEMA_NAME
+    if catalogue_path.is_file():
+        with catalogue_path.open(encoding="utf-8") as fh:
+            out["control_catalogue"] = json.load(fh)
+    else:
+        out["control_catalogue"] = None
     return out
 
 
@@ -1792,6 +1807,47 @@ def verification_cases() -> list[tuple[str, str, object, str]]:
     return out
 
 
+def control_catalogue_cases() -> list[tuple[str, str, object, str]]:
+    """(seit_id, name, instance, expect accept|reject) for Alphazedehq#584."""
+    out: list[tuple[str, str, object, str]] = []
+    loaded: list[dict] = []
+    if CONTROL_CATALOGUE_DIR.is_dir():
+        for path in sorted(CONTROL_CATALOGUE_DIR.glob("*.json")):
+            with path.open(encoding="utf-8") as fh:
+                entry = json.load(fh)
+            loaded.append(entry)
+            out.append(("SEIT-CTRL-001", f"seed_{path.stem}", entry, "accept"))
+    if loaded:
+        out.append((
+            "SEIT-CTRL-001",
+            "catalogue_bundle_all_seeds",
+            {"schema_version": "1", "controls": loaded},
+            "accept",
+        ))
+        sample = copy.deepcopy(loaded[0])
+        out.extend([
+            ("SEIT-CTRL-001", "entry_missing_requirement", omit(sample, "requirement"), "reject"),
+            ("SEIT-CTRL-001", "entry_missing_positive_case", omit(sample, "positive_case"), "reject"),
+            ("SEIT-CTRL-001", "entry_missing_negative_case", omit(sample, "negative_case"), "reject"),
+            ("SEIT-CTRL-001", "entry_empty_parameters", {**sample, "parameters": {}}, "reject"),
+            ("SEIT-CTRL-001", "entry_invalid_id", {**sample, "id": "LUKS-01"}, "reject"),
+            ("SEIT-CTRL-001", "entry_extra_field", {**sample, "unexpected": True}, "reject"),
+            ("SEIT-CTRL-001", "entry_requirement_no_ears", {
+                **sample,
+                "requirement": {**sample["requirement"], "statement": "Encrypt the disk."},
+            }, "reject"),
+            ("SEIT-CTRL-001", "entry_circular_oracle", {
+                **sample,
+                "positive_case": {
+                    **sample["positive_case"],
+                    "oracle_source": "Computed from production logic.",
+                },
+            }, "reject"),
+            ("SEIT-CTRL-001", "catalogue_empty_controls", {"schema_version": "1", "controls": []}, "reject"),
+        ])
+    return out
+
+
 def check_remote_ref_fails_closed() -> tuple[bool, str]:
     from referencing.exceptions import Unresolvable
 
@@ -2131,6 +2187,42 @@ def run_cases() -> int:
             failed += 1
             continue
         messages = errors_for(verification_schema, instance)
+        accepted = not messages
+        want_accept = expect == "accept"
+        ok = accepted if want_accept else not accepted
+        if ok:
+            print(f"PASS {line}")
+            passed += 1
+            continue
+        failed += 1
+        if want_accept:
+            first = messages[0] if messages else "rejected with no message"
+            print(f"FAIL {line}: rejected (expected accept): {first}")
+        else:
+            print(f"FAIL {line}: accepted (expected reject)")
+
+    catalogue_schema = schemas.get("control_catalogue")
+    seed_ids: set[str] = set()
+    if CONTROL_CATALOGUE_DIR.is_dir():
+        for path in sorted(CONTROL_CATALOGUE_DIR.glob("*.json")):
+            with path.open(encoding="utf-8") as fh:
+                entry = json.load(fh)
+            if isinstance(entry, dict) and isinstance(entry.get("id"), str):
+                seed_ids.add(entry["id"])
+    missing_seeds = [cid for cid in EXPECTED_SEED_CONTROLS if cid not in seed_ids]
+    if missing_seeds:
+        print(f"FAIL SEIT-CTRL-001 seed_controls_present: missing {', '.join(missing_seeds)}")
+        failed += 1
+    else:
+        print(f"PASS SEIT-CTRL-001 seed_controls_present: {len(seed_ids)} controls")
+        passed += 1
+    for seit_id, name, instance, expect in control_catalogue_cases():
+        line = f"{seit_id} {name}"
+        if not isinstance(catalogue_schema, dict):
+            print(f"FAIL {line}: {CONTROL_CATALOGUE_MISSING_SCHEMA}")
+            failed += 1
+            continue
+        messages = errors_for(catalogue_schema, instance)
         accepted = not messages
         want_accept = expect == "accept"
         ok = accepted if want_accept else not accepted

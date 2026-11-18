@@ -1,0 +1,203 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/alphazede/bearing-lite/schemas/control-catalogue.schema.json",
+  "title": "Bearing Lite reusable security control catalogue",
+  "description": "Alphazedehq#584. Defines reusable planning control entries: each entry carries parameters, exactly one requirement, one positive verification/validation case, and one negative verification/validation case that MBSE and Integration and Test select and parameterize instead of authoring from zero.",
+  "oneOf": [
+    { "$ref": "#/$defs/controlEntry" },
+    { "$ref": "#/$defs/catalogue" }
+  ],
+  "$defs": {
+    "nonempty": {
+      "type": "string",
+      "minLength": 1
+    },
+    "parameterSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "required", "description"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["string", "integer", "boolean", "array"]
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "description": {
+          "$ref": "#/$defs/nonempty"
+        },
+        "default": {},
+        "example": {},
+        "enum": {
+          "type": "array",
+          "minItems": 1
+        }
+      }
+    },
+    "requirementTemplate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "statement", "rationale", "verification_method"],
+      "properties": {
+        "uid_prefix": {
+          "type": "string",
+          "pattern": "^REQ-[A-Z0-9][A-Z0-9-]*$"
+        },
+        "title": {
+          "$ref": "#/$defs/nonempty"
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\b(When|While|Where|shall|If\\b.*\\bthen)\\b"
+        },
+        "rationale": {
+          "$ref": "#/$defs/nonempty"
+        },
+        "verification_method": {
+          "type": "string",
+          "enum": ["test", "inspection", "analysis", "demonstration", "evaluation"]
+        },
+        "applicable_standards": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonempty" }
+        }
+      }
+    },
+    "caseTemplate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "method",
+        "preconditions",
+        "stimulus_or_procedure",
+        "expected_result",
+        "observable_evidence",
+        "pass_fail_rule",
+        "negative_or_failure_case",
+        "oracle_source"
+      ],
+      "properties": {
+        "id_suffix": {
+          "type": "string",
+          "pattern": "^[A-Z0-9][A-Z0-9-]*$"
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["verification", "validation"]
+        },
+        "method": {
+          "type": "string",
+          "enum": ["test", "inspection", "analysis", "demonstration", "evaluation"]
+        },
+        "preconditions": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/nonempty" }
+        },
+        "stimulus_or_procedure": {
+          "$ref": "#/$defs/nonempty"
+        },
+        "expected_result": {
+          "$ref": "#/$defs/nonempty"
+        },
+        "observable_evidence": {
+          "$ref": "#/$defs/nonempty"
+        },
+        "pass_fail_rule": {
+          "$ref": "#/$defs/nonempty"
+        },
+        "negative_or_failure_case": {
+          "$ref": "#/$defs/nonempty"
+        },
+        "oracle_source": {
+          "$ref": "#/$defs/nonempty",
+          "not": {
+            "pattern": "(?:^|[.;:])(?:(?!\\b(?:[Nn][Oo][Tt]|[Nn][Ee][Vv][Ee][Rr])\\b)[^.])*(?:(?:[Cc]omput(?:e|ed|es|ing)\\b|[Dd]eriv(?:e|ed|es|ing)\\b|[Oo]btain(?:s|ed|ing)?\\b|[Gg]enerat(?:e|ed|es|ing)\\b|[Cc]all(?:ing|ed|s)?\\b|[Rr]un(?:ning|s)?\\b|[Rr]eimplement(?:s|ed|ing)?\\b|[Mm]irror(?:s|ed|ing)?\\b|[Cc]op(?:y|ies|ied|ying)\\b)(?:(?!\\b(?:[Nn][Oo][Tt]|[Nn][Ee][Vv][Ee][Rr])\\b)[^.])*\\b[Pp]roduction\\b|\\b[Ee]xpected\\b(?:(?!\\b(?:[Nn][Oo][Tt]|[Nn][Ee][Vv][Ee][Rr])\\b)[^.])*\\b[Pp]roduction\\b(?:(?!\\b(?:[Nn][Oo][Tt]|[Nn][Ee][Vv][Ee][Rr])\\b)[^.])*\\b(?:[Oo]utput|[Rr]esult|[Vv]alue)\\b)"
+          }
+        },
+        "method_fields": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": true
+        }
+      }
+    },
+    "controlEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "id",
+        "title",
+        "domain",
+        "summary",
+        "parameters",
+        "requirement",
+        "positive_case",
+        "negative_case"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "string",
+          "const": "1"
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^CTRL-[A-Z0-9][A-Z0-9-]*$"
+        },
+        "title": {
+          "$ref": "#/$defs/nonempty"
+        },
+        "domain": {
+          "$ref": "#/$defs/nonempty"
+        },
+        "summary": {
+          "$ref": "#/$defs/nonempty"
+        },
+        "tags": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/nonempty" }
+        },
+        "parameters": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/parameterSpec"
+          }
+        },
+        "requirement": {
+          "$ref": "#/$defs/requirementTemplate"
+        },
+        "positive_case": {
+          "$ref": "#/$defs/caseTemplate"
+        },
+        "negative_case": {
+          "$ref": "#/$defs/caseTemplate"
+        }
+      }
+    },
+    "catalogue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "controls"],
+      "properties": {
+        "schema_version": {
+          "type": "string",
+          "const": "1"
+        },
+        "controls": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/controlEntry" }
+        }
+      }
+    }
+  }
+}

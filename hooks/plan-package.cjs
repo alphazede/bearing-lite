@@ -798,6 +798,187 @@ function checkFinalRegister(dir, seit, implementation) {
   return result.findings.map(finding => ({ code: "register_precheck_failed", ...finding }));
 }
 
+const DEFAULT_CONTROL_CATALOG_DIR = path.resolve(__dirname, "..", "catalog", "controls");
+
+const isPlain = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
+const isNonEmptyStr = (value) => typeof value === "string" && value.trim().length > 0;
+
+/** #584: load reusable security control catalogue entries keyed by control ID. */
+function loadControlCatalogue(catalogDir = DEFAULT_CONTROL_CATALOG_DIR) {
+  const byId = new Map();
+  if (!fs.existsSync(catalogDir)) return byId;
+  const files = fs.readdirSync(catalogDir).filter((name) => name.endsWith(".json")).sort();
+  for (const name of files) {
+    const parsed = JSON.parse(fs.readFileSync(path.join(catalogDir, name), "utf8"));
+    const entries = Array.isArray(parsed?.controls) ? parsed.controls : [parsed];
+    for (const entry of entries) {
+      if (isPlain(entry) && isNonEmptyStr(entry.id)) byId.set(entry.id, entry);
+    }
+  }
+  return byId;
+}
+
+function matchesParameterType(value, type) {
+  if (type === "string") return isNonEmptyStr(value);
+  if (type === "integer") return Number.isInteger(value);
+  if (type === "boolean") return typeof value === "boolean";
+  if (type === "array") return Array.isArray(value) && value.length > 0;
+  return false;
+}
+
+function resolveControlParameters(control, supplied) {
+  const findings = [];
+  const resolved = {};
+  const specs = isPlain(control?.parameters) ? control.parameters : {};
+  if (!isPlain(supplied)) {
+    return { parameters: resolved, findings: [{ code: "control_parameters_invalid", control_id: control?.id ?? null }] };
+  }
+  for (const key of Object.keys(supplied)) {
+    if (!Object.prototype.hasOwnProperty.call(specs, key)) {
+      findings.push({ code: "unknown_control_parameter", control_id: control.id, parameter: key });
+    }
+  }
+  for (const [name, spec] of Object.entries(specs)) {
+    const hasValue = Object.prototype.hasOwnProperty.call(supplied, name) && supplied[name] !== undefined && supplied[name] !== null;
+    if (!hasValue) {
+      if (!spec?.required && spec?.default !== undefined) resolved[name] = spec.default;
+      else findings.push({ code: "control_parameter_missing", control_id: control.id, parameter: name });
+      continue;
+    }
+    const value = supplied[name];
+    if (!matchesParameterType(value, spec?.type) || (Array.isArray(spec?.enum) && !spec.enum.includes(value))) {
+      findings.push({
+        code: "control_parameter_invalid",
+        control_id: control.id,
+        parameter: name,
+        expected_type: spec?.type ?? null,
+      });
+      continue;
+    }
+    resolved[name] = value;
+  }
+  return { parameters: resolved, findings };
+}
+
+function renderTemplateValue(node, params, unresolved) {
+  if (typeof node === "string") {
+    const rendered = node.replace(/\{\{([a-z][a-z0-9_]*)\}\}/g, (match, key) => {
+      if (!Object.prototype.hasOwnProperty.call(params, key)) {
+        unresolved.push(key);
+        return match;
+      }
+      const val = params[key];
+      return Array.isArray(val) ? val.join(", ") : String(val);
+    });
+    for (const extra of rendered.matchAll(/\{\{([^}]+)\}\}/g)) unresolved.push(extra[1]);
+    return rendered;
+  }
+  if (Array.isArray(node)) return node.map((item) => renderTemplateValue(item, params, unresolved));
+  if (isPlain(node)) {
+    const out = {};
+    for (const [key, val] of Object.entries(node)) out[key] = renderTemplateValue(val, params, unresolved);
+    return out;
+  }
+  return node;
+}
+
+/** #584: parameterize one catalogue control entry into a requirement and paired positive/negative cases. */
+function parameterizeControl(control, selection) {
+  const findings = [];
+  if (!isPlain(control) || !isNonEmptyStr(control.id)) {
+    return { ok: false, findings: [{ code: "invalid_control_entry" }], parameters: {}, requirement: null, positive_case: null, negative_case: null };
+  }
+  if (!isPlain(selection)) {
+    return { ok: false, findings: [{ code: "invalid_control_selection", control_id: control.id }], parameters: {}, requirement: null, positive_case: null, negative_case: null };
+  }
+  if (!isNonEmptyStr(selection.requirement_id)) {
+    findings.push({ code: "control_requirement_id_missing", control_id: control.id });
+  }
+  if (!isNonEmptyStr(selection.positive_case_id) || !isNonEmptyStr(selection.negative_case_id)) {
+    findings.push({ code: "control_case_id_missing", control_id: control.id });
+  } else if (selection.positive_case_id === selection.negative_case_id) {
+    findings.push({ code: "control_case_ids_identical", control_id: control.id, case_id: selection.positive_case_id });
+  }
+  const paramResult = resolveControlParameters(control, selection.parameters);
+  findings.push(...paramResult.findings);
+  const unresolved = [];
+  const reqTpl = renderTemplateValue(control.requirement, paramResult.parameters, unresolved);
+  const posTpl = renderTemplateValue(control.positive_case, paramResult.parameters, unresolved);
+  const negTpl = renderTemplateValue(control.negative_case, paramResult.parameters, unresolved);
+  if (unresolved.length) {
+    findings.push({ code: "control_unresolved_placeholder", control_id: control.id, placeholders: [...new Set(unresolved)] });
+  }
+  const toCase = (caseId, tpl) => {
+    if (!isPlain(tpl)) return null;
+    const { id_suffix: _ignored, ...rest } = tpl;
+    return { id: caseId, requirement_id: selection.requirement_id, ...rest };
+  };
+  const requirement = isPlain(reqTpl) ? { uid: selection.requirement_id, ...reqTpl } : null;
+  const positive_case = toCase(selection.positive_case_id, posTpl);
+  const negative_case = toCase(selection.negative_case_id, negTpl);
+  return { ok: findings.length === 0, findings, parameters: paramResult.parameters, requirement, positive_case, negative_case };
+}
+
+/** #584: validate any declared `selected_controls` in implementation.json or seit.json against catalog/controls/. */
+function checkSelectedControls(implementation, seit, { catalogDir } = {}) {
+  const sources = [
+    ["implementation.json", implementation?.selected_controls],
+    ["seit.json", seit?.selected_controls],
+  ].filter(([, value]) => value !== undefined);
+  if (!sources.length) return [];
+  const catalogue = loadControlCatalogue(catalogDir);
+  const seitCases = Array.isArray(seit?.proof_cases)
+    ? new Map(seit.proof_cases.filter((row) => isNonEmptyStr(row?.id)).map((row) => [row.id, row]))
+    : null;
+  const findings = [];
+  for (const [source, list] of sources) {
+    const seenReqIds = new Set();
+    if (!Array.isArray(list)) {
+      findings.push({ code: "selected_controls_invalid", source });
+      continue;
+    }
+    for (const selection of list) {
+      if (!isPlain(selection)) {
+        findings.push({ code: "selected_control_invalid", source });
+        continue;
+      }
+      const controlId = selection.control_id;
+      if (!isNonEmptyStr(controlId) || !catalogue.has(controlId)) {
+        findings.push({ code: "unknown_control_id", source, control_id: controlId ?? null });
+        continue;
+      }
+      const control = catalogue.get(controlId);
+      if (isNonEmptyStr(selection.requirement_id)) {
+        if (seenReqIds.has(selection.requirement_id)) {
+          findings.push({ code: "duplicate_control_requirement_id", source, control_id: controlId, requirement_id: selection.requirement_id });
+        }
+        seenReqIds.add(selection.requirement_id);
+      }
+      const rendered = parameterizeControl(control, selection);
+      for (const f of rendered.findings) findings.push({ ...f, source });
+      if (seitCases) {
+        for (const caseId of [selection.positive_case_id, selection.negative_case_id]) {
+          if (!isNonEmptyStr(caseId)) continue;
+          const proof = seitCases.get(caseId);
+          if (!proof) {
+            findings.push({ code: "control_case_unresolved", source, control_id: controlId, case_id: caseId });
+          } else if (isNonEmptyStr(selection.requirement_id) && proof.requirement_id !== selection.requirement_id) {
+            findings.push({
+              code: "control_case_requirement_mismatch",
+              source,
+              control_id: controlId,
+              case_id: caseId,
+              expected: selection.requirement_id,
+              actual: proof.requirement_id ?? null,
+            });
+          }
+        }
+      }
+    }
+  }
+  return findings;
+}
+
 function freeze(dir, { stage = "final" } = {}) {
   try {
     const digests = verifyDigests(dir);
@@ -817,6 +998,7 @@ function freeze(dir, { stage = "final" } = {}) {
       ...checkDuplicateGates(implementation),
       ...checkDuplicateGates(seit),
       ...checkIntegrationStepRefs(implementation),
+      ...checkSelectedControls(implementation, seit),
       ...checkFrozenHashes(dir),
       ...checkLivePins(dir),
       ...digests.findings,
@@ -896,6 +1078,9 @@ module.exports = {
   checkIntegrationStepRefs,
   checkFrozenHashes,
   checkLivePins,
+  loadControlCatalogue,
+  parameterizeControl,
+  checkSelectedControls,
   verifyDigests,
   freeze,
 };

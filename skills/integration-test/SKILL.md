@@ -45,6 +45,12 @@ independent assurance (`../test-engineer/SKILL.md`) and execution assessment
 3. **Author `seit.json` and V&V claims:** author `seit.json` from requirements
    and interface/boundary inputs, binding each case to an existing requirement
    ID and completing MBSE's pending case bindings; no author drafts SEIT first.
+   For security controls covered by `catalog/controls/` (schema
+   `schemas/control-catalogue.schema.json`), **select and parameterize** the
+   entry's `positive_case` and `negative_case` into `seit.json`
+   `proof_cases[]` (recording the selection in `selected_controls` with
+   `control_id`, `requirement_id`, `positive_case_id`, `negative_case_id`, and
+   `parameters`) instead of authoring both cases from zero.
    Cover every relevant flow, state transition, illegal transition, trust
    boundary, and failure path from the Boundary/Data-Flow Contract when
    applicable. Every case carries independently justified expectations per
@@ -95,6 +101,11 @@ independent assurance (`../test-engineer/SKILL.md`) and execution assessment
      or slice(s) with one semantic key (`activity|kind|role|exit`).
    - **Planning-only role (`checkPlanningRoles`):** `Integration and Test` is
      planning-only and must never appear as an implementation slice's `role`.
+   - **Selected controls (`checkSelectedControls`):** any `selected_controls[]`
+     entry in `implementation.json` or `seit.json` must resolve `control_id`
+     against `catalog/controls/`, satisfy all required `parameters`, and bind
+     distinct `positive_case_id` and `negative_case_id` entries in
+     `seit.json` `proof_cases[]` matching `requirement_id`.
 
 ## Return and boundaries
 

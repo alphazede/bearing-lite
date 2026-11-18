@@ -1,0 +1,71 @@
+{
+  "schema_version": "1",
+  "id": "CTRL-SEC-APPARMOR",
+  "title": "AppArmor mandatory access control confinement",
+  "domain": "security",
+  "summary": "Confines a service binary under an AppArmor enforce-mode profile restricting filesystem access to explicitly permitted paths.",
+  "tags": ["mac", "apparmor", "confinement", "least-privilege"],
+  "parameters": {
+    "profile_name": {
+      "type": "string",
+      "required": true,
+      "description": "AppArmor profile identifier loaded into the kernel.",
+      "example": "usr.sbin.service-daemon"
+    },
+    "executable_path": {
+      "type": "string",
+      "required": true,
+      "description": "Absolute path of the confined executable.",
+      "example": "/usr/sbin/service-daemon"
+    },
+    "allowed_paths": {
+      "type": "string",
+      "required": true,
+      "description": "Permitted filesystem path scope and permissions for the confined process.",
+      "example": "/var/lib/service-daemon/** rwk"
+    },
+    "denied_path": {
+      "type": "string",
+      "required": true,
+      "description": "Out-of-scope sensitive path that the confined process must not access.",
+      "example": "/etc/shadow"
+    }
+  },
+  "requirement": {
+    "uid_prefix": "REQ-SEC-APPARMOR",
+    "title": "AppArmor mandatory access control for {{executable_path}}",
+    "statement": "While {{executable_path}} executes on the host, the AppArmor LSM shall confine the process under profile {{profile_name}} in enforce mode permitting only {{allowed_paths}} and denying access to {{denied_path}}.",
+    "rationale": "Limits the blast radius of a compromised {{executable_path}} process through kernel-enforced MAC mediation independent of discretionary permissions.",
+    "verification_method": "test"
+  },
+  "positive_case": {
+    "id_suffix": "POS",
+    "kind": "verification",
+    "method": "test",
+    "preconditions": [
+      "AppArmor LSM is active in the kernel.",
+      "Profile {{profile_name}} for {{executable_path}} is loaded in enforce mode."
+    ],
+    "stimulus_or_procedure": "Execute {{executable_path}} against its authorized {{allowed_paths}} scope and inspect aa-status and /proc/<pid>/attr/current.",
+    "expected_result": "aa-status lists {{profile_name}} in enforce mode, process confinement attribute reports {{profile_name}} (enforce), and authorized operations on {{allowed_paths}} succeed.",
+    "observable_evidence": "aa-status output showing {{profile_name}} in enforce mode and successful workload completion with zero AppArmor DENIED events for {{allowed_paths}}.",
+    "pass_fail_rule": "PASS iff {{profile_name}} is active in enforce mode for {{executable_path}} and authorized {{allowed_paths}} operations succeed; FAIL if complain/unconfined or authorized access fails.",
+    "negative_or_failure_case": "Paired negative case: accessing {{denied_path}} from {{executable_path}} under {{profile_name}} is denied with EACCES and audited.",
+    "oracle_source": "Linux AppArmor LSM enforce-mode mediation specification and aa-status(8) confinement contract."
+  },
+  "negative_case": {
+    "id_suffix": "NEG",
+    "kind": "verification",
+    "method": "test",
+    "preconditions": [
+      "Profile {{profile_name}} for {{executable_path}} is loaded in enforce mode.",
+      "Target {{denied_path}} exists on the host filesystem."
+    ],
+    "stimulus_or_procedure": "Attempt to read or write {{denied_path}} from {{executable_path}} (or a confined probe under profile {{profile_name}}).",
+    "expected_result": "AppArmor denies access to {{denied_path}} with EACCES and emits an APPARMOR=\"DENIED\" audit entry naming {{profile_name}}.",
+    "observable_evidence": "Operation fails with EACCES (Permission denied) and kernel or audit log records APPARMOR=\"DENIED\" for {{profile_name}} and {{denied_path}}.",
+    "pass_fail_rule": "PASS iff access to {{denied_path}} fails with EACCES and logs an AppArmor denial for {{profile_name}}; FAIL if access succeeds or profile is in complain mode.",
+    "negative_or_failure_case": "Fails if {{executable_path}} accesses {{denied_path}} or executes unconfined.",
+    "oracle_source": "Linux AppArmor LSM enforce-mode denial and kernel audit log contract."
+  }
+}
