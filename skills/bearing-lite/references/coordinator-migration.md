@@ -1,6 +1,6 @@
 # Coordinator duty migration
 
-The Implementation Orchestrator alone dispatches, schedules and escalates. Each duty below has one owner per duty. Never run both owners.
+On a direct wave, the Implementation Orchestrator alone dispatches, schedules and escalates. If the frozen assignment explicitly delegates a wave to an enabled Coordinator, that Coordinator retains its wave duties and reports to the Implementation Orchestrator. Keep one owner per duty. Never run both owners.
 
 The Coordinator stays available until every duty and profile proof passes. Never silently rewrite a frozen legacy route.
 
@@ -10,7 +10,7 @@ The Coordinator stays available until every duty and profile proof passes. Never
 | D2 | Implementation Orchestrator | Wave receipts and one task graph through `hooks/plan-package.cjs` |
 | D3 | Implementation Orchestrator | Dependency checks through `hooks/ready-set.cjs` |
 | D4 | Implementation Orchestrator | Lease checks through `hooks/reconcile.cjs` |
-| D5 | Implementation Orchestrator | Write-set checks through `hooks/write-set-check.cjs` |
+| D5 | Implementation Orchestrator | Compare all changed paths against the exact recorded write set. Run `hooks/write-set-check.cjs` for path and whitespace hygiene. |
 | D6 | Implementation Orchestrator | Event-driven dispatch through `hooks/dispatch-record.cjs` |
 | D7 | Implementation Orchestrator | Evidence integration through `tools/render-dod-manifest.mjs` and `hooks/orchestrator-write-lock.cjs` |
 | D8 | Implementation Orchestrator | Review dispatch at the wave boundary through `hooks/assurance-budget.cjs` |

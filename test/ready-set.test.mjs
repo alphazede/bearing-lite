@@ -96,6 +96,33 @@ describe("pending decision or consultation holds nothing else (SEIT-B30-211)", (
 });
 
 describe("F08 ready-set flow over the frozen graph (SEIT-F08)", () => {
+  it("admits a later wave only after its external prerequisite completes and serializes its shared groups", (t) => {
+    const dir = tempDir(t, "cross-wave-");
+    writeFileSync(path.join(dir, "implementation.json"), JSON.stringify({
+      waves: [{ id: "W2", slice_ids: ["A", "B", "C"] }],
+      slices: [
+        slice("A", ["prior"], ["repo: a"], { resource_groups: ["shared"] }),
+        slice("B", ["prior"], ["repo: b"], { resource_groups: ["shared"] }),
+        slice("C", [], ["repo: c"]),
+      ],
+    }));
+    writeFileSync(path.join(dir, "seit.json"), JSON.stringify({ procedures_and_commands: [] }));
+    const { slices } = waveView(dir, "W2");
+    assert.deepEqual(rs().evaluate({ slices, assignments: { prior: "HELD" } }).ready, ["C"]);
+    const next = rs().evaluate({ slices, assignments: { prior: "COMPLETED" } });
+    assert.deepEqual(next.ready, ["A", "C"]);
+    assertExcluded(next, "B", /resource/i, "shared");
+    const active = rs().evaluate({ slices, assignments: { prior: "COMPLETED", A: "DISPATCHED" } });
+    assert.deepEqual(active.ready, ["C"]);
+    assertExcluded(active, "B", /resource/i, "shared");
+  });
+
+  it("does not schedule two assignments for the same directory write set", () => {
+    const out = rs().evaluate({ slices: [slice("A", [], ["repo: src/"]), slice("B", [], ["repo: src/"])] });
+    assert.deepEqual(out.ready, ["A"]);
+    assertExcluded(out, "B", /overlap/i, "A");
+  });
+
   it("positive: waveView slices from a frozen package feed completion-driven readiness", (t) => {
     const dir = tempDir(t, "wave-fixtures-");
     writeFileSync(path.join(dir, "implementation.json"), JSON.stringify({

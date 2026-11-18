@@ -1,6 +1,6 @@
 "use strict";
 
-const { update, read: readJson } = require("./assurance-budget-store.cjs");
+const { count, text, update, read: readJson } = require("./assurance-budget-store.cjs");
 const crypto = require("node:crypto");
 
 function same(assignment, key) {
@@ -30,7 +30,7 @@ function ok(assignment, attempt) {
   return { outcome: "PASS", state: assignment.state, attempt: brief(attempt) };
 }
 function counts(value) {
-  return !!value && Number.isSafeInteger(value.invocation) && Number.isSafeInteger(value.review) && Number.isSafeInteger(value.repair);
+  return !!value && count(value.invocation) && count(value.review) && count(value.repair);
 }
 function pushAttempt(assignment, event) {
   const attempt = {
@@ -71,10 +71,14 @@ function reserve(record, event) {
   const refused = hold(find(record, key) || { state: "READY", attempts: [] }, "reservation refused");
   if (event.authorized !== true || !key.journey || !key.wave || !key.slice || !key.role) return refused;
   if (!event.candidate_revision || typeof event.route !== "string" || !Array.isArray(event.routes) || !event.routes.includes(event.route)) return refused;
-  if (!event.lease || !Number.isSafeInteger(event.lease.generation) || typeof event.lease.branch !== "string") return refused;
+  if (!event.lease || !count(key.generation) || event.lease.generation !== key.generation) {
+    return gap(refused.state, "lease generation mismatch");
+  }
+  if (event.lease.active === false || !text(event.lease.branch)) return gap(refused.state, "lease inactive or branch missing");
   if (!counts(event.limits) || typeof event.launch_digest !== "string" || !event.launch_digest) return refused;
   const assignment = find(record, key);
   if (!assignment) {
+    if (event.limits.invocation === 0) return { outcome: "REFUSED", state: "READY", reason: "invocation allowance spent" };
     const created = {
       journey: key.journey,
       wave: key.wave,
@@ -95,7 +99,11 @@ function reserve(record, event) {
     record.dispatches.assignments.push(created);
     return ok(created, attempt);
   }
+  if (key.generation < assignment.generation) return gap(assignment.state, "stale generation");
   if (assignment.state !== "RECOVERABLE") return hold(assignment, "open writer");
+  if (key.generation === assignment.generation && event.lease.branch !== latest(assignment).lease_branch) {
+    return gap(assignment.state, "lease branch mismatch");
+  }
   if (!routeAllowed(assignment, event.route)) return hold(assignment, "frozen route");
   const attempt = pushAttempt(assignment, event);
   assignment.state = "RESERVED";
@@ -143,6 +151,7 @@ function complete(assignment, attempt, eventId) {
   return ok(assignment, attempt);
 }
 function receipt(assignment, event) {
+  if (!text(event.event_id)) return hold(assignment, "missing receipt identity");
   const attempt = assignment.attempts.find(item => item.attempt_id === event.attempt_id);
   if (!attempt) return hold(assignment, "unknown attempt");
   if (event.candidate_revision !== attempt.candidate_revision) return gap(assignment.state, "candidate revision mismatch");
@@ -163,8 +172,9 @@ function check(assignment, event) {
   if (assignment.state === "COMPLETED") return { outcome: "NO_OP", state: "COMPLETED" };
   if (attempt.closed) return hold(assignment, "closed attempt");
   const receiptId = event.receipt && event.receipt.event_id;
-  if (receiptId) {
-    if (event.receipt.candidate_revision && event.receipt.candidate_revision !== attempt.candidate_revision) {
+  if (event.receipt != null) {
+    if (!text(receiptId)) return hold(assignment, "missing receipt identity");
+    if (event.receipt.candidate_revision !== attempt.candidate_revision) {
       return gap(assignment.state, "candidate revision mismatch");
     }
     if (assignment.state === "CHECKING" || assignment.state === "HELD" || assignment.state === "DISPATCHED") {
@@ -202,6 +212,7 @@ function apply(record, event) {
   if (event.type === "reserve") return reserve(record, event);
   const assignment = find(record, event.key);
   if (!assignment) return { outcome: "HOLD", state: "READY", reason: "no assignment" };
+  if (event.key.generation !== assignment.generation) return gap(assignment.state, "lease generation mismatch");
   if (event.type === "attach") return attach(assignment, event);
   if (event.type === "launch_failed") return launchFailed(assignment, event);
   if (event.type === "interrupted") return interrupted(assignment, event);

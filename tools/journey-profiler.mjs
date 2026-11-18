@@ -316,6 +316,7 @@ function unqualifiedCalls(records) {
 }
 
 function readerTotals(calls) {
+  if (calls.length === 0) return;
   let fresh = 0;
   let cacheRead = 0;
   for (const call of calls) {

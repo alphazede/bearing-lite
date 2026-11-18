@@ -370,8 +370,8 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     const migration = path.join(LITE_REF_DIR, "coordinator-migration.md");
     assert.equal(validateSkillDocument("coordinator", coordinator).ok, true, "Coordinator stays shipped in W3 (SM04.X1)");
     assert.ok(existsSync(migration), "skills/bearing-lite/references/coordinator-migration.md must ship");
-    // D8: wave-boundary review dispatch is received by the Implementation Orchestrator.
-    assert.match(reviewer, /Implementation Orchestrator[^.]*\bwave\b/);
+    // D8: either declared controller dispatches at the frozen boundary.
+    assert.match(reviewer, /assigned wave controller[^.]*dispatches review[^.]*frozen boundary/);
   });
 
   it("each skill frontmatter name equals directory and description is present", () => {

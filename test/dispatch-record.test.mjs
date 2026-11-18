@@ -19,7 +19,7 @@
 // receipt, admit (see helpers below for fields).
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync, existsSync } from "node:fs";
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { createRequire } from "node:module";
@@ -83,12 +83,12 @@ function held(file) {
   assert.equal(r.state, "HELD", JSON.stringify(r));
   return id;
 }
-// A refusal leaves the owned record byte-identical and releases the lock.
+// A refusal leaves the owned record byte-identical and leaves no scratch state.
 function assertRefused(file, before, result, outcome) {
   assert.notEqual(result.outcome, "PASS", JSON.stringify(result));
   if (outcome) assert.equal(result.outcome, outcome, JSON.stringify(result));
   assert.deepEqual(bytes(file), before);
-  assert.equal(existsSync(file + ".lock"), false);
+  assert.deepEqual(readdirSync(path.dirname(file)), [path.basename(file)]);
 }
 
 describe("SM03 legal transitions (SEIT-SM03-T)", () => {
@@ -289,6 +289,27 @@ describe("recovery decision table (SEIT-B30-115)", () => {
 });
 
 describe("budgets stay on the logical assignment (SEIT-B30-122, B30-501)", () => {
+  it("refuses invalid reservation and stale budget identity without changing the record", (t) => {
+    const file = journey(t);
+    const before = bytes(file);
+    assertRefused(file, before, reserve(file, { limits: { ...LIMITS, invocation: 0 } }), "REFUSED");
+    assertRefused(file, before, reserve(file, { lease: { ...LEASE, active: false } }), "IDENTITY_GAP");
+    assertRefused(file, before, reserve(file, { lease: { ...LEASE, generation: 2 } }), "IDENTITY_GAP");
+    assert.equal(reserve(file).outcome, "PASS");
+    const active = bytes(file);
+    assertRefused(file, active, dr().transition(file, { type: "admit", key: { ...KEY, generation: 0 }, kind: "review" }), "IDENTITY_GAP");
+    assert.equal(apply(file, { type: "admit", kind: "review" }).outcome, "PASS");
+  });
+
+  it("keeps an in-flight attempt open until it receives an identified completion", (t) => {
+    const file = journey(t);
+    const attempt_id = dispatched(file);
+    const event = { type: "receipt", attempt_id, candidate_revision: REV };
+    assertRefused(file, bytes(file), apply(file, event), "HOLD");
+    assert.equal(dr().read(file, KEY).state, "DISPATCHED");
+    assert.equal(apply(file, { ...event, event_id: "completion" }).state, "COMPLETED");
+  });
+
   it("recovery keeps spent 1/1/1 and limits 2/1/1; a second repair at the same boundary is refused", (t) => {
     const file = journey(t);
     const id = dispatched(file);
@@ -444,7 +465,7 @@ describe("TB06 host session identity into assignment ownership (SEIT-TB06-N)", (
     const view = dr().read(file, KEY);
     assert.equal(view.attempts.length, 1);
     assert.equal(view.state, "RESERVED");
-    assert.equal(existsSync(file + ".lock"), false);
+    assert.deepEqual(readdirSync(path.dirname(file)), [path.basename(file)]);
   });
 
   it("stale completion from a closed attempt is rejected, leaks no canary, and independent ready work proceeds", (t) => {

@@ -163,6 +163,20 @@ describe("DEC-07 promotion predicate, eight worked fixtures (SEIT-B30-216)", () 
 });
 
 describe("DEC-07 edges worked from the rule text (SEIT-B30-216, SEIT-EXP-PROMOTION)", () => {
+  it("malformed receipts and invalid mandatory evidence never promote", async () => {
+    for (const changes of [
+      { gates: [] }, { seeded_defects: [] }, { fresh_tokens: -1 }, { integrated_slices: 1.5 },
+      { owner_asks: undefined }, { elapsed_ms: -1 }, { errors: -1 }, { task: undefined },
+      { repetition: null }, { required_evidence: "calibration" },
+    ]) {
+      const report = await evaluate({ baseline: baseline(), candidate: candidate(onePair(() => changes)) });
+      assert.equal(report.decision, "no_promote", JSON.stringify(changes));
+      assert.ok(report.reasons.includes("missing_evidence"), JSON.stringify(report));
+    }
+    const report = await evaluate({ baseline: [null], candidate: candidate() });
+    assertReport(report, "no_promote", ["missing_evidence"]);
+  });
+
   it("a gate the baseline failed and a defect the baseline missed do not block promotion", async () => {
     // Fixture design: g3 FAIL and d3 missed in both arms; only baseline-passing gates
     // and baseline-found defects are DEC-07 terms.
