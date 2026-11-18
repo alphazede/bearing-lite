@@ -1,10 +1,10 @@
 # Coordinator duty migration
 
-On a direct wave, the Implementation Orchestrator alone dispatches, schedules and escalates. If the frozen assignment explicitly delegates a wave to an enabled Coordinator, that Coordinator retains its wave duties and reports to the Implementation Orchestrator. Keep one owner per duty. Never run both owners.
+The Implementation Orchestrator alone dispatches, schedules and escalates for new waves. A frozen assignment that delegates to an enabled legacy Coordinator retains that owner on its pinned runtime until an explicit handover. Keep one owner per duty. Never run both owners.
 
 Execute the frozen plan. Do not redo planning. Land each wave as soon as its integrated gates pass. Gap work is its own pull request. Dispatch by dependency across waves, up to the agent cap the owner set for the Lifecycle. Do not start a planning role during implementation. An Implementer fixes a plan gap inside its write set and records one amendment line. Run gates once per integrated candidate. Apply rolling batch review when the approved Lifecycle selects it.
 
-The Coordinator stays available until every duty and profile proof passes. Never silently rewrite a frozen legacy route.
+The Coordinator is retired on this runtime. Before removal, verify every duty and profile proof. Use the readiness result from `hooks/profiles.cjs` to identify active legacy journeys that require their pinned runtime or an explicit handover. Never silently rewrite a frozen legacy route.
 
 | Duty | Receiving owner | Component |
 | --- | --- | --- |
@@ -53,7 +53,7 @@ the Planning Orchestrator, not this implementation-wave work.
    in the review packet; consume consolidated evidence without reproducing findings. Authorized repair closes by
    deterministic checks, without automatic rereview or budget reset. Failed repair or scope drift returns to the Orchestrator; COMPLETE does not reopen review.
 
-Decide routine scheduling, ready-packet dispatch, and dependency order within the approved wave; implementation choices stay with the assigned author. Escalate an unresolved routine issue after two unsuccessful evidence-based attempts, sooner if no new evidence or safe approach exists. Each attempt needs a changed approach or hypothesis; this grants no extra agent runs, reviews, repairs, or reset of stricter limits. Escalate conflicting requirements, material scope/architecture changes, protected actions, authority conflicts, and exhausted review/repair limits immediately. Send evidence, attempts, affected work and recommendation; continue independent authorized work. Consume frozen decision holds and use `owner-stops.md#coordinator-escalation-and-delegation`; decide within Orchestrator authority or ask the owner.
+Decide routine scheduling, ready-packet dispatch, and dependency order within the approved wave; implementation choices stay with the assigned author. Escalate an unresolved routine issue after two unsuccessful evidence-based attempts, sooner if no new evidence or safe approach exists. Each attempt needs a changed approach or hypothesis; this grants no extra agent runs, reviews, repairs, or reset of stricter limits. Escalate conflicting requirements, material scope/architecture changes, protected actions, authority conflicts, and exhausted review/repair limits immediately. Send evidence, attempts, affected work and recommendation; continue independent authorized work. Consume frozen decision holds and use `owner-stops.md`; decide within Orchestrator authority or ask the owner.
 
 ## Completion notifications and recovery
 

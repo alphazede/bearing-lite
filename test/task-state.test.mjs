@@ -203,13 +203,13 @@ describe("CMD-STATE-01 task-state (SEIT-STATE-01)", () => {
     assert.equal(STATE_OWNERS.ACCEPTANCE, ownerCell.replace(/`/g, "").trim());
   });
 
-  it("parent controller is Orchestrator on a direct packet and Coordinator on a coordinator wave", () => {
+  it("Orchestrator controls new work and legacy Coordinator ownership stays pinned", () => {
     assert.match(TASK_STATE, /parent controller is the Orchestrator on a direct packet/i);
-    assert.match(TASK_STATE, /Coordinator on a coordinator wave/i);
+    assert.match(TASK_STATE, /frozen legacy coordinator wave, the Coordinator retains ownership on its pinned runtime/i);
     assert.match(TASK_STATE, /Direct packets never dispatch Coordinator/i);
-    assert.match(TASK_STATE, /roles\.coordinator\.enabled/i);
+    assert.match(TASK_STATE, /New waves also use the Implementation Orchestrator regardless of legacy catalog entries/i);
     assert.match(TASK_STATE, /typed capability gap/i);
-    assert.match(TASK_STATE, /not silent Orchestrator substitution/i);
+    assert.match(TASK_STATE, /without its pinned runtime or explicit handover/i);
     assert.match(TASK_STATE, /Implementer must not self-certify/i);
     assert.doesNotMatch(TASK_STATE, /One parent coordinator writes/);
   });

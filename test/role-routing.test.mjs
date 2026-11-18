@@ -368,8 +368,8 @@ describe("CMD-ROUTING-01 role-routing (SEIT-ROUTING-01)", () => {
     assert.match(router, /references\/task-state\.md/);
     assert.match(taskState, /Direct packets never dispatch Coordinator/);
     assert.match(taskState, /The parent controller is the Orchestrator on a direct packet/);
-    assert.match(onboarding, /Disabling Coordinator on a true direct packet is not a capability gap/);
-    assert.match(onboarding, /explicit disabled choice/);
+    assert.match(onboarding, /Legacy Coordinator catalog\s+entries are ignored for new dispatch/);
+    assert.match(onboarding, /pinned runtime or an explicit handover/);
   });
 
   it("negative: implicit Coordinator dispatch on a direct packet is rejected", () => {

@@ -1,7 +1,6 @@
 # Recorded Repair Implementer transition
 
-The parent controller is the Orchestrator on a direct packet, Coordinator on a
-coordinator wave. Prefer advance authorization in the original requested review
+The Implementation Orchestrator controls new waves and direct packets. On a frozen legacy wave, the Coordinator remains the controller on its pinned runtime until explicit handover. Prefer advance authorization in the original requested review
 packet: the same reviewer context may validate findings, freeze its receipt,
 transition to Repair Implementer, fix the consolidated in-scope findings and run
 deterministic checks without a controller round-trip. While reviewing it remains

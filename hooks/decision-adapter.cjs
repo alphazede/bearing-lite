@@ -84,12 +84,11 @@ function buildState(input) {
   }
   const labels = {};
   const criteria = {};
-  const choice = [];
+  let optionIndex = 0;
   for (const [meaning, description] of Object.entries(input.options || {})) {
-    const label = "n" + choice.length.toString(36);
+    const label = "n" + (optionIndex++).toString(36);
     labels[label] = meaning;
     criteria[label] = String(description);
-    choice.push(label);
   }
   trusted.labels = labels;
   trusted.criteria = criteria;
@@ -97,10 +96,14 @@ function buildState(input) {
   if (PROSE.has(input.decision_type) && typeof input.packet === "string") {
     state.untrusted = { packet: input.packet };
   }
-  const questions = [
-    { id: "fit", options: ["yes", "no"], text: "Does any option fit?" },
-    { id: "choice", options: choice, text: "Select one label." },
-  ];
+  const questions = {
+    fit: { type: "choice", instructions: "Does any criterion in the shared state fit?", criteria: { yes: "yes", no: "no" } },
+    choice: {
+      type: "choice",
+      instructions: "Select one label using the criteria in the shared state.",
+      criteria: Object.fromEntries(Object.keys(criteria).map((label) => [label, label])),
+    },
+  };
   return { state, questions, labels };
 }
 
@@ -113,20 +116,21 @@ function parseAnswers(text, questions) {
   }
   if (!body || typeof body !== "object" || !body.answers || typeof body.answers !== "object") return null;
   const out = {};
-  for (const question of questions) {
-    const row = body.answers[question.id];
+  for (const [id, question] of Object.entries(questions)) {
+    const answer = body.answers[id];
+    const row = answer?.type === "choice" ? answer.probabilities : answer;
     if (!row || typeof row !== "object" || Array.isArray(row)) return null;
-    const keys = Object.keys(row);
-    if (keys.length !== question.options.length || question.options.some((option) => !Object.prototype.hasOwnProperty.call(row, option))) {
+    const options = Object.keys(question.criteria);
+    if (Object.keys(row).length !== options.length || options.some((option) => !Object.hasOwn(row, option))) {
       return null;
     }
     const probs = {};
-    for (const option of question.options) {
+    for (const option of options) {
       const probability = row[option];
       if (typeof probability !== "number" || !Number.isFinite(probability) || probability < 0 || probability > 1) return null;
       probs[option] = probability;
     }
-    out[question.id] = probs;
+    out[id] = probs;
   }
   return out;
 }

@@ -26,7 +26,7 @@ a dispatched role.
 | Role | Responsibility |
 |---|---|
 | Orchestrator (Implementation mode) | Consumes the handoff; parent controller and bookkeeper on a direct packet |
-| Coordinator | Optional one-wave controller; proven-independent lanes; no nested coordinator. Dispatched only for a one-wave need; never on a direct packet |
+| Coordinator (retired) | Frozen legacy assignments need their pinned runtime or an explicit handover to the Implementation Orchestrator |
 | Test Implementer | TDD test-first author (`roles.test_implementer`). Write set is tests and approved fixtures only. Runs before Product Implementer. |
 | Product Implementer | Product write set under `tdd` (`roles.implementer`); combined author under `single_implementer`. TDD Product Implementer excludes tests; the combined author owns code and tests. Neither self-certifies. |
 | Light Implementer | Mechanical `work_class: light` slices |

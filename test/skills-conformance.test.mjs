@@ -341,24 +341,24 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     assert.ok(!existsSync(path.join(SKILLS_DIR, "navigator", "SKILL.md")));
   });
 
-  it("Coordinator match/non-match states the one-wave activation predicate", () => {
+  it("new waves have one controller and frozen legacy assignments retain their owner", () => {
     const router = readFileSync(path.join(SKILLS_DIR, "bearing-lite", "SKILL.md"), "utf8");
     const onboard = readFileSync(path.join(SKILLS_DIR, "onboard-bearing", "SKILL.md"), "utf8");
     const reviewer = readFileSync(path.join(SKILLS_DIR, "reviewer", "SKILL.md"), "utf8");
     const taskState = readFileSync(path.join(SKILLS_DIR, "bearing-lite", "references", "task-state.md"), "utf8");
-    assert.match(onboard, /two or more proven-independent packets/);
+    assert.match(onboard, /coordination for independent packets/);
     assert.match(onboard, /shared wave evidence/);
     assert.match(onboard, /aggregate repair\s+ownership/);
-    assert.match(taskState, /A wave that needs Coordinator while the route is omitted or disabled is a typed capability gap, not silent Orchestrator substitution/);
-    assert.match(router, /needed Coordinator[\s\S]{0,80}omitted or disabled, is a typed capability gap, not substitution/);
+    assert.match(taskState, /frozen legacy assignment without its pinned runtime or explicit handover is a typed capability gap/);
+    assert.match(router, /frozen legacy Coordinator assignment, use its pinned runtime or obtain an explicit handover/);
     assert.match(taskState, /Direct packets never dispatch Coordinator/);
     assert.match(taskState, /The parent controller is the Orchestrator on a direct packet/);
     assert.match(router, /typed capability gap, not substitution/);
-    assert.match(onboard, /Enabling Coordinator adds value only for a one-wave need/);
-    assert.match(onboard, /explicit disabled choice/);
-    assert.match(onboard, /disabled Coordinator\s+on a true direct packet is not a capability gap/);
+    assert.match(onboard, /Existing Coordinator routes are ignored for new work/);
+    assert.match(onboard, /disabled unless explicitly enabled/);
+    assert.match(onboard, /Preserve frozen legacy assignments/);
     assert.match(reviewer, /parent controller/);
-    assert.match(reviewer, /Orchestrator on a direct packet, Coordinator on a coordinator wave/);
+    assert.match(reviewer, /Coordinator on a frozen legacy wave retains ownership on its pinned runtime until explicit handover/);
     assert.doesNotMatch(reviewer, /the coordinator then runs deterministic verification/);
   });
 
@@ -368,7 +368,7 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     const migration = path.join(LITE_REF_DIR, "coordinator-migration.md");
     assert.ok(existsSync(migration), "skills/bearing-lite/references/coordinator-migration.md must ship");
     // D8: either declared controller dispatches at the frozen boundary.
-    assert.match(reviewer, /assigned wave controller[^.]*dispatches review[^.]*frozen boundary/);
+    assert.match(reviewer, /assigned parent controller[^.]*dispatches review[^.]*frozen boundary/);
   });
 
   it("each skill frontmatter name equals directory and description is present", () => {

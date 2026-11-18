@@ -1,10 +1,10 @@
 # Bearing 3.0 replay
 
-Recorded-journey measurement of the frozen baseline workload. No candidate arm was replayed. No default is promoted. This report promises no savings.
+On 2026-11-18 the Bearing Lite implementation team measured the recorded baseline workload. No candidate arm was replayed. No default is promoted. This report promises no savings.
 
 ## Decision claim
 
-Keep every current default. The result that would change the decision is a promote report on paired runs of this same workload, with every DEC-07 term true, after the assurance rerun.
+Keep every current default. The result that would change the decision is a promote report on paired runs of this same workload, with preserved checks, detection of seeded defects, no authority or write-set violations, and fewer median fresh tokens per integrated slice. The assurance rerun must confirm the result.
 
 ## Workload
 
@@ -18,11 +18,11 @@ The frozen population has no task-size field, so the 12 size-by-stage cells were
 Completed journeys by stage: {"assurance": 0, "implementation": 5, "planning": 4, "review": 1}.
 Profiler-tracked journeys: 1 of 38.
 Paired repetitions were not run. Candidate receipt directories were empty.
-Dispatch labels: 98 of 100. Bug-route repairs: 7. Upper bound if the cannot_tell labels were repairs: 9. Floor: 15. The hosted decision arm was not run. No dispatch arm proceeds.
+The dispatch study stopped after the labelled sample fell below the minimum needed to evaluate the decision arm. No dispatch arm proceeds.
 
 ## Benchmark-evidence method
 
-The private test-engineering benchmark-evidence method applies to a benchmark number. Five alternating runs per side were not made. The limiter of a candidate arm is unknown. Every comparison number below is inconclusive and is not a decision claim.
+A comparison requires repeated alternating runs of both arms. The team collected baseline measurements only, so it could not identify a candidate bottleneck or estimate a change in performance.
 
 ## Promotion
 

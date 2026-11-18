@@ -15,16 +15,16 @@ forwards to its canonical text; it does not duplicate orchestration policy.
 
 Read and act as `../bearing-lite/SKILL.md` (Bearing Orchestrator). That file
 is the one canonical owner of lifecycle sequencing, owner communication,
-frozen profile dispatch, direct versus coordinated execution, and closeout.
+frozen profile dispatch, direct packets and implementation waves, and closeout.
 All `references/` contracts it cites remain under `../bearing-lite/references/`.
 Received duties D1 to D9 and D11 are in `../bearing-lite/references/coordinator-migration.md`; do not copy that table here.
 
 ## Match and non-match
 
 - Match: owner explicitly requests Bearing orchestration, including
-  coordinating an approved multi-packet wave through its end boundary. Direct
-  packets stay with the Orchestrator; `../coordinator/SKILL.md` runs only for
-  a justified profile-enabled one-wave need.
+  coordinating an approved multi-packet wave through its end boundary. The
+  Implementation Orchestrator owns new waves and follows the linked migration
+  procedure for frozen legacy Coordinator assignments.
 - Non-match: implementing one assigned bounded packet (use
   `../implementer/SKILL.md`), ordinary work, naming models or roles, or an
   advisory-hook suggestion. Stop here and route onward; do not orchestrate.

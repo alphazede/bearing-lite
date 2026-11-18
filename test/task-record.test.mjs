@@ -714,7 +714,7 @@ function baseTask(overrides = {}) {
 describe("CMD-TASK-01 task-record (SEIT-TASK-RECORD-01, SEIT-SINGLE-WRITER-01)", () => {
   it("template records planning proposals for one integrated review", () => {
     assert.match(TEMPLATE, /Lifecycle settings/i);
-    assert.match(TEMPLATE, /lifecycle:\s*<direct packet \| coordinator wave \| orchestrated waves>/i);
+    assert.match(TEMPLATE, /lifecycle:\s*<direct packet \| orchestrated waves>/i);
     assert.match(
       TEMPLATE,
       /review_cadence:\s*phase/i
@@ -886,7 +886,7 @@ describe("CMD-TASK-01 task-record (SEIT-TASK-RECORD-01, SEIT-SINGLE-WRITER-01)",
 
   it("single-writer: Orchestrator is parent controller on a direct packet", () => {
     assert.match(TEMPLATE, /parent controller is the Orchestrator on a direct packet/i);
-    assert.match(TEMPLATE, /Coordinator on a coordinator wave/i);
+    assert.match(TEMPLATE, /Coordinator on a frozen legacy wave keeps ownership on its pinned runtime until explicit handover/i);
     assert.match(TEMPLATE, /Direct packets never dispatch Coordinator/i);
     assert.match(TEMPLATE, /Implementer must not self-certify/i);
     assert.match(TEMPLATE, /Workers do not edit the plan/i);

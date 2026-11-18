@@ -78,8 +78,7 @@ under the same `unit_kind` + `unit_id` key.
   authority in the review packet, not a per-finding parent approval. A second repair
   halts with `assurance_repair_limit`.
 - After that repair the parent controller closes the unit on a deterministic
-  `PASS` gate (Orchestrator on a direct packet, Coordinator on a coordinator
-  wave), consuming applicable repaired-candidate results without rerunning them;
+  `PASS` gate, consuming applicable repaired-candidate results without rerunning them;
   a missing or non-`PASS` gate halts with
   `deterministic_post_repair_gate_required`.
 - The repaired unit is never reviewed again. `automatic_rereview_requested` and
@@ -100,8 +99,7 @@ request is the dispatch authority for every declared boundary;
 does not ask again.
 
 - As soon as a declared unit's integrated candidate passes its deterministic
-  checks, the parent controller (Coordinator on a coordinator wave,
-  Orchestrator on a direct packet) dispatches every requested session for that
+  checks, the parent controller dispatches every requested session for that
   boundary. It never waits for a later wave, batches several units into one
   review, or defers the review to lifecycle end.
 - When waves are declared, `phase` cadence resolves to each wave (see Unit

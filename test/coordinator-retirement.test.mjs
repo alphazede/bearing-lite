@@ -64,6 +64,16 @@ describe("Coordinator role absent (B30-219, SM04 RETIRED)", () => {
     assert.equal(existsSync(path.join(ROOT, "skills/coordinator")), false, "skills/coordinator/ must be removed");
   });
 
+  it("the shipped orchestration entry points resolve their skill references", () => {
+    for (const skill of ["bearing-lite", "orchestrator"]) {
+      const dir = path.join(ROOT, "skills", skill);
+      const text = readFileSync(path.join(dir, "SKILL.md"), "utf8");
+      for (const [, link] of text.matchAll(/`(\.\.\/[^ `]+\/SKILL\.md)`/g)) {
+        assert.ok(existsSync(path.resolve(dir, link)), `${skill} links to a missing skill: ${link}`);
+      }
+    }
+  });
+
   it("the profiles reference records the Coordinator as retired and legacy routes as ignored", () => {
     const text = readFileSync(path.join(ROOT, "skills/bearing-lite/references/profiles.md"), "utf8").replace(/\s+/g, " ");
     assert.match(text, /Coordinator[^.]*\bretired\b/i);
@@ -72,6 +82,13 @@ describe("Coordinator role absent (B30-219, SM04 RETIRED)", () => {
 });
 
 describe("legacy Coordinator profiles migrate softly (B30-219, F09, SEIT-B30-219)", () => {
+  it("a null profile stays a catalog-presence result for schema validation to handle", (t) => {
+    const bytes = JSON.stringify({ schema_version: 1, profiles: { example: null } });
+    const { env, file } = homeWithCatalog(t, bytes);
+    assert.equal(profilesHook().evaluateCatalogState({ env }).outcome, "READY");
+    assert.equal(readFileSync(file, "utf8"), bytes);
+  });
+
   for (const name of PROFILE_NAMES) {
     it(`${name}: catalog stays READY, bytes unchanged, typed diagnostic only when the key is present`, (t) => {
       const bytes = catalogOf([name]);
@@ -138,7 +155,8 @@ describe("legacy Coordinator catalog stays schema-valid (B30-219, F09 old_profil
     const docPath = path.join(dir, "catalog.json");
     writeFileSync(docPath, CATALOG_BYTES);
     const r = spawnSync("python3", ["-c", VALIDATE_PY, path.join(ROOT, "schemas/profiles.schema.json"), docPath], { encoding: "utf8", timeout: 30_000 });
-    if (r.error || r.status !== 0) return t.skip(`ENVIRONMENT: python3 validator did not run: ${r.error ?? r.stderr}`);
+    assert.ifError(r.error);
+    assert.equal(r.status, 0, r.stderr);
     if (r.stdout.trim() === "NO_VALIDATOR") return t.skip("ENVIRONMENT: jsonschema not importable; set BEARING_LITE_SCHEMA_ISOLATED_ROOT");
     assert.deepEqual(JSON.parse(r.stdout), []);
   });
@@ -147,7 +165,6 @@ describe("legacy Coordinator catalog stays schema-valid (B30-219, F09 old_profil
 describe("removal readiness honours active legacy Coordinator journeys (B30-219, SM04.X2, F09 frozen_old_journey)", () => {
   const check = (journeys) => {
     const { evaluateCoordinatorRetirement } = profilesHook();
-    assert.equal(typeof evaluateCoordinatorRetirement, "function", "hooks/profiles.cjs exports evaluateCoordinatorRetirement");
     const before = JSON.stringify(journeys);
     const result = evaluateCoordinatorRetirement({ journeys });
     assert.equal(JSON.stringify(journeys), before, "journey records are never rewritten");
@@ -160,8 +177,11 @@ describe("removal readiness honours active legacy Coordinator journeys (B30-219,
     assert.deepEqual(result.journeys, [{ id: "journey-active-legacy", required: "pinned_runtime_or_handover" }]);
   });
 
-  it("complete, Coordinator-disabled and direct journeys do not hold retirement", () => {
+  it("complete, cancelled, Coordinator-disabled and direct journeys do not hold retirement", () => {
+    const cancelled = structuredClone(JOURNEYS["active-legacy-coordinator"]);
+    cancelled.journey.status = "cancelled";
     const result = check([
+      cancelled,
       JOURNEYS["complete-legacy-coordinator"],
       JOURNEYS["active-coordinator-disabled"],
       JOURNEYS["active-no-coordinator"],
