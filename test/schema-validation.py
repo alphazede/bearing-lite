@@ -1702,6 +1702,29 @@ def profiles_cases() -> list[tuple[str, str, object, str, str | None]]:
         ("SEIT-BDL-002", "catalog_top_level_fellow_extra_enabled_rejected", complete_user_catalog(fellow=fellow_extra_enabled), "reject", None),
         ("SEIT-BDL-002", "catalog_top_level_fellow_fallback_missing_harness_rejected", complete_user_catalog(fellow=fellow_fb_missing_harness), "reject", None),
     ])
+
+    decline_direct = complete_user_catalog()
+    decline_direct["profiles"]["fixture-alpha"]["roles"]["reviewer"] = {"enabled": False}
+    decline_direct["profiles"]["fixture-alpha"]["roles"]["scribe"] = {"enabled": False}
+    decline_direct["profiles"]["fixture-alpha"]["roles"]["light_implementer"] = {"enabled": False}
+    decline_session = catalog_with_role_sessions("mbse", {"planning": {"enabled": False}})
+    decline_assurance = catalog_with_role_sessions("test_engineer", {"assurance": {"enabled": False}})
+    decline_execution = catalog_with_role_sessions("integration_engineer", {"execution": {"enabled": False}})
+    enabled_missing_primary = complete_user_catalog()
+    enabled_missing_primary["profiles"]["fixture-alpha"]["roles"]["reviewer"] = {"enabled": True}
+    disabled_malformed_primary = complete_user_catalog()
+    disabled_malformed_primary["profiles"]["fixture-alpha"]["roles"]["reviewer"] = {
+        "enabled": False,
+        "primary": {"harness": "harness-a"},
+    }
+    out.extend([
+        ("SEIT-BDL-002", "explicit_decline_direct_routes_accepted", decline_direct, "accept", None),
+        ("SEIT-BDL-002", "explicit_decline_session_planning_accepted", decline_session, "accept", None),
+        ("SEIT-BDL-002", "explicit_decline_assurance_accepted", decline_assurance, "accept", None),
+        ("SEIT-BDL-002", "explicit_decline_execution_accepted", decline_execution, "accept", None),
+        ("SEIT-BDL-002", "enabled_route_without_primary_rejected", enabled_missing_primary, "reject", None),
+        ("SEIT-BDL-002", "disabled_route_with_malformed_primary_rejected", disabled_malformed_primary, "reject", None),
+    ])
     return out
 
 

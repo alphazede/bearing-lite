@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "allowed_paths": [
+    "profile.assurance",
+    "profile.review.ocr_execution_mode"
+  ]
+}

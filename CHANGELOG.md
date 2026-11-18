@@ -12,6 +12,7 @@
 - `plan-package` `checkWorkClass` inspects slices (`slices` and `waves[].slices`) only, so `dod_manifest.tasks` rows with `work_class: light` are not flagged as light slices. (Alphazedehq#576)
 - `plan-package` checks `requires`, `step`, `step_id`, and `integration_steps` only on slices instead of every object in `implementation.json`. (Alphazedehq#577)
 - Fix `onboard-bearing` checklist coverage (catalog `fellow`, merged `mbse`/`integration_test` roles, `defaults`, `assurance_repair`, no keyless questions), name `hooks/profiles.cjs` validation while preserving host-extension keys, clarify `welcome.md` lineup wording, and align `profiles.md` Route effort and Fellow with opened Orchestrator sessions. (Alphazedehq#582)
+- Repair onboarding findings R01-R22 across `skills/onboard-bearing`, `hooks/profiles.cjs`, `schemas/profiles.schema.json`, `tools/compile-handoff.mjs`, and `README.md`, add standalone read-only `validate-profiles.mjs` with bundled `profiles.schema.json`, support explicit route declines and lossless extension keys, enforce both TDD author routes and separate `lifecycle_settings` freeze metadata, and add the guided first-profile walkthrough with zero model guidance. (Alphazedehq#586)
 ### Changed
 
 - Prohibit planning correction loops: specialists fold known corrections into their first return, the Planning Orchestrator applies remaining author-known fixes during assembly without relaunching specialists, and `correction-delta` `exact_text_mismatch` errors name `requires_regate` for non-text field changes. (Alphazedehq#578)

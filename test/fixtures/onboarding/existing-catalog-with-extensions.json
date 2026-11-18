@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "fellow": {
+    "harness": "harness-fellow",
+    "model": "model-fellow",
+    "reasoning": "reasoning-fellow",
+    "ordered_fallbacks": []
+  },
+  "defaults": {
+    "planning": "Work",
+    "implementation": "Work"
+  },
+  "profiles": {
+    "Work": {
+      "assurance": {
+        "mode": "strict"
+      },
+      "roles": {
+        "implementer": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-work",
+            "model": "model-work",
+            "reasoning": "high"
+          },
+          "ordered_fallbacks": []
+        },
+        "reviewer": {
+          "enabled": true,
+          "primary": {
+            "harness": "harness-review",
+            "model": "model-review",
+            "reasoning": "high"
+          },
+          "ordered_fallbacks": [],
+          "cadence": "phase"
+        }
+      },
+      "development_strategy": {
+        "mode": "single_implementer"
+      },
+      "review": {
+        "coverage_assist": {
+          "enabled": true,
+          "required": false
+        },
+        "ocr_execution_mode": "delegate"
+      },
+      "deterministic_verification": {
+        "reverify": {
+          "enabled": false
+        },
+        "additional_tools": [
+          {
+            "name": "Repo tests",
+            "enabled": true,
+            "command": "node --test test/*.test.mjs",
+            "pass": "Exit 0",
+            "evidence": "TAP summary"
+          }
+        ]
+      }
+    }
+  }
+}

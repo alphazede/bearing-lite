@@ -64,17 +64,22 @@ If Bearing Lite helps keep a long agent task scoped and reviewable,
 ## Onboarding
 
 1. Install the plugin or copy `skills/` into a host skills directory.
-2. Run **onboard-bearing**. It asks one setting at a time, never selects or
-   writes a value without an explicit instruction, and preserves every
-   unaddressed existing value.
-3. Configure named role and session routes, fallbacks, development strategy
-   (`single_implementer` or `tdd`), planning review, assurance cadence,
-   concurrency, the planning-to-implementation clean-session boolean, holds,
-   and optional Reverify. Enabling Coordinator adds value only when a wave has
-   two or more proven-independent packets, shared wave evidence to integrate
-   once, or aggregate repair ownership; an explicit disabled choice is allowed,
-   and disabling Coordinator on a true direct packet is not a capability gap.
-   No value is preselected.
+2. Run **onboard-bearing**. It classifies your catalog first, asks one setting at a time
+   (or runs the guided first-profile walkthrough), never selects,
+   ranks, or writes a value without an explicit instruction, and preserves every
+   unaddressed existing value and host-extension key.
+3. Configure named role and session routes (including both `test_implementer`
+   and `implementer` independently for `tdd`), optional catalog-level `fellow`,
+   fallbacks, development strategy (`single_implementer` or `tdd`), assurance
+   cadence, concurrency booleans, the planning-to-implementation clean-session
+   boolean, holds, optional OpenCodeReview (`review.coverage_assist`),
+   `assurance_repair`, and optional Reverify / additional testing tools.
+   Coordinator is retired for new waves (the Implementation Orchestrator owns
+   new-wave coordination; existing `roles.coordinator` entries are ignored on
+   load and preserved only for frozen legacy journeys). Planning review is
+   requested per Lifecycle, not stored in `profiles.json`. Validate before and
+   after saving with `skills/onboard-bearing/scripts/validate-profiles.mjs`
+   (and `hooks/profiles.cjs` when hooks are installed). No value is preselected.
 4. If you decline Reverify or decline its download, onboard-bearing persists
    `reverify.enabled: false` for that named profile and does not ask again
    during ordinary Lifecycles. Reverify is an optional third-party backend.
@@ -271,8 +276,9 @@ register hooks. That path remains first-class. See
    proposed route, user-owned primary/fallback profile, role states, reasoning,
    cadence, and plan; the Orchestrator then writes `handoff.md`.
 4. **Dispatch bounded sessions** with compact receipts. Implementer may
-   continue in-wave. Coordinator continues only on a coordinator wave; direct
-   packets never dispatch Coordinator. Declared assurance starts fresh at the
+   continue in-wave. The Implementation Orchestrator owns new waves (Coordinator
+   is retired for new work; frozen legacy Coordinator waves keep their pinned
+   runtime until explicit handover). Declared assurance starts fresh at the
    configured cadence boundary.
 5. **Record state visibly.** The project's human-readable Markdown plan is the
    only task-state record: task blocks, task states, and their transitions. The
@@ -305,17 +311,13 @@ final Planning and Design itself to complete all five artifacts with proposed
 profile and cadence, runs a planning review only when requested, obtains one
 integrated owner confirmation, and writes the handoff that a new
 Implementation Orchestrator session consumes before bounded implementation.
-Direct packets never dispatch Coordinator; the Orchestrator is the parent
-controller and bookkeeper. Coordinator is dispatched only when the approved
-graph has a one-wave need: two or more proven-independent packets, shared
-wave evidence to integrate once, or aggregate repair ownership. It then owns
-proven-independent in-wave lanes without a nested coordinator.
-`roles.coordinator.enabled` means the route is available, not that every
-packet gets a Coordinator. A wave that needs Coordinator while the route is
-omitted or disabled is a typed capability gap, not silent Orchestrator
-substitution. Assurance Test Engineer, Reviewer, and Integration Engineer
-execution appear when declared at the configured cadence boundary. Diagrams
-explain orientation; they never authorize a transition.
+Direct packets never dispatch Coordinator; the Implementation Orchestrator owns
+new waves as parent controller and bookkeeper. Coordinator is retired for new
+work (`roles.coordinator` entries are ignored on load); only frozen legacy
+Coordinator waves retain their pinned runtime until explicit handover. Assurance
+Test Engineer, Reviewer, and Integration Engineer execution appear when declared
+at the configured cadence boundary. Diagrams explain orientation; they never
+authorize a transition.
 
 | Role | Sessions | Primary work |
 |---|---|---|
@@ -326,7 +328,7 @@ explain orientation; they never authorize a transition.
 | **Planning and Design** | controller procedure | The Orchestrator's own final plan/design and assembly; not a dispatched or configured role |
 | **Requirements Engineer** | planning | Authors requirements and runs its own quality pass and repairs; later case bindings stay owned by the Test Engineer |
 | **Systems Modeler** | planning | After requirements; placement receipt for final design |
-| **Coordinator** | implementation | Optional one-wave controller; proven-independent lanes. Not dispatched on a direct packet |
+| **Coordinator** | retired (legacy only) | Retired for new waves (`roles.coordinator` ignored); frozen legacy waves keep their pinned runtime until handover |
 | **Test Implementer** | implementation | TDD test-first author (`roles.test_implementer`); tests and approved fixtures only |
 | **Product Implementer** | implementation | Product write set under `tdd` (`roles.implementer`); combined author under `single_implementer`. Neither self-certifies |
 | **Light Implementer** | implementation | `work_class: light` slices only |
@@ -360,8 +362,8 @@ Failure escalates to the nearest role whose scope can see it:
 
 | Failure scope | Escalates to |
 |---|---|
-| Within one slice or packet | Parent controller: Orchestrator on a direct packet, Coordinator on a coordinator wave |
-| Across slices in a wave | Coordinator |
+| Within one slice or packet | Parent controller: Implementation Orchestrator on new waves (Coordinator only on a frozen legacy wave) |
+| Across slices in a wave | Implementation Orchestrator (Coordinator only on a frozen legacy wave) |
 | Across waves or phases | Orchestrator |
 | Contract, security, or authority change | Owner Authority |
 
@@ -378,9 +380,9 @@ optional `VALIDATING` / `REVIEWING` when required, then `ACCEPTANCE` →
 conflict, or assurance dispatch.
 Ordinary execution corrections remain bounded. The assurance gate allows one
 review-directed repair, followed by deterministic parent-controller
-verification (Orchestrator on a direct packet, Coordinator on a coordinator
-wave) and no second review. Diagrams never create state or authorize
-transitions.
+verification (Implementation Orchestrator on new waves; Coordinator only on a
+frozen legacy wave) and no second review. Diagrams never create state or
+authorize transitions.
 
 `hooks/reconcile.cjs` deterministically applies evidence events to Lifecycle
 state. It is a short-lived Orchestrator-run invocation, not a daemon or host
@@ -391,11 +393,11 @@ merges, or closes issues.
 ## Implementation process (explanatory)
 
 Default packet completion is author self-check plus parent-controller
-confirmation: Orchestrator on a direct packet, Coordinator on a coordinator
-wave. Implementer must not self-certify. Declared independent assurance runs
-at the configured cadence boundary. A repairable verdict permits one repair;
-deterministic parent-controller verification then closes the gate without
-another review. Once the Lifecycle is `COMPLETE`,
+confirmation: Implementation Orchestrator on new waves (Coordinator only on a
+frozen legacy wave). Implementer must not self-certify. Declared independent
+assurance runs at the configured cadence boundary. A repairable verdict permits
+one repair; deterministic parent-controller verification then closes the gate
+without another review. Once the Lifecycle is `COMPLETE`,
 an already authorized deployment proceeds with operational checks and rollback
 readiness, not a new assurance round. Source-changing deployment work is
 separate work.

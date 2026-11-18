@@ -1,0 +1,562 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/alphazede/bearing-lite/schemas/profiles.schema.json",
+  "title": "Bearing Lite profiles.json",
+  "description": "User-owned named profile catalog. Packaged bytes stay an empty catalog with no defaults. Selection is not an authority grant. Normal runtime never reads lineups.json or default-role-lineup.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "profiles"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Integer 1. The string \"1\" used by Lifecycle artifacts is invalid here."
+    },
+    "profiles": {
+      "type": "object",
+      "description": "Named profiles. Empty object is valid. Unlimited keys; no maxProperties.",
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/profile"
+      }
+    },
+    "defaults": {
+      "type": "object",
+      "description": "Optional user-owned recommendations. Not a grant.",
+      "additionalProperties": false,
+      "properties": {
+        "planning": {
+          "type": "string",
+          "minLength": 1
+        },
+        "implementation": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "fellow": {
+      "$ref": "#/$defs/fellow"
+    }
+  },
+  "$defs": {
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "harness",
+        "model",
+        "reasoning"
+      ],
+      "properties": {
+        "harness": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reasoning": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "fallback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "condition",
+        "harness",
+        "model",
+        "reasoning"
+      ],
+      "properties": {
+        "condition": {
+          "type": "string",
+          "minLength": 1
+        },
+        "harness": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reasoning": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "fellowFallback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "harness",
+        "model",
+        "reasoning"
+      ],
+      "properties": {
+        "condition": {
+          "type": "string",
+          "minLength": 1
+        },
+        "harness": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reasoning": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "fellow": {
+      "type": "object",
+      "description": "Optional Bearing-level Fellow route at the catalog envelope, consulted only by the Orchestrator regardless of selected profile.",
+      "additionalProperties": false,
+      "required": [
+        "harness",
+        "model",
+        "reasoning",
+        "ordered_fallbacks"
+      ],
+      "properties": {
+        "harness": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reasoning": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ordered_fallbacks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/fellowFallback"
+          }
+        }
+      }
+    },
+    "cadence": {
+      "type": "string",
+      "enum": [
+        "slice",
+        "phase",
+        "lifecycle"
+      ]
+    },
+    "route": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled"
+      ],
+      "if": {
+        "properties": {
+          "enabled": {
+            "const": true
+          }
+        },
+        "required": [
+          "enabled"
+        ]
+      },
+      "then": {
+        "required": [
+          "primary",
+          "ordered_fallbacks"
+        ]
+      },
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "primary": {
+          "$ref": "#/$defs/identity"
+        },
+        "ordered_fallbacks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/fallback"
+          }
+        }
+      }
+    },
+    "reviewerRoute": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled"
+      ],
+      "if": {
+        "properties": {
+          "enabled": {
+            "const": true
+          }
+        },
+        "required": [
+          "enabled"
+        ]
+      },
+      "then": {
+        "required": [
+          "primary",
+          "ordered_fallbacks"
+        ]
+      },
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "primary": {
+          "$ref": "#/$defs/identity"
+        },
+        "ordered_fallbacks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/fallback"
+          }
+        },
+        "cadence": {
+          "$ref": "#/$defs/cadence"
+        }
+      }
+    },
+    "scribeCadence": {
+      "type": "string",
+      "description": "When the Orchestrator dispatches the Scribe: event (after each owner decision, authority event, or landing), phase (at each phase or wave boundary), or lifecycle (at handoff and closeout only). Omitted means event. Handoff and closeout check history coverage at every cadence.",
+      "enum": [
+        "event",
+        "phase",
+        "lifecycle"
+      ]
+    },
+    "scribeRoute": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled"
+      ],
+      "if": {
+        "properties": {
+          "enabled": {
+            "const": true
+          }
+        },
+        "required": [
+          "enabled"
+        ]
+      },
+      "then": {
+        "required": [
+          "primary",
+          "ordered_fallbacks"
+        ]
+      },
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "primary": {
+          "$ref": "#/$defs/identity"
+        },
+        "ordered_fallbacks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/fallback"
+          }
+        },
+        "cadence": {
+          "$ref": "#/$defs/scribeCadence"
+        }
+      }
+    },
+    "assuranceSession": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled"
+      ],
+      "if": {
+        "properties": {
+          "enabled": {
+            "const": true
+          }
+        },
+        "required": [
+          "enabled"
+        ]
+      },
+      "then": {
+        "required": [
+          "primary",
+          "ordered_fallbacks"
+        ]
+      },
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "primary": {
+          "$ref": "#/$defs/identity"
+        },
+        "ordered_fallbacks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/fallback"
+          }
+        },
+        "cadence": {
+          "$ref": "#/$defs/cadence"
+        }
+      }
+    },
+    "sessionedRole": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sessions"
+      ],
+      "properties": {
+        "sessions": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": false,
+          "properties": {
+            "planning": {
+              "$ref": "#/$defs/route"
+            }
+          }
+        }
+      }
+    },
+    "testEngineerRole": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sessions"
+      ],
+      "properties": {
+        "sessions": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": false,
+          "properties": {
+            "assurance": {
+              "$ref": "#/$defs/assuranceSession"
+            }
+          }
+        }
+      }
+    },
+    "integrationEngineerRole": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sessions"
+      ],
+      "properties": {
+        "sessions": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": false,
+          "properties": {
+            "execution": {
+              "$ref": "#/$defs/assuranceSession"
+            }
+          }
+        }
+      }
+    },
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "roles"
+      ],
+      "properties": {
+        "roles": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "implementer": {
+              "$ref": "#/$defs/route"
+            },
+            "test_implementer": {
+              "$ref": "#/$defs/route"
+            },
+            "light_implementer": {
+              "$ref": "#/$defs/route"
+            },
+            "coordinator": {
+              "$ref": "#/$defs/route"
+            },
+            "reviewer": {
+              "$ref": "#/$defs/reviewerRoute"
+            },
+            "scribe": {
+              "$ref": "#/$defs/scribeRoute"
+            },
+            "mbse": {
+              "$ref": "#/$defs/sessionedRole"
+            },
+            "integration_test": {
+              "$ref": "#/$defs/sessionedRole"
+            },
+            "test_engineer": {
+              "$ref": "#/$defs/testEngineerRole"
+            },
+            "integration_engineer": {
+              "$ref": "#/$defs/integrationEngineerRole"
+            }
+          }
+        },
+        "development_strategy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode"
+          ],
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": [
+                "single_implementer",
+                "tdd"
+              ]
+            }
+          }
+        },
+        "planning_to_implementation_clean_session": {
+          "type": "boolean"
+        },
+        "concurrency": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "dispatch_ready_independent_work": {
+              "type": "boolean"
+            },
+            "preserve_order_for_dependencies_interfaces_write_overlap_and_shared_mutable_resources": {
+              "type": "boolean"
+            }
+          }
+        },
+        "holds": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": [
+              "id",
+              "effect"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "effect": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "deterministic_verification": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "additional_tools": {
+              "type": "array",
+              "description": "Optional owner-chosen repository testing tools. Enabled entries are planning inputs, not automatic execution or installation authority; applicable commands and evidence are bound in SEIT.",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["name", "enabled"],
+                "if": { "properties": { "enabled": { "const": true } }, "required": ["enabled"] },
+                "then": { "required": ["command", "pass", "evidence"] },
+                "properties": {
+                  "name": { "type": "string", "minLength": 1, "pattern": "\\S" },
+                  "enabled": { "type": "boolean" },
+                  "command": { "type": "string", "minLength": 1, "pattern": "\\S" },
+                  "pass": { "type": "string", "minLength": 1, "pattern": "\\S" },
+                  "evidence": { "type": "string", "minLength": 1, "pattern": "\\S" }
+                }
+              }
+            },
+            "reverify": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "enabled"
+              ],
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        },
+        "review": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Optional Reviewer capabilities. A capability is a tool the Reviewer uses as its method, never a role and never an authority source.",
+          "properties": {
+            "coverage_assist": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "enabled"
+              ],
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "description": "When true, the role may proceed with a recorded note if the capability is unavailable. Activated-but-unavailable remains a typed gap."
+                },
+                "required": {
+                  "type": "boolean",
+                  "description": "When true, the role may not proceed without the capability (halt). Omitted on legacy profiles is false; no migration. Activated-but-unavailable remains a typed gap."
+                }
+              },
+              "description": "Deterministic file selection and rule resolution for the Reviewer. It finds no defects and produces no verdict. Four states: (enabled:false, required:false) = off/inactive; (enabled:true, required:false) = optional, proceed with note if unavailable; (enabled:false, required:true) = required-only activation, halt if unavailable; (enabled:true, required:true) = enabled and required, halt if unavailable. Write both flags false when turning coverage off."
+            }
+          }
+        },
+        "assurance_repair": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "enabled"
+          ],
+          "description": "Optional Assurance Test Engineer bounded test-side repair preauthorization. When true, the parent may record a repair_transition for one same-session test-side repair; when absent or false, assurance behaves exactly as today (FAIL with findings, no repair).",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "When true, the frozen profile preauthorizes one bounded same-session repair of proven test-side defects per assurance round, reusing the Reviewer repair_transition contract. Absent or false means no repair authority."
+            }
+          }
+        }
+      }
+    }
+  }
+}
