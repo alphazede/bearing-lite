@@ -167,10 +167,24 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "enabled",
-        "primary",
-        "ordered_fallbacks"
+        "enabled"
       ],
+      "if": {
+        "properties": {
+          "enabled": {
+            "const": true
+          }
+        },
+        "required": [
+          "enabled"
+        ]
+      },
+      "then": {
+        "required": [
+          "primary",
+          "ordered_fallbacks"
+        ]
+      },
       "properties": {
         "enabled": {
           "type": "boolean"
@@ -190,10 +204,24 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "enabled",
-        "primary",
-        "ordered_fallbacks"
+        "enabled"
       ],
+      "if": {
+        "properties": {
+          "enabled": {
+            "const": true
+          }
+        },
+        "required": [
+          "enabled"
+        ]
+      },
+      "then": {
+        "required": [
+          "primary",
+          "ordered_fallbacks"
+        ]
+      },
       "properties": {
         "enabled": {
           "type": "boolean"
@@ -225,10 +253,24 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "enabled",
-        "primary",
-        "ordered_fallbacks"
+        "enabled"
       ],
+      "if": {
+        "properties": {
+          "enabled": {
+            "const": true
+          }
+        },
+        "required": [
+          "enabled"
+        ]
+      },
+      "then": {
+        "required": [
+          "primary",
+          "ordered_fallbacks"
+        ]
+      },
       "properties": {
         "enabled": {
           "type": "boolean"
@@ -251,10 +293,24 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "enabled",
-        "primary",
-        "ordered_fallbacks"
+        "enabled"
       ],
+      "if": {
+        "properties": {
+          "enabled": {
+            "const": true
+          }
+        },
+        "required": [
+          "enabled"
+        ]
+      },
+      "then": {
+        "required": [
+          "primary",
+          "ordered_fallbacks"
+        ]
+      },
       "properties": {
         "enabled": {
           "type": "boolean"
@@ -482,7 +538,7 @@
                   "description": "When true, the role may not proceed without the capability (halt). Omitted on legacy profiles is false; no migration. Activated-but-unavailable remains a typed gap."
                 }
               },
-              "description": "Deterministic file selection and rule resolution for the Reviewer. It finds no defects and produces no verdict. enabled and required are independent: required has force when both are true."
+              "description": "Deterministic file selection and rule resolution for the Reviewer. It finds no defects and produces no verdict. Four states: (enabled:false, required:false) = off/inactive; (enabled:true, required:false) = optional, proceed with note if unavailable; (enabled:false, required:true) = required-only activation, halt if unavailable; (enabled:true, required:true) = enabled and required, halt if unavailable. Write both flags false when turning coverage off."
             }
           }
         },

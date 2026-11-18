@@ -135,14 +135,59 @@ function validRoute(route) {
     route.ordered_fallbacks.every((hop) => validHop(hop, true));
 }
 
+function validAdditionalTool(tool) {
+  if (!closed(tool, ["name", "enabled", "command", "pass", "evidence"])) return false;
+  if (!text(tool.name) || typeof tool.enabled !== "boolean") return false;
+  if (tool.enabled === true) {
+    return text(tool.command) && text(tool.pass) && text(tool.evidence);
+  }
+  return (
+    (tool.command === undefined || text(tool.command)) &&
+    (tool.pass === undefined || text(tool.pass)) &&
+    (tool.evidence === undefined || text(tool.evidence))
+  );
+}
+
 function validCapabilities(snap) {
-  const review = snap?.review;
-  const coverage = review?.coverage_assist;
-  const verification = snap?.deterministic_verification;
-  return closed(review, ["coverage_assist", "ocr_execution_mode"]) && closed(coverage, ["enabled", "required"]) &&
-    typeof coverage.enabled === "boolean" && typeof coverage.required === "boolean" && text(review.ocr_execution_mode) &&
-    closed(verification, ["reverify"]) && closed(verification.reverify, ["enabled"]) &&
-    typeof verification.reverify.enabled === "boolean";
+  if (!record(snap)) return false;
+  const review = snap.review;
+  if (review !== undefined) {
+    if (!closed(review, ["coverage_assist", "ocr_execution_mode"])) return false;
+    if (review.coverage_assist !== undefined) {
+      const coverage = review.coverage_assist;
+      if (
+        !closed(coverage, ["enabled", "required"]) ||
+        typeof coverage.enabled !== "boolean" ||
+        (coverage.required !== undefined && typeof coverage.required !== "boolean")
+      ) {
+        return false;
+      }
+    }
+    if (review.ocr_execution_mode !== undefined && !text(review.ocr_execution_mode)) {
+      return false;
+    }
+  }
+  const verification = snap.deterministic_verification;
+  if (verification !== undefined) {
+    if (!closed(verification, ["reverify", "additional_tools"])) return false;
+    if (verification.reverify !== undefined) {
+      if (
+        !closed(verification.reverify, ["enabled"]) ||
+        typeof verification.reverify.enabled !== "boolean"
+      ) {
+        return false;
+      }
+    }
+    if (verification.additional_tools !== undefined) {
+      if (
+        !Array.isArray(verification.additional_tools) ||
+        !verification.additional_tools.every(validAdditionalTool)
+      ) {
+        return false;
+      }
+    }
+  }
+  return true;
 }
 
 const candidate = opt["--candidate"];
@@ -248,10 +293,13 @@ const expected = (Array.isArray(slice.expected_files) ? slice.expected_files : [
   path: String(entry),
   inside_write_set: insideWriteSet(entry, writeSet),
 }));
-const capabilities = {
-  review: binding.json.snapshot.review,
-  deterministic_verification: binding.json.snapshot.deterministic_verification,
-};
+const capabilities = {};
+if (binding.json.snapshot.review !== undefined) {
+  capabilities.review = binding.json.snapshot.review;
+}
+if (binding.json.snapshot.deterministic_verification !== undefined) {
+  capabilities.deterministic_verification = binding.json.snapshot.deterministic_verification;
+}
 const skillRole = routeKey === "test_implementer" ? "implementer" : routeKey.replaceAll("_", "-");
 const skill = `skills/${skillRole}/SKILL.md`;
 const actions = Array.isArray(authority.json.prohibited?.actions) ? authority.json.prohibited.actions : [];

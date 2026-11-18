@@ -406,6 +406,40 @@ describe("frozen identity and authority (SM05.X1, SM05.X2, F04 failure_recovery)
     mutate(f.binding, (b) => delete b.snapshot.roles.implementer);
     assertGap(f, "S1", "route");
   });
+
+  it("compiles public onboarded capability shapes (R05): omitted ocr_execution_mode, omitted required, omitted sections, and additional_tools", (t) => {
+    const f = fixture(t);
+    mutate(f.binding, (b) => {
+      delete b.snapshot.review.ocr_execution_mode;
+      delete b.snapshot.review.coverage_assist.required;
+      b.snapshot.deterministic_verification.additional_tools = [];
+    });
+    const noMode = ready(f).json;
+    assert.deepEqual(noMode.capabilities.deterministic_verification.additional_tools, []);
+
+    mutate(f.binding, (b) => {
+      b.snapshot.deterministic_verification.additional_tools = [
+        { name: "Unit", enabled: true, command: "node --test", pass: "exit 0", evidence: "TAP" },
+        { name: "Lint", enabled: false },
+      ];
+    });
+    const withTools = ready(f).json;
+    assert.equal(withTools.capabilities.deterministic_verification.additional_tools.length, 2);
+
+    mutate(f.binding, (b) => {
+      delete b.snapshot.review;
+      delete b.snapshot.deterministic_verification;
+    });
+    const omittedCaps = ready(f).json;
+    assert.deepEqual(omittedCaps.capabilities, {});
+
+    mutate(f.binding, (b) => {
+      b.snapshot.deterministic_verification = {
+        additional_tools: [{ name: "Broken", enabled: true }],
+      };
+    });
+    assertGap(f, "S1", "binding");
+  });
 });
 
 describe("handoff schema (SEIT-B30-306, closed schema)", () => {
