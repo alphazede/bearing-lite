@@ -76,10 +76,15 @@ test('explicit null or wrong-typed context fails before closing or reserving a r
 test('exact_text rejects non-verbatim text and wording-external changes', () => {
   const input = fixture();
   input.after[0].text += ' Extra.';
-  assert.equal(evaluate(input).verdict, 'VALIDATION_FAILED');
+  const textMismatch = evaluate(input);
+  assert.equal(textMismatch.verdict, 'VALIDATION_FAILED');
+  assert.equal(textMismatch.findings[0].code, 'exact_text_mismatch');
   input.after[0].text = input.findings[0].corrected_text;
   input.after[0].references = ['REQ-2'];
-  assert.equal(evaluate(input).verdict, 'VALIDATION_FAILED');
+  const nonTextMismatch = evaluate(input);
+  assert.equal(nonTextMismatch.verdict, 'VALIDATION_FAILED');
+  assert.equal(nonTextMismatch.findings[0].code, 'exact_text_mismatch');
+  assert.match(String(nonTextMismatch.findings[0].detail), /requires_regate/);
 });
 
 test('mechanical closure needs candidate-bound lint and resolving cross-references', () => {

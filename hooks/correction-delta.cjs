@@ -67,9 +67,14 @@ function evaluateCorrectionDelta(input) {
   for (const finding of exact) {
     const oldRow = oldRows.get(finding.uid);
     const newRow = newRows.get(finding.uid);
-    if (!oldRow || !newRow || newRow.text !== finding.corrected_text ||
-        !isDeepStrictEqual({ ...oldRow, text: newRow.text }, newRow)) {
-      fail("exact_text_mismatch", { uid: finding.uid });
+    const nonTextChanged = oldRow && newRow && !isDeepStrictEqual({ ...oldRow, text: newRow.text }, newRow);
+    if (!oldRow || !newRow || newRow.text !== finding.corrected_text || nonTextChanged) {
+      const detail = !oldRow || !newRow
+        ? "exact_text requires an existing row in before and after; use requires_regate for non-text field changes"
+        : nonTextChanged
+          ? "non-text field changed; use requires_regate for non-text field changes"
+          : "text does not match corrected_text verbatim";
+      fail("exact_text_mismatch", { uid: finding.uid, detail });
     }
   }
   const targets = new Set([...newRows.keys(), ...known]);

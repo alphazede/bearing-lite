@@ -114,33 +114,38 @@ Start each selected author once when its required inputs are ready. Requirements
 precede dependent specialist work; final planning/design follows their inputs.
 Run independent work concurrently;
 serialize real input dependencies, overlapping writes, or shared mutable resources.
-Authors inspect and repair their own drafts in their assignment. Mechanical
-register prechecks belong to the requirements author; do not add a separate
-quality-check agent or wait for an independent requirements verdict. Findings on
-specialist-owned content return to that author as a named delta; the Orchestrator
-never edits requirements or SEIT itself.
+Authors inspect and repair their own drafts in their assignment, folding all
+known corrections into their first return. Mechanical register prechecks belong
+to the requirements author; do not add a separate quality-check agent or wait
+for an independent requirements verdict. No correction loops in planning: never
+relaunch a returned specialist for author-known fixes—the Planning Orchestrator
+applies remaining author-known fixes during assembly. Only end-of-planning
+review findings on specialist-owned content return to that author as a named delta.
 
 ### Author-known deltas (#221)
 
+No correction loops in planning (#578): specialists fold known corrections into
+their first return, and the Planning Orchestrator applies any remaining
+author-known fixes during assembly instead of relaunching specialists.
 Sometimes an author working on its own artifact finds an exact correction that
 belongs in another role's artifact. One example is a Test Engineer who finds a
 wrong value in the implementation graph while authoring `seit.json`. That
-correction is an author-known delta, not a review finding. It returns to the
-owning author at the next reconciliation inside the wave. It never waits for
-the end-of-wave review.
+correction is an author-known delta, not a review finding. It is reconciled at
+the next reconciliation inside the wave rather than relaunching returned
+specialists. It never waits for the end-of-wave review.
 
 - **Reconciliation point:** this is the moment the Orchestrator consumes the
-  return that names the delta. Route the delta before dispatching any session
+  return that names the delta. Apply or route the delta before dispatching any session
   that consumes the affected artifact, and in every case before final
   assembly, freeze, or review dispatch.
 - **Routing:** deltas on the Orchestrator's own final plan, design, graph, or
   Manifest are applied in its existing session. A delta on specialist-owned
-  content goes into that author's open assignment. If the assignment has
-  already returned, it goes in one named-delta packet to that author. Send at
-  most one packet per owner per reconciliation, covering only the named
-  `exact_text` rows and closed mechanically with `hooks/correction-delta.cjs`.
-  The identifying author's return supplies the `findings` rows and corrected
-  text in place of a gate report. Do not reopen the author's full assignment.
+  content goes into that author's open assignment only if that assignment has
+  not yet returned. Once a specialist has returned, never relaunch it for
+  author-known deltas: the Planning Orchestrator applies remaining author-known
+  fixes during assembly (closing `exact_text` rows mechanically with
+  `hooks/correction-delta.cjs` where applicable, without reopening or
+  relaunching the specialist).
 - **Bindings:** refresh cross-artifact sha256 bindings once, after all deltas
   at that reconciliation are applied, not after each edit.
 - **Budget:** these deltas spend no `max_assurance_rounds`, no planning-review
@@ -148,8 +153,10 @@ the end-of-wave review.
   findings the requested review discovers.
 - **Planning inputs, not the repair:** a specialist finding on another author's artifact,
   including one that changes meaning, rationale, verification, or allocation,
-  and owner-added scope during planning are planning inputs. The owning author
-  consumes them before assembly. They start no review round, they are not
+  and owner-added scope during planning are planning inputs. An open owning
+  assignment—or the Planning Orchestrator during assembly when the specialist
+  has already returned—consumes them before assembly, without relaunching
+  specialists. They start no review round, they are not
   `requires_regate`, and the repair allowance stays 1. Only findings from the
   single end-of-planning review follow the correction loop. A delta
   raised after the unit's review round opens joins that round's one aggregate

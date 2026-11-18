@@ -40,7 +40,7 @@ Integration Engineer execution assessment.
    a plain string. A declared gate with a missing tool or a `not_run` outcome is a
    typed gap, never PASS. Every red-then-green receipt binds the
    baseline failing run and the candidate passing run over the same test IDs.
-4. Check and repair the plan in this assignment, then return it to the Planning Orchestrator with proof cases, selected capability bindings, and exact fixes in other roles' artifacts as named deltas (`../bearing-lite/references/planning-assembly.md#author-known-deltas-221`).
+4. Check and repair the plan in this assignment, folding all known corrections into this first return to the Planning Orchestrator with proof cases, selected capability bindings, and exact fixes for other roles' artifacts as named deltas for the Orchestrator to apply during assembly without relaunching specialists (`../bearing-lite/references/planning-assembly.md#author-known-deltas-221`).
    Verify coverage, source bindings, feasible methods, pass/fail criteria, and gate cost; Orchestrator design follows these inputs.
 5. Assurance Test Engineer runs only when requested, in a fresh session without author ancestry, on the exact candidate; refuse an unconfigured slice or round boundary. VALIDATING belongs here.
    The Assurance Test Engineer independently reruns the gate-chain at the declared boundary for

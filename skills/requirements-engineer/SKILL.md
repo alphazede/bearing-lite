@@ -53,8 +53,7 @@ Return `READY`, `NEEDS_MORE_EVIDENCE`, or `OWNER_DECISION_REQUIRED` with
 candidate identity, paths, source/decision traceability, checks, and next action.
 Self-checks are author evidence, not independent review or owner acceptance. Author corrections do not consume review or repair budget.
 Return `READY` only when required self-quality checks pass and no fixable
-requirement defect remains; unresolved owner decisions and missing proof stay typed.
-Use `references/gate-report.md` for the compact author return. A new invocation
-requires explicit authority; do not invent correction-round limits.
-Never implement, write tests, select models, publish, or persist outside approved
-local draft authority. Required register-host workflows remain authoritative.
+requirement defect remains; fold all known corrections into this first return
+with no planning correction relaunch (unresolved owner decisions and missing
+proof stay typed; a new invocation requires explicit authority). Use `references/gate-report.md` for the compact return; do not invent correction-round limits.
+Never implement, write tests, select models, publish, or persist outside approved local draft authority. Required register-host workflows remain authoritative.
