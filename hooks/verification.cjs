@@ -411,17 +411,15 @@ function resolveProcessTier(phase) {
         phase.live_host_only_full_risk !== true || otherFullRisk) {
       return unchanged;
     }
-    if (
-      !Array.isArray(phase.operations) ||
-      phase.operations.length === 0 ||
-      phase.operations.some((op) => !nonempty(op))
-    ) {
+    const { operations } = phase;
+    if (phase.deletes === true || phase.mutates === true ||
+        !Array.isArray(operations) || operations.length === 0) {
       return unchanged;
     }
-    const ops = phase.operations.map((op) => op.trim().toLowerCase());
-    if (phase.deletes === true || phase.mutates === true ||
-        ops.some((op) => !COPY_OR_READ_OPERATIONS.has(op))) {
-      return unchanged;
+    for (const operation of operations) {
+      if (typeof operation !== "string" || !COPY_OR_READ_OPERATIONS.has(operation.trim().toLowerCase())) {
+        return unchanged;
+      }
     }
     return {
       ...result("READY", "copy_or_read_only_live_host", "standard"),
