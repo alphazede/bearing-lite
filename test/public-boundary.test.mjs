@@ -637,3 +637,39 @@ describe("CMD-PUBLIC-01 public-boundary (SEIT-PUBLIC-01, SEIT-MODEL-01, SEIT-IND
     );
   });
 });
+
+/**
+ * HLW-VC-024 (HLW-REQ-021, BC-08): the live-wave contract ships in the public
+ * package with no herdr dependency and no private path, route or model text
+ * (HLW-CMD-PUBSCAN pattern). Negative: a seeded /home/<user> path is caught.
+ */
+describe("live-wave no-herdr private-path scan (HLW-VC-024)", () => {
+  const PRIVATE = /\/home\/[a-z]|\.local\/state\/bearing|profiles\.json:|muse-spark|gpt-6|claude-opus/;
+  const filesUnder = (rel) => {
+    const abs = path.join(ROOT, rel);
+    return statSync(abs).isDirectory()
+      ? readdirSync(abs).flatMap((n) => filesUnder(path.join(rel, n)))
+      : [rel];
+  };
+
+  it("no-herdr: package declares no herdr dependency of any kind", () => {
+    const deps = { ...PACKAGE.dependencies, ...PACKAGE.optionalDependencies, ...PACKAGE.peerDependencies };
+    assert.deepEqual(Object.keys(deps).filter((k) => /herdr/i.test(k)), []);
+  });
+
+  it("private-path: live-wave reference ships and skills, hooks and schemas have zero private hits", () => {
+    assert.ok(existsSync(path.join(ROOT, "skills/bearing-lite/references/live-wave.md")),
+      "skills/bearing-lite/references/live-wave.md must ship");
+    const hits = ["skills", "hooks", "schemas"].flatMap(filesUnder)
+      .filter((rel) => PRIVATE.test(readFileSync(path.join(ROOT, rel), "utf8")));
+    assert.deepEqual(hits, []);
+  });
+
+  it("private-path negative: a seeded /home/<user> path in a skill is caught", () => {
+    assert.ok(PRIVATE.test("Read /home/someuser/.local/state/bearing/live/active.json\n"));
+    const verdict = scanPublicLiteSurfaces({
+      extraFiles: [{ path: "skills/bearing-lite/references/live-wave.md", content: "see /home/someuser/live\n" }],
+    });
+    assert.equal(verdict.ok, false);
+  });
+});
