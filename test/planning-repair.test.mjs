@@ -163,6 +163,97 @@ test("F2 unresolved or forged target input snapshots cannot justify adoption", t
   assert.equal(fx.evaluate().reason, "planning_sessions_incomplete");
 });
 
+test("#624 mechanical hash-binding fix with edit_records preserves adoption while meaning changes stay rejected", t => {
+  const fx = fixture(t);
+  const oldNotesSha = fx.seit.source_baseline.planning_inputs[1].sha256;
+  const oldSeitBytes = readFileSync(path.join(fx.dir, "seit.json"));
+  const oldSeitSha = sha(oldSeitBytes);
+  const priorCandidate = {
+    candidate_ref: "plan",
+    candidate_revision: "r0",
+    candidate_digest: sha([...fx.seit.source_baseline.planning_inputs.map(x => x.sha256), oldSeitSha].join("\n")),
+  };
+  // Specialist integration_test returned on r0 having consumed plan.md and seit.json.
+  const priorSeitInput = { path: "seit.json", sha256: oldSeitSha };
+  const priorPlanInput = copy(fx.review.input_digests[0]);
+
+  // After specialists return, Orchestrator updates unrelated notes.md and applies the documented
+  // mechanical hash-binding fix to seit.json's source_baseline.planning_inputs[1].sha256.
+  const newNotes = "Updated notes.\n";
+  const newNotesSha = sha(newNotes);
+  writeFileSync(path.join(fx.dir, "notes.md"), newNotes);
+  fx.seit.source_baseline.planning_inputs[1].sha256 = newNotesSha;
+  const newSeitBytes = JSON.stringify(fx.seit);
+  writeFileSync(path.join(fx.dir, "seit.json"), newSeitBytes);
+  const newSeitSha = sha(newSeitBytes);
+  const newDigests = [
+    priorPlanInput,
+    { path: "notes.md", sha256: newNotesSha },
+    { path: "seit.json", sha256: newSeitSha },
+  ];
+  const newCandidate = {
+    candidate_ref: "plan",
+    candidate_revision: "r1",
+    candidate_digest: sha(newDigests.map(x => x.sha256).join("\n")),
+  };
+  const editRecord = {
+    path: "seit.json",
+    kind: "hash_binding",
+    field: "source_baseline.planning_inputs[1].sha256",
+    before: oldNotesSha,
+    after: newNotesSha,
+    before_sha256: oldSeitSha,
+    after_sha256: newSeitSha,
+    reason: "Refresh notes.md sha256 binding after reconciliation.",
+    candidate: newCandidate,
+  };
+  fx.review.candidate = copy(newCandidate);
+  fx.review.input_digests = copy(newDigests);
+  fx.review.receipts[0] = { ...fx.review.receipts[0], ...newCandidate };
+  fx.review.planning_wave.sessions[1] = {
+    session: "integration_test",
+    ...priorCandidate,
+    verdict: "READY",
+    inputs: [priorPlanInput, priorSeitInput],
+    adopted_to: copy(newCandidate),
+  };
+  fx.review.planning_wave.sessions[0] = {
+    session: "mbse",
+    ...priorCandidate,
+    verdict: "READY",
+    inputs: [priorPlanInput],
+    adopted_to: copy(newCandidate),
+  };
+  fx.review.planning_wave.edit_records = [copy(editRecord)];
+  fx.saveReview();
+
+  Object.assign(fx.wave, {
+    sessions: copy(fx.review.planning_wave.sessions),
+    edit_records: [copy(editRecord)],
+    candidate_digest: newCandidate.candidate_digest,
+    closing_candidate: copy(newCandidate),
+  });
+  fx.doc.journey_settings.planning_review.candidate_digest = newCandidate.candidate_digest;
+
+  assert.equal(fx.evaluate().outcome, "PASS");
+  assert.deepEqual(fx.run().findings, []);
+
+  // A hidden meaning change in seit.json masked as a hash_binding edit_record must still fail.
+  const tamperedSeit = copy(fx.seit);
+  tamperedSeit.proof_cases[0].expected_result = "Changed meaning silently.";
+  const tamperedBytes = JSON.stringify(tamperedSeit);
+  writeFileSync(path.join(fx.dir, "seit.json"), tamperedBytes);
+  const tamperedSha = sha(tamperedBytes);
+  const tamperedDigests = [priorPlanInput, { path: "notes.md", sha256: newNotesSha }, { path: "seit.json", sha256: tamperedSha }];
+  const tamperedCandidate = { ...newCandidate, candidate_digest: sha(tamperedDigests.map(x => x.sha256).join("\n")) };
+  fx.review.candidate = copy(tamperedCandidate);
+  fx.review.input_digests = copy(tamperedDigests);
+  fx.review.receipts[0] = { ...fx.review.receipts[0], ...tamperedCandidate };
+  fx.review.planning_wave.sessions.forEach(s => { s.adopted_to = copy(tamperedCandidate); });
+  fx.review.planning_wave.edit_records[0].after_sha256 = tamperedSha;
+  assert.deepEqual(fx.evaluate(), { outcome: "NEEDS_MORE_EVIDENCE", reason: "planning_sessions_incomplete" });
+});
+
 for (const id of ["CMD-LITE-SCHEMA-VALIDATE", "SYN-ENV-LOCAL", "SYN-L1"]) test(`F3 ${id} is not a proof_cases row`, t => {
   const fx = fixture(t);
   fx.doc.boundary_contract = { trust_boundaries: [{ id: "TRUST-1", crossing: "external -> worker", enforcement: "Authenticate before enqueue", seit_rows: [id] }] };

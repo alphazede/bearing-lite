@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Align `skills/bearing-lite/references/planning-assembly.md`, `skills/planning-and-design/SKILL.md`, `schemas/implementation.schema.json`, `hooks/planning-review.cjs`, and `hooks/plan-package.cjs` so `adopted()` preserves adopted returns across recorded mechanical ID and hash-binding `edit_records[]` (`before_sha256` to `after_sha256`) while still blocking inputs whose meaning changed. (Alphazedehq#624)
 - Document `CANDIDATE_READY` with `external_open_items` across planning and author skills without spending a closing return, and require `hooks/planning-review.cjs` and `hooks/plan-package.cjs` to refuse review/freeze while any listed external item remains open or unowned-closed. (Alphazedehq#626)
 - Document and schema-validate the planning input row shape (`path` and 64-hex `sha256` required, optional `git_blob`) across `schemas/seit.schema.json`, `schemas/implementation.schema.json`, `skills/mbse/SKILL.md`, and `skills/integration-test/SKILL.md`, with `sha256_required` detail on `malformed_planning_input`. (Alphazedehq#625)
 - Ignore unrelated `*.json` files during `hooks/plan-package.cjs` freeze checks and include the offending `path` in `planning_input_unreadable` findings. (Alphazedehq#628)

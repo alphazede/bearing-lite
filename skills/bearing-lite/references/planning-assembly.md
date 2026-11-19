@@ -247,12 +247,17 @@ specialists. It never waits for the end-of-wave review.
   deltas (zero relaunch budget): the Planning Orchestrator may apply purely
   mechanical ID and hash binding fixes itself during assembly (and close
   `exact_text` rows mechanically with `hooks/correction-delta.cjs` where
-  applicable), recording each edit in an edit record (file, target ID/field,
-  change, reason, and candidate). Any change of meaning returns to the owning
-  author (`mbse` or `integration_test`) under an authorized return rather than
-  silent Orchestrator rewriting or an unbudgeted author-known relaunch.
+  applicable), recording each edit in an edit record (`planning_wave.edit_records[]`
+  with `path`, `kind`: `"hash_binding"` | `"id_binding"`, `field`, `before`,
+  `after`, `before_sha256`, `after_sha256`, `reason`, and `candidate`). Any
+  change of meaning returns to the owning author (`mbse` or `integration_test`)
+  under an authorized return rather than silent Orchestrator rewriting or an
+  unbudgeted author-known relaunch.
 - **Bindings:** refresh cross-artifact sha256 bindings once, after all deltas
-  at that reconciliation are applied, not after each edit.
+  at that reconciliation are applied, not after each edit. Record those
+  mechanical ID and hash-binding edits in `edit_records[]` so adopted returns
+  remain valid across the binding refresh (`before_sha256` to `after_sha256`)
+  while any change of meaning to a consumed input still blocks adoption.
 - **Budget:** author-known reconciliation counts against a budget of zero
   relaunches (fold into the author's first return or an Orchestrator mechanical
   ID/hash fix); these deltas spend no `max_assurance_rounds`, no planning-review
@@ -349,9 +354,11 @@ lineage, deterministic closure, and `closing_candidate`—keeping round-1
 `node <plugin root>/hooks/plan-package.cjs draft <plan dir>` for draft checks and
 the candidate-bound final freeze when its receipts are complete: every declared
 session `READY` (or a `GAPS` session closed to `READY` through one recorded
-closing return), required artifacts present, and deterministic closure. Earlier specialist returns may be explicitly adopted to the no-review closing
-candidate only when every consumed input matches the actual verified closing
-snapshot; retain the original return identity. Changed consumed inputs block
+closing return), required artifacts present, and deterministic closure. Earlier specialist returns may be explicitly adopted (`adopted_to`) to the review or closing
+candidate when every consumed input in `session.inputs` either matches the actual verified closing
+snapshot or has its digest transition (`before_sha256` to `after_sha256`) proven solely by
+recorded mechanical ID or hash-binding edits in `planning_wave.edit_records[]`; retain the
+original return identity. Any unrecorded change or change of meaning in a consumed input blocks
 adoption, and recorded hashes never substitute for checking file bytes. Missing
 required receipts remain typed gaps, never a pass. The current freeze contract
 must be satisfied or explicitly amended, never bypassed by prose.

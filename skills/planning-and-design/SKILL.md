@@ -64,7 +64,11 @@ owner question box (`OWNER_DECISION_REQUIRED`), even under delegation.
    evidence as digests, commands, and exit codes, not narrative logs. Repair
    your owned artifacts in-session and rerun affected checks. Under the zero
    author-known relaunch budget (`0` relaunches), apply purely mechanical ID and
-   hash binding fixes in-session and record each edit in an edit record; never
+   hash binding fixes in-session and record each edit in an edit record (`planning_wave.edit_records[]`
+   with `path`, `kind`: `"hash_binding"` | `"id_binding"`, `field`, `before`,
+   `after`, `before_sha256`, `after_sha256`, `reason`) so adopted specialist
+   returns remain valid across those mechanical binding refreshes while any change
+   of meaning to a consumed input still blocks adoption; never
    rewrite meaning silently—any change of meaning returns to the owning author
    (`mbse` or `integration_test`, including a meaning defect found at assembly)
    under the **one closing return** authorized by the Planning Orchestrator (the

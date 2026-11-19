@@ -33,6 +33,100 @@ function manifestGenerated(input) {
 }
 
 const nonempty = (value) => typeof value === "string" && value.trim().length > 0;
+const sha256Bytes = (data) => crypto.createHash("sha256").update(data).digest("hex");
+
+function repoRootForPlan(dir) {
+  let current = path.resolve(dir);
+  for (;;) {
+    if (fs.existsSync(path.join(current, ".git"))) return current;
+    const parent = path.dirname(current);
+    if (parent === current) return path.resolve(dir);
+    current = parent;
+  }
+}
+
+function resolvePlanInputFile(dir, relPath) {
+  if (!nonempty(dir) || !nonempty(relPath)) return null;
+  const candidates = [path.resolve(dir, relPath), path.resolve(repoRootForPlan(dir), relPath)];
+  for (const candidate of candidates) {
+    try {
+      if (fs.statSync(candidate).isFile()) return candidate;
+    } catch {
+      // Ignore absent candidates.
+    }
+  }
+  return null;
+}
+
+const HASH_TOKEN = /^(?:sha256:)?[0-9a-f]{64}$/;
+const ID_BEFORE_TOKEN = /^(?:VERIFICATION_CASE(?:S|_ID)?:\s*)?(?:pending|[A-Z][A-Z0-9._-]+(?:[ \t,]+[A-Z][A-Z0-9._-]+)*)$/;
+const ID_AFTER_TOKEN = /^(?:VERIFICATION_CASE(?:S|_ID)?:\s*)?[A-Z][A-Z0-9._-]+(?:[ \t,]+[A-Z][A-Z0-9._-]+)*$/;
+
+function isValidMechanicalEdit(edit) {
+  if (!edit || typeof edit !== "object" || Array.isArray(edit)) return false;
+  if (!["hash_binding", "id_binding"].includes(edit.kind)) return false;
+  if (!nonempty(edit.path) || !nonempty(edit.field) || !nonempty(edit.reason) ||
+      !nonempty(edit.before) || !nonempty(edit.after) || edit.before === edit.after) {
+    return false;
+  }
+  if (!/^[0-9a-f]{64}$/.test(edit.before_sha256) || !/^[0-9a-f]{64}$/.test(edit.after_sha256) ||
+      edit.before_sha256 === edit.after_sha256) {
+    return false;
+  }
+  if (edit.kind === "hash_binding") {
+    return HASH_TOKEN.test(edit.before) && HASH_TOKEN.test(edit.after);
+  }
+  return ID_BEFORE_TOKEN.test(edit.before) && ID_AFTER_TOKEN.test(edit.after);
+}
+
+function revertEditChainMatches(text, chain) {
+  let current = text;
+  for (let i = chain.length - 1; i >= 0; i -= 1) {
+    const { before, after, before_sha256 } = chain[i];
+    let matched = null;
+    let pos = current.indexOf(after);
+    while (pos !== -1) {
+      const candidate = current.slice(0, pos) + before + current.slice(pos + after.length);
+      if (sha256Bytes(candidate) === before_sha256) {
+        matched = candidate;
+        break;
+      }
+      pos = current.indexOf(after, pos + 1);
+    }
+    if (matched === null) return false;
+    current = matched;
+  }
+  return true;
+}
+
+function validMechanicalEditPath(input, targetRow, editRecords, dir) {
+  if (!Array.isArray(editRecords) || editRecords.length === 0) return false;
+  const pathEdits = editRecords.filter((e) => e && typeof e === "object" && !Array.isArray(e) && e.path === input.path);
+  if (pathEdits.length === 0 || !pathEdits.every(isValidMechanicalEdit)) return false;
+  let cursor = input.sha256;
+  const used = new Set();
+  const chain = [];
+  while (cursor !== targetRow.sha256) {
+    const idx = pathEdits.findIndex((e, i) => !used.has(i) && e.before_sha256 === cursor);
+    if (idx === -1) return false;
+    used.add(idx);
+    chain.push(pathEdits[idx]);
+    cursor = pathEdits[idx].after_sha256;
+  }
+  if (chain.length === 0) return false;
+  const file = resolvePlanInputFile(dir, input.path);
+  if (file) {
+    try {
+      const diskBytes = fs.readFileSync(file);
+      if (sha256Bytes(diskBytes) === targetRow.sha256) {
+        return revertEditChainMatches(diskBytes.toString("utf8"), chain);
+      }
+    } catch {
+      return false;
+    }
+  }
+  return true;
+}
 
 /**
  * #593/#595: Validate at most one closing return per declared specialist session
@@ -113,7 +207,7 @@ function resolveWaveWithClosingReturns(wave) {
  * incomplete return stays a gap. Returns null when complete, else a typed
  * { outcome, reason }. Shared with plan-package.cjs.
  */
-function planningSessionsVerdict(wave, candidate, inputDigests, { requireSnapshot = true } = {}) {
+function planningSessionsVerdict(wave, candidate, inputDigests, { requireSnapshot = true, dir = null } = {}) {
   if (!wave || typeof wave !== "object") {
     return { outcome: "NEEDS_MORE_EVIDENCE", reason: "planning_sessions_incomplete" };
   }
@@ -146,11 +240,19 @@ function planningSessionsVerdict(wave, candidate, inputDigests, { requireSnapsho
     inputDigests.every(validInputRow) &&
     new Set(inputDigests.map((row) => row.path)).size === inputDigests.length &&
     crypto.createHash("sha256").update(inputDigests.map((row) => row.sha256).join("\n")).digest("hex") === candidate?.candidate_digest;
+  if (resolved.wave.edit_records !== undefined && !Array.isArray(resolved.wave.edit_records)) {
+    return { outcome: "NEEDS_MORE_EVIDENCE", reason: "planning_sessions_incomplete" };
+  }
+  const inputMatchesOrMechanical = (input) => {
+    const row = inputDigests.find((item) => item.path === input?.path);
+    if (!row) return false;
+    if (row.sha256 === input?.sha256) return true;
+    return validMechanicalEditPath(input, row, resolved.wave.edit_records, dir);
+  };
   const adopted = (session) => sameCandidate(session, session) &&
     sameCandidate(session.adopted_to, candidate) && Array.isArray(session.inputs) &&
     session.inputs.length > 0 && session.inputs.every(validInputRow) &&
-    (!requireSnapshot || (snapshotBound && session.inputs.every((input) =>
-      inputDigests.some((row) => row.path === input?.path && row.sha256 === input?.sha256))));
+    (!requireSnapshot || (snapshotBound && session.inputs.every(inputMatchesOrMechanical)));
   const returned = declared.every((name) => {
     const session = sessions.find((item) => item?.session === name);
     return (
@@ -217,7 +319,7 @@ function evaluatePlanningReview(input) {
     return { outcome: "NEEDS_MORE_EVIDENCE", reason: "missing_requirement_register" };
   }
   // #205: the review never opens while a declared planning session is out.
-  const sessions = planningSessionsVerdict(input.planning_wave, input.candidate, input.input_digests);
+  const sessions = planningSessionsVerdict(input.planning_wave, input.candidate, input.input_digests, { dir: input.plan_dir });
   if (sessions) return sessions;
   const slots = Array.isArray(input.reviewer_slots) ? input.reviewer_slots : [];
   const ids = slots.map((slot) => slot?.slot_id);
