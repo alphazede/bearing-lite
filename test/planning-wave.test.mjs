@@ -1322,6 +1322,33 @@ describe("Alphazedehq#626 CANDIDATE_READY for externally owned open items", () =
     });
     assert.deepEqual(freeze(closedPkg.dir).findings, []);
   });
+
+  for (const items of [undefined, []]) {
+    it(`retains prior external items through a READY closing return with ${items ? "empty" : "no"} external items`, () => {
+      const pkg = planPackage((doc, digest) => {
+        const wave = unreviewedPlanningWave(digest, ["mbse"]);
+        doc.journey_settings.planning_wave = wave;
+        Object.assign(wave.sessions[0], {
+          verdict: "CANDIDATE_READY",
+          external_open_items: [{ id: "EXT-1", owner: "orchestrator", summary: "Pin the plan", status: "open" }],
+          closing_return: {
+            author: "mbse", reason: "Verify updated requirements", items: ["Verified register"],
+            candidate: wave.closing_candidate, verdict: "READY", external_open_items: items,
+          },
+        });
+      });
+      const result = freeze(pkg.dir);
+      assert.equal(result.outcome, "FAIL", JSON.stringify(result));
+      assert.ok(codes(result).includes("planning_wave_external_items_open"), JSON.stringify(result));
+      const file = path.join(pkg.dir, "implementation.json");
+      const doc = JSON.parse(readFileSync(file, "utf8"));
+      doc.journey_settings.planning_wave.external_closures = [
+        { id: "EXT-1", owner: "orchestrator", closed_by: "orchestrator", status: "closed" },
+      ];
+      writeFileSync(file, JSON.stringify(doc));
+      assert.deepEqual(freeze(pkg.dir).findings, []);
+    });
+  }
 });
 
 describe("Alphazedehq#624 edit_records contract for mechanical hash-binding fixes and adopted returns", () => {
