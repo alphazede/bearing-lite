@@ -175,14 +175,17 @@ function resolveWaveWithClosingReturns(wave) {
     if (!POLICY.planning_session_ready_verdicts.includes(cr.verdict)) {
       return { ok: false, wave };
     }
+    // The legacy CANDIDATE_READY closing verdict carried no external-item report.
+    if (cr.verdict === "CANDIDATE_READY" && cr.external_open_items !== undefined) {
+      return { ok: false, wave };
+    }
   }
   const normalizedSessions = sessions.map((session) => {
     if (!session || !byAuthor.has(session.session)) return session;
     const cr = byAuthor.get(session.session);
     const { candidate_ref, candidate_revision, candidate_digest } = cr.candidate;
-    const externalItems = cr.external_open_items !== undefined
-      ? cr.external_open_items
-      : (cr.verdict === "CANDIDATE_READY" ? session.external_open_items : undefined);
+    const reports = [session.external_open_items, cr.external_open_items].filter(items => items !== undefined);
+    const externalItems = reports.every(Array.isArray) ? reports.flat() : null;
     return {
       session: session.session,
       candidate_ref,
@@ -191,7 +194,7 @@ function resolveWaveWithClosingReturns(wave) {
       verdict: cr.verdict,
       inputs: cr.inputs,
       adopted_to: cr.adopted_to,
-      ...(externalItems !== undefined ? { external_open_items: externalItems } : {}),
+      ...(reports.length > 0 ? { external_open_items: externalItems } : {}),
     };
   });
   return { ok: true, wave: { ...wave, sessions: normalizedSessions } };
@@ -269,30 +272,21 @@ function planningSessionsVerdict(wave, candidate, inputDigests, { requireSnapsho
   if (waveClosures !== undefined && !Array.isArray(waveClosures)) {
     return { outcome: "NEEDS_MORE_EVIDENCE", reason: "external_items_open" };
   }
-  const closuresById = new Map();
-  for (const c of waveClosures || []) {
-    if (!c || typeof c !== "object" || Array.isArray(c)) continue;
-    if (nonempty(c.id) && nonempty(c.owner) && c.status === "closed" && c.closed_by === c.owner) {
-      closuresById.set(c.id, c);
-    }
-  }
+  const closes = (closure, item) => closure?.id === item.id && closure.owner === item.owner &&
+    closure.status === "closed" && closure.closed_by === item.owner;
   for (const name of declared) {
     const session = sessions.find((item) => item?.session === name);
     if (!session || session.external_open_items === undefined) continue;
     if (!Array.isArray(session.external_open_items)) {
       return { outcome: "NEEDS_MORE_EVIDENCE", reason: "external_items_open" };
     }
-    for (const item of session.external_open_items) {
-      if (!item || typeof item !== "object" || Array.isArray(item) ||
+    const items = session.external_open_items;
+    if (items.some(item => !item || typeof item !== "object" || Array.isArray(item) ||
           !nonempty(item.id) || !nonempty(item.owner) || !nonempty(item.summary) ||
-          !["open", "closed"].includes(item.status) || item.owner === session.session) {
-        return { outcome: "NEEDS_MORE_EVIDENCE", reason: "external_items_open" };
-      }
-      const inlineClosed = item.status === "closed" && nonempty(item.closed_by) && item.closed_by === item.owner;
-      const waveClosed = closuresById.get(item.id)?.owner === item.owner;
-      if (!inlineClosed && !waveClosed) {
-        return { outcome: "NEEDS_MORE_EVIDENCE", reason: "external_items_open" };
-      }
+          !["open", "closed"].includes(item.status) || item.owner === session.session) ||
+        items.some(item => !items.some(closure => closes(closure, item)) &&
+          !waveClosures?.some(closure => closes(closure, item)))) {
+      return { outcome: "NEEDS_MORE_EVIDENCE", reason: "external_items_open" };
     }
   }
   return null;

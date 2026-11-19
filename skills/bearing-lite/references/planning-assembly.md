@@ -217,7 +217,9 @@ item belongs to the Orchestrator or another author, the author returns
 `status`) rather than `GAPS`. `CANDIDATE_READY` spends no closing return, while
 `hooks/planning-review.cjs` and `hooks/plan-package.cjs` still refuse until
 every listed external item is closed by its declared owner (`status: "closed"`
-with `closed_by` matching `owner`, inline or in `external_closures`). Author
+with `closed_by` matching `owner`, inline or in `external_closures`). Record
+this report on the session. A later closing return leaves earlier items open
+until the same item ID and owner have a closure. Author
 returns check only each author's own and upstream authored artifacts and do not
 depend on generated `implementation.json`; follow the planning return order:
 Orchestrator inputs, then `integration_test`, then verify-only `mbse`, then
@@ -360,8 +362,9 @@ lineage, deterministic closure, and `closing_candidate`—keeping round-1
 (`planning`, append-only closeout). Use
 `node <plugin root>/hooks/plan-package.cjs draft <plan dir>` for draft checks and
 the candidate-bound final freeze when its receipts are complete: every declared
-session `READY` (or a `GAPS` session closed to `READY` through one recorded
-closing return), required artifacts present, and deterministic closure. Earlier specialist returns may be explicitly adopted (`adopted_to`) to the review or closing
+session ready (`READY`, `CANDIDATE_READY` with every external item closed,
+or one recorded closing return that resolves `GAPS`), required artifacts
+present, and deterministic closure. Earlier specialist returns may be explicitly adopted (`adopted_to`) to the review or closing
 candidate when every consumed input in `session.inputs` either matches the actual verified closing
 snapshot or has its digest transition (`before_sha256` to `after_sha256`) proven solely by
 recorded mechanical ID or hash-binding edits in `planning_wave.edit_records[]`; retain the

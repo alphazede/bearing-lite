@@ -287,4 +287,20 @@ describe("model-neutral planning review", () => {
       "PASS"
     );
   });
+
+  it("resolves external closures by item ID and owner regardless of receipt order", () => {
+    const wave = review().planning_wave;
+    wave.sessions[0].verdict = "CANDIDATE_READY";
+    wave.sessions[0].external_open_items = [{ id: "EXT-1", owner: "orchestrator", summary: "Pin the plan", status: "open" }];
+    wave.sessions[1].verdict = "CANDIDATE_READY";
+    wave.sessions[1].external_open_items = [{ id: "EXT-1", owner: "mbse", summary: "Update the register", status: "open" }];
+    wave.external_closures = ["orchestrator", "mbse"].map(owner => ({
+      id: "EXT-1", owner, closed_by: owner, status: "closed",
+    }));
+    assert.equal(core.evaluatePlanningReview(review({ planning_wave: wave })).outcome, "PASS");
+    wave.external_closures.reverse();
+    assert.equal(core.evaluatePlanningReview(review({ planning_wave: wave })).outcome, "PASS");
+    wave.external_closures.pop();
+    assert.equal(core.evaluatePlanningReview(review({ planning_wave: wave })).reason, "external_items_open");
+  });
 });
