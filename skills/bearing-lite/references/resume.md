@@ -28,7 +28,8 @@ Resume runs `node <plugin root>/hooks/scribe-coverage.cjs <journey.json>` and
 lists every untranscribed event it reports (owner decisions, authority
 events, landings) with its id and time. `ORCHESTRATOR_REQUIRED` means the profile
 omits or disables Scribe: Orchestrator records those source-backed events itself.
-`SCRIBE_REQUIRED` sends only missing events to the existing Scribe session on its
+`SCRIBE_REQUIRED` launches a never-launched enabled Scribe once on its frozen
+cadence or sends only missing events to the existing Scribe session on its
 frozen route; `CAPABILITY_GAP` reports an unavailable selected Scribe. Handoff
 (`action_kind: "scribe_coverage"`,
 `mode: "handoff"`) and protected completion in `hooks/closeout.cjs` refuse
@@ -51,7 +52,8 @@ or surfaced as a typed gap, never drafted by the Orchestrator.
 ## Scribe cadence
 
 Scribe is optional; when omitted or disabled, Orchestrator owns transcription.
-When enabled, use one persistent session throughout the Lifecycle, consuming events
+When enabled, launch an enabled Scribe once at the start of the Lifecycle and
+use one persistent session throughout the Lifecycle, consuming events
 or batches by frozen `roles.scribe.cadence`: `event` (default), `phase`, or `lifecycle`.
 Never relaunch it per event, phase or batch, poll it, or invent a Scribe when disabled.
 After a genuine context reset or inactive session, resume from the last durable

@@ -70,7 +70,14 @@ const RECOVERY_CHANNEL =
   "Keep repair, status, owner communication, and safe rollback available; closeout does not block them";
 
 const RECOVERY_SCRIBE_HANDOFF =
-  "Do not render the handoff; complete the listed transcription with Orchestrator when Scribe is off, otherwise continue the existing Scribe session or report its typed capability gap, then retry";
+  "Do not render the handoff; complete the listed transcription with Orchestrator when Scribe is off, otherwise launch a never-launched enabled Scribe on its frozen cadence, continue the existing Scribe session, or report its typed capability gap, then retry";
+
+function scribeCoverageRecovery(coverage) {
+  if (coverage && coverage.outcome === "SCRIBE_REQUIRED") {
+    return "Launch a never-launched enabled Scribe once on its frozen cadence or send these events to the existing Scribe session on its frozen route, then re-run this check; never relaunch per event or phase";
+  }
+  return coverage.recovery;
+}
 
 const RECOVERY_FINAL_FREEZE_HANDOFF =
   "Return to planning. Run node <plugin root>/hooks/plan-package.cjs <plan dir> and record the final freeze receipt";
@@ -217,7 +224,7 @@ function evaluate(input) {
 
     if (scribeOnly) {
       return { ...result("ADVISE", "scribe_coverage:" + scribeCoverage.outcome + ":" + scribeCoverage.reason,
-        scribeCoverage.recovery), scribe_coverage: scribeCoverage };
+        scribeCoverageRecovery(scribeCoverage)), scribe_coverage: scribeCoverage };
     }
 
     const planningVerdict = input.planning_review
@@ -288,7 +295,7 @@ function evaluate(input) {
       return result(
         "REROUTE",
         "scribe_coverage:" + scribeCoverage.outcome + ":" + scribeCoverage.reason,
-        scribeCoverage.recovery
+        scribeCoverageRecovery(scribeCoverage)
       );
     }
 
