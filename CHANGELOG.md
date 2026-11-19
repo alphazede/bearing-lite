@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - Add opt-in Herdr live-wave evidence to plan freeze, wave views, and closeout handoffs, with a shared role reference.
+- Verify Mermaid views in plan freeze without requiring synchronous ESM loading.
 
 - Accept digest-bound Mermaid source views in the plan schema and final freeze.
 
