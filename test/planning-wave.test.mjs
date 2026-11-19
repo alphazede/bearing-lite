@@ -1365,7 +1365,7 @@ describe("Alphazedehq#624 edit_records contract for mechanical hash-binding fixe
 
 describe("Alphazedehq#627 regenerate implementation.json before verify-only author returns", () => {
   it("releases one planning return order with an explicit exception for reading generated files", () => {
-    const entries = read("CHANGELOG.md").split(/\n## /)[1].split("\n")
+    const entries = read("CHANGELOG.md").split("\n")
       .filter(line => line.startsWith("- ") && line.includes("Alphazedehq#627"));
     assert.equal(entries.length, 1);
     assert.match(entries[0], /Orchestrator inputs.*integration_test.*verify-only.*mbse.*regenerat/i);
