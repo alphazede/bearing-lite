@@ -88,7 +88,9 @@ Loop: author → self requirements-quality pass → model and map → self-check
    absent: `format` `svg` or `png` with `path` relative to
    `implementation.json`, or `format` `svg` with `inline`, plus `mode`,
    `source`, `revision`, `viewpoint`, `trace`, `limitations`, `render_status`,
-   and view `alt`; inactive or not-applicable gives `reason` and no view). Write
+   and view `alt`; inactive or not-applicable gives `reason` and no view).
+   Write `trace` as one string containing comma-separated requirement or decision
+   IDs, for example `"trace": "REQ-001, REQ-002"`. Write
    for the owner in plain English, one claim per sentence, citing `path:line` or
    a requirement ID. Close every finding (fix in your own artifacts or name its
    owner and proposed fix with an id and source citation).

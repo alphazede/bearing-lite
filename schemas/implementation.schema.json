@@ -263,7 +263,10 @@
         "revision": { "type": "string" },
         "digest": { "type": "string" },
         "viewpoint": { "type": "string" },
-        "trace": { "type": "string" },
+        "trace": {
+          "type": "string",
+          "description": "Comma-separated requirement or decision IDs."
+        },
         "limitations": { "type": "string" },
         "render_status": { "type": "string" },
         "required": { "type": "boolean" },

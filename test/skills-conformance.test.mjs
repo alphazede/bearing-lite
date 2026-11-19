@@ -574,6 +574,11 @@ describe("CMD-SKILLS-01 skills-conformance (SEIT-SKILLS-01, SEIT-ACTIVATION-01)"
     }
   });
 
+  it("RC6-5 MBSE specifies a single string for the Manifest model trace", () => {
+    const mbse = readFileSync(path.join(SKILLS_DIR, "mbse", "SKILL.md"), "utf8");
+    assert.match(mbse, /`trace` as (?:a|one) string\b/, "MBSE must tell authors how to serialize multiple trace IDs");
+  });
+
   it("Test Engineer keeps only Assurance; MBSE and Integration and Test own planning and state plan-package rules", () => {
     const skillPath = path.join(SKILLS_DIR, "test-engineer", "SKILL.md");
     assert.ok(existsSync(skillPath), "test-engineer/SKILL.md must exist");
