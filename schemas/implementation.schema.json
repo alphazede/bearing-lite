@@ -125,6 +125,28 @@
         "status": { "const": "closed" }
       }
     },
+    "mechanicalEditRecord": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["path", "kind", "field", "before", "after", "before_sha256", "after_sha256", "reason"],
+      "description": "Purely mechanical ID or hash-binding fix applied during assembly without changing meaning (#624).",
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "kind": { "type": "string", "enum": ["hash_binding", "id_binding"] },
+        "field": { "type": "string", "minLength": 1 },
+        "before": { "type": "string", "minLength": 1 },
+        "after": { "type": "string", "minLength": 1 },
+        "before_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "after_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "reason": { "type": "string", "minLength": 1 },
+        "candidate": {
+          "oneOf": [
+            { "type": "string", "minLength": 1 },
+            { "$ref": "#/$defs/planningCandidate" }
+          ]
+        }
+      }
+    },
     "slice": {
       "type": "object",
       "additionalProperties": true,
@@ -646,6 +668,10 @@
               "type": "array",
               "items": { "$ref": "#/$defs/externalClosure" }
             },
+            "edit_records": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/mechanicalEditRecord" }
+            },
             "reviews": {
               "type": "integer",
               "minimum": 0,
@@ -764,6 +790,10 @@
               "external_closures": {
                 "type": "array",
                 "items": { "$ref": "#/$defs/externalClosure" }
+              },
+              "edit_records": {
+                "type": "array",
+                "items": { "$ref": "#/$defs/mechanicalEditRecord" }
               },
               "reviews": { "type": "integer", "minimum": 0, "maximum": 1 },
               "repairs": { "type": "integer", "minimum": 0, "maximum": 1 },

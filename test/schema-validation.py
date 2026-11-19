@@ -1415,6 +1415,34 @@ def cases() -> list[tuple[str, str, str, object, str]]:
                 ]
             }
         ), "reject"),
+        ("SEIT-EMV-022", "implementation_planning_wave_edit_records_accepted", "implementation", planning_contract_implementation(
+            wave={
+                "edit_records": [{
+                    "path": "seit.json",
+                    "kind": "hash_binding",
+                    "field": "source_baseline.planning_inputs[0].sha256",
+                    "before": "0" * 64,
+                    "after": SYN_DIGEST,
+                    "before_sha256": "1" * 64,
+                    "after_sha256": SYN_DIGEST,
+                    "reason": "Refresh source hash after assembly.",
+                }]
+            }
+        ), "accept"),
+        ("SEIT-EMV-022", "implementation_planning_wave_edit_records_meaning_kind_rejected", "implementation", planning_contract_implementation(
+            wave={
+                "edit_records": [{
+                    "path": "seit.json",
+                    "kind": "meaning",
+                    "field": "proof_cases[0].expected_result",
+                    "before": "a",
+                    "after": "b",
+                    "before_sha256": "1" * 64,
+                    "after_sha256": SYN_DIGEST,
+                    "reason": "Disguised meaning change.",
+                }]
+            }
+        ), "reject"),
         ("SEIT-EMV-022", "implementation_planning_corrections_rc2_sessions_accepted", "implementation",
             planning_contract_implementation() | {
                 "journey_settings": planning_contract_implementation()["journey_settings"] | {

@@ -633,7 +633,7 @@ function checkWaveRecord(wave, { expectedDigest, isLatest, stage = "final", dir,
         wave,
         closing,
         isLatest ? inputDigests : wave.input_digests,
-        { requireSnapshot: isLatest || correctionId !== null || wave.input_digests !== undefined },
+        { requireSnapshot: isLatest || correctionId !== null || wave.input_digests !== undefined, dir },
       );
       if (sessionVerdict) {
         push({
@@ -685,10 +685,11 @@ function checkWaveRecord(wave, { expectedDigest, isLatest, stage = "final", dir,
     if (!isDeepStrictEqual(wave.required_sessions, review.planning_wave?.required_sessions) ||
         !isDeepStrictEqual(wave.sessions, review.planning_wave?.sessions) ||
         !isDeepStrictEqual(wave.closing_returns ?? null, review.planning_wave?.closing_returns ?? null) ||
-        !isDeepStrictEqual(wave.external_closures ?? null, review.planning_wave?.external_closures ?? null)) {
+        !isDeepStrictEqual(wave.external_closures ?? null, review.planning_wave?.external_closures ?? null) ||
+        !isDeepStrictEqual(wave.edit_records ?? null, review.planning_wave?.edit_records ?? null)) {
       push({ code: "planning_wave_session_provenance_mismatch" });
     }
-    const sessionVerdict = planningSessionsVerdict(wave, review.candidate, review.input_digests);
+    const sessionVerdict = planningSessionsVerdict(wave, review.candidate, review.input_digests, { dir });
     if (sessionVerdict) {
       push({
         code: sessionVerdict.reason === "external_items_open"

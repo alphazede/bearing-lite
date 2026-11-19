@@ -1284,6 +1284,20 @@ describe("Alphazedehq#626 CANDIDATE_READY for externally owned open items", () =
   });
 });
 
+describe("Alphazedehq#624 edit_records contract for mechanical hash-binding fixes and adopted returns", () => {
+  it("documents edit_records alignment with adopted() across planning-assembly and planning-and-design", () => {
+    for (const rel of ["skills/bearing-lite/references/planning-assembly.md", "skills/planning-and-design/SKILL.md"]) {
+      operatorInstruction(rel, [
+        /edit_records/i,
+        /before_sha256/,
+        /after_sha256/,
+        /adopted/i,
+        /meaning/i,
+      ], /\n\s*\n/);
+    }
+  });
+});
+
 function operatorInstruction(rel, expectations, breakAt = /(?<=[.!?])\s+/) {
   const parts = read(rel).split(/\n\s*\n/).flatMap(paragraph => paragraph
     .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
