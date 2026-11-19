@@ -112,8 +112,26 @@ function repoRoot(dir) {
   }
 }
 
-function readJson(file) {
-  return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, "utf8")) : null;
+function withFilePath(error, filePath) {
+  if (error && typeof error === "object" && !error.filePath && filePath) error.filePath = filePath;
+  return error;
+}
+
+function readFileChecked(file, label = file) {
+  try {
+    return fs.readFileSync(file);
+  } catch (error) {
+    throw withFilePath(error, label);
+  }
+}
+
+function readJson(file, label = file) {
+  if (!fs.existsSync(file)) return null;
+  try {
+    return JSON.parse(fs.readFileSync(file, "utf8"));
+  } catch (error) {
+    throw withFilePath(error, label);
+  }
 }
 
 function verifyDigests(dir) {
@@ -122,8 +140,8 @@ function verifyDigests(dir) {
     if (!fs.existsSync(path.join(dir, name))) findings.push({ code: "missing_artifact", path: name });
   }
   if (findings.length) return { manifest_digest: null, findings };
-  const seit = readJson(path.join(dir, "seit.json"));
-  const implementation = readJson(path.join(dir, "implementation.json"));
+  const seit = readJson(path.join(dir, "seit.json"), "seit.json");
+  const implementation = readJson(path.join(dir, "implementation.json"), "implementation.json");
   const root = repoRoot(dir);
   const inputs = seit?.source_baseline?.planning_inputs;
   if (!Array.isArray(inputs) || !inputs.length) {
@@ -141,7 +159,7 @@ function verifyDigests(dir) {
       findings.push({ code: "missing_input", path: input.path });
       continue;
     }
-    const digest = sha256(fs.readFileSync(file));
+    const digest = sha256(readFileChecked(file, input.path));
     actual.push(digest);
     input_digests.push({ path: input.path, sha256: digest });
     if (digest !== input.sha256) {
@@ -149,7 +167,7 @@ function verifyDigests(dir) {
     }
   }
   // The manifest binds the planning inputs and seit.json itself (#70).
-  const seitDigest = sha256(fs.readFileSync(path.join(dir, "seit.json")));
+  const seitDigest = sha256(readFileChecked(path.join(dir, "seit.json"), "seit.json"));
   actual.push(seitDigest);
   input_digests.push({ path: path.relative(root, path.join(dir, "seit.json")), sha256: seitDigest });
   const manifest_digest = sha256(actual.join("\n"));
@@ -313,18 +331,45 @@ function checkIntegrationStepRefs(implementation, findings = []) {
   return findings;
 }
 
+/** #628: declared plan JSON artifacts whose frozen-hash maps freeze() inspects. */
+function declaredFrozenHashArtifacts(dir, seit, implementation) {
+  const declared = new Set([
+    "implementation.json",
+    "seit.json",
+    "authority.json",
+    "plan-integration.json",
+  ]);
+  const root = repoRoot(dir);
+  const base = path.resolve(dir);
+  const addIfInDir = (rel) => {
+    if (typeof rel !== "string" || !rel.endsWith(".json")) return;
+    for (const candidate of [path.resolve(dir, rel), path.resolve(root, rel)]) {
+      if (path.dirname(candidate) === base) declared.add(path.basename(candidate));
+    }
+  };
+  for (const input of Array.isArray(seit?.source_baseline?.planning_inputs) ? seit.source_baseline.planning_inputs : []) {
+    addIfInDir(input?.path);
+  }
+  addIfInDir(implementation?.journey_settings?.planning_wave?.review_receipt?.path);
+  return [...declared];
+}
+
 /** #121: live frozen-content hashes must match the files they name. */
-function checkFrozenHashes(dir, findings = []) {
+function checkFrozenHashes(dir, findings = [], declaredNames = null) {
   const root = repoRoot(dir);
   let names = [];
-  try {
-    names = fs.readdirSync(dir);
-  } catch {
-    return findings;
+  if (Array.isArray(declaredNames)) {
+    names = declaredNames;
+  } else {
+    try {
+      names = fs.readdirSync(dir);
+    } catch {
+      return findings;
+    }
   }
   for (const name of names) {
     if (!name.endsWith(".json")) continue;
-    const data = readJson(path.join(dir, name));
+    const data = readJson(path.join(dir, name), name);
     const maps = [];
     if (data?.source_file_hashes && typeof data.source_file_hashes === "object") {
       maps.push(data.source_file_hashes);
@@ -344,7 +389,7 @@ function checkFrozenHashes(dir, findings = []) {
           findings.push({ code: "frozen_hash_missing", path: rel, from: name });
           continue;
         }
-        const actual = sha256(fs.readFileSync(file));
+        const actual = sha256(readFileChecked(file, rel));
         if (actual !== recorded) {
           findings.push({
             code: "frozen_hash_mismatch",
@@ -385,9 +430,9 @@ const DATED_RECEIPT_LINE = /^\d{4}-\d{2}-\d{2}\s+receipt\b/i;
 
 /** DES-135.01 (Pin-hygiene): live pins across the repository write set match the recorded baseline. */
 function checkLivePins(dir, findings = []) {
-  const implementation = readJson(path.join(dir, "implementation.json"));
+  const implementation = readJson(path.join(dir, "implementation.json"), "implementation.json");
   if (!implementation) return findings;
-  const authority = readJson(path.join(dir, "authority.json"));
+  const authority = readJson(path.join(dir, "authority.json"), "authority.json");
   // IE-F1: fail closed only when the package declares or requires a register
   // (specification journey or authority.json carrying a register entry);
   // packages with no register skip the live-pin baseline check cleanly.
@@ -778,7 +823,7 @@ function checkBoundaryContract(implementation, seit) {
 /** Final assembly must close the requirements-stage pending case bindings. */
 function checkFinalRegister(dir, seit, implementation) {
   const settings = implementation?.journey_settings || {};
-  const authority = readJson(path.join(dir, "authority.json"));
+  const authority = readJson(path.join(dir, "authority.json"), "authority.json");
   if (settings.journey_type !== "specification" && settings.requirement_register == null && authority?.requirement_register == null) return [];
   const register = settings.requirement_register ?? authority?.requirement_register?.path;
   if (typeof register !== "string" || !register.endsWith(".sdoc")) return [{ code: "missing_requirement_register" }];
@@ -787,7 +832,15 @@ function checkFinalRegister(dir, seit, implementation) {
     typeof input?.path === "string" && (input.path.endsWith("-technical-plan.md") || path.basename(input.path) === "plan.md"));
   if (plans.length !== 1) return [{ code: "register_precheck_context_invalid", count: plans.length }];
   const root = repoRoot(dir);
-  const result = checkRegisterFiles({ registerPath: path.resolve(root, register), planPath: path.resolve(root, plans[0].path), root, stage: "final", seitPath: path.join(dir, "seit.json") });
+  const regAbs = path.resolve(root, register);
+  const planAbs = path.resolve(root, plans[0].path);
+  let result;
+  try {
+    result = checkRegisterFiles({ registerPath: regAbs, planPath: planAbs, root, stage: "final", seitPath: path.join(dir, "seit.json") });
+  } catch (error) {
+    const offending = error?.path === planAbs ? plans[0].path : register;
+    throw withFilePath(error, offending);
+  }
   return result.findings.map(finding => ({ code: "register_precheck_failed", ...finding }));
 }
 
@@ -1041,8 +1094,8 @@ function checkSerialChains(implementation) {
 function freeze(dir, { stage = "final" } = {}) {
   try {
     const digests = verifyDigests(dir);
-    const seit = readJson(path.join(dir, "seit.json"));
-    const implementation = readJson(path.join(dir, "implementation.json"));
+    const seit = readJson(path.join(dir, "seit.json"), "seit.json");
+    const implementation = readJson(path.join(dir, "implementation.json"), "implementation.json");
     const findings = [
       ...(implementation ? [
         ...checkReviewRounds(implementation),
@@ -1059,14 +1112,27 @@ function freeze(dir, { stage = "final" } = {}) {
       ...checkDuplicateGates(seit),
       ...checkIntegrationStepRefs(implementation),
       ...checkSelectedControls(implementation, seit),
-      ...checkFrozenHashes(dir),
+      ...checkFrozenHashes(dir, [], declaredFrozenHashArtifacts(dir, seit, implementation)),
       ...checkLivePins(dir),
       ...digests.findings,
     ];
     const blocking = findings.some((f) => f && f.blocking !== false);
     return { outcome: blocking ? "FAIL" : "PASS", stage, manifest_digest: digests.manifest_digest, findings };
   } catch (error) {
-    return { outcome: "FAIL", stage, manifest_digest: null, findings: [{ code: "planning_input_unreadable", reason: error.code || "INVALID_INPUT" }] };
+    const rawPath = error?.filePath || error?.path;
+    const filePath = typeof rawPath === "string" && rawPath
+      ? (path.isAbsolute(rawPath) ? path.relative(dir, rawPath) || path.basename(rawPath) : rawPath)
+      : undefined;
+    return {
+      outcome: "FAIL",
+      stage,
+      manifest_digest: null,
+      findings: [{
+        code: "planning_input_unreadable",
+        ...(filePath ? { path: filePath } : {}),
+        reason: error.code || "INVALID_INPUT",
+      }],
+    };
   }
 }
 
