@@ -949,6 +949,22 @@ describe("Alphazedehq#603 Integration and Test run-once command check", () => {
   });
 });
 
+describe("Alphazedehq#633 fail-able SEIT command check", () => {
+  it("requires proving each frozen command can fail on a seeded bad input, or recording why not", () => {
+    const skill = read("skills/integration-test/SKILL.md");
+    const selfCheck = skill.slice(skill.indexOf("**Self-check and deltas"), skill.indexOf("**Plan-package checker rules")).replace(/\s+/g, " ");
+    const ret = skill.slice(skill.indexOf("## Return and boundaries")).replace(/\s+/g, " ");
+    assert.match(selfCheck, /vacuous/i);
+    assert.match(selfCheck, /expected input/i);
+    assert.match(selfCheck, /seeded bad input/i);
+    assert.match(selfCheck, /can fail|fail-able/i);
+    assert.match(selfCheck, /record[^.]*(?:reason|why)/i);
+    assert.match(ret, /expected input/i);
+    assert.match(ret, /seeded bad input/i);
+    assert.match(ret, /can fail|cannot/i);
+  });
+});
+
 describe("Alphazedehq#605 independent validation of a single-run receipt under one-run budget", () => {
   it("names the form and when it applies in skills/integration-test, skills/test-engineer, and verification.md", () => {
     for (const rel of [
