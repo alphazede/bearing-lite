@@ -61,7 +61,11 @@ owner question box (`OWNER_DECISION_REQUIRED`), even under delegation.
    author-known relaunch budget (`0` relaunches), apply purely mechanical ID and
    hash binding fixes in-session and record each edit in an edit record; never
    rewrite meaning silently—any change of meaning returns to the owning author
-   (`mbse` or `integration_test`) under an authorized return, and missing
+   (`mbse` or `integration_test`, including a meaning defect found at assembly)
+   under the **one closing return** authorized by the Planning Orchestrator (the
+   same closing return path used for a `GAPS` return, resuming the author's own
+   session once—which does not count as a relaunch—recorded with `author`,
+   `reason`, `items`, `candidate`, and resulting `READY`), and missing
    specialist facts stay gaps returned to their owner, never authored by the
    Orchestrator itself.
 6. Requested planning review opens only after `hooks/planning-review.cjs`
