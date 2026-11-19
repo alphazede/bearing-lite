@@ -57,6 +57,27 @@ function bindTask(dir, sessionId, extraLines = "") {
   );
 }
 
+function observeAgyWrite(ws, toolCall) {
+  const evaluatorDir = path.join(ws, "skills/test-engineering/hooks");
+  mkdirSync(evaluatorDir, { recursive: true });
+  assert.equal(spawnSync("git", ["init", "-q"], { cwd: ws }).status, 0);
+  writeFileSync(path.join(evaluatorDir, "te-evaluator.cjs"), `
+    exports.evaluateTestWrite = (request) => {
+      require("node:fs").writeFileSync(${JSON.stringify(path.join(ws, "write-request.json"))}, JSON.stringify(request));
+      return { verdict: "ALLOW" };
+    };
+    exports.evaluateCompletion = () => ({ verdict: "ALLOW" });
+  `);
+  const { out } = runAgyHook("te-write", {
+    conversationId: "conv-write-request",
+    workspacePaths: [ws],
+    hookEventName: "PreToolUse",
+    toolCall,
+  }, { BEARING_TEST_ENGINEERING_SELECTED: "1" });
+  assert.deepEqual(out, { decision: "allow" });
+  return JSON.parse(readFileSync(path.join(ws, "write-request.json"), "utf8"));
+}
+
 describe("Alphazedehq#636 AGY root hooks.json and adapter", () => {
   let tmp;
 
@@ -170,6 +191,19 @@ describe("Alphazedehq#636 AGY root hooks.json and adapter", () => {
       });
       assert.equal(denied.out.decision, "deny", toolCall.name);
       assert.match(String(denied.out.reason), /integration_test/);
+    }
+  });
+
+  it("BL-01 forwards the native primary and all reported AGY paths to the evaluator", () => {
+    const paths = { Path: "notes.md", TargetFile: "summary.md", path: "outline.md" };
+    for (const [name, expected] of [
+      ["write_file", "notes.md"], ["edit_file", "notes.md"],
+      ["write_to_file", "summary.md"], ["replace_file_content", "summary.md"],
+      ["multi_replace_file_content", "summary.md"],
+    ]) {
+      const request = observeAgyWrite(path.join(tmp, name), { name, args: paths });
+      assert.equal(request.tool_input.file_path, expected, name);
+      assert.deepEqual(request.target_paths, ["notes.md", "outline.md", "summary.md"], name);
     }
   });
 
