@@ -1412,6 +1412,90 @@ describe("Alphazedehq#627 regenerate implementation.json before verify-only auth
     writeFileSync(staleImplPath, JSON.stringify(staleImpl));
     assert.deepEqual(freeze(pkg.dir).findings, []);
   });
+
+  it("states the field-test return order (Orchestrator inputs, then integration_test, then verify-only mbse, then regeneration) across planning and author skills", () => {
+    for (const rel of [
+      "skills/bearing-lite/references/planning-assembly.md",
+      "skills/planning-and-design/SKILL.md",
+      "skills/mbse/SKILL.md",
+      "skills/integration-test/SKILL.md",
+    ]) {
+      operatorInstruction(rel, [
+        /Orchestrator inputs.*integration_test.*verify-only.*mbse.*regenerat/i,
+      ], /\n\s*\n/);
+    }
+  });
+
+  it("accepts the field-test sequence (Orchestrator inputs, then integration_test, then verify-only mbse, then regeneration)", () => {
+    const pkg = planPackage((doc, digest) => {
+      doc.journey_settings.planning_wave = unreviewedPlanningWave(digest, ["integration_test", "mbse"]);
+      doc.journey_settings.planning_wave.sessions[0].verdict = "CANDIDATE_READY";
+      doc.journey_settings.planning_wave.sessions[0].external_open_items = [{
+        id: "EXT-ORCH-1",
+        owner: "orchestrator",
+        summary: "Update plan.md input",
+        status: "open",
+      }];
+      doc.journey_settings.planning_wave.sessions[1].verdict = "CANDIDATE_READY";
+      doc.journey_settings.planning_wave.sessions[1].external_open_items = [{
+        id: "EXT-IT-1",
+        owner: "integration_test",
+        summary: "Bind SEIT case",
+        status: "open",
+      }];
+    });
+    const implPath = path.join(pkg.dir, "implementation.json");
+    const impl = JSON.parse(readFileSync(implPath, "utf8"));
+    const baseCandidate = structuredClone(impl.journey_settings.planning_wave.closing_candidate);
+
+    // 1. Orchestrator inputs updated first.
+    const updatedPlan = "# Plan\nOrchestrator inputs updated.\n";
+    writeFileSync(path.join(pkg.dir, "plan.md"), updatedPlan);
+    impl.journey_settings.planning_wave.external_closures = [{
+      id: "EXT-ORCH-1",
+      owner: "orchestrator",
+      closed_by: "orchestrator",
+      status: "closed",
+    }];
+
+    // 2. integration_test updates seit.json and closes EXT-IT-1.
+    const seitPath = path.join(pkg.dir, "seit.json");
+    const seitObj = JSON.parse(readFileSync(seitPath, "utf8"));
+    seitObj.source_baseline.planning_inputs = [{ path: "plan.md", sha256: sha(updatedPlan) }];
+    const updatedSeit = JSON.stringify(seitObj);
+    writeFileSync(seitPath, updatedSeit);
+    const afterItDigest = sha([sha(updatedPlan), sha(updatedSeit)].join("\n"));
+    const afterItCandidate = { candidate_ref: "plan", candidate_revision: "r1", candidate_digest: afterItDigest };
+    impl.journey_settings.planning_wave.sessions[0].closing_return = {
+      author: "integration_test",
+      reason: "close_gaps",
+      items: ["Updated seit.json against Orchestrator inputs"],
+      candidate: afterItCandidate,
+      verdict: "READY",
+    };
+    impl.journey_settings.planning_wave.external_closures.push({
+      id: "EXT-IT-1",
+      owner: "integration_test",
+      closed_by: "integration_test",
+      status: "closed",
+    });
+
+    // 3. verify-only mbse verifies against authored inputs (not stale implementation.json).
+    impl.journey_settings.planning_wave.sessions[1].closing_return = {
+      author: "mbse",
+      reason: "verify_only",
+      items: ["Verified MBSE artifacts after Orchestrator inputs and integration_test"],
+      candidate: afterItCandidate,
+      verdict: "READY",
+    };
+
+    // 4. Regeneration of implementation.json to the final candidate digest happens last.
+    impl.journey_settings.planning_review.candidate_digest = afterItDigest;
+    impl.journey_settings.planning_wave.candidate_digest = afterItDigest;
+    impl.journey_settings.planning_wave.closing_candidate = afterItCandidate;
+    writeFileSync(implPath, JSON.stringify(impl));
+    assert.deepEqual(freeze(pkg.dir).findings, []);
+  });
 });
 
 function operatorInstruction(rel, expectations, breakAt = /(?<=[.!?])\s+/) {

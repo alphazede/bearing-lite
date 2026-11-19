@@ -218,11 +218,13 @@ item belongs to the Orchestrator or another author, the author returns
 `hooks/planning-review.cjs` and `hooks/plan-package.cjs` still refuse until
 every listed external item is closed by its declared owner (`status: "closed"`
 with `closed_by` matching `owner`, inline or in `external_closures`). Author
-returns check only each author's own artifacts and do not depend on generated
-`implementation.json`; whenever a verify-only author return inspects
-`implementation.json`, the Planning Orchestrator must regenerate
-`implementation.json` first and bind the packet to that regenerated candidate so
-the verify-only return never reads a stale copy.
+returns check only each author's own and upstream authored artifacts and do not
+depend on generated `implementation.json`; follow the planning return order:
+Orchestrator inputs, then `integration_test`, then verify-only `mbse`, then
+regeneration of `implementation.json` (and if any verify-only author return
+explicitly inspects `implementation.json`, regenerate `implementation.json` first
+and bind the packet to that regenerated candidate so it never reads a stale
+copy).
 
 ### Author-known deltas (#221)
 
