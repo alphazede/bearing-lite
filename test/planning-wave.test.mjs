@@ -995,18 +995,24 @@ describe("Alphazedehq#608 ready-slice orchestration and planning guidance", () =
   });
 });
 
-describe("Alphazedehq#611 copy-only or read-only live-host phase tier rule", () => {
-  it("communicates the conditions and observations for the standard-tier exception", () => {
+describe("Alphazedehq#611 per-operation copy/read live-host phase tier rule", () => {
+  it("communicates per-operation classification, conditions, and observations for the standard-tier exception", () => {
     for (const rel of [
       "skills/bearing-lite/references/planning-assembly.md",
       "skills/bearing-lite/references/verification.md",
+      "skills/test-engineer/SKILL.md",
     ]) {
       operatorInstruction(rel, [
-        /copy.only|read.only/i, /\bstandard\b/i, /\bbefore\b/i, /\bafter\b/i,
+        /per[- ]operation|every planned operation/i,
+        /copy or (a )?read/i,
+        /\bstandard\b/i, /\bbefore\b/i, /\bafter\b/i,
         /live.service/i, /observ/i, /\b(one|single) implementer\b/i,
         /\b(one|single) review\b/i, /\b(no|without) separate assurance\b/i,
       ], /\n\s*\n/);
-      operatorInstruction(rel, [/delet\w* or mutat\w*/i, /\b(existing|original|prior)\b|as before/i]);
+      operatorInstruction(rel, [
+        /other operation|another operation|delet\w* or mutat\w*/i,
+        /\b(existing|original|prior|previous)\b|as before/i,
+      ]);
     }
   });
 });

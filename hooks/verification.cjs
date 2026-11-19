@@ -18,7 +18,7 @@ const STAGES = Object.freeze([
 const EXPECTED = Object.freeze(["VERIFIED", "REFUTED"]);
 const EVIDENCE_TIERS = Object.freeze(["observed", "derived"]);
 const PROCESS_TIERS = Object.freeze(["light", "standard", "full"]);
-const NON_MUTATING_OPERATIONS = new Set(["copy", "read", "observe", "inspect"]);
+const COPY_OR_READ_OPERATIONS = new Set(["copy", "read"]);
 const SHA256 = /^[0-9a-f]{64}$/;
 const CANDIDATE_FIELDS = Object.freeze([
   "candidate_ref",
@@ -412,18 +412,15 @@ function resolveProcessTier(phase) {
       return unchanged;
     }
     if (
-      phase.operations !== undefined &&
-      (!Array.isArray(phase.operations) || phase.operations.some((op) => !nonempty(op)))
+      !Array.isArray(phase.operations) ||
+      phase.operations.length === 0 ||
+      phase.operations.some((op) => !nonempty(op))
     ) {
       return unchanged;
     }
-    const ops = Array.isArray(phase.operations)
-      ? phase.operations.map((op) => op.trim().toLowerCase()) : [];
+    const ops = phase.operations.map((op) => op.trim().toLowerCase());
     if (phase.deletes === true || phase.mutates === true ||
-        ops.some((op) => !NON_MUTATING_OPERATIONS.has(op))) {
-      return unchanged;
-    }
-    if (phase.copy_only !== true && phase.read_only !== true && ops.length === 0) {
+        ops.some((op) => !COPY_OR_READ_OPERATIONS.has(op))) {
       return unchanged;
     }
     return {

@@ -43,8 +43,9 @@ established in Alignment/Scope (unless the owner explicitly specifies a tier):
 - **`standard`:** moderate-risk multi-module feature or behavioral change within
   settled architecture and contracts without new trust boundaries, protocol
   state machines, multi-wave coordination, or specification-register authoring.
-  Also applies to a **copy-only or read-only** phase that crosses into a host
-  with **live services** (and carries no other `full`-tier risk factor) when
+  Also applies to a live-host phase classified per operation (not by a
+  whole-phase `copy-only` or `read-only` label) when every planned operation
+  is a copy or a read (and the phase carries no other `full`-tier risk factor),
   paired with a required **before and after live-service observation** (one
   implementer, one review, no separate assurance). Apply the
   [live-host tier exception](verification.md#process-tier-resolution) only
@@ -61,8 +62,9 @@ established in Alignment/Scope (unless the owner explicitly specifies a tier):
   full enabled planning wave (`mbse` and `integration_test` in parallel from
   the frozen requirement skeleton) and full declared execution/assurance cadence.
 
-Use the existing risk rule and cadence for phases that delete or mutate, and
-preserve any explicit owner tier.
+Use the existing risk rule and prior tier cadence for phases with any other
+operation (including phases that delete or mutate), and preserve any explicit
+owner tier.
 
 ## Planning order
 

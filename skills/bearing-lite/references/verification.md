@@ -108,16 +108,19 @@ stated risk rule ([planning assembly](planning-assembly.md#process-tiers-and-sta
 1. Apply the existing risk rule and pass its result as `prior_tier`. Preserve
    any explicit owner tier. Set `live_host_only_full_risk: true` only when
    crossing a host with **live services** is the sole reason for `full`.
-   Supply `live_host: true` and the known operation scope (`copy_only`,
-   `read_only`, or an `operations` list of copy, read, observe, or inspect).
-2. An eligible **copy-only or read-only** phase may resolve to
-  `standard` with a required **before and after live-service observation**
-  (`live_service_observation: { required: true, stages: ["before", "after"] }`):
-  one implementer, one review, and **no separate assurance** (`separate_assurance: false`).
+   Supply `live_host: true` and a non-empty `operations` list naming every
+   planned operation; classify **per operation**, never by a whole-phase
+   `copy_only` or `read_only` label.
+2. An eligible live-host phase where **every planned operation is a copy or a
+   read** (`operations` entries are `copy` or `read` only) resolves to
+   `standard` with a required **before and after live-service observation**
+   (`live_service_observation: { required: true, stages: ["before", "after"] }`):
+   one implementer, one review, and **no separate assurance** (`separate_assurance: false`).
    The Implementation Orchestrator schedules both observations around the
    host operation and includes both results in the existing review evidence.
-3. A phase that **deletes or mutates**, carries other `full`-tier risk
-   factors, or has an unconfirmed scope retains the original tier and cadence.
+3. A phase with any other operation (or missing `operations`), or that
+   **deletes or mutates**, carries other `full`-tier risk factors, or has an
+   unconfirmed scope retains the prior tier and cadence.
    A `tier_unchanged` result carries the original tier. If the helper has no
    prior tier, apply the existing risk rule.
 
