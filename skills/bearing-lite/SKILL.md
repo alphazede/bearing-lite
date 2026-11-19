@@ -43,8 +43,8 @@ explicit setup or catalog-edit request uses [onboard-bearing](../onboard-bearing
    Consult before a major decision (with options and a leaning in hand), when
    stuck after two genuine attempts, facing unexplained behavior, or preparing
    a workaround. Also consult before declaring a task done and when the owner asks.
-   The Implementation Orchestrator owns new waves. For a frozen legacy
-   Coordinator assignment, use its pinned runtime or obtain an explicit handover
+   The Implementation Orchestrator owns new waves.
+   For a frozen legacy Coordinator assignment, use its pinned runtime or obtain an explicit handover
    before continuing.
 5. **Review:** dispatch the owner-requested review immediately after the
    recorded boundary passes deterministic checks. Use the approved
