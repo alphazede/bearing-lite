@@ -810,6 +810,34 @@ describe("Alphazedehq#593 one closing return for GAPS", () => {
 });
 
 describe("Alphazedehq#595 meaning defect at assembly uses one closing return", () => {
+  for (const [label, verdict, adoptClosingReturn, expected] of [
+      ["no closing verdict", undefined, true, "FAIL"],
+      ["original adoption only", "READY", false, "FAIL"],
+      ["closing return adoption", "READY", true, "PASS"],
+  ]) {
+    it(`checks the closing return's own verdict and adoption evidence: ${label}`, () => {
+      const pkg = planPackage((doc, digest) => {
+        const wave = unreviewedPlanningWave(digest, ["integration_test"]);
+        const earlier = { candidate_ref: "plan", candidate_revision: "r0", candidate_digest: "2".repeat(64) };
+        const adoption = {
+          adopted_to: wave.closing_candidate,
+          inputs: [{ path: "plan.md", sha256: sha("# Plan\n") }],
+        };
+        wave.sessions[0] = {
+          session: "integration_test", verdict: "READY", ...earlier, ...adoption,
+          closing_return: {
+            author: "integration_test", reason: "meaning_defect", items: ["Check accepts the wrong outcome"],
+            candidate: { ...earlier, candidate_revision: "r0-corrected", candidate_digest: "3".repeat(64) },
+            verdict, ...(adoptClosingReturn ? adoption : {}),
+          },
+        };
+        doc.journey_settings.planning_wave = wave;
+      });
+      const result = freeze(pkg.dir);
+      assert.equal(result.outcome, expected, `${label}: ${JSON.stringify(result.findings)}`);
+    });
+  }
+
   it("names one closing return and its record in both planning-assembly.md and planning-and-design/SKILL.md", () => {
     const assembly = read("skills/bearing-lite/references/planning-assembly.md").replace(/\s+/g, " ");
     const pd = read("skills/planning-and-design/SKILL.md").replace(/\s+/g, " ");

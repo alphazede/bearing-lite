@@ -78,23 +78,22 @@ function resolveWaveWithClosingReturns(wave) {
       return { ok: false, wave };
     }
     if (!sameCandidate(cr.candidate, cr.candidate)) return { ok: false, wave };
-    const effectiveVerdict = cr.verdict !== undefined
-      ? cr.verdict
-      : (session.verdict === "GAPS" ? null : session.verdict);
-    if (!nonempty(effectiveVerdict) || !POLICY.planning_session_ready_verdicts.includes(effectiveVerdict)) {
+    if (!POLICY.planning_session_ready_verdicts.includes(cr.verdict)) {
       return { ok: false, wave };
     }
   }
   const normalizedSessions = sessions.map((session) => {
     if (!session || !byAuthor.has(session.session)) return session;
     const cr = byAuthor.get(session.session);
-    const effectiveVerdict = cr.verdict !== undefined ? cr.verdict : session.verdict;
+    const { candidate_ref, candidate_revision, candidate_digest } = cr.candidate;
     return {
-      ...session,
-      ...cr.candidate,
-      verdict: effectiveVerdict,
-      ...(cr.inputs !== undefined ? { inputs: cr.inputs } : {}),
-      ...(cr.adopted_to !== undefined ? { adopted_to: cr.adopted_to } : {}),
+      session: session.session,
+      candidate_ref,
+      candidate_revision,
+      candidate_digest,
+      verdict: cr.verdict,
+      inputs: cr.inputs,
+      adopted_to: cr.adopted_to,
     };
   });
   return { ok: true, wave: { ...wave, sessions: normalizedSessions } };
