@@ -9,6 +9,10 @@ pass; it does not introduce a separate checker.
 node hooks/register-precheck.cjs --stage requirements <draft.sdoc> <workspace.md> <repository-root>
 ```
 
+Both stages use repository-root-relative citation paths. Pass the checkout
+root explicitly, or omit it to discover the Git root from the current
+directory. For a standalone non-Git package, pass its root explicitly.
+
 ## Stages
 
 - `--stage requirements` (MBSE): the context input is the confirmed

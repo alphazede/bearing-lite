@@ -5,7 +5,7 @@ const path = require("node:path");
 const crypto = require("node:crypto");
 
 const { PLANNING_REVIEW_POLICY: POLICY } = require("./policy.cjs");
-const { parseRegister } = require("./register-precheck.cjs");
+const { parseRegister, repoRoot } = require("./register-precheck.cjs");
 
 const sameCandidate = (a, b) =>
   POLICY.candidate_fields.every(
@@ -35,16 +35,6 @@ function manifestGenerated(input) {
 
 const nonempty = (value) => typeof value === "string" && value.trim().length > 0;
 const sha256Bytes = (data) => crypto.createHash("sha256").update(data).digest("hex");
-
-function repoRoot(dir) {
-  let current = path.resolve(dir);
-  for (;;) {
-    if (fs.existsSync(path.join(current, ".git"))) return current;
-    const parent = path.dirname(current);
-    if (parent === current) return path.resolve(dir);
-    current = parent;
-  }
-}
 
 const HASH_TOKEN = /^[0-9a-f]{64}$/;
 const HASH_FIELD = /^source_baseline\.planning_inputs\[(0|[1-9]\d*)\]\.sha256$/;

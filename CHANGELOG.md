@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Resolve register citations from the same repository root during requirements precheck and final freeze.
+
 ## [3.0.0-rc.6] - 2026-11-19
 
 - Translate Antigravity session, workspace, and continuation fields in its own adapter so shared hook consumers keep their existing input behavior. (Alphazedehq#636)
