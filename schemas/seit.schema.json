@@ -37,7 +37,7 @@
     },
     "planningInputRow": {
       "type": "object",
-      "additionalProperties": false,
+      "additionalProperties": true,
       "required": ["path", "sha256"],
       "description": "Planning input row shape: path and 64-hex file sha256 are required; git_blob (40-hex or 64-hex Git object id) is optional.",
       "properties": {

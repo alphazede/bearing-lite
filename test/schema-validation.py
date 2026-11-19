@@ -1178,6 +1178,11 @@ def cases() -> list[tuple[str, str, str, object, str]]:
                 "planning_inputs": [{"path": "plan.md", "sha256": SYN_DIGEST, "git_blob": "a" * 40}]
             }
         ), "accept"),
+        ("SEIT-EMV-021", "seit_planning_input_row_retains_provenance", "seit", complete_seit(
+            source_baseline=complete_seit()["source_baseline"] | {
+                "planning_inputs": [{"path": "plan.md", "sha256": SYN_DIGEST, "source_note": "Author handoff"}]
+            }
+        ), "accept"),
         ("SEIT-EMV-021", "seit_planning_input_row_git_blob_only", "seit", complete_seit(
             source_baseline=complete_seit()["source_baseline"] | {
                 "planning_inputs": [{"path": "plan.md", "git_blob": "a" * 40}]
