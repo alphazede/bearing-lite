@@ -874,3 +874,15 @@ describe("Alphazedehq#600 Implementation Orchestrator links consultation.md and 
     assert.match(implStep, /when the owner asks/i);
   });
 });
+
+describe("Alphazedehq#603 Integration and Test run-once command check", () => {
+  it("names the run-once command step and return record in skills/integration-test/SKILL.md", () => {
+    const itSkill = read("skills/integration-test/SKILL.md");
+    const proc = itSkill.slice(itSkill.indexOf("## Procedure"), itSkill.indexOf("## Return and boundaries")).replace(/\s+/g, " ");
+    const ret = itSkill.slice(itSkill.indexOf("## Return and boundaries")).replace(/\s+/g, " ");
+    assert.match(proc, /run[^.]{0,60}(?:each|every)[^.]{0,60}(?:authored|frozen)[^.]{0,60}command[^.]{0,40}once/i);
+    assert.match(proc, /reason[^.]{0,80}(?:cannot|could not) run before implementation/i);
+    assert.match(ret, /run-once|each frozen command/i);
+    assert.match(ret, /exit code[^.]{0,60}(?:reason[^.]{0,60}cannot run|pre-implementation)/i);
+  });
+});
