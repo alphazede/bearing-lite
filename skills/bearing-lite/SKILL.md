@@ -60,7 +60,7 @@ explicit setup or catalog-edit request uses [onboard-bearing](../onboard-bearing
    slice runs. The same session joins the last slice's receipts before its
    verdict on the final integrated candidate and preserves single-run role and
    gate budgets. Follow the [dispatch timing](references/assurance-policy.md#dispatch-timing-222)
-   for early assurance and dispatch any remaining requested sessions when the
+   for early assurance. Dispatch each remaining owner-requested review immediately after the
    recorded boundary passes deterministic checks. The approved
    task plan supplies task and rolling batch boundaries. A recorded request
    requires no further approval. An independent evaluator is a reviewer.

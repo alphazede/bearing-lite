@@ -53,9 +53,9 @@ the Planning Orchestrator, not this implementation-wave work.
    slices' immutable receipts and the pinned candidate while the last slice
    runs. The same session joins the last slice's receipts before issuing its
    verdict on the final integrated candidate and keeps single-run role and gate
-   budgets. Run deterministic checks. When they pass,
-   immediately dispatch the profile-enabled review or assurance the owner
-   requested for this boundary if it has yet to start. Honor declared
+   budgets. Run deterministic checks. For sessions that have yet to start,
+   use the existing dispatch rule. When they pass, immediately dispatch the profile-enabled review or assurance
+   the owner requested for this boundary in the frozen plan; never re-ask or defer it to a later wave. Honor declared
    max_assurance_rounds and assurance_rounds; use `assurance-policy.md`. Preauthorize bounded same-session repair
    in the review packet; consume consolidated evidence without reproducing findings. Authorized repair closes by
    deterministic checks, without automatic rereview or budget reset. Failed repair or scope drift returns to the Orchestrator; COMPLETE does not reopen review.
@@ -85,7 +85,8 @@ If notifications are unavailable, return `WAITING_ON`; resume on the actual retu
 One liveness check after disconnection may recover state; it never permits relaunch.
 Follow the [landing order](task-state.md#landing-a-closed-unit). Finish the change
 and focused checks, then push and open a draft PR to get its number. Commit the
-`CHANGELOG` link and number-dependent text. Gate once and push the verified
+`CHANGELOG` link and number-dependent text. Gate once on the final commit.
+When gating locally, run exit commands after that last commit and push the verified
 commit to the draft. If a push runs the gate, reuse its result for the unchanged
 head with matching input hashes. After review closure, mark ready and merge only under express authority
 on the same head with its exact-head receipt. A head change after gating is a
