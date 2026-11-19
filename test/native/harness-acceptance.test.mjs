@@ -523,11 +523,8 @@ describe("AGY (TC-AGY-DISC-01, TC-AGY-SYMLINK-01)", () => {
     const fx = freshAgy(t);
     agyVersion(t, fx);
     const root = path.join(fx.dir, "install-root");
-    mkdirSync(path.join(root, "skills"), { recursive: true });
+    cpSync(shared.pkg, root, { recursive: true, dereference: true });
     cpSync(path.join(ROOT, ".agy", "plugin.json"), path.join(root, "plugin.json"));
-    cpSync(path.join(ROOT, "hooks.json"), path.join(root, "hooks.json"));
-    cpSync(path.join(shared.pkg, "hooks"), path.join(root, "hooks"), { recursive: true, dereference: true });
-    cpSync(path.join(shared.pkg, "skills"), path.join(root, "skills"), { recursive: true, dereference: true });
     const installOut = ok(AGY, ["plugin", "install", root], { env: fx.env, cwd: fx.repo });
     const list = jsonTail(ok(AGY, ["plugin", "list", "--json"], { env: fx.env, cwd: fx.repo }), "[");
     assert.ok(list.some((p) => p.name === "bearing-lite"), `plugin not listed: ${JSON.stringify(list).slice(0, 300)}`);
@@ -545,18 +542,18 @@ describe("AGY (TC-AGY-DISC-01, TC-AGY-SYMLINK-01)", () => {
     t.diagnostic(`install+discovery PASS; skill load PASS; hooks PASS (validate hooks=7). install out: ${installOut.trim().split("\n").filter(Boolean).slice(-2).join(" | ").slice(0, 300)}`);
   });
 
-  it("documented symlink install FAILS natively on this build", (t) => {
+  it("the former symlink layout fails natively on this build", (t) => {
     const fx = freshAgy(t);
     agyVersion(t, fx);
     const root = path.join(fx.dir, "symlink-root");
     mkdirSync(root, { recursive: true });
     cpSync(path.join(ROOT, ".agy", "plugin.json"), path.join(root, "plugin.json"));
-    // The README's documented install shape, as a disposable copy.
+    // Preserve the former layout as a negative control.
     symlinkSync(path.join(shared.pkg, "skills"), path.join(root, "skills"), "dir");
     const r = run(AGY, ["plugin", "install", root], { env: fx.env, cwd: fx.repo });
     assert.match(r.stdout + r.stderr, /points outside/,
       `symlink install must be refused natively, got: ${(r.stdout + r.stderr).slice(-500)}`);
-    t.diagnostic("TC-AGY-SYMLINK-01 FAIL: documented symlink install refused (symlink points outside plugin root); copy install is the verified path");
+    t.diagnostic("TC-AGY-SYMLINK-01 FAIL: symlink points outside plugin root. Copy install is the verified path.");
   });
 });
 

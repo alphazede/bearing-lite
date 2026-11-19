@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Document Antigravity installation from a staged npm payload with the AGY manifest and all seven hook registrations. (Alphazedehq#636)
+
 - Preserve single replacements, batch edits, and replace-all options when forwarding AGY tool calls to Bearing hooks. (Alphazedehq#636)
 
 - Check all reported AGY file targets with the write lock and prefer the path field for the requested tool. (Alphazedehq#636)
