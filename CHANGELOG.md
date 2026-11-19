@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Add native Codex Stop-hook check (`test/native/codex-stop-hooks.test.mjs`) verifying that Bearing's `SessionStart` and three `Stop` hooks complete under Codex when trusted and documenting that stale `trusted_content_hash` in host `[hooks.state]` causes pre-exec `hook: Stop Failed` x3 without modifying product hooks. (Alphazedehq#634)
 - State the field-test planning return order (Orchestrator inputs, then `integration_test`, then verify-only `mbse`, then regeneration) across `skills/bearing-lite/references/planning-assembly.md`, `skills/planning-and-design/SKILL.md`, `skills/mbse/SKILL.md`, and `skills/integration-test/SKILL.md`, keeping author returns independent of generated `implementation.json`. (Alphazedehq#627)
 - Update landing guidance across `skills/bearing-lite/references/task-state.md`, `skills/bearing-lite/SKILL.md`, `skills/bearing-lite/references/planning-assembly.md`, `skills/bearing-lite/references/assurance-policy.md`, `skills/bearing-lite/references/storage-lifecycle.md`, and `skills/bearing-lite/references/coordinator-migration.md` to run the single repository gate once after the review repair on the final head rather than gating before review and again on the repaired head. (Alphazedehq#618)
 - Require Integration and Test to prove each frozen SEIT command can fail (one run on the expected input and one on a seeded bad input, or a recorded reason it cannot) instead of passing vacuously (`skills/integration-test/SKILL.md`). (Alphazedehq#633)
