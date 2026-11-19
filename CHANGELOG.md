@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Add the lighter `light` planning tier for a contained tool change (`tool_change`, one repository, no new trust boundary, no live host) in `skills/planning-and-design/SKILL.md`, `skills/bearing-lite/references/planning-assembly.md`, `skills/bearing-lite/references/verification.md`, `hooks/verification.cjs` (`resolveProcessTier`, re-exported by `hooks/verification-bridge.cjs`), and `schemas/verification.schema.json`, returning fewer planning sessions (`planning_sessions: 0`, `required_sessions: []`), the same freeze (`same_freeze: true`), and one review (`reviews: 1`) only when every criterion holds and keeping the prior tier on any unmet or unknown criterion. (Alphazedehq#643)
+
 - Launch an enabled Scribe once at the start of the Lifecycle on its frozen cadence (`roles.scribe.cadence`, `event` default), and name a never-launched enabled Scribe as the gap the Orchestrator acts on in `hooks/closeout.cjs`, `skills/bearing-lite/references/planning-assembly.md`, and `skills/bearing-lite/references/resume.md` without adding a new refusal. (Alphazedehq#642)
 
 - Add root `hooks.json` and `hooks/com.google.antigravity/host.cjs` AGY adapter so all 7 Bearing hooks with AGY events (`SessionStart`, `PreToolUse`, `Stop`) run natively under AGY, and update `docs/harness-compatibility.md` and `hooks/com.anthropic.claude-code/mapping.md` from live AGY 1.5.12 verification. (Alphazedehq#636)

@@ -39,7 +39,14 @@ established in Alignment/Scope (unless the owner explicitly specifies a tier):
   requirements-register authoring. Planning stays in the Orchestrator
   (`required_sessions: []`, no separate requirements register, SysML/formal
   model, or specialist fan-out); execution uses one author (Implementer or
-  Light Implementer).
+  Light Implementer). Also applies to a **contained tool change**
+  ([process tier resolution](verification.md#process-tier-resolution)) only when
+  every named criterion holds—tool change, one repository, no new trust
+  boundary, no live host, and no other `full`-tier risk factor or explicit owner
+  tier—giving fewer planning sessions (`planning_sessions: 0`,
+  `required_sessions: []`), the same `hooks/plan-package.cjs` freeze
+  (`same_freeze: true`), and one review when requested (`reviews: 1`); any unmet
+  or unknown criterion keeps the current tier.
 - **`standard`:** moderate-risk multi-module feature or behavioral change within
   settled architecture and contracts without new trust boundaries, protocol
   state machines, multi-wave coordination, or specification-register authoring.

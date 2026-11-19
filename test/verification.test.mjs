@@ -485,3 +485,72 @@ describe("Alphazedehq#611 per-operation copy/read live-host tier resolution", ()
     assert.equal(got.separate_assurance, undefined);
   });
 });
+
+describe("Alphazedehq#643 contained tool change lighter planning tier", () => {
+  it("resolves a contained tool change to light with fewer planning sessions, same freeze, and one review", () => {
+    for (const phase of [
+      { tool_change: true, one_repository: true, new_trust_boundary: false, live_host: false, prior_tier: "full" },
+      { tool_change: true, repositories: 1, trust_boundary: false, crosses_live_host: false, prior_tier: "standard", stage: "planning" },
+      { tool_change: true, repositories: ["bearing-lite"], new_trust_boundary: false, live_services: false, prior_tier: "full", scope: "planning" },
+    ]) {
+      const got = adapter.resolveProcessTier(phase);
+      assert.deepEqual(got, {
+        schema_version: "1",
+        kind: "tier_resolution",
+        outcome: "READY",
+        reason: "contained_tool_change",
+        tier: "light",
+        planning_sessions: 0,
+        same_freeze: true,
+        reviews: 1,
+      }, JSON.stringify(phase));
+    }
+  });
+
+  it("keeps the prior tier when any contained-tool-change criterion is unmet or unknown", () => {
+    const base = {
+      tool_change: true,
+      one_repository: true,
+      new_trust_boundary: false,
+      live_host: false,
+      prior_tier: "full",
+    };
+    const cases = [
+      { ...base, tool_change: false },
+      { ...base, tool_change: undefined },
+      { ...base, one_repository: false },
+      { ...base, one_repository: undefined },
+      { ...base, one_repository: undefined, repositories: 2 },
+      { ...base, one_repository: undefined, repositories: ["repo-a", "repo-b"] },
+      { ...base, one_repository: undefined, repositories: [] },
+      { ...base, multi_repo: true },
+      { ...base, cross_repo: true },
+      { ...base, new_trust_boundary: true },
+      { ...base, trust_boundary: true },
+      { ...base, new_trust_boundary: undefined },
+      { ...base, new_trust_boundary: "unknown" },
+      { ...base, live_host: true },
+      { ...base, crosses_live_host: true },
+      { ...base, live_services: true },
+      { ...base, live_host: undefined },
+      { ...base, live_host: null },
+      { ...base, stateful_protocol: true },
+      { ...base, multi_wave: true },
+      { ...base, specification_register: true },
+      { ...base, journey_type: "specification" },
+      { ...base, explicit_owner_tier: true },
+      { ...base, stage: "implementation" },
+      { ...base, prior_tier: "light" },
+    ];
+    for (const phase of cases) {
+      const got = adapter.resolveProcessTier(phase);
+      assert.deepEqual(got, {
+        schema_version: "1",
+        kind: "tier_resolution",
+        outcome: "READY",
+        reason: "tier_unchanged",
+        tier: phase.prior_tier,
+      }, JSON.stringify(phase));
+    }
+  });
+});

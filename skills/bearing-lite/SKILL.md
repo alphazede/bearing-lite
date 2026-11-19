@@ -28,7 +28,7 @@ explicit setup or catalog-edit request uses [onboard-bearing](../onboard-bearing
 3. **Planning:** select the process tier (`light` — Orchestrator plus one author —
    `standard`, or `full`) by the stated risk rule in
    `references/planning-assembly.md`, including the
-   [live-host tier exception](references/verification.md#process-tier-resolution)
+   [live-host and contained-tool-change tier rules](references/verification.md#process-tier-resolution)
    when applicable. Coordinate only the profile-enabled
    specialists required by that tier and task, then author final plan/design and
    assemble the package using `references/planning-assembly.md`. Specialists run

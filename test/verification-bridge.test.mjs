@@ -497,4 +497,15 @@ describe("verification receipt bridge (#105)", () => {
     assert.equal(wholePhaseLabelOnly.tier, "full");
     assert.equal(wholePhaseLabelOnly.reason, "tier_unchanged");
   });
+
+  it("exposes contained tool change planning tier resolution through the verification bridge (#643)", () => {
+    const got = bridge.resolveProcessTier({
+      tool_change: true, one_repository: true, new_trust_boundary: false, live_host: false, prior_tier: "full",
+    });
+    assert.equal(got.reason, "contained_tool_change");
+    assert.equal(got.tier, "light");
+    assert.equal(got.planning_sessions, 0);
+    assert.equal(got.same_freeze, true);
+    assert.equal(got.reviews, 1);
+  });
 });
