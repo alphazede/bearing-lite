@@ -63,16 +63,19 @@ Landing uses the existing review round without opening another.
 1. Finish the change and its focused checks.
 2. Push the Lifecycle branch and open or update one
    pull request to the default branch as a draft to get its number.
-3. Commit the `CHANGELOG` link and any PR-number-dependent text on the leased
-   Lifecycle branch.
-4. Gate once on that final commit. Run the unit's exit commands after that last commit
-   and push the verified commit to update the draft PR. If a push runs the
-   repository gate, push the final commit and reuse the result for the unchanged
-   head when its input hashes match. If review and landing share this repository
-   gate, supply the same exact-head gate result to the review.
-5. When the requested review round and required checks pass, confirm the
-   draft PR head matches the exact-head merge receipt. Mark the PR ready and
-   merge that head under the existing authority.
+3. Complete the requested review round and any authorized review repair on the
+   draft PR before running the landing repository gate.
+4. After the review repair, commit the `CHANGELOG` link and any
+   PR-number-dependent text on the leased Lifecycle branch so that commit is the
+   final head.
+5. Gate once, after the review repair, on that final head.
+   Run the unit's exit commands after that last commit and push the verified
+   commit to update the draft PR. If a push runs the repository gate, push the
+   final commit and reuse the result for the unchanged head when its input
+   hashes match.
+6. When required checks pass, confirm the draft PR head matches the exact-head
+   merge receipt. Mark the PR ready and merge that head under the existing
+   authority.
 
 A head change after gating is a procedure defect. The exact-head merge receipt
 still applies, and the landing has one repository gate run.
