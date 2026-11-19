@@ -90,12 +90,12 @@ independent assurance (`../test-engineer/SKILL.md`) and execution assessment
    `plan-package.cjs` rules, and source bindings. The Planning Orchestrator runs
    the repository gate once at assembly.
    For each authored SEIT command (`procedures_and_commands[]`), run it once
-   before returning to verify syntax, selectors, and exit behavior when planning
-   authority covers the action, inputs, and side effects, and prove it cannot
-   pass vacuously (for example, a `jq` expression that never parses or a
-   `getpath` yielding empty diffs): run it once on the expected input and once
-   on a seeded bad input to verify it can fail with a non-zero exit. Record the
-   specific reason to defer a command (or why it cannot be fail-tested) when
+   on the expected input and verify the declared pass outcome. To check that
+   it can fail, run the same command once on seeded bad input and confirm that
+   the seeded defect caused the non-zero exit. This catches vacuous passes such
+   as selectors that produce an empty diff for both inputs. Run both cases
+   when planning authority covers the action, inputs, and side effects. Record the
+   specific reason to defer a command or its seeded case when
    reserved for another role, the repository gate, a later one-run budget, or
    unavailable prerequisites.
    Repair your own defects in this assignment, folding
@@ -140,8 +140,9 @@ Return `READY`, `CANDIDATE_READY`, `NEEDS_MORE_EVIDENCE`, `GAPS`, or
 `OWNER_DECISION_REQUIRED` with session, verdict, candidate_ref,
 changed_paths, tests, findings, and blocker, plus gaps, the run-once record for
 each frozen command (one run on the expected input and one run on a seeded bad
-input proving it can fail, with command, exit code, and digest, or the recorded
-pre-implementation reason it cannot run or be fail-tested), and next action.
+input proving it can fail, with command, exit code, digest, and the observed
+pass outcome or seeded failure). Record the pre-implementation reason for any
+deferred case and the next action.
 Return `CANDIDATE_READY` when Integration and Test's own artifacts (`seit.json`
 and boundary inputs) are complete and every remaining open item belongs to the
 Orchestrator or another author, listing those externally owned items in
