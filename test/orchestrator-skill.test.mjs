@@ -16,7 +16,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
-import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { assertLinksTo, assertLocalLinksResolve, readShipped } from "./skill-contract-fixture.mjs";
@@ -252,19 +252,19 @@ describe("live-wave skill links (HLW-VC-027)", () => {
     });
   }
 
-  it("live-wave reference copies no Herdr skill text (no run of more than 2 shared lines)", (t) => {
-    const ours = readShipped(LIVE);
-    // Print-only oracle: `herdr --skill` writes the installed skill text and starts no server.
-    const res = spawnSync("herdr", ["--skill"], { encoding: "utf8", timeout: 10_000 });
-    if (res.error || res.status !== 0) {
-      t.skip(`typed gap: herdr --skill unavailable (${res.error?.code || res.status})`);
-      return;
+  it("live-wave reference and links copy no three-line run from Herdr's skill", () => {
+    // Fingerprints of normalized three-line runs in the embedded 0.9.5 skill.
+    // https://github.com/herdrdev/herdr/blob/v0.9.5/skills/herdr/SKILL.md
+    const fixture = new URL("./fixtures/herdr-v0.9.5-skill.sha256", import.meta.url);
+    const windows = new Set(readFileSync(fixture, "utf8").trim().split("\n"));
+    assert.equal(windows.size, 139);
+    for (const rel of [LIVE, ...LINKERS]) {
+      const lines = readShipped(rel).split("\n").map((line) => line.trim().replace(/\s+/g, " ")).filter(Boolean);
+      const copied = lines.slice(0, -2).findIndex((_, i) => {
+        const digest = createHash("sha256").update(lines.slice(i, i + 3).join("\n")).digest("hex");
+        return windows.has(digest);
+      });
+      assert.equal(copied, -1, `${rel} shares a three-line run with Herdr's skill`);
     }
-    const norm = (s) => s.split("\n").map((l) => l.trim().replace(/\s+/g, " ")).filter(Boolean);
-    const theirs = norm(res.stdout);
-    const windows = new Set(theirs.slice(0, -2).map((_, i) => theirs.slice(i, i + 3).join("\n")));
-    const mine = norm(ours);
-    const copied = mine.slice(0, -2).map((_, i) => mine.slice(i, i + 3).join("\n")).filter((w) => windows.has(w));
-    assert.deepEqual(copied, [], "live-wave.md shares a 3-line run with herdr --skill");
   });
 });
