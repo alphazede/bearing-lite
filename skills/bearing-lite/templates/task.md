@@ -169,7 +169,9 @@ Field rules:
 For requested review, include advance same-session repair authority in the original
 packet: exact candidate/session, allocated repair paths and regression tests, one
 remaining repair allowance, required deterministic commands and protected-action
-holds. Follow `skills/reviewer/references/repair-transition.md`; do not grant new
+holds. For a review before a first live apply, include the frozen host and class
+rows and the exact proposed operand list, not only the executor diff. Follow
+`skills/reviewer/references/repair-transition.md`; do not grant new
 scope through a receipt. Reviewer starts bug/security OCR and performs complementary
 architecture, requirements, implementation/V&V and lint/quality work concurrently,
 then validates all findings, freezes one receipt, repairs and verifies in the same
