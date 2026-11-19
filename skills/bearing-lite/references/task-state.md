@@ -90,9 +90,10 @@ the author's deterministic checker, compare the candidate digest, and report
 one line; evidence returns digests, commands, and exit codes, not narrative logs.
 Planning specialists run only their own artifact checker while the repository
 gate runs once at assembly. Every packet carries a time target and "at the limit,
-return what you have and list the gaps". Before
-composing a packet, follow `pre-packet.md`; use the handoff compiler instead
-of writing the packet by hand. Side work runs outside this context on an
+return what you have and list the gaps". Before composing a packet, follow `pre-packet.md`: use the handoff compiler
+(`tools/compile-handoff.mjs`) for execution packets (once `implementation.json`
+and `seit.json` exist) instead of writing the packet by hand, and use the
+Prompt template (`../../prompt/SKILL.md`) for planning (pre-assembly) packets. Side work runs outside this context on an
 approved lighter model where that model is adequate. Waiting and dispatch use
 the owner-selected route in `profiles.md` and do not lower its reasoning effort.
 ketchup-video and automate-me stay optional skills outside Bearing core. They

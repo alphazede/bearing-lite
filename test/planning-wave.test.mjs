@@ -845,3 +845,17 @@ describe("Alphazedehq#595 meaning defect at assembly uses one closing return", (
     assert.ok(codes(secondResult).includes("planning_wave_sessions_incomplete"), JSON.stringify(secondResult));
   });
 });
+
+describe("Alphazedehq#596 pre-packet and task-state scope handoff compiler to execution packets", () => {
+  it("scopes tools/compile-handoff.mjs to execution packets and uses Prompt template for planning (pre-assembly) packets", () => {
+    const prePacket = read("skills/bearing-lite/references/pre-packet.md").replace(/\s+/g, " ");
+    const taskState = read("skills/bearing-lite/references/task-state.md").replace(/\s+/g, " ");
+    for (const [name, text] of [["pre-packet", prePacket], ["task-state", taskState]]) {
+      assert.match(text, /execution packets?\*{0,2}[^;\n]{0,140}(?:handoff compiler|tools\/compile-handoff\.mjs)|(?:handoff compiler|tools\/compile-handoff\.mjs)[^;\n]{0,140}execution packets?/i, name);
+      assert.match(text, /planning\s*\(pre-assembly\)\s*packets?\*{0,2}[^;\n]{0,140}Prompt template|Prompt template[^;\n]{0,140}planning\s*\(pre-assembly\)\s*packets?/i, name);
+      assert.doesNotMatch(text, /Before composing a packet, the Orchestrator runs the handoff compiler's field check/i, name);
+    }
+    assert.match(prePacket, /implementation\.json[^.]{0,40}seit\.json/i);
+    assert.match(taskState, /implementation\.json[^.]{0,40}seit\.json/i);
+  });
+});

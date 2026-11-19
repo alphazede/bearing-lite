@@ -1,13 +1,17 @@
 # Pre-packet check
 
-Before composing a packet, the Orchestrator runs the handoff compiler's field
-check: one objective, observable acceptance, write set, existing commands, named
+Before composing a packet, the Orchestrator checks the required packet fields:
+one objective, observable acceptance, write set, existing commands, named
 evidence (digests, commands, and exit codes, not narrative logs), and a time
 target with "at the limit, return what you have and list the gaps". Planning
 specialist packets name only that specialist's own artifact checker; the
 repository gate runs once at assembly. A missing or empty field is a compilation
-gap, not a packet. The Orchestrator uses that compiler instead of writing the
-packet by hand.
+gap, not a packet. For **execution packets** (after assembly, once
+`implementation.json` and `seit.json` exist), the Orchestrator runs the handoff
+compiler (`tools/compile-handoff.mjs`) instead of writing the packet by hand.
+For **planning (pre-assembly) packets** before `implementation.json` and
+`seit.json` exist, compose from the Prompt template (`../../prompt/SKILL.md`)
+using the same field check.
 
 It then runs the advisory decision-model check: is the objective one
 observable outcome, and is each acceptance item observable by something other
