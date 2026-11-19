@@ -42,7 +42,9 @@ At intake, the Implementation Orchestrator checks `stage: final`, `outcome: PASS
 and `exit_code: 0` on the structured receipt. Compare `manifest_digest` with
 `journey_settings.planning_review.candidate_digest` in the handoff's
 `implementation.json` and verify the recorded artifact hashes against their files.
-When work crosses a target host, confirm `target_host_delivery` settles how the
-exact candidate and its proof travel to the target host, who may approve that
-transport, and what may land locally when the host gate cannot run.
-If the receipt is absent or any check fails, return to planning before dispatch.
+If the final freeze receipt is absent or a receipt check fails, return to
+planning before dispatch.
+
+When scheduling work on a target host, use `target_host_delivery` to identify
+how the exact candidate and its proof travel to the target host, who may approve
+that transport, and what may land locally when the host gate cannot run.

@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Use target-host handoff details when scheduling host work and keep the intake return to planning scoped to final-freeze receipt checks.
 - Keep the prior live-host tier when any planned operation is unspecified, including an empty slot in the operation list.
 - Gate once per landing in `skills/bearing-lite/references/task-state.md#landing-a-closed-unit` and closeout descriptions (finish change and focused checks, push and open draft PR for its number, commit `CHANGELOG` link, gate once on that head with unchanged-head push-gate reuse, mark ready and merge that same head; head change after gating is a procedure defect, exact-head merge receipt unchanged). (Alphazedehq#618)
 - Require packets to name the verified Git object for tracked inputs and keep the exact author draft through assurance, and require the Orchestrator to start in a directory that survives cleanup and name the worktree explicitly for short commands. (Alphazedehq#617)
