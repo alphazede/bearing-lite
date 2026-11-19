@@ -1421,6 +1421,20 @@ def cases() -> list[tuple[str, str, str, object, str]]:
         ("SEIT-EMV-022", "slice_with_nonstring_resource", "implementation", complete_implementation(
             slices=[complete_slice(resource=42)]
         ), "reject"),
+        ("SEIT-EMV-022", "nested_slices_keep_new_and_legacy_declarations", "implementation", complete_implementation(
+            waves=[{"id": SYN_WAVE, "slices": [
+                complete_slice(inputs=[], resource="host:example"), complete_slice(), SYN_SLICE,
+            ]}]
+        ), "accept"),
+        ("SEIT-EMV-022", "nested_slice_rejects_nonarray_inputs", "implementation", complete_implementation(
+            waves=[{"id": SYN_WAVE, "slices": [complete_slice(inputs="S0")]}]
+        ), "reject"),
+        ("SEIT-EMV-022", "nested_slice_rejects_duplicate_inputs", "implementation", complete_implementation(
+            waves=[{"id": SYN_WAVE, "slices": [complete_slice(inputs=["S0", "S0"])]}]
+        ), "reject"),
+        ("SEIT-EMV-022", "nested_slice_rejects_nonstring_resource", "implementation", complete_implementation(
+            waves=[{"id": SYN_WAVE, "slices": [complete_slice(resource=42)]}]
+        ), "reject"),
         # #609: per-phase tooling choice and reuse.
         ("SEIT-EMV-022", "tooling_choice_reviewed_command_list", "implementation", complete_implementation() | {
             "journey_settings": complete_implementation()["journey_settings"] | {

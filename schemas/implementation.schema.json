@@ -26,6 +26,17 @@
       "type": "array",
       "items": { "type": "string" }
     },
+    "sliceInputs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Optional. Real inputs this slice depends on before it can start."
+    },
+    "sliceResource": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Optional. Held resource (host, repository, or worktree) this slice occupies exclusively while running."
+    },
     "planningCandidate": {
       "type": "object",
       "additionalProperties": true,
@@ -100,17 +111,8 @@
         "reasoning_level": { "$ref": "#/$defs/contentfulObject" },
         "review_path": { "$ref": "#/$defs/contentfulObject" },
         "write_set": { "$ref": "#/$defs/stringList" },
-        "inputs": {
-          "type": "array",
-          "uniqueItems": true,
-          "items": { "type": "string", "minLength": 1 },
-          "description": "Optional. Real inputs this slice depends on before it can start."
-        },
-        "resource": {
-          "type": "string",
-          "minLength": 1,
-          "description": "Optional. Held resource (host, repository, or worktree) this slice occupies exclusively while running."
-        },
+        "inputs": { "$ref": "#/$defs/sliceInputs" },
+        "resource": { "$ref": "#/$defs/sliceResource" },
         "command_ids": { "$ref": "#/$defs/stringList" },
         "stop_condition": { "type": "string", "minLength": 1 },
         "human_decision": { "type": ["string", "object", "null"] },
@@ -755,6 +757,14 @@
         "type": "object",
         "additionalProperties": true,
         "properties": {
+          "slices": {
+            "items": {
+              "properties": {
+                "inputs": { "$ref": "#/$defs/sliceInputs" },
+                "resource": { "$ref": "#/$defs/sliceResource" }
+              }
+            }
+          },
           "resource_groups": {
             "type": "array",
             "uniqueItems": true,
