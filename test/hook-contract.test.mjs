@@ -58,6 +58,7 @@ const EVALUATOR_MODULES = new Set([
   "task-binding.cjs", // current-session reader, no hook class or state store
   "policy.cjs", // #63 shared policy source
   "plan-package.cjs", // #70/#73 Map the Route freeze checks
+  "manifest-view-binding.cjs", // Shared model-view verification for freeze and rendering
   "reconcile.cjs", // #64 deterministic evidence reconciliation
   "owner-stops.cjs", // #79 procedural preflight and local wait metrics
   "profiles.cjs", // S1 profile catalog / MIGRATION_REQUIRED classifier
@@ -143,6 +144,8 @@ describe("CMD-HOOK-01 hook-contract (SEIT-HOOK-CLASS-01, SEIT-HOOK-COVERAGE-01)"
     const classes = new Set(HOOKS.map((h) => h.mod.HOOK_CLASS));
     assert.deepEqual([...classes].sort(), [...EXPECTED_CLASSES].sort());
     assert.equal(classes.size, 4);
+    assert.equal(require(path.join(HOOKS_DIR, "manifest-view-binding.cjs")).HOOK_CLASS, undefined);
+    assert.doesNotMatch(readFileSync(path.join(HOOKS_DIR, "hooks.json"), "utf8"), /manifest-view-binding\.cjs/);
   });
 
   it("TE ships te_test_write and te_completion as additional distinct classes", () => {
