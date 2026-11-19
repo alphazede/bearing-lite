@@ -162,13 +162,15 @@ not permission to start repeated polling or duplicate an invocation.
    to start requested assurance on finished slices while the last slice runs.
    Run the required deterministic checks. When each declared boundary passes them,
    dispatch the independent review/assurance the owner requested for it in the frozen
-   plan at once if it has yet to start. Then land
-   the closed unit (`task-state.md#landing-a-closed-unit`) and close out the work:
-   finish the change and focused checks, push and open a draft PR for its number,
-   commit the `CHANGELOG` link, gate once on that head (reusing a push gate result
-   for the unchanged head via input-hash-matched reuse), and mark ready and merge that
-   same head (a head change after gating is a procedure defect, not a reason to
-   gate again; exact-head merge receipt unchanged).
+   plan at once if it has yet to start. When a review shares the repository
+   gate with landing, follow the draft and commit steps below before that gate.
+5. Follow the [landing order](task-state.md#landing-a-closed-unit). Finish the
+   change and focused checks, then push and open a draft PR for its number.
+   Commit the `CHANGELOG` link and number-dependent text. Gate once and push
+   the verified commit to the draft. If a push runs the gate, reuse its result
+   for the unchanged head with matching input hashes. After review closure,
+   mark ready and merge the same head with its exact-head receipt. A head
+   change after gating is a procedure defect.
 
 Test planning belongs to planning; test implementation belongs to implementation.
 All specialist dispatch remains subject to the enabled selected profile and task need.

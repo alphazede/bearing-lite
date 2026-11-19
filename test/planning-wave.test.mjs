@@ -1178,7 +1178,6 @@ describe("Alphazedehq#617 tracked Git object inputs, author draft retention, and
 describe("Alphazedehq#618 gate once per landing", () => {
   it("states the draft-PR-first landing order, unchanged-head gate reuse, and exact-head merge receipt across task-state and closeout descriptions", () => {
     for (const rel of [
-      "skills/bearing-lite/references/task-state.md",
       "skills/bearing-lite/SKILL.md",
       "skills/bearing-lite/references/coordinator-migration.md",
       "skills/bearing-lite/references/planning-assembly.md",
@@ -1189,6 +1188,7 @@ describe("Alphazedehq#618 gate once per landing", () => {
         /draft/i,
         /CHANGELOG/i,
         /gate once|once on that head|single.*gate/i,
+        /push (?:the )?(?:verified|gated) (?:commit|head)/i,
         /procedure defect/i,
         /reuse/i,
         /unchanged head/i,

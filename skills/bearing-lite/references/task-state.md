@@ -56,33 +56,31 @@ The project's human-readable plan is the only task-state record. Diagrams explai
 
 ## Landing a closed unit
 
-Landing moves a closed unit toward the repository's default branch. It is
-delivery, not assurance: it never opens or reopens a review.
+The parent controller lands the unit before reporting it `READY` or
+`COMPLETE`. A unit is not landed while its requested review is pending.
+Landing uses the existing review round without opening another.
 
-- **When and order (gate once per landing):** a declared wave or phase, or a
-  direct packet, is closed once its focused deterministic checks pass and any
-  owner-requested review round has closed through its deterministic gate. The
-  parent controller lands it before reporting the unit `READY` or `COMPLETE`.
-  A unit is not landed while its requested review is pending. Follow this exact
-  landing order so the repository gate runs once on the exact commit that merges:
-  (1) finish the change and its focused checks; (2) push the Lifecycle branch
-  and open or update one pull request to the default branch as a draft to get
-  its PR number; (3) write the `CHANGELOG` link and any PR-number-dependent
-  text and commit on the leased Lifecycle branch; (4) run the repository gate
-  (the unit's exit commands) to gate once on that last commit/head (where a
-  push already runs a gate, reuse that result for the unchanged head via
-  input-hash-matched reuse instead of running a second gate); (5) mark the PR
-  ready and merge that same head. A head change after step 4 is a procedure
-  defect, not a reason to gate again, and the merge guard's exact-head receipt
-  requirement remains unchanged.
-- **Commit:** revalidate the wave receipt at `commit`, then commit the closed
-  candidate on the leased Lifecycle branch. Never commit on the default
-  branch. Run the unit's exit commands after that last commit (reusing an
-  unchanged-head push gate result where already run), and keep raw logs out of
-  commits.
-- **Push and pull request:** push the Lifecycle branch, then open or update one
-  pull request to the default branch as a draft first to get its number before
-  committing the `CHANGELOG` link. Name the unit, candidate revision,
+1. Finish the change and its focused checks.
+2. Push the Lifecycle branch and open or update one
+   pull request to the default branch as a draft to get its number.
+3. Commit the `CHANGELOG` link and any PR-number-dependent text on the leased
+   Lifecycle branch.
+4. Gate once on that final commit. Run the unit's exit commands after that last commit
+   and push the verified commit to update the draft PR. If a push runs the
+   repository gate, push the final commit and reuse the result for the unchanged
+   head when its input hashes match. If review and landing share this repository
+   gate, supply the same exact-head gate result to the review.
+5. When the requested review round and required checks pass, confirm the
+   draft PR head matches the exact-head merge receipt. Mark the PR ready and
+   merge that head under the existing authority.
+
+A head change after gating is a procedure defect. The exact-head merge receipt
+still applies, and the landing has one repository gate run.
+
+- **Commit.** Revalidate the wave receipt at `commit` and commit on the leased
+  Lifecycle branch. Never commit on the default
+  branch. Keep raw logs out of commits.
+- **Pull request.** Name the unit, candidate revision,
   deterministic and review receipts, and the issues it addresses. Planning
   proposes `commit`, `push`, and `open_pull_request` in the authority
   envelope's `allowed.actions`, and the integrated approval grants them.
