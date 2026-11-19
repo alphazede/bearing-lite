@@ -1366,6 +1366,14 @@ describe("Alphazedehq#624 edit_records contract for mechanical hash-binding fixe
 });
 
 describe("Alphazedehq#627 regenerate implementation.json before verify-only author returns", () => {
+  it("releases one planning return order with an explicit exception for reading generated files", () => {
+    const entries = read("CHANGELOG.md").split(/\n## /)[1].split("\n")
+      .filter(line => line.startsWith("- ") && line.includes("Alphazedehq#627"));
+    assert.equal(entries.length, 1);
+    assert.match(entries[0], /Orchestrator inputs.*integration_test.*verify-only.*mbse.*regenerat/i);
+    assert.match(entries[0], /if.*reads? .*implementation\.json.*regenerat.*first/i);
+  });
+
   it("orders Orchestrator regeneration before any verify-only author return and keeps initial author returns independent of generated implementation.json", () => {
     for (const rel of [
       "skills/bearing-lite/references/planning-assembly.md",
@@ -1420,10 +1428,15 @@ describe("Alphazedehq#627 regenerate implementation.json before verify-only auth
     assert.ok(codes(staleRes).includes("candidate_digest_mismatch"), JSON.stringify(staleRes));
     assert.ok(codes(staleRes).includes("planning_wave_candidate_mismatch"), JSON.stringify(staleRes));
 
-    // Case 2 (ordered): Orchestrator regenerates implementation.json to r1 before the verify-only return.
+    // A current generated package cannot reuse the earlier verify-only return.
     staleImpl.journey_settings.planning_review.candidate_digest = regeneratedDigest;
     staleImpl.journey_settings.planning_wave.candidate_digest = regeneratedDigest;
     staleImpl.journey_settings.planning_wave.closing_candidate = regeneratedCandidate;
+    writeFileSync(staleImplPath, JSON.stringify(staleImpl));
+    const regeneratedWithStaleReturn = freeze(pkg.dir);
+    assert.deepEqual(codes(regeneratedWithStaleReturn), ["planning_wave_sessions_incomplete"]);
+
+    // The ordered return reads the regenerated package and binds to its candidate.
     staleImpl.journey_settings.planning_wave.sessions[0] = {
       session: "integration_test",
       ...staleCandidate,
