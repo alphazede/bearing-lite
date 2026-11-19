@@ -181,7 +181,9 @@ to close the listed gaps or fix the named meaning defect. That resume is **not a
 relaunch** (it does not count against the zero author-known relaunch budget).
 It is recorded (`author`, `reason`, `items`, `candidate`, and resulting
 `verdict`: `READY` or `CANDIDATE_READY`) on the session (`closing_return`) or in
-`planning_wave.closing_returns[]`. `hooks/plan-package.cjs` (`final`) accepts
+`planning_wave.closing_returns[]`. If the closing return needs adoption, put
+its consumed `inputs` and `adopted_to` candidate on that return.
+`hooks/plan-package.cjs` (`final`) accepts
 the resulting `READY` when one valid closing return is recorded and refuses
 unclosed `GAPS`, incomplete records, or a second closing return for the same
 author.
