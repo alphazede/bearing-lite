@@ -289,6 +289,25 @@ describe("CMD-HANDOFF-01 role-handoff (SEIT-HANDOFF-01)", () => {
 });
 
 describe("Alphazedehq#594 planning handoff requires final freeze receipt", () => {
+  for (const [label, fields, outcome, reason] of [
+    ["pending planning review", { planning_review: {} }, "REROUTE", /planning_review:NEEDS_MORE_EVIDENCE/],
+    ["pending assurance", { required_assurance: ["reviewer"] }, "ADVISE", /^assurance_pending:reviewer$/],
+    ["protected completion", { protected_completion: true, required_assurance: ["reviewer"] },
+      "BLOCK", /^protected_completion_invalid:.*assurance:reviewer/],
+    ["incomplete role return", { handoff: { verdict: "READY" } }, "ADVISE", /^handoff_incomplete:/],
+  ]) {
+    it(`preserves ${label} during a handoff check`, () => {
+      const result = closeout.evaluate({
+        mode: "handoff",
+        handoff: validHandoff({ verdict: "READY" }),
+        final_freeze_receipt: { stage: "final", outcome: "PASS", manifest_digest: "a".repeat(64), findings: [] },
+        ...fields,
+      });
+      assert.equal(result.outcome, outcome, result.reason);
+      assert.match(result.reason, reason);
+    });
+  }
+
   it("closeout handoff path refuses a handoff without a valid final freeze receipt and accepts a final PASS receipt", () => {
     const missing = closeout.evaluate({
       mode: "handoff",
