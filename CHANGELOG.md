@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - Allow a copy-only or read-only phase crossing into a host with live services (and no other `full`-tier risk factor) to resolve to `standard` via `resolveProcessTier` in `hooks/verification.cjs` (re-exported by `hooks/verification-bridge.cjs`, validated by `schemas/verification.schema.json`) with a required before and after live-service observation, one implementer, one review, and no separate assurance, while phases that delete or mutate still resolve as before. (Alphazedehq#611)
+- Record per-phase planning choice between a short reviewed command list and new reusable tooling in `journey_settings.tooling_choice` (`schemas/implementation.schema.json`), `skills/planning-and-design/SKILL.md`, `skills/planning-and-design/references/artifact-grammar.md`, and `skills/bearing-lite/references/planning-assembly.md`, requiring `reason` and `reuse` when new tooling is chosen. (Alphazedehq#609)
 
 ## [3.0.0-rc.3] - 2026-11-19
 

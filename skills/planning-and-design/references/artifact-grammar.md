@@ -152,7 +152,10 @@ undefined term and fails the gate.
    packets when practical.
 10. Keep one plan per phase: split multi-phase work into separate phase plans
    rather than combining multiple phases into one `implementation.json` and DoD
-   Manifest.
+   Manifest. Decide per phase between a **short reviewed command list**
+   (`reviewed_command_list`) and **new reusable tooling** (`new_reusable_tooling`)
+   in `journey_settings.tooling_choice` (and the technical plan): record why, and
+   whenever new reusable tooling is chosen, state its reuse (`reuse`).
 11. Record the process tier (`light` — Orchestrator plus one author — `standard`,
    or `full`) chosen by the stated risk rule in
    `../../bearing-lite/references/planning-assembly.md`; in `light` tier,

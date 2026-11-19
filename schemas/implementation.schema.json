@@ -707,6 +707,33 @@
               }
             }
           }
+        },
+        "tooling_choice": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Alphazedehq#609: per-phase planning choice between a short reviewed command list and new reusable tooling, recording why and stating reuse when new tooling is chosen.",
+          "required": ["mode", "reason"],
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": ["reviewed_command_list", "new_reusable_tooling"]
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1
+            },
+            "reuse": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "if": {
+            "properties": { "mode": { "const": "new_reusable_tooling" } },
+            "required": ["mode"]
+          },
+          "then": {
+            "required": ["reuse"]
+          }
         }
       }
     },

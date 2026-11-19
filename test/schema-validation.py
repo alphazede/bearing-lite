@@ -1399,6 +1399,47 @@ def cases() -> list[tuple[str, str, str, object, str]]:
                 slice_status="publication-blocked",
             )]
         ), "accept"),
+        # #609: per-phase tooling choice and reuse.
+        ("SEIT-EMV-022", "tooling_choice_reviewed_command_list", "implementation", complete_implementation() | {
+            "journey_settings": complete_implementation()["journey_settings"] | {
+                "tooling_choice": {
+                    "mode": "reviewed_command_list",
+                    "reason": "One-off operational file copy needs no reusable binary.",
+                }
+            }
+        }, "accept"),
+        ("SEIT-EMV-022", "tooling_choice_new_reusable_tooling_with_reuse", "implementation", complete_implementation() | {
+            "journey_settings": complete_implementation()["journey_settings"] | {
+                "tooling_choice": {
+                    "mode": "new_reusable_tooling",
+                    "reason": "Repeated cross-phase inventory verification.",
+                    "reuse": "Used across every release phase and scheduled audit.",
+                }
+            }
+        }, "accept"),
+        ("SEIT-EMV-022", "tooling_choice_new_reusable_tooling_missing_reuse", "implementation", complete_implementation() | {
+            "journey_settings": complete_implementation()["journey_settings"] | {
+                "tooling_choice": {
+                    "mode": "new_reusable_tooling",
+                    "reason": "General executor.",
+                }
+            }
+        }, "reject"),
+        ("SEIT-EMV-022", "tooling_choice_missing_reason", "implementation", complete_implementation() | {
+            "journey_settings": complete_implementation()["journey_settings"] | {
+                "tooling_choice": {
+                    "mode": "reviewed_command_list",
+                }
+            }
+        }, "reject"),
+        ("SEIT-EMV-022", "tooling_choice_invalid_mode", "implementation", complete_implementation() | {
+            "journey_settings": complete_implementation()["journey_settings"] | {
+                "tooling_choice": {
+                    "mode": "ad_hoc_script",
+                    "reason": "Unsupported mode.",
+                }
+            }
+        }, "reject"),
     ])
     return out
 
