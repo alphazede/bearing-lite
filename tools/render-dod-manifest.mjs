@@ -77,6 +77,8 @@ const SVG_ALLOWED_TAGS = new Set([
   "pattern",
 ]);
 
+const SVG_TEXT_TAGS = new Set(["text", "tspan", "title", "desc"]);
+
 const SVG_ALLOWED_ATTRS = new Set([
   "id",
   "class",
@@ -608,6 +610,12 @@ function parseAttrs(raw, tag) {
   return attrs;
 }
 
+function escSvgValue(value) {
+  // Character references keep significant whitespace out of source-only blank lines.
+  return esc(value).replace(/^[ \t]+(?=\r?$)/gm, (spaces) =>
+    spaces.replace(/[ \t]/g, (char) => `&#${char.charCodeAt(0)};`));
+}
+
 export function sanitizeSvg(raw) {
   if (typeof raw !== "string") {
     throw new RenderError("UNSAFE_ASSET", "SVG view must be a string.");
@@ -640,8 +648,10 @@ export function sanitizeSvg(raw) {
       break;
     }
     if (lt > i) {
-      const text = esc(decodeSvgXmlValue(input.slice(i, lt), "text"));
-      if (depth > 0 || text.trim()) out.push(text);
+      const value = decodeSvgXmlValue(input.slice(i, lt), "text");
+      if (depth > 0 || value.trim()) {
+        out.push(SVG_TEXT_TAGS.has(open.at(-1)) ? escSvgValue(value) : esc(value));
+      }
     }
     if (input.startsWith("<!--", lt)) {
       const end = input.indexOf("-->", lt + 4);
@@ -709,7 +719,7 @@ export function sanitizeSvg(raw) {
     }
     let attrHtml = "";
     for (const [k, v] of attrs) {
-      attrHtml += ` ${k}="${esc(v)}"`;
+      attrHtml += ` ${k}="${escSvgValue(v)}"`;
     }
     i = q + 1;
     if (name === "style") {

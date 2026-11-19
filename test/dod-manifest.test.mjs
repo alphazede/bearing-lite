@@ -661,29 +661,14 @@ describe("S3 DoD Manifest template, schema, and renderer", () => {
     unsafe('<svg xmlns="http://www.w3.org/2000/svg"><text>A &amp B</text></svg>');
   });
 
-  it("skips XML comments after whitespace and between SVG elements without whitespace-only lines while keeping refusals unchanged", () => {
-    assert.equal(
-      sanitizeSvg('<svg xmlns="http://www.w3.org/2000/svg"><!-- c --><g/></svg>'),
-      '<svg xmlns="http://www.w3.org/2000/svg"><g /></svg>'
-    );
-    assert.equal(
-      sanitizeSvg('<svg xmlns="http://www.w3.org/2000/svg">\n  <!-- c -->\n  <g/>\n</svg>'),
-      '<svg xmlns="http://www.w3.org/2000/svg">\n\n  <g />\n</svg>'
-    );
-    assert.equal(
-      sanitizeSvg('<!-- head -->\n<svg xmlns="http://www.w3.org/2000/svg"><text>A<!-- mid -->B</text></svg>'),
-      '<svg xmlns="http://www.w3.org/2000/svg"><text>AB</text></svg>'
-    );
-    const leadingCommentsSvg = '<!-- a -->\n  <!-- b -->\n<svg xmlns="http://www.w3.org/2000/svg"><rect/></svg>\n';
-    assert.equal(
-      sanitizeSvg(leadingCommentsSvg),
-      '<svg xmlns="http://www.w3.org/2000/svg"><rect /></svg>'
-    );
-    for (const svg of [
-      leadingCommentsSvg,
-      '<svg xmlns="http://www.w3.org/2000/svg">\n  <!-- c -->\n  <g/>\n</svg>',
-      '<svg xmlns="http://www.w3.org/2000/svg">\n  \n  <rect/>\n</svg>',
-      '<!-- a -->\r\n  <!-- b -->\r\n<svg xmlns="http://www.w3.org/2000/svg"><rect/></svg>\r\n  <!-- tail -->\r\n',
+  it("renders SVG figures without comments or whitespace-only source lines", () => {
+    for (const [svg, rendered] of [
+      ['<svg xmlns="http://www.w3.org/2000/svg"><!-- fixture --><g/></svg>', /<g\b/],
+      ['<svg xmlns="http://www.w3.org/2000/svg">\n  <!-- fixture -->\n  <g/>\n</svg>', /<g\b/],
+      ['<!-- fixture -->\n<svg xmlns="http://www.w3.org/2000/svg"><text>A<!-- fixture -->B</text></svg>', /<text\b[^>]*>AB<\/text>/],
+      ['<!-- fixture -->\n  <!-- fixture -->\n<svg xmlns="http://www.w3.org/2000/svg"><rect/></svg>\n', /<rect\b/],
+      ['<svg xmlns="http://www.w3.org/2000/svg">\n  \n  <rect/>\n</svg>', /<rect\b/],
+      ['<!-- fixture -->\r\n  <!-- fixture -->\r\n<svg xmlns="http://www.w3.org/2000/svg"><rect/></svg>\r\n  <!-- fixture -->\r\n', /<rect\b/],
     ]) {
       const html = renderDodManifest(
         {
@@ -698,6 +683,8 @@ describe("S3 DoD Manifest template, schema, and renderer", () => {
         },
         { assetRoot: tempDir() }
       ).html;
+      assert.match(html, rendered);
+      assert.doesNotMatch(html, /<!-- fixture -->/);
       assert.doesNotMatch(html, /^[ \t]+$/m, "rendered DoD Manifest must not contain whitespace-only lines");
     }
     for (const bad of [
@@ -708,6 +695,17 @@ describe("S3 DoD Manifest template, schema, and renderer", () => {
     ]) {
       assert.throws(() => sanitizeSvg(bad), (err) => err.code === "UNSAFE_ASSET");
     }
+  });
+
+  it("preserves significant whitespace in SVG text while clearing whitespace-only source lines", () => {
+    const text = "A\n \t \nB";
+    const svg = sanitizeSvg(`<svg xmlns="http://www.w3.org/2000/svg"><text style="white-space: pre">${text}</text></svg>`);
+    const [, serialized] = /<text\b[^>]*>([^<]*)<\/text>/.exec(svg) ?? [];
+    assert.ok(serialized, "SVG text is present");
+    const decoded = serialized.replace(/&#(\d+|x[\da-f]+);/gi, (_, code) =>
+      String.fromCodePoint(Number(/^x/i.test(code) ? `0${code}` : code)));
+    assert.equal(decoded, text);
+    assert.doesNotMatch(svg, /^[ \t]+$/m);
   });
 
   it("prints the frozen-input binding contract used by S3L", () => {
