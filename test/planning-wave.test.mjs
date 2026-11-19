@@ -1048,3 +1048,23 @@ describe("Alphazedehq#610 preflight slice and closing real-gate run", () => {
     }
   });
 });
+
+describe("Alphazedehq#612 pre-merge heavy check for shared tables and fixtures", () => {
+  it("requires integration and landing guidance to run the heavy check before merge when editing a table or fixture other suites read", () => {
+    for (const rel of [
+      "skills/integration-test/SKILL.md",
+      "skills/integration-engineer/SKILL.md",
+      "skills/bearing-lite/references/task-state.md",
+    ]) {
+      const raw = read(rel);
+      const section = rel.endsWith("task-state.md")
+        ? raw.slice(raw.indexOf("## Landing a closed unit"), raw.indexOf("## Orchestrator context"))
+        : raw;
+      const text = section.replace(/\s+/g, " ");
+      assert.match(text, /table or fixture/i, rel);
+      assert.match(text, /other suites read/i, rel);
+      assert.match(text, /heavy check/i, rel);
+      assert.match(text, /before merge/i, rel);
+    }
+  });
+});

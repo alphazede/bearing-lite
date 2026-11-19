@@ -66,7 +66,9 @@ delivery, not assurance: it never opens or reopens a review.
   `OWNER_DECISION_REQUIRED` (owner-stops class F). A missing remote or a
   refused push is `WAITING_ON`, never a landed unit.
 - **Merge:** merge only when `allowed.actions` includes `merge` for that unit
-  and the repository's required checks pass on the pull request head. A
+  and the repository's required checks pass on the pull request head. When a
+  change edits a table or fixture that other suites read, run the heavy check
+  before merge rather than merging on a fast gate that skips those suites. A
   passing check, a review verdict, or a profile setting never grants merge.
   Otherwise merge stays with the owner: report the pull request, mark the unit
   as awaiting the owner's merge, and continue dependency-ready work on the

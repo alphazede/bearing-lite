@@ -22,7 +22,10 @@ for the declared boundary.
    a fresh session independent of author identity/ancestry. Bind the exact
    integrated candidate, approved outcome, SEIT, and authorized checks.
 2. Run the planned system-level checks and assess compatibility and evidence
-   against `../test-engineer/references/shared-machine-tests.md`. Check the
+   against `../test-engineer/references/shared-machine-tests.md`. When a change
+   edits a table or fixture that other suites read, require running the heavy
+   check before merge rather than accepting a fast gate that skips those suites.
+   Check the
    report against observed results; report the smallest material gap. Hand the
    candidate on with the runnable build, the real-app verification procedure in
    `../test-engineer/references/real-app-verification.md`, and applicable

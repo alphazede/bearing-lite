@@ -43,7 +43,10 @@ independent assurance (`../test-engineer/SKILL.md`) and execution assessment
    pass, or the stricter repository rule, before assembly. Plan the first
    implementation slice as a preflight slice running every planned command in
    dry-run or `--version` form on every target host in parallel, and end any
-   phase that builds a host by running that repository's real gate on it.
+   phase that builds a host by running that repository's real gate on it. When a
+   change edits a table or fixture that other suites read, require running the
+   heavy check before merge rather than relying on a fast gate that skips those
+   suites.
 3. **Author `seit.json` and V&V claims:** start with the frozen requirement
    skeleton, decisions, and interface and boundary inputs. Bind each case to
    a frozen requirement ID and return those links for assembly. Where a case
