@@ -42,6 +42,12 @@ describe("#222 owner-requested review runs at its declared boundary", () => {
     assert.match(ASSEMBLY, /dispatch the independent review\/assurance the owner requested for it in the frozen\s+plan at once/);
   });
 
+  it("dispatches review after focused checks and reserves the landing repository gate for the repaired head", () => {
+    const timing = ASSURANCE.split("## Dispatch timing (#222)")[1].split(/\n## /)[0].replace(/\s+/g, " ");
+    assert.match(timing, /passes its focused deterministic checks.*dispatches every requested session/i);
+    assert.match(timing, /landing repository gate.*after requested review and any repair/i);
+  });
+
   it("phase cadence resolves to each declared wave, so no default change is needed", () => {
     assert.match(ASSURANCE, /`phase` cadence resolves to each wave/);
     assert.match(TASK_TEMPLATE, /`phase` cadence resolves to each wave/);
@@ -60,13 +66,17 @@ describe("#223 closed units are landed", () => {
   });
 
   it("updates the draft to the verified head before ready and merge", () => {
-    const landing = TASK_STATE.split("## Landing a closed unit\n")[1].split(/\n## /)[0]
-      .replace(/\s+/g, " ");
-    assert.match(landing, /draft .*review repair.*CHANGELOG.*gate once.*final head.*push the verified commit.*mark .*ready.*merge/i);
-    assert.match(landing, /push runs the repository gate.*reuse the result for the unchanged head.*input hashes match/i);
-    assert.doesNotMatch(landing, /supply the same exact-head gate result to the review/i);
-    assert.match(landing, /PR head matches the exact-head merge receipt/i);
-    assert.match(landing, /head change after gating is a procedure defect/i);
+    const section = TASK_STATE.split("## Landing a closed unit\n")[1].split(/\n## /)[0];
+    const steps = (section.match(/^\d+\. [^\n]+(?:\n  [^\n]+)*/gm) || []).map(step => step.replace(/\s+/g, " "));
+    const draft = steps.findIndex(step => /pull request .*as a draft/i.test(step));
+    const review = steps.findIndex(step => /complete the requested review round and any authorized review repair/i.test(step));
+    const changelog = steps.findIndex(step => /commit the `CHANGELOG` link/i.test(step));
+    const gate = steps.findIndex(step => /(?:run|start|execute) the (?:landing )?repository gate|^\d+\. gate once/i.test(step));
+    const merge = steps.findIndex(step => /mark the PR ready and merge/i.test(step));
+    assert.ok(draft >= 0 && draft < review && review < changelog && changelog < gate && gate < merge, section);
+    assert.match(steps[gate], /final head.*push the verified commit.*reuse the result for the unchanged head.*input hashes match/i);
+    assert.match(steps[merge], /PR head matches the exact-head merge receipt/i);
+    assert.match(section.replace(/\s+/g, " "), /head change after gating is a procedure defect/i);
   });
 
   it("controllers and authority point at the landing rule", () => {

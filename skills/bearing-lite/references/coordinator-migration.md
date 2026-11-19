@@ -2,7 +2,7 @@
 
 The Implementation Orchestrator alone dispatches, schedules and escalates for new waves. A frozen assignment that delegates to an enabled legacy Coordinator retains that owner on its pinned runtime until an explicit handover. Keep one owner per duty. Never run both owners.
 
-Execute the frozen plan. Do not redo planning. Land each wave as soon as its integrated gates pass. Gap work is its own pull request. Dispatch by dependency across waves, up to the agent cap the owner set for the Lifecycle. Do not start a planning role during implementation. An Implementer fixes a plan gap inside its write set and records one amendment line. Run gates once per integrated candidate. Apply rolling batch review when the approved Lifecycle selects it.
+Execute the frozen plan. Do not redo planning. Land each wave as soon as its required checks pass. Gap work is its own pull request. Dispatch by dependency across waves, up to the agent cap the owner set for the Lifecycle. Do not start a planning role during implementation. An Implementer fixes a plan gap inside its write set and records one amendment line. Apply rolling batch review when the approved Lifecycle selects it.
 
 The Coordinator is retired on this runtime. Before removal, verify every duty and profile proof. Use the readiness result from `hooks/profiles.cjs` to identify active legacy journeys that require their pinned runtime or an explicit handover. Never silently rewrite a frozen legacy route.
 

@@ -1237,11 +1237,6 @@ describe("Alphazedehq#618 gate once per landing", () => {
         /gate once|one[^.]*gate/i,
       ], /\n\s*\n/);
     }
-    const landing = read("skills/bearing-lite/references/task-state.md")
-      .split("## Landing a closed unit\n")[1]
-      .split(/\n## /)[0]
-      .replace(/\s+/g, " ");
-    assert.doesNotMatch(landing, /supply the same exact-head gate result to the review/i);
   });
 });
 
