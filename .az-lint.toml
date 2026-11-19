@@ -1,0 +1,18 @@
+# Shared az-lint configuration for alphazede/bearing-lite.
+[tools.python]
+enabled = true
+
+[tools.yaml]
+enabled = true
+
+[tools.actionlint]
+enabled = true
+
+[tools.js]
+enabled = true
+
+[tools.gitleaks]
+enabled = true
+
+[tools.semgrep]
+enabled = true
