@@ -1298,6 +1298,82 @@ describe("Alphazedehq#624 edit_records contract for mechanical hash-binding fixe
   });
 });
 
+describe("Alphazedehq#627 regenerate implementation.json before verify-only author returns", () => {
+  it("orders Orchestrator regeneration before any verify-only author return and keeps initial author returns independent of generated implementation.json", () => {
+    for (const rel of [
+      "skills/bearing-lite/references/planning-assembly.md",
+      "skills/planning-and-design/SKILL.md",
+      "skills/mbse/SKILL.md",
+      "skills/integration-test/SKILL.md",
+    ]) {
+      operatorInstruction(rel, [
+        /verify-only/i,
+        /regenerat/i,
+        /implementation\.json/,
+        /stale/i,
+      ], /\n\s*\n/);
+    }
+  });
+
+  it("rejects a verify-only closing return bound to a stale implementation.json and passes after regenerating first", () => {
+    const pkg = planPackage((doc, digest) => {
+      doc.journey_settings.planning_wave = unreviewedPlanningWave(digest, ["integration_test"]);
+    });
+    const staleImplPath = path.join(pkg.dir, "implementation.json");
+    const staleImpl = JSON.parse(readFileSync(staleImplPath, "utf8"));
+    const staleCandidate = structuredClone(staleImpl.journey_settings.planning_wave.closing_candidate);
+
+    // Underlying authored inputs advance to r1, leaving implementation.json stale at r0.
+    const updatedPlan = "# Plan\nUpdated requirement trace.\n";
+    writeFileSync(path.join(pkg.dir, "plan.md"), updatedPlan);
+    const seitPath = path.join(pkg.dir, "seit.json");
+    const seitObj = JSON.parse(readFileSync(seitPath, "utf8"));
+    seitObj.source_baseline.planning_inputs = [{ path: "plan.md", sha256: sha(updatedPlan) }];
+    const updatedSeit = JSON.stringify(seitObj);
+    writeFileSync(seitPath, updatedSeit);
+    const regeneratedDigest = sha([sha(updatedPlan), sha(updatedSeit)].join("\n"));
+    const regeneratedCandidate = { candidate_ref: "plan", candidate_revision: "r1", candidate_digest: regeneratedDigest };
+
+    // Case 1 (stale order): verify-only return reads the stale implementation.json (r0) before regeneration.
+    staleImpl.journey_settings.planning_wave.sessions[0] = {
+      session: "integration_test",
+      ...staleCandidate,
+      verdict: "GAPS",
+      closing_return: {
+        author: "integration_test",
+        reason: "verify_only",
+        items: ["Verified against stale implementation.json"],
+        candidate: staleCandidate,
+        verdict: "READY",
+      },
+    };
+    writeFileSync(staleImplPath, JSON.stringify(staleImpl));
+    const staleRes = freeze(pkg.dir);
+    assert.equal(staleRes.outcome, "FAIL");
+    assert.ok(codes(staleRes).includes("candidate_digest_mismatch"), JSON.stringify(staleRes));
+    assert.ok(codes(staleRes).includes("planning_wave_candidate_mismatch"), JSON.stringify(staleRes));
+
+    // Case 2 (ordered): Orchestrator regenerates implementation.json to r1 before the verify-only return.
+    staleImpl.journey_settings.planning_review.candidate_digest = regeneratedDigest;
+    staleImpl.journey_settings.planning_wave.candidate_digest = regeneratedDigest;
+    staleImpl.journey_settings.planning_wave.closing_candidate = regeneratedCandidate;
+    staleImpl.journey_settings.planning_wave.sessions[0] = {
+      session: "integration_test",
+      ...staleCandidate,
+      verdict: "GAPS",
+      closing_return: {
+        author: "integration_test",
+        reason: "verify_only",
+        items: ["Verified against regenerated implementation.json"],
+        candidate: regeneratedCandidate,
+        verdict: "READY",
+      },
+    };
+    writeFileSync(staleImplPath, JSON.stringify(staleImpl));
+    assert.deepEqual(freeze(pkg.dir).findings, []);
+  });
+});
+
 function operatorInstruction(rel, expectations, breakAt = /(?<=[.!?])\s+/) {
   const parts = read(rel).split(/\n\s*\n/).flatMap(paragraph => paragraph
     .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
