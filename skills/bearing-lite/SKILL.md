@@ -67,7 +67,7 @@ explicit setup or catalog-edit request uses [onboard-bearing](../onboard-bearing
    original packet and consume consolidated evidence without per-finding approval. For
    a review before a first live apply, include the frozen host and class rows and
    the exact proposed operand list, not only the executor diff. Add no quality agents.
-6. **Landing and closeout:** land each closed unit (`references/task-state.md#landing-a-closed-unit`); check deliverables and evidence. Distinguish
+6. **Landing and closeout:** land each closed unit (`references/task-state.md#landing-a-closed-unit`): finish change and focused checks, push and open draft PR for its number, commit the `CHANGELOG` link and number-dependent text, gate once on that head (reusing a push gate result for the unchanged head via input-hash-matched reuse), then mark ready and merge that same head (a head change after gating is a procedure defect, not a reason to gate again; exact-head merge receipt unchanged); check deliverables and evidence. Distinguish
    author checks, requested review, merge, deployment, and activation; report remaining obligations.
 
 ## Planning handoff

@@ -1,8 +1,13 @@
 # Storage lifecycle and landing
 
 Prefer coherent outcomes over tiny handoffs. Orchestration does not end at
-worker handoff or a draft PR: verify delivery, then clean merged resources
-after resolving live references.
+worker handoff or a draft PR: finish the change and focused checks, push and
+open a draft PR for its number, commit the `CHANGELOG` link, gate once on that
+head (reusing a push gate result for the unchanged head via input-hash-matched reuse),
+then mark ready and merge that same head (a head change after gating is a
+procedure defect, not a reason to gate again; exact-head merge receipt
+unchanged), verify delivery, then clean merged resources after resolving live
+references.
 
 Run storage maintenance at intake/resume, wave boundaries, and closeout. Start
 the Orchestrator in a directory that survives cleanup (outside leased task

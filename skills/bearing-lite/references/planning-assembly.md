@@ -161,7 +161,12 @@ not permission to start repeated polling or duplicate an invocation.
 4. Run the required deterministic checks. When each declared boundary passes them,
    dispatch the independent review/assurance the owner requested for it in the frozen
    plan at once, without a second request or deferral to a later boundary. Then land
-   the closed unit (`task-state.md#landing-a-closed-unit`) and close out the work.
+   the closed unit (`task-state.md#landing-a-closed-unit`) and close out the work:
+   finish the change and focused checks, push and open a draft PR for its number,
+   commit the `CHANGELOG` link, gate once on that head (reusing a push gate result
+   for the unchanged head via input-hash-matched reuse), and mark ready and merge that
+   same head (a head change after gating is a procedure defect, not a reason to
+   gate again; exact-head merge receipt unchanged).
 
 Test planning belongs to planning; test implementation belongs to implementation.
 All specialist dispatch remains subject to the enabled selected profile and task need.
