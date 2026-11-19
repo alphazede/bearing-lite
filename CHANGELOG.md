@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Bind the final technical plan in the implementation package when it is written after the SEIT return.
+
 - Include the compact closeout receipt fields in the planning handoff template.
 
 - Resolve register citations from the same repository root during requirements precheck and final freeze.

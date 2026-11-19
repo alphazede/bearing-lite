@@ -115,7 +115,14 @@ This is the default dependency order, not a requirement to enable every role:
    inputs into the technical plan and `design.md` (keeping **one plan per phase**;
    split multi-phase work into separate phase plans), copy the confirmed quantity
    table into its glossary, allocate against the placement receipt, then assemble
-   the implementation graph and Manifest. Run the repository gate once at assembly
+   the implementation graph and Manifest. When the final technical plan was
+   written after the SEIT return, bind its repository-relative path and
+   SHA-256 in `implementation.json` at `journey_settings.final_technical_plan`
+   as `{ "path": "...", "sha256": "..." }`. Keep the SEIT author's input list and
+   omit the new binding if that list already binds the technical plan. The
+   freeze hashes the ordered SEIT inputs, then this binding if supplied, then
+   `seit.json` to compute the candidate digest from the newline-separated
+   SHA-256 hex values. Run the repository gate once at assembly
    alongside final-stage `hooks/register-precheck.cjs` with `--seit` and
    cross-artifact coverage checks; pending bindings block assembly until
    completed.

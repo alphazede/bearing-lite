@@ -124,6 +124,29 @@ test("final register validation rejects missing or ambiguous bound technical-pla
   }
 });
 
+test("RC6-6 final freeze binds the technical plan written after the SEIT return", t => {
+  const fx = fixture(t);
+  const [technicalPlan, ...earlyInputs] = fx.seit.source_baseline.planning_inputs;
+  fx.seit.source_baseline.planning_inputs = earlyInputs;
+  const seitBytes = JSON.stringify(fx.seit);
+  fx.put("seit.json", seitBytes);
+  fx.doc.journey_settings.final_technical_plan = technicalPlan;
+  const expected = sha([...earlyInputs, technicalPlan, { sha256: sha(seitBytes) }].map(row => row.sha256).join("\n"));
+  fx.doc.journey_settings.planning_review.candidate_digest = expected;
+  fx.wave.candidate_digest = expected;
+  fx.wave.closing_candidate.candidate_digest = expected;
+
+  const frozen = fx.run();
+  assert.equal(frozen.outcome, "PASS", JSON.stringify(frozen));
+  assert.equal(frozen.manifest_digest, expected);
+  assert.equal(readFileSync(path.join(fx.dir, "seit.json"), "utf8"), seitBytes);
+
+  fx.put("plan.md", read("./fixtures/register-precheck/plan.md") + "Unbound change.\n");
+  const stale = fx.run();
+  rejects(stale);
+  assert.ok(stale.findings.some(f => f.code === "digest_mismatch" && f.path === "plan.md"));
+});
+
 test("no-review closure adopts unchanged consumed inputs without rewriting the original return", t => {
   const fx = fixture(t);
   fx.put("notes.md", "Changed notes outside the specialist's consumed inputs.\n");
