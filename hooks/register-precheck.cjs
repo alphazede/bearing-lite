@@ -135,8 +135,9 @@ function seitCaseIdsOf(seit) {
 }
 
 /** Shared file-bound check for the CLI and final package freeze. */
-function checkRegisterFiles({ registerPath, planPath, root = repoRoot(process.cwd()), stage = 'final', seitPath }) {
-  const register = fs.readFileSync(registerPath, 'utf8'), technicalPlan = fs.readFileSync(planPath, 'utf8');
+function checkRegisterFiles({ registerPath, planPath, root = repoRoot(process.cwd()), stage = 'final', seitPath, technicalPlan }) {
+  const register = fs.readFileSync(registerPath, 'utf8');
+  technicalPlan ??= fs.readFileSync(planPath, 'utf8');
   const files = {};
   for (const match of (register + '\n' + technicalPlan).matchAll(/(?:^|[\s`(])((?:[\w.-]+\/)*[\w.-]+\.[\w.-]+):\d+\b/g)) {
     const target = path.resolve(root, match[1]);
