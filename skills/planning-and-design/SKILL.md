@@ -38,7 +38,11 @@ owner question box (`OWNER_DECISION_REQUIRED`), even under delegation.
    infer one; keep register references versus Lifecycle-local requirements distinct.
 2. Author the technical plan and `design.md` from the completed inputs, keeping
    **one plan per phase** (split multi-phase work into separate phase plans
-   instead of combining multiple phases into one plan). Preserve
+   instead of combining multiple phases into one plan). Decide per phase between
+   a **short reviewed command list** (`reviewed_command_list`) and **new reusable
+   tooling** (`new_reusable_tooling`), record why in the plan and
+   `journey_settings.tooling_choice`, and state its reuse whenever new tooling is
+   chosen (avoid building general tooling for one-off operational work). Preserve
    registered IDs and definitions, published-standard clauses, trust boundaries, and recovery.
    Copy the confirmed quantity-definitions table into the glossary verbatim (`references/artifact-grammar.md`).
    Allocate requirements to components from the placement receipt per `references/allocation-inputs.md`.

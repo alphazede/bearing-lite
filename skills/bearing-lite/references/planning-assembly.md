@@ -250,7 +250,12 @@ specialists. It never waits for the end-of-wave review.
 
 - Keep **one plan per phase**: split multi-phase work into separate phase plans
   rather than combining multiple phases into one plan and multiplying
-  cross-artifact bindings. Any scope decision that drops an acceptance item is
+  cross-artifact bindings. Decide per phase between a **short reviewed command
+  list** (`reviewed_command_list`) and **new reusable tooling**
+  (`new_reusable_tooling`), record why in `journey_settings.tooling_choice` and
+  the technical plan, and state its reuse (`reuse`) whenever new tooling is
+  chosen (prefer a short reviewed command list for one-off operational work). Any
+  scope decision that drops an acceptance item is
   always an owner question box (`OWNER_DECISION_REQUIRED`), even under delegation
   (`owner-stops.md`).
 

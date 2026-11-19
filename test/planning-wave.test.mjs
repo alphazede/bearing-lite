@@ -986,3 +986,19 @@ describe("Alphazedehq#611 copy-only or read-only live-host phase tier rule", () 
     }
   });
 });
+
+describe("Alphazedehq#609 per-phase choice between reviewed command list and reusable tooling", () => {
+  it("requires planning text and grammar to decide per phase, record why, and state reuse for new tooling", () => {
+    for (const rel of [
+      "skills/planning-and-design/SKILL.md",
+      "skills/planning-and-design/references/artifact-grammar.md",
+      "skills/bearing-lite/references/planning-assembly.md",
+    ]) {
+      const text = read(rel).replace(/\s+/g, " ");
+      assert.match(text, /short reviewed command list/i, rel);
+      assert.match(text, /new reusable tooling/i, rel);
+      assert.match(text, /record(?:s|ing)? why|reason/i, rel);
+      assert.match(text, /states? its reuse|reuse/i, rel);
+    }
+  });
+});
