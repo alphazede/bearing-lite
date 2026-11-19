@@ -1,7 +1,6 @@
----
 name: Bearing quality
 
-'on':
+on:
   push:
     branches: [main]
     tags: ['v*']
@@ -17,7 +16,7 @@ concurrency:
 
 jobs:
   quality:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
 
     steps:
@@ -28,7 +27,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Node
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22'
 
@@ -41,7 +40,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Check out az-lint
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: alphazede/az-lint
           ref: cc79b7a1dc533822aa5e67cccca4fb8c0e52d117
@@ -71,27 +70,23 @@ jobs:
         run: node --test test/*.test.mjs
 
       - name: Native Codex hook discovery
-        # The pinned CLI checks hook registration without invoking hooks.
+        # Test-only tooling, pinned; never a package dependency. Registration proof, not invocation.
         run: |
           set -euo pipefail
-          npm install --prefix "${RUNNER_TEMP}/bearing-codex" \
-            --ignore-scripts --no-audit --no-fund @openai/codex@0.162.1
-          codex_dir="${RUNNER_TEMP}/bearing-codex"
-          export BEARING_CODEX_BIN="$codex_dir/node_modules/.bin/codex"
+          npm install --prefix "${RUNNER_TEMP}/bearing-codex" --ignore-scripts --no-audit --no-fund @openai/codex@0.162.1
+          export BEARING_CODEX_BIN="${RUNNER_TEMP}/bearing-codex/node_modules/.bin/codex"
           test "$("$BEARING_CODEX_BIN" --version)" = "codex-cli 0.162.1"
-          node --test test/native/codex-hook-discovery.test.mjs \
-            test/native/assurance-dispatch.test.mjs
+          node --test test/native/codex-hook-discovery.test.mjs test/native/assurance-dispatch.test.mjs
 
       - name: Set up Python 3.12
-        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.12'
           architecture: x64
 
       - name: Validate Lite artifact schemas
         env:
-          BEARING_LITE_SCHEMA_ISOLATED_ROOT: >-
-            ${{ runner.temp }}/lite-schema-validator
+          BEARING_LITE_SCHEMA_ISOLATED_ROOT: ${{ runner.temp }}/lite-schema-validator
         run: |
           python3 -m pip install \
             --isolated \
@@ -115,13 +110,10 @@ jobs:
           const pack = require(process.env.PACK_JSON)[0];
           const pkg = require("./package.json");
           if (pack.name !== pkg.name || pack.version !== pkg.version) {
-            const identity = `${pack.name}@${pack.version}`;
-            throw new Error(`Unexpected package identity: ${identity}`);
+            throw new Error(`Unexpected package identity: ${pack.name}@${pack.version}`);
           }
-          const count = pack.files.length;
-          if (pack.entryCount !== count || count === 0) {
-            const detail = `${pack.entryCount}/${count}`;
-            throw new Error(`Invalid packed file count: ${detail}`);
+          if (pack.entryCount !== pack.files.length || pack.files.length === 0) {
+            throw new Error(`Invalid packed file count: ${pack.entryCount}/${pack.files.length}`);
           }
           NODE
 
