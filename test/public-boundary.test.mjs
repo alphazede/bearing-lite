@@ -108,7 +108,7 @@ const DEEP_COUPLING_PATTERNS = [
 /** The approved compact prompt frontmatter has a content-bound exemption; every privacy/security pattern still applies. */
 const TRUSTED_PUBLIC_PROMPT_SKILL = "skills/prompt/SKILL.md";
 const TRUSTED_PUBLIC_PROMPT_SKILL_SHA256 =
-  "fbb4f6905751f4a02904bae79a0141bd015c0a39c59b0f2a4159420744dbf1df";
+  "c7a84a4a4db001fab94920f10808c0e205906378156028f0459370352f56fa8f";
 
 /**
  * @param {string} content

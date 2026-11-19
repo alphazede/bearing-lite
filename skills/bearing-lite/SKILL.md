@@ -64,7 +64,9 @@ explicit setup or catalog-edit request uses [onboard-bearing](../onboard-bearing
    task plan supplies task and rolling batch boundaries. A recorded request
    requires no further approval. An independent evaluator is a reviewer.
    Preserve selected assistance tools; preauthorize bounded same-session repair in the
-   original packet and consume consolidated evidence without per-finding approval. Add no quality agents.
+   original packet and consume consolidated evidence without per-finding approval. For
+   a review before a first live apply, include the frozen host and class rows and
+   the exact proposed operand list, not only the executor diff. Add no quality agents.
 6. **Landing and closeout:** land each closed unit (`references/task-state.md#landing-a-closed-unit`); check deliverables and evidence. Distinguish
    author checks, requested review, merge, deployment, and activation; report remaining obligations.
 

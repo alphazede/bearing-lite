@@ -1122,6 +1122,26 @@ describe("Alphazedehq#615 early assurance start and join before verdict", () => 
   });
 });
 
+describe("Alphazedehq#616 first live apply review operand list", () => {
+  it("requires reviewer packet guidance, reviewer, and implementer text to supply frozen host/class rows and exact operand list", () => {
+    for (const rel of [
+      "skills/prompt/SKILL.md",
+      "skills/bearing-lite/references/pre-packet.md",
+      "skills/bearing-lite/templates/task.md",
+      "skills/reviewer/SKILL.md",
+      "skills/implementer/SKILL.md",
+      "skills/bearing-lite/SKILL.md",
+    ]) {
+      operatorInstruction(rel, [
+        /first live apply/i,
+        /frozen host and class rows/i,
+        /exact proposed operand list/i,
+        /not (only|just) the executor diff/i,
+      ], /\n\s*\n/);
+    }
+  });
+});
+
 function operatorInstruction(rel, expectations, breakAt = /(?<=[.!?])\s+/) {
   const parts = read(rel).split(/\n\s*\n/).flatMap(paragraph => paragraph
     .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
