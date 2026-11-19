@@ -104,10 +104,11 @@ Deterministic gate-chain claims use the mutation, changed-line coverage, and
 red-then-green claim types, each naming the target repository's own tool plus
 its threshold; `method` stays a plain string, never a schema enum. Each claim
 type defines a typed gap for a declared gate with a missing tool or a `not_run`
-outcome. The Assurance Test Engineer normally reruns the gate-chain at the
-declared cadence boundary. For a gate or role turn with an explicit **one-run
+outcome. By default, the Assurance Test Engineer independently reruns the gate-chain
+at the declared cadence boundary. Author gate-chain receipts are
+diagnostic evidence. For a gate or role turn with an explicit **one-run
 budget**, the Assurance Test Engineer uses **independent validation of a
-single-run receipt**. The author receipt supplies the recorded inputs, digest,
+single-run receipt**. The source receipt supplies the recorded inputs, digest,
 and log. The independent assurance receipt supplies the assurance verdict and
 references the original run. Every red-then-green receipt binds the baseline
 failing run and the candidate passing run over the same test IDs.
