@@ -51,7 +51,12 @@ choose on the user's behalf only within explicitly delegated decision scope and
 current task authority. Record that scope, exclusions, and expiry in the existing
 Lifecycle authority record; a profile flag alone never grants authority. Preserve
 the hold in the frozen binding and relevant packets. Changing it for an active
-Lifecycle requires an explicit owner amendment, never a live-catalog reload.
+Lifecycle requires an explicit owner amendment, never a live-catalog reload. When
+an owner's delegate approves a proposal or amendment within delegated authority,
+record it in `authority.json.delegate_approval` with `approver` (the delegate) and
+`delegation_ref` (the delegation grant it rests on), plus optional UTC `approved_at`,
+rather than writing a separate effective-authority file; a delegate approval without
+`delegation_ref` is invalid.
 
 Delegation does not authorize material scope or architecture changes, conflicting
 requirements with unresolved owner intent, protected actions, owner holds, model or

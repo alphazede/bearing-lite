@@ -1,6 +1,10 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(import.meta.url);
 const { evaluateOwnerStop, ownerWaitMetrics } = require("../hooks/owner-stops.cjs");
 const transition = require("../hooks/transition-order.cjs");
@@ -130,5 +134,16 @@ describe("local owner wait metrics", () => {
     assert.equal(result.owner_wait.decisions_asked, 0);
     assert.equal(result.enforcement, "procedural");
     assert.equal(closeout.evaluate({ action_kind: "owner_wait_summary", journey: journey(), as_of: "bad" }).outcome, "UNAVAILABLE");
+  });
+
+  it("documents authority.json.delegate_approval and delegation_ref in references/owner-stops.md (#604)", () => {
+    const text = readFileSync(path.join(ROOT, "skills/bearing-lite/references/owner-stops.md"), "utf8");
+    const delegationStart = text.indexOf("## Coordinator escalation and delegation");
+    const approvalStart = text.indexOf("## Approval and authority");
+    assert.ok(delegationStart >= 0 && approvalStart > delegationStart);
+    const delegationSection = text.slice(delegationStart, approvalStart);
+    assert.match(delegationSection, /delegate_approval/);
+    assert.match(delegationSection, /approver/);
+    assert.match(delegationSection, /delegation_ref/);
   });
 });
