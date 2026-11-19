@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Apply AGY tool exemptions to AGY assurance dispatch only. Other hosts retain their declared dispatch rules. (Alphazedehq#636)
+
 - Give the same recovery instructions for a never-launched Scribe in standalone coverage, resume, handoff, and closeout. (Alphazedehq#642)
 
 - Include the empty required specialist schedule in contained-tool planning results alongside the existing freeze and review requirements. (Alphazedehq#643)

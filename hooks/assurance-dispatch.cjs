@@ -16,7 +16,11 @@ const HOST_SUPPORT = Object.freeze({
   pi: { executable: false, test_status: 'skills_only' },
   deepcode: { executable: false, test_status: 'skills_only' },
 });
-const SAFE_TOOLS = new Set(['Read', 'Glob', 'Grep', 'List', 'read_file', 'list_dir', 'view_image', 'request_user_input', 'Write', 'Edit', 'MultiEdit', 'NotebookEdit', 'apply_patch', 'write_file', 'edit_file', 'view_file', 'find_by_name', 'grep_search', 'write_to_file', 'replace_file_content', 'multi_replace_file_content']);
+const SAFE_TOOLS = new Set(['Read', 'Glob', 'Grep', 'List', 'read_file', 'list_dir', 'view_image', 'request_user_input', 'Write', 'Edit', 'MultiEdit', 'NotebookEdit', 'apply_patch']);
+const AGY_SAFE_TOOLS = new Set([
+  'write_file', 'edit_file', 'view_file', 'find_by_name', 'grep_search',
+  'write_to_file', 'replace_file_content', 'multi_replace_file_content',
+]);
 const KINDS = new Set(['review', 'repair', 'deterministic', 'qualification']);
 const CLOSED = new Set(['PASS', 'REPAIR_REQUIRED', 'FAIL']);
 function stable(v) {
@@ -190,7 +194,9 @@ function handle(input, host = 'claude-code') {
     if (!['pretooluse', 'beforeshellexecution'].includes(event)) return result('INACTIVE', 'unmapped_host_event');
     const tool_name = input.tool_name || input.toolName || (event === 'beforeshellexecution' ? 'Bash' : '');
     const tool_input = input.tool_input || input.toolInput || (event === 'beforeshellexecution' ? { command: input.command } : {});
-    if (SAFE_TOOLS.has(tool_name)) return result('INACTIVE', 'read_or_owner_channel');
+    if (SAFE_TOOLS.has(tool_name) || (host === 'agy' && AGY_SAFE_TOOLS.has(tool_name))) {
+      return result('INACTIVE', 'read_or_owner_channel');
+    }
     const b = store.binding(input.cwd || input.workspaceRoot || process.cwd(), input);
     if (!b) return result('INACTIVE', 'ordinary_unbound_work');
     if (!HOST_SUPPORT[host]?.executable) return gap('host_enforcement_unavailable');
