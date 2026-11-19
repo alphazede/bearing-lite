@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [3.0.0-rc.7] - 2026-11-19
+
 - Add opt-in Herdr live-wave evidence to plan freeze, wave views, and closeout handoffs, with a shared role reference.
 - Verify Mermaid views in plan freeze without requiring synchronous ESM loading, including in hooks-only installs.
 - Link the shared live-wave instructions from the canonical Orchestrator, MBSE, and Integration and Test skills.
