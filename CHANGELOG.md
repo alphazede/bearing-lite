@@ -7,6 +7,7 @@
 - Link the shared live-wave instructions from the canonical Orchestrator, MBSE, and Integration and Test skills.
 - Preserve advisory live-wave evidence when closeout uses the final freeze receipt.
 - Resolve the late technical plan within the checkout and reuse the verified bytes for register precheck.
+- Ship the JSON Schema for each live-wave exchange record.
 
 - Accept digest-bound Mermaid source views in the plan schema and final freeze.
 
