@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Require Integration and Test to prove each frozen SEIT command can fail (one run on the expected input and one on a seeded bad input, or a recorded reason it cannot) instead of passing vacuously (`skills/integration-test/SKILL.md`). (Alphazedehq#633)
 - Keep author returns independent of generated `implementation.json` and order the Orchestrator to regenerate `implementation.json` before dispatching any verify-only author return so it never reads a stale copy (`skills/bearing-lite/references/planning-assembly.md`, `skills/planning-and-design/SKILL.md`, `skills/mbse/SKILL.md`, `skills/integration-test/SKILL.md`). (Alphazedehq#627)
 - Align `skills/bearing-lite/references/planning-assembly.md`, `skills/planning-and-design/SKILL.md`, `schemas/implementation.schema.json`, `hooks/planning-review.cjs`, and `hooks/plan-package.cjs` so `adopted()` preserves adopted returns across recorded mechanical ID and hash-binding `edit_records[]` (`before_sha256` to `after_sha256`) while still blocking inputs whose meaning changed. (Alphazedehq#624)
 - Document `CANDIDATE_READY` with `external_open_items` across planning and author skills without spending a closing return, and require `hooks/planning-review.cjs` and `hooks/plan-package.cjs` to refuse review/freeze while any listed external item remains open or unowned-closed. (Alphazedehq#626)
