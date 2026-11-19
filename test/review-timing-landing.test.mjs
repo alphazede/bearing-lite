@@ -57,6 +57,7 @@ describe("#223 closed units are landed", () => {
     assert.match(TASK_STATE, /merge only when `allowed\.actions` includes `merge` for that unit/);
     assert.match(TASK_STATE, /A\s+passing check, a review verdict, or a profile setting never grants merge/);
     assert.match(TASK_STATE, /A unit is not landed while its requested\s+review is pending/);
+    assert.match(TASK_STATE, /draft[\s\S]*CHANGELOG[\s\S]*gate\s+once[\s\S]*reuse[\s\S]*unchanged\s+head[\s\S]*procedure\s+defect[\s\S]*exact-head/i);
   });
 
   it("controllers and authority point at the landing rule", () => {
