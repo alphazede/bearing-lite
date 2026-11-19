@@ -443,10 +443,14 @@ describe("Alphazedehq#611 per-operation copy/read live-host tier resolution", ()
   });
 
   it("keeps the prior tier and lifecycle cadence outside the per-operation copy/read exception", () => {
+    const incompleteOperations = ["copy"];
+    incompleteOperations.length = 2;
     const cases = [
       { live_host: true, copy_only: true, prior_tier: "full" },
       { live_services: true, read_only: true, prior_tier: "full" },
       { live_host: true, copy_only: true, operations: [], prior_tier: "full" },
+      { live_host: true, operations: Array(1), prior_tier: "full" },
+      { live_host: true, operations: incompleteOperations, prior_tier: "full" },
       { live_host: true, copy_only: true, operations: ["copy", "rebuild_worktree"], prior_tier: "full" },
       { live_host: true, operations: ["copy", "observe"], prior_tier: "full" },
       { live_host: true, operations: ["read", "run_role"], prior_tier: "full" },
