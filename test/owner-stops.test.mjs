@@ -136,14 +136,14 @@ describe("local owner wait metrics", () => {
     assert.equal(closeout.evaluate({ action_kind: "owner_wait_summary", journey: journey(), as_of: "bad" }).outcome, "UNAVAILABLE");
   });
 
-  it("documents authority.json.delegate_approval and delegation_ref in references/owner-stops.md (#604)", () => {
+  it("records delegate approvals on the effective envelope while preserving the frozen proposal (#604)", () => {
     const text = readFileSync(path.join(ROOT, "skills/bearing-lite/references/owner-stops.md"), "utf8");
-    const delegationStart = text.indexOf("## Coordinator escalation and delegation");
-    const approvalStart = text.indexOf("## Approval and authority");
-    assert.ok(delegationStart >= 0 && approvalStart > delegationStart);
-    const delegationSection = text.slice(delegationStart, approvalStart);
+    const [, delegationSection] = /(?:^|\n)## [^\n]*\bdelegation\b[^\n]*\n([\s\S]*?)(?=\n## |$)/i.exec(text) ?? [];
+    assert.ok(delegationSection, "The owner stops guide includes delegation instructions");
     assert.match(delegationSection, /delegate_approval/);
     assert.match(delegationSection, /approver/);
     assert.match(delegationSection, /delegation_ref/);
+    assert.match(delegationSection, /effective\s+envelope/i);
+    assert.match(delegationSection, /preserve\s+(?:the\s+)?frozen\s+proposal/i);
   });
 });
