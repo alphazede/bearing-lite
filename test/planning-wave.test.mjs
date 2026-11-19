@@ -936,7 +936,8 @@ describe("Alphazedehq#603 Integration and Test run-once command check", () => {
     assert.match(proc, /run[^.]*\bonce\b/i);
     assert.match(proc, /reason[^.]*(?:defer|cannot run before implementation)/i);
     assert.match(ret, /run-once|each frozen command/i);
-    assert.match(ret, /exit code[^.]*(?:reason[^.]*cannot run|pre-implementation)/i);
+    assert.match(ret, /run-once record[^.]*exit code/i);
+    assert.match(ret, /pre-implementation reason for any deferred case/i);
   });
 
   it("defers SEIT command checks outside planning authority or the declared run budget", () => {
@@ -958,6 +959,8 @@ describe("Alphazedehq#633 fail-able SEIT command check", () => {
     assert.match(selfCheck, /expected input/i);
     assert.match(selfCheck, /seeded bad input/i);
     assert.match(selfCheck, /can fail|fail-able/i);
+    assert.match(selfCheck, /verify the declared pass outcome/i);
+    assert.match(selfCheck, /seeded defect caused the non-zero exit/i);
     assert.match(selfCheck, /record[^.]*(?:reason|why)/i);
     assert.match(ret, /expected input/i);
     assert.match(ret, /seeded bad input/i);
