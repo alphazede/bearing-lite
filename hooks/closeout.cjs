@@ -223,8 +223,10 @@ function evaluate(input) {
     }
 
     const scribeCoverage = isPlainObject(input.journey) ? evaluateScribeCoverage(input) : null;
+    const protectedCompletion = input.mode === "protected_completion" || input.protected_completion === true;
+    const planningHandoff = input.mode === "handoff" && !protectedCompletion;
 
-    if (input.mode === "handoff") {
+    if (planningHandoff) {
       if (scribeCoverage && scribeCoverage.outcome !== "PASS") {
         return {
           ...result("REROUTE", "handoff_refused:scribe_" + scribeCoverage.outcome + ":" + scribeCoverage.reason,
@@ -243,25 +245,7 @@ function evaluate(input) {
           RECOVERY_FINAL_FREEZE_HANDOFF
         );
       }
-      const hasHandoffEnvelope = isPlainObject(input.handoff) ||
-        HANDOFF_FIELDS.some((field) => input[field] !== undefined);
-      if (hasHandoffEnvelope) {
-        const { missing, invalid } = inspectHandoffFields(input);
-        if (missing.length > 0) {
-          return result("REROUTE", "handoff_incomplete:" + missing.join(","), RECOVERY_HANDOFF);
-        }
-        if (invalid.length > 0) {
-          return result("REROUTE", "handoff_invalid:" + invalid.join(","), RECOVERY_INVALID_VERDICT);
-        }
-      }
-      const complete = result("ADVISE", "handoff_complete", RECOVERY_COMPLETE);
-      return scribeCoverage ? { ...complete, scribe_coverage: scribeCoverage } : complete;
     }
-
-    const mode =
-      input.mode === "protected_completion" || input.protected_completion === true
-        ? "protected_completion"
-        : "advisory";
 
     const planningVerdict = input.planning_review
       ? evaluatePlanningReview(input.planning_review)
@@ -282,7 +266,7 @@ function evaluate(input) {
         input.blocker.trim() &&
         input.blocker.trim() !== "none");
 
-    if (mode === "protected_completion") {
+    if (protectedCompletion) {
       const blockers = [];
       const handoffProblems = [...missing, ...invalid];
       if (handoffProblems.length > 0) blockers.push("handoff:" + handoffProblems.join(","));
@@ -336,7 +320,9 @@ function evaluate(input) {
     }
 
     // Advisory closeout: never BLOCK.
-    if (missing.length > 0) {
+    const hasHandoffEnvelope = isPlainObject(input.handoff) ||
+      HANDOFF_FIELDS.some((field) => input[field] !== undefined);
+    if (missing.length > 0 && (!planningHandoff || hasHandoffEnvelope)) {
       return result(
         "ADVISE",
         "handoff_incomplete:" + missing.join(","),
@@ -361,7 +347,8 @@ function evaluate(input) {
       );
     }
 
-    return result("ADVISE", "handoff_complete", RECOVERY_COMPLETE);
+    const complete = result("ADVISE", "handoff_complete", RECOVERY_COMPLETE);
+    return planningHandoff && scribeCoverage ? { ...complete, scribe_coverage: scribeCoverage } : complete;
   } catch {
     return unavailable("adapter_exception");
   }
