@@ -366,9 +366,39 @@ function evaluateVerification(input) {
   }
 }
 
+function confirmedOneRepository(phase) {
+  if (phase.multi_repo === true || phase.cross_repo === true || phase.one_repository === false) {
+    return false;
+  }
+  if (phase.one_repository !== undefined && typeof phase.one_repository !== "boolean") return false;
+  if (phase.repository_count !== undefined && phase.repository_count !== 1) return false;
+  const repoArrayOne =
+    Array.isArray(phase.repositories) &&
+    phase.repositories.length === 1 &&
+    typeof phase.repositories[0] === "string" &&
+    phase.repositories[0].trim().length > 0;
+  if (phase.repositories !== undefined && phase.repositories !== 1 && !repoArrayOne) return false;
+  return phase.one_repository === true || phase.repositories === 1 || phase.repository_count === 1 || repoArrayOne;
+}
+
+function confirmedNoNewTrustBoundary(phase) {
+  if (phase.new_trust_boundary !== undefined && typeof phase.new_trust_boundary !== "boolean") return false;
+  if (phase.trust_boundary !== undefined && typeof phase.trust_boundary !== "boolean") return false;
+  if (phase.new_trust_boundary === true || phase.trust_boundary === true) return false;
+  return phase.new_trust_boundary === false || phase.trust_boundary === false;
+}
+
+function confirmedNoLiveHost(phase) {
+  for (const key of ["live_host", "crosses_live_host", "live_services"]) {
+    if (phase[key] !== undefined && typeof phase[key] !== "boolean") return false;
+    if (phase[key] === true) return false;
+  }
+  return phase.live_host === false || phase.crosses_live_host === false || phase.live_services === false;
+}
+
 /**
- * Apply the live-host exception to the tier selected by the existing risk rule.
- * Only the exception supplies a new cadence and live-service observations.
+ * Apply the live-host exception or contained-tool-change planning rule to the
+ * tier selected by the existing risk rule.
  *
  * @param {unknown} phase
  * @returns {{
@@ -380,7 +410,9 @@ function evaluateVerification(input) {
  *   implementers?: number,
  *   reviews?: number,
  *   separate_assurance?: boolean,
- *   live_service_observation?: { required: boolean, stages: string[] }
+ *   live_service_observation?: { required: boolean, stages: string[] },
+ *   planning_sessions?: number,
+ *   same_freeze?: boolean
  * }}
  */
 function resolveProcessTier(phase) {
@@ -396,6 +428,7 @@ function resolveProcessTier(phase) {
     if (phase.prior_tier === undefined) return result("NEEDS_MORE_EVIDENCE", "prior_tier_missing");
     if (!PROCESS_TIERS.includes(phase.prior_tier)) return result("REJECT", "tier_invalid");
     const unchanged = result("READY", "tier_unchanged", phase.prior_tier);
+    if (phase.explicit_owner_tier === true) return unchanged;
     const crossesLiveHost =
       phase.live_host === true || phase.crosses_live_host === true || phase.live_services === true;
     const otherFullRisk =
@@ -407,6 +440,27 @@ function resolveProcessTier(phase) {
       phase.multi_wave === true ||
       phase.specification_register === true ||
       phase.journey_type === "specification";
+    const planningScope =
+      (phase.scope === undefined || phase.scope === "planning") &&
+      (phase.stage === undefined || phase.stage === "planning");
+    if (
+      planningScope &&
+      phase.prior_tier !== "light" &&
+      phase.tool_change === true &&
+      confirmedOneRepository(phase) &&
+      confirmedNoNewTrustBoundary(phase) &&
+      confirmedNoLiveHost(phase) &&
+      !otherFullRisk &&
+      phase.risk_unknown !== true &&
+      phase.unconfirmed_scope !== true
+    ) {
+      return {
+        ...result("READY", "contained_tool_change", "light"),
+        planning_sessions: 0,
+        same_freeze: true,
+        reviews: 1,
+      };
+    }
     if (phase.prior_tier !== "full" || !crossesLiveHost ||
         phase.live_host_only_full_risk !== true || otherFullRisk) {
       return unchanged;

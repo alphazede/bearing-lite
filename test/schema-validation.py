@@ -2069,6 +2069,43 @@ def verification_cases() -> list[tuple[str, str, object, str]]:
             "schema_version": "1", "kind": "tier_resolution",
             "outcome": "READY", "reason": "tier_unchanged", "tier": "full",
         }, "accept"),
+        ("SEIT-BDL-004", "tier_resolution_contained_tool_change_accept", {
+            "schema_version": "1",
+            "kind": "tier_resolution",
+            "outcome": "READY",
+            "reason": "contained_tool_change",
+            "tier": "light",
+            "planning_sessions": 0,
+            "same_freeze": True,
+            "reviews": 1,
+        }, "accept"),
+        ("SEIT-BDL-004", "tier_resolution_contained_tool_change_missing_freeze_reject", {
+            "schema_version": "1",
+            "kind": "tier_resolution",
+            "outcome": "READY",
+            "reason": "contained_tool_change",
+            "tier": "light",
+            "planning_sessions": 0,
+            "reviews": 1,
+        }, "reject"),
+        ("SEIT-BDL-004", "tier_resolution_contained_tool_change_wrong_tier_reject", {
+            "schema_version": "1",
+            "kind": "tier_resolution",
+            "outcome": "READY",
+            "reason": "contained_tool_change",
+            "tier": "full",
+            "planning_sessions": 0,
+            "same_freeze": True,
+            "reviews": 1,
+        }, "reject"),
+        ("SEIT-BDL-004", "tier_resolution_unchanged_rejects_planning_fields", {
+            "schema_version": "1",
+            "kind": "tier_resolution",
+            "outcome": "READY",
+            "reason": "tier_unchanged",
+            "tier": "full",
+            "planning_sessions": 0,
+        }, "reject"),
     ])
     for field in VERIFICATION_REQUEST_FIELDS:
         out.append((

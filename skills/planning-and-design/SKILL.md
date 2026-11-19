@@ -23,7 +23,16 @@ contracts, evidence, selected routes/capabilities, cadence, authority, and
 repository rules. `mbse` and `integration_test` start in parallel from the
 frozen requirement skeleton and decisions when required by the process tier and
 task; in `light` tier, skip unneeded specialist sessions (`required_sessions: []`)
-and keep the package proportional to the work. Any needed decision change
+and keep the package proportional to the work. For a **contained tool change**,
+tier resolution (`resolveProcessTier` in `hooks/verification.cjs`) selects the
+lighter `light` planning tier only when every named criterion holds—tool change
+(`tool_change: true`), one repository (`one_repository: true` or `repositories: 1`),
+no new trust boundary (`new_trust_boundary: false`), no live host (`live_host: false`),
+and no other `full`-tier risk factor or explicit owner tier—yielding fewer planning
+sessions (`planning_sessions: 0`, `required_sessions: []`, planning stays in the
+Planning Orchestrator), the same `hooks/plan-package.cjs` freeze (`same_freeze: true`),
+and one review when requested (`reviews: 1`); any unmet or unknown criterion keeps
+the prior tier. Any needed decision change
 surfaced mid-wave waits for assembly rather than amending decisions mid-wave.
 Reuse adequate sources for inactive roles; expose missing required inputs rather
 than inventing them.

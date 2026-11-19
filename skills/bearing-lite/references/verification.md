@@ -123,6 +123,14 @@ stated risk rule ([planning assembly](planning-assembly.md#process-tiers-and-sta
    unconfirmed scope retains the prior tier and cadence.
    A `tier_unchanged` result carries the original tier. If the helper has no
    prior tier, apply the existing risk rule.
+4. A **contained tool change** resolves to `light`
+   (`reason: "contained_tool_change"`, `planning_sessions: 0`,
+   `required_sessions: []`, `same_freeze: true` with `hooks/plan-package.cjs`,
+   `reviews: 1`) only when every criterion holds—`tool_change: true`, one
+   repository (`one_repository: true` or `repositories: 1`), no new trust
+   boundary (`new_trust_boundary: false`), no live host (`live_host: false`),
+   and no other `full`-tier risk factor or explicit owner tier—while any unmet
+   or unknown criterion keeps `prior_tier` (`tier_unchanged`).
 
 ## Gate-chain claim types
 

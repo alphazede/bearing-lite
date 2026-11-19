@@ -147,7 +147,9 @@
         "separate_assurance": { "type": "boolean" },
         "live_service_observation": {
           "const": { "required": true, "stages": ["before", "after"] }
-        }
+        },
+        "planning_sessions": { "type": "integer", "minimum": 0 },
+        "same_freeze": { "type": "boolean" }
       },
       "if": {
         "properties": { "reason": { "const": "copy_or_read_only_live_host" } }
@@ -159,15 +161,37 @@
           "tier": { "const": "standard" },
           "implementers": { "const": 1 },
           "reviews": { "const": 1 },
-          "separate_assurance": { "const": false }
+          "separate_assurance": { "const": false },
+          "planning_sessions": false,
+          "same_freeze": false
         }
       },
       "else": {
-        "properties": {
-          "implementers": false,
-          "reviews": false,
-          "separate_assurance": false,
-          "live_service_observation": false
+        "if": {
+          "properties": { "reason": { "const": "contained_tool_change" } }
+        },
+        "then": {
+          "required": ["planning_sessions", "same_freeze", "reviews"],
+          "properties": {
+            "outcome": { "const": "READY" },
+            "tier": { "const": "light" },
+            "planning_sessions": { "const": 0 },
+            "same_freeze": { "const": true },
+            "reviews": { "const": 1 },
+            "implementers": false,
+            "separate_assurance": false,
+            "live_service_observation": false
+          }
+        },
+        "else": {
+          "properties": {
+            "implementers": false,
+            "reviews": false,
+            "separate_assurance": false,
+            "live_service_observation": false,
+            "planning_sessions": false,
+            "same_freeze": false
+          }
         }
       }
     }

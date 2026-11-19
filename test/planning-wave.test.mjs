@@ -1536,6 +1536,35 @@ describe("Alphazedehq#627 regenerate implementation.json before verify-only auth
   });
 });
 
+describe("Alphazedehq#643 contained tool change lighter planning tier", () => {
+  it("states the contained-tool-change tier criteria, fewer planning sessions, same freeze, and one review in planning docs", () => {
+    operatorInstruction("skills/planning-and-design/SKILL.md", [
+      /contained tool change/i,
+      /one repository/i,
+      /no new trust boundary/i,
+      /no live host/i,
+      /fewer planning sessions|planning_sessions:\s*0|required_sessions:\s*\[\]/i,
+      /same freeze|plan-package\.cjs/i,
+      /one review|one planning review/i,
+    ]);
+    operatorInstruction("skills/bearing-lite/references/planning-assembly.md", [
+      /contained tool change/i,
+      /one repository/i,
+      /no new trust boundary/i,
+      /no live host/i,
+      /fewer planning sessions|planning_sessions:\s*0|required_sessions:\s*\[\]/i,
+      /same .*freeze|plan-package\.cjs/i,
+      /one review/i,
+      /unmet or unknown criterion keeps the current tier|keeps the (?:prior|current) tier/i,
+    ]);
+    operatorInstruction("skills/bearing-lite/references/verification.md", [
+      /contained tool change/i,
+      /contained_tool_change/,
+      /unmet or unknown/i,
+    ]);
+  });
+});
+
 function operatorInstruction(rel, expectations, breakAt = /(?<=[.!?])\s+/) {
   const parts = read(rel).split(/\n\s*\n/).flatMap(paragraph => paragraph
     .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
