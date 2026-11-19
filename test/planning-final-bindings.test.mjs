@@ -101,7 +101,7 @@ for (const name of ["register.sdoc", "plan.md", "seit.json", "evidence.txt"]) {
     rejects(result);
     assert.ok(result.findings.some(f => name === "evidence.txt"
       ? f.code === "register_precheck_failed" && f.class === "citation"
-      : f.code === "planning_input_unreadable"), JSON.stringify(result));
+      : f.code === "planning_input_unreadable" && f.path === name), JSON.stringify(result));
   });
 }
 

@@ -876,3 +876,49 @@ describe("plan-package (Alphazedehq#608 false serial chain flag)", () => {
     assert.ok(result.findings.some((f) => f.code === "false_serial_chain" && f.blocking === false));
   });
 });
+
+describe("plan-package (Alphazedehq#628 declared artifacts and named unreadable files)", () => {
+  function setupValidPackage(t) {
+    const dir = mkdtempSync(path.join(os.tmpdir(), "plan-pkg-628-"));
+    t.after(() => rmSync(dir, { recursive: true, force: true }));
+    mkdirSync(path.join(dir, ".git"), { recursive: true });
+    const plan = "# Plan\n";
+    writeFileSync(path.join(dir, "plan.md"), plan);
+    const seitDoc = JSON.stringify({
+      source_baseline: { planning_inputs: [{ path: "plan.md", sha256: sha(plan) }] },
+      procedures_and_commands: [],
+      proof_cases: [],
+    });
+    writeFileSync(path.join(dir, "seit.json"), seitDoc);
+    const digest = sha([sha(plan), sha(seitDoc)].join("\n"));
+    const contract = planningContract(digest, { units: ["W1"], kind: "wave", dir });
+    const doc = {
+      journey_settings: { planning_review: { candidate_digest: digest }, ...contract.journey_settings },
+      boundary_contract: contract.boundary_contract,
+      waves: [{ id: "W1", slice_ids: ["S1"] }],
+      dependencies: [],
+      slices: [{ id: "S1", role: "Implementer", write_set: ["a.js"], command_ids: [] }],
+    };
+    writeFileSync(path.join(dir, "implementation.json"), JSON.stringify(doc));
+    return dir;
+  }
+
+  it("ignores an unrelated empty *.json file in the plan directory during freeze", (t) => {
+    const dir = setupValidPackage(t);
+    writeFileSync(path.join(dir, "unrelated-notes.json"), "");
+    const res = freeze(dir, { stage: "final" });
+    assert.equal(res.outcome, "PASS", JSON.stringify(res));
+    assert.deepEqual(res.findings, []);
+  });
+
+  it("names the offending declared artifact when unreadable or invalid JSON", (t) => {
+    for (const bad of ["authority.json", "plan-integration.json"]) {
+      const dir = setupValidPackage(t);
+      writeFileSync(path.join(dir, bad), "");
+      const res = freeze(dir, { stage: "final" });
+      assert.equal(res.outcome, "FAIL", bad);
+      assert.equal(res.findings[0]?.code, "planning_input_unreadable", JSON.stringify(res));
+      assert.equal(res.findings[0]?.path, bad, JSON.stringify(res));
+    }
+  });
+});

@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Ignore unrelated `*.json` files during `hooks/plan-package.cjs` freeze checks and include the offending `path` in `planning_input_unreadable` findings. (Alphazedehq#628)
+
 ## [3.0.0-rc.4] - 2026-11-19
 
 - Clarify that the copy/read exception applies only when live hosting is the sole reason for the full assurance tier.
