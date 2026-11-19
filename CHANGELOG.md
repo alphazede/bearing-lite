@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Hold declared external inputs until their required versions are observed, and allow an observed input before a later writer runs. (#608)
 - Schedule from the full frozen slice graph so independent waves can proceed while cross-wave inputs, dependencies, and resource holds are respected. (#608)
 - Keep live-service observation policy in tier resolution records and preserve the existing verification receipt schema. (#611)
 - Apply the live-host tier exception only when live hosting is the sole reason for the existing full tier. Other phases retain their selected tier and cadence. (#611)

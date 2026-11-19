@@ -62,8 +62,12 @@ The Implementation Orchestrator evaluates the complete frozen graph with
 current scheduling state as JSON on stdin. Supply the assignment statuses
 for all waves in `assignments`, outstanding decisions and out-of-scope slices
 in `pending` (rows with `slice` IDs), and externally held resources in
-`busy_resources`. Start eligible ready
-slices across waves within the frozen authority and agent cap.
+`busy_resources`. Put a file or artifact in `available_inputs` only after
+observing the version the consuming slice needs. A slice ID used as an input
+requires that slice's `COMPLETED` status. A file input is satisfied by the
+observed version or by completion of its planned producers. Use the producer's
+slice ID when the consumer specifically needs that slice's output. Start
+eligible ready slices across waves within the frozen authority and agent cap.
 Read a ready slice's commands with
 `node <plugin root>/hooks/plan-package.cjs wave <plan dir> <wave id>`.
 Launch with the packet's frozen-route form unchanged. Subscribe to native response

@@ -51,7 +51,7 @@ function evaluate(input) {
   const assignments = (input && input.assignments) || {};
   const pending = new Set((Array.isArray(input && input.pending) ? input.pending : []).map(item => item && item.slice));
   const busy = new Set(Array.isArray(input && input.busy_resources) ? input.busy_resources : []);
-  const available = Array.isArray(input && input.available_inputs) ? new Set(input.available_inputs) : null;
+  const available = new Set(Array.isArray(input && input.available_inputs) ? input.available_inputs : []);
   const ids = new Set(slices.map(slice => slice.id));
   const index = { files: new Map(), dirs: [] };
   for (const slice of slices) {
@@ -80,12 +80,12 @@ function evaluate(input) {
             if (assignments[inp] !== "COMPLETED") { cause = "input"; by = inp; break; }
             continue;
           }
+          if (available.has(inp)) continue;
           const producers = slices.filter(other => other.id !== slice.id && writes(other).some(w => pathMatches(w, inp)));
-          if (producers.length) {
-            if (producers.some(prod => assignments[prod.id] !== "COMPLETED")) { cause = "input"; by = inp; break; }
-            continue;
-          }
-          if (available && !available.has(inp)) { cause = "input"; by = inp; break; }
+          if (producers.length && producers.every(prod => assignments[prod.id] === "COMPLETED")) continue;
+          cause = "input";
+          by = inp;
+          break;
         }
       }
       if (!cause) {
