@@ -123,6 +123,10 @@ function adaptInput(rawInput, target) {
     ...(cwd ? { cwd, workspaceRoot: cwd } : {}),
     ...(hookEventName ? { hook_event_name: hookEventName, hookEventName } : {}),
   };
+  if ([rawInput.continuationActive, rawInput.continuation_active]
+    .some((value) => [true, "true", 1, "1"].includes(value))) {
+    adapted.stop_hook_active = true;
+  }
 
   if (isPlainObject(rawInput.toolCall)) {
     if (target === "assurance-dispatch") {

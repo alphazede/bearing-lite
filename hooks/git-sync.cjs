@@ -131,14 +131,7 @@ function isTruthyFlag(value) {
 function isStopReentry(input, eventName) {
   const event = String(eventName || "").replace(/[_\-\s]/g, "").toLowerCase();
   if (event !== "stop" && event !== "subagentstop") return false;
-  if (
-    isTruthyFlag(input.stop_hook_active) ||
-    isTruthyFlag(input.stopHookActive) ||
-    isTruthyFlag(input.continuationActive) ||
-    isTruthyFlag(input.continuation_active)
-  ) {
-    return true;
-  }
+  if (isTruthyFlag(input.stop_hook_active) || isTruthyFlag(input.stopHookActive)) return true;
   // Cursor signals a stop re-entry after a real follow-up with loop_count (#139).
   const loops = Number(input.loop_count ?? input.loopCount);
   return Number.isFinite(loops) && loops >= 1;
@@ -171,12 +164,7 @@ function handle(raw) {
   } catch {
     input = {};
   }
-  const cwd =
-    typeof input.cwd === "string" && input.cwd
-      ? input.cwd
-      : Array.isArray(input.workspacePaths) && typeof input.workspacePaths[0] === "string" && input.workspacePaths[0]
-        ? input.workspacePaths[0]
-        : process.cwd();
+  const cwd = typeof input.cwd === "string" && input.cwd ? input.cwd : process.cwd();
   const event =
     typeof input.hook_event_name === "string"
       ? input.hook_event_name

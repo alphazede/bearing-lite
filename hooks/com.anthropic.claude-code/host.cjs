@@ -274,14 +274,7 @@ function isTruthyFlag(value) {
 
 function isStopReentry(input, eventName) {
   if (!STOP_CONTINUATION_EVENTS.has(eventName)) return false;
-  if (
-    isTruthyFlag(input.stop_hook_active) ||
-    isTruthyFlag(input.stopHookActive) ||
-    isTruthyFlag(input.continuationActive) ||
-    isTruthyFlag(input.continuation_active)
-  ) {
-    return true;
-  }
+  if (isTruthyFlag(input.stop_hook_active) || isTruthyFlag(input.stopHookActive)) return true;
   // Cursor signals a stop re-entry after a real follow-up with loop_count (#139).
   const loops = Number(input.loop_count ?? input.loopCount);
   return Number.isFinite(loops) && loops >= 1;
@@ -411,7 +404,6 @@ function handle(input, options = {}) {
   const cwd =
     presentString(parsed.cwd) ||
     presentString(parsed.workspaceRoot) ||
-    (Array.isArray(parsed.workspacePaths) && presentString(parsed.workspacePaths[0])) ||
     process.cwd();
 
   const bound = binding(parsed);

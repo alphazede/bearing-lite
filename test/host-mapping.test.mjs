@@ -483,6 +483,16 @@ describe("verified host mapping", () => {
     assert.notEqual(response.decision, "block");
   });
 
+  it("BL-08 a common-host Stop ignores Antigravity continuation metadata", () => {
+    const cwd = path.join(tmp, "stop-foreign-continuation");
+    mkdirSync(cwd);
+    writePlan(cwd, READY_PLAN);
+    const stop = { cwd, session_id: "stop-foreign", hook_event_name: "Stop" };
+    const ordinary = host.handle(stop);
+    assert.match(ordinary.hookSpecificOutput.additionalContext, /closeout/);
+    assert.deepEqual(host.handle({ ...stop, continuationActive: true }), ordinary);
+  });
+
   it("unmapped host events stay quiet without blocking", () => {
     const response = host.handle({
       cwd: tmp,
