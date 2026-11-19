@@ -1095,4 +1095,27 @@ describe("SEIT-B30-524 content parity and artwork", () => {
     assert.match(html, /S0, design\.md/);
     assert.match(html, /host:i7/);
   });
+
+  it("shows frozen top-level and inline slice inputs and resources instead of stale task-row copies", () => {
+    const doc = {
+      slices: [
+        { id: "A", inputs: ["inputs/seed.json"], resource: "host:primary" },
+        { id: "C" },
+      ],
+      waves: [{ slices: [{ id: "B", inputs: ["A"], resource: "host:secondary" }] }],
+      dod_manifest: baseManifest({
+        tasks: [
+          { id: "A", role: "Implementer", write_set: ["a.json"], resource: "host:stale" },
+          { id: "B", role: "Implementer", write_set: ["b.json"] },
+          { id: "C", role: "Implementer", write_set: ["c.json"], inputs: ["stale.json"] },
+        ],
+      }),
+    };
+    const { html } = renderDodManifest(doc);
+    assert.match(html, /Inputs<\/th>/);
+    assert.match(html, /inputs\/seed\.json/);
+    assert.match(html, /host:primary/);
+    assert.match(html, /host:secondary/);
+    assert.doesNotMatch(html, /host:stale|\bstale\.json/);
+  });
 });

@@ -1390,9 +1390,18 @@ export function renderDodManifest(doc, opts = {}) {
   ].join("\n");
 
   const taskParsed = asRows(man.tasks);
-  const showSliceFlow =
-    !taskParsed.na &&
-    taskParsed.value.some((row) => row && (row.inputs !== undefined || row.resource !== undefined));
+  const sliceById = new Map();
+  for (const owner of [doc, ...(Array.isArray(doc.waves) ? doc.waves : [])]) {
+    if (!Array.isArray(owner?.slices)) continue;
+    for (const slice of owner.slices) {
+      if (typeof slice?.id === "string" && !sliceById.has(slice.id)) sliceById.set(slice.id, slice);
+    }
+  }
+  const taskRows = taskParsed.na ? [] : taskParsed.value.map((row) => {
+    const slice = sliceById.get(row?.id);
+    return slice ? { ...row, inputs: slice.inputs, resource: slice.resource } : row;
+  });
+  const showSliceFlow = taskRows.some((row) => row && (row.inputs !== undefined || row.resource !== undefined));
   const taskTable = taskParsed.na
     ? naBlock("Task graph", taskParsed.reason)
     : renderTable(
@@ -1403,29 +1412,20 @@ export function renderDodManifest(doc, opts = {}) {
         showSliceFlow
           ? ["ID", "Role", "Depends on", "Inputs", "Resource", "Write set", "Status"]
           : ["ID", "Role", "Depends on", "Write set", "Status"],
-        taskParsed.value.map((row) => {
+        taskRows.map((row) => {
           const planned = field(row, "status");
           const current = currentSliceStatus(man.closeout, row.id);
           return {
             kind: statusKind(current || planned),
             status: current || planned,
-            cells: showSliceFlow
-              ? [
-                  esc(row.id),
-                  cellText(row.role),
-                  cellText(row.depends_on),
-                  cellText(row.inputs),
-                  cellText(row.resource),
-                  cellText(row.write_set),
-                  statusChip(current || planned),
-                ]
-              : [
-                  esc(row.id),
-                  cellText(row.role),
-                  cellText(row.depends_on),
-                  cellText(row.write_set),
-                  statusChip(current || planned),
-                ],
+            cells: [
+              esc(row.id),
+              cellText(row.role),
+              cellText(row.depends_on),
+              ...(showSliceFlow ? [cellText(row.inputs), cellText(row.resource)] : []),
+              cellText(row.write_set),
+              statusChip(current || planned),
+            ],
           };
         })
       );

@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Show frozen slice inputs and held resources in the DoD Manifest task graph, including inline wave slices. (#608)
 - Validate inputs and held resources for inline wave slices as well as top-level slices. Legacy slice references remain valid. (#608)
 - Hold declared external inputs until their required versions are observed, and allow an observed input before a later writer runs. (#608)
 - Schedule from the full frozen slice graph so independent waves can proceed while cross-wave inputs, dependencies, and resource holds are respected. (#608)
