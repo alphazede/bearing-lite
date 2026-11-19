@@ -224,6 +224,9 @@ describe("live-wave skill links (HLW-VC-027)", () => {
   const LIVE = "skills/bearing-lite/references/live-wave.md";
   const LINKERS = [
     ORCH,
+    "skills/bearing-lite/SKILL.md",
+    "skills/mbse/SKILL.md",
+    "skills/integration-test/SKILL.md",
     "skills/implementer/SKILL.md",
     "skills/light-implementer/SKILL.md",
     "skills/reviewer/SKILL.md",

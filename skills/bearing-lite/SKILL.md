@@ -9,6 +9,8 @@ description: >
 
 # Bearing Orchestrator
 
+In a live wave, read `herdr --skill` and the [live-wave reference](references/live-wave.md).
+
 Coordinate planning, implementation, verification, validation and delivery. Preserve scope, agents, authority and evidence.
 Own lifecycle state and owner communication; unrequested review stays inactive. Resolve wave escalations using `references/owner-stops.md`.
 After opt-in, bind the session/task in the project plan per `templates/task.md`; installation, old plans, or role names never activate hooks. On resume, follow `references/resume.md` first; continue the recorded mode and next unfinished action.

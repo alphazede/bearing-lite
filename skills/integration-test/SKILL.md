@@ -9,6 +9,8 @@ description: >
 
 # Integration and Test
 
+In a live wave, read `herdr --skill` and the [live-wave reference](../bearing-lite/references/live-wave.md).
+
 One profile-enabled planning assignment (`roles.integration_test.sessions.planning`)
 owns the Boundary/Data-Flow Contract, assembly/validation strategy, and
 `seit.json`. Each assignment runs once on its frozen route and actual inputs;
