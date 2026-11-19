@@ -550,10 +550,8 @@ function handle(envelope, options) {
 
   if (
     hookClass === TE_COMPLETION &&
-    ((host === "copilot" &&
-      (isTruthyFlag(input.stop_hook_active) || isTruthyFlag(input.stopHookActive))) ||
-      (host === "agy" &&
-        (isTruthyFlag(input.continuationActive) || isTruthyFlag(input.continuation_active))))
+    (host === "copilot" || host === "agy") &&
+    (isTruthyFlag(input.stop_hook_active) || isTruthyFlag(input.stopHookActive))
   ) {
     return hostOutput(
       hookClass,

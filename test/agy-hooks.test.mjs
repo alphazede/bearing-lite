@@ -153,7 +153,6 @@ describe("Alphazedehq#636 AGY root hooks.json and adapter", () => {
     bindTask(ws, "conv-bound");
     const bound = runAgyHook("activation", {
       conversationId: "conv-bound",
-      cwd: ws,
       workspacePaths: [ws],
       hookEventName: "SessionStart",
     });

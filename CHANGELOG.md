@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Translate Antigravity session, workspace, and continuation fields in its own adapter so shared hook consumers keep their existing input behavior. (Alphazedehq#636)
+
 - Apply AGY tool exemptions to AGY assurance dispatch only. Other hosts retain their declared dispatch rules. (Alphazedehq#636)
 
 - Give the same recovery instructions for a never-launched Scribe in standalone coverage, resume, handoff, and closeout. (Alphazedehq#642)
