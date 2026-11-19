@@ -1390,25 +1390,42 @@ export function renderDodManifest(doc, opts = {}) {
   ].join("\n");
 
   const taskParsed = asRows(man.tasks);
+  const showSliceFlow =
+    !taskParsed.na &&
+    taskParsed.value.some((row) => row && (row.inputs !== undefined || row.resource !== undefined));
   const taskTable = taskParsed.na
     ? naBlock("Task graph", taskParsed.reason)
     : renderTable(
         "cap-task",
-        "Implementation tasks, roles, dependencies, and exact write sets",
-        ["ID", "Role", "Depends on", "Write set", "Status"],
+        showSliceFlow
+          ? "Implementation tasks, roles, dependencies, inputs, held resources, and exact write sets"
+          : "Implementation tasks, roles, dependencies, and exact write sets",
+        showSliceFlow
+          ? ["ID", "Role", "Depends on", "Inputs", "Resource", "Write set", "Status"]
+          : ["ID", "Role", "Depends on", "Write set", "Status"],
         taskParsed.value.map((row) => {
           const planned = field(row, "status");
           const current = currentSliceStatus(man.closeout, row.id);
           return {
             kind: statusKind(current || planned),
             status: current || planned,
-            cells: [
-              esc(row.id),
-              cellText(row.role),
-              cellText(row.depends_on),
-              cellText(row.write_set),
-              statusChip(current || planned),
-            ],
+            cells: showSliceFlow
+              ? [
+                  esc(row.id),
+                  cellText(row.role),
+                  cellText(row.depends_on),
+                  cellText(row.inputs),
+                  cellText(row.resource),
+                  cellText(row.write_set),
+                  statusChip(current || planned),
+                ]
+              : [
+                  esc(row.id),
+                  cellText(row.role),
+                  cellText(row.depends_on),
+                  cellText(row.write_set),
+                  statusChip(current || planned),
+                ],
           };
         })
       );

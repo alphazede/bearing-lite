@@ -1,6 +1,7 @@
 /** #70 / #73: Map the Route freeze checks. */
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { createHash } from "node:crypto";
@@ -749,5 +750,91 @@ describe("plan-package (#226 post-approval correction round)", () => {
     assert.equal(postCorrection.outcome, "PASS", JSON.stringify(postCorrection));
     assert.deepEqual(postCorrection.findings, []);
     assert.deepEqual(doc.journey_settings.planning_wave, r1Wave);
+  });
+});
+
+describe("plan-package (Alphazedehq#608 false serial chain flag)", () => {
+  function setupPackage(t, mutate) {
+    const dir = mkdtempSync(path.join(os.tmpdir(), "plan-pkg-608-"));
+    t.after(() => rmSync(dir, { recursive: true, force: true }));
+    mkdirSync(path.join(dir, ".git"), { recursive: true });
+    const plan = "# Plan\n";
+    writeFileSync(path.join(dir, "plan.md"), plan);
+    const seit = JSON.stringify({
+      source_baseline: { planning_inputs: [{ path: "plan.md", sha256: sha(plan) }] },
+      procedures_and_commands: [],
+      proof_cases: [],
+    });
+    writeFileSync(path.join(dir, "seit.json"), seit);
+    const digest = sha([sha(plan), sha(seit)].join("\n"));
+    const contract = planningContract(digest, { units: ["W1"], kind: "wave", dir });
+    const doc = {
+      journey_settings: { planning_review: { candidate_digest: digest }, ...contract.journey_settings },
+      boundary_contract: contract.boundary_contract,
+      waves: [{ id: "W1", slice_ids: ["S1", "S2"] }],
+      dependencies: [],
+      slices: [
+        { id: "S1", role: "Implementer", write_set: ["a.js"], command_ids: [], inputs: [], resource: "host:i7" },
+        { id: "S2", role: "Implementer", write_set: ["b.js"], command_ids: [], depends_on: ["S1"], inputs: [], resource: "host:mac" },
+      ],
+    };
+    if (mutate) mutate(doc);
+    writeFileSync(path.join(dir, "implementation.json"), JSON.stringify(doc));
+    return dir;
+  }
+
+  it("flags an ordering edge between slices that share no input or resource without refusing the freeze", (t) => {
+    const dir = setupPackage(t);
+    const finalRes = freeze(dir, { stage: "final" });
+    assert.equal(finalRes.outcome, "PASS", JSON.stringify(finalRes));
+    const flag = finalRes.findings.find((f) => f.code === "false_serial_chain");
+    assert.ok(flag, JSON.stringify(finalRes.findings));
+    assert.equal(flag.from, "S1");
+    assert.equal(flag.to, "S2");
+
+    const draftRes = freeze(dir, { stage: "draft" });
+    assert.equal(draftRes.outcome, "PASS");
+    assert.ok(draftRes.findings.some((f) => f.code === "false_serial_chain" && f.from === "S1" && f.to === "S2"));
+
+    const cli = spawnSync(process.execPath, [path.join(ROOT, "hooks/plan-package.cjs"), dir], { encoding: "utf8" });
+    assert.equal(cli.status, 0, cli.stderr);
+    const parsed = JSON.parse(cli.stdout);
+    assert.equal(parsed.outcome, "PASS");
+    assert.ok(parsed.findings.some((f) => f.code === "false_serial_chain"));
+  });
+
+  it("also flags top-level dependencies edges sharing no input or resource without refusing", (t) => {
+    const dir = setupPackage(t, (doc) => {
+      delete doc.slices[1].depends_on;
+      doc.dependencies = [{ from: "S1", to: "S2" }];
+    });
+    const res = freeze(dir, { stage: "final" });
+    assert.equal(res.outcome, "PASS");
+    assert.deepEqual(res.findings.filter((f) => f.code === "false_serial_chain").map((f) => [f.from, f.to]), [["S1", "S2"]]);
+  });
+
+  it("does not flag ordering edges that share an input, producer write_set, resource, or omit the new fields", (t) => {
+    const sharedInputSliceId = setupPackage(t, (doc) => {
+      doc.slices[1].inputs = ["S1"];
+    });
+    assert.deepEqual(freeze(sharedInputSliceId).findings, []);
+
+    const sharedInputWriteSet = setupPackage(t, (doc) => {
+      doc.slices[1].inputs = ["a.js"];
+    });
+    assert.deepEqual(freeze(sharedInputWriteSet).findings, []);
+
+    const sharedResource = setupPackage(t, (doc) => {
+      doc.slices[1].resource = "host:i7";
+    });
+    assert.deepEqual(freeze(sharedResource).findings, []);
+
+    const legacyWithoutFields = setupPackage(t, (doc) => {
+      delete doc.slices[0].inputs;
+      delete doc.slices[0].resource;
+      delete doc.slices[1].inputs;
+      delete doc.slices[1].resource;
+    });
+    assert.deepEqual(freeze(legacyWithoutFields).findings, []);
   });
 });

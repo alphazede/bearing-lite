@@ -970,6 +970,31 @@ describe("Alphazedehq#605 independent validation of a single-run receipt under o
   });
 });
 
+describe("Alphazedehq#608 ready-slice orchestration and planning guidance", () => {
+  it("Implementation Orchestrator text starts every ready slice whose inputs and resource are free", () => {
+    const router = read("skills/bearing-lite/SKILL.md");
+    const implStep = router.slice(
+      router.indexOf("4. **Implementation:**"),
+      router.indexOf("5. **Review:**"),
+    ).replace(/\s+/g, " ");
+    assert.match(implStep, /start every (?:ready )?slice/i);
+    assert.match(implStep, /inputs/i);
+    assert.match(implStep, /resource/i);
+    assert.match(implStep, /ready-set\.cjs/);
+
+    const assembly = read("skills/bearing-lite/references/planning-assembly.md").replace(/\s+/g, " ");
+    assert.match(assembly, /false_serial_chain|share no input or resource/i);
+    assert.match(assembly, /starts every ready slice/i);
+
+    const taskState = read("skills/bearing-lite/references/task-state.md").replace(/\s+/g, " ");
+    assert.match(taskState, /start every ready slice/i);
+
+    const pdSkill = read("skills/planning-and-design/SKILL.md").replace(/\s+/g, " ");
+    assert.match(pdSkill, /inputs/i);
+    assert.match(pdSkill, /resource/i);
+  });
+});
+
 describe("Alphazedehq#611 copy-only or read-only live-host phase tier rule", () => {
   it("documents the standard-tier before/after live-service observation rule and unchanged delete/mutate rule", () => {
     for (const rel of [

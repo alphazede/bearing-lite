@@ -140,7 +140,7 @@ not permission to start repeated polling or duplicate an invocation.
    approved handoff using the [handoff template](../templates/handoff.md),
    returning to planning before dispatch if the receipt is absent, invalid, or
    `draft`-only. The Orchestrator validates the candidate and authority, executes the frozen plan,
-   and schedules dependency-ready implementation slices. The pace rules are in
+   and starts every ready slice whose declared `inputs` and dependencies are met and whose held `resource` and `write_set` are free (`hooks/ready-set.cjs`), without holding independent slices for wave order. The pace rules are in
    `coordinator-migration.md`.
 2. In selected `tdd` mode, the configured Test Implementer writes the authorized
    tests and records the expected baseline failure before Product Implementer runs.
@@ -260,7 +260,7 @@ specialists. It never waits for the end-of-wave review.
   (`owner-stops.md`).
 
 - Give each slice one coherent outcome with a bounded write set, acceptance,
-  commands, dependencies, selected author, recovery, and expected evidence.
+  commands, real `inputs`, held `resource` (when exclusive: host, repository, or worktree), dependencies, selected author, recovery, and expected evidence.
 - Avoid overloaded slices spanning unrelated outcomes and waves that hold ready
   independent work until everything else finishes. Avoid tiny slices whose
   extra handoffs exceed their useful work.
@@ -271,7 +271,7 @@ specialists. It never waits for the end-of-wave review.
   or required integration boundary. Name merge hotspots and shared test resources.
 - Include gate cost and resource groups in wave planning. Group independent
   checks concurrently and preserve required coverage and security controls.
-- Generate the implementation graph from those real dependencies. Wave boundaries
+- Generate the implementation graph from those real dependencies and held resources. `hooks/plan-package.cjs` flags (without refusing the freeze) any ordering edge between slices that share no input or resource (`false_serial_chain`). Wave boundaries
   support integration and the owner's chosen review cadence; they do not create
   automatic per-wave reviews or additional review agents.
 - Use Light Implementer only when selected and applicable. Preserve its existing

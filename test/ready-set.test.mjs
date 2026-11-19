@@ -206,3 +206,66 @@ describe("F08 ready-set flow over the frozen graph (SEIT-F08)", () => {
     assert.deepEqual(input, before);
   });
 });
+
+describe("real inputs and held resource scheduling (Alphazedehq#608)", () => {
+  it("starts every slice whose inputs are met and whose held resource is free, without serializing across resources", () => {
+    const slices = [
+      slice("i7-preserve", [], ["i7/preserve.log"], { inputs: [], resource: "host:i7" }),
+      slice("i7-delete", [], ["i7/delete.log"], { inputs: ["i7-preserve"], resource: "host:i7" }),
+      slice("i7-install", [], ["i7/install.log"], { inputs: [], resource: "host:i7" }),
+      slice("mac-preserve", [], ["mac/preserve.log"], { inputs: [], resource: "host:mac" }),
+      slice("mac-delete", [], ["mac/delete.log"], { inputs: ["mac-preserve"], resource: "host:mac" }),
+    ];
+    const start = rs().evaluate({ slices, assignments: {} });
+    assert.deepEqual(start.ready, ["i7-preserve", "mac-preserve"]);
+    assertExcluded(start, "i7-delete", /input/i, "i7-preserve");
+    assertExcluded(start, "i7-install", /resource/i, "host:i7");
+    assertExcluded(start, "mac-delete", /input/i, "mac-preserve");
+
+    const mid = rs().evaluate({ slices, assignments: { "i7-preserve": "COMPLETED", "mac-preserve": "DISPATCHED" } });
+    assert.deepEqual(mid.ready, ["i7-delete"]);
+    assertExcluded(mid, "i7-install", /resource/i, "host:i7");
+    assertExcluded(mid, "mac-delete", /input/i, "mac-preserve");
+
+    const next = rs().evaluate({
+      slices,
+      assignments: { "i7-preserve": "COMPLETED", "i7-delete": "COMPLETED", "mac-preserve": "COMPLETED" },
+    });
+    assert.deepEqual(next.ready, ["i7-install", "mac-delete"]);
+  });
+
+  it("blocks a slice whose declared input is produced by an uncompleted slice write_set or missing from available_inputs", () => {
+    const slices = [
+      slice("produce", [], ["build/out.json"], { inputs: [], resource: "wt:a" }),
+      slice("consume", [], ["build/next.json"], { inputs: ["build/out.json"], resource: "wt:b" }),
+      slice("ext", [], ["build/ext.json"], { inputs: ["artifact:seed"], resource: "wt:c" }),
+    ];
+    const missingAvail = rs().evaluate({ slices, assignments: {}, available_inputs: [] });
+    assert.deepEqual(missingAvail.ready, ["produce"]);
+    assertExcluded(missingAvail, "consume", /input/i, "build/out.json");
+    assertExcluded(missingAvail, "ext", /input/i, "artifact:seed");
+
+    const readyExt = rs().evaluate({ slices, assignments: { produce: "COMPLETED" }, available_inputs: ["artifact:seed"] });
+    assert.deepEqual(readyExt.ready, ["consume", "ext"]);
+  });
+
+  it("waveView forwards slice inputs and resource to ready-set evaluation", (t) => {
+    const dir = tempDir(t, "wave-608-");
+    writeFileSync(path.join(dir, "implementation.json"), JSON.stringify({
+      waves: [{ id: "W1", slice_ids: ["A", "B", "C"] }],
+      slices: [
+        slice("A", [], ["a.txt"], { inputs: [], resource: "host:i7" }),
+        slice("B", [], ["b.txt"], { inputs: ["A"], resource: "host:i7" }),
+        slice("C", [], ["c.txt"], { inputs: [], resource: "host:mac" }),
+      ],
+    }));
+    writeFileSync(path.join(dir, "seit.json"), JSON.stringify({ procedures_and_commands: [] }));
+    const view = waveView(dir, "W1");
+    assert.equal(view.outcome, "PASS", JSON.stringify(view.findings));
+    assert.deepEqual(view.slices[0].inputs, []);
+    assert.equal(view.slices[0].resource, "host:i7");
+    const out = rs().evaluate({ slices: view.slices, assignments: {} });
+    assert.deepEqual(out.ready, ["A", "C"]);
+    assertExcluded(out, "B", /input/i, "A");
+  });
+});

@@ -966,6 +966,75 @@ function checkSelectedControls(implementation, seit, { catalogDir } = {}) {
   return findings;
 }
 
+function pathsOverlap(a, b) {
+  return a === b || (a.endsWith("/") && b.startsWith(a)) || (b.endsWith("/") && a.startsWith(b));
+}
+
+/** #608: flag ordering edges between slices that share no input or resource without refusing the freeze. */
+function checkSerialChains(implementation) {
+  const nodes = [...sliceNodes(implementation)];
+  const byId = new Map();
+  for (const node of nodes) {
+    if (typeof node.id === "string" && node.id && !byId.has(node.id)) byId.set(node.id, node);
+  }
+  const edges = [];
+  const seenEdges = new Set();
+  const addEdge = (from, to) => {
+    if (typeof from !== "string" || typeof to !== "string" || !from || !to || from === to) return;
+    const key = `${from}\0${to}`;
+    if (seenEdges.has(key)) return;
+    seenEdges.add(key);
+    edges.push([from, to]);
+  };
+  for (const node of nodes) {
+    if (typeof node.id !== "string" || !node.id) continue;
+    for (const dep of Array.isArray(node.depends_on) ? node.depends_on : []) {
+      addEdge(dep, node.id);
+    }
+  }
+  for (const edge of Array.isArray(implementation?.dependencies) ? implementation.dependencies : []) {
+    addEdge(edge?.from, edge?.to);
+  }
+  const strList = (val) => (Array.isArray(val) ? val.filter((x) => typeof x === "string" && x) : []);
+  const resSet = (slice) => {
+    const out = new Set(strList(slice.resource_groups));
+    if (typeof slice.resource === "string" && slice.resource) out.add(slice.resource);
+    return out;
+  };
+  const declaresFlow = (slice) =>
+    Array.isArray(slice.inputs) || (typeof slice.resource === "string" && slice.resource.length > 0);
+  const findings = [];
+  for (const [fromId, toId] of edges) {
+    const from = byId.get(fromId);
+    const to = byId.get(toId);
+    if (!from || !to) continue;
+    if (!declaresFlow(from) && !declaresFlow(to)) continue;
+    const fromInputs = new Set(strList(from.inputs));
+    const toInputs = strList(to.inputs);
+    const fromWrites = strList(from.write_set);
+    const toWrites = strList(to.write_set);
+    const sharesInput =
+      toInputs.includes(fromId) ||
+      toInputs.some((inp) => fromInputs.has(inp)) ||
+      toInputs.some((inp) => fromWrites.some((w) => pathsOverlap(w, inp)));
+    const fromRes = resSet(from);
+    const toRes = resSet(to);
+    const sharesResource =
+      [...toRes].some((r) => fromRes.has(r)) ||
+      toWrites.some((w1) => fromWrites.some((w2) => pathsOverlap(w1, w2)));
+    if (!sharesInput && !sharesResource) {
+      findings.push({
+        code: "false_serial_chain",
+        from: fromId,
+        to: toId,
+        blocking: false,
+        reason: `Ordering edge ${fromId} -> ${toId} shares no input or resource.`,
+      });
+    }
+  }
+  return findings;
+}
+
 function freeze(dir, { stage = "final" } = {}) {
   try {
     const digests = verifyDigests(dir);
@@ -977,6 +1046,7 @@ function freeze(dir, { stage = "final" } = {}) {
         ...checkPlanningWave(implementation, digests.manifest_digest, stage, dir, digests.input_digests),
         ...(stage === "final" ? checkFinalRegister(dir, seit, implementation) : []),
         ...checkBoundaryContract(implementation, seit),
+        ...checkSerialChains(implementation),
       ] : []),
       ...checkManifestProjection(implementation),
       ...checkRoles(seit, implementation),
@@ -990,7 +1060,8 @@ function freeze(dir, { stage = "final" } = {}) {
       ...checkLivePins(dir),
       ...digests.findings,
     ];
-    return { outcome: findings.length ? "FAIL" : "PASS", stage, manifest_digest: digests.manifest_digest, findings };
+    const blocking = findings.some((f) => f && f.blocking !== false);
+    return { outcome: blocking ? "FAIL" : "PASS", stage, manifest_digest: digests.manifest_digest, findings };
   } catch (error) {
     return { outcome: "FAIL", stage, manifest_digest: null, findings: [{ code: "planning_input_unreadable", reason: error.code || "INVALID_INPUT" }] };
   }
@@ -1036,6 +1107,8 @@ function waveView(dir, waveId) {
     work_class: slice.work_class ?? null,
     depends_on: slice.depends_on ?? null,
     write_set: slice.write_set ?? [],
+    ...(Array.isArray(slice.inputs) ? { inputs: slice.inputs } : {}),
+    ...(typeof slice.resource === "string" && slice.resource ? { resource: slice.resource } : {}),
     ...(Array.isArray(slice.resource_groups) ? { resource_groups: slice.resource_groups } : {}),
     commands: resolve(slice.id, [...(slice.command_ids || []), ...(slice.post_step_command_ids || [])]),
   }));
@@ -1065,6 +1138,7 @@ module.exports = {
   checkIntegrationStepRefs,
   checkFrozenHashes,
   checkLivePins,
+  checkSerialChains,
   loadControlCatalogue,
   parameterizeControl,
   checkSelectedControls,
