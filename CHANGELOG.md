@@ -9,6 +9,7 @@
 - Define the Planning Orchestrator's one closing return (`author`, `reason`, `items`, `candidate`, resulting `READY`; resuming the author's own session without counting as a relaunch) in `skills/bearing-lite/references/planning-assembly.md`, and accept one valid closing return closing a `GAPS` session in `hooks/plan-package.cjs` final freeze while refusing unclosed `GAPS`, incomplete records, or a second closing return. (Alphazedehq#593)
 - Name the same one closing return path and its record (`author`, `reason`, `items`, `candidate`, resulting `READY`) in `skills/planning-and-design/SKILL.md` and `skills/bearing-lite/references/planning-assembly.md` for a meaning defect found at assembly. (Alphazedehq#595)
 - Add `skills/bearing-lite/templates/handoff.md` recording `final_freeze_receipt`, require Implementation Orchestrator intake in `skills/bearing-lite/SKILL.md` and `skills/bearing-lite/references/planning-assembly.md` to verify it and return to planning when absent or `draft`-only, and make `hooks/closeout.cjs` (`mode: "handoff"`) refuse a handoff without a valid `final_freeze_receipt`. (Alphazedehq#594)
+- Scope `tools/compile-handoff.mjs` in `skills/bearing-lite/references/pre-packet.md` and `skills/bearing-lite/references/task-state.md` to execution packets (once `implementation.json` and `seit.json` exist) while directing planning (pre-assembly) packets to the Prompt template. (Alphazedehq#596)
 
 ## [3.0.0-rc.2] - 2026-11-18
 
