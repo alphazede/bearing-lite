@@ -30,7 +30,7 @@ const { isDeepStrictEqual } = require("node:util");
 const { checkReviewRounds } = require("./assurance-budget.cjs");
 const { checkRegisterFiles } = require("./register-precheck.cjs");
 const { evaluate: evaluateReadySet } = require("./ready-set.cjs");
-const { POLICY: REVIEW_POLICY, planningSessionsVerdict, evaluatePlanningReview, sameCandidate } = require("./planning-review.cjs");
+const { POLICY: REVIEW_POLICY, planningSessionsVerdict, evaluatePlanningReview, repoRoot, sameCandidate } = require("./planning-review.cjs");
 
 const sha256 = (data) => crypto.createHash("sha256").update(data).digest("hex");
 
@@ -100,16 +100,6 @@ function checkPlanningRoles(node, findings = []) {
     }
   }
   return findings;
-}
-
-function repoRoot(dir) {
-  let current = path.resolve(dir);
-  for (;;) {
-    if (fs.existsSync(path.join(current, ".git"))) return current;
-    const parent = path.dirname(current);
-    if (parent === current) return path.resolve(dir);
-    current = parent;
-  }
 }
 
 function withFilePath(error, filePath) {
@@ -631,7 +621,8 @@ function checkWaveRecord(wave, { expectedDigest, isLatest, stage = "final", dir,
         wave,
         closing,
         isLatest ? inputDigests : wave.input_digests,
-        { requireSnapshot: isLatest || correctionId !== null || wave.input_digests !== undefined, dir },
+        { requireSnapshot: isLatest || correctionId !== null || wave.input_digests !== undefined || Boolean(wave.edit_records?.length),
+          dir, historical: !isLatest },
       );
       if (sessionVerdict) {
         push({
@@ -667,9 +658,12 @@ function checkWaveRecord(wave, { expectedDigest, isLatest, stage = "final", dir,
     }
   }
   if (review) {
+    const historical = !isLatest || (wave.repairs === 1 &&
+      sameCandidate(wave.repair?.from_candidate, review.candidate) &&
+      sameCandidate(wave.repair?.to_candidate, wave.closing_candidate));
     let result;
     try {
-      result = evaluatePlanningReview({ ...review, plan_dir: dir });
+      result = evaluatePlanningReview({ ...review, plan_dir: dir }, { historical });
     } catch {
       result = { outcome: "FAIL", reason: "receipt_invalid" };
     }
@@ -687,7 +681,7 @@ function checkWaveRecord(wave, { expectedDigest, isLatest, stage = "final", dir,
         !isDeepStrictEqual(wave.edit_records ?? null, review.planning_wave?.edit_records ?? null)) {
       push({ code: "planning_wave_session_provenance_mismatch" });
     }
-    const sessionVerdict = planningSessionsVerdict(wave, review.candidate, review.input_digests, { dir });
+    const sessionVerdict = planningSessionsVerdict(wave, review.candidate, review.input_digests, { dir, historical });
     if (sessionVerdict) {
       push({
         code: sessionVerdict.reason === "external_items_open"

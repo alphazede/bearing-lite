@@ -368,9 +368,14 @@ present, and deterministic closure. Earlier specialist returns may be explicitly
 candidate when every consumed input in `session.inputs` either matches the actual verified closing
 snapshot or has its digest transition (`before_sha256` to `after_sha256`) proven solely by
 recorded mechanical ID or hash-binding edits in `planning_wave.edit_records[]`; retain the
-original return identity. Any unrecorded change or change of meaning in a consumed input blocks
-adoption, and recorded hashes never substitute for checking file bytes. Missing
-required receipts remain typed gaps, never a pass. The current freeze contract
+original return identity. Use `source_baseline.planning_inputs[n].sha256` for
+a SEIT hash binding or the SDoc verification-case field name for a case ID
+binding. Review checks the candidate file bytes. Before a repair or correction
+overwrites those bytes, retain them under `gate-evidence/planning-inputs/<sha256>`
+inside the plan directory. For a case ID binding, retain the candidate's
+`seit.json` too if it will change. A no-review wave with mechanical adoption
+retains its candidate's `input_digests` for later corrections. Missing byte
+evidence, unrecorded changes, and changes of meaning block adoption. The current freeze contract
 must be satisfied or explicitly amended, never bypassed by prose.
 
 Planning review is a separate pre-dispatch gate; never consumes implementation

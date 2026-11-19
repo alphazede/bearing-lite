@@ -5,6 +5,7 @@ const path = require("node:path");
 const crypto = require("node:crypto");
 
 const { PLANNING_REVIEW_POLICY: POLICY } = require("./policy.cjs");
+const { parseRegister } = require("./register-precheck.cjs");
 
 const sameCandidate = (a, b) =>
   POLICY.candidate_fields.every(
@@ -35,7 +36,7 @@ function manifestGenerated(input) {
 const nonempty = (value) => typeof value === "string" && value.trim().length > 0;
 const sha256Bytes = (data) => crypto.createHash("sha256").update(data).digest("hex");
 
-function repoRootForPlan(dir) {
+function repoRoot(dir) {
   let current = path.resolve(dir);
   for (;;) {
     if (fs.existsSync(path.join(current, ".git"))) return current;
@@ -45,22 +46,15 @@ function repoRootForPlan(dir) {
   }
 }
 
-function resolvePlanInputFile(dir, relPath) {
-  if (!nonempty(dir) || !nonempty(relPath)) return null;
-  const candidates = [path.resolve(dir, relPath), path.resolve(repoRootForPlan(dir), relPath)];
-  for (const candidate of candidates) {
-    try {
-      if (fs.statSync(candidate).isFile()) return candidate;
-    } catch {
-      // Ignore absent candidates.
-    }
-  }
-  return null;
-}
+const HASH_TOKEN = /^[0-9a-f]{64}$/;
+const HASH_FIELD = /^source_baseline\.planning_inputs\[(0|[1-9]\d*)\]\.sha256$/;
+const CASE_FIELD = /^VERIFICATION_CASE(?:S|_ID)?$/;
+const CASE_ID = /^[A-Z][A-Z0-9]*-[A-Z0-9.-]*[A-Z0-9]$/;
 
-const HASH_TOKEN = /^(?:sha256:)?[0-9a-f]{64}$/;
-const ID_BEFORE_TOKEN = /^(?:VERIFICATION_CASE(?:S|_ID)?:\s*)?(?:pending|[A-Z][A-Z0-9._-]+(?:[ \t,]+[A-Z][A-Z0-9._-]+)*)$/;
-const ID_AFTER_TOKEN = /^(?:VERIFICATION_CASE(?:S|_ID)?:\s*)?[A-Z][A-Z0-9._-]+(?:[ \t,]+[A-Z][A-Z0-9._-]+)*$/;
+function caseValue(field, value) {
+  const label = field + ":";
+  return value.startsWith(label) ? value.slice(label.length).trimStart() : value;
+}
 
 function isValidMechanicalEdit(edit) {
   if (!edit || typeof edit !== "object" || Array.isArray(edit)) return false;
@@ -69,25 +63,59 @@ function isValidMechanicalEdit(edit) {
       !nonempty(edit.before) || !nonempty(edit.after) || edit.before === edit.after) {
     return false;
   }
-  if (!/^[0-9a-f]{64}$/.test(edit.before_sha256) || !/^[0-9a-f]{64}$/.test(edit.after_sha256) ||
+  if (!HASH_TOKEN.test(edit.before_sha256) || !HASH_TOKEN.test(edit.after_sha256) ||
       edit.before_sha256 === edit.after_sha256) {
     return false;
   }
   if (edit.kind === "hash_binding") {
-    return HASH_TOKEN.test(edit.before) && HASH_TOKEN.test(edit.after);
+    return HASH_FIELD.test(edit.field) && HASH_TOKEN.test(edit.before) && HASH_TOKEN.test(edit.after);
   }
-  return ID_BEFORE_TOKEN.test(edit.before) && ID_AFTER_TOKEN.test(edit.after);
+  const oldCases = caseValue(edit.field, edit.before);
+  const newCases = caseValue(edit.field, edit.after);
+  const ids = value => value.split(/[ \t,]+/).every(id => CASE_ID.test(id));
+  return CASE_FIELD.test(edit.field) && !/[\r\n]/.test(edit.before + edit.after) &&
+    (oldCases === "pending" || ids(oldCases)) && ids(newCases);
 }
 
-function revertEditChainMatches(text, chain) {
+function changedNamedBinding(edit, before, after, offset, { file, plan, root, cases }) {
+  if (edit.kind === "hash_binding") {
+    if (file !== path.join(plan, "seit.json")) return false;
+    const [, index] = edit.field.match(HASH_FIELD);
+    const row = JSON.parse(after)?.source_baseline?.planning_inputs?.[index];
+    return typeof row?.path === "string" && path.extname(row.path).toLowerCase() === ".md" &&
+      path.dirname(path.resolve(root, row.path)) === plan &&
+      JSON.parse(before)?.source_baseline?.planning_inputs?.[index]?.sha256 === edit.before &&
+      row.sha256 === edit.after;
+  }
+  if (path.extname(file) !== ".sdoc" || !Array.isArray(cases)) return false;
+  const line = after.slice(0, offset).split("\n").length;
+  const matchesLine = field => field.name === edit.field && field.line === line;
+  const row = parseRegister(after).find(entry => entry.fields.some(matchesLine));
+  const uid = row?.fields.find(field => field.name === "UID")?.value.trim();
+  if (!uid) return false;
+  const previous = parseRegister(before).flatMap(entry => entry.fields).find(matchesLine)?.value.trim();
+  const current = row.fields.find(matchesLine).value.trim();
+  if (previous !== caseValue(edit.field, edit.before) || current !== caseValue(edit.field, edit.after)) return false;
+  const ids = current.split(/[ \t,]+/);
+  const bindsToRequirement = id => {
+    const matching = cases.filter(test => test?.id === id);
+    return matching.length === 1 && matching[0].requirement_id === uid;
+  };
+  return new Set(ids).size === ids.length && ids.every(bindsToRequirement) &&
+    previous.split(/[ \t,]+/).every(id => !bindsToRequirement(id) || ids.includes(id));
+}
+
+function revertEditChainMatches(text, chain, context) {
   let current = text;
   for (let i = chain.length - 1; i >= 0; i -= 1) {
-    const { before, after, before_sha256 } = chain[i];
+    const edit = chain[i];
+    const { before, after, before_sha256 } = edit;
     let matched = null;
     let pos = current.indexOf(after);
     while (pos !== -1) {
       const candidate = current.slice(0, pos) + before + current.slice(pos + after.length);
-      if (sha256Bytes(candidate) === before_sha256) {
+      if (sha256Bytes(candidate) === before_sha256 &&
+          changedNamedBinding(edit, candidate, current, pos, context)) {
         matched = candidate;
         break;
       }
@@ -99,7 +127,24 @@ function revertEditChainMatches(text, chain) {
   return true;
 }
 
-function validMechanicalEditPath(input, targetRow, editRecords, dir) {
+function readVerifiedInput(root, file, digest) {
+  try {
+    const actual = fs.realpathSync(file);
+    if (!actual.startsWith(root + path.sep) || !fs.statSync(actual).isFile()) return null;
+    const bytes = fs.readFileSync(actual);
+    return sha256Bytes(bytes) === digest ? bytes : null;
+  } catch {
+    return null;
+  }
+}
+
+function readCandidateInput(root, plan, file, digest, historical) {
+  const bytes = readVerifiedInput(root, file, digest);
+  if (bytes || !historical) return bytes;
+  return readVerifiedInput(plan, path.join(plan, "gate-evidence", "planning-inputs", digest), digest);
+}
+
+function validMechanicalEditPath(input, targetRow, inputDigests, editRecords, dir, historical) {
   if (!Array.isArray(editRecords) || editRecords.length === 0) return false;
   const pathEdits = editRecords.filter((e) => e && typeof e === "object" && !Array.isArray(e) && e.path === input.path);
   if (pathEdits.length === 0 || !pathEdits.every(isValidMechanicalEdit)) return false;
@@ -113,19 +158,27 @@ function validMechanicalEditPath(input, targetRow, editRecords, dir) {
     chain.push(pathEdits[idx]);
     cursor = pathEdits[idx].after_sha256;
   }
-  if (chain.length === 0) return false;
-  const file = resolvePlanInputFile(dir, input.path);
-  if (file) {
-    try {
-      const diskBytes = fs.readFileSync(file);
-      if (sha256Bytes(diskBytes) === targetRow.sha256) {
-        return revertEditChainMatches(diskBytes.toString("utf8"), chain);
-      }
-    } catch {
-      return false;
+  if (!nonempty(dir) || chain.length === 0) return false;
+  try {
+    const plan = fs.realpathSync(dir);
+    const root = repoRoot(plan);
+    const file = path.resolve(root, input.path);
+    if (!file.startsWith(root + path.sep)) return false;
+    const bytes = readCandidateInput(root, plan, file, targetRow.sha256, historical);
+    if (!bytes) return false;
+    let cases;
+    if (chain.some(edit => edit.kind === "id_binding")) {
+      const seit = path.join(plan, "seit.json");
+      const seitDigest = inputDigests.find(row => row.path === path.relative(root, seit))?.sha256;
+      if (!seitDigest) return false;
+      const seitBytes = readCandidateInput(root, plan, seit, seitDigest, historical);
+      if (!seitBytes) return false;
+      cases = JSON.parse(seitBytes).proof_cases;
     }
+    return revertEditChainMatches(bytes.toString("utf8"), chain, { file, plan, root, cases });
+  } catch {
+    return false;
   }
-  return true;
 }
 
 /**
@@ -210,7 +263,7 @@ function resolveWaveWithClosingReturns(wave) {
  * incomplete return stays a gap. Returns null when complete, else a typed
  * { outcome, reason }. Shared with plan-package.cjs.
  */
-function planningSessionsVerdict(wave, candidate, inputDigests, { requireSnapshot = true, dir = null } = {}) {
+function planningSessionsVerdict(wave, candidate, inputDigests, { requireSnapshot = true, dir = null, historical = false } = {}) {
   if (!wave || typeof wave !== "object") {
     return { outcome: "NEEDS_MORE_EVIDENCE", reason: "planning_sessions_incomplete" };
   }
@@ -250,7 +303,7 @@ function planningSessionsVerdict(wave, candidate, inputDigests, { requireSnapsho
     const row = inputDigests.find((item) => item.path === input?.path);
     if (!row) return false;
     if (row.sha256 === input?.sha256) return true;
-    return validMechanicalEditPath(input, row, resolved.wave.edit_records, dir);
+    return validMechanicalEditPath(input, row, inputDigests, resolved.wave.edit_records, dir, historical);
   };
   const adopted = (session) => sameCandidate(session, session) &&
     sameCandidate(session.adopted_to, candidate) && Array.isArray(session.inputs) &&
@@ -292,7 +345,7 @@ function planningSessionsVerdict(wave, candidate, inputDigests, { requireSnapsho
   return null;
 }
 
-function evaluatePlanningReview(input) {
+function evaluatePlanningReview(input, { historical = false } = {}) {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     return { outcome: "NEEDS_MORE_EVIDENCE", reason: "planning_review_missing" };
   }
@@ -313,7 +366,7 @@ function evaluatePlanningReview(input) {
     return { outcome: "NEEDS_MORE_EVIDENCE", reason: "missing_requirement_register" };
   }
   // #205: the review never opens while a declared planning session is out.
-  const sessions = planningSessionsVerdict(input.planning_wave, input.candidate, input.input_digests, { dir: input.plan_dir });
+  const sessions = planningSessionsVerdict(input.planning_wave, input.candidate, input.input_digests, { dir: input.plan_dir, historical });
   if (sessions) return sessions;
   const slots = Array.isArray(input.reviewer_slots) ? input.reviewer_slots : [];
   const ids = slots.map((slot) => slot?.slot_id);
@@ -387,4 +440,4 @@ function evaluatePlanningReview(input) {
   return { outcome: "PASS", reason: repairs ? "repair_gate_passed" : "review_aggregated" };
 }
 
-module.exports = { POLICY, evaluatePlanningReview, planningSessionsVerdict, sameCandidate };
+module.exports = { POLICY, evaluatePlanningReview, planningSessionsVerdict, repoRoot, sameCandidate };

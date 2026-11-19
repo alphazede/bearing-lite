@@ -163,7 +163,7 @@ test("F2 unresolved or forged target input snapshots cannot justify adoption", t
   assert.equal(fx.evaluate().reason, "planning_sessions_incomplete");
 });
 
-test("#624 mechanical hash-binding fix with edit_records preserves adoption while meaning changes stay rejected", t => {
+test("#624 mechanical hash-binding fix with edit_records preserves adoption while meaning changes stay rejected", async t => {
   const fx = fixture(t);
   const oldNotesSha = fx.seit.source_baseline.planning_inputs[1].sha256;
   const oldSeitBytes = readFileSync(path.join(fx.dir, "seit.json"));
@@ -238,6 +238,57 @@ test("#624 mechanical hash-binding fix with edit_records preserves adoption whil
   assert.equal(fx.evaluate().outcome, "PASS");
   assert.deepEqual(fx.run().findings, []);
 
+  await t.test("live review requires the candidate file bytes", () => {
+    const file = path.join(fx.dir, "seit.json");
+    try {
+      writeFileSync(file, oldSeitBytes);
+      assert.equal(fx.evaluate().reason, "planning_sessions_incomplete");
+      rmSync(file);
+      assert.equal(fx.evaluate().reason, "planning_sessions_incomplete");
+    } finally {
+      writeFileSync(file, newSeitBytes);
+    }
+  });
+
+  await t.test("a mechanical record must identify the binding that actually changed", () => {
+    const entry = fx.review.planning_wave.edit_records[0];
+    try {
+      entry.field = "source_baseline.planning_inputs[0].sha256";
+      assert.equal(fx.evaluate().reason, "planning_sessions_incomplete");
+    } finally {
+      entry.field = editRecord.field;
+    }
+  });
+
+  await t.test("repair replays mechanical adoption from the preserved reviewed bytes", () => {
+    const checkpoint = copy(fx.wave);
+    const seitFile = path.join(fx.dir, "seit.json");
+    const archiveDir = path.join(fx.dir, "gate-evidence/planning-inputs");
+    const archive = path.join(archiveDir, newSeitSha);
+    const repairedSeit = copy(fx.seit);
+    repairedSeit.proof_cases[0].expected_result = "Clarify the originally reviewed proof outcome.";
+    const repairedBytes = JSON.stringify(repairedSeit);
+    const closing = { ...newCandidate, candidate_revision: "r2",
+      candidate_digest: sha([priorPlanInput.sha256, newNotesSha, sha(repairedBytes)].join("\n")) };
+    try {
+      writeFileSync(seitFile, repairedBytes);
+      Object.assign(fx.wave, { repairs: 1, closing_candidate: closing, candidate_digest: closing.candidate_digest,
+        repair: { from_candidate: newCandidate, to_candidate: closing, deterministic_gate: "PASS" } });
+      fx.doc.journey_settings.planning_review.candidate_digest = closing.candidate_digest;
+      rejects(fx.run(), "planning_wave_review_invalid", "planning_sessions_incomplete");
+      mkdirSync(archiveDir);
+      writeFileSync(archive, repairedBytes);
+      rejects(fx.run(), "planning_wave_review_invalid", "planning_sessions_incomplete");
+      writeFileSync(archive, newSeitBytes);
+      assert.deepEqual(fx.run().findings, []);
+    } finally {
+      delete fx.wave.repair;
+      Object.assign(fx.wave, checkpoint);
+      fx.doc.journey_settings.planning_review.candidate_digest = newCandidate.candidate_digest;
+      writeFileSync(seitFile, newSeitBytes);
+    }
+  });
+
   // A hidden meaning change in seit.json masked as a hash_binding edit_record must still fail.
   const tamperedSeit = copy(fx.seit);
   tamperedSeit.proof_cases[0].expected_result = "Changed meaning silently.";
@@ -252,6 +303,35 @@ test("#624 mechanical hash-binding fix with edit_records preserves adoption whil
   fx.review.planning_wave.sessions.forEach(s => { s.adopted_to = copy(tamperedCandidate); });
   fx.review.planning_wave.edit_records[0].after_sha256 = tamperedSha;
   assert.deepEqual(fx.evaluate(), { outcome: "NEEDS_MORE_EVIDENCE", reason: "planning_sessions_incomplete" });
+});
+
+test("#624 verification case adoption binds to the edited requirement", t => {
+  const fx = fixture(t);
+  const file = "register.sdoc";
+  const prior = "[REQUIREMENT]\nUID: REQ-1\nVERIFICATION_CASE_ID: pending\n";
+  const priorInput = { path: file, sha256: sha(prior) };
+  const priorCandidate = copy(fx.candidate);
+  const session = fx.review.planning_wave.sessions[0];
+  function verify(requirement) {
+    const next = prior.replace("pending", "SEIT-1");
+    const input = { path: file, sha256: sha(next) };
+    const seit = JSON.stringify({ proof_cases: [{ id: "SEIT-1", requirement_id: requirement }] });
+    writeFileSync(path.join(fx.dir, file), next);
+    writeFileSync(path.join(fx.dir, "seit.json"), seit);
+    fx.review.input_digests = [input, { path: "seit.json", sha256: sha(seit) }];
+    const candidate = { ...fx.candidate, candidate_digest: sha([input.sha256, sha(seit)].join("\n")) };
+    fx.review.candidate = candidate;
+    Object.assign(fx.review.receipts[0], candidate);
+    Object.assign(session, priorCandidate, { adopted_to: candidate, inputs: [priorInput] });
+    Object.assign(fx.review.planning_wave.sessions[1], candidate);
+    fx.review.planning_wave.edit_records = [{
+      path: file, kind: "id_binding", field: "VERIFICATION_CASE_ID", before: "pending", after: "SEIT-1",
+      before_sha256: priorInput.sha256, after_sha256: input.sha256, reason: "Bind the authored case",
+    }];
+    return fx.evaluate();
+  }
+  assert.equal(verify("REQ-1").outcome, "PASS");
+  assert.equal(verify("REQ-2").reason, "planning_sessions_incomplete");
 });
 
 for (const id of ["CMD-LITE-SCHEMA-VALIDATE", "SYN-ENV-LOCAL", "SYN-L1"]) test(`F3 ${id} is not a proof_cases row`, t => {
