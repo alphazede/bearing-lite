@@ -115,7 +115,14 @@ This is the default dependency order, not a requirement to enable every role:
    inputs into the technical plan and `design.md` (keeping **one plan per phase**;
    split multi-phase work into separate phase plans), copy the confirmed quantity
    table into its glossary, allocate against the placement receipt, then assemble
-   the implementation graph and Manifest. Run the repository gate once at assembly
+   the implementation graph and Manifest. When the final technical plan was
+   written after the SEIT return, bind its repository-relative path and
+   SHA-256 in `implementation.json` at `journey_settings.final_technical_plan`
+   as `{ "path": "...", "sha256": "..." }`. Keep the SEIT author's input list and
+   omit the new binding if that list already binds the technical plan. The
+   freeze hashes the ordered SEIT inputs, then this binding if supplied, then
+   `seit.json` to compute the candidate digest from the newline-separated
+   SHA-256 hex values. Run the repository gate once at assembly
    alongside final-stage `hooks/register-precheck.cjs` with `--seit` and
    cross-artifact coverage checks; pending bindings block assembly until
    completed.
@@ -410,6 +417,8 @@ blockers, and next action. Every dispatched packet carries a time target and
 "at the limit, return what you have and list the gaps". Before writing `handoff.md`, run the
 handoff check in `hooks/closeout.cjs` with `journey` (`mode: "handoff"`) and
 the structured `final_freeze_receipt` from `node <plugin root>/hooks/plan-package.cjs <plan dir>`.
+For a live wave, also pass the confirmed directory as top-level `plan_dir`
+so closeout can re-read the exchange evidence.
 A missing or invalid final freeze receipt refuses the
 handoff (`handoff_refused:final_freeze_receipt_missing` or `_invalid`), and a
 history coverage gap refuses the handoff until its recorder transcribes the listed

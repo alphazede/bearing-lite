@@ -9,6 +9,8 @@ description: >
 
 # Bearing Orchestrator
 
+In a live wave, read `herdr --skill` and the [live-wave reference](references/live-wave.md).
+
 Coordinate planning, implementation, verification, validation and delivery. Preserve scope, agents, authority and evidence.
 Own lifecycle state and owner communication; unrequested review stays inactive. Resolve wave escalations using `references/owner-stops.md`.
 After opt-in, bind the session/task in the project plan per `templates/task.md`; installation, old plans, or role names never activate hooks. On resume, follow `references/resume.md` first; continue the recorded mode and next unfinished action.
@@ -88,6 +90,7 @@ When false, continue from the durable handoff here. Resolve an unset choice
 during integrated owner confirmation. The owner opens a fresh session.
 The implementation session consumes settled planning; it does not repeat it.
 Handoff and closeout pass `journey` to `hooks/closeout.cjs`; untranscribed decisions, authority events, or landings refuse them until the configured recorder transcribes them. On `mode: "handoff"`, `hooks/closeout.cjs` also requires a valid `final_freeze_receipt` and refuses the handoff when absent or `draft`-only.
+For live-wave evidence, pass the confirmed directory as top-level `plan_dir`.
 ## Dispatch and recovery
 
 Preserve the recorded profile; use `references/profiles.md` for authorized amendments.

@@ -2,6 +2,28 @@
 
 ## [Unreleased]
 
+## [3.0.0-rc.7] - 2026-11-19
+
+- Add opt-in Herdr live-wave evidence to plan freeze, wave views, and closeout handoffs, with a shared role reference.
+- Verify Mermaid views in plan freeze without requiring synchronous ESM loading, including in hooks-only installs.
+- Link the shared live-wave instructions from the canonical Orchestrator, MBSE, and Integration and Test skills.
+- Preserve advisory live-wave evidence when closeout uses the final freeze receipt.
+- Resolve the late technical plan within the checkout and reuse the verified bytes for register precheck.
+- Ship the JSON Schema for each live-wave exchange record.
+- Display missing, stale, and invalid model views as gaps in the manifest diagnostic.
+
+- Accept digest-bound Mermaid source views in the plan schema and final freeze.
+
+- Render digest-bound Mermaid source files as text views for diagram-assisted models.
+
+- Specify a single string for MBSE model trace IDs so the authored manifest matches the implementation schema.
+
+- Bind the final technical plan in the implementation package when it is written after the SEIT return.
+
+- Include the compact closeout receipt fields in the planning handoff template.
+
+- Resolve register citations from the same repository root during requirements precheck and final freeze.
+
 ## [3.0.0-rc.6] - 2026-11-19
 
 - Translate Antigravity session, workspace, and continuation fields in its own adapter so shared hook consumers keep their existing input behavior. (Alphazedehq#636)

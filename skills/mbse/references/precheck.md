@@ -9,6 +9,10 @@ pass; it does not introduce a separate checker.
 node hooks/register-precheck.cjs --stage requirements <draft.sdoc> <workspace.md> <repository-root>
 ```
 
+Both stages use repository-root-relative citation paths. Pass the checkout
+root explicitly, or omit it to discover the Git root from the current
+directory. For a standalone non-Git package, pass its root explicitly.
+
 ## Stages
 
 - `--stage requirements` (MBSE): the context input is the confirmed
@@ -23,8 +27,10 @@ node hooks/register-precheck.cjs --stage requirements <draft.sdoc> <workspace.md
   require each ID to resolve to a SEIT `proof_cases[].id`. Pending bindings fail.
   Final `plan-package.cjs` freeze enforces this directly whenever a register is
   declared in journey settings or authority. The bound planning inputs must
-  identify exactly one `*-technical-plan.md` (or compatibility `plan.md`);
-  missing/ambiguous context and unreadable register, SEIT, or citations fail closed.
+  identify exactly one `*-technical-plan.md` (or compatibility `plan.md`).
+  The Orchestrator can bind a plan written after the SEIT return in
+  `implementation.json` under `journey_settings.final_technical_plan`.
+  Missing or ambiguous context and unreadable register, SEIT, or citations fail closed.
   Draft freeze does not require completed final case bindings.
 
 Never fabricate a preliminary technical plan to satisfy this command. Missing

@@ -14,366 +14,464 @@ const OUTCOMES = Object.freeze(["ADVISE", "REROUTE", "BLOCK", "UNAVAILABLE"]);
 const ENFORCEMENT = "procedural";
 const { evaluatePlanningReview } = require("./planning-review.cjs");
 const { evaluateScribeCoverage } = require("./scribe-coverage.cjs");
+const { readLiveWave } = require("./plan-package.cjs");
 
 const HANDOFF_FIELDS = Object.freeze([
-  "verdict",
-  "candidate_ref",
-  "changed_paths",
-  "tests",
-  "findings",
-  "blocker",
+	"verdict",
+	"candidate_ref",
+	"changed_paths",
+	"tests",
+	"findings",
+	"blocker",
 ]);
 
 /** Closed role-return tokens. Task-block `outcome` is intent and cannot satisfy this. */
 const VERDICT_VALUES = new Set([
-  "ACCEPT",
-  "ACCEPT_WITH_FINDINGS",
-  "BLOCK",
-  "CANDIDATE_READY",
-  "FAIL",
-  "GAPS",
-  "NEEDS_MORE_EVIDENCE",
-  "OWNER_DECISION_REQUIRED",
-  "PARTIAL",
-  "PASS",
-  "READY",
-  "REPAIR_REQUIRED",
-  "REROUTED",
-  "WAITING_ON",
+	"ACCEPT",
+	"ACCEPT_WITH_FINDINGS",
+	"BLOCK",
+	"CANDIDATE_READY",
+	"FAIL",
+	"GAPS",
+	"NEEDS_MORE_EVIDENCE",
+	"OWNER_DECISION_REQUIRED",
+	"PARTIAL",
+	"PASS",
+	"READY",
+	"REPAIR_REQUIRED",
+	"REROUTED",
+	"WAITING_ON",
 ]);
 
 /** Closed verdicts that refuse protected completion (#55). */
 const NEGATIVE_VERDICTS = new Set([
-  "BLOCK",
-  "FAIL",
-  "GAPS",
-  "NEEDS_MORE_EVIDENCE",
-  "OWNER_DECISION_REQUIRED",
-  "PARTIAL",
-  "REPAIR_REQUIRED",
-  "REROUTED",
-  "WAITING_ON",
+	"BLOCK",
+	"FAIL",
+	"GAPS",
+	"NEEDS_MORE_EVIDENCE",
+	"OWNER_DECISION_REQUIRED",
+	"PARTIAL",
+	"REPAIR_REQUIRED",
+	"REROUTED",
+	"WAITING_ON",
 ]);
 
 const RECOVERY_UNAVAILABLE =
-  "Report UNAVAILABLE, complete the handoff checklist manually, and do not request protected completion until required fields and assurance are present";
+	"Report UNAVAILABLE, complete the handoff checklist manually, and do not request protected completion until required fields and assurance are present";
 const RECOVERY_HANDOFF =
-  "Complete the compact receipt (verdict, candidate_ref, changed_paths, tests, findings, blocker) in the project plan";
+	"Complete the compact receipt (verdict, candidate_ref, changed_paths, tests, findings, blocker) in the project plan";
 const RECOVERY_INVALID_VERDICT =
-  "Replace verdict with a closed role-return token: " +
-  [...VERDICT_VALUES].join(", ");
+	"Replace verdict with a closed role-return token: " +
+	[...VERDICT_VALUES].join(", ");
 const RECOVERY_COMPLETE =
-  "Handoff is complete; parent controller may advance using the project plan only (Orchestrator on a direct packet, Coordinator on a coordinator wave)";
+	"Handoff is complete; parent controller may advance using the project plan only (Orchestrator on a direct packet, Coordinator on a coordinator wave)";
 const RECOVERY_BLOCK_COMPLETION =
-  "Do not mark COMPLETE; restore missing assurance, candidate match, or handoff fields first. Repair and owner channels remain open";
+	"Do not mark COMPLETE; restore missing assurance, candidate match, or handoff fields first. Repair and owner channels remain open";
 const RECOVERY_CHANNEL =
-  "Keep repair, status, owner communication, and safe rollback available; closeout does not block them";
+	"Keep repair, status, owner communication, and safe rollback available; closeout does not block them";
 
 const RECOVERY_FINAL_FREEZE_HANDOFF =
-  "Return to planning. Run node <plugin root>/hooks/plan-package.cjs <plan dir> and record the final freeze receipt";
+	"Return to planning. Run node <plugin root>/hooks/plan-package.cjs <plan dir> and record the final freeze receipt";
 
 const SAFE_CHANNELS = new Set([
-  "repair",
-  "status",
-  "owner_communication",
-  "safe_rollback",
+	"repair",
+	"status",
+	"owner_communication",
+	"safe_rollback",
 ]);
 
 function isPlainObject(value) {
-  return value !== null && typeof value === "object" && !Array.isArray(value);
+	return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
 function result(outcome, reason, recovery, extra) {
-  const body = {
-    hook_class: HOOK_CLASS,
-    outcome,
-    reason,
-    recovery,
-    enforcement: ENFORCEMENT,
-  };
-  if (extra && typeof extra.protected_action === "string" && extra.protected_action) {
-    body.protected_action = extra.protected_action;
-  }
-  return body;
+	const body = {
+		hook_class: HOOK_CLASS,
+		outcome,
+		reason,
+		recovery,
+		enforcement: ENFORCEMENT,
+	};
+	if (
+		extra &&
+		typeof extra.protected_action === "string" &&
+		extra.protected_action
+	) {
+		body.protected_action = extra.protected_action;
+	}
+	return body;
 }
 
 function unavailable(reason) {
-  return result("UNAVAILABLE", reason, RECOVERY_UNAVAILABLE);
+	return result("UNAVAILABLE", reason, RECOVERY_UNAVAILABLE);
 }
 
 function normalizeAssurance(value) {
-  if (value === undefined || value === null || value === "" || value === "none") {
-    return [];
-  }
-  if (Array.isArray(value)) {
-    return value.map(String).filter((s) => s && s !== "none");
-  }
-  return [String(value)].filter((s) => s && s !== "none");
+	if (
+		value === undefined ||
+		value === null ||
+		value === "" ||
+		value === "none"
+	) {
+		return [];
+	}
+	if (Array.isArray(value)) {
+		return value.map(String).filter((s) => s && s !== "none");
+	}
+	return [String(value)].filter((s) => s && s !== "none");
 }
 
 function finalFreezeReceiptIssue(receipt) {
-  if (receipt === undefined || receipt === null ||
-      (typeof receipt === "string" && !receipt.trim())) return "missing";
-  const valid = isPlainObject(receipt) &&
-    receipt.stage === "final" && receipt.outcome === "PASS" &&
-    typeof receipt.manifest_digest === "string" && /^[0-9a-f]{64}$/i.test(receipt.manifest_digest) &&
-    (receipt.findings === undefined || (Array.isArray(receipt.findings) && receipt.findings.length === 0)) &&
-    (receipt.exit_code === undefined || receipt.exit_code === 0);
-  return valid ? null : "invalid";
+	if (
+		receipt === undefined ||
+		receipt === null ||
+		(typeof receipt === "string" && !receipt.trim())
+	)
+		return "missing";
+	const valid =
+		isPlainObject(receipt) &&
+		receipt.stage === "final" &&
+		receipt.outcome === "PASS" &&
+		typeof receipt.manifest_digest === "string" &&
+		/^[0-9a-f]{64}$/i.test(receipt.manifest_digest) &&
+		(receipt.findings === undefined ||
+			(Array.isArray(receipt.findings) && receipt.findings.length === 0)) &&
+		(receipt.exit_code === undefined || receipt.exit_code === 0);
+	return valid ? null : "invalid";
 }
 
 function inspectHandoffFields(input) {
-  const handoff = isPlainObject(input.handoff) ? input.handoff : input;
-  const missing = [];
-  const invalid = [];
-  for (const field of HANDOFF_FIELDS) {
-    const value = handoff[field];
-    if (value === undefined || value === null) {
-      missing.push(field);
-      continue;
-    }
-    if (typeof value === "string" && value.trim() === "") {
-      missing.push(field);
-      continue;
-    }
-    if (field === "verdict" && (typeof value !== "string" || !VERDICT_VALUES.has(value.trim()))) {
-      invalid.push(field);
-    }
-  }
-  // blocker may be the string "none"; that is present and valid.
-  return { missing, invalid };
+	const handoff = isPlainObject(input.handoff) ? input.handoff : input;
+	const missing = [];
+	const invalid = [];
+	for (const field of HANDOFF_FIELDS) {
+		const value = handoff[field];
+		if (value === undefined || value === null) {
+			missing.push(field);
+			continue;
+		}
+		if (typeof value === "string" && value.trim() === "") {
+			missing.push(field);
+			continue;
+		}
+		if (
+			field === "verdict" &&
+			(typeof value !== "string" || !VERDICT_VALUES.has(value.trim()))
+		) {
+			invalid.push(field);
+		}
+	}
+	// blocker may be the string "none"; that is present and valid.
+	return { missing, invalid };
 }
 
 /**
  * @param {unknown} input
  */
 function evaluate(input) {
-  try {
-    if (input === undefined || input === null) {
-      return unavailable("missing_input");
-    }
-    if (typeof input === "string") {
-      try {
-        input = JSON.parse(input);
-      } catch {
-        return unavailable("malformed_input");
-      }
-    }
-    if (!isPlainObject(input)) {
-      return unavailable("malformed_input");
-    }
+	try {
+		if (input === undefined || input === null) {
+			return unavailable("missing_input");
+		}
+		if (typeof input === "string") {
+			try {
+				input = JSON.parse(input);
+			} catch {
+				return unavailable("malformed_input");
+			}
+		}
+		if (!isPlainObject(input)) {
+			return unavailable("malformed_input");
+		}
 
-    if (input.infrastructure_failure) {
-      return unavailable(String(input.infrastructure_failure) || "infrastructure_failure");
-    }
+		if (input.infrastructure_failure) {
+			return unavailable(
+				String(input.infrastructure_failure) || "infrastructure_failure",
+			);
+		}
 
-    if (SAFE_CHANNELS.has(input.channel) || SAFE_CHANNELS.has(input.action_kind)) {
-      return result("ADVISE", "channel_open", RECOVERY_CHANNEL);
-    }
+		if (
+			SAFE_CHANNELS.has(input.channel) ||
+			SAFE_CHANNELS.has(input.action_kind)
+		) {
+			return result("ADVISE", "channel_open", RECOVERY_CHANNEL);
+		}
 
-    // Explicit invocation by Router; native Stop mappings do not supply Journey JSON.
-    if (input.action_kind === "owner_wait_summary") {
-      if (input.mode === "protected_completion" || input.protected_completion === true) {
-        return unavailable("owner_wait_summary_is_not_completion");
-      }
-      try {
-        const metrics = ownerWaitMetrics(input.journey, input.as_of);
-        return { ...result("ADVISE", "owner_wait:" + metrics.status,
-          "Render metrics and coverage in the wave or closeout receipt; no authority is granted"),
-        owner_wait: metrics };
-      } catch {
-        return unavailable("owner_wait_records_invalid");
-      }
-    }
+		// Explicit invocation by Router; native Stop mappings do not supply Journey JSON.
+		if (input.action_kind === "owner_wait_summary") {
+			if (
+				input.mode === "protected_completion" ||
+				input.protected_completion === true
+			) {
+				return unavailable("owner_wait_summary_is_not_completion");
+			}
+			try {
+				const metrics = ownerWaitMetrics(input.journey, input.as_of);
+				return {
+					...result(
+						"ADVISE",
+						"owner_wait:" + metrics.status,
+						"Render metrics and coverage in the wave or closeout receipt; no authority is granted",
+					),
+					owner_wait: metrics,
+				};
+			} catch {
+				return unavailable("owner_wait_records_invalid");
+			}
+		}
 
-    const scribeOnly = input.action_kind === "scribe_coverage";
-    const scribeCoverage = scribeOnly || isPlainObject(input.journey) ? evaluateScribeCoverage(input) : null;
-    const protectedCompletion = input.mode === "protected_completion" || input.protected_completion === true;
-    const planningHandoff = input.mode === "handoff" && (scribeOnly || !protectedCompletion);
+		const scribeOnly = input.action_kind === "scribe_coverage";
+		const scribeCoverage =
+			scribeOnly || isPlainObject(input.journey)
+				? evaluateScribeCoverage(input)
+				: null;
+		const protectedCompletion =
+			input.mode === "protected_completion" ||
+			input.protected_completion === true;
+		const planningHandoff =
+			input.mode === "handoff" && (scribeOnly || !protectedCompletion);
 
-    if (planningHandoff) {
-      if (scribeCoverage && scribeCoverage.outcome !== "PASS") {
-        return {
-          ...result("REROUTE", "handoff_refused:scribe_" + scribeCoverage.outcome + ":" + scribeCoverage.reason,
-            "Pause the handoff until coverage passes. " + scribeCoverage.recovery),
-          scribe_coverage: scribeCoverage,
-        };
-      }
-      const rawReceipt = input.final_freeze_receipt !== undefined
-        ? input.final_freeze_receipt
-        : (isPlainObject(input.handoff) ? input.handoff.final_freeze_receipt : undefined);
-      const issue = finalFreezeReceiptIssue(rawReceipt);
-      if (issue) {
-        return result(
-          "REROUTE",
-          "handoff_refused:final_freeze_receipt_" + issue,
-          RECOVERY_FINAL_FREEZE_HANDOFF
-        );
-      }
-    }
+		let freezeReceipt;
+		if (planningHandoff) {
+			if (scribeCoverage && scribeCoverage.outcome !== "PASS") {
+				return {
+					...result(
+						"REROUTE",
+						"handoff_refused:scribe_" +
+							scribeCoverage.outcome +
+							":" +
+							scribeCoverage.reason,
+						"Pause the handoff until coverage passes. " +
+							scribeCoverage.recovery,
+					),
+					scribe_coverage: scribeCoverage,
+				};
+			}
+			freezeReceipt =
+				input.final_freeze_receipt !== undefined
+					? input.final_freeze_receipt
+					: isPlainObject(input.handoff)
+						? input.handoff.final_freeze_receipt
+						: undefined;
+			const issue = finalFreezeReceiptIssue(freezeReceipt);
+			if (issue) {
+				return result(
+					"REROUTE",
+					"handoff_refused:final_freeze_receipt_" + issue,
+					RECOVERY_FINAL_FREEZE_HANDOFF,
+				);
+			}
+		}
 
-    if (scribeOnly) {
-      return { ...result("ADVISE", "scribe_coverage:" + scribeCoverage.outcome + ":" + scribeCoverage.reason,
-        scribeCoverage.recovery), scribe_coverage: scribeCoverage };
-    }
+		if (scribeOnly) {
+			return {
+				...result(
+					"ADVISE",
+					"scribe_coverage:" +
+						scribeCoverage.outcome +
+						":" +
+						scribeCoverage.reason,
+					scribeCoverage.recovery,
+				),
+				scribe_coverage: scribeCoverage,
+			};
+		}
 
-    const planningVerdict = input.planning_review
-      ? evaluatePlanningReview(input.planning_review)
-      : null;
+		const planningVerdict = input.planning_review
+			? evaluatePlanningReview(input.planning_review)
+			: null;
 
-    const { missing, invalid } = inspectHandoffFields(input);
-    const required = normalizeAssurance(input.required_assurance);
-    const accepted = Array.isArray(input.assurance_accepted)
-      ? input.assurance_accepted.map(String)
-      : [];
-    const missingAssurance = required.filter((role) => !accepted.includes(role));
-    // Protected completion requires explicit same-candidate proof; omit/false fail closed.
-    // Advisory closeout never uses this flag for outcome selection.
-    const candidateMatched = input.candidate_matched === true;
-    const unresolvedBlocker =
-      input.unresolved_blocker === true ||
-      (typeof input.blocker === "string" &&
-        input.blocker.trim() &&
-        input.blocker.trim() !== "none");
+		const { missing, invalid } = inspectHandoffFields(input);
+		const required = normalizeAssurance(input.required_assurance);
+		const accepted = Array.isArray(input.assurance_accepted)
+			? input.assurance_accepted.map(String)
+			: [];
+		const missingAssurance = required.filter(
+			(role) => !accepted.includes(role),
+		);
+		// Protected completion requires explicit same-candidate proof; omit/false fail closed.
+		// Advisory closeout never uses this flag for outcome selection.
+		const candidateMatched = input.candidate_matched === true;
+		const unresolvedBlocker =
+			input.unresolved_blocker === true ||
+			(typeof input.blocker === "string" &&
+				input.blocker.trim() &&
+				input.blocker.trim() !== "none");
 
-    if (protectedCompletion) {
-      const blockers = [];
-      const handoffProblems = [...missing, ...invalid];
-      if (handoffProblems.length > 0) blockers.push("handoff:" + handoffProblems.join(","));
-      const verdict = String((isPlainObject(input.handoff) ? input.handoff : input).verdict ?? "").trim();
-      if (NEGATIVE_VERDICTS.has(verdict)) blockers.push("verdict:" + verdict);
-      if (missingAssurance.length > 0) {
-        blockers.push("assurance:" + missingAssurance.join(","));
-      }
-      if (!candidateMatched) blockers.push("candidate_mismatch");
-      if (unresolvedBlocker) blockers.push("unresolved_blocker");
-      if (planningVerdict && planningVerdict.outcome !== "PASS") {
-        blockers.push("planning_review:" + planningVerdict.outcome);
-      }
-      if (scribeCoverage && scribeCoverage.outcome !== "PASS") {
-        blockers.push("scribe:" + scribeCoverage.outcome + ":" + scribeCoverage.reason);
-      }
+		if (protectedCompletion) {
+			const blockers = [];
+			const handoffProblems = [...missing, ...invalid];
+			if (handoffProblems.length > 0)
+				blockers.push("handoff:" + handoffProblems.join(","));
+			const verdict = String(
+				(isPlainObject(input.handoff) ? input.handoff : input).verdict ?? "",
+			).trim();
+			if (NEGATIVE_VERDICTS.has(verdict)) blockers.push("verdict:" + verdict);
+			if (missingAssurance.length > 0) {
+				blockers.push("assurance:" + missingAssurance.join(","));
+			}
+			if (!candidateMatched) blockers.push("candidate_mismatch");
+			if (unresolvedBlocker) blockers.push("unresolved_blocker");
+			if (planningVerdict && planningVerdict.outcome !== "PASS") {
+				blockers.push("planning_review:" + planningVerdict.outcome);
+			}
+			if (scribeCoverage && scribeCoverage.outcome !== "PASS") {
+				blockers.push(
+					"scribe:" + scribeCoverage.outcome + ":" + scribeCoverage.reason,
+				);
+			}
 
-      if (blockers.length > 0) {
-        return result(
-          "BLOCK",
-          "protected_completion_invalid:" + blockers.join("+"),
-          RECOVERY_BLOCK_COMPLETION,
-          { protected_action: "completion" }
-        );
-      }
+			if (blockers.length > 0) {
+				return result(
+					"BLOCK",
+					"protected_completion_invalid:" + blockers.join("+"),
+					RECOVERY_BLOCK_COMPLETION,
+					{ protected_action: "completion" },
+				);
+			}
 
-      return result(
-        "ADVISE",
-        "protected_completion_ready",
-        RECOVERY_COMPLETE,
-        { protected_action: "completion" }
-      );
-    }
+			return result("ADVISE", "protected_completion_ready", RECOVERY_COMPLETE, {
+				protected_action: "completion",
+			});
+		}
 
-    if (planningVerdict) {
-      return result(
-        planningVerdict.outcome === "PASS" ? "ADVISE" : "REROUTE",
-        "planning_review:" + planningVerdict.outcome + ":" + planningVerdict.reason,
-        planningVerdict.outcome === "PASS"
-          ? "Planning-review record is complete; continue to the integrated owner gate"
-          : "Keep dispatch closed and complete, repair, or amend the planning-review record"
-      );
-    }
+		if (planningVerdict) {
+			return result(
+				planningVerdict.outcome === "PASS" ? "ADVISE" : "REROUTE",
+				"planning_review:" +
+					planningVerdict.outcome +
+					":" +
+					planningVerdict.reason,
+				planningVerdict.outcome === "PASS"
+					? "Planning-review record is complete; continue to the integrated owner gate"
+					: "Keep dispatch closed and complete, repair, or amend the planning-review record",
+			);
+		}
 
-    if (scribeCoverage && scribeCoverage.outcome !== "PASS") {
-      return result(
-        "REROUTE",
-        "scribe_coverage:" + scribeCoverage.outcome + ":" + scribeCoverage.reason,
-        scribeCoverage.recovery
-      );
-    }
+		if (scribeCoverage && scribeCoverage.outcome !== "PASS") {
+			return result(
+				"REROUTE",
+				"scribe_coverage:" +
+					scribeCoverage.outcome +
+					":" +
+					scribeCoverage.reason,
+				scribeCoverage.recovery,
+			);
+		}
 
-    // Advisory closeout: never BLOCK.
-    const hasHandoffEnvelope = isPlainObject(input.handoff) ||
-      HANDOFF_FIELDS.some((field) => input[field] !== undefined);
-    if (missing.length > 0 && (!planningHandoff || hasHandoffEnvelope)) {
-      return result(
-        "ADVISE",
-        "handoff_incomplete:" + missing.join(","),
-        RECOVERY_HANDOFF
-      );
-    }
+		// Advisory closeout: never BLOCK.
+		const hasHandoffEnvelope =
+			isPlainObject(input.handoff) ||
+			HANDOFF_FIELDS.some((field) => input[field] !== undefined);
+		if (missing.length > 0 && (!planningHandoff || hasHandoffEnvelope)) {
+			return result(
+				"ADVISE",
+				"handoff_incomplete:" + missing.join(","),
+				RECOVERY_HANDOFF,
+			);
+		}
 
-    if (invalid.length > 0) {
-      return result(
-        "ADVISE",
-        "handoff_invalid:" + invalid.join(","),
-        RECOVERY_INVALID_VERDICT
-      );
-    }
+		if (invalid.length > 0) {
+			return result(
+				"ADVISE",
+				"handoff_invalid:" + invalid.join(","),
+				RECOVERY_INVALID_VERDICT,
+			);
+		}
 
-    if (missingAssurance.length > 0) {
-      return result(
-        "ADVISE",
-        "assurance_pending:" + missingAssurance.join(","),
-        "Do not request protected completion until assurance roles accept the same candidate: " +
-          missingAssurance.join(", ")
-      );
-    }
+		if (missingAssurance.length > 0) {
+			return result(
+				"ADVISE",
+				"assurance_pending:" + missingAssurance.join(","),
+				"Do not request protected completion until assurance roles accept the same candidate: " +
+					missingAssurance.join(", "),
+			);
+		}
 
-    const complete = result("ADVISE", "handoff_complete", RECOVERY_COMPLETE);
-    return planningHandoff && scribeCoverage ? { ...complete, scribe_coverage: scribeCoverage } : complete;
-  } catch {
-    return unavailable("adapter_exception");
-  }
+		const findings = [];
+		let liveWave;
+		if (planningHandoff) {
+			if (input.plan_dir !== undefined) {
+				liveWave = readLiveWave(input.plan_dir, findings);
+			} else if (Array.isArray(freezeReceipt.live_wave?.waves)) {
+				liveWave = { waves: freezeReceipt.live_wave.waves };
+			}
+		}
+		if (findings.length) {
+			return {
+				...result(
+					"REROUTE",
+					"handoff_refused:final_freeze_receipt_invalid:" + findings[0].code,
+					RECOVERY_FINAL_FREEZE_HANDOFF,
+				),
+				live_wave: liveWave,
+				findings,
+			};
+		}
+		return {
+			...result("ADVISE", "handoff_complete", RECOVERY_COMPLETE),
+			...(planningHandoff && scribeCoverage
+				? { scribe_coverage: scribeCoverage }
+				: {}),
+			...(liveWave ? { live_wave: liveWave } : {}),
+		};
+	} catch {
+		return unavailable("adapter_exception");
+	}
 }
 
 function readStdinSync() {
-  try {
-    return require("node:fs").readFileSync(0, "utf8");
-  } catch (err) {
-    const code = err && err.code;
-    if (code === "EAGAIN" || code === "EOF") return "";
-    throw err;
-  }
+	try {
+		return require("node:fs").readFileSync(0, "utf8");
+	} catch (err) {
+		const code = err && err.code;
+		if (code === "EAGAIN" || code === "EOF") return "";
+		throw err;
+	}
 }
 
 function main() {
-  let raw = "";
-  try {
-    raw = readStdinSync();
-  } catch {
-    process.stdout.write(JSON.stringify(unavailable("stdin_read_failure")) + "\n");
-    process.exit(0);
-    return;
-  }
+	let raw = "";
+	try {
+		raw = readStdinSync();
+	} catch {
+		process.stdout.write(
+			JSON.stringify(unavailable("stdin_read_failure")) + "\n",
+		);
+		process.exit(0);
+		return;
+	}
 
-  const trimmed = raw.trim();
-  if (!trimmed) {
-    process.stdout.write(JSON.stringify(unavailable("missing_input")) + "\n");
-    process.exit(0);
-    return;
-  }
+	const trimmed = raw.trim();
+	if (!trimmed) {
+		process.stdout.write(JSON.stringify(unavailable("missing_input")) + "\n");
+		process.exit(0);
+		return;
+	}
 
-  let parsed;
-  try {
-    parsed = JSON.parse(trimmed);
-  } catch {
-    process.stdout.write(JSON.stringify(unavailable("malformed_input")) + "\n");
-    process.exit(0);
-    return;
-  }
+	let parsed;
+	try {
+		parsed = JSON.parse(trimmed);
+	} catch {
+		process.stdout.write(JSON.stringify(unavailable("malformed_input")) + "\n");
+		process.exit(0);
+		return;
+	}
 
-  process.stdout.write(JSON.stringify(evaluate(parsed)) + "\n");
-  process.exit(0);
+	process.stdout.write(JSON.stringify(evaluate(parsed)) + "\n");
+	process.exit(0);
 }
 
 module.exports = {
-  HOOK_CLASS,
-  OUTCOMES,
-  ENFORCEMENT,
-  HANDOFF_FIELDS,
-  VERDICT_VALUES,
-  NEGATIVE_VERDICTS,
-  evaluate,
+	HOOK_CLASS,
+	OUTCOMES,
+	ENFORCEMENT,
+	HANDOFF_FIELDS,
+	VERDICT_VALUES,
+	NEGATIVE_VERDICTS,
+	evaluate,
 };
 
 if (require.main === module) {
-  main();
+	main();
 }

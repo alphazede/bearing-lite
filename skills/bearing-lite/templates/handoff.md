@@ -7,6 +7,7 @@ result with the command and its exit code.
 ```markdown
 # Planning Handoff
 
+- verdict: READY
 - candidate_ref: <repository/plan reference>
 - candidate_revision: <revision or HEAD>
 - worktree: <checkout/worktree path>
@@ -28,13 +29,15 @@ result with the command and its exit code.
 - decisions_and_authority: <confirmed owner decision IDs and authority envelope>
 - profile_snapshot: <frozen selected models/harnesses/capabilities>
 - assignments_and_write_sets: <dependency-ordered waves/slices, roles, write sets>
-- commands_and_evidence: <commands, exit codes, and digests — not narrative logs>
+- changed_paths: <exact paths changed during planning>
+- tests: <commands, exit codes, and evidence digests, including the final freeze>
+- findings: <finding IDs and their disposition, or none>
 - target_host_delivery:
   - candidate_transport: <how the exact candidate and its proof travel to each target host, or none>
   - transport_approval: <who may approve that transport (owner or explicit delegate within authority.json), or none>
   - local_landing_when_host_gate_unavailable: <what may land locally vs what stays held when the host gate cannot run, or none>
 - review_status: <planning review outcome or review_requested: false>
-- blockers: <none | open blockers>
+- blocker: none
 - next_action: <first implementation wave/slice dispatch>
 ```
 
