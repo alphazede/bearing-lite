@@ -49,8 +49,13 @@ the Planning Orchestrator, not this implementation-wave work.
 4. Inspect compact returns against acceptance and write sets. Integrate evidence
    without implementing; update implementation.json and the DoD Manifest once per
    wave, plus material owner-decision or blocker changes. Preserve unrelated work.
-5. Run deterministic checks. When they pass, immediately dispatch the profile-enabled review or assurance
-   the owner requested for this boundary in the frozen plan; never re-ask or defer it to a later wave. For a multi-slice phase or wave, independent assurance may start early on finished slices' immutable receipts and the pinned candidate while the last slice runs, joining the last slice's receipts before issuing its verdict while keeping single-run role and gate budgets. Honor declared
+5. For a multi-slice phase or wave, independent assurance may start on finished
+   slices' immutable receipts and the pinned candidate while the last slice
+   runs. The same session joins the last slice's receipts before issuing its
+   verdict on the final integrated candidate and keeps single-run role and gate
+   budgets. Run deterministic checks. When they pass,
+   immediately dispatch the profile-enabled review or assurance the owner
+   requested for this boundary if it has yet to start. Honor declared
    max_assurance_rounds and assurance_rounds; use `assurance-policy.md`. Preauthorize bounded same-session repair
    in the review packet; consume consolidated evidence without reproducing findings. Authorized repair closes by
    deterministic checks, without automatic rereview or budget reset. Failed repair or scope drift returns to the Orchestrator; COMPLETE does not reopen review.

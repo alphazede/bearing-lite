@@ -54,13 +54,14 @@ explicit setup or catalog-edit request uses [onboard-bearing](../onboard-bearing
    The Implementation Orchestrator owns new waves.
    For a frozen legacy Coordinator assignment, use its pinned runtime or obtain an explicit handover
    before continuing.
-5. **Review:** dispatch the owner-requested review immediately after the
-   recorded boundary passes deterministic checks. Use the approved
-   slice, phase, or lifecycle cadence for the selected review. When independent
-   assurance is requested on a multi-slice phase or wave, assurance may start
-   early on finished slices' immutable receipts and the pinned candidate while
-   the last slice runs, joining the last slice's receipts before its verdict
-   while keeping single-run role and gate budgets. The approved
+5. **Review:** use the approved slice, phase, or lifecycle cadence. On a
+   multi-slice phase or wave, requested independent assurance may start on
+   finished slices' immutable receipts and the pinned candidate while the last
+   slice runs. The same session joins the last slice's receipts before its
+   verdict on the final integrated candidate and preserves single-run role and
+   gate budgets. Follow the [dispatch timing](references/assurance-policy.md#dispatch-timing-222)
+   for early assurance and dispatch any remaining requested sessions when the
+   recorded boundary passes deterministic checks. The approved
    task plan supplies task and rolling batch boundaries. A recorded request
    requires no further approval. An independent evaluator is a reviewer.
    Preserve selected assistance tools; preauthorize bounded same-session repair in the

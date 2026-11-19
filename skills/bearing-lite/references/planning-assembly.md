@@ -158,9 +158,11 @@ not permission to start repeated polling or duplicate an invocation.
 3. Product Implementer writes the behavior against those tests. In selected
    `single_implementer` mode, the configured Implementer owns both tests and product
    changes; do not create a separate Test Implementer assignment automatically.
-4. Run the required deterministic checks. When each declared boundary passes them,
+4. On a multi-slice phase or wave, use the [assurance timing rule](assurance-policy.md#dispatch-timing-222)
+   to start requested assurance on finished slices while the last slice runs.
+   Run the required deterministic checks. When each declared boundary passes them,
    dispatch the independent review/assurance the owner requested for it in the frozen
-   plan at once, without a second request or deferral to a later boundary. Then land
+   plan at once if it has yet to start. Then land
    the closed unit (`task-state.md#landing-a-closed-unit`) and close out the work:
    finish the change and focused checks, push and open a draft PR for its number,
    commit the `CHANGELOG` link, gate once on that head (reusing a push gate result
