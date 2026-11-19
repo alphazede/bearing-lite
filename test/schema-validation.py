@@ -1871,32 +1871,33 @@ def verification_cases() -> list[tuple[str, str, object, str]]:
     for key, receipt in sealed.items():
         out.append(("SEIT-BDL-004", f"sealed_receipt_{key}", receipt, "accept"))
     observed = sealed["observed"]
+    tier_override = {
+        "schema_version": "1",
+        "kind": "tier_resolution",
+        "outcome": "READY",
+        "reason": "copy_or_read_only_live_host",
+        "tier": "standard",
+        "implementers": 1,
+        "reviews": 1,
+        "separate_assurance": False,
+        "live_service_observation": {"required": True, "stages": ["before", "after"]},
+    }
     out.extend([
         ("SEIT-BDL-004", "sealed_receipt_evidence_tier_invalid", {**observed, "evidence_tier": "guessed"}, "reject"),
         ("SEIT-BDL-004", "sealed_receipt_backend_verdict_invalid", {**observed, "backend_verdict": "PASS"}, "reject"),
         ("SEIT-BDL-004", "sealed_receipt_evidence_engine_empty", {**sealed["derived"], "evidence_engine": ""}, "reject"),
-        ("SEIT-BDL-004", "tier_resolution_standard_live_host_accept", {
-            "schema_version": "1",
-            "kind": "tier_resolution",
-            "outcome": "READY",
-            "reason": "copy_or_read_only_live_host",
-            "tier": "standard",
-            "implementers": 1,
-            "reviews": 1,
-            "separate_assurance": False,
-            "live_service_observation": {"required": True, "stages": ["before", "after"]},
-        }, "accept"),
+        ("SEIT-BDL-004", "tier_resolution_standard_live_host_accept", tier_override, "accept"),
         ("SEIT-BDL-004", "tier_resolution_missing_after_observation_reject", {
-            "schema_version": "1",
-            "kind": "tier_resolution",
-            "outcome": "READY",
-            "reason": "copy_or_read_only_live_host",
-            "tier": "standard",
-            "implementers": 1,
-            "reviews": 1,
-            "separate_assurance": False,
+            **tier_override,
             "live_service_observation": {"required": True, "stages": ["before"]},
         }, "reject"),
+        ("SEIT-BDL-004", "tier_resolution_requires_live_service_observation", {
+            **tier_override, "live_service_observation": {"required": False, "stages": []},
+        }, "reject"),
+        ("SEIT-BDL-004", "tier_resolution_keeps_existing_cadence", {
+            "schema_version": "1", "kind": "tier_resolution",
+            "outcome": "READY", "reason": "tier_unchanged", "tier": "full",
+        }, "accept"),
     ])
     for field in VERIFICATION_REQUEST_FIELDS:
         out.append((

@@ -39,7 +39,9 @@ its map or the requested scope changes. Reuse confirmed scope and current eviden
 4. Map components, interfaces, data flow, ownership, constraints, and trust
    boundaries with sources. Select the process tier (`light` — Orchestrator plus
    one author — `standard`, or `full`) by the stated risk rule in
-   `../bearing-lite/references/planning-assembly.md`. Explain where the requested
+   `../bearing-lite/references/planning-assembly.md`. Apply the
+   [live-host tier exception](../bearing-lite/references/verification.md#process-tier-resolution)
+   when its conditions are established. Explain where the requested
    work fits; distinguish facts, inferences, and gaps. Do not design missing architecture,
    activate a specialist automatically, or choose material changes
    or risk for the owner.
