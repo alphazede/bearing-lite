@@ -21,7 +21,7 @@ const MATRIX = [
   { host: "codex", install: "plugin", blocking: "native", skills: true },
   { host: "grok", install: "plugin", blocking: "advisory", skills: true },
   { host: "copilot", install: "plugin", blocking: "native", skills: true },
-  { host: "agy", install: "skills-only", blocking: "not_supported", skills: true },
+  { host: "agy", install: "plugin", blocking: "native", skills: true },
   { host: "kimi", install: "plugin", blocking: "not_supported", skills: true },
 ];
 

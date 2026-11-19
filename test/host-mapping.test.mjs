@@ -772,13 +772,17 @@ describe("verified host mapping", () => {
       /followup_message/i,
       "followup_message is not a hard completion block"
     );
-    // Kimi / Pi / AGY / DeepCode / Qwen remain UNAVAILABLE for native TE blocking.
+    // Kimi / Pi / DeepCode / Qwen remain UNAVAILABLE; AGY has native write/completion deny and UNAVAILABLE child stop.
     for (const host of ["Kimi", "Pi", "AGY", "DeepCode", "Qwen"]) {
       const row = mapping
         .split("\n")
         .find((line) => new RegExp(`^\\|\\s*${host}\\b`).test(line) && /te_|TE\b/.test(line));
       assert.ok(row, `mapping.md must state TE support for ${host}`);
       assert.match(row, /UNAVAILABLE/, host);
+      if (host === "AGY") {
+        assert.match(row, /native `PreToolUse` deny/);
+        assert.match(row, /native `Stop` deny/);
+      }
     }
     const copilotHonesty = mapping
       .split("\n")

@@ -175,6 +175,7 @@ describe("model-neutral planning review", () => {
       ["Claude Code", "SessionStart", "Stop"],
       ["Codex", "session_start", "session_end"],
       ["Cursor", "sessionStart", "stop"],
+      ["AGY", "SessionStart", "Stop"],
     ];
     for (const [name, start, stop] of partial) {
       assert.match(mapping, new RegExp(`\\| ${name.replace(" ", "\\s") } \\|[^\\n]+\\| partial \\|`));
@@ -185,7 +186,7 @@ describe("model-neutral planning review", () => {
     for (const name of ["Grok Build", "Kimi Code", "Qwen Code"]) {
       assert.match(mapping, new RegExp(`\\| ${name} \\|[^\\n]+\\| unsupported \\|`));
     }
-    for (const name of ["AGY", "Pi", "DeepCode"]) {
+    for (const name of ["Pi", "DeepCode"]) {
       assert.match(mapping, new RegExp(`\\| ${name} \\|[^\\n]+\\| skills-only \\|`));
     }
     assert.match(mapping, /cannot derive that nested record safely/);

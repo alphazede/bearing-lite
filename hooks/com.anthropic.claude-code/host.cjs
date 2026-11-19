@@ -274,7 +274,14 @@ function isTruthyFlag(value) {
 
 function isStopReentry(input, eventName) {
   if (!STOP_CONTINUATION_EVENTS.has(eventName)) return false;
-  if (isTruthyFlag(input.stop_hook_active) || isTruthyFlag(input.stopHookActive)) return true;
+  if (
+    isTruthyFlag(input.stop_hook_active) ||
+    isTruthyFlag(input.stopHookActive) ||
+    isTruthyFlag(input.continuationActive) ||
+    isTruthyFlag(input.continuation_active)
+  ) {
+    return true;
+  }
   // Cursor signals a stop re-entry after a real follow-up with loop_count (#139).
   const loops = Number(input.loop_count ?? input.loopCount);
   return Number.isFinite(loops) && loops >= 1;
@@ -317,8 +324,23 @@ function toHostResponse(eventName, verdict) {
   return body;
 }
 
-function detectWriteLock() {
+function detectWriteLock(host) {
+  const isAgy = host === "agy" || process.argv.includes("--host=agy");
   try {
+    if (isAgy) {
+      const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "..", "hooks.json"), "utf8"));
+      const wired = Object.values(manifest || {}).some((spec) =>
+        isPlainObject(spec) &&
+        spec.enabled !== false &&
+        Array.isArray(spec.PreToolUse) &&
+        spec.PreToolUse.some((entry) =>
+          (entry.hooks || []).some((hook) =>
+            String(hook.command || "").includes("orchestrator-write-lock")
+          )
+        )
+      );
+      return wired ? "present" : "absent";
+    }
     const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "hooks.json"), "utf8"));
     const pre = manifest.hooks && manifest.hooks.PreToolUse;
     if (!Array.isArray(pre)) return "absent";
@@ -333,7 +355,7 @@ function detectWriteLock() {
   }
 }
 
-function evaluateForHost(eventName, derived, input = {}) {
+function evaluateForHost(eventName, derived, input = {}, options = {}) {
   if (classForEvent(eventName) === "closeout") {
     const task = derived.active_task || {};
     return closeout.evaluate({
@@ -353,14 +375,15 @@ function evaluateForHost(eventName, derived, input = {}) {
     next_action: derived.next_action,
     assigned_role: derived.assigned_role,
     router_invoked: derived.router_invoked === true,
-    write_lock: detectWriteLock(),
+    write_lock: detectWriteLock(options.host),
   });
 }
 
 /**
  * @param {unknown} input
+ * @param {{ host?: string }} [options]
  */
-function handle(input) {
+function handle(input, options = {}) {
   let parsed = input;
   if (typeof parsed === "string") {
     try {
@@ -388,6 +411,7 @@ function handle(input) {
   const cwd =
     presentString(parsed.cwd) ||
     presentString(parsed.workspaceRoot) ||
+    (Array.isArray(parsed.workspacePaths) && presentString(parsed.workspacePaths[0])) ||
     process.cwd();
 
   const bound = binding(parsed);
@@ -402,15 +426,33 @@ function handle(input) {
     );
   }
 
-  return toHostResponse(eventName, evaluateForHost(eventName, derived, parsed));
+  return toHostResponse(eventName, evaluateForHost(eventName, derived, parsed, options));
 }
 
 // Hosted replies measured under 450 ms. Leave that reserve so cleanup finishes inside the registration timeout.
 const RESPONSE_RESERVE_MS = 450;
 const ADAPTER_EVENTS = new Set(["SessionStart", "Stop"]);
 
-function hostTimeoutSeconds(eventName) {
-  const cursor = process.argv.includes("--host=cursor");
+function hostTimeoutSeconds(eventName, host) {
+  if (host === "agy" || process.argv.includes("--host=agy")) {
+    try {
+      const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "..", "hooks.json"), "utf8"));
+      const target = eventName === "SessionStart" ? "activation" : "closeout";
+      for (const spec of Object.values(manifest || {})) {
+        if (!isPlainObject(spec) || spec.enabled === false || !Array.isArray(spec[eventName])) continue;
+        for (const hook of spec[eventName]) {
+          const cmd = String(hook.command || "");
+          if (cmd.includes("com.google.antigravity/host.cjs") && cmd.includes(target)) {
+            return hook.timeout;
+          }
+        }
+      }
+      return undefined;
+    } catch {
+      return undefined;
+    }
+  }
+  const cursor = host === "cursor" || process.argv.includes("--host=cursor");
   let manifest;
   try {
     const file = path.join(__dirname, "..", cursor ? "com.cursor/hooks.json" : "hooks.json");
@@ -449,7 +491,7 @@ function decisionRecordFile() {
   return path.join(dir, "advisory-decisions.json");
 }
 
-async function applyAdapter(rawInput, response, enteredAt) {
+async function applyAdapter(rawInput, response, enteredAt, options = {}) {
   let parsed = rawInput;
   if (typeof parsed === "string") {
     try {
@@ -465,7 +507,7 @@ async function applyAdapter(rawInput, response, enteredAt) {
   if (!bound) return response;
   const input = decisionChoice(bound.task);
   if (!input) return response;
-  const timeout = hostTimeoutSeconds(eventName);
+  const timeout = hostTimeoutSeconds(eventName, options.host);
   if (typeof timeout !== "number" || !(timeout > 0)) return response;
   const result = await decisionAdapter.decide(input, {
     config_file: path.join(__dirname, "..", "decision-backend.json"),
@@ -530,6 +572,7 @@ module.exports = {
   deriveContext,
   evaluateForHost,
   handle,
+  applyAdapter,
   toHostResponse,
 };
 

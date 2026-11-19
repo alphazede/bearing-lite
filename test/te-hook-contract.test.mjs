@@ -917,7 +917,10 @@ describe("Lite TE host adapter (hooks/te-host.cjs)", () => {
     assert.equal(support.cursor.write_time_deny, "native");
     assert.equal(support.cursor.completion_deny, "UNAVAILABLE");
     assert.equal(support.cursor.child_stop_deny, "UNAVAILABLE");
-    for (const host of ["kimi", "pi", "agy", "deepcode"]) {
+    assert.equal(support.agy.write_time_deny, "native");
+    assert.equal(support.agy.completion_deny, "native");
+    assert.equal(support.agy.child_stop_deny, "UNAVAILABLE");
+    for (const host of ["kimi", "pi", "deepcode"]) {
       assert.equal(support[host].write_time_deny, "UNAVAILABLE", host);
       assert.equal(support[host].completion_deny, "UNAVAILABLE", host);
       assert.equal(support[host].child_stop_deny, "UNAVAILABLE", host);
