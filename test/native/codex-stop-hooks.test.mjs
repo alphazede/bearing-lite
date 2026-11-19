@@ -5,21 +5,22 @@
  * HOME/CODEX_HOME with the prepared candidate plugin to prove:
  * 1. Fresh/trusted plugin hooks complete SessionStart and all three Stop hooks
  *    (`host.cjs`, `te-host.cjs`, `git-sync.cjs`) under real `codex exec`.
- * 2. A stale `trusted_content_hash` in `[hooks.state]` reproduces the exact
- *    pre-execution failure (`plugin contents changed; hook approval required` /
- *    `hook: Stop Failed` x3) without spawning Node.
+ * 2. Changing only the saved content hash makes Codex report modified trust
+ *    and fail those same hooks.
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
 import { spawn, spawnSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync, appendFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { createInterface } from "node:readline";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const CODEX = process.env.BEARING_CODEX_BIN || "codex";
+const PLUGIN_ID = "bearing-lite@bearing-lite";
 
 function runSync(cmd, args, env, cwd, timeout = 60_000) {
   const r = spawnSync(cmd, args, { cwd, env, stdio: ["ignore", "pipe", "pipe"], encoding: "utf8", timeout });
@@ -28,7 +29,52 @@ function runSync(cmd, args, env, cwd, timeout = 60_000) {
   return r.stdout;
 }
 
-async function withLoopbackCodex(repo, env, extraArgs, timeoutMs = 45_000) {
+async function listHookTrust(repo, env) {
+  const child = spawn(CODEX, ["app-server", "--stdio"], {
+    cwd: repo, env, stdio: ["pipe", "pipe", "ignore"],
+  });
+  const closed = new Promise(resolve => child.once("close", resolve));
+  const lines = createInterface({ input: child.stdout });
+  const send = (method, params, id) => child.stdin.write(JSON.stringify({ jsonrpc: "2.0", method, params, id }) + "\n");
+  try {
+    return await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error("Codex hooks/list timed out")), 10_000);
+      const finish = () => clearTimeout(timer);
+      child.once("error", error => { finish(); reject(error); });
+      child.once("close", code => { finish(); reject(new Error(`Codex app-server exited with ${code}`)); });
+      child.stdin.on("error", error => { finish(); reject(error); });
+      lines.on("line", line => {
+        try {
+          const response = JSON.parse(line);
+          if (response.error) throw new Error(JSON.stringify(response.error));
+          if (response.id === 1) {
+            send("initialized");
+            send("hooks/list", { cwds: [repo] }, 2);
+          }
+          if (response.id === 2) {
+            const entry = response.result.data.find(item => item.cwd === repo);
+            assert.ok(entry, "Codex did not list hooks for the test repository");
+            assert.deepEqual(entry.errors, []);
+            finish();
+            resolve(entry.hooks.filter(hook => hook.pluginId === PLUGIN_ID &&
+              ["sessionStart", "stop"].includes(hook.eventName)));
+          }
+        } catch (error) {
+          finish();
+          reject(error);
+        }
+      });
+      send("initialize", { clientInfo: { name: "bearing_stop_test", version: "0" } }, 1);
+    });
+  } finally {
+    lines.close();
+    child.stdin.end();
+    child.kill("SIGKILL");
+    await closed;
+  }
+}
+
+async function withLoopbackCodex(repo, env, timeoutMs = 45_000) {
   let server;
   let child;
   const groups = new Set();
@@ -58,8 +104,7 @@ async function withLoopbackCodex(repo, env, extraArgs, timeoutMs = 45_000) {
     });
     const url = `http://127.0.0.1:${server.address().port}/v1`;
     const args = [
-      "exec", "--skip-git-repo-check", "--ephemeral", "--dangerously-bypass-approvals-and-sandbox",
-      ...extraArgs,
+      "exec", "--skip-git-repo-check", "--ephemeral",
       "-c", 'model_provider="sentinel"',
       "-c", 'model="sentinel"',
       "-c", 'model_providers.sentinel.name="Owned local sentinel"',
@@ -108,10 +153,36 @@ test("Alphazedehq#634 Bearing Stop hooks complete under Codex when trusted and f
     runSync(CODEX, ["--version"], env, repo);
     runSync(process.execPath, [path.join(ROOT, "tools/prepare-codex-plugin.mjs"), "--out", path.join(tmp, "marketplace")], env, repo);
     runSync(CODEX, ["plugin", "marketplace", "add", path.join(tmp, "marketplace")], env, repo);
-    runSync(CODEX, ["plugin", "add", "bearing-lite@bearing-lite"], env, repo);
+    runSync(CODEX, ["plugin", "add", PLUGIN_ID], env, repo);
 
-    // 1. Trusted candidate plugin hooks complete SessionStart + all 3 Stop hooks under Codex.
-    const ok = await withLoopbackCodex(repo, env, ["--dangerously-bypass-hook-trust"]);
+    const hooks = await listHookTrust(repo, env);
+    assert.equal(hooks.filter(hook => hook.eventName === "stop").length, 3);
+    assert.equal(hooks.filter(hook => hook.eventName === "sessionStart").length, 1);
+    const configPath = path.join(codexHome, "config.toml");
+    const pluginConfig = readFileSync(configPath, "utf8");
+    const hashes = hooks.map(({ key, currentHash }) => {
+      assert.match(currentHash, /^sha256:[a-f0-9]{64}\/sha256:[a-f0-9]{64}$/);
+      const [commandHash, contentHash] = currentHash.split("/");
+      return { key, commandHash, contentHash };
+    });
+    const saveTrust = (stale) => writeFileSync(configPath, pluginConfig + hashes.map(
+      ({ key, commandHash, contentHash }) => [
+        "",
+        `[hooks.state.${JSON.stringify(key)}]`,
+        `trusted_hash = "${commandHash}"`,
+        `trusted_content_hash = "${stale ? "sha256:" + "0".repeat(64) : contentHash}"`,
+        "",
+      ].join("\n")
+    ).join("\n"));
+    const assertTrust = async (status) => {
+      const current = await listHookTrust(repo, env);
+      assert.deepEqual(current.map(hook => hook.key).sort(), hooks.map(hook => hook.key).sort());
+      assert.deepEqual([...new Set(current.map(hook => hook.trustStatus))], [status]);
+    };
+
+    saveTrust(false);
+    await assertTrust("trusted");
+    const ok = await withLoopbackCodex(repo, env);
     assert.equal(ok.exit.code, 0, ok.stderr);
     const completedStops = ok.stderr.match(/^hook: Stop Completed$/gm) || [];
     const failedStops = ok.stderr.match(/^hook: Stop Failed$/gm) || [];
@@ -119,33 +190,14 @@ test("Alphazedehq#634 Bearing Stop hooks complete under Codex when trusted and f
     assert.equal(failedStops.length, 0, `unexpected failed Stop hooks; stderr:\n${ok.stderr}`);
     assert.match(ok.stderr, /^hook: SessionStart Completed$/m, ok.stderr);
 
-    // 2. Stale trusted_content_hash (e.g., from an earlier installed plugin version) reproduces Stop Failed x3.
-    const configPath = path.join(codexHome, "config.toml");
-    const staleHash = "sha256:0000000000000000000000000000000000000000000000000000000000000000";
-    appendFileSync(configPath, [
-      "",
-      '[hooks.state."bearing-lite@bearing-lite:hooks/hooks.json:session_start:0:0"]',
-      'trusted_hash = "sha256:55325932f7df937eff5c1eaf9b42de779b30a5175803cd4e80aa40b9b1f4af51"',
-      `trusted_content_hash = "${staleHash}"`,
-      "",
-      '[hooks.state."bearing-lite@bearing-lite:hooks/hooks.json:stop:0:0"]',
-      'trusted_hash = "sha256:86644f9053227947c121da584e0aa24964d4be6dd11a9be7c77387da6bff58d2"',
-      `trusted_content_hash = "${staleHash}"`,
-      "",
-      '[hooks.state."bearing-lite@bearing-lite:hooks/hooks.json:stop:1:0"]',
-      'trusted_hash = "sha256:445f36137eafaaccf762da778134cf052729f62d01fe974d9bb0cbf71f13062a"',
-      `trusted_content_hash = "${staleHash}"`,
-      "",
-      '[hooks.state."bearing-lite@bearing-lite:hooks/hooks.json:stop:2:0"]',
-      'trusted_hash = "sha256:b2347d1451c5ec4936abebe87f3d356ff28350b3559915548243c253164ad101"',
-      `trusted_content_hash = "${staleHash}"`,
-      "",
-    ].join("\n"));
-    assert.ok(readFileSync(configPath, "utf8").includes(staleHash));
-    const stale = await withLoopbackCodex(repo, env, []);
+    saveTrust(true);
+    await assertTrust("modified");
+    const stale = await withLoopbackCodex(repo, env);
     assert.equal(stale.exit.code, 0, stale.stderr);
     const staleFailedStops = stale.stderr.match(/^hook: Stop Failed$/gm) || [];
     assert.equal(staleFailedStops.length, 3, `expected 3 failed Stop hooks on stale trust hash; stderr:\n${stale.stderr}`);
+    assert.match(stale.stderr, /^hook: SessionStart Failed$/m);
+    assert.doesNotMatch(stale.stderr, /^hook: (?:SessionStart|Stop) Completed$/m);
   } finally {
     rmSync(tmp, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }
