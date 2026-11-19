@@ -187,7 +187,7 @@ function evaluateScribeCoverage(input) {
     reason: "untranscribed:" + ids,
     untranscribed: pending,
     cadence,
-    recovery: "Send these events to the existing Scribe session on its frozen route, then re-run this check; never relaunch per event or phase",
+    recovery: "Launch a never-launched enabled Scribe once on its frozen cadence or send the listed events to the existing Scribe session on its frozen route. Reuse that session across events and phases, then rerun this check.",
   };
 }
 
