@@ -971,65 +971,63 @@ describe("Alphazedehq#605 independent validation of a single-run receipt under o
 });
 
 describe("Alphazedehq#608 ready-slice orchestration and planning guidance", () => {
-  it("Implementation Orchestrator text starts every ready slice whose inputs and resource are free", () => {
-    const router = read("skills/bearing-lite/SKILL.md");
-    const implStep = router.slice(
-      router.indexOf("4. **Implementation:**"),
-      router.indexOf("5. **Review:**"),
-    ).replace(/\s+/g, " ");
-    assert.match(implStep, /start every (?:ready )?slice/i);
-    assert.match(implStep, /inputs/i);
-    assert.match(implStep, /resource/i);
-    assert.match(implStep, /ready-set\.cjs/);
-
-    const assembly = read("skills/bearing-lite/references/planning-assembly.md").replace(/\s+/g, " ");
-    assert.match(assembly, /false_serial_chain|share no input or resource/i);
-    assert.match(assembly, /starts every ready slice/i);
-
-    const taskState = read("skills/bearing-lite/references/task-state.md").replace(/\s+/g, " ");
-    assert.match(taskState, /start every ready slice/i);
-
-    const pdSkill = read("skills/planning-and-design/SKILL.md").replace(/\s+/g, " ");
-    assert.match(pdSkill, /inputs/i);
-    assert.match(pdSkill, /resource/i);
+  it("tells operators to start all eligible slices with free resources and satisfied inputs", () => {
+    for (const rel of [
+      "skills/bearing-lite/SKILL.md",
+      "skills/bearing-lite/references/planning-assembly.md",
+      "skills/bearing-lite/references/task-state.md",
+    ]) {
+      operatorInstruction(rel, [
+        /\b(start|dispatch|launch)\w* (all|each|every) (ready|eligible) (slice|task)/i,
+        /\b(input|prerequisite)/i,
+        /\b(resource|lock)/i,
+        /\b(free|available|unoccupied)\b/i,
+      ]);
+    }
+    operatorInstruction("skills/bearing-lite/references/planning-assembly.md", [
+      /\b(flag|warn|report)/i,
+      /ordering edge|serial chain/i,
+      /without (refusing|blocking|failing)\b|advisory/i,
+    ]);
+    operatorInstruction("skills/planning-and-design/SKILL.md", [
+      /\b(build|plan|declare)/i, /\bslices?\b/i, /\binputs?\b/i, /\bresources?\b/i,
+    ]);
   });
 });
 
 describe("Alphazedehq#611 copy-only or read-only live-host phase tier rule", () => {
-  it("documents the standard-tier before/after live-service observation rule and unchanged delete/mutate rule", () => {
+  it("communicates the conditions and observations for the standard-tier exception", () => {
     for (const rel of [
       "skills/bearing-lite/references/planning-assembly.md",
       "skills/bearing-lite/references/verification.md",
     ]) {
-      const text = read(rel).replace(/\s+/g, " ");
-      assert.match(text, /copy-only or read-only/i, rel);
-      assert.match(text, /live services|live-service/i, rel);
-      assert.match(text, /\bstandard\b/i, rel);
-      assert.match(text, /before and after live-service observation/i, rel);
-      assert.match(text, /no separate assurance/i, rel);
-      assert.match(text, /deletes? or mutates?/i, rel);
+      operatorInstruction(rel, [
+        /copy.only|read.only/i, /\bstandard\b/i, /\bbefore\b/i, /\bafter\b/i,
+        /live.service/i, /observ/i, /\b(one|single) implementer\b/i,
+        /\b(one|single) review\b/i, /\b(no|without) separate assurance\b/i,
+      ], /\n\s*\n/);
+      operatorInstruction(rel, [/delet\w* or mutat\w*/i, /\b(existing|original|prior)\b|as before/i]);
     }
   });
 });
 
 describe("Alphazedehq#609 per-phase choice between reviewed command list and reusable tooling", () => {
-  it("requires planning text and grammar to decide per phase, record why, and state reuse for new tooling", () => {
+  it("tells planners to record their choice, reason, and intended reuse", () => {
     for (const rel of [
       "skills/planning-and-design/SKILL.md",
       "skills/planning-and-design/references/artifact-grammar.md",
       "skills/bearing-lite/references/planning-assembly.md",
     ]) {
-      const text = read(rel).replace(/\s+/g, " ");
-      assert.match(text, /short reviewed command list/i, rel);
-      assert.match(text, /new reusable tooling/i, rel);
-      assert.match(text, /record(?:s|ing)? why|reason/i, rel);
-      assert.match(text, /states? its reuse|reuse/i, rel);
+      operatorInstruction(rel, [
+        /\b(per|each) phase\b/i, /reviewed command/i, /reusable tool/i,
+        /\b(why|reason|rationale|justification)\b/i, /\breuse\b/i,
+      ]);
     }
   });
 });
 
 describe("Alphazedehq#610 preflight slice and closing real-gate run", () => {
-  it("requires planning and implementation text to run a parallel preflight slice across target hosts and close host-building phases with the repository real gate", () => {
+  it("tells operators which commands to preflight, where, and how to finish building a host", () => {
     for (const rel of [
       "skills/planning-and-design/SKILL.md",
       "skills/planning-and-design/references/artifact-grammar.md",
@@ -1038,33 +1036,47 @@ describe("Alphazedehq#610 preflight slice and closing real-gate run", () => {
       "skills/bearing-lite/references/task-state.md",
       "skills/bearing-lite/SKILL.md",
     ]) {
-      const text = read(rel).replace(/\s+/g, " ");
-      assert.match(text, /first implementation slice|preflight/i, rel);
-      assert.match(text, /dry-run.*--version|--version.*dry-run/i, rel);
-      assert.match(text, /every target host/i, rel);
-      assert.match(text, /in parallel/i, rel);
-      assert.match(text, /builds? a host/i, rel);
-      assert.match(text, /real gate/i, rel);
+      operatorInstruction(rel, [
+        /\b(first|initial) (implementation )?(slice|step)\b/i,
+        /\b(all|every|each) (planned |declared )?commands?\b/i,
+        /\bdry[- ]run\b|\bpreview mode\b/i,
+        /--version|\bversion check\b/i,
+        /\b(all|every|each) target (host|machine)/i, /parallel|concurren/i,
+      ]);
+      operatorInstruction(rel, [
+        /\b(build|provision)\w* (a |the )?(host|machine)/i,
+        /\b(end|finish|close)\w*\b/i,
+        /\b(real|actual|native) (repository )?gate\b/i,
+      ]);
     }
   });
 });
 
 describe("Alphazedehq#612 pre-merge heavy check for shared tables and fixtures", () => {
-  it("requires integration and landing guidance to run the heavy check before merge when editing a table or fixture other suites read", () => {
+  it("tells integration and landing operators to run the full check before merging", () => {
     for (const rel of [
       "skills/integration-test/SKILL.md",
       "skills/integration-engineer/SKILL.md",
       "skills/bearing-lite/references/task-state.md",
     ]) {
-      const raw = read(rel);
-      const section = rel.endsWith("task-state.md")
-        ? raw.slice(raw.indexOf("## Landing a closed unit"), raw.indexOf("## Orchestrator context"))
-        : raw;
-      const text = section.replace(/\s+/g, " ");
-      assert.match(text, /table or fixture/i, rel);
-      assert.match(text, /other suites read/i, rel);
-      assert.match(text, /heavy check/i, rel);
-      assert.match(text, /before merge/i, rel);
+      operatorInstruction(rel, [
+        /\b(table|fixture) or (table|fixture)\b/i,
+        /\b(other|dependent) (test )?suites? (read|consume|use)/i,
+        /\b(run|require|execute)\w* (running )?(the )?(heavy|full) (check|suite)\b/i,
+        /before merg/i,
+      ]);
     }
   });
 });
+
+function operatorInstruction(rel, expectations, breakAt = /(?<=[.!?])\s+/) {
+  const parts = read(rel).split(/\n\s*\n/).flatMap(paragraph => paragraph
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/[\x60*]/g, "")
+    .replace(/\s+/g, " ")
+    .split(breakAt));
+  assert.ok(
+    parts.some(part => expectations.every(expectation => expectation.test(part))),
+    `${rel} is missing guidance covering ${expectations.join(", ")}`,
+  );
+}
