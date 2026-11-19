@@ -207,6 +207,54 @@ describe("Alphazedehq#636 AGY root hooks.json and adapter", () => {
     }
   });
 
+  it("BL-02 preserves native single and batched AGY edits at the evaluator boundary", () => {
+    const native = { Target: "before", Replacement: "after", AllowMultiple: true };
+    const tab = { TargetContent: "before", ReplacementContent: "after" };
+    const all = { old_string: "before", new_string: "after", replace_all: true };
+    const once = { ...all, replace_all: false };
+    for (const [id, name, args, tool, expected] of [
+      ["native-single", "edit_file", { Path: "notes.md", ...native }, "Edit", all],
+      ["native-batch", "edit_file", { Path: "notes.md", Edits: [native, { ...native, Replacement: "" }] },
+        "MultiEdit", { edits: [all, { ...all, new_string: "" }] }],
+      ["tab-single", "replace_file_content", { TargetFile: "notes.md", ...tab, AllowMultiple: true }, "Edit", all],
+      ["tab-chunks", "replace_file_content", { TargetFile: "notes.md", ReplacementChunks: [tab] },
+        "MultiEdit", { edits: [once] }],
+      ["tab-multi", "multi_replace_file_content", { TargetFile: "notes.md", ReplacementChunks: [tab, { ...tab, ReplacementContent: "" }] },
+        "MultiEdit", { edits: [once, { ...once, new_string: "" }] }],
+    ]) {
+      const request = observeAgyWrite(path.join(tmp, id), { name, args });
+      assert.equal(request.tool_name, tool, id);
+      assert.deepEqual(request.tool_input, { file_path: "notes.md", ...expected }, id);
+    }
+  });
+
+  it("BL-02 lets the existing write lock verify an AGY replacement of a stale source hash", () => {
+    const ws = path.join(tmp, "hash-refresh");
+    const plan = "docs/plans/example";
+    const design = `${plan}/design.md`;
+    const seit = `${plan}/seit.json`;
+    const content = "# Approved design\n";
+    const oldHash = "0".repeat(64);
+    const newHash = createHash("sha256").update(content).digest("hex");
+    mkdirSync(path.join(ws, plan), { recursive: true });
+    bindTask(ws, "conv-assembly", `- plan_dir: ${plan}\n`);
+    writeFileSync(path.join(ws, design), content);
+    writeFileSync(path.join(ws, seit), JSON.stringify({
+      source_baseline: { planning_inputs: [{ path: design, sha256: oldHash }] },
+    }, null, 2));
+    const { out } = runAgyHook("orchestrator-write-lock", {
+      conversationId: "conv-assembly",
+      workspacePaths: [ws],
+      hookEventName: "PreToolUse",
+      toolCall: { name: "replace_file_content", args: {
+        TargetFile: path.join(ws, seit),
+        TargetContent: `        "sha256": "${oldHash}"`,
+        ReplacementContent: `        "sha256": "${newHash}"`,
+      } },
+    }, { BEARING_ROLE: "orchestrator" });
+    assert.deepEqual(out, { decision: "allow" });
+  });
+
   it("PreToolUse assurance-dispatch allows safe/bound slots and denies undeclared bound launches", () => {
     const ws = path.join(tmp, "dispatch");
     mkdirSync(ws);
