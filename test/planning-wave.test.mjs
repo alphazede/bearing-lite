@@ -21,6 +21,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(import.meta.url);
 const { freeze } = require(path.join(ROOT, "hooks/plan-package.cjs"));
 const { evaluatePlanningReview } = require(path.join(ROOT, "hooks/planning-review.cjs"));
+const closeout = require(path.join(ROOT, "hooks/closeout.cjs"));
 const { evaluateCorrectionDelta } = require(path.join(ROOT, "hooks/correction-delta.cjs"));
 const transition = require(path.join(ROOT, "hooks/transition-order.cjs"));
 const PLAN_PACKAGE = path.join(ROOT, "hooks/plan-package.cjs");
@@ -133,6 +134,18 @@ describe("#205 one planning wave, one consolidated review", () => {
     aggregated_repairs: 1,
     deterministic_gate: "PASS",
     ...extra,
+  });
+
+  it("accepts the produced final freeze receipt for handoff and refuses the produced draft receipt", () => {
+    const { dir, digest } = planPackage();
+    for (const [args, expected] of [[[dir], "ADVISE"], [["draft", dir], "REROUTE"]]) {
+      const cli = spawnSync(process.execPath, [PLAN_PACKAGE, ...args], { encoding: "utf8" });
+      assert.equal(cli.status, 0, cli.stdout || cli.stderr);
+      const receipt = JSON.parse(cli.stdout);
+      assert.equal(receipt.manifest_digest, digest);
+      const result = closeout.evaluate({ mode: "handoff", final_freeze_receipt: receipt });
+      assert.equal(result.outcome, expected, result.reason);
+    }
   });
 
   it("keeps an unrepaired Requirements Engineer return a gap: the author self-repairs before READY (F4)", () => {

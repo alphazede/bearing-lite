@@ -130,11 +130,10 @@ not permission to start repeated polling or duplicate an invocation.
 
 ## Implementation order after the handoff
 
-1. The Implementation Orchestrator consumes the approved handoff, confirms its
-   `final_freeze_receipt` (`stage: "final"`, `outcome: "PASS"`, matching
-   `manifest_digest`) — returning to planning without dispatching
-   implementation if absent, invalid, or `draft`-only — validates its candidate
-   and authority, executes the frozen plan without redoing planning,
+1. The Implementation Orchestrator verifies the `final_freeze_receipt` in the
+   approved handoff using the [handoff template](../templates/handoff.md),
+   returning to planning before dispatch if the receipt is absent, invalid, or
+   `draft`-only. The Orchestrator validates the candidate and authority, executes the frozen plan,
    and schedules dependency-ready implementation slices. The pace rules are in
    `coordinator-migration.md`.
 2. In selected `tdd` mode, the configured Test Implementer writes the authorized
@@ -335,7 +334,8 @@ evidence (digests, commands, and exit codes, not narrative logs), review status,
 blockers, and next action. Every dispatched packet carries a time target and
 "at the limit, return what you have and list the gaps". Before writing `handoff.md`, run the
 handoff check in `hooks/closeout.cjs` with `journey` (`mode: "handoff"`) and
-`final_freeze_receipt`; a missing or non-final freeze receipt refuses the
+the structured `final_freeze_receipt` from `node <plugin root>/hooks/plan-package.cjs <plan dir>`.
+A missing or invalid final freeze receipt refuses the
 handoff (`handoff_refused:final_freeze_receipt_missing` or `_invalid`), and a
 history coverage gap refuses the handoff until its recorder transcribes the listed
 decisions, authority events, and landings: Orchestrator when Scribe is omitted or

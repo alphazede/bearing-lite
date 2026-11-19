@@ -1,8 +1,8 @@
 # Planning handoff template
 
-Write `handoff.md` in the confirmed plan directory only after `hooks/plan-package.cjs`
-final freeze passes (`stage: "final"`, `outcome: "PASS"`). A `draft` freeze does not
-satisfy this receipt.
+Run `node <plugin root>/hooks/plan-package.cjs <plan dir>` and write `handoff.md`
+in the confirmed plan directory after the final freeze passes. Record the JSON
+result with the command and its exit code.
 
 ```markdown
 # Planning Handoff
@@ -16,6 +16,7 @@ satisfy this receipt.
   - stage: final
   - outcome: PASS
   - manifest_digest: <64-hex sha256 from final freeze>
+  - findings: []
   - exit_code: 0
 - artifacts:
   - <plan_dir/technical-plan.md>: <sha256>
@@ -33,6 +34,8 @@ satisfy this receipt.
 - next_action: <first implementation wave/slice dispatch>
 ```
 
-Implementation Orchestrator intake checks `final_freeze_receipt` (`stage: final`,
-`outcome: PASS`, matching `manifest_digest`). If absent, invalid, or `draft`-only,
-refuse dispatch and return to planning to complete the final freeze.
+At intake, the Implementation Orchestrator checks `stage: final`, `outcome: PASS`,
+and `exit_code: 0` on the structured receipt. Compare `manifest_digest` with
+`journey_settings.planning_review.candidate_digest` in the handoff's
+`implementation.json` and verify the recorded artifact hashes against their files.
+If the receipt is absent or any check fails, return to planning before dispatch.

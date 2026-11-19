@@ -17,6 +17,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (rel) => readFileSync(path.join(ROOT, rel), "utf8");
 const { evaluateScribeCoverage, DEFAULT_SCRIBE_CADENCE } = require("../hooks/scribe-coverage.cjs");
 const closeout = require("../hooks/closeout.cjs");
+const finalFreezeReceipt = { stage: "final", outcome: "PASS", manifest_digest: "a".repeat(64), findings: [] };
 
 const scribeRoute = (enabled, cadence) => ({
   enabled,
@@ -90,7 +91,9 @@ describe("#194 Scribe coverage", () => {
       assert.equal(evaluateScribeCoverage({ journey: recorded }).outcome, "PASS");
       assert.equal(closeout.evaluate(completion(recorded)).reason, "protected_completion_ready");
       assert.equal(closeout.evaluate({ action_kind: "scribe_coverage", mode: "handoff", journey: j }).outcome, "REROUTE");
-      assert.equal(closeout.evaluate({ action_kind: "scribe_coverage", mode: "handoff", journey: recorded }).outcome, "ADVISE");
+      assert.equal(closeout.evaluate({
+        action_kind: "scribe_coverage", mode: "handoff", journey: recorded, final_freeze_receipt: finalFreezeReceipt,
+      }).outcome, "ADVISE");
     }
   });
 
@@ -178,9 +181,11 @@ describe("#194 Scribe coverage", () => {
     assert.match(refused.reason, /^handoff_refused:scribe_SCRIBE_REQUIRED/);
     assert.equal(refused.scribe_coverage.untranscribed.length, 3);
 
-    const allowed = closeout.evaluate({
+    const recorded = {
       action_kind: "scribe_coverage", mode: "handoff", journey: journey({ history: fullHistory }),
-    });
+    };
+    assert.equal(closeout.evaluate(recorded).reason, "handoff_refused:final_freeze_receipt_missing");
+    const allowed = closeout.evaluate({ ...recorded, final_freeze_receipt: finalFreezeReceipt });
     assert.equal(allowed.outcome, "ADVISE");
     assert.match(allowed.reason, /^scribe_coverage:PASS/);
 
