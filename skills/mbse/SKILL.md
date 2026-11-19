@@ -85,10 +85,14 @@ Loop: author → self requirements-quality pass → model and map → self-check
    one `dod_manifest.models[]` entry the Orchestrator copies unchanged (`id`
    required; activated `selected` or `required` and not not-applicable sets
    `digest` `sha256:` + view hex and `view`, or `views[0]` when `view` is
-   absent: `format` `svg` or `png` with `path` relative to
-   `implementation.json`, or `format` `svg` with `inline`, plus `mode`,
+   absent. Use `format` `svg` or `png` with `path` relative to
+   `implementation.json`, or `format` `svg` with `inline`. For a
+   diagram-assisted model, `format` `mermaid` with a relative `path` embeds
+   the source as text. The digest binds the exact source file bytes. Supply `mode`,
    `source`, `revision`, `viewpoint`, `trace`, `limitations`, `render_status`,
-   and view `alt`; inactive or not-applicable gives `reason` and no view). Write
+   and view `alt`; inactive or not-applicable gives `reason` and no view).
+   Write `trace` as one string containing comma-separated requirement or decision
+   IDs, for example `"trace": "REQ-001, REQ-002"`. Write
    for the owner in plain English, one claim per sentence, citing `path:line` or
    a requirement ID. Close every finding (fix in your own artifacts or name its
    owner and proposed fix with an id and source citation).

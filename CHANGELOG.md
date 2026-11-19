@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+- Accept digest-bound Mermaid source views in the plan schema and final freeze.
+
+- Render digest-bound Mermaid source files as text views for diagram-assisted models.
+
+- Specify a single string for MBSE model trace IDs so the authored manifest matches the implementation schema.
+
+- Bind the final technical plan in the implementation package when it is written after the SEIT return.
+
+- Include the compact closeout receipt fields in the planning handoff template.
+
+- Resolve register citations from the same repository root during requirements precheck and final freeze.
+
 ## [3.0.0-rc.6] - 2026-11-19
 
 - Translate Antigravity session, workspace, and continuation fields in its own adapter so shared hook consumers keep their existing input behavior. (Alphazedehq#636)

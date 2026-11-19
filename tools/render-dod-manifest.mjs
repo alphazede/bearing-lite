@@ -5,7 +5,7 @@
  * or fills absent evidence. Node.js standard library only.
  */
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, realpathSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -24,7 +24,7 @@ function packagedArtwork(className, filename, width, height) {
 }
 
 const PNG_MAGIC = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-const MAX_SVG_BYTES = 512 * 1024;
+const MAX_TEXT_VIEW_BYTES = 512 * 1024;
 const MAX_PNG_BYTES = 2 * 1024 * 1024;
 
 const SECTIONS = Object.freeze([
@@ -168,6 +168,7 @@ export function bindingRequirement(modelId = "<model.id>") {
     "Minimal planning binding:",
     `  "digest": "sha256:<hex of view bytes>",`,
     `  "view": { "format": "svg"|"png", "path": "<path relative to implementation.json>" }`,
+    'For diagram-assisted models, "format": "mermaid" accepts a path and a digest over the source bytes.',
     "or SVG only: \"view\": { \"format\": \"svg\", \"inline\": \"<svg ...></svg>\" } with the same digest over UTF-8 inline bytes.",
     "Append-only alternative: dod_manifest.closeout.model_views[] { model_id, digest, view } keyed to a planning model id. Supplemental entries may not rewrite planning rows or override mode, source, viewpoint, trace, limitations, activation, or an already-planned binding.",
     "Inactive (selected=false AND required=false) or not_applicable+reason needs no view.",
@@ -623,7 +624,7 @@ export function sanitizeSvg(raw) {
   const input = raw.replace(/^\uFEFF/, "");
   const needsScope = /<style[\s>/]/i.test(input);
   const scopeClass = `dod-svg-${createHash("sha256").update(input, "utf8").digest("hex").slice(0, 16)}`;
-  if (Buffer.byteLength(input, "utf8") > MAX_SVG_BYTES) {
+  if (Buffer.byteLength(input, "utf8") > MAX_TEXT_VIEW_BYTES) {
     throw new RenderError("UNSAFE_ASSET", "SVG exceeds size limit.");
   }
   if (input.includes("\0")) {
@@ -856,7 +857,8 @@ function loadView(model, assetRoot) {
   const spec = viewSpec(model);
   if (!spec) return null;
   const format = String(spec.format || "").toLowerCase();
-  if (format !== "svg" && format !== "png") {
+  const mermaid = format === "mermaid" && model.mode === "diagram-assisted";
+  if (format !== "svg" && format !== "png" && !mermaid) {
     throw new RenderError(
       "MISSING_VIEW",
       `${model.id || "model"} view.format must be "svg" or "png".\n${bindingRequirement(model.id)}`
@@ -875,6 +877,16 @@ function loadView(model, assetRoot) {
   const resolved = resolveUnder(assetRoot, spec.path);
   if (!existsSync(resolved)) {
     throw new RenderError("MISSING_VIEW", `${model.id || "model"} view path not found: ${spec.path}`);
+  }
+  if (mermaid) {
+    const root = realpathSync(assetRoot);
+    const file = realpathSync(resolved);
+    resolveUnder(root, path.relative(root, file));
+    const stat = statSync(file);
+    if (!stat.isFile() || stat.size > MAX_TEXT_VIEW_BYTES) {
+      throw new RenderError("UNSAFE_ASSET", "Mermaid source must be a regular file within the text view size limit.");
+    }
+    return { format, bytes: readFileSync(file) };
   }
   const bytes = readFileSync(resolved);
   if (format === "svg") {
@@ -899,6 +911,12 @@ function verifyDigest(model, bytes) {
     );
   }
   return actual;
+}
+
+export function loadVerifiedView(model, assetRoot) {
+  const view = loadView(model, assetRoot);
+  verifyDigest(model, view.bytes);
+  return view;
 }
 
 function tableHint() {
@@ -1055,6 +1073,8 @@ function renderModelFigure(model, loaded, boundDigest) {
   let graphic;
   if (loaded.format === "svg") {
     graphic = loaded.svg;
+  } else if (loaded.format === "mermaid") {
+    graphic = `<pre aria-label="Mermaid source"><code>${esc(loaded.bytes.toString("utf8"))}</code></pre>`;
   } else {
     graphic = `<img src="${loaded.pngUri}" alt="${esc(title)}" />`;
   }
@@ -1236,8 +1256,7 @@ export function renderDodManifest(doc, opts = {}) {
             `${model.id} has no view binding.\n${bindingRequirement(model.id)}`
           );
         }
-        const loaded = loadView({ id: model.id, view: spec }, assetRoot);
-        verifyDigest({ id: model.id, digest: boundDigest }, loaded.bytes);
+        const loaded = loadVerifiedView({ id: model.id, mode: model.mode, view: spec, digest: boundDigest }, assetRoot);
         statusLabel = model.render_status || "Embedded";
         kind = statusKind(statusLabel) === "plan" ? "pass" : statusKind(statusLabel);
         modelRows.push({

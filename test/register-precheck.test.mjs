@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { createRequire } from 'node:module';
@@ -186,4 +186,34 @@ test('does not promote hyphenated prose tokens in VERIFICATION to case IDs', () 
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test('RC6-1 both stages resolve citations from the repository root', t => {
+  const repo = mkdtempSync(path.join(tmpdir(), 'precheck-citation-root-'));
+  t.after(() => rmSync(repo, { recursive: true, force: true }));
+  const dir = path.join(repo, 'plan');
+  mkdirSync(dir);
+  writeFileSync(path.join(repo, '.git'), 'gitdir: synthetic worktree metadata\n');
+  writeFileSync(path.join(dir, 'register.sdoc'), read('valid.sdoc'));
+  writeFileSync(path.join(dir, 'plan.md'), read('plan.md'));
+  writeFileSync(path.join(dir, 'evidence.txt'), read('evidence.txt'));
+  const hook = new URL('../hooks/register-precheck.cjs', import.meta.url).pathname;
+  const run = (stage, ...rootArg) => {
+    const result = spawnSync(process.execPath, [
+      hook, '--stage', stage, 'register.sdoc', 'plan.md', ...rootArg,
+    ], { cwd: dir, encoding: 'utf8', timeout: 5000 });
+    assert.ifError(result.error);
+    return [result.status, JSON.parse(result.stdout)];
+  };
+
+  const [finalStatus, final] = run('final', repo);
+  assert.equal(finalStatus, 1);
+  assert.ok(final.findings.some(finding => finding.class === 'citation'));
+  const [status, receipt] = run('requirements');
+  assert.equal(status, 1, JSON.stringify(receipt));
+  assert.deepEqual(receipt.findings, final.findings);
+
+  writeFileSync(path.join(repo, 'evidence.txt'), read('evidence.txt'));
+  assert.equal(run('requirements')[0], 0);
+  assert.equal(run('final')[0], 0);
 });

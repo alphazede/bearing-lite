@@ -1,5 +1,8 @@
 'use strict';
 
+const fs = require('node:fs');
+const path = require('node:path');
+
 const CLASSES = ['verification', 'ears', 'glossary', 'reference', 'decision', 'citation'];
 // Stage-aware binding (F4/#580): MBSE runs the `requirements` stage before
 // SEIT exists, so a missing case ID is an explicitly owned pending binding for
@@ -132,8 +135,7 @@ function seitCaseIdsOf(seit) {
 }
 
 /** Shared file-bound check for the CLI and final package freeze. */
-function checkRegisterFiles({ registerPath, planPath, root = process.cwd(), stage = 'final', seitPath }) {
-  const fs = require('node:fs'), path = require('node:path');
+function checkRegisterFiles({ registerPath, planPath, root = repoRoot(process.cwd()), stage = 'final', seitPath }) {
   const register = fs.readFileSync(registerPath, 'utf8'), technicalPlan = fs.readFileSync(planPath, 'utf8');
   const files = {};
   for (const match of (register + '\n' + technicalPlan).matchAll(/(?:^|[\s`(])((?:[\w.-]+\/)*[\w.-]+\.[\w.-]+):\d+\b/g)) {
@@ -145,7 +147,17 @@ function checkRegisterFiles({ registerPath, planPath, root = process.cwd(), stag
   return checkRegister({ register, technicalPlan, registerPath, planPath, files, stage, seitCaseIds });
 }
 
-module.exports = { parseRegister, checkRegister, checkRegisterFiles, seitCaseIdsOf, STAGES };
+function repoRoot(dir) {
+  let current = path.resolve(dir);
+  for (;;) {
+    if (fs.existsSync(path.join(current, '.git'))) return current;
+    const parent = path.dirname(current);
+    if (parent === current) return path.resolve(dir);
+    current = parent;
+  }
+}
+
+module.exports = { parseRegister, checkRegister, checkRegisterFiles, repoRoot, seitCaseIdsOf, STAGES };
 
 if (require.main === module) {
   const args = process.argv.slice(2);
@@ -158,7 +170,7 @@ if (require.main === module) {
   };
   const stage = flag('--stage') ?? 'final';
   const seitPath = flag('--seit');
-  const [registerPath, planPath, root = process.cwd()] = args;
+  const [registerPath, planPath, root] = args;
   if (!registerPath || !planPath || !STAGES.includes(stage) || seitPath === '' || (seitPath && stage !== 'final')) {
     process.stderr.write('usage: node hooks/register-precheck.cjs [--stage requirements|final] [--seit <seit.json>] <register.sdoc> <context-or-technical-plan.md> [repository root]\n');
     process.exit(2);

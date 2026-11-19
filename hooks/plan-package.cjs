@@ -125,6 +125,13 @@ function readJson(file, label = file, ignoreBlank = false) {
   }
 }
 
+function planningInputs(seit, implementation) {
+  const inputs = seit?.source_baseline?.planning_inputs;
+  const finalPlan = implementation?.journey_settings?.final_technical_plan;
+  const seitInputs = Array.isArray(inputs) ? inputs : [];
+  return finalPlan === undefined ? seitInputs : [...seitInputs, finalPlan];
+}
+
 function verifyDigests(dir) {
   const findings = [];
   for (const name of ["seit.json", "implementation.json"]) {
@@ -140,7 +147,7 @@ function verifyDigests(dir) {
   }
   const actual = [];
   const input_digests = [];
-  for (const input of inputs || []) {
+  for (const input of planningInputs(seit, implementation)) {
     if (typeof input?.path !== "string" || !/^[0-9a-f]{64}$/.test(input?.sha256 || "")) {
       findings.push({
         code: "malformed_planning_input",
@@ -470,7 +477,7 @@ function checkLivePins(dir, findings = []) {
 }
 
 /** #153: the owner projection carries content, not just source references. */
-function checkManifestProjection(implementation) {
+function checkManifestProjection(implementation, dir) {
   const manifest = implementation?.dod_manifest;
   // Older digest-only packages have no renderer input; validate supplied projections.
   if (manifest === undefined) return [];
@@ -551,12 +558,25 @@ function checkManifestProjection(implementation) {
     if (!["diagram-assisted", "sysml-v2"].includes(model?.mode)) continue;
     const views = model.view ? [model.view] : rows(model.views);
     const supplement = rows(manifest.closeout?.model_views).filter((row) => row?.model_id === model.id);
-    const bound = [...views, ...supplement.map((row) => row.view)].some((view) =>
+    let bound = [...views, ...supplement.map((row) => row.view)].some((view) =>
       ["svg", "png"].includes(view?.format) &&
       (text(view.path) || (view.format === "svg" && text(view.inline))));
+    const view = views[0] || supplement[0]?.view;
+    let reason;
+    if (view?.format === "mermaid") {
+      try {
+        const { loadVerifiedView } = require("../tools/render-dod-manifest.mjs");
+        const digest = views[0] ? model.digest : supplement[0].digest;
+        loadVerifiedView({ id: model.id, mode: model.mode, view, digest }, dir);
+        bound = true;
+      } catch (error) {
+        bound = false;
+        reason = error.code || "UNSAFE_ASSET";
+      }
+    }
     // N/A or deselection cannot override a selected modeling mode.
     if (model.not_applicable === true || model.selected === false || !bound) {
-      findings.push({ code: "manifest_model_view_missing", id: model.id ?? null, mode: model.mode });
+      findings.push({ code: "manifest_model_view_missing", id: model.id ?? null, mode: model.mode, ...(reason && { reason }) });
     }
   }
   return findings;
@@ -835,8 +855,7 @@ function checkFinalRegister(dir, seit, implementation) {
   if (settings.journey_type !== "specification" && settings.requirement_register == null && authority?.requirement_register == null) return [];
   const register = settings.requirement_register ?? authority?.requirement_register?.path;
   if (typeof register !== "string" || !register.endsWith(".sdoc")) return [{ code: "missing_requirement_register" }];
-  const inputs = seit?.source_baseline?.planning_inputs;
-  const plans = (Array.isArray(inputs) ? inputs : []).filter(input =>
+  const plans = planningInputs(seit, implementation).filter(input =>
     typeof input?.path === "string" && (input.path.endsWith("-technical-plan.md") || path.basename(input.path) === "plan.md"));
   if (plans.length !== 1) return [{ code: "register_precheck_context_invalid", count: plans.length }];
   const root = repoRoot(dir);
@@ -1112,7 +1131,7 @@ function freeze(dir, { stage = "final" } = {}) {
         ...checkBoundaryContract(implementation, seit),
         ...checkSerialChains(implementation),
       ] : []),
-      ...checkManifestProjection(implementation),
+      ...checkManifestProjection(implementation, dir),
       ...checkRoles(seit, implementation),
       ...checkWorkClass(implementation),
       ...checkPlanningRoles(implementation),

@@ -7,6 +7,8 @@ import { after, describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
+import planPackage from "../hooks/plan-package.cjs";
+import { unreviewedPlanningWave } from "./planning-contract-fixture.mjs";
 import {
   existsSync,
   mkdirSync,
@@ -198,7 +200,7 @@ describe("S3 DoD Manifest template, schema, and renderer", () => {
     const schema = JSON.parse(readFileSync(SCHEMA, "utf8"));
     assert.equal(schema.$defs.dodManifest.required.includes("template_version"), true);
     assert.equal(schema.properties.dod_manifest.$ref, "#/$defs/dodManifest");
-    assert.equal(schema.$defs.dodView.properties.format.enum.join(","), "svg,png");
+    assert.deepEqual(schema.$defs.dodView.properties.format.enum, ["svg", "png", "mermaid"]);
     assert.equal(schema.required.includes("dod_manifest"), false);
     assert.equal(
       schema.$defs.dodManifest.properties.closeout.properties.model_views.items.required.join(","),
@@ -331,6 +333,83 @@ describe("S3 DoD Manifest template, schema, and renderer", () => {
     };
     const traversalInput = writeFixture(dir, traversal);
     assert.throws(() => renderFile(traversalInput), (err) => err.code === "PATH_TRAVERSAL");
+  });
+
+  it("RC6-3 renders a digest-bound Mermaid source view for a diagram-assisted model", () => {
+    const dir = tempDir();
+    const source = 'flowchart LR\n    A["Start < Finish"] --> B["Done"]\n';
+    const model = boundSvgModel({
+      source: "views/model.mmd",
+      digest: `sha256:${sha256Hex(Buffer.from(source, "utf8"))}`,
+      view: { format: "mermaid", path: "views/model.mmd" },
+    });
+    const doc = { dod_manifest: baseManifest({ models: [model] }) };
+    const input = writeFixture(dir, doc, { "views/model.mmd": source });
+    const { html } = renderFile(input);
+    assert.match(html, /flowchart LR/);
+    assert.match(html, /Start &lt; Finish/);
+
+    const unbound = writeFixture(dir, { dod_manifest: baseManifest({
+      models: [{ ...model, digest: undefined }],
+    }) });
+    assert.throws(() => renderFile(unbound), err => err.code === "MISSING_VIEW" && /missing digest/.test(err.message));
+
+    const sysml = writeFixture(dir, { dod_manifest: baseManifest({
+      models: [{ ...model, mode: "sysml-v2" }],
+    }) });
+    assert.throws(() => renderFile(sysml), err => err.code === "MISSING_VIEW");
+
+    writeFixture(dir, doc);
+    writeFileSync(path.join(dir, model.view.path), source.replace("Done", "Changed"));
+    assert.throws(() => renderFile(input), err => err.code === "STALE_VIEW");
+
+    const outside = path.join(tempDir(), "model.mmd");
+    writeFileSync(outside, source);
+    rmSync(path.join(dir, model.view.path));
+    symlinkSync(outside, path.join(dir, model.view.path));
+    assert.throws(() => renderFile(input), err => err.code === "PATH_TRAVERSAL");
+  });
+
+  it("RC6-3 final freeze accepts a schema-declared Mermaid view and checks its bytes", () => {
+    const dir = tempDir();
+    const source = "flowchart LR\n    A --> B\n";
+    const view = { format: "mermaid", path: "views/model.mmd" };
+    const digest = `sha256:${sha256Hex(Buffer.from(source))}`;
+    const corpus = JSON.parse(readFileSync(path.join(ROOT, "test/fixtures/planning-repair-package.json"), "utf8"));
+    const doc = corpus.implementation;
+    const plan = "# Stable planning source\n";
+    const planDigest = sha256Hex(Buffer.from(plan));
+    corpus.seit.source_baseline.planning_inputs = [{ path: "plan.md", sha256: planDigest }];
+    const seit = JSON.stringify(corpus.seit);
+    const candidateDigest = sha256Hex(Buffer.from(`${planDigest}\n${sha256Hex(Buffer.from(seit))}`));
+    doc.journey_settings.planning_review = { candidate_digest: candidateDigest };
+    doc.journey_settings.planning_wave = unreviewedPlanningWave(candidateDigest, []);
+    const model = boundSvgModel({ source: view.path, view, digest });
+    doc.dod_manifest = baseManifest({
+      models: [model],
+      tasks: doc.slices.map(({ id, role, write_set }) => ({ id, role, write_set, depends_on: [], route: "implementation" })),
+    });
+    writeFileSync(path.join(dir, ".git"), "fixture worktree marker\n");
+    writeFileSync(path.join(dir, "plan.md"), plan);
+    writeFileSync(path.join(dir, "seit.json"), seit);
+    const input = writeFixture(dir, doc, { [view.path]: source });
+    const frozen = planPackage.freeze(dir);
+    assert.equal(frozen.outcome, "PASS", JSON.stringify(frozen));
+    const schema = JSON.parse(readFileSync(SCHEMA, "utf8"));
+    assert.ok(schema.$defs.dodView.properties.format.enum.includes(view.format));
+    assert.match(renderFile(input).html, /flowchart LR/);
+
+    delete model.digest;
+    writeFixture(dir, doc);
+    const unbound = planPackage.freeze(dir);
+    assert.equal(unbound.outcome, "FAIL");
+    assert.ok(unbound.findings.some(f => f.id === model.id && f.reason === "MISSING_VIEW"));
+
+    model.digest = digest;
+    writeFixture(dir, doc, { [view.path]: source.replace("B", "C") });
+    const stale = planPackage.freeze(dir);
+    assert.equal(stale.outcome, "FAIL");
+    assert.ok(stale.findings.some(f => f.id === model.id && f.reason === "STALE_VIEW"));
   });
 
   it("keeps explicit N/A sections visible and does not fail inactive unselected/unrequired models", () => {
