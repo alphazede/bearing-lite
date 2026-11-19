@@ -13,6 +13,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 const APPROVED_FILES_ALLOWLIST = [
   "plugin.json",
+  "hooks.json",
   "skills/",
   "hooks/",
   "README.md",

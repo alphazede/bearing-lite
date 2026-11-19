@@ -29,6 +29,7 @@
   },
   "files": [
     "plugin.json",
+    "hooks.json",
     "skills/",
     "hooks/",
     "README.md",
