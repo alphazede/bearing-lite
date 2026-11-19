@@ -9,6 +9,8 @@ description: >
 
 # MBSE
 
+In a live wave, read `herdr --skill` and the [live-wave reference](../bearing-lite/references/live-wave.md).
+
 One profile-enabled planning assignment (`roles.mbse.sessions.planning`) owns
 requirements, self-quality checks, modeling mode, view metadata, and placement
 traceability. The Planning Orchestrator dispatches it directly; no separate
