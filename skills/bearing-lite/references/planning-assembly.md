@@ -417,6 +417,8 @@ blockers, and next action. Every dispatched packet carries a time target and
 "at the limit, return what you have and list the gaps". Before writing `handoff.md`, run the
 handoff check in `hooks/closeout.cjs` with `journey` (`mode: "handoff"`) and
 the structured `final_freeze_receipt` from `node <plugin root>/hooks/plan-package.cjs <plan dir>`.
+For a live wave, also pass the confirmed directory as top-level `plan_dir`
+so closeout can re-read the exchange evidence.
 A missing or invalid final freeze receipt refuses the
 handoff (`handoff_refused:final_freeze_receipt_missing` or `_invalid`), and a
 history coverage gap refuses the handoff until its recorder transcribes the listed
