@@ -8,6 +8,7 @@ the public checkout-lease identity, and the selected lineup catalog contract —
 not from candidate schema required arrays. Fixtures are public-safe synthetics
 of the approved structures. Lineups extra oracles stay in this test file.
 """
+
 from __future__ import annotations
 
 import copy
@@ -248,7 +249,9 @@ def die_env(message: str, code: int = 2) -> None:
 
 def pip_install(target: str) -> None:
     if sys.version_info[:2] not in ((3, 12), (3, 14)):
-        die_env("scanned rpds-py wheels are cp312 and cp314; python3.12 or python3.14 is required")
+        die_env(
+            "scanned rpds-py wheels are cp312 and cp314; python3.12 or python3.14 is required"
+        )
     cmd = [
         sys.executable,
         "-m",
@@ -291,6 +294,7 @@ def bootstrap() -> None:
         }
         proc = subprocess.run(
             [sys.executable, "-I", "-S", str(Path(__file__).resolve())],
+            check=False,
             env=env,
             timeout=60,
         )
@@ -491,7 +495,9 @@ def complete_slice(**overrides: object) -> dict:
     return slice_
 
 
-def complete_implementation(slices: list[dict] | None = None, **overrides: object) -> dict:
+def complete_implementation(
+    slices: list[dict] | None = None, **overrides: object
+) -> dict:
     resolved = slices if slices is not None else [complete_slice()]
     slice_ids = [
         item["id"]
@@ -556,33 +562,65 @@ def planning_contract_implementation(
     sessions = ["mbse", "integration_test"]
     doc["journey_settings"]["planning_wave"] = {
         "required_sessions": sessions,
-        "sessions": [{"session": name, "candidate_ref": "plan", "candidate_revision": SYN_REV, "candidate_digest": SYN_DIGEST, "verdict": "READY"} for name in sessions],
-        "closing_candidate": {"candidate_ref": "plan", "candidate_revision": SYN_REV, "candidate_digest": SYN_DIGEST},
-        "review_receipt": {"path": "gate-evidence/planning-review.json", "sha256": SYN_DIGEST},
+        "sessions": [
+            {
+                "session": name,
+                "candidate_ref": "plan",
+                "candidate_revision": SYN_REV,
+                "candidate_digest": SYN_DIGEST,
+                "verdict": "READY",
+            }
+            for name in sessions
+        ],
+        "closing_candidate": {
+            "candidate_ref": "plan",
+            "candidate_revision": SYN_REV,
+            "candidate_digest": SYN_DIGEST,
+        },
+        "review_receipt": {
+            "path": "gate-evidence/planning-review.json",
+            "sha256": SYN_DIGEST,
+        },
         "reviews": 1,
         "repairs": 0,
         "closure": "deterministic_PASS",
         "candidate_digest": SYN_DIGEST,
         **(wave or {}),
     }
-    doc["boundary_contract"] = boundary or {"not_applicable": True, "reason": "No material boundary."}
+    doc["boundary_contract"] = boundary or {
+        "not_applicable": True,
+        "reason": "No material boundary.",
+    }
     return doc
 
 
-def unreviewed_planning_implementation(sessions: list[str], extra: dict | None = None) -> dict:
+def unreviewed_planning_implementation(
+    sessions: list[str], extra: dict | None = None
+) -> dict:
     """Planning contract whose owner did not request planning review (F2 repair)."""
     doc = planning_contract_implementation()
     wave = doc["journey_settings"]["planning_wave"]
     for key in ("review_receipt",):
         wave.pop(key, None)
-    wave.update({
-        "required_sessions": sessions,
-        "sessions": [{"session": name, "candidate_ref": "plan", "candidate_revision": SYN_REV, "candidate_digest": SYN_DIGEST, "verdict": "READY"} for name in sessions],
-        "review_requested": False,
-        "reviews": 0,
-        "repairs": 0,
-        **(extra or {}),
-    })
+    wave.update(
+        {
+            "required_sessions": sessions,
+            "sessions": [
+                {
+                    "session": name,
+                    "candidate_ref": "plan",
+                    "candidate_revision": SYN_REV,
+                    "candidate_digest": SYN_DIGEST,
+                    "verdict": "READY",
+                }
+                for name in sessions
+            ],
+            "review_requested": False,
+            "reviews": 0,
+            "repairs": 0,
+            **(extra or {}),
+        }
+    )
     return doc
 
 
@@ -674,7 +712,10 @@ def complete_seit(**overrides: object) -> dict:
         },
         "levels": [
             {"id": "SYN-L1", "description": "Synthetic artifact completeness"},
-            {"id": "SYN-L2", "description": "Synthetic integration of the four documents"},
+            {
+                "id": "SYN-L2",
+                "description": "Synthetic integration of the four documents",
+            },
         ],
         "environments_fixtures_data_simulations_support": {
             "environments": [{"id": "SYN-ENV-LOCAL", "kind": "isolated-python"}],
@@ -834,9 +875,7 @@ def catalog_from_fixture_profiles(*names: str) -> dict:
     fixture = load_profiles_fixture()
     return {
         "schema_version": 1,
-        "profiles": {
-            name: copy.deepcopy(fixture["profiles"][name]) for name in names
-        },
+        "profiles": {name: copy.deepcopy(fixture["profiles"][name]) for name in names},
     }
 
 
@@ -874,7 +913,10 @@ def assurance_repair_missing_enabled() -> dict:
 
 def assurance_repair_unknown_key() -> dict:
     doc = complete_user_catalog()
-    doc["profiles"]["fixture-alpha"]["assurance_repair"] = {"enabled": True, "not_a_field": True}
+    doc["profiles"]["fixture-alpha"]["assurance_repair"] = {
+        "enabled": True,
+        "not_a_field": True,
+    }
     return doc
 
 
@@ -1017,9 +1059,21 @@ def cases() -> list[tuple[str, str, str, object, str]]:
     }
     out: list[tuple[str, str, str, object, str]] = [
         ("HLW-VC-025", "exchange_advisory_flags", "live_exchange", exchange, "accept"),
-        ("HLW-VC-025", "exchange_reply", "live_exchange", dict(exchange, reply_to="request-0"), "accept"),
+        (
+            "HLW-VC-025",
+            "exchange_reply",
+            "live_exchange",
+            dict(exchange, reply_to="request-0"),
+            "accept",
+        ),
         *[
-            ("HLW-VC-025", f"exchange_invalid_{field}", "live_exchange", {**exchange, field: value}, "reject")
+            (
+                "HLW-VC-025",
+                f"exchange_invalid_{field}",
+                "live_exchange",
+                {**exchange, field: value},
+                "reject",
+            )
             for field, value in (
                 ("time", "2026-11-19T10:00:00-06:00"),
                 ("attempts", 3),
@@ -1028,724 +1082,1742 @@ def cases() -> list[tuple[str, str, str, object, str]]:
                 ("role_file_digests", {"implementer": {"src/a.js": "unbound"}}),
             )
         ],
-        ("SEIT-EMV-024", "incomplete_journey_document", "journey", {"schema_version": "1"}, "reject"),
-        ("SEIT-EMV-024", "incomplete_authority_document", "authority", {
-            "schema_version": "1",
-            "id": SYN_AUTH,
-            "state": "active",
-            "effective": True,
-        }, "reject"),
-        ("SEIT-EMV-022", "incomplete_implementation_document", "implementation", {"schema_version": "1"}, "reject"),
-        ("SEIT-EMV-021", "incomplete_seit_document", "seit", {"schema_version": "1"}, "reject"),
-        ("SEIT-EMV-021", "sparse_complete_seit_labels_only", "seit", sparse_seit(), "reject"),
-        ("SEIT-EMV-021", "seit_four_field_proof_stub", "seit", complete_seit(
-            proof_cases=[sparse_proof()]
-        ), "reject"),
-        ("SEIT-EMV-021", "seit_empty_proof_case", "seit", complete_seit(proof_cases=[{}]), "reject"),
-        ("SEIT-EMV-021", "seit_proof_case_missing_structure", "seit", complete_seit(
-            proof_cases=[{"id": "SEIT-SYN-002", "method": "inspection"}]
-        ), "reject"),
-        ("SEIT-EMV-022", "sparse_complete_implementation", "implementation", sparse_implementation(), "reject"),
+        (
+            "SEIT-EMV-024",
+            "incomplete_journey_document",
+            "journey",
+            {"schema_version": "1"},
+            "reject",
+        ),
+        (
+            "SEIT-EMV-024",
+            "incomplete_authority_document",
+            "authority",
+            {
+                "schema_version": "1",
+                "id": SYN_AUTH,
+                "state": "active",
+                "effective": True,
+            },
+            "reject",
+        ),
+        (
+            "SEIT-EMV-022",
+            "incomplete_implementation_document",
+            "implementation",
+            {"schema_version": "1"},
+            "reject",
+        ),
+        (
+            "SEIT-EMV-021",
+            "incomplete_seit_document",
+            "seit",
+            {"schema_version": "1"},
+            "reject",
+        ),
+        (
+            "SEIT-EMV-021",
+            "sparse_complete_seit_labels_only",
+            "seit",
+            sparse_seit(),
+            "reject",
+        ),
+        (
+            "SEIT-EMV-021",
+            "seit_four_field_proof_stub",
+            "seit",
+            complete_seit(proof_cases=[sparse_proof()]),
+            "reject",
+        ),
+        (
+            "SEIT-EMV-021",
+            "seit_empty_proof_case",
+            "seit",
+            complete_seit(proof_cases=[{}]),
+            "reject",
+        ),
+        (
+            "SEIT-EMV-021",
+            "seit_proof_case_missing_structure",
+            "seit",
+            complete_seit(proof_cases=[{"id": "SEIT-SYN-002", "method": "inspection"}]),
+            "reject",
+        ),
+        (
+            "SEIT-EMV-022",
+            "sparse_complete_implementation",
+            "implementation",
+            sparse_implementation(),
+            "reject",
+        ),
         *[
-            ("RC6-5", f"manifest_model_trace_{shape}", "implementation", complete_implementation(
-                dod_manifest={
-                    "template_version": "1.0.1",
-                    "output_name": "review.html",
-                    "title": "Trace fixture",
-                    "models": [{"id": "MODEL-1", "trace": trace}],
-                }
-            ), expect)
+            (
+                "RC6-5",
+                f"manifest_model_trace_{shape}",
+                "implementation",
+                complete_implementation(
+                    dod_manifest={
+                        "template_version": "1.0.1",
+                        "output_name": "review.html",
+                        "title": "Trace fixture",
+                        "models": [{"id": "MODEL-1", "trace": trace}],
+                    }
+                ),
+                expect,
+            )
             for shape, trace, expect in [
                 ("string", "REQ-001, REQ-002", "accept"),
                 ("array", ["REQ-001", "REQ-002"], "reject"),
             ]
         ],
-        ("SEIT-EMV-022", "implementation_light_slice_complete", "implementation", complete_implementation(
-            slices=[complete_slice(role="Light Implementer", work_class="light", work_class_reason="scaffold run", command_ids=["CMD-1"])]
-        ), "accept"),
-        ("SEIT-EMV-022", "implementation_light_slice_without_command", "implementation", complete_implementation(
-            slices=[complete_slice(role="Light Implementer", work_class="light", work_class_reason="scaffold run", command_ids=[])]
-        ), "reject"),
-        ("SEIT-EMV-022", "implementation_light_slice_wrong_role", "implementation", complete_implementation(
-            slices=[complete_slice(role="Implementer", work_class="light", work_class_reason="scaffold run", command_ids=["CMD-1"])]
-        ), "reject"),
-        ("SEIT-EMV-022", "implementation_work_class_outside_enum", "implementation", complete_implementation(
-            slices=[complete_slice(work_class="easy")]
-        ), "reject"),
-        ("SEIT-EMV-022", "implementation_sparse_reasoning_string", "implementation", complete_implementation(
-            slices=[omit(complete_slice(), "reasoning_level") | {"reasoning": "synthetic owner-selected route"}]
-        ), "reject"),
-        ("SEIT-EMV-022", "slice_empty_object", "implementation", complete_implementation(slices=[{}]), "reject"),
-        ("SEIT-EMV-024", "invalid_lease_generation_type", "journey", complete_journey(
-            checkout_lease=complete_lease(generation="1")
-        ), "reject"),
-        ("SEIT-EMV-022", "invalid_human_decision_type", "implementation", complete_implementation(
-            slices=[complete_slice(human_decision=3)]
-        ), "reject"),
-        ("SEIT-EMV-022", "invalid_slices_type", "implementation", complete_implementation(slices={"id": SYN_SLICE}), "reject"),
-        ("SEIT-EMV-021", "invalid_proof_cases_type", "seit", complete_seit(proof_cases={}), "reject"),
-        ("SEIT-EMV-024", "authority_sparse_granting_owner_decision", "authority", omit(
-            complete_authority(), "granting_owner_decisions"
-        ) | {"granting_owner_decision": SYN_DEC}, "reject"),
-        ("SEIT-EMV-024", "authority_sparse_expiry", "authority", omit(
-            complete_authority(), "expiry_conditions"
-        ) | {"expiry": None}, "reject"),
+        (
+            "SEIT-EMV-022",
+            "implementation_light_slice_complete",
+            "implementation",
+            complete_implementation(
+                slices=[
+                    complete_slice(
+                        role="Light Implementer",
+                        work_class="light",
+                        work_class_reason="scaffold run",
+                        command_ids=["CMD-1"],
+                    )
+                ]
+            ),
+            "accept",
+        ),
+        (
+            "SEIT-EMV-022",
+            "implementation_light_slice_without_command",
+            "implementation",
+            complete_implementation(
+                slices=[
+                    complete_slice(
+                        role="Light Implementer",
+                        work_class="light",
+                        work_class_reason="scaffold run",
+                        command_ids=[],
+                    )
+                ]
+            ),
+            "reject",
+        ),
+        (
+            "SEIT-EMV-022",
+            "implementation_light_slice_wrong_role",
+            "implementation",
+            complete_implementation(
+                slices=[
+                    complete_slice(
+                        role="Implementer",
+                        work_class="light",
+                        work_class_reason="scaffold run",
+                        command_ids=["CMD-1"],
+                    )
+                ]
+            ),
+            "reject",
+        ),
+        (
+            "SEIT-EMV-022",
+            "implementation_work_class_outside_enum",
+            "implementation",
+            complete_implementation(slices=[complete_slice(work_class="easy")]),
+            "reject",
+        ),
+        (
+            "SEIT-EMV-022",
+            "implementation_sparse_reasoning_string",
+            "implementation",
+            complete_implementation(
+                slices=[
+                    omit(complete_slice(), "reasoning_level")
+                    | {"reasoning": "synthetic owner-selected route"}
+                ]
+            ),
+            "reject",
+        ),
+        (
+            "SEIT-EMV-022",
+            "slice_empty_object",
+            "implementation",
+            complete_implementation(slices=[{}]),
+            "reject",
+        ),
+        (
+            "SEIT-EMV-024",
+            "invalid_lease_generation_type",
+            "journey",
+            complete_journey(checkout_lease=complete_lease(generation="1")),
+            "reject",
+        ),
+        (
+            "SEIT-EMV-022",
+            "invalid_human_decision_type",
+            "implementation",
+            complete_implementation(slices=[complete_slice(human_decision=3)]),
+            "reject",
+        ),
+        (
+            "SEIT-EMV-022",
+            "invalid_slices_type",
+            "implementation",
+            complete_implementation(slices={"id": SYN_SLICE}),
+            "reject",
+        ),
+        (
+            "SEIT-EMV-021",
+            "invalid_proof_cases_type",
+            "seit",
+            complete_seit(proof_cases={}),
+            "reject",
+        ),
+        (
+            "SEIT-EMV-024",
+            "authority_sparse_granting_owner_decision",
+            "authority",
+            omit(complete_authority(), "granting_owner_decisions")
+            | {"granting_owner_decision": SYN_DEC},
+            "reject",
+        ),
+        (
+            "SEIT-EMV-024",
+            "authority_sparse_expiry",
+            "authority",
+            omit(complete_authority(), "expiry_conditions") | {"expiry": None},
+            "reject",
+        ),
         # R1: effective is a boolean gate. The string "false" is truthy under
         # ordinary consumption, so a string must be rejected outright.
-        ("SEIT-EMV-024", "authority_effective_string_false", "authority", complete_authority(
-            effective="false"
-        ), "reject"),
-        ("SEIT-EMV-024", "authority_expiry_conditions_object", "authority", complete_authority(
-            expiry_conditions={"note": "synthetic-object-expiry"}
-        ), "reject"),
+        (
+            "SEIT-EMV-024",
+            "authority_effective_string_false",
+            "authority",
+            complete_authority(effective="false"),
+            "reject",
+        ),
+        (
+            "SEIT-EMV-024",
+            "authority_expiry_conditions_object",
+            "authority",
+            complete_authority(expiry_conditions={"note": "synthetic-object-expiry"}),
+            "reject",
+        ),
     ]
 
     for field in JOURNEY_TOP_FIELDS:
-        out.append((
-            "SEIT-EMV-024",
-            f"journey_missing_{field}",
-            "journey",
-            omit_nested(complete_journey(), field),
-            "reject",
-        ))
-    for field in JOURNEY_IDENTITY_FIELDS:
-        out.append((
-            "SEIT-EMV-024",
-            f"journey_identity_missing_{field}",
-            "journey",
-            omit_nested(complete_journey(), "journey", field),
-            "reject",
-        ))
-    for field in LEASE_IDENTITY_FIELDS:
-        out.append((
-            "SEIT-EMV-024",
-            f"checkout_lease_missing_{field}",
-            "journey",
-            omit_nested(complete_journey(), "checkout_lease", field),
-            "reject",
-        ))
-    for field in AUTHORITY_TOP_FIELDS:
-        out.append((
-            "SEIT-EMV-024",
-            f"authority_missing_{field}",
-            "authority",
-            omit_nested(complete_authority(), field),
-            "reject",
-        ))
-    for field in ALLOWED_PROHIBITED_FIELDS:
-        out.append((
-            "SEIT-EMV-024",
-            f"authority_allowed_missing_{field}",
-            "authority",
-            omit_nested(complete_authority(), "allowed", field),
-            "reject",
-        ))
-        out.append((
-            "SEIT-EMV-024",
-            f"authority_prohibited_missing_{field}",
-            "authority",
-            omit_nested(complete_authority(), "prohibited", field),
-            "reject",
-        ))
-    for field in IMPLEMENTATION_TOP_FIELDS:
-        out.append((
-            "SEIT-EMV-022",
-            f"implementation_missing_{field}",
-            "implementation",
-            omit_nested(complete_implementation(), field),
-            "reject",
-        ))
-    for field in CARDINALITY_FIELDS:
-        out.append((
-            "SEIT-EMV-028",
-            f"implementation_cardinality_missing_{field}",
-            "implementation",
-            omit_nested(complete_implementation(), "journey_settings", "review_cardinality", field),
-            "reject",
-        ))
-    for field in SLICE_FIELDS:
-        out.append((
-            "SEIT-EMV-022",
-            f"slice_missing_{field}",
-            "implementation",
-            omit_nested(complete_implementation(), "slices", "0", field),
-            "reject",
-        ))
-    for field in NAMED_SEIT_SECTIONS:
-        out.append((
-            "SEIT-EMV-021",
-            f"seit_missing_{field}",
-            "seit",
-            omit_nested(complete_seit(), field),
-            "reject",
-        ))
-    out.append((
-        "SEIT-EMV-021",
-        "seit_missing_proof_cases",
-        "seit",
-        omit_nested(complete_seit(), "proof_cases"),
-        "reject",
-    ))
-    for field in PROOF_FIELDS:
-        out.append((
-            "SEIT-EMV-021",
-            f"proof_missing_{field}",
-            "seit",
-            omit_nested(complete_seit(), "proof_cases", "0", field),
-            "reject",
-        ))
-
-    out.extend([
-        ("SEIT-EMV-024", "complete_journey_document", "journey", complete_journey(), "accept"),
-        ("SEIT-EMV-024", "journey_released_lease_without_release_fields", "journey", complete_journey(
-            checkout_lease=complete_lease(state="released")
-        ), "reject"),
-        ("SEIT-EMV-024", "journey_released_lease_with_release_fields", "journey", complete_journey(
-            checkout_lease=complete_lease(
-                state="released", released_at="2026-01-02T00:00:00Z", release_reason="COMPLETE"
+        out.append(
+            (
+                "SEIT-EMV-024",
+                f"journey_missing_{field}",
+                "journey",
+                omit_nested(complete_journey(), field),
+                "reject",
             )
-        ), "accept"),
-        ("SEIT-EMV-024", "journey_status_outside_enum", "journey", complete_journey(
-            journey={
-                "id": SYN_JOURNEY,
-                "title": "Synthetic portable schema fixture",
-                "status": "done",
-                "planning_repository": "example/bearing-lite",
-            }
-        ), "reject"),
-        ("SEIT-EMV-024", "complete_authority_document", "authority", complete_authority(), "accept"),
-        ("SEIT-EMV-022", "complete_implementation_document", "implementation", complete_implementation(), "accept"),
-        ("SEIT-EMV-021", "complete_seit_document", "seit", complete_seit(), "accept"),
-        ("SEIT-EMV-021", "seit_planning_input_row_with_git_blob", "seit", complete_seit(
-            source_baseline=complete_seit()["source_baseline"] | {
-                "planning_inputs": [{"path": "plan.md", "sha256": SYN_DIGEST, "git_blob": "a" * 40}]
-            }
-        ), "accept"),
-        ("SEIT-EMV-021", "seit_planning_input_row_retains_provenance", "seit", complete_seit(
-            source_baseline=complete_seit()["source_baseline"] | {
-                "planning_inputs": [{"path": "plan.md", "sha256": SYN_DIGEST, "source_note": "Author handoff"}]
-            }
-        ), "accept"),
-        ("SEIT-EMV-021", "seit_planning_input_row_git_blob_only", "seit", complete_seit(
-            source_baseline=complete_seit()["source_baseline"] | {
-                "planning_inputs": [{"path": "plan.md", "git_blob": "a" * 40}]
-            }
-        ), "reject"),
-        # Optional gate-cost fields: present and absent both validate; bad values reject.
-        ("SEIT-EMV-021", "seit_proof_with_resource_group_and_gate_cost", "seit", complete_seit(
-            proof_cases=[complete_proof(resource_group="engine", expected_gate_seconds=45)]
-        ), "accept"),
-        ("SEIT-EMV-021", "seit_proof_empty_resource_group", "seit", complete_seit(
-            proof_cases=[complete_proof(resource_group="")]
-        ), "reject"),
-        ("SEIT-EMV-021", "seit_proof_nonstring_resource_group", "seit", complete_seit(
-            proof_cases=[complete_proof(resource_group=1)]
-        ), "reject"),
-        ("SEIT-EMV-021", "seit_proof_minimum_gate_seconds", "seit", complete_seit(
-            proof_cases=[complete_proof(expected_gate_seconds=1)]
-        ), "accept"),
-        ("SEIT-EMV-021", "seit_proof_zero_gate_seconds", "seit", complete_seit(
-            proof_cases=[complete_proof(expected_gate_seconds=0)]
-        ), "reject"),
-        ("SEIT-EMV-021", "seit_proof_string_gate_seconds", "seit", complete_seit(
-            proof_cases=[complete_proof(expected_gate_seconds="45")]
-        ), "reject"),
-        # Optional oracle-source field: present validates, absent validates.
-        ("SEIT-EMV-021", "seit_proof_with_oracle_source", "seit", complete_seit(
-            proof_cases=[complete_proof(
-                oracle_source="Requirement REQ-SYN-001 text, independently worked example.")]
-        ), "accept"),
-        ("SEIT-EMV-021", "seit_proof_circular_oracle_source", "seit", complete_seit(
-            proof_cases=[complete_proof(
-                oracle_source="Expected value obtained by calling the production helper computeTotal on the same inputs.")]
-        ), "reject"),
-        ("SEIT-EMV-021", "seit_proof_neutral_independent_production_code", "seit", complete_seit(
-            proof_cases=[complete_proof(
-                oracle_source="Requirement REQ-7; independent of production code")]
-        ), "accept"),
-        ("SEIT-EMV-021", "seit_proof_neutral_golden_output_before_algorithm_change", "seit", complete_seit(
-            proof_cases=[complete_proof(
-                oracle_source="Golden output captured before the production algorithm changed")]
-        ), "accept"),
-        ("SEIT-EMV-021", "seit_proof_negated_not_derived_from_production_logic", "seit", complete_seit(
-            proof_cases=[complete_proof(
-                oracle_source="Published vector; not derived from production logic")]
-        ), "accept"),
-        ("SEIT-EMV-021", "seit_proof_never_derived_from_production_logic", "seit", complete_seit(
-            proof_cases=[complete_proof(
-                oracle_source="never derived from production logic")]
-        ), "accept"),
-        ("SEIT-EMV-021", "seit_proof_computed_by_calling_production_helper", "seit", complete_seit(
-            proof_cases=[complete_proof(
-                oracle_source="computed by calling the production helper computeTotal")]
-        ), "reject"),
-        ("SEIT-EMV-021", "seit_proof_expected_equals_production_helper_output", "seit", complete_seit(
-            proof_cases=[complete_proof(
-                oracle_source="expected = production helper output")]
-        ), "reject"),
-        ("SEIT-EMV-021", "seit_proof_reimplements_production_algorithm", "seit", complete_seit(
-            proof_cases=[complete_proof(
-                oracle_source="reimplements the production algorithm")]
-        ), "reject"),
-        ("SEIT-EMV-021", "seit_proof_copied_formula_from_production", "seit", complete_seit(
-            proof_cases=[complete_proof(
-                oracle_source="copied formula from production")]
-        ), "reject"),
-        ("SEIT-EMV-021", "seit_proof_derived_from_production_code_path", "seit", complete_seit(
-            proof_cases=[complete_proof(
-                oracle_source="derived from the production code path")]
-        ), "reject"),
-        # Property-based applicability: applicable and justified
-        # non-applicable both validate; unknown applicability rejects.
-        ("SEIT-EMV-021", "seit_proof_applicable_property_based", "seit", complete_seit(
-            proof_cases=[complete_proof(property_based={
-                "applicability": "applicable",
-                "rationale": "Applicable: invariant 'total equals sum(quantity*unit_price) plus tax and is non-negative' over domain 'lists of 1..8 items, quantity 1..10, unit_price 0..100' per CONTRACT-SYN-007; 3 fixed examples miss empty-list and max-tax boundary; ties to AC-SYN-001 and REQ-SYN-001.",
-                "invariant_source": "Requirement REQ-SYN-001; design CONTRACT-SYN-007",
-            })]
-        ), "accept"),
-        ("SEIT-EMV-021", "seit_proof_justified_nonapplicable_property_based", "seit", complete_seit(
-            proof_cases=[complete_proof(property_based={
-                "applicability": "not_applicable",
-                "rationale": "Not applicable: SEIT-SYN-001 inspects 2 boolean flags (flag A x flag B, 4 total combinations); 4 fixed examples exhaust the whole domain, so no shrinking generator is needed.",
-            })]
-        ), "accept"),
-        ("SEIT-EMV-021", "seit_proof_unknown_property_applicability", "seit", complete_seit(
-            proof_cases=[complete_proof(property_based={
-                "applicability": "mandatory",
-                "rationale": "Synthetic invalid applicability value.",
-            })]
-        ), "reject"),
-        ("SEIT-EMV-021", "planning_repair_complete_seit_corpus", "seit", json.loads(
-            (ROOT / "test/fixtures/planning-repair-package.json").read_text()
-        )["seit"], "accept"),
-        ("SEIT-EMV-022", "planning_repair_complete_implementation_corpus", "implementation", json.loads(
-            (ROOT / "test/fixtures/planning-repair-package.json").read_text()
-        )["implementation"], "accept"),
-        # F1/F2 receipt identities are shaped here; real file/lineage rejection runs in Node.
-        ("SEIT-EMV-022", "planning_session_without_revision", "implementation", omit_nested(
-            planning_contract_implementation(), "journey_settings", "planning_wave", "sessions", "0", "candidate_revision"
-        ), "reject"),
-        ("SEIT-EMV-022", "planning_session_without_digest", "implementation", omit_nested(
-            planning_contract_implementation(), "journey_settings", "planning_wave", "sessions", "0", "candidate_digest"
-        ), "reject"),
-        ("SEIT-EMV-022", "planning_review_reference_bad_digest", "implementation", planning_contract_implementation(
-            wave={"review_receipt": {"path": "gate-evidence/review.json", "sha256": "bad"}}
-        ), "reject"),
-        ("SEIT-EMV-022", "planning_closing_candidate_incomplete", "implementation", planning_contract_implementation(
-            wave={"closing_candidate": {"candidate_ref": "plan"}}
-        ), "reject"),
-        ("SEIT-EMV-022", "planning_repair_lineage_complete", "implementation", planning_contract_implementation(
-            wave={"repairs": 1, "repair": {
-                "from_candidate": {"candidate_ref": "plan", "candidate_revision": "before", "candidate_digest": SYN_DIGEST},
-                "to_candidate": {"candidate_ref": "plan", "candidate_revision": "after", "candidate_digest": SYN_DIGEST},
-                "deterministic_gate": "PASS"
-            }}
-        ), "accept"),
-        ("SEIT-EMV-022", "planning_repair_lineage_missing_target", "implementation", planning_contract_implementation(
-            wave={"repair": {"from_candidate": {"candidate_ref": "plan", "candidate_revision": SYN_REV, "candidate_digest": SYN_DIGEST}, "deterministic_gate": "PASS"}}
-        ), "reject"),
-        # #157/#205/#155 future-planning contract: shape only; plan-package.cjs owns completeness.
-        ("SEIT-EMV-022", "implementation_planning_contract_complete", "implementation", planning_contract_implementation(), "accept"),
-        ("SEIT-EMV-022", "implementation_review_round_second_round", "implementation", planning_contract_implementation(
-            rounds={"reviewer_rounds": 2}
-        ), "reject"),
-        ("SEIT-EMV-022", "implementation_review_round_second_repair", "implementation", planning_contract_implementation(
-            rounds={"repairs_max": 2}
-        ), "reject"),
-        ("SEIT-EMV-022", "implementation_review_round_rereview_closure", "implementation", planning_contract_implementation(
-            rounds={"closure": "rereview"}
-        ), "reject"),
-        ("SEIT-EMV-022", "implementation_planning_wave_second_review", "implementation", planning_contract_implementation(
-            wave={"reviews": 2}
-        ), "reject"),
-        ("SEIT-EMV-022", "implementation_planning_wave_second_repair", "implementation", planning_contract_implementation(
-            wave={"repairs": 2}
-        ), "reject"),
-        ("SEIT-EMV-022", "implementation_planning_wave_unknown_session", "implementation", planning_contract_implementation(
-            wave={"required_sessions": ["mbse", "integration_test", "scribe"]}
-        ), "reject"),
-        # F2 repair: optional specialists and owner-requested-only planning review.
-        ("SEIT-EMV-022", "implementation_planning_wave_retired_design_session", "implementation", planning_contract_implementation(
-            wave={"required_sessions": ["planning_and_design", "integration_test"]}
-        ), "reject"),
-        ("SEIT-EMV-022", "implementation_session_inputs_with_git_blob", "implementation", planning_contract_implementation(
-            wave={
-                "sessions": [
+        )
+    for field in JOURNEY_IDENTITY_FIELDS:
+        out.append(
+            (
+                "SEIT-EMV-024",
+                f"journey_identity_missing_{field}",
+                "journey",
+                omit_nested(complete_journey(), "journey", field),
+                "reject",
+            )
+        )
+    for field in LEASE_IDENTITY_FIELDS:
+        out.append(
+            (
+                "SEIT-EMV-024",
+                f"checkout_lease_missing_{field}",
+                "journey",
+                omit_nested(complete_journey(), "checkout_lease", field),
+                "reject",
+            )
+        )
+    for field in AUTHORITY_TOP_FIELDS:
+        out.append(
+            (
+                "SEIT-EMV-024",
+                f"authority_missing_{field}",
+                "authority",
+                omit_nested(complete_authority(), field),
+                "reject",
+            )
+        )
+    for field in ALLOWED_PROHIBITED_FIELDS:
+        out.append(
+            (
+                "SEIT-EMV-024",
+                f"authority_allowed_missing_{field}",
+                "authority",
+                omit_nested(complete_authority(), "allowed", field),
+                "reject",
+            )
+        )
+        out.append(
+            (
+                "SEIT-EMV-024",
+                f"authority_prohibited_missing_{field}",
+                "authority",
+                omit_nested(complete_authority(), "prohibited", field),
+                "reject",
+            )
+        )
+    for field in IMPLEMENTATION_TOP_FIELDS:
+        out.append(
+            (
+                "SEIT-EMV-022",
+                f"implementation_missing_{field}",
+                "implementation",
+                omit_nested(complete_implementation(), field),
+                "reject",
+            )
+        )
+    for field in CARDINALITY_FIELDS:
+        out.append(
+            (
+                "SEIT-EMV-028",
+                f"implementation_cardinality_missing_{field}",
+                "implementation",
+                omit_nested(
+                    complete_implementation(),
+                    "journey_settings",
+                    "review_cardinality",
+                    field,
+                ),
+                "reject",
+            )
+        )
+    for field in SLICE_FIELDS:
+        out.append(
+            (
+                "SEIT-EMV-022",
+                f"slice_missing_{field}",
+                "implementation",
+                omit_nested(complete_implementation(), "slices", "0", field),
+                "reject",
+            )
+        )
+    for field in NAMED_SEIT_SECTIONS:
+        out.append(
+            (
+                "SEIT-EMV-021",
+                f"seit_missing_{field}",
+                "seit",
+                omit_nested(complete_seit(), field),
+                "reject",
+            )
+        )
+    out.append(
+        (
+            "SEIT-EMV-021",
+            "seit_missing_proof_cases",
+            "seit",
+            omit_nested(complete_seit(), "proof_cases"),
+            "reject",
+        )
+    )
+    for field in PROOF_FIELDS:
+        out.append(
+            (
+                "SEIT-EMV-021",
+                f"proof_missing_{field}",
+                "seit",
+                omit_nested(complete_seit(), "proof_cases", "0", field),
+                "reject",
+            )
+        )
+
+    out.extend(
+        [
+            (
+                "SEIT-EMV-024",
+                "complete_journey_document",
+                "journey",
+                complete_journey(),
+                "accept",
+            ),
+            (
+                "SEIT-EMV-024",
+                "journey_released_lease_without_release_fields",
+                "journey",
+                complete_journey(checkout_lease=complete_lease(state="released")),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-024",
+                "journey_released_lease_with_release_fields",
+                "journey",
+                complete_journey(
+                    checkout_lease=complete_lease(
+                        state="released",
+                        released_at="2026-01-02T00:00:00Z",
+                        release_reason="COMPLETE",
+                    )
+                ),
+                "accept",
+            ),
+            (
+                "SEIT-EMV-024",
+                "journey_status_outside_enum",
+                "journey",
+                complete_journey(
+                    journey={
+                        "id": SYN_JOURNEY,
+                        "title": "Synthetic portable schema fixture",
+                        "status": "done",
+                        "planning_repository": "example/bearing-lite",
+                    }
+                ),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-024",
+                "complete_authority_document",
+                "authority",
+                complete_authority(),
+                "accept",
+            ),
+            (
+                "SEIT-EMV-022",
+                "complete_implementation_document",
+                "implementation",
+                complete_implementation(),
+                "accept",
+            ),
+            (
+                "SEIT-EMV-021",
+                "complete_seit_document",
+                "seit",
+                complete_seit(),
+                "accept",
+            ),
+            (
+                "SEIT-EMV-021",
+                "seit_planning_input_row_with_git_blob",
+                "seit",
+                complete_seit(
+                    source_baseline=complete_seit()["source_baseline"]
+                    | {
+                        "planning_inputs": [
+                            {
+                                "path": "plan.md",
+                                "sha256": SYN_DIGEST,
+                                "git_blob": "a" * 40,
+                            }
+                        ]
+                    }
+                ),
+                "accept",
+            ),
+            (
+                "SEIT-EMV-021",
+                "seit_planning_input_row_retains_provenance",
+                "seit",
+                complete_seit(
+                    source_baseline=complete_seit()["source_baseline"]
+                    | {
+                        "planning_inputs": [
+                            {
+                                "path": "plan.md",
+                                "sha256": SYN_DIGEST,
+                                "source_note": "Author handoff",
+                            }
+                        ]
+                    }
+                ),
+                "accept",
+            ),
+            (
+                "SEIT-EMV-021",
+                "seit_planning_input_row_git_blob_only",
+                "seit",
+                complete_seit(
+                    source_baseline=complete_seit()["source_baseline"]
+                    | {"planning_inputs": [{"path": "plan.md", "git_blob": "a" * 40}]}
+                ),
+                "reject",
+            ),
+            # Optional gate-cost fields: present and absent both validate; bad values reject.
+            (
+                "SEIT-EMV-021",
+                "seit_proof_with_resource_group_and_gate_cost",
+                "seit",
+                complete_seit(
+                    proof_cases=[
+                        complete_proof(
+                            resource_group="engine", expected_gate_seconds=45
+                        )
+                    ]
+                ),
+                "accept",
+            ),
+            (
+                "SEIT-EMV-021",
+                "seit_proof_empty_resource_group",
+                "seit",
+                complete_seit(proof_cases=[complete_proof(resource_group="")]),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-021",
+                "seit_proof_nonstring_resource_group",
+                "seit",
+                complete_seit(proof_cases=[complete_proof(resource_group=1)]),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-021",
+                "seit_proof_minimum_gate_seconds",
+                "seit",
+                complete_seit(proof_cases=[complete_proof(expected_gate_seconds=1)]),
+                "accept",
+            ),
+            (
+                "SEIT-EMV-021",
+                "seit_proof_zero_gate_seconds",
+                "seit",
+                complete_seit(proof_cases=[complete_proof(expected_gate_seconds=0)]),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-021",
+                "seit_proof_string_gate_seconds",
+                "seit",
+                complete_seit(proof_cases=[complete_proof(expected_gate_seconds="45")]),
+                "reject",
+            ),
+            # Optional oracle-source field: present validates, absent validates.
+            (
+                "SEIT-EMV-021",
+                "seit_proof_with_oracle_source",
+                "seit",
+                complete_seit(
+                    proof_cases=[
+                        complete_proof(
+                            oracle_source="Requirement REQ-SYN-001 text, independently worked example."
+                        )
+                    ]
+                ),
+                "accept",
+            ),
+            (
+                "SEIT-EMV-021",
+                "seit_proof_circular_oracle_source",
+                "seit",
+                complete_seit(
+                    proof_cases=[
+                        complete_proof(
+                            oracle_source="Expected value obtained by calling the production helper computeTotal on the same inputs."
+                        )
+                    ]
+                ),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-021",
+                "seit_proof_neutral_independent_production_code",
+                "seit",
+                complete_seit(
+                    proof_cases=[
+                        complete_proof(
+                            oracle_source="Requirement REQ-7; independent of production code"
+                        )
+                    ]
+                ),
+                "accept",
+            ),
+            (
+                "SEIT-EMV-021",
+                "seit_proof_neutral_golden_output_before_algorithm_change",
+                "seit",
+                complete_seit(
+                    proof_cases=[
+                        complete_proof(
+                            oracle_source="Golden output captured before the production algorithm changed"
+                        )
+                    ]
+                ),
+                "accept",
+            ),
+            (
+                "SEIT-EMV-021",
+                "seit_proof_negated_not_derived_from_production_logic",
+                "seit",
+                complete_seit(
+                    proof_cases=[
+                        complete_proof(
+                            oracle_source="Published vector; not derived from production logic"
+                        )
+                    ]
+                ),
+                "accept",
+            ),
+            (
+                "SEIT-EMV-021",
+                "seit_proof_never_derived_from_production_logic",
+                "seit",
+                complete_seit(
+                    proof_cases=[
+                        complete_proof(
+                            oracle_source="never derived from production logic"
+                        )
+                    ]
+                ),
+                "accept",
+            ),
+            (
+                "SEIT-EMV-021",
+                "seit_proof_computed_by_calling_production_helper",
+                "seit",
+                complete_seit(
+                    proof_cases=[
+                        complete_proof(
+                            oracle_source="computed by calling the production helper computeTotal"
+                        )
+                    ]
+                ),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-021",
+                "seit_proof_expected_equals_production_helper_output",
+                "seit",
+                complete_seit(
+                    proof_cases=[
+                        complete_proof(
+                            oracle_source="expected = production helper output"
+                        )
+                    ]
+                ),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-021",
+                "seit_proof_reimplements_production_algorithm",
+                "seit",
+                complete_seit(
+                    proof_cases=[
+                        complete_proof(
+                            oracle_source="reimplements the production algorithm"
+                        )
+                    ]
+                ),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-021",
+                "seit_proof_copied_formula_from_production",
+                "seit",
+                complete_seit(
+                    proof_cases=[
+                        complete_proof(oracle_source="copied formula from production")
+                    ]
+                ),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-021",
+                "seit_proof_derived_from_production_code_path",
+                "seit",
+                complete_seit(
+                    proof_cases=[
+                        complete_proof(
+                            oracle_source="derived from the production code path"
+                        )
+                    ]
+                ),
+                "reject",
+            ),
+            # Property-based applicability: applicable and justified
+            # non-applicable both validate; unknown applicability rejects.
+            (
+                "SEIT-EMV-021",
+                "seit_proof_applicable_property_based",
+                "seit",
+                complete_seit(
+                    proof_cases=[
+                        complete_proof(
+                            property_based={
+                                "applicability": "applicable",
+                                "rationale": "Applicable: invariant 'total equals sum(quantity*unit_price) plus tax and is non-negative' over domain 'lists of 1..8 items, quantity 1..10, unit_price 0..100' per CONTRACT-SYN-007; 3 fixed examples miss empty-list and max-tax boundary; ties to AC-SYN-001 and REQ-SYN-001.",
+                                "invariant_source": "Requirement REQ-SYN-001; design CONTRACT-SYN-007",
+                            }
+                        )
+                    ]
+                ),
+                "accept",
+            ),
+            (
+                "SEIT-EMV-021",
+                "seit_proof_justified_nonapplicable_property_based",
+                "seit",
+                complete_seit(
+                    proof_cases=[
+                        complete_proof(
+                            property_based={
+                                "applicability": "not_applicable",
+                                "rationale": "Not applicable: SEIT-SYN-001 inspects 2 boolean flags (flag A x flag B, 4 total combinations); 4 fixed examples exhaust the whole domain, so no shrinking generator is needed.",
+                            }
+                        )
+                    ]
+                ),
+                "accept",
+            ),
+            (
+                "SEIT-EMV-021",
+                "seit_proof_unknown_property_applicability",
+                "seit",
+                complete_seit(
+                    proof_cases=[
+                        complete_proof(
+                            property_based={
+                                "applicability": "mandatory",
+                                "rationale": "Synthetic invalid applicability value.",
+                            }
+                        )
+                    ]
+                ),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-021",
+                "planning_repair_complete_seit_corpus",
+                "seit",
+                json.loads(
+                    (ROOT / "test/fixtures/planning-repair-package.json").read_text()
+                )["seit"],
+                "accept",
+            ),
+            (
+                "SEIT-EMV-022",
+                "planning_repair_complete_implementation_corpus",
+                "implementation",
+                json.loads(
+                    (ROOT / "test/fixtures/planning-repair-package.json").read_text()
+                )["implementation"],
+                "accept",
+            ),
+            # F1/F2 receipt identities are shaped here; real file/lineage rejection runs in Node.
+            (
+                "SEIT-EMV-022",
+                "planning_session_without_revision",
+                "implementation",
+                omit_nested(
+                    planning_contract_implementation(),
+                    "journey_settings",
+                    "planning_wave",
+                    "sessions",
+                    "0",
+                    "candidate_revision",
+                ),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-022",
+                "planning_session_without_digest",
+                "implementation",
+                omit_nested(
+                    planning_contract_implementation(),
+                    "journey_settings",
+                    "planning_wave",
+                    "sessions",
+                    "0",
+                    "candidate_digest",
+                ),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-022",
+                "planning_review_reference_bad_digest",
+                "implementation",
+                planning_contract_implementation(
+                    wave={
+                        "review_receipt": {
+                            "path": "gate-evidence/review.json",
+                            "sha256": "bad",
+                        }
+                    }
+                ),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-022",
+                "planning_closing_candidate_incomplete",
+                "implementation",
+                planning_contract_implementation(
+                    wave={"closing_candidate": {"candidate_ref": "plan"}}
+                ),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-022",
+                "planning_repair_lineage_complete",
+                "implementation",
+                planning_contract_implementation(
+                    wave={
+                        "repairs": 1,
+                        "repair": {
+                            "from_candidate": {
+                                "candidate_ref": "plan",
+                                "candidate_revision": "before",
+                                "candidate_digest": SYN_DIGEST,
+                            },
+                            "to_candidate": {
+                                "candidate_ref": "plan",
+                                "candidate_revision": "after",
+                                "candidate_digest": SYN_DIGEST,
+                            },
+                            "deterministic_gate": "PASS",
+                        },
+                    }
+                ),
+                "accept",
+            ),
+            (
+                "SEIT-EMV-022",
+                "planning_repair_lineage_missing_target",
+                "implementation",
+                planning_contract_implementation(
+                    wave={
+                        "repair": {
+                            "from_candidate": {
+                                "candidate_ref": "plan",
+                                "candidate_revision": SYN_REV,
+                                "candidate_digest": SYN_DIGEST,
+                            },
+                            "deterministic_gate": "PASS",
+                        }
+                    }
+                ),
+                "reject",
+            ),
+            # #157/#205/#155 future-planning contract: shape only; plan-package.cjs owns completeness.
+            (
+                "SEIT-EMV-022",
+                "implementation_planning_contract_complete",
+                "implementation",
+                planning_contract_implementation(),
+                "accept",
+            ),
+            (
+                "SEIT-EMV-022",
+                "implementation_review_round_second_round",
+                "implementation",
+                planning_contract_implementation(rounds={"reviewer_rounds": 2}),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-022",
+                "implementation_review_round_second_repair",
+                "implementation",
+                planning_contract_implementation(rounds={"repairs_max": 2}),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-022",
+                "implementation_review_round_rereview_closure",
+                "implementation",
+                planning_contract_implementation(rounds={"closure": "rereview"}),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-022",
+                "implementation_planning_wave_second_review",
+                "implementation",
+                planning_contract_implementation(wave={"reviews": 2}),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-022",
+                "implementation_planning_wave_second_repair",
+                "implementation",
+                planning_contract_implementation(wave={"repairs": 2}),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-022",
+                "implementation_planning_wave_unknown_session",
+                "implementation",
+                planning_contract_implementation(
+                    wave={"required_sessions": ["mbse", "integration_test", "scribe"]}
+                ),
+                "reject",
+            ),
+            # F2 repair: optional specialists and owner-requested-only planning review.
+            (
+                "SEIT-EMV-022",
+                "implementation_planning_wave_retired_design_session",
+                "implementation",
+                planning_contract_implementation(
+                    wave={
+                        "required_sessions": ["planning_and_design", "integration_test"]
+                    }
+                ),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-022",
+                "implementation_session_inputs_with_git_blob",
+                "implementation",
+                planning_contract_implementation(
+                    wave={
+                        "sessions": [
+                            {
+                                "session": "mbse",
+                                "candidate_ref": "plan",
+                                "candidate_revision": SYN_REV,
+                                "candidate_digest": SYN_DIGEST,
+                                "verdict": "READY",
+                                "inputs": [
+                                    {
+                                        "path": "plan.md",
+                                        "sha256": SYN_DIGEST,
+                                        "git_blob": "a" * 40,
+                                    }
+                                ],
+                            },
+                            {
+                                "session": "integration_test",
+                                "candidate_ref": "plan",
+                                "candidate_revision": SYN_REV,
+                                "candidate_digest": SYN_DIGEST,
+                                "verdict": "READY",
+                            },
+                        ]
+                    }
+                ),
+                "accept",
+            ),
+            (
+                "SEIT-EMV-022",
+                "implementation_session_inputs_git_blob_only",
+                "implementation",
+                planning_contract_implementation(
+                    wave={
+                        "sessions": [
+                            {
+                                "session": "mbse",
+                                "candidate_ref": "plan",
+                                "candidate_revision": SYN_REV,
+                                "candidate_digest": SYN_DIGEST,
+                                "verdict": "READY",
+                                "inputs": [{"path": "plan.md", "git_blob": "a" * 40}],
+                            },
+                            {
+                                "session": "integration_test",
+                                "candidate_ref": "plan",
+                                "candidate_revision": SYN_REV,
+                                "candidate_digest": SYN_DIGEST,
+                                "verdict": "READY",
+                            },
+                        ]
+                    }
+                ),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-022",
+                "implementation_candidate_ready_with_external_open_items",
+                "implementation",
+                planning_contract_implementation(
+                    wave={
+                        "sessions": [
+                            {
+                                "session": "mbse",
+                                "candidate_ref": "plan",
+                                "candidate_revision": SYN_REV,
+                                "candidate_digest": SYN_DIGEST,
+                                "verdict": "CANDIDATE_READY",
+                                "external_open_items": [
+                                    {
+                                        "id": "EXT-1",
+                                        "owner": "orchestrator",
+                                        "summary": "Finalize slice write_set mapping.",
+                                        "status": "closed",
+                                        "closed_by": "orchestrator",
+                                    }
+                                ],
+                            },
+                            {
+                                "session": "integration_test",
+                                "candidate_ref": "plan",
+                                "candidate_revision": SYN_REV,
+                                "candidate_digest": SYN_DIGEST,
+                                "verdict": "READY",
+                            },
+                        ]
+                    }
+                ),
+                "accept",
+            ),
+            (
+                "SEIT-EMV-022",
+                "implementation_candidate_ready_external_item_missing_owner",
+                "implementation",
+                planning_contract_implementation(
+                    wave={
+                        "sessions": [
+                            {
+                                "session": "mbse",
+                                "candidate_ref": "plan",
+                                "candidate_revision": SYN_REV,
+                                "candidate_digest": SYN_DIGEST,
+                                "verdict": "CANDIDATE_READY",
+                                "external_open_items": [
+                                    {
+                                        "id": "EXT-1",
+                                        "summary": "Missing owner.",
+                                        "status": "open",
+                                    }
+                                ],
+                            },
+                            {
+                                "session": "integration_test",
+                                "candidate_ref": "plan",
+                                "candidate_revision": SYN_REV,
+                                "candidate_digest": SYN_DIGEST,
+                                "verdict": "READY",
+                            },
+                        ]
+                    }
+                ),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-022",
+                "implementation_planning_wave_edit_records_accepted",
+                "implementation",
+                planning_contract_implementation(
+                    wave={
+                        "edit_records": [
+                            {
+                                "path": "seit.json",
+                                "kind": "hash_binding",
+                                "field": "source_baseline.planning_inputs[0].sha256",
+                                "before": "0" * 64,
+                                "after": SYN_DIGEST,
+                                "before_sha256": "1" * 64,
+                                "after_sha256": SYN_DIGEST,
+                                "reason": "Refresh source hash after assembly.",
+                            }
+                        ]
+                    }
+                ),
+                "accept",
+            ),
+            (
+                "SEIT-EMV-022",
+                "implementation_planning_wave_edit_records_meaning_kind_rejected",
+                "implementation",
+                planning_contract_implementation(
+                    wave={
+                        "edit_records": [
+                            {
+                                "path": "seit.json",
+                                "kind": "meaning",
+                                "field": "proof_cases[0].expected_result",
+                                "before": "a",
+                                "after": "b",
+                                "before_sha256": "1" * 64,
+                                "after_sha256": SYN_DIGEST,
+                                "reason": "Disguised meaning change.",
+                            }
+                        ]
+                    }
+                ),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-022",
+                "implementation_planning_corrections_rc2_sessions_accepted",
+                "implementation",
+                planning_contract_implementation()
+                | {
+                    "journey_settings": planning_contract_implementation()[
+                        "journey_settings"
+                    ]
+                    | {
+                        "planning_corrections": [
+                            {
+                                "correction_id": "corr-1",
+                                "from_candidate": {
+                                    "candidate_ref": "plan",
+                                    "candidate_revision": "r1",
+                                    "candidate_digest": SYN_DIGEST,
+                                },
+                                "required_sessions": ["mbse", "integration_test"],
+                            }
+                        ]
+                    }
+                },
+                "accept",
+            ),
+            (
+                "SEIT-EMV-022",
+                "implementation_planning_corrections_removed_session_rejected",
+                "implementation",
+                planning_contract_implementation()
+                | {
+                    "journey_settings": planning_contract_implementation()[
+                        "journey_settings"
+                    ]
+                    | {
+                        "planning_corrections": [
+                            {
+                                "correction_id": "corr-1",
+                                "from_candidate": {
+                                    "candidate_ref": "plan",
+                                    "candidate_revision": "r1",
+                                    "candidate_digest": SYN_DIGEST,
+                                },
+                                "required_sessions": ["requirements_engineer"],
+                            }
+                        ]
+                    }
+                },
+                "reject",
+            ),
+            (
+                "SEIT-EMV-022",
+                "implementation_planning_wave_no_specialists_unreviewed",
+                "implementation",
+                unreviewed_planning_implementation([]),
+                "accept",
+            ),
+            (
+                "SEIT-EMV-022",
+                "implementation_planning_wave_unreviewed_with_receipt",
+                "implementation",
+                unreviewed_planning_implementation(
+                    ["integration_test"],
                     {
-                        "session": "mbse",
-                        "candidate_ref": "plan",
-                        "candidate_revision": SYN_REV,
-                        "candidate_digest": SYN_DIGEST,
-                        "verdict": "READY",
-                        "inputs": [{"path": "plan.md", "sha256": SYN_DIGEST, "git_blob": "a" * 40}],
+                        "review_receipt": {
+                            "path": "gate-evidence/planning-review.json",
+                            "sha256": SYN_DIGEST,
+                        }
                     },
-                    {
-                        "session": "integration_test",
-                        "candidate_ref": "plan",
-                        "candidate_revision": SYN_REV,
-                        "candidate_digest": SYN_DIGEST,
-                        "verdict": "READY",
-                    },
-                ]
-            }
-        ), "accept"),
-        ("SEIT-EMV-022", "implementation_session_inputs_git_blob_only", "implementation", planning_contract_implementation(
-            wave={
-                "sessions": [
-                    {
-                        "session": "mbse",
-                        "candidate_ref": "plan",
-                        "candidate_revision": SYN_REV,
-                        "candidate_digest": SYN_DIGEST,
-                        "verdict": "READY",
-                        "inputs": [{"path": "plan.md", "git_blob": "a" * 40}],
-                    },
-                    {
-                        "session": "integration_test",
-                        "candidate_ref": "plan",
-                        "candidate_revision": SYN_REV,
-                        "candidate_digest": SYN_DIGEST,
-                        "verdict": "READY",
-                    },
-                ]
-            }
-        ), "reject"),
-        ("SEIT-EMV-022", "implementation_candidate_ready_with_external_open_items", "implementation", planning_contract_implementation(
-            wave={
-                "sessions": [
-                    {
-                        "session": "mbse",
-                        "candidate_ref": "plan",
-                        "candidate_revision": SYN_REV,
-                        "candidate_digest": SYN_DIGEST,
-                        "verdict": "CANDIDATE_READY",
-                        "external_open_items": [{
-                            "id": "EXT-1",
-                            "owner": "orchestrator",
-                            "summary": "Finalize slice write_set mapping.",
-                            "status": "closed",
-                            "closed_by": "orchestrator",
-                        }],
-                    },
-                    {
-                        "session": "integration_test",
-                        "candidate_ref": "plan",
-                        "candidate_revision": SYN_REV,
-                        "candidate_digest": SYN_DIGEST,
-                        "verdict": "READY",
-                    },
-                ]
-            }
-        ), "accept"),
-        ("SEIT-EMV-022", "implementation_candidate_ready_external_item_missing_owner", "implementation", planning_contract_implementation(
-            wave={
-                "sessions": [
-                    {
-                        "session": "mbse",
-                        "candidate_ref": "plan",
-                        "candidate_revision": SYN_REV,
-                        "candidate_digest": SYN_DIGEST,
-                        "verdict": "CANDIDATE_READY",
-                        "external_open_items": [{
-                            "id": "EXT-1",
-                            "summary": "Missing owner.",
-                            "status": "open",
-                        }],
-                    },
-                    {
-                        "session": "integration_test",
-                        "candidate_ref": "plan",
-                        "candidate_revision": SYN_REV,
-                        "candidate_digest": SYN_DIGEST,
-                        "verdict": "READY",
-                    },
-                ]
-            }
-        ), "reject"),
-        ("SEIT-EMV-022", "implementation_planning_wave_edit_records_accepted", "implementation", planning_contract_implementation(
-            wave={
-                "edit_records": [{
-                    "path": "seit.json",
-                    "kind": "hash_binding",
-                    "field": "source_baseline.planning_inputs[0].sha256",
-                    "before": "0" * 64,
-                    "after": SYN_DIGEST,
-                    "before_sha256": "1" * 64,
-                    "after_sha256": SYN_DIGEST,
-                    "reason": "Refresh source hash after assembly.",
-                }]
-            }
-        ), "accept"),
-        ("SEIT-EMV-022", "implementation_planning_wave_edit_records_meaning_kind_rejected", "implementation", planning_contract_implementation(
-            wave={
-                "edit_records": [{
-                    "path": "seit.json",
-                    "kind": "meaning",
-                    "field": "proof_cases[0].expected_result",
-                    "before": "a",
-                    "after": "b",
-                    "before_sha256": "1" * 64,
-                    "after_sha256": SYN_DIGEST,
-                    "reason": "Disguised meaning change.",
-                }]
-            }
-        ), "reject"),
-        ("SEIT-EMV-022", "implementation_planning_corrections_rc2_sessions_accepted", "implementation",
-            planning_contract_implementation() | {
-                "journey_settings": planning_contract_implementation()["journey_settings"] | {
-                    "planning_corrections": [{
-                        "correction_id": "corr-1",
-                        "from_candidate": {"candidate_ref": "plan", "candidate_revision": "r1", "candidate_digest": SYN_DIGEST},
-                        "required_sessions": ["mbse", "integration_test"],
-                    }]
-                }
-            }, "accept"),
-        ("SEIT-EMV-022", "implementation_planning_corrections_removed_session_rejected", "implementation",
-            planning_contract_implementation() | {
-                "journey_settings": planning_contract_implementation()["journey_settings"] | {
-                    "planning_corrections": [{
-                        "correction_id": "corr-1",
-                        "from_candidate": {"candidate_ref": "plan", "candidate_revision": "r1", "candidate_digest": SYN_DIGEST},
-                        "required_sessions": ["requirements_engineer"],
-                    }]
-                }
-            }, "reject"),
-        ("SEIT-EMV-022", "implementation_planning_wave_no_specialists_unreviewed", "implementation", unreviewed_planning_implementation([]), "accept"),
-        ("SEIT-EMV-022", "implementation_planning_wave_unreviewed_with_receipt", "implementation",
-            unreviewed_planning_implementation(["integration_test"], {"review_receipt": {"path": "gate-evidence/planning-review.json", "sha256": SYN_DIGEST}}), "reject"),
-        ("SEIT-EMV-022", "implementation_planning_wave_unreviewed_with_review_count", "implementation",
-            unreviewed_planning_implementation(["integration_test"], {"reviews": 1}), "reject"),
-        ("SEIT-EMV-022", "implementation_planning_wave_review_request_not_boolean", "implementation",
-            planning_contract_implementation(wave={"review_requested": "no"}), "reject"),
-        ("SEIT-EMV-022", "implementation_boundary_contract_flow_without_sink", "implementation", planning_contract_implementation(
-            boundary={"flows": [{"id": "FLOW-1", "source": {"component": "a", "owner": "b"}}]}
-        ), "reject"),
-        ("SEIT-EMV-022", "implementation_wave_with_gate_cost", "implementation", complete_implementation(
-            waves=[complete_implementation()["waves"][0] | {"resource_groups": ["engine", "display"], "added_gate_seconds": 120}]
-        ), "accept"),
-        ("SEIT-EMV-022", "implementation_wave_without_shared_resources_or_added_cost", "implementation", complete_implementation(
-            waves=[complete_implementation()["waves"][0] | {"resource_groups": [], "added_gate_seconds": 0}]
-        ), "accept"),
-        ("SEIT-EMV-022", "implementation_wave_negative_gate_seconds", "implementation", complete_implementation(
-            waves=[complete_implementation()["waves"][0] | {"added_gate_seconds": -1}]
-        ), "reject"),
-        ("SEIT-EMV-022", "implementation_wave_string_gate_seconds", "implementation", complete_implementation(
-            waves=[complete_implementation()["waves"][0] | {"added_gate_seconds": "120"}]
-        ), "reject"),
-        ("SEIT-EMV-022", "implementation_wave_duplicate_resource_groups", "implementation", complete_implementation(
-            waves=[complete_implementation()["waves"][0] | {"resource_groups": ["engine", "engine"]}]
-        ), "reject"),
-        ("SEIT-EMV-022", "implementation_wave_empty_resource_group", "implementation", complete_implementation(
-            waves=[complete_implementation()["waves"][0] | {"resource_groups": [""]}]
-        ), "reject"),
-        ("SEIT-EMV-022", "implementation_wave_nonarray_resource_groups", "implementation", complete_implementation(
-            waves=[complete_implementation()["waves"][0] | {"resource_groups": "engine"}]
-        ), "reject"),
-        ("SEIT-EMV-022", "human_decision_null", "implementation", complete_implementation(
-            slices=[complete_slice(human_decision=None)]
-        ), "accept"),
-        ("SEIT-EMV-022", "human_decision_string", "implementation", complete_implementation(
-            slices=[complete_slice(human_decision="owner-confirmed")]
-        ), "accept"),
-        ("SEIT-EMV-022", "human_decision_object", "implementation", complete_implementation(
-            slices=[complete_slice(human_decision={"required": False, "status": "none"})]
-        ), "accept"),
-        ("SEIT-EMV-022", "dispatchable_slice_with_authority_id", "implementation", complete_implementation(
-            slices=[complete_slice(authority_id=SYN_AUTH, dispatchable=True)]
-        ), "accept"),
-        ("SEIT-EMV-022", "authority_id_null_on_dispatchable", "implementation", complete_implementation(
-            slices=[complete_slice(authority_id=None, dispatchable=True)]
-        ), "reject"),
-        # R1: a dispatchable slice must name a real authority envelope. An empty
-        # string is not an identity, so it must be rejected exactly like null.
-        ("SEIT-EMV-022", "authority_id_empty_string_on_dispatchable", "implementation", complete_implementation(
-            slices=[complete_slice(authority_id="", dispatchable=True)]
-        ), "reject"),
-        ("SEIT-EMV-022", "authority_id_null_on_not_dispatchable", "implementation", complete_implementation(
-            slices=[complete_slice(
-                id="SYN-S-BLOCKED",
-                type="release-gated",
-                authority_id=None,
-                dispatchable=False,
-            )]
-        ), "accept"),
-        ("SEIT-EMV-024", "authority_id_null_on_publication_blocked", "implementation", complete_implementation(
-            slices=[complete_slice(
-                id="SYN-S-PUB",
-                type="release-gated",
-                authority_id=None,
-                dispatchable=False,
-                slice_status="publication-blocked",
-            )]
-        ), "accept"),
-        # #608: optional per-slice real inputs and held resource.
-        ("SEIT-EMV-022", "slice_with_inputs_and_resource", "implementation", complete_implementation(
-            slices=[complete_slice(inputs=["S0", "docs/design.md"], resource="host:i7")]
-        ), "accept"),
-        ("SEIT-EMV-022", "slice_with_empty_inputs", "implementation", complete_implementation(
-            slices=[complete_slice(inputs=[])]
-        ), "accept"),
-        ("SEIT-EMV-022", "slice_with_duplicate_inputs", "implementation", complete_implementation(
-            slices=[complete_slice(inputs=["S0", "S0"])]
-        ), "reject"),
-        ("SEIT-EMV-022", "slice_with_empty_input_item", "implementation", complete_implementation(
-            slices=[complete_slice(inputs=[""])]
-        ), "reject"),
-        ("SEIT-EMV-022", "slice_with_nonarray_inputs", "implementation", complete_implementation(
-            slices=[complete_slice(inputs="S0")]
-        ), "reject"),
-        ("SEIT-EMV-022", "slice_with_empty_resource", "implementation", complete_implementation(
-            slices=[complete_slice(resource="")]
-        ), "reject"),
-        ("SEIT-EMV-022", "slice_with_nonstring_resource", "implementation", complete_implementation(
-            slices=[complete_slice(resource=42)]
-        ), "reject"),
-        ("SEIT-EMV-022", "nested_slices_keep_new_and_legacy_declarations", "implementation", complete_implementation(
-            waves=[{"id": SYN_WAVE, "slices": [
-                complete_slice(inputs=[], resource="host:example"), complete_slice(), SYN_SLICE,
-            ]}]
-        ), "accept"),
-        ("SEIT-EMV-022", "nested_slice_rejects_nonarray_inputs", "implementation", complete_implementation(
-            waves=[{"id": SYN_WAVE, "slices": [complete_slice(inputs="S0")]}]
-        ), "reject"),
-        ("SEIT-EMV-022", "nested_slice_rejects_duplicate_inputs", "implementation", complete_implementation(
-            waves=[{"id": SYN_WAVE, "slices": [complete_slice(inputs=["S0", "S0"])]}]
-        ), "reject"),
-        ("SEIT-EMV-022", "nested_slice_rejects_nonstring_resource", "implementation", complete_implementation(
-            waves=[{"id": SYN_WAVE, "slices": [complete_slice(resource=42)]}]
-        ), "reject"),
-        # #609: per-phase tooling choice and reuse.
-        ("SEIT-EMV-022", "tooling_choice_reviewed_command_list", "implementation", complete_implementation() | {
-            "journey_settings": complete_implementation()["journey_settings"] | {
-                "tooling_choice": {
-                    "mode": "reviewed_command_list",
-                    "reason": "One-off operational file copy needs no reusable binary.",
-                }
-            }
-        }, "accept"),
-        ("SEIT-EMV-022", "tooling_choice_new_reusable_tooling_with_reuse", "implementation", complete_implementation() | {
-            "journey_settings": complete_implementation()["journey_settings"] | {
-                "tooling_choice": {
-                    "mode": "new_reusable_tooling",
-                    "reason": "Repeated cross-phase inventory verification.",
-                    "reuse": "Used across every release phase and scheduled audit.",
-                }
-            }
-        }, "accept"),
-        ("SEIT-EMV-022", "tooling_choice_new_reusable_tooling_missing_reuse", "implementation", complete_implementation() | {
-            "journey_settings": complete_implementation()["journey_settings"] | {
-                "tooling_choice": {
-                    "mode": "new_reusable_tooling",
-                    "reason": "General executor.",
-                }
-            }
-        }, "reject"),
-        ("SEIT-EMV-022", "tooling_choice_missing_reason", "implementation", complete_implementation() | {
-            "journey_settings": complete_implementation()["journey_settings"] | {
-                "tooling_choice": {
-                    "mode": "reviewed_command_list",
-                }
-            }
-        }, "reject"),
-        ("SEIT-EMV-022", "tooling_choice_blank_reason", "implementation", complete_implementation() | {
-            "journey_settings": complete_implementation()["journey_settings"] | {
-                "tooling_choice": {
-                    "mode": "reviewed_command_list",
-                    "reason": " \t",
-                }
-            }
-        }, "reject"),
-        ("SEIT-EMV-022", "tooling_choice_blank_reuse", "implementation", complete_implementation() | {
-            "journey_settings": complete_implementation()["journey_settings"] | {
-                "tooling_choice": {
-                    "mode": "new_reusable_tooling",
-                    "reason": "Repeated cross-phase work.",
-                    "reuse": " \n",
-                }
-            }
-        }, "reject"),
-        ("SEIT-EMV-022", "tooling_choice_invalid_mode", "implementation", complete_implementation() | {
-            "journey_settings": complete_implementation()["journey_settings"] | {
-                "tooling_choice": {
-                    "mode": "ad_hoc_script",
-                    "reason": "Unsupported mode.",
-                }
-            }
-        }, "reject"),
-    ])
+                ),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-022",
+                "implementation_planning_wave_unreviewed_with_review_count",
+                "implementation",
+                unreviewed_planning_implementation(
+                    ["integration_test"], {"reviews": 1}
+                ),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-022",
+                "implementation_planning_wave_review_request_not_boolean",
+                "implementation",
+                planning_contract_implementation(wave={"review_requested": "no"}),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-022",
+                "implementation_boundary_contract_flow_without_sink",
+                "implementation",
+                planning_contract_implementation(
+                    boundary={
+                        "flows": [
+                            {"id": "FLOW-1", "source": {"component": "a", "owner": "b"}}
+                        ]
+                    }
+                ),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-022",
+                "implementation_wave_with_gate_cost",
+                "implementation",
+                complete_implementation(
+                    waves=[
+                        complete_implementation()["waves"][0]
+                        | {
+                            "resource_groups": ["engine", "display"],
+                            "added_gate_seconds": 120,
+                        }
+                    ]
+                ),
+                "accept",
+            ),
+            (
+                "SEIT-EMV-022",
+                "implementation_wave_without_shared_resources_or_added_cost",
+                "implementation",
+                complete_implementation(
+                    waves=[
+                        complete_implementation()["waves"][0]
+                        | {"resource_groups": [], "added_gate_seconds": 0}
+                    ]
+                ),
+                "accept",
+            ),
+            (
+                "SEIT-EMV-022",
+                "implementation_wave_negative_gate_seconds",
+                "implementation",
+                complete_implementation(
+                    waves=[
+                        complete_implementation()["waves"][0]
+                        | {"added_gate_seconds": -1}
+                    ]
+                ),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-022",
+                "implementation_wave_string_gate_seconds",
+                "implementation",
+                complete_implementation(
+                    waves=[
+                        complete_implementation()["waves"][0]
+                        | {"added_gate_seconds": "120"}
+                    ]
+                ),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-022",
+                "implementation_wave_duplicate_resource_groups",
+                "implementation",
+                complete_implementation(
+                    waves=[
+                        complete_implementation()["waves"][0]
+                        | {"resource_groups": ["engine", "engine"]}
+                    ]
+                ),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-022",
+                "implementation_wave_empty_resource_group",
+                "implementation",
+                complete_implementation(
+                    waves=[
+                        complete_implementation()["waves"][0]
+                        | {"resource_groups": [""]}
+                    ]
+                ),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-022",
+                "implementation_wave_nonarray_resource_groups",
+                "implementation",
+                complete_implementation(
+                    waves=[
+                        complete_implementation()["waves"][0]
+                        | {"resource_groups": "engine"}
+                    ]
+                ),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-022",
+                "human_decision_null",
+                "implementation",
+                complete_implementation(slices=[complete_slice(human_decision=None)]),
+                "accept",
+            ),
+            (
+                "SEIT-EMV-022",
+                "human_decision_string",
+                "implementation",
+                complete_implementation(
+                    slices=[complete_slice(human_decision="owner-confirmed")]
+                ),
+                "accept",
+            ),
+            (
+                "SEIT-EMV-022",
+                "human_decision_object",
+                "implementation",
+                complete_implementation(
+                    slices=[
+                        complete_slice(
+                            human_decision={"required": False, "status": "none"}
+                        )
+                    ]
+                ),
+                "accept",
+            ),
+            (
+                "SEIT-EMV-022",
+                "dispatchable_slice_with_authority_id",
+                "implementation",
+                complete_implementation(
+                    slices=[complete_slice(authority_id=SYN_AUTH, dispatchable=True)]
+                ),
+                "accept",
+            ),
+            (
+                "SEIT-EMV-022",
+                "authority_id_null_on_dispatchable",
+                "implementation",
+                complete_implementation(
+                    slices=[complete_slice(authority_id=None, dispatchable=True)]
+                ),
+                "reject",
+            ),
+            # R1: a dispatchable slice must name a real authority envelope. An empty
+            # string is not an identity, so it must be rejected exactly like null.
+            (
+                "SEIT-EMV-022",
+                "authority_id_empty_string_on_dispatchable",
+                "implementation",
+                complete_implementation(
+                    slices=[complete_slice(authority_id="", dispatchable=True)]
+                ),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-022",
+                "authority_id_null_on_not_dispatchable",
+                "implementation",
+                complete_implementation(
+                    slices=[
+                        complete_slice(
+                            id="SYN-S-BLOCKED",
+                            type="release-gated",
+                            authority_id=None,
+                            dispatchable=False,
+                        )
+                    ]
+                ),
+                "accept",
+            ),
+            (
+                "SEIT-EMV-024",
+                "authority_id_null_on_publication_blocked",
+                "implementation",
+                complete_implementation(
+                    slices=[
+                        complete_slice(
+                            id="SYN-S-PUB",
+                            type="release-gated",
+                            authority_id=None,
+                            dispatchable=False,
+                            slice_status="publication-blocked",
+                        )
+                    ]
+                ),
+                "accept",
+            ),
+            # #608: optional per-slice real inputs and held resource.
+            (
+                "SEIT-EMV-022",
+                "slice_with_inputs_and_resource",
+                "implementation",
+                complete_implementation(
+                    slices=[
+                        complete_slice(
+                            inputs=["S0", "docs/design.md"], resource="host:i7"
+                        )
+                    ]
+                ),
+                "accept",
+            ),
+            (
+                "SEIT-EMV-022",
+                "slice_with_empty_inputs",
+                "implementation",
+                complete_implementation(slices=[complete_slice(inputs=[])]),
+                "accept",
+            ),
+            (
+                "SEIT-EMV-022",
+                "slice_with_duplicate_inputs",
+                "implementation",
+                complete_implementation(slices=[complete_slice(inputs=["S0", "S0"])]),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-022",
+                "slice_with_empty_input_item",
+                "implementation",
+                complete_implementation(slices=[complete_slice(inputs=[""])]),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-022",
+                "slice_with_nonarray_inputs",
+                "implementation",
+                complete_implementation(slices=[complete_slice(inputs="S0")]),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-022",
+                "slice_with_empty_resource",
+                "implementation",
+                complete_implementation(slices=[complete_slice(resource="")]),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-022",
+                "slice_with_nonstring_resource",
+                "implementation",
+                complete_implementation(slices=[complete_slice(resource=42)]),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-022",
+                "nested_slices_keep_new_and_legacy_declarations",
+                "implementation",
+                complete_implementation(
+                    waves=[
+                        {
+                            "id": SYN_WAVE,
+                            "slices": [
+                                complete_slice(inputs=[], resource="host:example"),
+                                complete_slice(),
+                                SYN_SLICE,
+                            ],
+                        }
+                    ]
+                ),
+                "accept",
+            ),
+            (
+                "SEIT-EMV-022",
+                "nested_slice_rejects_nonarray_inputs",
+                "implementation",
+                complete_implementation(
+                    waves=[{"id": SYN_WAVE, "slices": [complete_slice(inputs="S0")]}]
+                ),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-022",
+                "nested_slice_rejects_duplicate_inputs",
+                "implementation",
+                complete_implementation(
+                    waves=[
+                        {
+                            "id": SYN_WAVE,
+                            "slices": [complete_slice(inputs=["S0", "S0"])],
+                        }
+                    ]
+                ),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-022",
+                "nested_slice_rejects_nonstring_resource",
+                "implementation",
+                complete_implementation(
+                    waves=[{"id": SYN_WAVE, "slices": [complete_slice(resource=42)]}]
+                ),
+                "reject",
+            ),
+            # #609: per-phase tooling choice and reuse.
+            (
+                "SEIT-EMV-022",
+                "tooling_choice_reviewed_command_list",
+                "implementation",
+                complete_implementation()
+                | {
+                    "journey_settings": complete_implementation()["journey_settings"]
+                    | {
+                        "tooling_choice": {
+                            "mode": "reviewed_command_list",
+                            "reason": "One-off operational file copy needs no reusable binary.",
+                        }
+                    }
+                },
+                "accept",
+            ),
+            (
+                "SEIT-EMV-022",
+                "tooling_choice_new_reusable_tooling_with_reuse",
+                "implementation",
+                complete_implementation()
+                | {
+                    "journey_settings": complete_implementation()["journey_settings"]
+                    | {
+                        "tooling_choice": {
+                            "mode": "new_reusable_tooling",
+                            "reason": "Repeated cross-phase inventory verification.",
+                            "reuse": "Used across every release phase and scheduled audit.",
+                        }
+                    }
+                },
+                "accept",
+            ),
+            (
+                "SEIT-EMV-022",
+                "tooling_choice_new_reusable_tooling_missing_reuse",
+                "implementation",
+                complete_implementation()
+                | {
+                    "journey_settings": complete_implementation()["journey_settings"]
+                    | {
+                        "tooling_choice": {
+                            "mode": "new_reusable_tooling",
+                            "reason": "General executor.",
+                        }
+                    }
+                },
+                "reject",
+            ),
+            (
+                "SEIT-EMV-022",
+                "tooling_choice_missing_reason",
+                "implementation",
+                complete_implementation()
+                | {
+                    "journey_settings": complete_implementation()["journey_settings"]
+                    | {
+                        "tooling_choice": {
+                            "mode": "reviewed_command_list",
+                        }
+                    }
+                },
+                "reject",
+            ),
+            (
+                "SEIT-EMV-022",
+                "tooling_choice_blank_reason",
+                "implementation",
+                complete_implementation()
+                | {
+                    "journey_settings": complete_implementation()["journey_settings"]
+                    | {
+                        "tooling_choice": {
+                            "mode": "reviewed_command_list",
+                            "reason": " \t",
+                        }
+                    }
+                },
+                "reject",
+            ),
+            (
+                "SEIT-EMV-022",
+                "tooling_choice_blank_reuse",
+                "implementation",
+                complete_implementation()
+                | {
+                    "journey_settings": complete_implementation()["journey_settings"]
+                    | {
+                        "tooling_choice": {
+                            "mode": "new_reusable_tooling",
+                            "reason": "Repeated cross-phase work.",
+                            "reuse": " \n",
+                        }
+                    }
+                },
+                "reject",
+            ),
+            (
+                "SEIT-EMV-022",
+                "tooling_choice_invalid_mode",
+                "implementation",
+                complete_implementation()
+                | {
+                    "journey_settings": complete_implementation()["journey_settings"]
+                    | {
+                        "tooling_choice": {
+                            "mode": "ad_hoc_script",
+                            "reason": "Unsupported mode.",
+                        }
+                    }
+                },
+                "reject",
+            ),
+        ]
+    )
     return out
 
 
 def profiles_cases() -> list[tuple[str, str, object, str, str | None]]:
     """(seit_id, name, instance, expect accept|reject, raw)."""
     wrong_primary = complete_user_catalog()
-    wrong_primary["profiles"]["fixture-alpha"]["roles"]["implementer"]["primary"] = "harness-a"
+    wrong_primary["profiles"]["fixture-alpha"]["roles"]["implementer"]["primary"] = (
+        "harness-a"
+    )
     wrong_fallbacks = complete_user_catalog()
-    wrong_fallbacks["profiles"]["fixture-alpha"]["roles"]["implementer"]["ordered_fallbacks"] = {
+    wrong_fallbacks["profiles"]["fixture-alpha"]["roles"]["implementer"][
+        "ordered_fallbacks"
+    ] = {
         "condition": "condition-first",
     }
     collision = complete_user_catalog()
-    collision["profiles"]["Fixture-Alpha"] = copy.deepcopy(collision["profiles"]["fixture-alpha"])
+    collision["profiles"]["Fixture-Alpha"] = copy.deepcopy(
+        collision["profiles"]["fixture-alpha"]
+    )
     retired = complete_user_catalog()
     retired["profiles"]["fixture-alpha"]["roles"]["surveyor"] = {
         "enabled": True,
-        "primary": {"harness": "harness-a", "model": "model-a", "reasoning": "reasoning-a"},
+        "primary": {
+            "harness": "harness-a",
+            "model": "model-a",
+            "reasoning": "reasoning-a",
+        },
         "ordered_fallbacks": [],
     }
     retired_planning = {}
     for key in ("plan_integrator", "planning_and_design"):
         retired_planning[key] = complete_user_catalog()
-        retired_planning[key]["profiles"]["fixture-alpha"]["roles"][key] = profile_session_route()
+        retired_planning[key]["profiles"]["fixture-alpha"]["roles"][key] = (
+            profile_session_route()
+        )
     bad_cadence = complete_user_catalog()
     bad_cadence["profiles"]["fixture-alpha"]["roles"]["reviewer"]["cadence"] = "wave"
-    missing_roles = omit_nested(complete_user_catalog(), "profiles", "fixture-alpha", "roles")
+    missing_roles = omit_nested(
+        complete_user_catalog(), "profiles", "fixture-alpha", "roles"
+    )
     unknown_role = complete_user_catalog()
-    unknown_role["profiles"]["fixture-alpha"]["roles"]["not_a_configurable_role"] = profile_session_route()
+    unknown_role["profiles"]["fixture-alpha"]["roles"]["not_a_configurable_role"] = (
+        profile_session_route()
+    )
     single_with_test_implementer = complete_user_catalog()
-    single_with_test_implementer["profiles"]["fixture-alpha"]["roles"]["test_implementer"] = copy.deepcopy(
-        load_profiles_fixture()["profiles"]["fixture-gamma"]["roles"]["test_implementer"]
+    single_with_test_implementer["profiles"]["fixture-alpha"]["roles"][
+        "test_implementer"
+    ] = copy.deepcopy(
+        load_profiles_fixture()["profiles"]["fixture-gamma"]["roles"][
+            "test_implementer"
+        ]
     )
 
     out: list[tuple[str, str, object, str, str | None]] = [
-        ("SEIT-BDL-002", "complete_populated_user_catalog_with_resolving_defaults", complete_user_catalog(), "accept", None),
-        ("SEIT-BDL-002", "populated_catalog_without_defaults_field", omit(complete_user_catalog(), "defaults"), "accept", None),
-        ("SEIT-BDL-002", "unlimited_profile_keys", {
-            "schema_version": 1,
-            "profiles": {
-                "fixture-alpha": complete_profile(),
-                "fixture-beta": complete_profile(),
-                "fixture-gamma": complete_profile(),
+        (
+            "SEIT-BDL-002",
+            "complete_populated_user_catalog_with_resolving_defaults",
+            complete_user_catalog(),
+            "accept",
+            None,
+        ),
+        (
+            "SEIT-BDL-002",
+            "populated_catalog_without_defaults_field",
+            omit(complete_user_catalog(), "defaults"),
+            "accept",
+            None,
+        ),
+        (
+            "SEIT-BDL-002",
+            "unlimited_profile_keys",
+            {
+                "schema_version": 1,
+                "profiles": {
+                    "fixture-alpha": complete_profile(),
+                    "fixture-beta": complete_profile(),
+                    "fixture-gamma": complete_profile(),
+                },
+                "defaults": {
+                    "planning": "fixture-alpha",
+                    "implementation": "fixture-gamma",
+                },
             },
-            "defaults": {
-                "planning": "fixture-alpha",
-                "implementation": "fixture-gamma",
+            "accept",
+            None,
+        ),
+        (
+            "SEIT-BDL-002",
+            "long_profile_name_no_128_ceiling",
+            catalog_named("A" + ("a" * 128)),
+            "accept",
+            None,
+        ),
+        (
+            "SEIT-BDL-002",
+            "schema_version_string_1",
+            complete_user_catalog(schema_version="1"),
+            "reject",
+            None,
+        ),
+        (
+            "SEIT-BDL-002",
+            "schema_version_not_1",
+            complete_user_catalog(schema_version=2),
+            "reject",
+            None,
+        ),
+        (
+            "SEIT-BDL-002",
+            "profiles_array_not_object",
+            complete_user_catalog(profiles=[]),
+            "reject",
+            None,
+        ),
+        (
+            "SEIT-BDL-002",
+            "profile_not_object",
+            {
+                "schema_version": 1,
+                "profiles": {"fixture-alpha": "not-an-object"},
             },
-        }, "accept", None),
-        ("SEIT-BDL-002", "long_profile_name_no_128_ceiling", catalog_named("A" + ("a" * 128)), "accept", None),
-        ("SEIT-BDL-002", "schema_version_string_1", complete_user_catalog(schema_version="1"), "reject", None),
-        ("SEIT-BDL-002", "schema_version_not_1", complete_user_catalog(schema_version=2), "reject", None),
-        ("SEIT-BDL-002", "profiles_array_not_object", complete_user_catalog(profiles=[]), "reject", None),
-        ("SEIT-BDL-002", "profile_not_object", {
-            "schema_version": 1,
-            "profiles": {"fixture-alpha": "not-an-object"},
-        }, "reject", None),
+            "reject",
+            None,
+        ),
         ("SEIT-BDL-002", "primary_not_object", wrong_primary, "reject", None),
-        ("SEIT-BDL-002", "ordered_fallbacks_not_array", wrong_fallbacks, "reject", None),
-        ("SEIT-BDL-002", "duplicate_raw_json_keys", None, "reject", raw_duplicate_profile_keys()),
+        (
+            "SEIT-BDL-002",
+            "ordered_fallbacks_not_array",
+            wrong_fallbacks,
+            "reject",
+            None,
+        ),
+        (
+            "SEIT-BDL-002",
+            "duplicate_raw_json_keys",
+            None,
+            "reject",
+            raw_duplicate_profile_keys(),
+        ),
         ("SEIT-BDL-002", "ascii_case_fold_collision", collision, "reject", None),
-        ("SEIT-BDL-002", "defaults_planning_does_not_resolve", complete_user_catalog(
-            defaults={"planning": "missing-profile", "implementation": "fixture-beta"}
-        ), "reject", None),
-        ("SEIT-BDL-002", "defaults_implementation_does_not_resolve", complete_user_catalog(
-            defaults={"planning": "fixture-alpha", "implementation": "missing-profile"}
-        ), "reject", None),
+        (
+            "SEIT-BDL-002",
+            "defaults_planning_does_not_resolve",
+            complete_user_catalog(
+                defaults={
+                    "planning": "missing-profile",
+                    "implementation": "fixture-beta",
+                }
+            ),
+            "reject",
+            None,
+        ),
+        (
+            "SEIT-BDL-002",
+            "defaults_implementation_does_not_resolve",
+            complete_user_catalog(
+                defaults={
+                    "planning": "fixture-alpha",
+                    "implementation": "missing-profile",
+                }
+            ),
+            "reject",
+            None,
+        ),
         ("SEIT-BDL-002", "retired_surveyor_role_rejected", retired, "reject", None),
-        ("SEIT-BDL-002", "retired_plan_integrator_route_rejected", retired_planning["plan_integrator"], "reject", None),
-        ("SEIT-BDL-002", "retired_planning_and_design_route_rejected", retired_planning["planning_and_design"], "reject", None),
+        (
+            "SEIT-BDL-002",
+            "retired_plan_integrator_route_rejected",
+            retired_planning["plan_integrator"],
+            "reject",
+            None,
+        ),
+        (
+            "SEIT-BDL-002",
+            "retired_planning_and_design_route_rejected",
+            retired_planning["planning_and_design"],
+            "reject",
+            None,
+        ),
         ("SEIT-BDL-002", "invalid_cadence_rejected", bad_cadence, "reject", None),
         ("SEIT-BDL-002", "profile_missing_roles", missing_roles, "reject", None),
-        ("SEIT-BDL-002", "legacy_lineups_root_rejected", complete_user_catalog() | {"lineups": {}}, "reject", None),
+        (
+            "SEIT-BDL-002",
+            "legacy_lineups_root_rejected",
+            complete_user_catalog() | {"lineups": {}},
+            "reject",
+            None,
+        ),
     ]
 
     def with_additional_tools(tools: object) -> dict:
@@ -1754,92 +2826,184 @@ def profiles_cases() -> list[tuple[str, str, object, str, str | None]]:
         profile.setdefault("deterministic_verification", {})["additional_tools"] = tools
         return catalog
 
-    tool = {"name": "Repository tests", "enabled": True,
-            "command": "node --test test/*.test.mjs", "pass": "Exit 0", "evidence": "Test summary"}
-    out.extend([
-        ("SEIT-BDL-002", "additional_testing_tools_configured", with_additional_tools([tool]), "accept", None),
-        ("SEIT-BDL-002", "additional_testing_tools_empty", with_additional_tools([]), "accept", None),
-        ("SEIT-BDL-002", "additional_testing_tool_disabled_needs_no_command", with_additional_tools([
-            {"name": "Coverage", "enabled": False}]), "accept", None),
-        ("SEIT-BDL-002", "additional_testing_tools_not_array", with_additional_tools({}), "reject", None),
-        ("SEIT-BDL-002", "additional_testing_tool_enabled_missing_command", with_additional_tools([
-            {key: value for key, value in tool.items() if key != "command"}]), "reject", None),
-        ("SEIT-BDL-002", "additional_testing_tool_whitespace_command", with_additional_tools([
-            tool | {"command": " "}]), "reject", None),
-        ("SEIT-BDL-002", "additional_testing_tool_missing_pass_rule", with_additional_tools([
-            {key: value for key, value in tool.items() if key != "pass"}]), "reject", None),
-        ("SEIT-BDL-002", "additional_testing_tool_missing_evidence", with_additional_tools([
-            {key: value for key, value in tool.items() if key != "evidence"}]), "reject", None),
-        ("SEIT-BDL-002", "additional_testing_tool_enabled_not_boolean", with_additional_tools([
-            tool | {"enabled": "yes"}]), "reject", None),
-        ("SEIT-BDL-002", "additional_testing_tool_no_credential_fields", with_additional_tools([
-            tool | {"credentials": "not-a-secret"}]), "reject", None),
-    ])
+    tool = {
+        "name": "Repository tests",
+        "enabled": True,
+        "command": "node --test test/*.test.mjs",
+        "pass": "Exit 0",
+        "evidence": "Test summary",
+    }
+    out.extend(
+        [
+            (
+                "SEIT-BDL-002",
+                "additional_testing_tools_configured",
+                with_additional_tools([tool]),
+                "accept",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "additional_testing_tools_empty",
+                with_additional_tools([]),
+                "accept",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "additional_testing_tool_disabled_needs_no_command",
+                with_additional_tools([{"name": "Coverage", "enabled": False}]),
+                "accept",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "additional_testing_tools_not_array",
+                with_additional_tools({}),
+                "reject",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "additional_testing_tool_enabled_missing_command",
+                with_additional_tools(
+                    [{key: value for key, value in tool.items() if key != "command"}]
+                ),
+                "reject",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "additional_testing_tool_whitespace_command",
+                with_additional_tools([tool | {"command": " "}]),
+                "reject",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "additional_testing_tool_missing_pass_rule",
+                with_additional_tools(
+                    [{key: value for key, value in tool.items() if key != "pass"}]
+                ),
+                "reject",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "additional_testing_tool_missing_evidence",
+                with_additional_tools(
+                    [{key: value for key, value in tool.items() if key != "evidence"}]
+                ),
+                "reject",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "additional_testing_tool_enabled_not_boolean",
+                with_additional_tools([tool | {"enabled": "yes"}]),
+                "reject",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "additional_testing_tool_no_credential_fields",
+                with_additional_tools([tool | {"credentials": "not-a-secret"}]),
+                "reject",
+                None,
+            ),
+        ]
+    )
 
     if PROFILES_SHIPPED_PATH.is_file():
-        out.insert(0, (
-            "SEIT-BDL-002",
-            "empty_shipped_catalog_without_defaults",
-            empty_shipped_catalog(),
-            "accept",
-            None,
-        ))
+        out.insert(
+            0,
+            (
+                "SEIT-BDL-002",
+                "empty_shipped_catalog_without_defaults",
+                empty_shipped_catalog(),
+                "accept",
+                None,
+            ),
+        )
     else:
-        out.insert(0, (
-            "SEIT-BDL-002",
-            "empty_shipped_catalog_without_defaults",
-            {"schema_version": 1, "profiles": {"not-empty": complete_profile()}},
-            "reject",
-            None,
-        ))
+        out.insert(
+            0,
+            (
+                "SEIT-BDL-002",
+                "empty_shipped_catalog_without_defaults",
+                {"schema_version": 1, "profiles": {"not-empty": complete_profile()}},
+                "reject",
+                None,
+            ),
+        )
 
     for field in PROFILES_ROOT_FIELDS:
-        out.append((
-            "SEIT-BDL-002",
-            f"catalog_missing_{field}",
-            omit_nested(complete_user_catalog(), field),
-            "reject",
-            None,
-        ))
+        out.append(
+            (
+                "SEIT-BDL-002",
+                f"catalog_missing_{field}",
+                omit_nested(complete_user_catalog(), field),
+                "reject",
+                None,
+            )
+        )
     for field in PROFILES_PRIMARY_FIELDS:
-        out.append((
-            "SEIT-BDL-002",
-            f"primary_missing_{field}",
-            omit_nested(
-                complete_user_catalog(),
-                "profiles", "fixture-alpha", "roles", "implementer", "primary", field,
-            ),
-            "reject",
-            None,
-        ))
+        out.append(
+            (
+                "SEIT-BDL-002",
+                f"primary_missing_{field}",
+                omit_nested(
+                    complete_user_catalog(),
+                    "profiles",
+                    "fixture-alpha",
+                    "roles",
+                    "implementer",
+                    "primary",
+                    field,
+                ),
+                "reject",
+                None,
+            )
+        )
     for field in PROFILES_FALLBACK_FIELDS:
-        out.append((
-            "SEIT-BDL-002",
-            f"fallback_missing_{field}",
-            omit_nested(
-                complete_user_catalog(),
-                "profiles", "fixture-alpha", "roles", "implementer",
-                "ordered_fallbacks", "0", field,
-            ),
-            "reject",
-            None,
-        ))
+        out.append(
+            (
+                "SEIT-BDL-002",
+                f"fallback_missing_{field}",
+                omit_nested(
+                    complete_user_catalog(),
+                    "profiles",
+                    "fixture-alpha",
+                    "roles",
+                    "implementer",
+                    "ordered_fallbacks",
+                    "0",
+                    field,
+                ),
+                "reject",
+                None,
+            )
+        )
     for field in PROFILES_PACKAGED_DEFAULT_FIELDS:
-        out.append((
-            "SEIT-BDL-002",
-            f"extra_packaged_{field}_field",
-            complete_user_catalog() | {field: {"fixture": "no"}},
-            "reject",
-            None,
-        ))
+        out.append(
+            (
+                "SEIT-BDL-002",
+                f"extra_packaged_{field}_field",
+                complete_user_catalog() | {field: {"fixture": "no"}},
+                "reject",
+                None,
+            )
+        )
     for name, value in PROFILES_INVALID_NAMES:
-        out.append((
-            "SEIT-BDL-002",
-            name,
-            catalog_named(value),
-            "reject",
-            None,
-        ))
+        out.append(
+            (
+                "SEIT-BDL-002",
+                name,
+                catalog_named(value),
+                "reject",
+                None,
+            )
+        )
 
     planning = profile_session_route()
     disabled_planning = profile_session_route(enabled=False)
@@ -1847,96 +3011,285 @@ def profiles_cases() -> list[tuple[str, str, object, str, str | None]]:
     disabled_assurance = profile_session_route(enabled=False, cadence="phase")
     execution = profile_session_route(cadence="lifecycle")
     disabled_execution = profile_session_route(enabled=False, cadence="lifecycle")
-    out.extend([
-        ("SEIT-BDL-002", "mbse_execution_session_rejected", catalog_with_role_sessions(
-            "mbse", {"execution": execution}
-        ), "reject", None),
-        ("SEIT-BDL-002", "mbse_assurance_session_rejected", catalog_with_role_sessions(
-            "mbse", {"assurance": assurance}
-        ), "reject", None),
-        ("SEIT-BDL-002", "mbse_planning_and_execution_rejected", catalog_with_role_sessions(
-            "mbse", {"planning": planning, "execution": execution}
-        ), "reject", None),
-        ("SEIT-BDL-002", "integration_test_execution_session_rejected", catalog_with_role_sessions(
-            "integration_test", {"execution": execution}
-        ), "reject", None),
-        ("SEIT-BDL-002", "integration_test_assurance_session_rejected", catalog_with_role_sessions(
-            "integration_test", {"assurance": assurance}
-        ), "reject", None),
-        ("SEIT-BDL-002", "requirements_engineer_role_rejected", catalog_with_role_sessions(
-            "requirements_engineer", {"planning": planning}
-        ), "reject", None),
-        ("SEIT-BDL-002", "systems_modeler_role_rejected", catalog_with_role_sessions(
-            "systems_modeler", {"planning": planning}
-        ), "reject", None),
-        ("SEIT-BDL-002", "test_engineer_execution_session_rejected", catalog_with_role_sessions(
-            "test_engineer", {"execution": execution}
-        ), "reject", None),
-        ("SEIT-BDL-002", "test_engineer_planning_session_rejected", catalog_with_role_sessions(
-            "test_engineer", {"planning": planning}
-        ), "reject", None),
-        ("SEIT-BDL-002", "test_engineer_planning_and_assurance_rejected", catalog_with_role_sessions(
-            "test_engineer", {"planning": planning, "assurance": assurance}
-        ), "reject", None),
-        ("SEIT-BDL-002", "integration_engineer_assurance_session_rejected", catalog_with_role_sessions(
-            "integration_engineer", {"assurance": assurance}
-        ), "reject", None),
-        ("SEIT-BDL-002", "integration_engineer_planning_session_rejected", catalog_with_role_sessions(
-            "integration_engineer", {"planning": planning}
-        ), "reject", None),
-        ("SEIT-BDL-002", "integration_engineer_planning_and_execution_rejected", catalog_with_role_sessions(
-            "integration_engineer", {"planning": planning, "execution": execution}
-        ), "reject", None),
-        ("SEIT-BDL-002", "omitted_sessioned_roles_accepted", catalog_omitting_roles(
-            "mbse",
-            "integration_test",
-            "test_engineer",
-            "integration_engineer",
-        ), "accept", None),
-        ("SEIT-BDL-002", "mbse_planning_explicitly_disabled", catalog_with_role_sessions(
-            "mbse", {"planning": disabled_planning}
-        ), "accept", None),
-        ("SEIT-BDL-002", "integration_test_planning_explicitly_disabled", catalog_with_role_sessions(
-            "integration_test", {"planning": disabled_planning}
-        ), "accept", None),
-        ("SEIT-BDL-002", "test_engineer_assurance_explicitly_disabled", catalog_with_role_sessions(
-            "test_engineer", {"assurance": disabled_assurance}
-        ), "accept", None),
-        ("SEIT-BDL-002", "integration_engineer_execution_explicitly_disabled", catalog_with_role_sessions(
-            "integration_engineer", {"execution": disabled_execution}
-        ), "accept", None),
-        ("SEIT-BDL-002", "sessioned_planning_primary_missing_harness", catalog_with_role_sessions(
-            "mbse",
-            {
-                "planning": {
-                    "enabled": True,
-                    "primary": {"model": "model-a", "reasoning": "reasoning-a"},
-                    "ordered_fallbacks": [],
-                }
-            },
-        ), "reject", None),
-        ("SEIT-BDL-002", "test_implementer_route_accepted", catalog_from_fixture_profiles(
-            "fixture-gamma"
-        ), "accept", None),
-        ("SEIT-BDL-002", "complete_populated_catalog_includes_tdd_test_implementer", complete_populated_fixture_catalog(), "accept", None),
-        ("SEIT-BDL-002", "unknown_extra_role_key_rejected", unknown_role, "reject", None),
-        ("SEIT-BDL-002", "single_implementer_without_test_implementer_accepted", catalog_from_fixture_profiles(
-            "fixture-alpha"
-        ), "accept", None),
-        ("SEIT-BDL-002", "tdd_missing_test_implementer_schema_accepted", catalog_from_fixture_profiles(
-            "fixture-beta"
-        ), "accept", None),
-        ("SEIT-BDL-002", "single_implementer_with_present_test_implementer_accepted", single_with_test_implementer, "accept", None),
-        ("SEIT-BDL-002", "review_coverage_assist_accepted", with_review_capability(True, False), "accept", None),
-        ("SEIT-BDL-002", "review_coverage_assist_required_accepted", with_review_capability(True, True), "accept", None),
-        ("SEIT-BDL-002", "review_coverage_assist_disabled_accepted", with_review_capability(False, False), "accept", None),
-        ("SEIT-BDL-002", "review_capability_without_enabled_rejected", review_missing_enabled(), "reject", None),
-        ("SEIT-BDL-002", "unknown_review_capability_rejected", review_unknown_key(), "reject", None),
-        ("SEIT-BDL-002", "assurance_repair_enabled_accepted", with_assurance_repair(True), "accept", None),
-        ("SEIT-BDL-002", "assurance_repair_disabled_accepted", with_assurance_repair(False), "accept", None),
-        ("SEIT-BDL-002", "assurance_repair_without_enabled_rejected", assurance_repair_missing_enabled(), "reject", None),
-        ("SEIT-BDL-002", "assurance_repair_unknown_field_rejected", assurance_repair_unknown_key(), "reject", None),
-    ])
+    out.extend(
+        [
+            (
+                "SEIT-BDL-002",
+                "mbse_execution_session_rejected",
+                catalog_with_role_sessions("mbse", {"execution": execution}),
+                "reject",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "mbse_assurance_session_rejected",
+                catalog_with_role_sessions("mbse", {"assurance": assurance}),
+                "reject",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "mbse_planning_and_execution_rejected",
+                catalog_with_role_sessions(
+                    "mbse", {"planning": planning, "execution": execution}
+                ),
+                "reject",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "integration_test_execution_session_rejected",
+                catalog_with_role_sessions(
+                    "integration_test", {"execution": execution}
+                ),
+                "reject",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "integration_test_assurance_session_rejected",
+                catalog_with_role_sessions(
+                    "integration_test", {"assurance": assurance}
+                ),
+                "reject",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "requirements_engineer_role_rejected",
+                catalog_with_role_sessions(
+                    "requirements_engineer", {"planning": planning}
+                ),
+                "reject",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "systems_modeler_role_rejected",
+                catalog_with_role_sessions("systems_modeler", {"planning": planning}),
+                "reject",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "test_engineer_execution_session_rejected",
+                catalog_with_role_sessions("test_engineer", {"execution": execution}),
+                "reject",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "test_engineer_planning_session_rejected",
+                catalog_with_role_sessions("test_engineer", {"planning": planning}),
+                "reject",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "test_engineer_planning_and_assurance_rejected",
+                catalog_with_role_sessions(
+                    "test_engineer", {"planning": planning, "assurance": assurance}
+                ),
+                "reject",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "integration_engineer_assurance_session_rejected",
+                catalog_with_role_sessions(
+                    "integration_engineer", {"assurance": assurance}
+                ),
+                "reject",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "integration_engineer_planning_session_rejected",
+                catalog_with_role_sessions(
+                    "integration_engineer", {"planning": planning}
+                ),
+                "reject",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "integration_engineer_planning_and_execution_rejected",
+                catalog_with_role_sessions(
+                    "integration_engineer",
+                    {"planning": planning, "execution": execution},
+                ),
+                "reject",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "omitted_sessioned_roles_accepted",
+                catalog_omitting_roles(
+                    "mbse",
+                    "integration_test",
+                    "test_engineer",
+                    "integration_engineer",
+                ),
+                "accept",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "mbse_planning_explicitly_disabled",
+                catalog_with_role_sessions("mbse", {"planning": disabled_planning}),
+                "accept",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "integration_test_planning_explicitly_disabled",
+                catalog_with_role_sessions(
+                    "integration_test", {"planning": disabled_planning}
+                ),
+                "accept",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "test_engineer_assurance_explicitly_disabled",
+                catalog_with_role_sessions(
+                    "test_engineer", {"assurance": disabled_assurance}
+                ),
+                "accept",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "integration_engineer_execution_explicitly_disabled",
+                catalog_with_role_sessions(
+                    "integration_engineer", {"execution": disabled_execution}
+                ),
+                "accept",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "sessioned_planning_primary_missing_harness",
+                catalog_with_role_sessions(
+                    "mbse",
+                    {
+                        "planning": {
+                            "enabled": True,
+                            "primary": {"model": "model-a", "reasoning": "reasoning-a"},
+                            "ordered_fallbacks": [],
+                        }
+                    },
+                ),
+                "reject",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "test_implementer_route_accepted",
+                catalog_from_fixture_profiles("fixture-gamma"),
+                "accept",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "complete_populated_catalog_includes_tdd_test_implementer",
+                complete_populated_fixture_catalog(),
+                "accept",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "unknown_extra_role_key_rejected",
+                unknown_role,
+                "reject",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "single_implementer_without_test_implementer_accepted",
+                catalog_from_fixture_profiles("fixture-alpha"),
+                "accept",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "tdd_missing_test_implementer_schema_accepted",
+                catalog_from_fixture_profiles("fixture-beta"),
+                "accept",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "single_implementer_with_present_test_implementer_accepted",
+                single_with_test_implementer,
+                "accept",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "review_coverage_assist_accepted",
+                with_review_capability(True, False),
+                "accept",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "review_coverage_assist_required_accepted",
+                with_review_capability(True, True),
+                "accept",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "review_coverage_assist_disabled_accepted",
+                with_review_capability(False, False),
+                "accept",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "review_capability_without_enabled_rejected",
+                review_missing_enabled(),
+                "reject",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "unknown_review_capability_rejected",
+                review_unknown_key(),
+                "reject",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "assurance_repair_enabled_accepted",
+                with_assurance_repair(True),
+                "accept",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "assurance_repair_disabled_accepted",
+                with_assurance_repair(False),
+                "accept",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "assurance_repair_without_enabled_rejected",
+                assurance_repair_missing_enabled(),
+                "reject",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "assurance_repair_unknown_field_rejected",
+                assurance_repair_unknown_key(),
+                "reject",
+                None,
+            ),
+        ]
+    )
 
     fellow_route = {
         "harness": "harness-fellow",
@@ -1961,44 +3314,134 @@ def profiles_cases() -> list[tuple[str, str, object, str, str | None]]:
         fellow={**copy.deepcopy(fellow_route), "ordered_fallbacks": []}
     )
     catalog_with_roles_fellow = complete_user_catalog()
-    catalog_with_roles_fellow["profiles"]["fixture-alpha"]["roles"]["fellow"] = profile_session_route()
+    catalog_with_roles_fellow["profiles"]["fixture-alpha"]["roles"]["fellow"] = (
+        profile_session_route()
+    )
     fellow_missing_model = copy.deepcopy(fellow_route)
     del fellow_missing_model["model"]
     fellow_extra_enabled = {**copy.deepcopy(fellow_route), "enabled": True}
     fellow_fb_missing_harness = copy.deepcopy(fellow_route)
     del fellow_fb_missing_harness["ordered_fallbacks"][0]["harness"]
 
-    out.extend([
-        ("SEIT-BDL-002", "catalog_top_level_fellow_accepted", catalog_with_fellow, "accept", None),
-        ("SEIT-BDL-002", "catalog_top_level_fellow_empty_fallbacks_accepted", catalog_with_fellow_empty_fb, "accept", None),
-        ("SEIT-BDL-002", "catalog_roles_fellow_rejected", catalog_with_roles_fellow, "reject", None),
-        ("SEIT-BDL-002", "catalog_top_level_fellow_missing_model_rejected", complete_user_catalog(fellow=fellow_missing_model), "reject", None),
-        ("SEIT-BDL-002", "catalog_top_level_fellow_extra_enabled_rejected", complete_user_catalog(fellow=fellow_extra_enabled), "reject", None),
-        ("SEIT-BDL-002", "catalog_top_level_fellow_fallback_missing_harness_rejected", complete_user_catalog(fellow=fellow_fb_missing_harness), "reject", None),
-    ])
+    out.extend(
+        [
+            (
+                "SEIT-BDL-002",
+                "catalog_top_level_fellow_accepted",
+                catalog_with_fellow,
+                "accept",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "catalog_top_level_fellow_empty_fallbacks_accepted",
+                catalog_with_fellow_empty_fb,
+                "accept",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "catalog_roles_fellow_rejected",
+                catalog_with_roles_fellow,
+                "reject",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "catalog_top_level_fellow_missing_model_rejected",
+                complete_user_catalog(fellow=fellow_missing_model),
+                "reject",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "catalog_top_level_fellow_extra_enabled_rejected",
+                complete_user_catalog(fellow=fellow_extra_enabled),
+                "reject",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "catalog_top_level_fellow_fallback_missing_harness_rejected",
+                complete_user_catalog(fellow=fellow_fb_missing_harness),
+                "reject",
+                None,
+            ),
+        ]
+    )
 
     decline_direct = complete_user_catalog()
-    decline_direct["profiles"]["fixture-alpha"]["roles"]["reviewer"] = {"enabled": False}
+    decline_direct["profiles"]["fixture-alpha"]["roles"]["reviewer"] = {
+        "enabled": False
+    }
     decline_direct["profiles"]["fixture-alpha"]["roles"]["scribe"] = {"enabled": False}
-    decline_direct["profiles"]["fixture-alpha"]["roles"]["light_implementer"] = {"enabled": False}
-    decline_session = catalog_with_role_sessions("mbse", {"planning": {"enabled": False}})
-    decline_assurance = catalog_with_role_sessions("test_engineer", {"assurance": {"enabled": False}})
-    decline_execution = catalog_with_role_sessions("integration_engineer", {"execution": {"enabled": False}})
+    decline_direct["profiles"]["fixture-alpha"]["roles"]["light_implementer"] = {
+        "enabled": False
+    }
+    decline_session = catalog_with_role_sessions(
+        "mbse", {"planning": {"enabled": False}}
+    )
+    decline_assurance = catalog_with_role_sessions(
+        "test_engineer", {"assurance": {"enabled": False}}
+    )
+    decline_execution = catalog_with_role_sessions(
+        "integration_engineer", {"execution": {"enabled": False}}
+    )
     enabled_missing_primary = complete_user_catalog()
-    enabled_missing_primary["profiles"]["fixture-alpha"]["roles"]["reviewer"] = {"enabled": True}
+    enabled_missing_primary["profiles"]["fixture-alpha"]["roles"]["reviewer"] = {
+        "enabled": True
+    }
     disabled_malformed_primary = complete_user_catalog()
     disabled_malformed_primary["profiles"]["fixture-alpha"]["roles"]["reviewer"] = {
         "enabled": False,
         "primary": {"harness": "harness-a"},
     }
-    out.extend([
-        ("SEIT-BDL-002", "explicit_decline_direct_routes_accepted", decline_direct, "accept", None),
-        ("SEIT-BDL-002", "explicit_decline_session_planning_accepted", decline_session, "accept", None),
-        ("SEIT-BDL-002", "explicit_decline_assurance_accepted", decline_assurance, "accept", None),
-        ("SEIT-BDL-002", "explicit_decline_execution_accepted", decline_execution, "accept", None),
-        ("SEIT-BDL-002", "enabled_route_without_primary_rejected", enabled_missing_primary, "reject", None),
-        ("SEIT-BDL-002", "disabled_route_with_malformed_primary_rejected", disabled_malformed_primary, "reject", None),
-    ])
+    out.extend(
+        [
+            (
+                "SEIT-BDL-002",
+                "explicit_decline_direct_routes_accepted",
+                decline_direct,
+                "accept",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "explicit_decline_session_planning_accepted",
+                decline_session,
+                "accept",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "explicit_decline_assurance_accepted",
+                decline_assurance,
+                "accept",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "explicit_decline_execution_accepted",
+                decline_execution,
+                "accept",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "enabled_route_without_primary_rejected",
+                enabled_missing_primary,
+                "reject",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "disabled_route_with_malformed_primary_rejected",
+                disabled_malformed_primary,
+                "reject",
+                None,
+            ),
+        ]
+    )
     return out
 
 
@@ -2051,33 +3494,113 @@ def complete_verification_receipt(**overrides: object) -> dict:
 def verification_cases() -> list[tuple[str, str, object, str]]:
     """(seit_id, name, instance, expect accept|reject)."""
     out: list[tuple[str, str, object, str]] = [
-        ("SEIT-BDL-004", "complete_verification_request", complete_verification_request(), "accept"),
-        ("SEIT-BDL-004", "complete_verification_receipt", complete_verification_receipt(), "accept"),
-        ("SEIT-BDL-004", "receipt_rejects_live_service_observation_policy", complete_verification_receipt(
-            live_service_observation={"required": True, "stages": ["before", "after"]},
-        ), "reject"),
-        ("SEIT-BDL-004", "complete_diagnostic_request", complete_verification_request(
-            authority="diagnostic", stage="implementation", selected=False, required=False
-        ), "accept"),
-        ("SEIT-BDL-004", "complete_diagnostic_receipt", complete_verification_receipt(
-            authority="diagnostic", stage="implementation",
-            produced_by={"role": "implementer", "identity": "author-syn", "session": "sess-impl-syn"},
-        ), "accept"),
-        ("SEIT-BDL-004", "receipt_inconclusive_status", complete_verification_receipt(status="INCONCLUSIVE"), "accept"),
-        ("SEIT-BDL-004", "receipt_error_status", complete_verification_receipt(status="ERROR"), "accept"),
-        ("SEIT-BDL-004", "request_schema_version_integer", complete_verification_request(schema_version=1), "reject"),
-        ("SEIT-BDL-004", "receipt_invalid_status", complete_verification_receipt(status="PASS"), "reject"),
-        ("SEIT-BDL-004", "request_invalid_authority", complete_verification_request(authority="self"), "reject"),
-        ("SEIT-BDL-004", "receipt_evidence_digest_not_sha256", complete_verification_receipt(
-            evidence_digest="not-a-digest"
-        ), "reject"),
-        ("SEIT-BDL-004", "request_empty_command_configuration", complete_verification_request(
-            command_configuration={}
-        ), "reject"),
-        ("SEIT-BDL-004", "receipt_produced_by_missing_session", complete_verification_receipt(
-            produced_by={"role": "test_engineer.assurance", "identity": "ate-syn-001"}
-        ), "reject"),
-        ("SEIT-BDL-004", "request_kind_receipt_hybrid", complete_verification_request(kind="receipt"), "reject"),
+        (
+            "SEIT-BDL-004",
+            "complete_verification_request",
+            complete_verification_request(),
+            "accept",
+        ),
+        (
+            "SEIT-BDL-004",
+            "complete_verification_receipt",
+            complete_verification_receipt(),
+            "accept",
+        ),
+        (
+            "SEIT-BDL-004",
+            "receipt_rejects_live_service_observation_policy",
+            complete_verification_receipt(
+                live_service_observation={
+                    "required": True,
+                    "stages": ["before", "after"],
+                },
+            ),
+            "reject",
+        ),
+        (
+            "SEIT-BDL-004",
+            "complete_diagnostic_request",
+            complete_verification_request(
+                authority="diagnostic",
+                stage="implementation",
+                selected=False,
+                required=False,
+            ),
+            "accept",
+        ),
+        (
+            "SEIT-BDL-004",
+            "complete_diagnostic_receipt",
+            complete_verification_receipt(
+                authority="diagnostic",
+                stage="implementation",
+                produced_by={
+                    "role": "implementer",
+                    "identity": "author-syn",
+                    "session": "sess-impl-syn",
+                },
+            ),
+            "accept",
+        ),
+        (
+            "SEIT-BDL-004",
+            "receipt_inconclusive_status",
+            complete_verification_receipt(status="INCONCLUSIVE"),
+            "accept",
+        ),
+        (
+            "SEIT-BDL-004",
+            "receipt_error_status",
+            complete_verification_receipt(status="ERROR"),
+            "accept",
+        ),
+        (
+            "SEIT-BDL-004",
+            "request_schema_version_integer",
+            complete_verification_request(schema_version=1),
+            "reject",
+        ),
+        (
+            "SEIT-BDL-004",
+            "receipt_invalid_status",
+            complete_verification_receipt(status="PASS"),
+            "reject",
+        ),
+        (
+            "SEIT-BDL-004",
+            "request_invalid_authority",
+            complete_verification_request(authority="self"),
+            "reject",
+        ),
+        (
+            "SEIT-BDL-004",
+            "receipt_evidence_digest_not_sha256",
+            complete_verification_receipt(evidence_digest="not-a-digest"),
+            "reject",
+        ),
+        (
+            "SEIT-BDL-004",
+            "request_empty_command_configuration",
+            complete_verification_request(command_configuration={}),
+            "reject",
+        ),
+        (
+            "SEIT-BDL-004",
+            "receipt_produced_by_missing_session",
+            complete_verification_receipt(
+                produced_by={
+                    "role": "test_engineer.assurance",
+                    "identity": "ate-syn-001",
+                }
+            ),
+            "reject",
+        ),
+        (
+            "SEIT-BDL-004",
+            "request_kind_receipt_hybrid",
+            complete_verification_request(kind="receipt"),
+            "reject",
+        ),
     ]
     sealed_path = ROOT / "test" / "fixtures" / "sealed-receipts.reverify.json"
     with sealed_path.open(encoding="utf-8") as fh:
@@ -2107,56 +3630,134 @@ def verification_cases() -> list[tuple[str, str, object, str]]:
         "same_freeze": True,
         "reviews": 1,
     }
-    out.extend([
-        ("SEIT-BDL-004", "sealed_receipt_evidence_tier_invalid", {**observed, "evidence_tier": "guessed"}, "reject"),
-        ("SEIT-BDL-004", "sealed_receipt_backend_verdict_invalid", {**observed, "backend_verdict": "PASS"}, "reject"),
-        ("SEIT-BDL-004", "sealed_receipt_evidence_engine_empty", {**sealed["derived"], "evidence_engine": ""}, "reject"),
-        ("SEIT-BDL-004", "tier_resolution_standard_live_host_accept", tier_override, "accept"),
-        ("SEIT-BDL-004", "tier_resolution_missing_after_observation_reject", {
-            **tier_override,
-            "live_service_observation": {"required": True, "stages": ["before"]},
-        }, "reject"),
-        ("SEIT-BDL-004", "tier_resolution_requires_live_service_observation", {
-            **tier_override, "live_service_observation": {"required": False, "stages": []},
-        }, "reject"),
-        ("SEIT-BDL-004", "tier_resolution_keeps_existing_cadence", {
-            "schema_version": "1", "kind": "tier_resolution",
-            "outcome": "READY", "reason": "tier_unchanged", "tier": "full",
-        }, "accept"),
-        ("SEIT-BDL-004", "tier_resolution_contained_tool_change_accept", contained_tier, "accept"),
-        ("SEIT-BDL-004", "tier_resolution_contained_tool_change_missing_freeze_reject",
-         omit(contained_tier, "same_freeze"), "reject"),
-        ("SEIT-BDL-004", "tier_resolution_contained_tool_change_legacy_accept",
-         omit(contained_tier, "required_sessions"), "accept"),
-        ("SEIT-BDL-004", "tier_resolution_contained_tool_change_nonempty_sessions_reject", {
-            **contained_tier, "required_sessions": ["integration_test"],
-        }, "reject"),
-        ("SEIT-BDL-004", "tier_resolution_contained_tool_change_wrong_tier_reject", {
-            **contained_tier, "tier": "full",
-        }, "reject"),
-        ("SEIT-BDL-004", "tier_resolution_unchanged_rejects_planning_fields", {
-            "schema_version": "1",
-            "kind": "tier_resolution",
-            "outcome": "READY",
-            "reason": "tier_unchanged",
-            "tier": "full",
-            "planning_sessions": 0,
-        }, "reject"),
-    ])
+    out.extend(
+        [
+            (
+                "SEIT-BDL-004",
+                "sealed_receipt_evidence_tier_invalid",
+                {**observed, "evidence_tier": "guessed"},
+                "reject",
+            ),
+            (
+                "SEIT-BDL-004",
+                "sealed_receipt_backend_verdict_invalid",
+                {**observed, "backend_verdict": "PASS"},
+                "reject",
+            ),
+            (
+                "SEIT-BDL-004",
+                "sealed_receipt_evidence_engine_empty",
+                {**sealed["derived"], "evidence_engine": ""},
+                "reject",
+            ),
+            (
+                "SEIT-BDL-004",
+                "tier_resolution_standard_live_host_accept",
+                tier_override,
+                "accept",
+            ),
+            (
+                "SEIT-BDL-004",
+                "tier_resolution_missing_after_observation_reject",
+                {
+                    **tier_override,
+                    "live_service_observation": {
+                        "required": True,
+                        "stages": ["before"],
+                    },
+                },
+                "reject",
+            ),
+            (
+                "SEIT-BDL-004",
+                "tier_resolution_requires_live_service_observation",
+                {
+                    **tier_override,
+                    "live_service_observation": {"required": False, "stages": []},
+                },
+                "reject",
+            ),
+            (
+                "SEIT-BDL-004",
+                "tier_resolution_keeps_existing_cadence",
+                {
+                    "schema_version": "1",
+                    "kind": "tier_resolution",
+                    "outcome": "READY",
+                    "reason": "tier_unchanged",
+                    "tier": "full",
+                },
+                "accept",
+            ),
+            (
+                "SEIT-BDL-004",
+                "tier_resolution_contained_tool_change_accept",
+                contained_tier,
+                "accept",
+            ),
+            (
+                "SEIT-BDL-004",
+                "tier_resolution_contained_tool_change_missing_freeze_reject",
+                omit(contained_tier, "same_freeze"),
+                "reject",
+            ),
+            (
+                "SEIT-BDL-004",
+                "tier_resolution_contained_tool_change_legacy_accept",
+                omit(contained_tier, "required_sessions"),
+                "accept",
+            ),
+            (
+                "SEIT-BDL-004",
+                "tier_resolution_contained_tool_change_nonempty_sessions_reject",
+                {
+                    **contained_tier,
+                    "required_sessions": ["integration_test"],
+                },
+                "reject",
+            ),
+            (
+                "SEIT-BDL-004",
+                "tier_resolution_contained_tool_change_wrong_tier_reject",
+                {
+                    **contained_tier,
+                    "tier": "full",
+                },
+                "reject",
+            ),
+            (
+                "SEIT-BDL-004",
+                "tier_resolution_unchanged_rejects_planning_fields",
+                {
+                    "schema_version": "1",
+                    "kind": "tier_resolution",
+                    "outcome": "READY",
+                    "reason": "tier_unchanged",
+                    "tier": "full",
+                    "planning_sessions": 0,
+                },
+                "reject",
+            ),
+        ]
+    )
     for field in VERIFICATION_REQUEST_FIELDS:
-        out.append((
-            "SEIT-BDL-004",
-            f"request_missing_{field}",
-            omit(complete_verification_request(), field),
-            "reject",
-        ))
+        out.append(
+            (
+                "SEIT-BDL-004",
+                f"request_missing_{field}",
+                omit(complete_verification_request(), field),
+                "reject",
+            )
+        )
     for field in VERIFICATION_RECEIPT_FIELDS:
-        out.append((
-            "SEIT-BDL-004",
-            f"receipt_missing_{field}",
-            omit(complete_verification_receipt(), field),
-            "reject",
-        ))
+        out.append(
+            (
+                "SEIT-BDL-004",
+                f"receipt_missing_{field}",
+                omit(complete_verification_receipt(), field),
+                "reject",
+            )
+        )
     return out
 
 
@@ -2171,33 +3772,85 @@ def control_catalogue_cases() -> list[tuple[str, str, object, str]]:
             loaded.append(entry)
             out.append(("SEIT-CTRL-001", f"seed_{path.stem}", entry, "accept"))
     if loaded:
-        out.append((
-            "SEIT-CTRL-001",
-            "catalogue_bundle_all_seeds",
-            {"schema_version": "1", "controls": loaded},
-            "accept",
-        ))
+        out.append(
+            (
+                "SEIT-CTRL-001",
+                "catalogue_bundle_all_seeds",
+                {"schema_version": "1", "controls": loaded},
+                "accept",
+            )
+        )
         sample = copy.deepcopy(loaded[0])
-        out.extend([
-            ("SEIT-CTRL-001", "entry_missing_requirement", omit(sample, "requirement"), "reject"),
-            ("SEIT-CTRL-001", "entry_missing_positive_case", omit(sample, "positive_case"), "reject"),
-            ("SEIT-CTRL-001", "entry_missing_negative_case", omit(sample, "negative_case"), "reject"),
-            ("SEIT-CTRL-001", "entry_empty_parameters", {**sample, "parameters": {}}, "reject"),
-            ("SEIT-CTRL-001", "entry_invalid_id", {**sample, "id": "LUKS-01"}, "reject"),
-            ("SEIT-CTRL-001", "entry_extra_field", {**sample, "unexpected": True}, "reject"),
-            ("SEIT-CTRL-001", "entry_requirement_no_ears", {
-                **sample,
-                "requirement": {**sample["requirement"], "statement": "Encrypt the disk."},
-            }, "reject"),
-            ("SEIT-CTRL-001", "entry_circular_oracle", {
-                **sample,
-                "positive_case": {
-                    **sample["positive_case"],
-                    "oracle_source": "Computed from production logic.",
-                },
-            }, "reject"),
-            ("SEIT-CTRL-001", "catalogue_empty_controls", {"schema_version": "1", "controls": []}, "reject"),
-        ])
+        out.extend(
+            [
+                (
+                    "SEIT-CTRL-001",
+                    "entry_missing_requirement",
+                    omit(sample, "requirement"),
+                    "reject",
+                ),
+                (
+                    "SEIT-CTRL-001",
+                    "entry_missing_positive_case",
+                    omit(sample, "positive_case"),
+                    "reject",
+                ),
+                (
+                    "SEIT-CTRL-001",
+                    "entry_missing_negative_case",
+                    omit(sample, "negative_case"),
+                    "reject",
+                ),
+                (
+                    "SEIT-CTRL-001",
+                    "entry_empty_parameters",
+                    {**sample, "parameters": {}},
+                    "reject",
+                ),
+                (
+                    "SEIT-CTRL-001",
+                    "entry_invalid_id",
+                    {**sample, "id": "LUKS-01"},
+                    "reject",
+                ),
+                (
+                    "SEIT-CTRL-001",
+                    "entry_extra_field",
+                    {**sample, "unexpected": True},
+                    "reject",
+                ),
+                (
+                    "SEIT-CTRL-001",
+                    "entry_requirement_no_ears",
+                    {
+                        **sample,
+                        "requirement": {
+                            **sample["requirement"],
+                            "statement": "Encrypt the disk.",
+                        },
+                    },
+                    "reject",
+                ),
+                (
+                    "SEIT-CTRL-001",
+                    "entry_circular_oracle",
+                    {
+                        **sample,
+                        "positive_case": {
+                            **sample["positive_case"],
+                            "oracle_source": "Computed from production logic.",
+                        },
+                    },
+                    "reject",
+                ),
+                (
+                    "SEIT-CTRL-001",
+                    "catalogue_empty_controls",
+                    {"schema_version": "1", "controls": []},
+                    "reject",
+                ),
+            ]
+        )
     return out
 
 
@@ -2223,7 +3876,10 @@ def check_fixture_contract_fields() -> tuple[bool, str]:
     for alias in FORBIDDEN_SLICE_ALIASES:
         if alias in slice_:
             problems.append(f"slice uses forbidden alias {alias}")
-    if not isinstance(slice_.get("reasoning_level"), dict) or not slice_["reasoning_level"]:
+    if (
+        not isinstance(slice_.get("reasoning_level"), dict)
+        or not slice_["reasoning_level"]
+    ):
         problems.append("slice.reasoning_level must be a non-empty object")
     if not isinstance(slice_.get("review_path"), dict):
         problems.append("slice.review_path must be an object")
@@ -2236,8 +3892,14 @@ def check_fixture_contract_fields() -> tuple[bool, str]:
         if alias in authority:
             problems.append(f"authority uses forbidden alias {alias}")
     expiry = authority.get("expiry_conditions")
-    if not isinstance(expiry, list) or not expiry or not all(isinstance(item, str) and item for item in expiry):
-        problems.append("authority.expiry_conditions must be a non-empty array of strings")
+    if (
+        not isinstance(expiry, list)
+        or not expiry
+        or not all(isinstance(item, str) and item for item in expiry)
+    ):
+        problems.append(
+            "authority.expiry_conditions must be a non-empty array of strings"
+        )
     grants = authority.get("granting_owner_decisions")
     if not isinstance(grants, list) or not grants:
         problems.append("authority.granting_owner_decisions must be a non-empty array")
@@ -2269,7 +3931,9 @@ def check_fixture_contract_fields() -> tuple[bool, str]:
         else None
     )
     if not isinstance(cardinality, dict):
-        problems.append("implementation.journey_settings.review_cardinality must be an object")
+        problems.append(
+            "implementation.journey_settings.review_cardinality must be an object"
+        )
     else:
         for field in CARDINALITY_FIELDS:
             if not isinstance(cardinality.get(field), int):
@@ -2308,7 +3972,10 @@ def check_fixture_contract_fields() -> tuple[bool, str]:
 
     if problems:
         return False, "complete fixtures omit or misuse " + ", ".join(problems)
-    return True, "complete fixtures include CONTRACT-EMV-007/008/009 named structures and lease identity fields"
+    return (
+        True,
+        "complete fixtures include CONTRACT-EMV-007/008/009 named structures and lease identity fields",
+    )
 
 
 def check_property_based_applicability() -> tuple[bool, str]:
@@ -2341,17 +4008,27 @@ def check_property_based_applicability() -> tuple[bool, str]:
         problems.append("applicable rationale must name an invariant")
     if ".." not in applicable:
         problems.append("applicable rationale must name an input domain range")
-    if not any(token in applicable for token in ("REQ-SYN-001", "AC-SYN-001", "CONTRACT-SYN-007")):
+    if not any(
+        token in applicable
+        for token in ("REQ-SYN-001", "AC-SYN-001", "CONTRACT-SYN-007")
+    ):
         problems.append("applicable rationale must tie to a requirement/design source")
     if "fixed example" not in low_non:
         problems.append("non-applicable rationale must cite fixed examples")
     if "exhaust" not in low_non and "whole" not in low_non:
-        problems.append("non-applicable rationale must say fixed examples exhaust the domain")
+        problems.append(
+            "non-applicable rationale must say fixed examples exhaust the domain"
+        )
     if "4" not in non_applicable and "2 boolean" not in non_applicable:
         problems.append("non-applicable rationale must name the small domain size")
     if problems:
-        return False, "property-based applicability not concrete: " + "; ".join(problems)
-    return True, "applicable names invariant+domain+source; non-applicable justifies fixed examples"
+        return False, "property-based applicability not concrete: " + "; ".join(
+            problems
+        )
+    return (
+        True,
+        "applicable names invariant+domain+source; non-applicable justifies fixed examples",
+    )
 
 
 def check_test_implementer_role_field(profiles_schema: dict | None) -> tuple[bool, str]:
@@ -2390,64 +4067,219 @@ def check_nkc(implementation_schema: dict) -> tuple[bool, str]:
         if isinstance(default, int):
             defaulted.append(name)
     if missing:
-        return False, f"implementation schema missing N/K/C fields: {', '.join(missing)}"
+        return (
+            False,
+            f"implementation schema missing N/K/C fields: {', '.join(missing)}",
+        )
     if defaulted:
-        return False, f"implementation schema has assistant default integers on: {', '.join(defaulted)}"
+        return (
+            False,
+            f"implementation schema has assistant default integers on: {', '.join(defaulted)}",
+        )
     return True, "n/k/c present without assistant default integers"
 
 
 def owner_stop_cases() -> list:
-    grant = {"granted": True, "owner_decision_id": SYN_DEC, "expires_at": None,
-             "exclusions": ["scope_change", "budget_exhaustion", "owner_hold", "owner_only_actions"]}
-    question = {"record_type": "owner_stop", "id": "Q1", "class": "F",
-                "question": "Authorize action?", "why_owner": "Excluded action",
-                "evidence_ref": "AUTH-1", "affected_slices": ["S1"], "blocking": True,
-                "status": "queued", "created_at": "2026-09-11T10:00:00Z",
-                "asked_at": None, "answered_at": None, "cancelled_at": None, "round_trip_id": None}
-    out = [("OWNER-STOP", "explicit_continuation", "authority", complete_authority(continuation=grant), "accept"),
-           ("OWNER-STOP", "tracked_queue", "journey", complete_journey(
-               owner_wait_tracking=True, owner_blocked_intervals=[], open_decisions=[question]), "accept")]
+    grant = {
+        "granted": True,
+        "owner_decision_id": SYN_DEC,
+        "expires_at": None,
+        "exclusions": [
+            "scope_change",
+            "budget_exhaustion",
+            "owner_hold",
+            "owner_only_actions",
+        ],
+    }
+    question = {
+        "record_type": "owner_stop",
+        "id": "Q1",
+        "class": "F",
+        "question": "Authorize action?",
+        "why_owner": "Excluded action",
+        "evidence_ref": "AUTH-1",
+        "affected_slices": ["S1"],
+        "blocking": True,
+        "status": "queued",
+        "created_at": "2026-09-11T10:00:00Z",
+        "asked_at": None,
+        "answered_at": None,
+        "cancelled_at": None,
+        "round_trip_id": None,
+    }
+    out = [
+        (
+            "OWNER-STOP",
+            "explicit_continuation",
+            "authority",
+            complete_authority(continuation=grant),
+            "accept",
+        ),
+        (
+            "OWNER-STOP",
+            "tracked_queue",
+            "journey",
+            complete_journey(
+                owner_wait_tracking=True,
+                owner_blocked_intervals=[],
+                open_decisions=[question],
+            ),
+            "accept",
+        ),
+    ]
     for key in grant:
-        out.append(("OWNER-STOP", "grant_missing_" + key, "authority",
-                    complete_authority(continuation=omit(grant, key)), "reject"))
-    out.append(("OWNER-STOP", "grant_missing_exclusions", "authority",
-                complete_authority(continuation=grant | {"exclusions": []}), "reject"))
-    out.append(("OWNER-STOP", "grant_without_expiry_conditions", "authority",
-                complete_authority(continuation=grant, expiry_conditions=[]), "reject"))
-    out.append(("OWNER-STOP", "tracking_without_intervals", "journey",
-                complete_journey(owner_wait_tracking=True), "reject"))
+        out.append(
+            (
+                "OWNER-STOP",
+                "grant_missing_" + key,
+                "authority",
+                complete_authority(continuation=omit(grant, key)),
+                "reject",
+            )
+        )
+    out.append(
+        (
+            "OWNER-STOP",
+            "grant_missing_exclusions",
+            "authority",
+            complete_authority(continuation=grant | {"exclusions": []}),
+            "reject",
+        )
+    )
+    out.append(
+        (
+            "OWNER-STOP",
+            "grant_without_expiry_conditions",
+            "authority",
+            complete_authority(continuation=grant, expiry_conditions=[]),
+            "reject",
+        )
+    )
+    out.append(
+        (
+            "OWNER-STOP",
+            "tracking_without_intervals",
+            "journey",
+            complete_journey(owner_wait_tracking=True),
+            "reject",
+        )
+    )
     for key in question.keys() - {"record_type"}:
-        out.append(("OWNER-STOP", "question_missing_" + key, "journey",
-                    complete_journey(open_decisions=[omit(question, key)]), "reject"))
+        out.append(
+            (
+                "OWNER-STOP",
+                "question_missing_" + key,
+                "journey",
+                complete_journey(open_decisions=[omit(question, key)]),
+                "reject",
+            )
+        )
     for value in ["2026-09-11T10:00:00+00:00", "2026-09-11T10:00:00.123456Z"]:
-        out.append(("OWNER-STOP", "timestamp_precision_" + value, "journey",
-                    complete_journey(open_decisions=[question | {"created_at": value}]), "reject"))
-        out.append(("OWNER-STOP", "grant_timestamp_precision_" + value, "authority",
-                    complete_authority(continuation=grant | {"expires_at": value}), "reject"))
+        out.append(
+            (
+                "OWNER-STOP",
+                "timestamp_precision_" + value,
+                "journey",
+                complete_journey(open_decisions=[question | {"created_at": value}]),
+                "reject",
+            )
+        )
+        out.append(
+            (
+                "OWNER-STOP",
+                "grant_timestamp_precision_" + value,
+                "authority",
+                complete_authority(continuation=grant | {"expires_at": value}),
+                "reject",
+            )
+        )
     for status in ["asked", "answered", "cancelled"]:
-        out.append(("OWNER-STOP", "missing_" + status + "_timestamp", "journey",
-                    complete_journey(open_decisions=[question | {"status": status}]), "reject"))
+        out.append(
+            (
+                "OWNER-STOP",
+                "missing_" + status + "_timestamp",
+                "journey",
+                complete_journey(open_decisions=[question | {"status": status}]),
+                "reject",
+            )
+        )
     delegate = {"approver": "Implementation Orchestrator", "delegation_ref": SYN_DEC}
-    out.extend([
-        ("OWNER-STOP", "delegate_approval_with_delegation_ref", "authority",
-         complete_authority(delegate_approval=delegate), "accept"),
-        ("OWNER-STOP", "delegate_approval_with_timestamp", "authority",
-         complete_authority(delegate_approval=delegate | {"approved_at": "2026-11-18T12:00:00Z"}), "accept"),
-        ("OWNER-STOP", "delegate_approval_missing_delegation_ref", "authority",
-         complete_authority(delegate_approval={"approver": "Implementation Orchestrator"}), "reject"),
-        ("OWNER-STOP", "delegate_approval_empty_delegation_ref", "authority",
-         complete_authority(delegate_approval=delegate | {"delegation_ref": ""}), "reject"),
-        ("OWNER-STOP", "delegate_approval_blank_delegation_ref", "authority",
-         complete_authority(delegate_approval=delegate | {"delegation_ref": "   "}), "reject"),
-        ("OWNER-STOP", "delegate_approval_missing_approver", "authority",
-         complete_authority(delegate_approval={"delegation_ref": SYN_DEC}), "reject"),
-        ("OWNER-STOP", "delegate_approval_empty_approver", "authority",
-         complete_authority(delegate_approval=delegate | {"approver": ""}), "reject"),
-        ("OWNER-STOP", "delegate_approval_bad_timestamp", "authority",
-         complete_authority(delegate_approval=delegate | {"approved_at": "2026-11-18T12:00:00+00:00"}), "reject"),
-        ("OWNER-STOP", "delegate_approval_non_object", "authority",
-         complete_authority(delegate_approval="Implementation Orchestrator"), "reject"),
-    ])
+    out.extend(
+        [
+            (
+                "OWNER-STOP",
+                "delegate_approval_with_delegation_ref",
+                "authority",
+                complete_authority(delegate_approval=delegate),
+                "accept",
+            ),
+            (
+                "OWNER-STOP",
+                "delegate_approval_with_timestamp",
+                "authority",
+                complete_authority(
+                    delegate_approval=delegate | {"approved_at": "2026-11-18T12:00:00Z"}
+                ),
+                "accept",
+            ),
+            (
+                "OWNER-STOP",
+                "delegate_approval_missing_delegation_ref",
+                "authority",
+                complete_authority(
+                    delegate_approval={"approver": "Implementation Orchestrator"}
+                ),
+                "reject",
+            ),
+            (
+                "OWNER-STOP",
+                "delegate_approval_empty_delegation_ref",
+                "authority",
+                complete_authority(delegate_approval=delegate | {"delegation_ref": ""}),
+                "reject",
+            ),
+            (
+                "OWNER-STOP",
+                "delegate_approval_blank_delegation_ref",
+                "authority",
+                complete_authority(
+                    delegate_approval=delegate | {"delegation_ref": "   "}
+                ),
+                "reject",
+            ),
+            (
+                "OWNER-STOP",
+                "delegate_approval_missing_approver",
+                "authority",
+                complete_authority(delegate_approval={"delegation_ref": SYN_DEC}),
+                "reject",
+            ),
+            (
+                "OWNER-STOP",
+                "delegate_approval_empty_approver",
+                "authority",
+                complete_authority(delegate_approval=delegate | {"approver": ""}),
+                "reject",
+            ),
+            (
+                "OWNER-STOP",
+                "delegate_approval_bad_timestamp",
+                "authority",
+                complete_authority(
+                    delegate_approval=delegate
+                    | {"approved_at": "2026-11-18T12:00:00+00:00"}
+                ),
+                "reject",
+            ),
+            (
+                "OWNER-STOP",
+                "delegate_approval_non_object",
+                "authority",
+                complete_authority(delegate_approval="Implementation Orchestrator"),
+                "reject",
+            ),
+        ]
+    )
     return out
 
 
@@ -2511,7 +4343,9 @@ def run_cases() -> int:
         failed += 1
 
     if not PROFILES_SHIPPED_PATH.is_file():
-        print("FAIL SEIT-BDL-002 empty_shipped_catalog_without_defaults: missing profiles.json (pending S1L)")
+        print(
+            "FAIL SEIT-BDL-002 empty_shipped_catalog_without_defaults: missing profiles.json (pending S1L)"
+        )
         failed += 1
     profiles_schema = schemas.get("profiles")
     ok, detail = check_test_implementer_role_field(
@@ -2536,7 +4370,10 @@ def run_cases() -> int:
             print(f"FAIL {line}: {PROFILES_MISSING_SCHEMA}")
             failed += 1
             continue
-        if name == "empty_shipped_catalog_without_defaults" and not PROFILES_SHIPPED_PATH.is_file():
+        if (
+            name == "empty_shipped_catalog_without_defaults"
+            and not PROFILES_SHIPPED_PATH.is_file()
+        ):
             continue
         messages = profiles_errors(profiles_schema, instance, raw)
         accepted = not messages
@@ -2585,7 +4422,9 @@ def run_cases() -> int:
                 seed_ids.add(entry["id"])
     missing_seeds = [cid for cid in EXPECTED_SEED_CONTROLS if cid not in seed_ids]
     if missing_seeds:
-        print(f"FAIL SEIT-CTRL-001 seed_controls_present: missing {', '.join(missing_seeds)}")
+        print(
+            f"FAIL SEIT-CTRL-001 seed_controls_present: missing {', '.join(missing_seeds)}"
+        )
         failed += 1
     else:
         print(f"PASS SEIT-CTRL-001 seed_controls_present: {len(seed_ids)} controls")
