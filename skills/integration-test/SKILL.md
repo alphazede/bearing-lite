@@ -40,7 +40,10 @@ independent assurance (`../test-engineer/SKILL.md`) and execution assessment
    and `resource_groups`; parallelize checks that share no resource. Follow
    `../test-engineer/references/shared-machine-tests.md`: required
    engine/server/browser tests need five consecutive and one two-copy concurrent
-   pass, or the stricter repository rule, before assembly.
+   pass, or the stricter repository rule, before assembly. Plan the first
+   implementation slice as a preflight slice running every planned command in
+   dry-run or `--version` form on every target host in parallel, and end any
+   phase that builds a host by running that repository's real gate on it.
 3. **Author `seit.json` and V&V claims:** start with the frozen requirement
    skeleton, decisions, and interface and boundary inputs. Bind each case to
    a frozen requirement ID and return those links for assembly. Where a case

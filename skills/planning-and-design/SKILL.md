@@ -53,6 +53,7 @@ owner question box (`OWNER_DECISION_REQUIRED`), even under delegation.
    `../test-engineer/references/shared-machine-tests.md`; engine-backed cases carry
    `resource_group`/`expected_gate_seconds`, waves `added_gate_seconds`/`resource_groups`.
    Prioritize prerequisite work and parallel ready work; avoid overloaded batches and false serial chains between slices that share no input or resource (`plan-package.cjs` flags them at assembly without refusing the freeze).
+   Make the first implementation slice a preflight slice that runs every planned command in dry-run or `--version` form on every target host in parallel; any phase that builds a host ends by running that repository's real gate on it.
 4. Assemble `implementation.json` and the DoD Manifest (one plan per phase). Copy specialist-owned
    decisions faithfully per `../bearing-lite/references/planning-assembly.md`;
    choose no new roles or capability defaults. Record `planning_wave` (`required_sessions`, `review_requested`); append post-approval corrections to `planning_corrections` without mutating round 1.

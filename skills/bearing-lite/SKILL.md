@@ -38,7 +38,7 @@ explicit setup or catalog-edit request uses [onboard-bearing](../onboard-bearing
    is absent, invalid, or `draft`-only, return to planning before dispatch.
    Once verified, consume the handoff. In selected TDD, run the frozen Test Implementer (`roles.test_implementer`)
    before Product Implementer. Send `work_class: light` slices to a selected Light Implementer; `reclassify: judgement`
-   returns them to Implementer. Evaluate readiness with `hooks/ready-set.cjs` and start every ready slice whose declared `inputs` and dependencies are met and whose held `resource` (host, repository, worktree, or `resource_groups`) and `write_set` are free; never hold independent slices for wave order. Honor dependencies, inputs, held resources, commands, and write sets.
+   returns them to Implementer. Evaluate readiness with `hooks/ready-set.cjs` and start every ready slice whose declared `inputs` and dependencies are met and whose held `resource` (host, repository, worktree, or `resource_groups`) and `write_set` are free; never hold independent slices for wave order. Run the first implementation slice as a preflight slice with every planned command in dry-run or `--version` form on every target host in parallel, and end any phase that builds a host by running that repository's real gate on it. Honor dependencies, inputs, held resources, commands, and write sets.
    When `snapshot.fellow` is present, follow the [Fellow consultation guide](references/consultation.md).
    Consult before a major decision (with options and a leaning in hand), when
    stuck after two genuine attempts, facing unexplained behavior, or preparing
