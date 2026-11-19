@@ -9,6 +9,8 @@ description: >
 
 # Light Implementer
 
+In a live wave, read `herdr --skill` and the [live-wave reference](../bearing-lite/references/live-wave.md).
+
 Use only when enabled in the selected profile and assigned the mechanical slice.
 Inputs fully determine the output, a
 command decides pass or fail, and nothing is decided in-session.

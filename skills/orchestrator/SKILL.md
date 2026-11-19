@@ -10,6 +10,8 @@ description: >
 
 # Orchestrator
 
+In a live wave, read `herdr --skill` and the [live-wave reference](../bearing-lite/references/live-wave.md).
+
 Discoverable name for the single canonical orchestration owner. This skill
 forwards to its canonical text; it does not duplicate orchestration policy.
 

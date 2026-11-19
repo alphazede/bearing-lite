@@ -11,6 +11,8 @@ description: >
 
 # Implementer
 
+In a live wave, read `herdr --skill` and the [live-wave reference](../bearing-lite/references/live-wave.md).
+
 One profile-enabled assignment and invocation. Extra runs or route changes need authority.
 
 ## Inputs and match

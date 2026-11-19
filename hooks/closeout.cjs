@@ -14,6 +14,7 @@ const OUTCOMES = Object.freeze(["ADVISE", "REROUTE", "BLOCK", "UNAVAILABLE"]);
 const ENFORCEMENT = "procedural";
 const { evaluatePlanningReview } = require("./planning-review.cjs");
 const { evaluateScribeCoverage } = require("./scribe-coverage.cjs");
+const { readLiveWave } = require("./plan-package.cjs");
 
 const HANDOFF_FIELDS = Object.freeze([
   "verdict",
@@ -317,8 +318,21 @@ function evaluate(input) {
       );
     }
 
-    const complete = result("ADVISE", "handoff_complete", RECOVERY_COMPLETE);
-    return planningHandoff && scribeCoverage ? { ...complete, scribe_coverage: scribeCoverage } : complete;
+    const findings = [];
+    const live_wave = planningHandoff ? readLiveWave(input.plan_dir, findings) : undefined;
+    if (findings.length) {
+      return {
+        ...result("REROUTE", "handoff_refused:final_freeze_receipt_invalid:" + findings[0].code,
+          RECOVERY_FINAL_FREEZE_HANDOFF),
+        live_wave,
+        findings,
+      };
+    }
+    return {
+      ...result("ADVISE", "handoff_complete", RECOVERY_COMPLETE),
+      ...(planningHandoff && scribeCoverage ? { scribe_coverage: scribeCoverage } : {}),
+      ...(live_wave ? { live_wave } : {}),
+    };
   } catch {
     return unavailable("adapter_exception");
   }

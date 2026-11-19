@@ -9,6 +9,8 @@ description: >
 
 # Test Engineer
 
+In a live wave, read `herdr --skill` and the [live-wave reference](../bearing-lite/references/live-wave.md).
+
 Independent assurance role (`roles.test_engineer.sessions.assurance`); planning
 V&V/SEIT authorship lives in `../integration-test/SKILL.md`, and Validator is
 absent from active roles. Independent evaluation needs the owner's requested
