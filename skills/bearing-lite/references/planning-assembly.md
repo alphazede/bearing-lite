@@ -217,7 +217,12 @@ item belongs to the Orchestrator or another author, the author returns
 `status`) rather than `GAPS`. `CANDIDATE_READY` spends no closing return, while
 `hooks/planning-review.cjs` and `hooks/plan-package.cjs` still refuse until
 every listed external item is closed by its declared owner (`status: "closed"`
-with `closed_by` matching `owner`, inline or in `external_closures`).
+with `closed_by` matching `owner`, inline or in `external_closures`). Author
+returns check only each author's own artifacts and do not depend on generated
+`implementation.json`; whenever a verify-only author return inspects
+`implementation.json`, the Planning Orchestrator must regenerate
+`implementation.json` first and bind the packet to that regenerated candidate so
+the verify-only return never reads a stale copy.
 
 ### Author-known deltas (#221)
 

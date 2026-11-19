@@ -80,7 +80,10 @@ owner question box (`OWNER_DECISION_REQUIRED`), even under delegation.
    open items are externally owned, accept `CANDIDATE_READY` with
    `external_open_items` (which spends no closing return) and close or route
    each listed external item so its declared owner closes it before planning
-   review or final freeze.
+   review or final freeze. Author returns check only each author's own artifacts
+   and do not depend on generated `implementation.json`; whenever a verify-only
+   author return reads `implementation.json`, regenerate `implementation.json`
+   before dispatching that return so it never reads a stale copy.
 6. Requested planning review opens only after `hooks/planning-review.cjs`
    `evaluatePlanningReview()` passes its guards (`manifest_not_generated` without
    the rendered Manifest). Then obtain one integrated owner confirmation (never
