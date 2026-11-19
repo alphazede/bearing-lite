@@ -13,7 +13,7 @@
  * every live register_sha256 pin in the repository write set must match the
  * recorded authority.json baseline, naming offenders with file:line;
  * gate-evidence/dated-receipt paths and HISTORICAL_GATE-marked values are allow-listed.
- * CLI: node <plugin root>/hooks/plan-package.cjs <plan dir> -> JSON, exit 1 on any finding.
+ * CLI: node <plugin root>/hooks/plan-package.cjs <plan dir> -> JSON, exit 1 on a blocking finding.
  * CLI: node <plugin root>/hooks/plan-package.cjs draft <plan dir> -> the pre-review freeze
  * (#205): every check except the completed planning-wave receipt.
  * CLI: node <plugin root>/hooks/plan-package.cjs wave <plan dir> <wave id> -> one wave's
@@ -1011,14 +1011,14 @@ function checkSerialChains(implementation) {
     const from = byId.get(fromId);
     const to = byId.get(toId);
     if (!from || !to) continue;
-    if (!declaresFlow(from) && !declaresFlow(to)) continue;
-    const fromInputs = new Set(strList(from.inputs));
+    if (!declaresFlow(from) || !declaresFlow(to)) continue;
+    const fromInputs = strList(from.inputs);
     const toInputs = strList(to.inputs);
     const fromWrites = strList(from.write_set);
     const toWrites = strList(to.write_set);
     const sharesInput =
       toInputs.includes(fromId) ||
-      toInputs.some((inp) => fromInputs.has(inp)) ||
+      toInputs.some((inp) => fromInputs.some((other) => pathsOverlap(other, inp))) ||
       toInputs.some((inp) => fromWrites.some((w) => pathsOverlap(w, inp)));
     const fromRes = resSet(from);
     const toRes = resSet(to);

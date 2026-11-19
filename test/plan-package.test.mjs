@@ -837,4 +837,32 @@ describe("plan-package (Alphazedehq#608 false serial chain flag)", () => {
     });
     assert.deepEqual(freeze(legacyWithoutFields).findings, []);
   });
+
+  it("leaves overlapping input scopes and partly declared legacy edges unflagged", (t) => {
+    const overlapping = setupPackage(t, (doc) => {
+      doc.slices[0].inputs = ["config/"];
+      doc.slices[1].inputs = ["config/service.json"];
+    });
+    const mixedLegacy = setupPackage(t, (doc) => {
+      delete doc.slices[0].inputs;
+      delete doc.slices[0].resource;
+    });
+    for (const dir of [overlapping, mixedLegacy]) {
+      for (const stage of ["draft", "final"]) {
+        const result = freeze(dir, { stage });
+        assert.equal(result.outcome, "PASS");
+        assert.deepEqual(result.findings, []);
+      }
+    }
+  });
+
+  it("still fails an existing freeze check when a serial chain warning is present", (t) => {
+    const dir = setupPackage(t, (doc) => {
+      doc.slices[1].command_ids = ["CMD-MISSING"];
+    });
+    const result = freeze(dir, { stage: "final" });
+    assert.equal(result.outcome, "FAIL");
+    assert.ok(result.findings.some((f) => f.code === "unknown_command_id"));
+    assert.ok(result.findings.some((f) => f.code === "false_serial_chain" && f.blocking === false));
+  });
 });

@@ -283,7 +283,11 @@ specialists. It never waits for the end-of-wave review.
   or required integration boundary. Name merge hotspots and shared test resources.
 - Include gate cost and resource groups in wave planning. Group independent
   checks concurrently and preserve required coverage and security controls.
-- Generate the implementation graph from those real dependencies and held resources. `hooks/plan-package.cjs` flags (without refusing the freeze) any ordering edge between slices that share no input or resource (`false_serial_chain`). Wave boundaries
+- Generate the implementation graph from those real dependencies and held
+  resources. For pairs that both declare flow data, the package checker flags
+  an ordering edge that shares no input or resource as `false_serial_chain`
+  without refusing the freeze. Overlapping input paths count as shared inputs.
+  Wave boundaries
   support integration and the owner's chosen review cadence; they do not create
   automatic per-wave reviews or additional review agents.
 - Use Light Implementer only when selected and applicable. Preserve its existing

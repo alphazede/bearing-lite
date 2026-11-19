@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Keep serial-chain warnings advisory and avoid flagging shared input paths or edges with incomplete legacy flow declarations. (#608)
 - Show frozen slice inputs and held resources in the DoD Manifest task graph, including inline wave slices. (#608)
 - Validate inputs and held resources for inline wave slices as well as top-level slices. Legacy slice references remain valid. (#608)
 - Hold declared external inputs until their required versions are observed, and allow an observed input before a later writer runs. (#608)
