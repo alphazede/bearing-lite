@@ -6,6 +6,7 @@
 - Record per-phase planning choice between a short reviewed command list and new reusable tooling in `journey_settings.tooling_choice` (`schemas/implementation.schema.json`), `skills/planning-and-design/SKILL.md`, `skills/planning-and-design/references/artifact-grammar.md`, and `skills/bearing-lite/references/planning-assembly.md`, requiring `reason` and `reuse` when new tooling is chosen. (Alphazedehq#609)
 - Support per-slice real `inputs` and held `resource` in `schemas/implementation.schema.json`, `hooks/ready-set.cjs`, `hooks/plan-package.cjs` (flagging `false_serial_chain` edges that share no input or resource without refusing the freeze, and forwarding the fields in `waveView`), and `tools/render-dod-manifest.mjs`, and direct the Implementation Orchestrator and planning docs to start every ready slice without wave-level serialization. (Alphazedehq#608)
 - Require planning and implementation guidance to run the first implementation slice as a parallel preflight across every target host in dry-run or `--version` form and close any host-building phase by running that repository's real gate on it. (Alphazedehq#610)
+- Require integration and landing guidance to run the heavy check before merge when a change edits a table or fixture that other suites read. (Alphazedehq#612)
 
 ## [3.0.0-rc.3] - 2026-11-19
 
