@@ -29,7 +29,8 @@ at the end of the wave and before replacing the active plugin.
 ## Exchange evidence
 
 The wave's declared evidence artifact is `live/<wave>/exchange.jsonl`. The
-launcher appends one JSON object per send.
+launcher appends one JSON object per send using the
+[exchange record schema](../../../schemas/live-exchange-record.schema.json).
 
 | Key | Value |
 | --- | --- |

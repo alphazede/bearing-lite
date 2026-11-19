@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/alphazede/bearing-lite/schemas/live-exchange-record.schema.json",
+  "title": "Bearing Lite live-wave exchange record",
+  "description": "One message send in exchange.jsonl. Readers also check references to earlier requests and the digest of the body file.",
+  "type": "object",
+  "$defs": {
+    "nonempty": { "type": "string", "pattern": "\\S" },
+    "digest": { "type": "string", "pattern": "^[0-9a-fA-F]{64}$" }
+  },
+  "required": [
+    "time", "from", "to", "request_id", "reply_to", "body_path", "body_sha256",
+    "delivered", "attempts", "allowed", "role_file_digests"
+  ],
+  "properties": {
+    "time": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|\\+00:00)$"
+    },
+    "from": { "$ref": "#/$defs/nonempty" },
+    "to": { "$ref": "#/$defs/nonempty" },
+    "request_id": { "$ref": "#/$defs/nonempty" },
+    "reply_to": { "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/nonempty" }] },
+    "body_path": {
+      "$ref": "#/$defs/nonempty",
+      "description": "Body file path relative to the plan directory."
+    },
+    "body_sha256": { "$ref": "#/$defs/digest" },
+    "delivered": { "type": "boolean" },
+    "attempts": { "type": "integer", "enum": [1, 2] },
+    "allowed": { "type": "boolean" },
+    "role_file_digests": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/nonempty" },
+      "additionalProperties": {
+        "type": "object",
+        "propertyNames": { "$ref": "#/$defs/nonempty" },
+        "additionalProperties": { "$ref": "#/$defs/digest" }
+      }
+    }
+  }
+}

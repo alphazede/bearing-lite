@@ -271,8 +271,8 @@ def pip_install(target: str) -> None:
     if wheelhouse:
         cmd.extend(["--no-index", "--find-links", wheelhouse])
     try:
-        subprocess.check_call(cmd, stdout=sys.stderr)
-    except (OSError, subprocess.CalledProcessError) as exc:
+        subprocess.check_call(cmd, stdout=sys.stderr, timeout=120)
+    except (OSError, subprocess.SubprocessError) as exc:
         die_env(f"isolated pip --require-hashes install failed: {exc}")
 
 
@@ -292,8 +292,11 @@ def bootstrap() -> None:
         proc = subprocess.run(
             [sys.executable, "-I", "-S", str(Path(__file__).resolve())],
             env=env,
+            timeout=60,
         )
         raise SystemExit(proc.returncode)
+    except subprocess.TimeoutExpired as exc:
+        die_env(f"schema validation timed out: {exc}")
     finally:
         shutil.rmtree(target, ignore_errors=True)
 
@@ -304,6 +307,7 @@ def load_schemas() -> dict[str, dict | None]:
         "authority": "authority.schema.json",
         "implementation": "implementation.schema.json",
         "seit": "seit.schema.json",
+        "live_exchange": "live-exchange-record.schema.json",
     }
     out: dict[str, dict | None] = {}
     for key, filename in names.items():
@@ -998,7 +1002,32 @@ def raw_duplicate_profile_keys() -> str:
 
 def cases() -> list[tuple[str, str, str, object, str]]:
     """(seit_id, name, schema_key, instance, expect accept|reject)."""
+    exchange = {
+        "time": "2026-11-19T10:00:00+00:00",
+        "from": "implementer",
+        "to": "reviewer",
+        "request_id": "request-1",
+        "reply_to": None,
+        "body_path": "live/W1/messages/request-1.md",
+        "body_sha256": "a" * 64,
+        "delivered": False,
+        "attempts": 2,
+        "allowed": False,
+        "role_file_digests": {"implementer": {"src/a.js": "b" * 64}},
+    }
     out: list[tuple[str, str, str, object, str]] = [
+        ("HLW-VC-025", "exchange_advisory_flags", "live_exchange", exchange, "accept"),
+        ("HLW-VC-025", "exchange_reply", "live_exchange", dict(exchange, reply_to="request-0"), "accept"),
+        *[
+            ("HLW-VC-025", f"exchange_invalid_{field}", "live_exchange", {**exchange, field: value}, "reject")
+            for field, value in (
+                ("time", "2026-11-19T10:00:00-06:00"),
+                ("attempts", 3),
+                ("body_sha256", "unbound"),
+                ("allowed", "false"),
+                ("role_file_digests", {"implementer": {"src/a.js": "unbound"}}),
+            )
+        ],
         ("SEIT-EMV-024", "incomplete_journey_document", "journey", {"schema_version": "1"}, "reject"),
         ("SEIT-EMV-024", "incomplete_authority_document", "authority", {
             "schema_version": "1",
