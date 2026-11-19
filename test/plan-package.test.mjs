@@ -911,6 +911,21 @@ describe("plan-package (Alphazedehq#628 declared artifacts and named unreadable 
     assert.deepEqual(res.findings, []);
   });
 
+  it("checks live frozen hashes in existing plan JSON sidecars during final freeze", (t) => {
+    const dir = setupValidPackage(t);
+    const sidecar = "design-bindings.json";
+    const plan = readFileSync(path.join(dir, "plan.md"));
+    const writeSidecar = (digest) => writeFileSync(path.join(dir, sidecar), JSON.stringify({
+      source_file_hashes: { "plan.md": digest },
+    }));
+    writeSidecar("0".repeat(64));
+    const stale = freeze(dir);
+    assert.equal(stale.outcome, "FAIL", JSON.stringify(stale));
+    assert.ok(stale.findings.some(f => f.code === "frozen_hash_mismatch" && f.from === sidecar && f.path === "plan.md"));
+    writeSidecar(sha(plan));
+    assert.equal(freeze(dir).outcome, "PASS");
+  });
+
   it("names the offending declared artifact when unreadable or invalid JSON", (t) => {
     for (const bad of ["authority.json", "plan-integration.json"]) {
       const dir = setupValidPackage(t);

@@ -125,10 +125,11 @@ function readFileChecked(file, label = file) {
   }
 }
 
-function readJson(file, label = file) {
+function readJson(file, label = file, ignoreBlank = false) {
   if (!fs.existsSync(file)) return null;
   try {
-    return JSON.parse(fs.readFileSync(file, "utf8"));
+    const text = fs.readFileSync(file, "utf8");
+    return ignoreBlank && !text.trim() ? null : JSON.parse(text);
   } catch (error) {
     throw withFilePath(error, label);
   }
@@ -355,25 +356,22 @@ function declaredFrozenHashArtifacts(dir, seit, implementation) {
     addIfInDir(input?.path);
   }
   addIfInDir(implementation?.journey_settings?.planning_wave?.review_receipt?.path);
-  return [...declared];
+  return declared;
 }
 
 /** #121: live frozen-content hashes must match the files they name. */
 function checkFrozenHashes(dir, findings = [], declaredNames = null) {
   const root = repoRoot(dir);
-  let names = [];
-  if (Array.isArray(declaredNames)) {
-    names = declaredNames;
-  } else {
-    try {
-      names = fs.readdirSync(dir);
-    } catch {
-      return findings;
-    }
+  let names;
+  try {
+    names = fs.readdirSync(dir);
+  } catch {
+    return findings;
   }
   for (const name of names) {
     if (!name.endsWith(".json")) continue;
-    const data = readJson(path.join(dir, name), name);
+    // Existing plans may store live hash maps in sidecars without declaring them as inputs.
+    const data = readJson(path.join(dir, name), name, declaredNames !== null && !declaredNames.has(name));
     const maps = [];
     if (data?.source_file_hashes && typeof data.source_file_hashes === "object") {
       maps.push(data.source_file_hashes);
