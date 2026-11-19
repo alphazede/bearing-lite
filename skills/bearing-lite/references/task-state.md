@@ -78,7 +78,9 @@ delivery, not assurance: it never opens or reopens a review.
   passing check, a review verdict, or a profile setting never grants merge.
   Otherwise merge stays with the owner: report the pull request, mark the unit
   as awaiting the owner's merge, and continue dependency-ready work on the
-  same branch. Never rewrite published history to land.
+  same branch. Never rewrite published history to land. When a target-host gate
+  cannot run, land locally only what the plan and `handoff.md` explicitly permit
+  while holding host-gated closure or merge.
 - **Record:** each push, pull request, and observed merge is a landing. The
   configured recorder transcribes it before handoff or closeout.
   `hooks/reconcile.cjs` observes merges through `merge` events. It never

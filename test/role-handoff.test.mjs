@@ -364,4 +364,14 @@ describe("Alphazedehq#594 planning handoff requires final freeze receipt", () =>
     assert.match(router, /Implementation:[\s\S]{0,400}final_freeze_receipt[\s\S]{0,200}return to planning/i);
     assert.match(assembly, /Implementation order after the handoff[\s\S]{0,400}final_freeze_receipt[\s\S]{0,200}return(?:ing)? to planning/i);
   });
+
+  it("handoff template settles target-host transport, approval authority, and local landing (#614)", () => {
+    const handoffTpl = readFileSync(path.join(ROOT, "skills/bearing-lite/templates/handoff.md"), "utf8");
+    assert.match(handoffTpl, /candidate_transport:/);
+    assert.match(handoffTpl, /transport_approval:/);
+    assert.match(handoffTpl, /local_landing_when_host_gate_unavailable:/);
+    assert.match(handoffTpl, /exact candidate/i);
+    assert.match(handoffTpl, /proof/i);
+    assert.match(handoffTpl, /target host/i);
+  });
 });

@@ -29,6 +29,10 @@ result with the command and its exit code.
 - profile_snapshot: <frozen selected models/harnesses/capabilities>
 - assignments_and_write_sets: <dependency-ordered waves/slices, roles, write sets>
 - commands_and_evidence: <commands, exit codes, and digests — not narrative logs>
+- target_host_delivery:
+  - candidate_transport: <how the exact candidate and its proof travel to each target host, or none>
+  - transport_approval: <who may approve that transport (owner or explicit delegate within authority.json), or none>
+  - local_landing_when_host_gate_unavailable: <what may land locally vs what stays held when the host gate cannot run, or none>
 - review_status: <planning review outcome or review_requested: false>
 - blockers: <none | open blockers>
 - next_action: <first implementation wave/slice dispatch>
@@ -38,4 +42,7 @@ At intake, the Implementation Orchestrator checks `stage: final`, `outcome: PASS
 and `exit_code: 0` on the structured receipt. Compare `manifest_digest` with
 `journey_settings.planning_review.candidate_digest` in the handoff's
 `implementation.json` and verify the recorded artifact hashes against their files.
+When work crosses a target host, confirm `target_host_delivery` settles how the
+exact candidate and its proof travel to the target host, who may approve that
+transport, and what may land locally when the host gate cannot run.
 If the receipt is absent or any check fails, return to planning before dispatch.

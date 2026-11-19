@@ -165,6 +165,10 @@ undefined term and fails the gate.
 12. Make the first implementation slice a preflight slice that runs every planned
    command in dry-run or `--version` form on every target host in parallel; a
    phase that builds a host ends by running that repository's real gate on it.
+   When work crosses a target host, state in the plan and `handoff.md` how the
+   exact candidate and its proof travel to the target host, who may approve that
+   transport (owner or explicit delegate within `authority.json`), and what may
+   land locally when the host gate cannot run.
 
 ## Optional binding sections
 

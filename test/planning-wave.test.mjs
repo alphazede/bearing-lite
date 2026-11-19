@@ -1075,6 +1075,31 @@ describe("Alphazedehq#612 pre-merge heavy check for shared tables and fixtures",
   });
 });
 
+describe("Alphazedehq#614 target-host transport and local-landing branches", () => {
+  it("requires plan and handoff text to settle transport, approval authority, and local landing", () => {
+    for (const rel of [
+      "skills/bearing-lite/references/planning-assembly.md",
+      "skills/planning-and-design/SKILL.md",
+      "skills/planning-and-design/references/artifact-grammar.md",
+      "skills/bearing-lite/SKILL.md",
+    ]) {
+      operatorInstruction(rel, [
+        /exact candidate/i,
+        /\bproof\b|receipts?|digests?/i,
+        /target host/i,
+        /\btransport|travel/i,
+        /approv/i,
+        /land locally|local landing/i,
+        /host gate cannot run|host gate is unavailable/i,
+      ], /\n\s*\n/);
+    }
+    operatorInstruction("skills/bearing-lite/references/task-state.md", [
+      /host gate cannot run|host gate is unavailable/i,
+      /land locally|local landing/i,
+    ]);
+  });
+});
+
 function operatorInstruction(rel, expectations, breakAt = /(?<=[.!?])\s+/) {
   const parts = read(rel).split(/\n\s*\n/).flatMap(paragraph => paragraph
     .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
