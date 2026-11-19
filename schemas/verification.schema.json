@@ -123,35 +123,7 @@
         "stage": { "$ref": "#/$defs/stage" },
         "evidence_tier": { "type": "string", "enum": ["observed", "derived"] },
         "backend_verdict": { "$ref": "#/$defs/status" },
-        "evidence_engine": { "$ref": "#/$defs/nonempty" },
-        "live_service_observation": { "$ref": "#/$defs/live_service_observation" }
-      }
-    },
-    "live_service_observation": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["required", "stages"],
-      "properties": {
-        "required": { "type": "boolean" },
-        "stages": {
-          "type": "array",
-          "items": { "type": "string", "enum": ["before", "after"] },
-          "uniqueItems": true
-        }
-      },
-      "if": {
-        "properties": { "required": { "const": true } },
-        "required": ["required"]
-      },
-      "then": {
-        "properties": {
-          "stages": {
-            "allOf": [
-              { "contains": { "const": "before" } },
-              { "contains": { "const": "after" } }
-            ]
-          }
-        }
+        "evidence_engine": { "$ref": "#/$defs/nonempty" }
       }
     },
     "tier_resolution": {
@@ -173,7 +145,9 @@
         "implementers": { "type": "integer", "minimum": 0 },
         "reviews": { "type": "integer", "minimum": 0 },
         "separate_assurance": { "type": "boolean" },
-        "live_service_observation": { "$ref": "#/$defs/live_service_observation" }
+        "live_service_observation": {
+          "const": { "required": true, "stages": ["before", "after"] }
+        }
       },
       "if": {
         "properties": { "reason": { "const": "copy_or_read_only_live_host" } }
@@ -185,10 +159,7 @@
           "tier": { "const": "standard" },
           "implementers": { "const": 1 },
           "reviews": { "const": 1 },
-          "separate_assurance": { "const": false },
-          "live_service_observation": {
-            "properties": { "required": { "const": true }, "stages": { "const": ["before", "after"] } }
-          }
+          "separate_assurance": { "const": false }
         }
       },
       "else": {

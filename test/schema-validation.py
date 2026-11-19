@@ -1842,6 +1842,9 @@ def verification_cases() -> list[tuple[str, str, object, str]]:
     out: list[tuple[str, str, object, str]] = [
         ("SEIT-BDL-004", "complete_verification_request", complete_verification_request(), "accept"),
         ("SEIT-BDL-004", "complete_verification_receipt", complete_verification_receipt(), "accept"),
+        ("SEIT-BDL-004", "receipt_rejects_live_service_observation_policy", complete_verification_receipt(
+            live_service_observation={"required": True, "stages": ["before", "after"]},
+        ), "reject"),
         ("SEIT-BDL-004", "complete_diagnostic_request", complete_verification_request(
             authority="diagnostic", stage="implementation", selected=False, required=False
         ), "accept"),
