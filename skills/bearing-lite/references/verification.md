@@ -103,17 +103,23 @@ assurance session produces `assurance`.
 `resolveProcessTier(phase)` in `hooks/verification.cjs` (and re-exported by
 `hooks/verification-bridge.cjs`, validated against `tier_resolution` in
 `schemas/verification.schema.json`) resolves a phase's process tier under the
-stated risk rule (`planning-assembly.md#process-tiers-and-stated-risk-rule`):
+stated risk rule ([planning assembly](planning-assembly.md#process-tiers-and-stated-risk-rule)).
 
-- A **copy-only or read-only** phase that crosses into a host with **live
-  services** (and carries no other `full`-tier risk factor) may resolve to
+1. Apply the existing risk rule and pass its result as `prior_tier`. Preserve
+   any explicit owner tier. Set `live_host_only_full_risk: true` only when
+   crossing a host with **live services** is the sole reason for `full`.
+   Supply `live_host: true` and the known operation scope (`copy_only`,
+   `read_only`, or an `operations` list of copy, read, observe, or inspect).
+2. An eligible **copy-only or read-only** phase may resolve to
   `standard` with a required **before and after live-service observation**
   (`live_service_observation: { required: true, stages: ["before", "after"] }`):
   one implementer, one review, and **no separate assurance** (`separate_assurance: false`).
-- A phase that **deletes or mutates** (or carries other `full`-tier risk
-  factors, or does not declare copy-only or read-only behavior) resolves as
-  before (`full` with separate assurance when crossing live hosts or high-risk
-  boundaries).
+   The Implementation Orchestrator schedules both observations around the
+   host operation and includes both results in the existing review evidence.
+3. A phase that **deletes or mutates**, carries other `full`-tier risk
+   factors, or has an unconfirmed scope retains the original tier and cadence.
+   A `tier_unchanged` result carries the original tier. If the helper has no
+   prior tier, apply the existing risk rule.
 
 ## Gate-chain claim types
 

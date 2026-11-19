@@ -162,22 +162,42 @@
         "kind",
         "outcome",
         "reason",
-        "tier",
-        "implementers",
-        "reviews",
-        "separate_assurance",
-        "live_service_observation"
+        "tier"
       ],
       "properties": {
         "schema_version": { "type": "string", "const": "1" },
         "kind": { "type": "string", "const": "tier_resolution" },
-        "outcome": { "$ref": "#/$defs/nonempty" },
+        "outcome": { "enum": ["READY", "REJECT", "NEEDS_MORE_EVIDENCE"] },
         "reason": { "$ref": "#/$defs/nonempty" },
         "tier": { "type": ["string", "null"], "enum": ["light", "standard", "full", null] },
         "implementers": { "type": "integer", "minimum": 0 },
         "reviews": { "type": "integer", "minimum": 0 },
         "separate_assurance": { "type": "boolean" },
         "live_service_observation": { "$ref": "#/$defs/live_service_observation" }
+      },
+      "if": {
+        "properties": { "reason": { "const": "copy_or_read_only_live_host" } }
+      },
+      "then": {
+        "required": ["implementers", "reviews", "separate_assurance", "live_service_observation"],
+        "properties": {
+          "outcome": { "const": "READY" },
+          "tier": { "const": "standard" },
+          "implementers": { "const": 1 },
+          "reviews": { "const": 1 },
+          "separate_assurance": { "const": false },
+          "live_service_observation": {
+            "properties": { "required": { "const": true }, "stages": { "const": ["before", "after"] } }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "implementers": false,
+          "reviews": false,
+          "separate_assurance": false,
+          "live_service_observation": false
+        }
       }
     }
   }

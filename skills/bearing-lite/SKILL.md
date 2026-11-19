@@ -27,7 +27,9 @@ explicit setup or catalog-edit request uses [onboard-bearing](../onboard-bearing
    no second scope stage or agent.
 3. **Planning:** select the process tier (`light` — Orchestrator plus one author —
    `standard`, or `full`) by the stated risk rule in
-   `references/planning-assembly.md`, coordinate only the profile-enabled
+   `references/planning-assembly.md`, including the
+   [live-host tier exception](references/verification.md#process-tier-resolution)
+   when applicable. Coordinate only the profile-enabled
    specialists required by that tier and task, then author final plan/design and
    assemble the package using `references/planning-assembly.md`. Specialists run
    only their own artifact checker; the repository gate runs once at assembly, and

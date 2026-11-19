@@ -427,9 +427,11 @@ describe("Alphazedehq#611 copy-only or read-only live-host tier resolution", () 
     for (const phase of [
       { live_host: true, copy_only: true },
       { live_services: true, read_only: true },
-      { crosses_live_host: true, operations: ["copy", "read"], prior_tier: "full" },
+      { crosses_live_host: true, operations: ["copy", "read"] },
     ]) {
-      const got = adapter.resolveProcessTier(phase);
+      const got = adapter.resolveProcessTier({
+        ...phase, prior_tier: "full", live_host_only_full_risk: true,
+      });
       assert.equal(got.outcome, "READY");
       assert.equal(got.tier, "standard");
       assert.equal(got.implementers, 1);
@@ -440,24 +442,35 @@ describe("Alphazedehq#611 copy-only or read-only live-host tier resolution", () 
     }
   });
 
-  it("keeps full or prior tier for phases that delete, mutate, carry other full risks, or omit copy-only/read-only", () => {
+  it("keeps the prior tier and lifecycle cadence outside the approved exception", () => {
     const cases = [
-      [{ live_host: true, deletes: true }, "full", true],
-      [{ live_host: true, mutates: true }, "full", true],
-      [{ live_host: true, copy_only: true, deletes: true }, "full", true],
-      [{ live_host: true, operations: ["copy", "mutate"] }, "full", true],
-      [{ live_host: true }, "full", true],
-      [{ live_host: true, copy_only: true, trust_boundary: true }, "full", true],
-      [{ live_host: false, copy_only: true }, "light", false],
-      [{ live_host: false, moderate_risk: true }, "standard", false],
-      [{ prior_tier: "standard", mutates: true }, "standard", false],
+      { live_host: true, deletes: true, prior_tier: "full" },
+      { live_host: true, mutates: true, prior_tier: "full" },
+      { live_host: true, copy_only: true, deletes: true, prior_tier: "full" },
+      { live_host: true, operations: ["copy", "mutate"], prior_tier: "full" },
+      { live_host: true, prior_tier: "full" },
+      { live_host: true, copy_only: true, trust_boundary: true, prior_tier: "full" },
+      { live_host: true, read_only: true, concurrency_contract: true, prior_tier: "full" },
+      { live_host: true, read_only: true, high_impact_loss: true, prior_tier: "full" },
+      { live_host: true, read_only: true, live_host_only_full_risk: false, prior_tier: "full" },
+      { live_host: true, read_only: true, prior_tier: "light" },
+      { live_host: false, copy_only: true, prior_tier: "light" },
+      { moderate_risk: true, prior_tier: "standard" },
+      { mutates: true, prior_tier: "standard" },
     ];
-    for (const [phase, expectedTier, expectedAssurance] of cases) {
-      const got = adapter.resolveProcessTier(phase);
-      assert.equal(got.outcome, "READY");
-      assert.equal(got.tier, expectedTier, JSON.stringify(phase));
-      assert.equal(got.separate_assurance, expectedAssurance, JSON.stringify(phase));
-      assert.equal(got.live_service_observation.required, false);
+    for (const phase of cases) {
+      const got = adapter.resolveProcessTier({ live_host_only_full_risk: true, ...phase });
+      assert.deepEqual(got, {
+        schema_version: "1", kind: "tier_resolution", outcome: "READY",
+        reason: "tier_unchanged", tier: phase.prior_tier,
+      }, JSON.stringify(phase));
     }
+  });
+
+  it("leaves tier selection to the existing rule when no prior tier is recorded", () => {
+    const got = adapter.resolveProcessTier({ live_host: true, mutates: true });
+    assert.equal(got.outcome, "NEEDS_MORE_EVIDENCE");
+    assert.equal(got.tier, null);
+    assert.equal(got.separate_assurance, undefined);
   });
 });
