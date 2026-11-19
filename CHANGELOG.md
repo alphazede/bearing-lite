@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Specify a single string for MBSE model trace IDs so the authored manifest matches the implementation schema.
+
 - Bind the final technical plan in the implementation package when it is written after the SEIT return.
 
 - Include the compact closeout receipt fields in the planning handoff template.

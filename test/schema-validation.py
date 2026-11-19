@@ -1017,6 +1017,20 @@ def cases() -> list[tuple[str, str, str, object, str]]:
             proof_cases=[{"id": "SEIT-SYN-002", "method": "inspection"}]
         ), "reject"),
         ("SEIT-EMV-022", "sparse_complete_implementation", "implementation", sparse_implementation(), "reject"),
+        *[
+            ("RC6-5", f"manifest_model_trace_{shape}", "implementation", complete_implementation(
+                dod_manifest={
+                    "template_version": "1.0.1",
+                    "output_name": "review.html",
+                    "title": "Trace fixture",
+                    "models": [{"id": "MODEL-1", "trace": trace}],
+                }
+            ), expect)
+            for shape, trace, expect in [
+                ("string", "REQ-001, REQ-002", "accept"),
+                ("array", ["REQ-001", "REQ-002"], "reject"),
+            ]
+        ],
         ("SEIT-EMV-022", "implementation_light_slice_complete", "implementation", complete_implementation(
             slices=[complete_slice(role="Light Implementer", work_class="light", work_class_reason="scaffold run", command_ids=["CMD-1"])]
         ), "accept"),
