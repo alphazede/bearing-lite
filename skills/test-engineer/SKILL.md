@@ -27,7 +27,11 @@ assessment.
 
 1. Assurance Test Engineer runs only when requested, in a fresh session without
    author ancestry, on the exact candidate; refuse an unconfigured
-   slice or round boundary. `VALIDATING` belongs here. A live-host phase
+   slice or round boundary. `VALIDATING` belongs here. For a multi-slice
+   declared phase or wave, independent assurance may start on finished slices'
+   immutable receipts and the pinned candidate while the last slice runs, and
+   must join the last slice's receipts before issuing its verdict while keeping
+   single-run role and gate budgets. A live-host phase
    classified per operation (not by a whole-phase label) where every planned
    operation is a copy or a read resolves to `standard` with a before and after
    live-service observation, one implementer, one review, and no separate

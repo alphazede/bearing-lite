@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Allow independent assurance to start on finished slices' immutable receipts and the pinned candidate while the last slice runs and join the last slice's receipts before issuing its verdict while keeping single-run role and gate budgets. (Alphazedehq#615)
 - Require the plan and `skills/bearing-lite/templates/handoff.md` to state how the exact candidate and its proof travel to a target host, who may approve that transport, and what may land locally when the host gate cannot run. (Alphazedehq#614)
 - Decide the `standard` live-host tier per planned operation (`operations` entries must all be `copy` or `read`) rather than by a whole-phase `copy_only` or `read_only` label, returning the prior tier for any phase with another operation. (Alphazedehq#611)
 - Require a nonblank rationale for a declared tooling choice and a nonblank reuse statement for new tooling. Existing plans may omit the choice. (#609)

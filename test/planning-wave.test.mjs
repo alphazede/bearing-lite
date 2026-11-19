@@ -1100,6 +1100,28 @@ describe("Alphazedehq#614 target-host transport and local-landing branches", () 
   });
 });
 
+describe("Alphazedehq#615 early assurance start and join before verdict", () => {
+  it("states early start on finished slices' immutable receipts and pinned candidate while the last slice runs, joining before verdict under single-run budgets", () => {
+    for (const rel of [
+      "skills/bearing-lite/SKILL.md",
+      "skills/bearing-lite/references/assurance-policy.md",
+      "skills/bearing-lite/references/coordinator-migration.md",
+      "skills/bearing-lite/references/task-state.md",
+      "skills/test-engineer/SKILL.md",
+    ]) {
+      operatorInstruction(rel, [
+        /immutable receipts/i,
+        /pinned candidate/i,
+        /while the last slice runs/i,
+        /join\w* the last slice/i,
+        /before (issuing )?(its )?verdict/i,
+        /single-run/i,
+        /budget/i,
+      ], /\n\s*\n/);
+    }
+  });
+});
+
 function operatorInstruction(rel, expectations, breakAt = /(?<=[.!?])\s+/) {
   const parts = read(rel).split(/\n\s*\n/).flatMap(paragraph => paragraph
     .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
