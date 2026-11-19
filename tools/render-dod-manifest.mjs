@@ -8,7 +8,7 @@ import { createHash } from "node:crypto";
 import { existsSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import bindings from "./manifest-view-binding.cjs";
+import bindings from "../hooks/manifest-view-binding.cjs";
 
 const { MAX_TEXT_VIEW_BYTES, loadVerifiedMermaidView, verifyDigest } = bindings;
 export const { RenderError, bindingRequirement, normalizeDigest, resolveUnder, sha256Hex } = bindings;
