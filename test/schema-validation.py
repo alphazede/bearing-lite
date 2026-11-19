@@ -1399,6 +1399,28 @@ def cases() -> list[tuple[str, str, str, object, str]]:
                 slice_status="publication-blocked",
             )]
         ), "accept"),
+        # #608: optional per-slice real inputs and held resource.
+        ("SEIT-EMV-022", "slice_with_inputs_and_resource", "implementation", complete_implementation(
+            slices=[complete_slice(inputs=["S0", "docs/design.md"], resource="host:i7")]
+        ), "accept"),
+        ("SEIT-EMV-022", "slice_with_empty_inputs", "implementation", complete_implementation(
+            slices=[complete_slice(inputs=[])]
+        ), "accept"),
+        ("SEIT-EMV-022", "slice_with_duplicate_inputs", "implementation", complete_implementation(
+            slices=[complete_slice(inputs=["S0", "S0"])]
+        ), "reject"),
+        ("SEIT-EMV-022", "slice_with_empty_input_item", "implementation", complete_implementation(
+            slices=[complete_slice(inputs=[""])]
+        ), "reject"),
+        ("SEIT-EMV-022", "slice_with_nonarray_inputs", "implementation", complete_implementation(
+            slices=[complete_slice(inputs="S0")]
+        ), "reject"),
+        ("SEIT-EMV-022", "slice_with_empty_resource", "implementation", complete_implementation(
+            slices=[complete_slice(resource="")]
+        ), "reject"),
+        ("SEIT-EMV-022", "slice_with_nonstring_resource", "implementation", complete_implementation(
+            slices=[complete_slice(resource=42)]
+        ), "reject"),
         # #609: per-phase tooling choice and reuse.
         ("SEIT-EMV-022", "tooling_choice_reviewed_command_list", "implementation", complete_implementation() | {
             "journey_settings": complete_implementation()["journey_settings"] | {

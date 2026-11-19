@@ -100,6 +100,17 @@
         "reasoning_level": { "$ref": "#/$defs/contentfulObject" },
         "review_path": { "$ref": "#/$defs/contentfulObject" },
         "write_set": { "$ref": "#/$defs/stringList" },
+        "inputs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Optional. Real inputs this slice depends on before it can start."
+        },
+        "resource": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Optional. Held resource (host, repository, or worktree) this slice occupies exclusively while running."
+        },
         "command_ids": { "$ref": "#/$defs/stringList" },
         "stop_condition": { "type": "string", "minLength": 1 },
         "human_decision": { "type": ["string", "object", "null"] },

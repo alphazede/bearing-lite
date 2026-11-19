@@ -206,8 +206,8 @@ not a reference index. Source references accompany content; they never replace i
 - Architecture rows carry `summary` or `decision` text.
 - Every slice in `slices` or `waves[].slices` has a task row keyed by the same `id`.
   Each task carries `role`, `route` (or `model_route` / `effective_route`),
-  `depends_on`, and `write_set`. Empty lists explicitly mean no dependencies or
-  no writes; omitted fields do not.
+  `depends_on`, and `write_set`, and may declare `inputs` (real upstream inputs) and `resource` (exclusive held host, repository, or worktree). Empty lists explicitly mean no dependencies or
+  no writes; omitted fields do not. `hooks/plan-package.cjs` flags any ordering edge between slices that share no input or resource (`false_serial_chain`) without refusing the freeze.
 - Documentation carries a named `surface` / `path` / `id` and `impact`, or explicit
   `not_applicable: true` with a non-empty `reason`. Unspecified rows alone fail.
 - MBSE's modeling selection is projected as `models[].mode`. `diagram-assisted`

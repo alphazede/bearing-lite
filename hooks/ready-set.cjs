@@ -7,11 +7,23 @@ const OCCUPIES = new Set(["RESERVED", "DISPATCHED", "CHECKING", "HELD"]);
 function deps(slice) {
   return Array.isArray(slice.depends_on) ? slice.depends_on : [];
 }
+function inputsOf(slice) {
+  return Array.isArray(slice.inputs) ? slice.inputs.filter(entry => typeof entry === "string" && entry) : [];
+}
 function writes(slice) {
   return Array.isArray(slice.write_set) ? slice.write_set.filter(entry => typeof entry === "string" && entry) : [];
 }
-function groups(slice) {
-  return Array.isArray(slice.resource_groups) ? slice.resource_groups : [];
+function resources(slice) {
+  const groups = Array.isArray(slice.resource_groups)
+    ? slice.resource_groups.filter(entry => typeof entry === "string" && entry)
+    : [];
+  return typeof slice.resource === "string" && slice.resource ? [slice.resource, ...groups] : groups;
+}
+function pathMatches(a, b) {
+  if (a === b) return true;
+  if (a.endsWith("/") && b.startsWith(a)) return true;
+  if (b.endsWith("/") && a.startsWith(b)) return true;
+  return false;
 }
 function occupy(index, slice) {
   for (const entry of writes(slice)) {
@@ -39,12 +51,13 @@ function evaluate(input) {
   const assignments = (input && input.assignments) || {};
   const pending = new Set((Array.isArray(input && input.pending) ? input.pending : []).map(item => item && item.slice));
   const busy = new Set(Array.isArray(input && input.busy_resources) ? input.busy_resources : []);
+  const available = Array.isArray(input && input.available_inputs) ? new Set(input.available_inputs) : null;
   const ids = new Set(slices.map(slice => slice.id));
   const index = { files: new Map(), dirs: [] };
   for (const slice of slices) {
     if (!OCCUPIES.has(assignments[slice.id])) continue;
     occupy(index, slice);
-    for (const group of groups(slice)) busy.add(group);
+    for (const res of resources(slice)) busy.add(res);
   }
   const ready = [];
   const excluded = [];
@@ -62,7 +75,21 @@ function evaluate(input) {
         if (assignments[dep] !== "COMPLETED") { cause = "dependency"; by = dep; break; }
       }
       if (!cause) {
-        for (const group of groups(slice)) if (busy.has(group)) { cause = "resource"; by = group; break; }
+        for (const inp of inputsOf(slice)) {
+          if (ids.has(inp) || Object.hasOwn(assignments, inp)) {
+            if (assignments[inp] !== "COMPLETED") { cause = "input"; by = inp; break; }
+            continue;
+          }
+          const producers = slices.filter(other => other.id !== slice.id && writes(other).some(w => pathMatches(w, inp)));
+          if (producers.length) {
+            if (producers.some(prod => assignments[prod.id] !== "COMPLETED")) { cause = "input"; by = inp; break; }
+            continue;
+          }
+          if (available && !available.has(inp)) { cause = "input"; by = inp; break; }
+        }
+      }
+      if (!cause) {
+        for (const res of resources(slice)) if (busy.has(res)) { cause = "resource"; by = res; break; }
       }
       if (!cause) {
         by = conflict(index, slice);
@@ -76,7 +103,7 @@ function evaluate(input) {
     } else {
       ready.push(slice.id);
       occupy(index, slice);
-      for (const group of groups(slice)) busy.add(group);
+      for (const res of resources(slice)) busy.add(res);
     }
   }
   return { ready, excluded };

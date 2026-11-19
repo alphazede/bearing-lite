@@ -1070,4 +1070,29 @@ describe("SEIT-B30-524 content parity and artwork", () => {
     assert.equal(/https?:\/\//i.test(html), false);
     assert.equal(/<script|<link\b/i.test(html), false);
   });
+
+  it("renders slice inputs and held resource in the task graph table (#608)", () => {
+    const dir = tempDir();
+    const doc = {
+      dod_manifest: baseManifest({
+        models: [],
+        tasks: [
+          {
+            id: "S1",
+            role: "Implementer",
+            depends_on: [],
+            inputs: ["S0", "design.md"],
+            resource: "host:i7",
+            write_set: ["src/a.js"],
+            status: "READY",
+          },
+        ],
+      }),
+    };
+    const { html } = renderFile(writeFixture(dir, doc));
+    assert.match(html, /<th[^>]*>Inputs<\/th>/);
+    assert.match(html, /<th[^>]*>Resource<\/th>/);
+    assert.match(html, /S0, design\.md/);
+    assert.match(html, /host:i7/);
+  });
 });
