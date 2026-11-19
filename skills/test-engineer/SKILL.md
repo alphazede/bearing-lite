@@ -37,13 +37,15 @@ assessment.
    verdict on the final integrated candidate. Credit early evidence only
    when its verified inputs and claims still apply to that candidate. Keep
    single-run role and gate budgets by independently validating the single-run
-   receipt as described below. A live-host phase
-   classified per operation (not by a whole-phase label) where every planned
-   operation is a copy or a read resolves to `standard` with a before and after
-   live-service observation, one implementer, one review, and no separate
-   assurance (`../bearing-lite/references/verification.md#process-tier-resolution`);
-   phases with any other operation, or that delete or mutate, retain their prior
-   tier and resolve as before.
+   receipt as described below.
+
+   For a live-host phase, [apply the per-operation tier decision](../bearing-lite/references/verification.md#process-tier-resolution).
+   Every planned operation must be a copy or a read, and live hosting must be
+   the sole reason for the `full` tier. When the resolver selects `standard`,
+   require before and after live-service observation, one implementer, one
+   review, and no separate assurance. Preserve the prior tier and cadence
+   for phases with any other operation or another full-tier risk, and honor
+   any explicit owner tier.
 2. By default, the Assurance Test Engineer independently reruns the gate-chain
    at the declared boundary for required claims and attaches `assurance` receipts.
    Author gate-chain receipts are diagnostic evidence. Use the target repository's
