@@ -67,7 +67,7 @@ explicit setup or catalog-edit request uses [onboard-bearing](../onboard-bearing
 ## Planning handoff
 
 Write `handoff.md` using `templates/handoff.md` and the Prompt skill (`../prompt/SKILL.md`) in the confirmed plan directory when planning is complete. Include `final_freeze_receipt` (`stage: "final"`, `outcome: "PASS"`, `manifest_digest`, command, and exit code from `hooks/plan-package.cjs`; a `draft` freeze does not satisfy it), exact plan paths and digests, scope, owner decisions and authority,
-selected models/harnesses/capabilities, candidate and worktree, assignments and write sets, commands, evidence, review status, blockers, and the next action.
+selected models/harnesses/capabilities, candidate and worktree, assignments and write sets, commands, evidence, review status, blockers, and the next action. When work crosses a target host, state in the plan and `handoff.md` how the exact candidate and its proof travel to the target host, who may approve that transport (owner or explicit delegate within `authority.json`), and what may land locally when the host gate cannot run.
 Honor the approved `planning_to_implementation_clean_session` setting. When
 true, recommend a new Implementation Orchestrator session with this handoff.
 When false, continue from the durable handoff here. Resolve an unset choice

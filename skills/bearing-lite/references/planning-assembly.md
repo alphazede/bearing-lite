@@ -275,6 +275,10 @@ specialists. It never waits for the end-of-wave review.
   Plan the first implementation slice as a preflight slice running every planned
   command in dry-run or `--version` form on every target host in parallel, and
   end any phase that builds a host by running that repository's real gate on it.
+  When work crosses a target host, settle and state in the plan and `handoff.md`
+  how the exact candidate and its proof travel to the target host, who may
+  approve that transport (owner or recorded delegate within `authority.json`),
+  and what may land locally when the host gate cannot run.
 - Avoid overloaded slices spanning unrelated outcomes and waves that hold ready
   independent work until everything else finishes. Avoid tiny slices whose
   extra handoffs exceed their useful work.
