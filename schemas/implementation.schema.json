@@ -410,6 +410,10 @@
       "additionalProperties": true,
       "required": ["review_cardinality"],
       "properties": {
+        "final_technical_plan": {
+          "$ref": "#/$defs/planningInputDigest",
+          "description": "Repository-relative path and SHA-256 for the technical plan assembled after the SEIT return. Freeze includes this binding after SEIT planning inputs and before the SEIT file digest."
+        },
         "review_cardinality": {
           "type": "object",
           "additionalProperties": true,

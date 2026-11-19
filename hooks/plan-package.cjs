@@ -125,6 +125,13 @@ function readJson(file, label = file, ignoreBlank = false) {
   }
 }
 
+function planningInputs(seit, implementation) {
+  const inputs = seit?.source_baseline?.planning_inputs;
+  const finalPlan = implementation?.journey_settings?.final_technical_plan;
+  const seitInputs = Array.isArray(inputs) ? inputs : [];
+  return finalPlan === undefined ? seitInputs : [...seitInputs, finalPlan];
+}
+
 function verifyDigests(dir) {
   const findings = [];
   for (const name of ["seit.json", "implementation.json"]) {
@@ -140,7 +147,7 @@ function verifyDigests(dir) {
   }
   const actual = [];
   const input_digests = [];
-  for (const input of inputs || []) {
+  for (const input of planningInputs(seit, implementation)) {
     if (typeof input?.path !== "string" || !/^[0-9a-f]{64}$/.test(input?.sha256 || "")) {
       findings.push({
         code: "malformed_planning_input",
@@ -835,8 +842,7 @@ function checkFinalRegister(dir, seit, implementation) {
   if (settings.journey_type !== "specification" && settings.requirement_register == null && authority?.requirement_register == null) return [];
   const register = settings.requirement_register ?? authority?.requirement_register?.path;
   if (typeof register !== "string" || !register.endsWith(".sdoc")) return [{ code: "missing_requirement_register" }];
-  const inputs = seit?.source_baseline?.planning_inputs;
-  const plans = (Array.isArray(inputs) ? inputs : []).filter(input =>
+  const plans = planningInputs(seit, implementation).filter(input =>
     typeof input?.path === "string" && (input.path.endsWith("-technical-plan.md") || path.basename(input.path) === "plan.md"));
   if (plans.length !== 1) return [{ code: "register_precheck_context_invalid", count: plans.length }];
   const root = repoRoot(dir);
