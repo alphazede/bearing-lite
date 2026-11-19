@@ -1187,7 +1187,7 @@ if (require.main === module && process.argv[2] === "control") {
   }
   process.stdout.write(JSON.stringify(result, null, 2) + "\n");
   process.exitCode = result.outcome === "PASS" ? 0 : 1;
-} else if (require.main === module && process.argv[2] === "ready") {
+} else if (require.main === module && process.argv[2] === "ready" && process.argv.length > 3) {
   try {
     const state = JSON.parse(fs.readFileSync(0, "utf8"));
     const result = readyView(process.argv[3], state);

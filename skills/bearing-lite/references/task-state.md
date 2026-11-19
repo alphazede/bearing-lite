@@ -42,10 +42,7 @@ The project's human-readable plan is the only task-state record. Diagrams explai
   Run the first implementation slice as a preflight slice with every planned
   command in dry-run or `--version` form on every target host in parallel, and
   end any phase that builds a host by running that repository's real gate on it.
-  Direct packets never dispatch Coordinator. New waves also use the
-  Implementation Orchestrator regardless of legacy catalog entries. A frozen
-  legacy assignment without its pinned runtime or explicit handover is a typed
-  capability gap.
+- Direct packets never dispatch Coordinator. New waves also use the Implementation Orchestrator regardless of legacy catalog entries. A frozen legacy assignment without its pinned runtime or explicit handover is a typed capability gap.
 - Workers and assurance roles return handoffs; they do not race plan edits.
 - Candidate authors never provide their own Assurance Test Engineer, Reviewer, or Integration Engineer execution verdict. Implementer must not self-certify.
 - Waiting on a prerequisite consumes no correction attempt. Record corrections as evidence, not a fixed attempt cap. Preserve any owner-supplied allowance; identical retries without new evidence are invalid.
