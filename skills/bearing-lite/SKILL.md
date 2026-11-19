@@ -39,7 +39,7 @@ explicit setup or catalog-edit request uses [onboard-bearing](../onboard-bearing
    or `draft`-only, refuse implementation dispatch and return to planning to
    complete `hooks/plan-package.cjs` final freeze. Otherwise consume the handoff; in selected TDD run the frozen Test Implementer (`roles.test_implementer`)
    before Product Implementer. Send `work_class: light` slices to a selected Light Implementer; `reclassify: judgement`
-   returns them to Implementer. Honor dependencies, commands, and write sets. The Implementation Orchestrator owns new waves. For a frozen legacy Coordinator assignment, use its pinned runtime or obtain an explicit handover before continuing.
+   returns them to Implementer. Honor dependencies, commands, and write sets. When `snapshot.fellow` is present, follow `references/consultation.md` at its four Fellow consultation checkpoints: before a major decision (with options and a leaning in hand), when stuck after two genuine attempts or on unexplained behavior or before a workaround, before declaring a task done, and when the owner asks. The Implementation Orchestrator owns new waves. For a frozen legacy Coordinator assignment, use its pinned runtime or obtain an explicit handover before continuing.
 5. **Review:** dispatch the owner-requested review immediately after the
    recorded boundary passes deterministic checks. Use the approved
    slice, phase, or lifecycle cadence for the selected review. The approved
