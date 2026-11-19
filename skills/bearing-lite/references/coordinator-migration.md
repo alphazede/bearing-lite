@@ -43,7 +43,9 @@ the Planning Orchestrator, not this implementation-wave work.
    packet within selected capacity; avoid overloaded slices/waves and tiny handoffs.
    Serialize only real dependencies, overlapping writes, or shared mutable resources;
    name the reason and resource. Never add an unselected role.
-   Own storage cleanup via `node <plugin root>/tools/lifecycle-pool.mjs` (installed plugin path) per `storage-lifecycle.md`.
+   Start the Orchestrator in a directory that survives cleanup (outside leased
+   task worktrees) and name the worktree explicitly for short commands so
+   cleanup can reclaim released worktrees. Own storage cleanup via `node <plugin root>/tools/lifecycle-pool.mjs` (installed plugin path) per `storage-lifecycle.md`.
 4. Inspect compact returns against acceptance and write sets. Integrate evidence
    without implementing; update implementation.json and the DoD Manifest once per
    wave, plus material owner-decision or blocker changes. Preserve unrelated work.

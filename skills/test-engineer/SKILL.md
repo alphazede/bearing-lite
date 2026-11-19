@@ -18,7 +18,10 @@ boundary; launch no extra checker.
 ## Inputs and match
 
 Assurance uses the approved baseline, stable candidate, `seit.json`, evidence,
-and expressly declared boundary, plus Test Engineering method skills. Missing
+and expressly declared boundary, plus Test Engineering method skills. Packets
+name the verified Git object for tracked inputs and keep the exact author draft
+through assurance so verification reads direct evidence rather than
+reconstructed history. Missing
 method behavior is a typed gap. Do not author SEIT plans, author product tests,
 replace Reviewer defect adjudication, or perform Integration Engineer execution
 assessment.

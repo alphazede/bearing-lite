@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Require packets to name the verified Git object for tracked inputs and keep the exact author draft through assurance, and require the Orchestrator to start in a directory that survives cleanup and name the worktree explicitly for short commands. (Alphazedehq#617)
 - Require review packets and implementation outputs before a first live apply to supply the frozen host and class rows and the exact proposed operand list, not only the executor diff. (Alphazedehq#616)
 - Allow independent assurance to start on finished slices' immutable receipts and the pinned candidate while the last slice runs and join the last slice's receipts before issuing its verdict while keeping single-run role and gate budgets. (Alphazedehq#615)
 - Require the plan and `skills/bearing-lite/templates/handoff.md` to state how the exact candidate and its proof travel to a target host, who may approve that transport, and what may land locally when the host gate cannot run. (Alphazedehq#614)

@@ -1142,6 +1142,38 @@ describe("Alphazedehq#616 first live apply review operand list", () => {
   });
 });
 
+describe("Alphazedehq#617 tracked Git object inputs, author draft retention, and orchestrator start directory", () => {
+  it("requires packets to name the verified Git object for tracked inputs and keep the exact author draft through assurance", () => {
+    for (const rel of [
+      "skills/prompt/SKILL.md",
+      "skills/bearing-lite/references/pre-packet.md",
+      "skills/bearing-lite/references/wave-operations.md",
+      "skills/test-engineer/SKILL.md",
+    ]) {
+      operatorInstruction(rel, [
+        /verified Git object/i,
+        /tracked inputs/i,
+        /exact author draft/i,
+        /through assurance/i,
+      ], /\n\s*\n/);
+    }
+  });
+
+  it("requires the Orchestrator to start in a directory that survives cleanup and name the worktree explicitly for short commands", () => {
+    for (const rel of [
+      "skills/bearing-lite/SKILL.md",
+      "skills/bearing-lite/references/storage-lifecycle.md",
+      "skills/bearing-lite/references/coordinator-migration.md",
+    ]) {
+      operatorInstruction(rel, [
+        /survives cleanup/i,
+        /worktree explicitly/i,
+        /short commands/i,
+      ], /\n\s*\n/);
+    }
+  });
+});
+
 function operatorInstruction(rel, expectations, breakAt = /(?<=[.!?])\s+/) {
   const parts = read(rel).split(/\n\s*\n/).flatMap(paragraph => paragraph
     .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
