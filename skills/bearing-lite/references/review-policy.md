@@ -34,10 +34,12 @@ implementation wave. No specialist session is unconditionally required: the
 wave declares in `required_sessions` exactly the profile-enabled specialist
 sessions this task needs (possibly none). Final Planning and Design is the
 Planning Orchestrator's own procedure, never a session. Every declared session
-must return `READY` (`CANDIDATE_READY` for Integration and Test planning) for
-the planning candidate before review or the final freeze; a pending or
-incomplete return, including an unrepaired MBSE self-check,
-stays a typed gap. Required artifacts are still checked by the freeze.
+must return `READY` or `CANDIDATE_READY` (own artifacts complete with externally
+owned open items listed in `external_open_items`, which spends no closing
+return) for the planning candidate before review or the final freeze; a pending
+or incomplete return, including an unrepaired MBSE self-check or any open or
+unowned-closed external item, stays a typed gap. Required artifacts are still
+checked by the freeze.
 
 Planning review runs only when the owner requested it at this boundary
 (`planning_review: owner_requested_only`). The wave records `review_requested`:

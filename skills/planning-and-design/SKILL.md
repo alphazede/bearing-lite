@@ -72,7 +72,11 @@ owner question box (`OWNER_DECISION_REQUIRED`), even under delegation.
    session once—which does not count as a relaunch—recorded with `author`,
    `reason`, `items`, `candidate`, and resulting `READY`), and missing
    specialist facts stay gaps returned to their owner, never authored by the
-   Orchestrator itself.
+   Orchestrator itself. When a specialist's own artifacts are complete and its
+   open items are externally owned, accept `CANDIDATE_READY` with
+   `external_open_items` (which spends no closing return) and close or route
+   each listed external item so its declared owner closes it before planning
+   review or final freeze.
 6. Requested planning review opens only after `hooks/planning-review.cjs`
    `evaluatePlanningReview()` passes its guards (`manifest_not_generated` without
    the rendered Manifest). Then obtain one integrated owner confirmation (never

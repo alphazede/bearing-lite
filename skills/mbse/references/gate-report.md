@@ -74,6 +74,10 @@ consumes typed open rows per
 
 `READY` requires all assigned quality checks to pass with no fixable defect
 remaining; recorded pending bindings owned by later authors are not defects of
-this stage. Author evidence does not assert independent review or owner
+this stage. When MBSE's own artifacts are complete and remaining open items
+belong to the Orchestrator or another author, return `CANDIDATE_READY` with
+`external_open_items` (`id`, `owner`, `summary`, `status`); this spends no
+closing return, and the freeze refuses until each listed external item is closed
+by its owner. Author evidence does not assert independent review or owner
 acceptance. A later explicitly requested review keeps its separate scope and
 allowance; it is not required to complete this author self-quality pass.

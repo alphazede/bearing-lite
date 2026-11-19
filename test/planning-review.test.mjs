@@ -254,4 +254,37 @@ describe("model-neutral planning review", () => {
       { outcome: "NEEDS_MORE_EVIDENCE", reason: "planning_sessions_incomplete" }
     );
   });
+
+  it("accepts CANDIDATE_READY with owner-closed external items and refuses open or unowned-closed items (#626)", () => {
+    const withExternal = (item, extraWave = {}) => {
+      const wave = review().planning_wave;
+      wave.sessions[0].verdict = "CANDIDATE_READY";
+      wave.sessions[0].external_open_items = [item];
+      Object.assign(wave, extraWave);
+      return review({ planning_wave: wave });
+    };
+    assert.deepEqual(
+      core.evaluatePlanningReview(withExternal({ id: "EXT-1", owner: "orchestrator", summary: "Fix slice map", status: "open" })),
+      { outcome: "NEEDS_MORE_EVIDENCE", reason: "external_items_open" }
+    );
+    assert.deepEqual(
+      core.evaluatePlanningReview(withExternal({ id: "EXT-1", owner: "integration_test", summary: "Bind case", status: "closed", closed_by: "orchestrator" })),
+      { outcome: "NEEDS_MORE_EVIDENCE", reason: "external_items_open" }
+    );
+    assert.deepEqual(
+      core.evaluatePlanningReview(withExternal({ id: "EXT-1", owner: "mbse", summary: "Own defect", status: "open" })),
+      { outcome: "NEEDS_MORE_EVIDENCE", reason: "external_items_open" }
+    );
+    assert.equal(
+      core.evaluatePlanningReview(withExternal({ id: "EXT-1", owner: "orchestrator", summary: "Fix slice map", status: "closed", closed_by: "orchestrator" })).outcome,
+      "PASS"
+    );
+    assert.equal(
+      core.evaluatePlanningReview(withExternal(
+        { id: "EXT-1", owner: "orchestrator", summary: "Fix slice map", status: "open" },
+        { external_closures: [{ id: "EXT-1", owner: "orchestrator", closed_by: "orchestrator", status: "closed" }] }
+      )).outcome,
+      "PASS"
+    );
+  });
 });

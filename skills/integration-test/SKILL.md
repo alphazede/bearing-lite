@@ -137,6 +137,12 @@ Return `READY`, `CANDIDATE_READY`, `NEEDS_MORE_EVIDENCE`, `GAPS`, or
 changed_paths, tests, findings, and blocker, plus gaps, the run-once record for
 each frozen command (command, exit code, and digest, or the recorded
 pre-implementation reason it cannot run), and next action.
+Return `CANDIDATE_READY` when Integration and Test's own artifacts (`seit.json`
+and boundary inputs) are complete and every remaining open item belongs to the
+Orchestrator or another author, listing those externally owned items in
+`external_open_items` (`id`, `owner`, `summary`, `status`); `CANDIDATE_READY`
+spends no closing return, while planning review and the final freeze still
+refuse until each listed external item is closed by its declared owner.
 Evidence returns digests, commands, and exit codes, not narrative logs. Honor
 the packet's time target; at the limit, return what you have and list the gaps.
 Material interface, contract, trust, ownership, or recovery gaps remain visible

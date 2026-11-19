@@ -1216,6 +1216,74 @@ describe("Alphazedehq#625 planning input row shape in skills", () => {
   });
 });
 
+describe("Alphazedehq#626 CANDIDATE_READY for externally owned open items", () => {
+  it("names CANDIDATE_READY for externally owned open items without spending a closing return in author and planning skills", () => {
+    for (const rel of [
+      "skills/mbse/SKILL.md",
+      "skills/integration-test/SKILL.md",
+      "skills/bearing-lite/references/planning-assembly.md",
+      "skills/bearing-lite/references/review-policy.md",
+      "skills/planning-and-design/SKILL.md",
+    ]) {
+      operatorInstruction(rel, [
+        /CANDIDATE_READY/,
+        /external/i,
+        /(?:no|without|spends? no) closing return/i,
+      ], /\n\s*\n/);
+    }
+  });
+
+  it("refuses final freeze while an external item on CANDIDATE_READY is open or unowned-closed, and passes once owner-closed without spending a closing return", () => {
+    const openPkg = planPackage((doc, digest) => {
+      doc.journey_settings.planning_wave = unreviewedPlanningWave(digest, ["mbse", "integration_test"]);
+      doc.journey_settings.planning_wave.sessions[0].verdict = "CANDIDATE_READY";
+      doc.journey_settings.planning_wave.sessions[0].external_open_items = [{
+        id: "EXT-1",
+        owner: "orchestrator",
+        summary: "Update slice write_set in plan",
+        status: "open",
+      }];
+    });
+    const openRes = freeze(openPkg.dir);
+    assert.equal(openRes.outcome, "FAIL");
+    assert.ok(codes(openRes).includes("planning_wave_external_items_open"), JSON.stringify(openRes));
+
+    const wrongCloserPkg = planPackage((doc, digest) => {
+      doc.journey_settings.planning_wave = unreviewedPlanningWave(digest, ["mbse", "integration_test"]);
+      doc.journey_settings.planning_wave.sessions[0].verdict = "CANDIDATE_READY";
+      doc.journey_settings.planning_wave.sessions[0].external_open_items = [{
+        id: "EXT-2",
+        owner: "integration_test",
+        summary: "Add SEIT case",
+        status: "closed",
+        closed_by: "orchestrator",
+      }];
+    });
+    const wrongRes = freeze(wrongCloserPkg.dir);
+    assert.equal(wrongRes.outcome, "FAIL");
+    assert.ok(codes(wrongRes).includes("planning_wave_external_items_open"), JSON.stringify(wrongRes));
+
+    // Owner closes EXT-1 without spending mbse's single closing return; mbse can still use its closing return if needed later.
+    const closedPkg = planPackage((doc, digest) => {
+      doc.journey_settings.planning_wave = unreviewedPlanningWave(digest, ["mbse", "integration_test"]);
+      doc.journey_settings.planning_wave.sessions[0].verdict = "CANDIDATE_READY";
+      doc.journey_settings.planning_wave.sessions[0].external_open_items = [{
+        id: "EXT-1",
+        owner: "orchestrator",
+        summary: "Update slice write_set in plan",
+        status: "open",
+      }];
+      doc.journey_settings.planning_wave.external_closures = [{
+        id: "EXT-1",
+        owner: "orchestrator",
+        closed_by: "orchestrator",
+        status: "closed",
+      }];
+    });
+    assert.deepEqual(freeze(closedPkg.dir).findings, []);
+  });
+});
+
 function operatorInstruction(rel, expectations, breakAt = /(?<=[.!?])\s+/) {
   const parts = read(rel).split(/\n\s*\n/).flatMap(paragraph => paragraph
     .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")

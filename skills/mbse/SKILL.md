@@ -115,11 +115,17 @@ Loop: author → self requirements-quality pass → model and map → self-check
 
 ## Return and boundaries
 
-Return `READY`, `NEEDS_MORE_EVIDENCE`, or `OWNER_DECISION_REQUIRED` with
-verdict, candidate_ref, changed_paths, tests, findings, and blocker,
-plus requirement clauses/bindings, modeling mode, view metadata, placement
-receipt, self-check evidence, and source/decision traceability. Evidence returns
-digests, commands, and exit codes, not narrative logs. Honor the
+Return `READY`, `CANDIDATE_READY`, `NEEDS_MORE_EVIDENCE`, `GAPS`, or
+`OWNER_DECISION_REQUIRED` with verdict, candidate_ref, changed_paths, tests,
+findings, and blocker, plus requirement clauses/bindings, modeling mode, view
+metadata, placement receipt, self-check evidence, and source/decision
+traceability. Return `CANDIDATE_READY` when MBSE's own requirements, views, and
+placement receipt are complete and every remaining open item belongs to the
+Orchestrator or another author, listing those externally owned items in
+`external_open_items` (`id`, `owner`, `summary`, `status`); `CANDIDATE_READY`
+spends no closing return, while the freeze still refuses until each listed
+external item is closed by its declared owner (`closed_by` matching `owner`).
+Evidence returns digests, commands, and exit codes, not narrative logs. Honor the
 packet's time target; at the limit, return what you have and list the gaps.
 Self-checks are author evidence, not independent review or owner acceptance;
 author corrections do not consume review or repair budget. Return `READY` only

@@ -211,7 +211,13 @@ its consumed `inputs` and `adopted_to` candidate on that return.
 `hooks/plan-package.cjs` (`final`) accepts
 the resulting `READY` when one valid closing return is recorded and refuses
 unclosed `GAPS`, incomplete records, or a second closing return for the same
-author.
+author. When a specialist's own artifacts are complete and every remaining open
+item belongs to the Orchestrator or another author, the author returns
+`CANDIDATE_READY` with `external_open_items` (`id`, `owner`, `summary`,
+`status`) rather than `GAPS`. `CANDIDATE_READY` spends no closing return, while
+`hooks/planning-review.cjs` and `hooks/plan-package.cjs` still refuse until
+every listed external item is closed by its declared owner (`status: "closed"`
+with `closed_by` matching `owner`, inline or in `external_closures`).
 
 ### Author-known deltas (#221)
 

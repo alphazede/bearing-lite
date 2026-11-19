@@ -101,6 +101,30 @@
         }
       }
     },
+    "externalOpenItem": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["id", "owner", "summary", "status"],
+      "description": "Externally owned open item reported by a CANDIDATE_READY planning author without spending its closing return.",
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "owner": { "type": "string", "minLength": 1 },
+        "summary": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "enum": ["open", "closed"] },
+        "closed_by": { "type": "string", "minLength": 1 }
+      }
+    },
+    "externalClosure": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["id", "owner", "closed_by", "status"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "owner": { "type": "string", "minLength": 1 },
+        "closed_by": { "type": "string", "minLength": 1 },
+        "status": { "const": "closed" }
+      }
+    },
     "slice": {
       "type": "object",
       "additionalProperties": true,
@@ -610,9 +634,17 @@
                   },
                   "adopted_to": {
                     "$ref": "#/$defs/planningCandidate"
+                  },
+                  "external_open_items": {
+                    "type": "array",
+                    "items": { "$ref": "#/$defs/externalOpenItem" }
                   }
                 }
               }
+            },
+            "external_closures": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/externalClosure" }
             },
             "reviews": {
               "type": "integer",
@@ -721,9 +753,17 @@
                       "minItems": 1,
                       "items": { "$ref": "#/$defs/planningInputRow" }
                     },
-                    "adopted_to": { "$ref": "#/$defs/planningCandidate" }
+                    "adopted_to": { "$ref": "#/$defs/planningCandidate" },
+                    "external_open_items": {
+                      "type": "array",
+                      "items": { "$ref": "#/$defs/externalOpenItem" }
+                    }
                   }
                 }
+              },
+              "external_closures": {
+                "type": "array",
+                "items": { "$ref": "#/$defs/externalClosure" }
               },
               "reviews": { "type": "integer", "minimum": 0, "maximum": 1 },
               "repairs": { "type": "integer", "minimum": 0, "maximum": 1 },
