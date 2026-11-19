@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Define `test_engineer.assurance` and `integration_engineer.execution` in `assurance-policy.md` as cadence keys distinct from `profiles.json` schema paths (`roles.<role>.sessions.<session>`), and use schema session paths consistently in `profiles.md` and onboarding docs. (Alphazedehq#639)
+
 - Skip the enable question and go straight to the route question for required profile roles (`roles.implementer`, and `roles.test_implementer` under `tdd`) in onboarding, keeping the enable question for optional roles. (Alphazedehq#638)
 
 ## [3.0.0-rc.5] - 2026-11-19

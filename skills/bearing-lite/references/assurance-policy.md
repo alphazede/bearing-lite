@@ -4,7 +4,12 @@ Decision source: `DEC-BDL-007`, `DEC-BDL-030`, `DEC-BDL-047`, `DES-BDL-007`.
 
 Cadence values are `slice`, `phase`, or `lifecycle`. Defaults are `phase`
 for Test Engineer assurance, `phase` for Reviewer, and `lifecycle` for
-Integration Engineer execution. A declared boundary runs each enabled
+Integration Engineer execution. In `default_cadence` below,
+`test_engineer.assurance`, `reviewer`, and `integration_engineer.execution`
+are **cadence keys** (`assurance-policy.md` / `hooks/policy.cjs`), distinct from
+`profiles.json` schema paths (`roles.test_engineer.sessions.assurance`,
+`roles.reviewer`, `roles.integration_engineer.sessions.execution`); do not use
+short cadence keys as keys in `profiles.json`. A declared boundary runs each enabled
 session once, allows one aggregated repair, then uses deterministic closure
 without automatic rereview. `hooks/assurance-budget.cjs` is the exact
 runtime mirror of the block below; the block is authoritative.

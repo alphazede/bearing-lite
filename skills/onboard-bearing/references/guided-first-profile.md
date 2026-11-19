@@ -103,9 +103,9 @@ Ask one setting at a time with no preselected value:
    - If the owner **enables** it: collect the owner's `harness`, `model`,
      `reasoning`, `ordered_fallbacks` (`[]` if none, or ordered entries with
      `condition`, `harness`, `model`, `reasoning`), and `cadence` where
-     supported (`reviewer`, `test_engineer.sessions.assurance`,
-     `integration_engineer.sessions.execution`: `slice` | `phase` | `lifecycle`;
-     `scribe`: `event` | `phase` | `lifecycle`).
+     supported (`roles.reviewer`, `roles.test_engineer.sessions.assurance`,
+     `roles.integration_engineer.sessions.execution`: `slice` | `phase` | `lifecycle`;
+     `roles.scribe`: `event` | `phase` | `lifecycle`).
    - If the owner **explicitly declines** an optional role/session: save
      `{ "enabled": false }` (for sessioned roles, `{ "sessions": { "<session>": { "enabled": false } } }`)
      without inventing a `primary` or `ordered_fallbacks`—or if disabling an

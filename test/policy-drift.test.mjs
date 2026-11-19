@@ -31,4 +31,37 @@ describe("policy drift (#63)", () => {
       assert.doesNotMatch(text, /const POLICY = Object\.freeze/, file);
     }
   });
+  it("Alphazedehq#639: docs distinguish cadence keys from profiles.json schema session paths", () => {
+    const assurance = readFileSync(path.join(REF, "assurance-policy.md"), "utf8");
+    const profiles = readFileSync(path.join(REF, "profiles.md"), "utf8");
+    const profilesHook = require(path.join(ROOT, "hooks/profiles.cjs"));
+
+    assert.match(assurance, /cadence key/i);
+    assert.match(assurance, /roles\.test_engineer\.sessions\.assurance/);
+    assert.match(assurance, /roles\.integration_engineer\.sessions\.execution/);
+
+    assert.doesNotMatch(profiles, /`integration_test\.planning`/);
+    assert.doesNotMatch(profiles, /`test_engineer\.assurance`/);
+    assert.doesNotMatch(profiles, /`scribe\.cadence`/);
+    assert.match(profiles, /`roles\.integration_test\.sessions\.planning`/);
+    assert.match(profiles, /`roles\.test_engineer\.sessions\.assurance`/);
+    assert.match(profiles, /`roles\.scribe\.cadence`/);
+
+    const route = { enabled: true, primary: { harness: "h", model: "m", reasoning: "high" }, ordered_fallbacks: [] };
+    const valid = profilesHook.validateCatalog({
+      raw: JSON.stringify({
+        schema_version: 1,
+        profiles: { P: { roles: { test_engineer: { sessions: { assurance: route } } } } },
+      }),
+    });
+    assert.equal(valid.catalog_valid, true);
+
+    const invalidShort = profilesHook.validateCatalog({
+      raw: JSON.stringify({
+        schema_version: 1,
+        profiles: { P: { roles: { "test_engineer.assurance": route } } },
+      }),
+    });
+    assert.equal(invalidShort.catalog_valid, false);
+  });
 });
