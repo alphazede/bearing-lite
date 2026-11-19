@@ -1468,6 +1468,23 @@ def cases() -> list[tuple[str, str, str, object, str]]:
                 }
             }
         }, "reject"),
+        ("SEIT-EMV-022", "tooling_choice_blank_reason", "implementation", complete_implementation() | {
+            "journey_settings": complete_implementation()["journey_settings"] | {
+                "tooling_choice": {
+                    "mode": "reviewed_command_list",
+                    "reason": " \t",
+                }
+            }
+        }, "reject"),
+        ("SEIT-EMV-022", "tooling_choice_blank_reuse", "implementation", complete_implementation() | {
+            "journey_settings": complete_implementation()["journey_settings"] | {
+                "tooling_choice": {
+                    "mode": "new_reusable_tooling",
+                    "reason": "Repeated cross-phase work.",
+                    "reuse": " \n",
+                }
+            }
+        }, "reject"),
         ("SEIT-EMV-022", "tooling_choice_invalid_mode", "implementation", complete_implementation() | {
             "journey_settings": complete_implementation()["journey_settings"] | {
                 "tooling_choice": {
