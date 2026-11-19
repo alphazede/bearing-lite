@@ -25,7 +25,10 @@ independent review also requires the owner's requested scope and cadence.
    skill. That skill owns responsibilities, self-checks, boundaries, and outcomes;
    the index does not override it. Resolve conflicting instructions first.
 2. Include useful facts and bindings: paths, source/candidate identities,
-   dependencies, recorded decisions, and gaps. Omit raw history and settled-context
+   dependencies, recorded decisions, and gaps. Name the verified Git object
+   (commit, tree, or blob SHA) for tracked inputs and keep the exact author
+   draft through assurance so inputs are read directly instead of reconstructed.
+   Omit raw history and settled-context
    rediscovery. Preserve the provided model, harness, reasoning, and authority.
    For a review before a first live apply, include the frozen host and class rows
    and the exact proposed operand list, not only the executor diff.

@@ -3,8 +3,9 @@
 Before composing a packet, the Orchestrator checks the required packet fields:
 one objective, observable acceptance, write set, existing commands, named
 evidence (digests, commands, and exit codes, not narrative logs), and a time
-target with "at the limit, return what you have and list the gaps". For a
-review before a first live apply, require the frozen host and class rows and the
+target with "at the limit, return what you have and list the gaps". Packets
+name the verified Git object for tracked inputs and keep the exact author draft
+through assurance. For a review before a first live apply, require the frozen host and class rows and the
 exact proposed operand list, not only the executor diff. Planning
 specialist packets name only that specialist's own artifact checker; the
 repository gate runs once at assembly. A missing or empty field is a compilation

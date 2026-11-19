@@ -4,7 +4,11 @@ Prefer coherent outcomes over tiny handoffs. Orchestration does not end at
 worker handoff or a draft PR: verify delivery, then clean merged resources
 after resolving live references.
 
-Run storage maintenance at intake/resume, wave boundaries, and closeout. Track
+Run storage maintenance at intake/resume, wave boundaries, and closeout. Start
+the Orchestrator in a directory that survives cleanup (outside leased task
+worktrees) and name the worktree explicitly for short commands (for example
+`git -C <worktree>`) so cleanup never finds the Orchestrator holding a worktree
+open. Track
 each task worktree, temporary build output, and evidence location with its owner,
 size, and remove/retain/unresolved disposition. Verify current merge proof and
 local contents, resolve live references, then remove released worktrees and

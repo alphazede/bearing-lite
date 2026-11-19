@@ -19,7 +19,9 @@ publication authority.
 
 Release disposable wave outputs after their consumers finish; retain integration
 inputs until the Orchestrator accepts the handoff, giving each retained path an
-owner, a reason, and a release event. Do not remove another wave's files, and a
+owner, a reason, and a release event. Packets name the verified Git object for
+tracked inputs and keep the exact author draft through assurance rather than
+reconstructing vanished history. Do not remove another wave's files, and a
 child `COMPLETE` is not permission to delete integration evidence. The
 Orchestrator guarantees cleanup by running the storage `recover` command in
 finally, cancellation, and restart paths (see
