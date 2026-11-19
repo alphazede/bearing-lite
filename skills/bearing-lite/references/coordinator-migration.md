@@ -8,7 +8,7 @@ The Coordinator is retired on this runtime. Before removal, verify every duty an
 
 | Duty | Receiving owner | Component |
 | --- | --- | --- |
-| D1 | Implementation Orchestrator | Graph-wide scheduling through `plan-package.cjs ready` |
+| D1 | Implementation Orchestrator | Graph-wide scheduling through `plan-package.cjs ready` and `hooks/ready-set.cjs` |
 | D2 | Implementation Orchestrator | Wave receipts and one task graph through `hooks/plan-package.cjs` |
 | D3 | Implementation Orchestrator | Dependency checks through `hooks/ready-set.cjs` |
 | D4 | Implementation Orchestrator | Lease checks through `hooks/reconcile.cjs` |

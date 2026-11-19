@@ -754,9 +754,10 @@ describe("plan-package (#226 post-approval correction round)", () => {
 });
 
 describe("plan-package (Alphazedehq#608 false serial chain flag)", () => {
-  function setupPackage(t, mutate) {
-    const dir = mkdtempSync(path.join(os.tmpdir(), "plan-pkg-608-"));
-    t.after(() => rmSync(dir, { recursive: true, force: true }));
+  function setupPackage(t, mutate, name = "") {
+    const parent = mkdtempSync(path.join(os.tmpdir(), "plan-pkg-608-"));
+    const dir = path.join(parent, name);
+    t.after(() => rmSync(parent, { recursive: true, force: true }));
     mkdirSync(path.join(dir, ".git"), { recursive: true });
     const plan = "# Plan\n";
     writeFileSync(path.join(dir, "plan.md"), plan);
@@ -811,6 +812,15 @@ describe("plan-package (Alphazedehq#608 false serial chain flag)", () => {
     const res = freeze(dir, { stage: "final" });
     assert.equal(res.outcome, "PASS");
     assert.deepEqual(res.findings.filter((f) => f.code === "false_serial_chain").map((f) => [f.from, f.to]), [["S1", "S2"]]);
+  });
+
+  it("still freezes a plan named ready when called with only the plan directory", (t) => {
+    const dir = setupPackage(t, undefined, "ready");
+    const cli = spawnSync(process.execPath, [path.join(ROOT, "hooks/plan-package.cjs"), "ready"], {
+      cwd: path.dirname(dir), input: "", encoding: "utf8",
+    });
+    assert.equal(cli.status, 0, cli.stderr || cli.stdout);
+    assert.equal(JSON.parse(cli.stdout).outcome, "PASS");
   });
 
   it("does not flag ordering edges that share an input, producer write_set, resource, or omit the new fields", (t) => {
