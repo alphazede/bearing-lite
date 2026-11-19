@@ -486,10 +486,15 @@ describe("verification receipt bridge (#105)", () => {
 
   it("exposes resolveProcessTier consistently through the verification bridge (#611)", () => {
     const got = bridge.resolveProcessTier({
-      live_host: true, copy_only: true, prior_tier: "full", live_host_only_full_risk: true,
+      live_host: true, operations: ["copy", "read"], prior_tier: "full", live_host_only_full_risk: true,
     });
     assert.equal(got.tier, "standard");
     assert.equal(got.separate_assurance, false);
     assert.deepEqual(got.live_service_observation, { required: true, stages: ["before", "after"] });
+    const wholePhaseLabelOnly = bridge.resolveProcessTier({
+      live_host: true, copy_only: true, prior_tier: "full", live_host_only_full_risk: true,
+    });
+    assert.equal(wholePhaseLabelOnly.tier, "full");
+    assert.equal(wholePhaseLabelOnly.reason, "tier_unchanged");
   });
 });

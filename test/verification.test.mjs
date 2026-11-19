@@ -422,11 +422,11 @@ describe("SEIT-BDL-004 deterministic verification adapter", () => {
   });
 });
 
-describe("Alphazedehq#611 copy-only or read-only live-host tier resolution", () => {
-  it("resolves a copy-only or read-only live-host phase to standard with before/after live-service observation and no separate assurance", () => {
+describe("Alphazedehq#611 per-operation copy/read live-host tier resolution", () => {
+  it("resolves a live-host phase to standard only when every planned operation is copy or read", () => {
     for (const phase of [
-      { live_host: true, copy_only: true },
-      { live_services: true, read_only: true },
+      { live_host: true, operations: ["copy"] },
+      { live_services: true, operations: ["read"] },
       { crosses_live_host: true, operations: ["copy", "read"] },
     ]) {
       const got = adapter.resolveProcessTier({
@@ -442,8 +442,14 @@ describe("Alphazedehq#611 copy-only or read-only live-host tier resolution", () 
     }
   });
 
-  it("keeps the prior tier and lifecycle cadence outside the approved exception", () => {
+  it("keeps the prior tier and lifecycle cadence outside the per-operation copy/read exception", () => {
     const cases = [
+      { live_host: true, copy_only: true, prior_tier: "full" },
+      { live_services: true, read_only: true, prior_tier: "full" },
+      { live_host: true, copy_only: true, operations: [], prior_tier: "full" },
+      { live_host: true, copy_only: true, operations: ["copy", "rebuild_worktree"], prior_tier: "full" },
+      { live_host: true, operations: ["copy", "observe"], prior_tier: "full" },
+      { live_host: true, operations: ["read", "run_role"], prior_tier: "full" },
       { live_host: true, deletes: true, prior_tier: "full" },
       { live_host: true, mutates: true, prior_tier: "full" },
       { live_host: true, copy_only: true, deletes: true, prior_tier: "full" },
@@ -452,9 +458,10 @@ describe("Alphazedehq#611 copy-only or read-only live-host tier resolution", () 
       { live_host: true, copy_only: true, trust_boundary: true, prior_tier: "full" },
       { live_host: true, read_only: true, concurrency_contract: true, prior_tier: "full" },
       { live_host: true, read_only: true, high_impact_loss: true, prior_tier: "full" },
-      { live_host: true, read_only: true, live_host_only_full_risk: false, prior_tier: "full" },
-      { live_host: true, read_only: true, prior_tier: "light" },
-      { live_host: false, copy_only: true, prior_tier: "light" },
+      { live_host: true, operations: ["copy"], trust_boundary: true, prior_tier: "full" },
+      { live_host: true, operations: ["read"], live_host_only_full_risk: false, prior_tier: "full" },
+      { live_host: true, operations: ["read"], prior_tier: "light" },
+      { live_host: false, operations: ["copy"], prior_tier: "light" },
       { moderate_risk: true, prior_tier: "standard" },
       { mutates: true, prior_tier: "standard" },
     ];

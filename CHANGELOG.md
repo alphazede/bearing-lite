@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Decide the `standard` live-host tier per planned operation (`operations` entries must all be `copy` or `read`) rather than by a whole-phase `copy_only` or `read_only` label, returning the prior tier for any phase with another operation. (Alphazedehq#611)
 - Require a nonblank rationale for a declared tooling choice and a nonblank reuse statement for new tooling. Existing plans may omit the choice. (#609)
 - Keep serial-chain warnings advisory and avoid flagging shared input paths or edges with incomplete legacy flow declarations. (#608)
 - Show frozen slice inputs and held resources in the DoD Manifest task graph, including inline wave slices. (#608)
