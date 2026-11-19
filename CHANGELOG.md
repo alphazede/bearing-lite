@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Clarify that the copy/read exception applies only when live hosting is the sole reason for the full assurance tier.
 - Update the draft PR to the verified final commit before marking it ready. When review and landing share a repository gate, use the same exact-head result.
 - Bind early assurance to the final integrated candidate. Reuse applicable slice evidence, join the final receipts, and independently validate the single gate run in the same session.
 - Use target-host handoff details when scheduling host work and keep the intake return to planning scoped to final-freeze receipt checks.

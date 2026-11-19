@@ -1014,6 +1014,10 @@ describe("Alphazedehq#611 per-operation copy/read live-host phase tier rule", ()
         /\b(existing|original|prior|previous)\b|as before/i,
       ]);
     }
+    operatorInstruction("skills/test-engineer/SKILL.md", [
+      /live hosting.*(?:sole|only) reason.*full/i,
+      /standard/i,
+    ], /\n\s*\n/);
   });
 });
 
