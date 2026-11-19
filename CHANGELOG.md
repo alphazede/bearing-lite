@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Schedule from the full frozen slice graph so independent waves can proceed while cross-wave inputs, dependencies, and resource holds are respected. (#608)
 - Keep live-service observation policy in tier resolution records and preserve the existing verification receipt schema. (#611)
 - Apply the live-host tier exception only when live hosting is the sole reason for the existing full tier. Other phases retain their selected tier and cadence. (#611)
 - Allow a copy-only or read-only phase crossing into a host with live services (and no other `full`-tier risk factor) to resolve to `standard` via `resolveProcessTier` in `hooks/verification.cjs` (re-exported by `hooks/verification-bridge.cjs`, validated by `schemas/verification.schema.json`) with a required before and after live-service observation, one implementer, one review, and no separate assurance, while phases that delete or mutate still resolve as before. (Alphazedehq#611)
