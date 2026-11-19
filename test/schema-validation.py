@@ -1173,6 +1173,16 @@ def cases() -> list[tuple[str, str, str, object, str]]:
         ("SEIT-EMV-024", "complete_authority_document", "authority", complete_authority(), "accept"),
         ("SEIT-EMV-022", "complete_implementation_document", "implementation", complete_implementation(), "accept"),
         ("SEIT-EMV-021", "complete_seit_document", "seit", complete_seit(), "accept"),
+        ("SEIT-EMV-021", "seit_planning_input_row_with_git_blob", "seit", complete_seit(
+            source_baseline=complete_seit()["source_baseline"] | {
+                "planning_inputs": [{"path": "plan.md", "sha256": SYN_DIGEST, "git_blob": "a" * 40}]
+            }
+        ), "accept"),
+        ("SEIT-EMV-021", "seit_planning_input_row_git_blob_only", "seit", complete_seit(
+            source_baseline=complete_seit()["source_baseline"] | {
+                "planning_inputs": [{"path": "plan.md", "git_blob": "a" * 40}]
+            }
+        ), "reject"),
         # Optional gate-cost fields: present and absent both validate; bad values reject.
         ("SEIT-EMV-021", "seit_proof_with_resource_group_and_gate_cost", "seit", complete_seit(
             proof_cases=[complete_proof(resource_group="engine", expected_gate_seconds=45)]
@@ -1310,6 +1320,48 @@ def cases() -> list[tuple[str, str, str, object, str]]:
         # F2 repair: optional specialists and owner-requested-only planning review.
         ("SEIT-EMV-022", "implementation_planning_wave_retired_design_session", "implementation", planning_contract_implementation(
             wave={"required_sessions": ["planning_and_design", "integration_test"]}
+        ), "reject"),
+        ("SEIT-EMV-022", "implementation_session_inputs_with_git_blob", "implementation", planning_contract_implementation(
+            wave={
+                "sessions": [
+                    {
+                        "session": "mbse",
+                        "candidate_ref": "plan",
+                        "candidate_revision": SYN_REV,
+                        "candidate_digest": SYN_DIGEST,
+                        "verdict": "READY",
+                        "inputs": [{"path": "plan.md", "sha256": SYN_DIGEST, "git_blob": "a" * 40}],
+                    },
+                    {
+                        "session": "integration_test",
+                        "candidate_ref": "plan",
+                        "candidate_revision": SYN_REV,
+                        "candidate_digest": SYN_DIGEST,
+                        "verdict": "READY",
+                    },
+                ]
+            }
+        ), "accept"),
+        ("SEIT-EMV-022", "implementation_session_inputs_git_blob_only", "implementation", planning_contract_implementation(
+            wave={
+                "sessions": [
+                    {
+                        "session": "mbse",
+                        "candidate_ref": "plan",
+                        "candidate_revision": SYN_REV,
+                        "candidate_digest": SYN_DIGEST,
+                        "verdict": "READY",
+                        "inputs": [{"path": "plan.md", "git_blob": "a" * 40}],
+                    },
+                    {
+                        "session": "integration_test",
+                        "candidate_ref": "plan",
+                        "candidate_revision": SYN_REV,
+                        "candidate_digest": SYN_DIGEST,
+                        "verdict": "READY",
+                    },
+                ]
+            }
         ), "reject"),
         ("SEIT-EMV-022", "implementation_planning_corrections_rc2_sessions_accepted", "implementation",
             planning_contract_implementation() | {

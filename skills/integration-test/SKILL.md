@@ -124,6 +124,11 @@ independent assurance (`../test-engineer/SKILL.md`) and execution assessment
      against `catalog/controls/`, satisfy all required `parameters`, and bind
      distinct `positive_case_id` and `negative_case_id` entries in
      `seit.json` `proof_cases[]` matching `requirement_id`.
+   - **Planning input rows (`source_baseline.planning_inputs` and session `inputs`):**
+     each row requires `path` (non-empty path) and `sha256` (64-hex SHA-256 of
+     the file bytes), and may optionally carry `git_blob` (40-hex or 64-hex
+     Git object id for tracked inputs); `git_blob`-only rows without `sha256`
+     fail with `malformed_planning_input`.
 
 ## Return and boundaries
 
