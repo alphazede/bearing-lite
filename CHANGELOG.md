@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Include the compact closeout receipt fields in the planning handoff template.
+
 - Resolve register citations from the same repository root during requirements precheck and final freeze.
 
 ## [3.0.0-rc.6] - 2026-11-19

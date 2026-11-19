@@ -365,6 +365,20 @@ describe("Alphazedehq#594 planning handoff requires final freeze receipt", () =>
     assert.match(assembly, /Implementation order after the handoff[\s\S]{0,400}final_freeze_receipt[\s\S]{0,200}return(?:ing)? to planning/i);
   });
 
+  it("RC6-7 a completed planning handoff template satisfies closeout", () => {
+    const template = readFileSync(path.join(ROOT, "skills/bearing-lite/templates/handoff.md"), "utf8");
+    const sample = template.match(/```markdown\n([\s\S]*?)\n```/)[1];
+    const handoff = Object.fromEntries(
+      [...sample.matchAll(/^- (\w+): (.+)$/gm)].map(([, field, value]) => [field, value]),
+    );
+    const receipt = closeout.evaluate({
+      mode: "handoff",
+      handoff,
+      final_freeze_receipt: { outcome: "PASS", stage: "final", manifest_digest: "a".repeat(64) },
+    });
+    assert.equal(receipt.reason, "handoff_complete");
+  });
+
   it("handoff template settles target-host transport, approval authority, and local landing (#614)", () => {
     const handoffTpl = readFileSync(path.join(ROOT, "skills/bearing-lite/templates/handoff.md"), "utf8")
       .replace(/\s+/g, " ");
