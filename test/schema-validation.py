@@ -3862,7 +3862,8 @@ def check_remote_ref_fails_closed() -> tuple[bool, str]:
         list(validator_for(schema).iter_errors({"x": 1}))
     except Unresolvable:
         return True, "missing remote $ref failed closed without retrieval"
-    except Exception as exc:
+    except (OSError, ValueError, TypeError, LookupError, RuntimeError) as exc:
+        # Any other exception propagates and still fails the run, with its traceback.
         return False, f"missing remote $ref raised {type(exc).__name__}: {exc}"
     return False, "missing remote $ref was retrieved or ignored"
 
