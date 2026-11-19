@@ -76,7 +76,10 @@ independent assurance (`../test-engineer/SKILL.md`) and execution assessment
    red-then-green claims using the target repository's own tools and thresholds
    (`method` stays a plain string; missing tool or `not_run` is a typed gap,
    never PASS; red-then-green receipts bind the baseline failing run and
-   candidate passing run over the same test IDs).
+   candidate passing run over the same test IDs). When a gate or role turn has
+   a **one-run budget**, specify **independent validation of a single-run receipt**
+   (assurance validates the recorded inputs, digest, and log instead of
+   re-running the command).
 4. **Self-check and deltas:** run only your own artifact checker (self-check
    boundary, assembly, and `seit.json` completeness, `plan-package.cjs` rules,
    and source bindings)—never run the repository gate (the repository gate runs

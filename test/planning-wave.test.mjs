@@ -886,3 +886,19 @@ describe("Alphazedehq#603 Integration and Test run-once command check", () => {
     assert.match(ret, /exit code[^.]{0,60}(?:reason[^.]{0,60}cannot run|pre-implementation)/i);
   });
 });
+
+describe("Alphazedehq#605 independent validation of a single-run receipt under one-run budget", () => {
+  it("names the form and when it applies in skills/integration-test, skills/test-engineer, and verification.md", () => {
+    for (const rel of [
+      "skills/integration-test/SKILL.md",
+      "skills/test-engineer/SKILL.md",
+      "skills/bearing-lite/references/verification.md",
+    ]) {
+      const text = read(rel).replace(/\s+/g, " ");
+      assert.match(text, /independent validation of a single-run receipt/i, rel);
+      assert.match(text, /one-run budget/i, rel);
+      assert.match(text, /inputs,\s*digest,?\s*and\s*log/i, rel);
+      assert.match(text, /(?:instead of|rather than)\s+re-?running/i, rel);
+    }
+  });
+});
