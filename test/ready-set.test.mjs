@@ -284,6 +284,26 @@ describe("real inputs and held resource scheduling (Alphazedehq#608)", () => {
     assert.deepEqual(readyExt.ready, ["consume", "ext"]);
   });
 
+  it("requires evidence for an external input and admits an observed version before a later writer", () => {
+    const missing = rs().evaluate({ slices: [slice("external", [], [], { inputs: ["seed.json"] })] });
+    assert.deepEqual(missing.ready, []);
+    assertExcluded(missing, "external", /input/, "seed.json");
+
+    const slices = [
+      slice("inspect", [], [], { inputs: ["config.json"] }),
+      slice("update", ["inspect"], ["config.json"]),
+    ];
+    const observed = rs().evaluate({ slices, available_inputs: ["config.json"] });
+    assert.deepEqual(observed.ready, ["inspect"]);
+    assertExcluded(observed, "update", /dependency/, "inspect");
+
+    const producerId = rs().evaluate({
+      slices: [slice("produce"), slice("consume", [], [], { inputs: ["produce"] })],
+      available_inputs: ["produce"],
+    });
+    assertExcluded(producerId, "consume", /input/, "produce");
+  });
+
   it("waveView forwards slice inputs and resource to ready-set evaluation", (t) => {
     const dir = tempDir(t, "wave-608-");
     writeFileSync(path.join(dir, "implementation.json"), JSON.stringify({
