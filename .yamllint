@@ -1,0 +1,11 @@
+extends: default
+
+rules:
+  comments:
+    ignore: /.github/workflows/
+  document-start:
+    ignore: /.github/workflows/
+  line-length:
+    ignore: /.github/workflows/
+  truthy:
+    ignore: /.github/workflows/
