@@ -16,6 +16,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { assertLinksTo, assertLocalLinksResolve, readShipped } from "./skill-contract-fixture.mjs";
@@ -211,5 +212,59 @@ describe("orchestrator-skill #214", () => {
       assert.ok(text.includes(ret), `orchestrator must name typed return ${ret}`);
     }
     assert.match(text, /stop|WAITING_ON|OWNER_DECISION_REQUIRED/i);
+  });
+});
+
+/**
+ * HLW-VC-027 (HLW-REQ-022, DES-HLW-SKILL): the live-wave reference ships and
+ * is linked from the orchestrator and each implementation-wave role skill,
+ * which also point at `herdr --skill`; no Herdr skill text is copied.
+ */
+describe("live-wave skill links (HLW-VC-027)", () => {
+  const LIVE = "skills/bearing-lite/references/live-wave.md";
+  const LINKERS = [
+    ORCH,
+    "skills/implementer/SKILL.md",
+    "skills/light-implementer/SKILL.md",
+    "skills/reviewer/SKILL.md",
+    "skills/test-engineer/SKILL.md",
+    "skills/integration-engineer/SKILL.md",
+  ];
+  const BC05_KEYS = ["time", "from", "to", "request_id", "reply_to", "body_path", "body_sha256",
+    "delivered", "attempts", "allowed", "role_file_digests"];
+
+  it("live-wave reference ships within 80 lines with resolving links and the BC-05 record shape", () => {
+    const text = readShipped(LIVE);
+    assert.ok(text.split("\n").length <= 81, `${LIVE} is at most 80 lines`);
+    assertLocalLinksResolve(LIVE);
+    const missing = BC05_KEYS.filter((k) => !text.includes(k));
+    assert.deepEqual(missing, [], `${LIVE} names every exchange.jsonl key`);
+    assert.match(text, /exchange\.jsonl/);
+    assert.match(text, /BEARING-MSG <request_id> <path> from=<role>/);
+    assert.match(text, /herdr --skill/);
+  });
+
+  for (const rel of LINKERS) {
+    it(`live-wave pointer in ${rel} names herdr --skill and links the reference`, () => {
+      assert.match(readShipped(rel), /herdr --skill/);
+      assertLinksTo(rel, LIVE);
+      assertLocalLinksResolve(rel);
+    });
+  }
+
+  it("live-wave reference copies no Herdr skill text (no run of more than 2 shared lines)", (t) => {
+    const ours = readShipped(LIVE);
+    // Print-only oracle: `herdr --skill` writes the installed skill text and starts no server.
+    const res = spawnSync("herdr", ["--skill"], { encoding: "utf8", timeout: 10_000 });
+    if (res.error || res.status !== 0) {
+      t.skip(`typed gap: herdr --skill unavailable (${res.error?.code || res.status})`);
+      return;
+    }
+    const norm = (s) => s.split("\n").map((l) => l.trim().replace(/\s+/g, " ")).filter(Boolean);
+    const theirs = norm(res.stdout);
+    const windows = new Set(theirs.slice(0, -2).map((_, i) => theirs.slice(i, i + 3).join("\n")));
+    const mine = norm(ours);
+    const copied = mine.slice(0, -2).map((_, i) => mine.slice(i, i + 3).join("\n")).filter((w) => windows.has(w));
+    assert.deepEqual(copied, [], "live-wave.md shares a 3-line run with herdr --skill");
   });
 });

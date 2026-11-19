@@ -977,3 +977,196 @@ describe("plan-package (Alphazedehq#625 planning input row shape)", () => {
     assert.equal(finding.reason, "sha256_required", JSON.stringify(finding));
   });
 });
+
+/**
+ * HLW-VC-025 (HLW-REQ-013, boundary-contract BC-05): with
+ * journey_settings.live_wave = "herdr", final freeze, the wave view and the
+ * closeout handoff read live/<wave>/exchange.jsonl. A valid record is
+ * summarized (record count, undelivered and allowed=false request ids); a
+ * malformed line or a body_sha256 mismatch is a named blocking finding.
+ * Summaries stay outside freeze `findings` so the final-freeze receipt that
+ * closeout requires (empty findings) is still attainable.
+ */
+describe("plan-package live-wave exchange.jsonl reader (HLW-VC-025)", () => {
+  const HOOK = path.join(ROOT, "hooks/plan-package.cjs");
+  const CLOSEOUT = path.join(ROOT, "hooks/closeout.cjs");
+  const run = (args, input) => spawnSync(process.execPath, args, {
+    cwd: ROOT, encoding: "utf8", timeout: 30_000, ...(input === undefined ? {} : { input }),
+  });
+
+  function livePlan(t, { liveWave = "herdr" } = {}) {
+    const repo = mkdtempSync(path.join(os.tmpdir(), "plan-package-live-"));
+    t.after(() => rmSync(repo, { recursive: true, force: true }));
+    const dir = path.join(repo, "docs/plans/x");
+    mkdirSync(path.join(repo, ".git"), { recursive: true });
+    mkdirSync(dir, { recursive: true });
+    const plan = "# plan\n";
+    const design = "# design\n";
+    writeFileSync(path.join(dir, "plan.md"), plan);
+    writeFileSync(path.join(dir, "design.md"), design);
+    writeFileSync(path.join(dir, "seit.json"), JSON.stringify({
+      source_baseline: { planning_inputs: [
+        { path: "docs/plans/x/plan.md", sha256: sha(plan) },
+        { path: "docs/plans/x/design.md", sha256: sha(design) },
+      ] },
+      procedures_and_commands: [],
+    }));
+    const manifest = sha([sha(plan), sha(design), sha(readFileSync(path.join(dir, "seit.json")))].join("\n"));
+    const contract = planningContract(manifest, { dir, units: ["W1"], kind: "wave" });
+    writeFileSync(path.join(dir, "implementation.json"), JSON.stringify({
+      boundary_contract: contract.boundary_contract,
+      journey_settings: {
+        planning_review: { candidate_digest: manifest },
+        ...contract.journey_settings,
+        ...(liveWave ? { live_wave: liveWave } : {}),
+      },
+      waves: [{ id: "W1", slice_ids: [], exit_command_ids: [] }],
+      slices: [],
+    }));
+    return dir;
+  }
+
+  const ZERO = "0".repeat(64);
+  function record(dir, n, { to = "reviewer", delivered = true, attempts = 1, allowed = true } = {}) {
+    const request_id = `implementer-${to}-${n}`;
+    const body_path = `live/W1/messages/${request_id}.md`;
+    const body = `request ${n}\n`;
+    mkdirSync(path.join(dir, "live/W1/messages"), { recursive: true });
+    writeFileSync(path.join(dir, body_path), body);
+    return {
+      time: `2026-11-19T10:0${n}:00Z`, from: "implementer", to, request_id, reply_to: null,
+      body_path, body_sha256: sha(body), delivered, attempts, allowed,
+      role_file_digests: { implementer: { "src/a.js": ZERO } },
+    };
+  }
+  const writeExchange = (dir, lines) =>
+    writeFileSync(path.join(dir, "live/W1/exchange.jsonl"),
+      lines.map((l) => (typeof l === "string" ? l : JSON.stringify(l))).join("\n") + "\n");
+
+  function validExchange(dir) {
+    const lines = [
+      record(dir, 1),
+      record(dir, 2, { delivered: false, attempts: 2 }),
+      record(dir, 3, { to: "test-engineer", allowed: false }),
+    ];
+    writeExchange(dir, lines);
+    return lines;
+  }
+
+  const waveSummary = (out) => {
+    assert.ok(out.live_wave, `output carries a live_wave summary: ${JSON.stringify(out)}`);
+    return (out.live_wave.waves || []).find((w) => w.wave === "W1");
+  };
+  const expectSummary = (summary) => {
+    assert.ok(summary, "summary names wave W1");
+    assert.equal(summary.records, 3);
+    assert.deepEqual(summary.undelivered, ["implementer-reviewer-2"]);
+    assert.deepEqual(summary.not_allowed, ["implementer-test-engineer-3"]);
+  };
+
+  it("live-wave schema declares journey_settings.live_wave as an optional herdr enum", () => {
+    const schema = JSON.parse(readFileSync(path.join(ROOT, "schemas/implementation.schema.json"), "utf8"));
+    const settings = schema.properties.journey_settings;
+    assert.deepEqual(settings.properties?.live_wave?.enum, ["herdr"]);
+    assert.ok(!(settings.required || []).includes("live_wave"), "live_wave stays optional");
+  });
+
+  it("live-wave final freeze accepts and summarizes a valid exchange.jsonl", (t) => {
+    const dir = livePlan(t);
+    validExchange(dir);
+    const res = run([HOOK, dir]);
+    const out = JSON.parse(res.stdout);
+    expectSummary(waveSummary(out));
+    assert.equal(res.status, 0, res.stdout);
+    assert.equal(out.outcome, "PASS");
+    assert.deepEqual(out.findings.filter((f) => /^live_/.test(f.code)), []);
+  });
+
+  it("live-wave wave view summarizes the wave's exchange.jsonl", (t) => {
+    const dir = livePlan(t);
+    validExchange(dir);
+    const res = run([HOOK, "wave", dir, "W1"]);
+    const out = JSON.parse(res.stdout);
+    assert.ok(out.live_exchange, `wave view carries live_exchange: ${res.stdout}`);
+    assert.equal(out.live_exchange.records, 3);
+    assert.deepEqual(out.live_exchange.undelivered, ["implementer-reviewer-2"]);
+    assert.deepEqual(out.live_exchange.not_allowed, ["implementer-test-engineer-3"]);
+    assert.equal(res.status, 0, res.stdout);
+  });
+
+  for (const [label, mutate] of [
+    ["a non-JSON line", (dir, lines) => writeExchange(dir, [...lines, "{not json"])],
+    ["a record missing body_sha256", (dir, lines) => {
+      const { body_sha256, ...rest } = record(dir, 4);
+      writeExchange(dir, [...lines, rest]);
+    }],
+    ["attempts outside 1-2", (dir, lines) => writeExchange(dir, [...lines, record(dir, 4, { attempts: 3 })])],
+  ]) {
+    it(`live-wave final freeze names a malformed exchange line: ${label}`, (t) => {
+      const dir = livePlan(t);
+      mutate(dir, validExchange(dir));
+      const res = run([HOOK, dir]);
+      const out = JSON.parse(res.stdout);
+      const finding = out.findings.find((f) => f.code === "live_exchange_malformed");
+      assert.ok(finding, `named finding: ${res.stdout}`);
+      assert.equal(finding.path, "live/W1/exchange.jsonl");
+      assert.equal(finding.line, 4);
+      assert.notEqual(res.status, 0);
+      assert.equal(out.outcome, "FAIL");
+    });
+  }
+
+  it("live-wave final freeze names an exchange body_sha256 mismatch", (t) => {
+    const dir = livePlan(t);
+    validExchange(dir);
+    writeFileSync(path.join(dir, "live/W1/messages/implementer-reviewer-1.md"), "edited after send\n");
+    const res = run([HOOK, dir]);
+    const out = JSON.parse(res.stdout);
+    const finding = out.findings.find((f) => f.code === "live_exchange_body_digest_mismatch");
+    assert.ok(finding, `named finding: ${res.stdout}`);
+    assert.equal(finding.request_id, "implementer-reviewer-1");
+    assert.notEqual(res.status, 0);
+    assert.equal(out.outcome, "FAIL");
+  });
+
+  it("live-wave freeze ignores exchange files when live_wave is absent", (t) => {
+    const dir = livePlan(t, { liveWave: null });
+    mkdirSync(path.join(dir, "live/W1"), { recursive: true });
+    writeExchange(dir, ["{not json"]);
+    // Positive half first: the same tree with live_wave set must name the defect.
+    const live = livePlan(t);
+    mkdirSync(path.join(live, "live/W1"), { recursive: true });
+    writeExchange(live, ["{not json"]);
+    assert.ok(JSON.parse(run([HOOK, live]).stdout).findings.some((f) => f.code === "live_exchange_malformed"));
+    const out = JSON.parse(run([HOOK, dir]).stdout);
+    assert.equal(out.outcome, "PASS", JSON.stringify(out));
+    assert.equal(out.live_wave, undefined);
+  });
+
+  const RECEIPT = { stage: "final", outcome: "PASS", manifest_digest: "a".repeat(64), findings: [] };
+  const handoff = (dir) => JSON.stringify({
+    mode: "handoff",
+    plan_dir: dir,
+    journey: { schema_version: "1", journey: { id: "x", status: "implementation" } },
+    final_freeze_receipt: RECEIPT,
+  });
+
+  it("live-wave closeout handoff summarizes a valid exchange.jsonl", (t) => {
+    const dir = livePlan(t);
+    validExchange(dir);
+    const res = run([CLOSEOUT], handoff(dir));
+    const out = JSON.parse(res.stdout);
+    expectSummary(waveSummary(out));
+    assert.equal(out.outcome, "ADVISE");
+    assert.equal(out.reason, "handoff_complete");
+  });
+
+  it("live-wave closeout handoff refuses with a named exchange finding", (t) => {
+    const dir = livePlan(t);
+    validExchange(dir);
+    writeFileSync(path.join(dir, "live/W1/messages/implementer-reviewer-1.md"), "edited after send\n");
+    const out = JSON.parse(run([CLOSEOUT], handoff(dir)).stdout);
+    assert.equal(out.outcome, "REROUTE", JSON.stringify(out));
+    assert.match(out.reason, /live_exchange_body_digest_mismatch/);
+  });
+});
