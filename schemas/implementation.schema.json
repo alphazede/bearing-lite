@@ -242,15 +242,25 @@
         "status": { "type": "string" }
       }
     },
+    "dodMermaidView": {
+      "required": ["format"],
+      "properties": { "format": { "const": "mermaid" } }
+    },
+    "dodMermaidDigest": {
+      "type": "string",
+      "pattern": "^\\s*(?:[sS][hH][aA]256:)?[0-9a-fA-F]{64}\\s*$"
+    },
     "dodView": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "format": { "type": "string", "enum": ["svg", "png"] },
+        "format": { "type": "string", "enum": ["svg", "png", "mermaid"] },
         "path": { "type": "string", "minLength": 1 },
         "inline": { "type": "string", "minLength": 1 },
         "alt": { "type": "string" }
-      }
+      },
+      "if": { "$ref": "#/$defs/dodMermaidView" },
+      "then": { "required": ["path"] }
     },
     "dodModel": {
       "type": "object",
@@ -278,12 +288,28 @@
           "type": "array",
           "items": { "$ref": "#/$defs/dodView" }
         }
+      },
+      "if": {
+        "anyOf": [
+          { "required": ["view"], "properties": { "view": { "$ref": "#/$defs/dodMermaidView" } } },
+          {
+            "required": ["views"],
+            "properties": { "views": { "contains": { "$ref": "#/$defs/dodMermaidView" } } }
+          }
+        ]
+      },
+      "then": {
+        "required": ["mode", "digest"],
+        "properties": {
+          "mode": { "const": "diagram-assisted" },
+          "digest": { "$ref": "#/$defs/dodMermaidDigest" }
+        }
       }
     },
     "dodManifest": {
       "type": "object",
       "additionalProperties": true,
-      "description": "Structured rendering input for the versioned DoD Manifest template. Planning fields are the immutable projection; closeout is append-only. Activated models (selected OR required, including render_status READY/MISSING/STALE) must bind digest plus view.format svg|png and view.path or svg view.inline, either on the planning row or via closeout.model_views. The renderer never invents views or evidence and never rewrites planning model rows.",
+      "description": "Structured rendering input for the versioned DoD Manifest template. Planning fields are the immutable projection; closeout is append-only. Activated models must bind a view and its digest on the planning row or via closeout.model_views. SVG accepts a path or inline markup. PNG and diagram-assisted Mermaid source views use a path. The renderer never invents views or evidence and never rewrites planning model rows.",
       "required": ["template_version", "output_name", "title"],
       "properties": {
         "template_version": { "type": "string", "const": "1.0.1" },
@@ -396,7 +422,9 @@
                   "model_id": { "type": "string", "minLength": 1 },
                   "digest": { "type": "string", "minLength": 1 },
                   "view": { "$ref": "#/$defs/dodView" }
-                }
+                },
+                "if": { "properties": { "view": { "$ref": "#/$defs/dodMermaidView" } } },
+                "then": { "properties": { "digest": { "$ref": "#/$defs/dodMermaidDigest" } } }
               }
             }
           }
