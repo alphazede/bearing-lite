@@ -98,6 +98,23 @@ Implementer, Light Implementer, or Integration Engineer execution run is
 `diagnostic` and cannot pass a gate; only an independent Test Engineer
 assurance session produces `assurance`.
 
+## Process tier resolution
+
+`resolveProcessTier(phase)` in `hooks/verification.cjs` (and re-exported by
+`hooks/verification-bridge.cjs`, validated against `tier_resolution` in
+`schemas/verification.schema.json`) resolves a phase's process tier under the
+stated risk rule (`planning-assembly.md#process-tiers-and-stated-risk-rule`):
+
+- A **copy-only or read-only** phase that crosses into a host with **live
+  services** (and carries no other `full`-tier risk factor) may resolve to
+  `standard` with a required **before and after live-service observation**
+  (`live_service_observation: { required: true, stages: ["before", "after"] }`):
+  one implementer, one review, and **no separate assurance** (`separate_assurance: false`).
+- A phase that **deletes or mutates** (or carries other `full`-tier risk
+  factors, or does not declare copy-only or read-only behavior) resolves as
+  before (`full` with separate assurance when crossing live hosts or high-risk
+  boundaries).
+
 ## Gate-chain claim types
 
 Deterministic gate-chain claims use the mutation, changed-line coverage, and

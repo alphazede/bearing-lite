@@ -421,3 +421,43 @@ describe("SEIT-BDL-004 deterministic verification adapter", () => {
     assert.equal(got.gate_eligible, false);
   });
 });
+
+describe("Alphazedehq#611 copy-only or read-only live-host tier resolution", () => {
+  it("resolves a copy-only or read-only live-host phase to standard with before/after live-service observation and no separate assurance", () => {
+    for (const phase of [
+      { live_host: true, copy_only: true },
+      { live_services: true, read_only: true },
+      { crosses_live_host: true, operations: ["copy", "read"], prior_tier: "full" },
+    ]) {
+      const got = adapter.resolveProcessTier(phase);
+      assert.equal(got.outcome, "READY");
+      assert.equal(got.tier, "standard");
+      assert.equal(got.implementers, 1);
+      assert.equal(got.reviews, 1);
+      assert.equal(got.separate_assurance, false);
+      assert.equal(got.live_service_observation.required, true);
+      assert.deepEqual(got.live_service_observation.stages, ["before", "after"]);
+    }
+  });
+
+  it("keeps full or prior tier for phases that delete, mutate, carry other full risks, or omit copy-only/read-only", () => {
+    const cases = [
+      [{ live_host: true, deletes: true }, "full", true],
+      [{ live_host: true, mutates: true }, "full", true],
+      [{ live_host: true, copy_only: true, deletes: true }, "full", true],
+      [{ live_host: true, operations: ["copy", "mutate"] }, "full", true],
+      [{ live_host: true }, "full", true],
+      [{ live_host: true, copy_only: true, trust_boundary: true }, "full", true],
+      [{ live_host: false, copy_only: true }, "light", false],
+      [{ live_host: false, moderate_risk: true }, "standard", false],
+      [{ prior_tier: "standard", mutates: true }, "standard", false],
+    ];
+    for (const [phase, expectedTier, expectedAssurance] of cases) {
+      const got = adapter.resolveProcessTier(phase);
+      assert.equal(got.outcome, "READY");
+      assert.equal(got.tier, expectedTier, JSON.stringify(phase));
+      assert.equal(got.separate_assurance, expectedAssurance, JSON.stringify(phase));
+      assert.equal(got.live_service_observation.required, false);
+    }
+  });
+});

@@ -483,4 +483,11 @@ describe("verification receipt bridge (#105)", () => {
     assert.equal(verdict.outcome, "PASS", JSON.stringify(verdict));
     assert.equal(verdict.gate_eligible, true, JSON.stringify(verdict));
   });
+
+  it("exposes resolveProcessTier consistently through the verification bridge (#611)", () => {
+    const got = bridge.resolveProcessTier({ live_host: true, copy_only: true });
+    assert.equal(got.tier, "standard");
+    assert.equal(got.separate_assurance, false);
+    assert.deepEqual(got.live_service_observation, { required: true, stages: ["before", "after"] });
+  });
 });

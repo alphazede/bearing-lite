@@ -969,3 +969,20 @@ describe("Alphazedehq#605 independent validation of a single-run receipt under o
     assert.match(assurance, /independent assurance receipt/i);
   });
 });
+
+describe("Alphazedehq#611 copy-only or read-only live-host phase tier rule", () => {
+  it("documents the standard-tier before/after live-service observation rule and unchanged delete/mutate rule", () => {
+    for (const rel of [
+      "skills/bearing-lite/references/planning-assembly.md",
+      "skills/bearing-lite/references/verification.md",
+    ]) {
+      const text = read(rel).replace(/\s+/g, " ");
+      assert.match(text, /copy-only or read-only/i, rel);
+      assert.match(text, /live services|live-service/i, rel);
+      assert.match(text, /\bstandard\b/i, rel);
+      assert.match(text, /before and after live-service observation/i, rel);
+      assert.match(text, /no separate assurance/i, rel);
+      assert.match(text, /deletes? or mutates?/i, rel);
+    }
+  });
+});

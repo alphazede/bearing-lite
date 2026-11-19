@@ -30,6 +30,7 @@
  */
 
 const crypto = require("node:crypto");
+const { resolveProcessTier } = require("./verification.cjs");
 
 const AUTHORITIES = Object.freeze(["diagnostic", "assurance"]);
 const STAGES = Object.freeze([
@@ -368,5 +369,6 @@ function sealVerification(input) {
 module.exports = {
   planVerification,
   sealVerification,
+  resolveProcessTier,
   canonicalJson,
 };
