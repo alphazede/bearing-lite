@@ -80,7 +80,11 @@ independent assurance (`../test-engineer/SKILL.md`) and execution assessment
 4. **Self-check and deltas:** run only your own artifact checker (self-check
    boundary, assembly, and `seit.json` completeness, `plan-package.cjs` rules,
    and source bindings)—never run the repository gate (the repository gate runs
-   once at assembly). Repair your own defects in this assignment, folding
+   once at assembly). Also run each authored/frozen SEIT command
+   (`procedures_and_commands[]`) once before returning to verify syntax,
+   selectors, and exit behavior—or record the specific reason it cannot run
+   before implementation (for example, it depends on unimplemented product code).
+   Repair your own defects in this assignment, folding
    all known corrections into this first return to the Planning Orchestrator
    with proof cases, boundary/assembly inputs, selected capability bindings,
    and exact fixes for other roles' artifacts as named deltas
@@ -115,7 +119,9 @@ independent assurance (`../test-engineer/SKILL.md`) and execution assessment
 
 Return `READY`, `CANDIDATE_READY`, `NEEDS_MORE_EVIDENCE`, `GAPS`, or
 `OWNER_DECISION_REQUIRED` with session, verdict, candidate_ref,
-changed_paths, tests, findings, and blocker, plus gaps and next action.
+changed_paths, tests, findings, and blocker, plus gaps, the run-once record for
+each frozen command (command, exit code, and digest, or the recorded
+pre-implementation reason it cannot run), and next action.
 Evidence returns digests, commands, and exit codes, not narrative logs. Honor
 the packet's time target; at the limit, return what you have and list the gaps.
 Material interface, contract, trust, ownership, or recovery gaps remain visible
