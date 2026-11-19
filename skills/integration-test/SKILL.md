@@ -149,10 +149,12 @@ Orchestrator or another author, listing those externally owned items in
 spends no closing return, while planning review and the final freeze still
 refuse until each listed external item is closed by its declared owner.
 Integration and Test author returns validate `seit.json` and boundary inputs
-and do not depend on generated `implementation.json`; for any verify-only
-return that inspects `implementation.json`, verify only after the Orchestrator
-regenerates `implementation.json` to the packet's candidate digest rather than
-reading a stale copy.
+and do not depend on generated `implementation.json`; the planning return order
+is Orchestrator inputs, then `integration_test`, then verify-only `mbse`, then
+regeneration of `implementation.json` (only if a verify-only return explicitly
+inspects `implementation.json` must it wait until the Orchestrator regenerates
+`implementation.json` to the packet's candidate digest rather than reading a
+stale copy).
 Evidence returns digests, commands, and exit codes, not narrative logs. Honor
 the packet's time target; at the limit, return what you have and list the gaps.
 Material interface, contract, trust, ownership, or recovery gaps remain visible
