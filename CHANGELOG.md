@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Launch an enabled Scribe once at the start of the Lifecycle on its frozen cadence (`roles.scribe.cadence`, `event` default), and name a never-launched enabled Scribe as the gap the Orchestrator acts on in `hooks/closeout.cjs`, `skills/bearing-lite/references/planning-assembly.md`, and `skills/bearing-lite/references/resume.md` without adding a new refusal. (Alphazedehq#642)
+
 - Add root `hooks.json` and `hooks/com.google.antigravity/host.cjs` AGY adapter so all 7 Bearing hooks with AGY events (`SessionStart`, `PreToolUse`, `Stop`) run natively under AGY, and update `docs/harness-compatibility.md` and `hooks/com.anthropic.claude-code/mapping.md` from live AGY 1.5.12 verification. (Alphazedehq#636)
 
 - Define `test_engineer.assurance` and `integration_engineer.execution` in `assurance-policy.md` as cadence keys distinct from `profiles.json` schema paths (`roles.<role>.sessions.<session>`), and use schema session paths consistently in `profiles.md` and onboarding docs. (Alphazedehq#639)

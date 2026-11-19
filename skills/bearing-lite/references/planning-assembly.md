@@ -407,7 +407,8 @@ A missing or invalid final freeze receipt refuses the
 handoff (`handoff_refused:final_freeze_receipt_missing` or `_invalid`), and a
 history coverage gap refuses the handoff until its recorder transcribes the listed
 decisions, authority events, and landings: Orchestrator when Scribe is omitted or
-disabled, otherwise the existing Scribe session on its frozen cadence (see
-`resume.md`). Follow the approved clean-session choice in
+disabled, otherwise the enabled Scribe on its frozen cadence—launching a
+never-launched enabled Scribe once, continuing its existing session, or
+reporting its typed capability gap (see `resume.md`). Follow the approved clean-session choice in
 `journey_settings.planning_to_implementation_clean_session`. The owner opens
 the fresh session when selected. Implementation resumes from the handoff.

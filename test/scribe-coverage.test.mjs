@@ -261,3 +261,54 @@ describe("#194 Scribe coverage", () => {
     assert.match(resume, /Never relaunch it per event, phase or batch, poll it, or invent a Scribe when disabled/);
   });
 });
+
+describe("Alphazedehq#642 enabled Scribe launch and never-launched gap", () => {
+  it("Orchestrator and resume docs name launching an enabled Scribe at Lifecycle start on its frozen cadence", () => {
+    const router = read("skills/bearing-lite/SKILL.md");
+    const assembly = read("skills/bearing-lite/references/planning-assembly.md");
+    const resume = read("skills/bearing-lite/references/resume.md");
+    assert.match(router, /launch an enabled Scribe[^.\n]*start of the Lifecycle[^.\n]*frozen cadence/i);
+    assert.match(resume, /launch[^.\n]*enabled Scribe[^.\n]*start of the Lifecycle/i);
+    assert.match(assembly, /never-launched enabled Scribe|if never launched/i);
+  });
+
+  it("closeout coverage-gap recovery names launching a never-launched enabled Scribe without adding a new refusal", () => {
+    const handoffGap = closeout.evaluate({
+      action_kind: "scribe_coverage",
+      mode: "handoff",
+      journey: journey(),
+      final_freeze_receipt: finalFreezeReceipt,
+    });
+    assert.equal(handoffGap.outcome, "REROUTE");
+    assert.match(handoffGap.reason, /^handoff_refused:scribe_SCRIBE_REQUIRED/);
+    assert.match(handoffGap.recovery, /launch[^.]*never-launched enabled Scribe[^.]*frozen cadence/i);
+
+    const resumeGap = closeout.evaluate({
+      action_kind: "scribe_coverage",
+      mode: "resume",
+      journey: journey(),
+    });
+    assert.equal(resumeGap.outcome, "ADVISE");
+    assert.match(resumeGap.reason, /^scribe_coverage:SCRIBE_REQUIRED/);
+    assert.match(resumeGap.recovery, /launch[^.]*never-launched enabled Scribe[^.]*frozen cadence/i);
+
+    const advisoryGap = closeout.evaluate({ ...completion(journey()), mode: undefined });
+    assert.equal(advisoryGap.outcome, "REROUTE");
+    assert.match(advisoryGap.reason, /^scribe_coverage:SCRIBE_REQUIRED/);
+    assert.match(advisoryGap.recovery, /launch[^.]*never-launched enabled Scribe[^.]*frozen cadence/i);
+
+    const noEventsYet = {
+      ...journey(),
+      decisions: [],
+      authority_events: [],
+    };
+    const passEmpty = closeout.evaluate({
+      action_kind: "scribe_coverage",
+      mode: "handoff",
+      journey: noEventsYet,
+      final_freeze_receipt: finalFreezeReceipt,
+    });
+    assert.equal(passEmpty.outcome, "ADVISE");
+    assert.match(passEmpty.reason, /^scribe_coverage:PASS/);
+  });
+});

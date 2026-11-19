@@ -19,7 +19,7 @@ explicit setup or catalog-edit request uses [onboard-bearing](../onboard-bearing
 - **Planning Orchestrator:** owns context, specialist dispatch, final plan/design, owner agreement, and the written handoff; does not dispatch implementation.
 - **Implementation Orchestrator:** checks handoff and follows `references/coordinator-migration.md` for wave duties and frozen legacy assignments.
 
-1. **Intake:** use `../intake/SKILL.md` to confirm repository and task location. Reuse confirmed inputs; ask only on material ambiguity. Start the Orchestrator in a directory that survives cleanup (outside disposable task worktrees) and name the worktree explicitly for short commands so no Orchestrator process holds a worktree open during cleanup.
+1. **Intake:** use `../intake/SKILL.md` to confirm repository and task location. Reuse confirmed inputs; ask only on material ambiguity. Start the Orchestrator in a directory that survives cleanup (outside disposable task worktrees) and name the worktree explicitly for short commands so no Orchestrator process holds a worktree open during cleanup. Once the profile is bound, launch an enabled Scribe once at the start of the Lifecycle at its frozen cadence (`roles.scribe.cadence`, `event` default); never invent or launch a disabled/omitted Scribe.
 2. **Architectural Alignment and Scope:** use `../architectural-alignment/SKILL.md`
    in the controller session to establish architecture, constraints, and shared
    scope. Reuse the previous `repository-map.md` after a freshness check,
@@ -94,7 +94,7 @@ Preserve the recorded profile; use `references/profiles.md` for authorized amend
 Launch each selected agent assignment once. Every packet carries a time target
 and "at the limit, return what you have and list the gaps". Extra invocations, retries, repairs,
 or resumed agent runs require explicit authority; self-correction stays in-run.
-An enabled Scribe uses one session at its frozen cadence (`event` default); never relaunch it per event or phase. When disabled or omitted, Orchestrator records history.
+Launch an enabled Scribe once at the start of the Lifecycle and use that one session at its frozen cadence (`event` default); never relaunch it per event or phase. When disabled or omitted, Orchestrator records history.
 Register native completion notifications at dispatch. Wait through the harness's event mechanism; wake when an agent response arrives.
 Consume each response once and dispatch newly ready work. Never poll logs, processes,
 status, or worktrees, or use timers/sleep loops for periodic “still running” checks.
