@@ -661,23 +661,50 @@ describe("S3 DoD Manifest template, schema, and renderer", () => {
     unsafe('<svg xmlns="http://www.w3.org/2000/svg"><text>A &amp B</text></svg>');
   });
 
-  it("skips XML comments after whitespace and between SVG elements while keeping refusals unchanged", () => {
+  it("skips XML comments after whitespace and between SVG elements without whitespace-only lines while keeping refusals unchanged", () => {
     assert.equal(
       sanitizeSvg('<svg xmlns="http://www.w3.org/2000/svg"><!-- c --><g/></svg>'),
       '<svg xmlns="http://www.w3.org/2000/svg"><g /></svg>'
     );
     assert.equal(
       sanitizeSvg('<svg xmlns="http://www.w3.org/2000/svg">\n  <!-- c -->\n  <g/>\n</svg>'),
-      '<svg xmlns="http://www.w3.org/2000/svg">\n  \n  <g />\n</svg>'
+      '<svg xmlns="http://www.w3.org/2000/svg">\n\n  <g />\n</svg>'
     );
     assert.equal(
       sanitizeSvg('<!-- head -->\n<svg xmlns="http://www.w3.org/2000/svg"><text>A<!-- mid -->B</text></svg>'),
-      '\n<svg xmlns="http://www.w3.org/2000/svg"><text>AB</text></svg>'
+      '<svg xmlns="http://www.w3.org/2000/svg"><text>AB</text></svg>'
     );
+    const leadingCommentsSvg = '<!-- a -->\n  <!-- b -->\n<svg xmlns="http://www.w3.org/2000/svg"><rect/></svg>\n';
+    assert.equal(
+      sanitizeSvg(leadingCommentsSvg),
+      '<svg xmlns="http://www.w3.org/2000/svg"><rect /></svg>'
+    );
+    for (const svg of [
+      leadingCommentsSvg,
+      '<svg xmlns="http://www.w3.org/2000/svg">\n  <!-- c -->\n  <g/>\n</svg>',
+      '<svg xmlns="http://www.w3.org/2000/svg">\n  \n  <rect/>\n</svg>',
+      '<!-- a -->\r\n  <!-- b -->\r\n<svg xmlns="http://www.w3.org/2000/svg"><rect/></svg>\r\n  <!-- tail -->\r\n',
+    ]) {
+      const html = renderDodManifest(
+        {
+          dod_manifest: baseManifest({
+            models: [
+              boundSvgModel({
+                digest: `sha256:${sha256Hex(Buffer.from(svg, "utf8"))}`,
+                view: { format: "svg", inline: svg },
+              }),
+            ],
+          }),
+        },
+        { assetRoot: tempDir() }
+      ).html;
+      assert.doesNotMatch(html, /^[ \t]+$/m, "rendered DoD Manifest must not contain whitespace-only lines");
+    }
     for (const bad of [
       '<svg xmlns="http://www.w3.org/2000/svg">\n  <!-- unterminated</svg>',
       '<svg xmlns="http://www.w3.org/2000/svg">\n  <1bad/></svg>',
       '<svg xmlns="http://www.w3.org/2000/svg">\n  <!-- c --><script>alert(1)</script></svg>',
+      '&amp <svg xmlns="http://www.w3.org/2000/svg"><rect/></svg>',
     ]) {
       assert.throws(() => sanitizeSvg(bad), (err) => err.code === "UNSAFE_ASSET");
     }
