@@ -33,7 +33,10 @@ assessment.
    changed-line coverage, and red-then-green claims using the target
    repository's own tools and thresholds, plus Reverify only for applicable
    binary-level claims) and attaches `assurance` receipts;
-   author gate-chain receipts are diagnostic-only and cannot satisfy independent assurance. A
+   author gate-chain receipts are diagnostic-only and cannot satisfy independent assurance. When a declared SEIT gate or role turn carries an explicit
+   **one-run budget**, use **independent validation of a single-run receipt**:
+   independently validate the recorded inputs, digest, and log (plus candidate
+   and command binding) instead of re-running the command. A
    declared gate with a missing tool or a `not_run` outcome is a typed gap,
    never PASS. Every red-then-green receipt binds the baseline failing run and
    the candidate passing run over the same test IDs.

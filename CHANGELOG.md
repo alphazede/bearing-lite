@@ -12,6 +12,7 @@
 - Scope `tools/compile-handoff.mjs` in `skills/bearing-lite/references/pre-packet.md` and `skills/bearing-lite/references/task-state.md` to execution packets (once `implementation.json` and `seit.json` exist) while directing planning (pre-assembly) packets to the Prompt template. (Alphazedehq#596)
 - Link `references/consultation.md` and name its four Fellow consultation checkpoints in the Implementation step of `skills/bearing-lite/SKILL.md`. (Alphazedehq#600)
 - Add a run-once check for each authored/frozen SEIT command (or a recorded pre-implementation reason it cannot run) and its return record to `skills/integration-test/SKILL.md`. (Alphazedehq#603)
+- Name `independent validation of a single-run receipt` (validating recorded inputs, digest, and log instead of re-running when a gate or role turn has a one-run budget) in `skills/integration-test/SKILL.md`, `skills/test-engineer/SKILL.md`, and `skills/bearing-lite/references/verification.md`. (Alphazedehq#605)
 
 ## [3.0.0-rc.2] - 2026-11-18
 
