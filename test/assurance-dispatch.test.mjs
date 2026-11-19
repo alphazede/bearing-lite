@@ -91,6 +91,14 @@ for (const host of ['claude-code', 'codex', 'cursor', 'copilot']) test(`209 ${ho
   assert.equal(existsSync(path.join(f.dir, 'excess.marker')), false);
   assert.equal(f.read().units[0].assurance_rounds, 1);
 });
+for (const host of ['claude-code', 'codex']) test(`BL-07 ${host} records a declared dispatch whose tool name is native to AGY`, t => {
+  const f = fixture(t);
+  Object.assign(f.slots[0], { tool_name: 'view_file', tool_input: { Path: 'notes.md' } });
+  json(f.declaration_path, f.declaration);
+  f.bind();
+  assert.equal(denied(run(f, envelope(f, 'review-a'), host)), false);
+  assert.deepEqual(f.read().dispatch_log.map(entry => entry.slot_id), ['review-a']);
+});
 test('209 mandatory registration covers every tool including native agent dispatch', () => {
   for (const [file, events] of [['hooks/hooks.json', ['PreToolUse']], ['hooks/com.cursor/hooks.json', ['preToolUse', 'beforeShellExecution']], ['com.github.copilot/hooks/hooks.json', ['PreToolUse']]]) {
     const m = JSON.parse(readFileSync(path.join(ROOT, file)));
