@@ -140,7 +140,7 @@ not permission to start repeated polling or duplicate an invocation.
    approved handoff using the [handoff template](../templates/handoff.md),
    returning to planning before dispatch if the receipt is absent, invalid, or
    `draft`-only. The Orchestrator validates the candidate and authority, executes the frozen plan,
-   and starts every ready slice whose declared `inputs` and dependencies are met and whose held `resource` and `write_set` are free (`hooks/ready-set.cjs`), without holding independent slices for wave order. The pace rules are in
+   and starts every ready slice whose declared `inputs` and dependencies are met and whose held `resource` and `write_set` are free (`hooks/ready-set.cjs`), without holding independent slices for wave order. Run the first implementation slice (preflight) with every planned command in dry-run or `--version` form on every target host in parallel before dependent host slices, and end any phase that builds a host by running that repository's real gate on it. The pace rules are in
    `coordinator-migration.md`.
 2. In selected `tdd` mode, the configured Test Implementer writes the authorized
    tests and records the expected baseline failure before Product Implementer runs.
@@ -261,6 +261,9 @@ specialists. It never waits for the end-of-wave review.
 
 - Give each slice one coherent outcome with a bounded write set, acceptance,
   commands, real `inputs`, held `resource` (when exclusive: host, repository, or worktree), dependencies, selected author, recovery, and expected evidence.
+  Plan the first implementation slice as a preflight slice running every planned
+  command in dry-run or `--version` form on every target host in parallel, and
+  end any phase that builds a host by running that repository's real gate on it.
 - Avoid overloaded slices spanning unrelated outcomes and waves that hold ready
   independent work until everything else finishes. Avoid tiny slices whose
   extra handoffs exceed their useful work.

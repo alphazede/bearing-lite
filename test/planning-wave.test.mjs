@@ -1027,3 +1027,24 @@ describe("Alphazedehq#609 per-phase choice between reviewed command list and reu
     }
   });
 });
+
+describe("Alphazedehq#610 preflight slice and closing real-gate run", () => {
+  it("requires planning and implementation text to run a parallel preflight slice across target hosts and close host-building phases with the repository real gate", () => {
+    for (const rel of [
+      "skills/planning-and-design/SKILL.md",
+      "skills/planning-and-design/references/artifact-grammar.md",
+      "skills/integration-test/SKILL.md",
+      "skills/bearing-lite/references/planning-assembly.md",
+      "skills/bearing-lite/references/task-state.md",
+      "skills/bearing-lite/SKILL.md",
+    ]) {
+      const text = read(rel).replace(/\s+/g, " ");
+      assert.match(text, /first implementation slice|preflight/i, rel);
+      assert.match(text, /dry-run.*--version|--version.*dry-run/i, rel);
+      assert.match(text, /every target host/i, rel);
+      assert.match(text, /in parallel/i, rel);
+      assert.match(text, /builds? a host/i, rel);
+      assert.match(text, /real gate/i, rel);
+    }
+  });
+});

@@ -162,6 +162,9 @@ undefined term and fails the gate.
    omit unneeded requirements registers, models, and specialist sessions
    (`required_sessions: []`). Record verification evidence as digests,
    commands, and exit codes, not narrative logs.
+12. Make the first implementation slice a preflight slice that runs every planned
+   command in dry-run or `--version` form on every target host in parallel; a
+   phase that builds a host ends by running that repository's real gate on it.
 
 ## Optional binding sections
 
