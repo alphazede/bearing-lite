@@ -501,6 +501,7 @@ describe("Alphazedehq#643 contained tool change lighter planning tier", () => {
         reason: "contained_tool_change",
         tier: "light",
         planning_sessions: 0,
+        required_sessions: [],
         same_freeze: true,
         reviews: 1,
       }, JSON.stringify(phase));

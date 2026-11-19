@@ -505,6 +505,7 @@ describe("verification receipt bridge (#105)", () => {
     assert.equal(got.reason, "contained_tool_change");
     assert.equal(got.tier, "light");
     assert.equal(got.planning_sessions, 0);
+    assert.deepEqual(got.required_sessions, []);
     assert.equal(got.same_freeze, true);
     assert.equal(got.reviews, 1);
   });

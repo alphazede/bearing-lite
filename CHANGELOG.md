@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Include the empty required specialist schedule in contained-tool planning results alongside the existing freeze and review requirements. (Alphazedehq#643)
+
 - Retain the prior planning tier when supplied scope, repository, owner tier, or full-tier risk flags leave containment unconfirmed. (Alphazedehq#643)
 
 - Document Antigravity installation from a staged npm payload with the AGY manifest and all seven hook registrations. (Alphazedehq#636)

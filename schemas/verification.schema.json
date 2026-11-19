@@ -149,6 +149,7 @@
           "const": { "required": true, "stages": ["before", "after"] }
         },
         "planning_sessions": { "type": "integer", "minimum": 0 },
+        "required_sessions": { "const": [] },
         "same_freeze": { "type": "boolean" }
       },
       "if": {
@@ -163,6 +164,7 @@
           "reviews": { "const": 1 },
           "separate_assurance": { "const": false },
           "planning_sessions": false,
+          "required_sessions": false,
           "same_freeze": false
         }
       },
@@ -190,6 +192,7 @@
             "separate_assurance": false,
             "live_service_observation": false,
             "planning_sessions": false,
+            "required_sessions": false,
             "same_freeze": false
           }
         }
