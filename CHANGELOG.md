@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [3.0.0-rc.5] - 2026-11-19
+
 - Test Codex hook trust in an isolated install. Current saved trust runs SessionStart and all three Stop hooks. Stale plugin content trust reports modified trust and fails the hooks. (Alphazedehq#634)
 - Order planning returns as Orchestrator inputs, `integration_test`, verify-only `mbse`, then regenerate `implementation.json`. If a verify-only return reads `implementation.json`, regenerate it first and bind the return to that candidate. (Alphazedehq#627)
 - Use focused checks before review. Run the landing repository gate once on the final head after review and any repair, then merge that exact head. (Alphazedehq#618)
