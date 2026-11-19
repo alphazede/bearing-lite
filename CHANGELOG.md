@@ -8,6 +8,7 @@
 - Add optional `delegate_approval` (`approver`, `delegation_ref`, optional UTC `approved_at`) to `schemas/authority.schema.json` and document it in `skills/bearing-lite/references/owner-stops.md` so delegate approvals validate with a delegation reference, fail validation without one, and compile without a separate effective-authority file. (Alphazedehq#604)
 - Define the Planning Orchestrator's one closing return (`author`, `reason`, `items`, `candidate`, resulting `READY`; resuming the author's own session without counting as a relaunch) in `skills/bearing-lite/references/planning-assembly.md`, and accept one valid closing return closing a `GAPS` session in `hooks/plan-package.cjs` final freeze while refusing unclosed `GAPS`, incomplete records, or a second closing return. (Alphazedehq#593)
 - Name the same one closing return path and its record (`author`, `reason`, `items`, `candidate`, resulting `READY`) in `skills/planning-and-design/SKILL.md` and `skills/bearing-lite/references/planning-assembly.md` for a meaning defect found at assembly. (Alphazedehq#595)
+- Add `skills/bearing-lite/templates/handoff.md` recording `final_freeze_receipt`, require Implementation Orchestrator intake in `skills/bearing-lite/SKILL.md` and `skills/bearing-lite/references/planning-assembly.md` to verify it and return to planning when absent or `draft`-only, and make `hooks/closeout.cjs` (`mode: "handoff"`) refuse a handoff without a valid `final_freeze_receipt`. (Alphazedehq#594)
 
 ## [3.0.0-rc.2] - 2026-11-18
 

@@ -130,8 +130,11 @@ not permission to start repeated polling or duplicate an invocation.
 
 ## Implementation order after the handoff
 
-1. The Implementation Orchestrator consumes the approved handoff, validates its
-   candidate and authority, executes the frozen plan without redoing planning,
+1. The Implementation Orchestrator consumes the approved handoff, confirms its
+   `final_freeze_receipt` (`stage: "final"`, `outcome: "PASS"`, matching
+   `manifest_digest`) — returning to planning without dispatching
+   implementation if absent, invalid, or `draft`-only — validates its candidate
+   and authority, executes the frozen plan without redoing planning,
    and schedules dependency-ready implementation slices. The pace rules are in
    `coordinator-migration.md`.
 2. In selected `tdd` mode, the configured Test Implementer writes the authorized
@@ -322,12 +325,16 @@ follow their frozen selections when a requested review or assurance session runs
 a selected or required capability that is unavailable is a typed capability gap.
 
 When planning is complete and the owner agreement required for execution is
-recorded, write `handoff.md` with exact artifact paths/digests, decisions and
+recorded, write `handoff.md` per `../templates/handoff.md` with
+`final_freeze_receipt` (`stage: "final"`, `outcome: "PASS"`, `manifest_digest`,
+command, and exit code), exact artifact paths/digests, decisions and
 authority, selected routes/capabilities, candidate/worktree, assignments, commands,
 evidence (digests, commands, and exit codes, not narrative logs), review status,
 blockers, and next action. Every dispatched packet carries a time target and
 "at the limit, return what you have and list the gaps". Before writing `handoff.md`, run the
-handoff check in `hooks/closeout.cjs` with `journey` (`mode: "handoff"`); a
+handoff check in `hooks/closeout.cjs` with `journey` (`mode: "handoff"`) and
+`final_freeze_receipt`; a missing or non-final freeze receipt refuses the
+handoff (`handoff_refused:final_freeze_receipt_missing` or `_invalid`), and a
 history coverage gap refuses the handoff until its recorder transcribes the listed
 decisions, authority events, and landings: Orchestrator when Scribe is omitted or
 disabled, otherwise the existing Scribe session on its frozen cadence (see

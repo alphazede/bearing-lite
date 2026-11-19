@@ -33,7 +33,11 @@ explicit setup or catalog-edit request uses [onboard-bearing](../onboard-bearing
    only their own artifact checker; the repository gate runs once at assembly, and
    evidence returns digests, commands, and exit codes, not narrative logs. Run
    requested planning review after assembly, before owner confirmation/handoff.
-4. **Implementation:** consume the handoff; in selected TDD run the frozen Test Implementer (`roles.test_implementer`)
+4. **Implementation:** at intake, read `handoff.md` and confirm it carries a
+   passing `final_freeze_receipt` (`stage: "final"`, `outcome: "PASS"`,
+   matching `manifest_digest`). If the final freeze receipt is absent, invalid,
+   or `draft`-only, refuse implementation dispatch and return to planning to
+   complete `hooks/plan-package.cjs` final freeze. Otherwise consume the handoff; in selected TDD run the frozen Test Implementer (`roles.test_implementer`)
    before Product Implementer. Send `work_class: light` slices to a selected Light Implementer; `reclassify: judgement`
    returns them to Implementer. Honor dependencies, commands, and write sets. The Implementation Orchestrator owns new waves. For a frozen legacy Coordinator assignment, use its pinned runtime or obtain an explicit handover before continuing.
 5. **Review:** dispatch the owner-requested review immediately after the
@@ -48,14 +52,14 @@ explicit setup or catalog-edit request uses [onboard-bearing](../onboard-bearing
 
 ## Planning handoff
 
-Write `handoff.md` using the Prompt skill (`../prompt/SKILL.md`) in the confirmed plan directory when planning is complete. Include exact plan paths and digests, scope, owner decisions and authority,
+Write `handoff.md` using `templates/handoff.md` and the Prompt skill (`../prompt/SKILL.md`) in the confirmed plan directory when planning is complete. Include `final_freeze_receipt` (`stage: "final"`, `outcome: "PASS"`, `manifest_digest`, command, and exit code from `hooks/plan-package.cjs`; a `draft` freeze does not satisfy it), exact plan paths and digests, scope, owner decisions and authority,
 selected models/harnesses/capabilities, candidate and worktree, assignments and write sets, commands, evidence, review status, blockers, and the next action.
 Honor the approved `planning_to_implementation_clean_session` setting. When
 true, recommend a new Implementation Orchestrator session with this handoff.
 When false, continue from the durable handoff here. Resolve an unset choice
 during integrated owner confirmation. The owner opens a fresh session.
 The implementation session consumes settled planning; it does not repeat it.
-Handoff and closeout pass `journey` to `hooks/closeout.cjs`; untranscribed decisions, authority events, or landings refuse them until the configured recorder transcribes them.
+Handoff and closeout pass `journey` to `hooks/closeout.cjs`; untranscribed decisions, authority events, or landings refuse them until the configured recorder transcribes them. On `mode: "handoff"`, `hooks/closeout.cjs` also requires a valid `final_freeze_receipt` and refuses the handoff when absent or `draft`-only.
 ## Dispatch and recovery
 
 Preserve the recorded profile; use `references/profiles.md` for authorized amendments.

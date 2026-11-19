@@ -287,3 +287,51 @@ describe("CMD-HANDOFF-01 role-handoff (SEIT-HANDOFF-01)", () => {
     assert.match(String(result.reason), /candidate_mismatch/);
   });
 });
+
+describe("Alphazedehq#594 planning handoff requires final freeze receipt", () => {
+  it("closeout handoff path refuses a handoff without a valid final freeze receipt and accepts a final PASS receipt", () => {
+    const missing = closeout.evaluate({
+      mode: "handoff",
+      handoff: validHandoff({ verdict: "READY" }),
+    });
+    assert.equal(missing.outcome, "REROUTE");
+    assert.match(missing.reason, /^handoff_refused:final_freeze_receipt_missing/);
+    assert.match(missing.recovery, /return to planning/i);
+
+    const draftOnly = closeout.evaluate({
+      mode: "handoff",
+      handoff: validHandoff({ verdict: "READY" }),
+      final_freeze_receipt: { outcome: "PASS", stage: "draft", manifest_digest: "a".repeat(64), findings: [] },
+    });
+    assert.equal(draftOnly.outcome, "REROUTE");
+    assert.match(draftOnly.reason, /^handoff_refused:final_freeze_receipt_invalid/);
+
+    const draftText = closeout.evaluate({
+      mode: "handoff",
+      handoff: validHandoff({ verdict: "READY" }),
+      final_freeze_receipt: "plan-package.cjs draft PASS",
+    });
+    assert.equal(draftText.outcome, "REROUTE");
+    assert.match(draftText.reason, /^handoff_refused:final_freeze_receipt_invalid/);
+
+    const valid = closeout.evaluate({
+      mode: "handoff",
+      handoff: validHandoff({ verdict: "READY" }),
+      final_freeze_receipt: { outcome: "PASS", stage: "final", manifest_digest: "a".repeat(64), findings: [] },
+    });
+    assert.equal(valid.outcome, "ADVISE");
+    assert.equal(valid.reason, "handoff_complete");
+  });
+
+  it("handoff template records final_freeze_receipt and Implementation Orchestrator intake returns to planning when absent", () => {
+    const templatePath = path.join(ROOT, "skills/bearing-lite/templates/handoff.md");
+    const handoffTpl = readFileSync(templatePath, "utf8");
+    const router = readFileSync(path.join(ROOT, "skills/bearing-lite/SKILL.md"), "utf8").replace(/\s+/g, " ");
+    const assembly = readFileSync(path.join(ROOT, "skills/bearing-lite/references/planning-assembly.md"), "utf8").replace(/\s+/g, " ");
+    assert.match(handoffTpl, /final_freeze_receipt/);
+    assert.match(handoffTpl, /stage:\s*final/i);
+    assert.match(router, /templates\/handoff\.md/);
+    assert.match(router, /Implementation:[\s\S]{0,400}final_freeze_receipt[\s\S]{0,200}return to planning/i);
+    assert.match(assembly, /Implementation order after the handoff[\s\S]{0,400}final_freeze_receipt[\s\S]{0,200}return(?:ing)? to planning/i);
+  });
+});

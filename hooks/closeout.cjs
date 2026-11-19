@@ -24,6 +24,11 @@ const HANDOFF_FIELDS = Object.freeze([
   "blocker",
 ]);
 
+const PLANNING_HANDOFF_FIELDS = Object.freeze([
+  ...HANDOFF_FIELDS,
+  "final_freeze_receipt",
+]);
+
 /** Closed role-return tokens. Task-block `outcome` is intent and cannot satisfy this. */
 const VERDICT_VALUES = new Set([
   "ACCEPT",
@@ -72,6 +77,9 @@ const RECOVERY_CHANNEL =
 const RECOVERY_SCRIBE_HANDOFF =
   "Do not render the handoff; complete the listed transcription with Orchestrator when Scribe is off, otherwise continue the existing Scribe session or report its typed capability gap, then retry";
 
+const RECOVERY_FINAL_FREEZE_HANDOFF =
+  "Refuse the handoff and return to planning to run hooks/plan-package.cjs final and record the final freeze receipt";
+
 const SAFE_CHANNELS = new Set([
   "repair",
   "status",
@@ -109,6 +117,34 @@ function normalizeAssurance(value) {
     return value.map(String).filter((s) => s && s !== "none");
   }
   return [String(value)].filter((s) => s && s !== "none");
+}
+
+function inspectFinalFreezeReceipt(receipt) {
+  if (receipt === undefined || receipt === null) {
+    return { ok: false, code: "missing" };
+  }
+  if (typeof receipt === "string") {
+    const trimmed = receipt.trim();
+    if (!trimmed || /^(none|null|pending|skipped|n\/a)$/i.test(trimmed)) {
+      return { ok: false, code: "missing" };
+    }
+    if ((/\bdraft\b/i.test(trimmed) && !/\bfinal\b/i.test(trimmed)) ||
+        /\b(fail|failed|refused|error)\b/i.test(trimmed)) {
+      return { ok: false, code: "invalid" };
+    }
+    return { ok: true };
+  }
+  if (isPlainObject(receipt)) {
+    const validDigest =
+      typeof receipt.manifest_digest === "string" && /^[0-9a-f]{64}$/i.test(receipt.manifest_digest);
+    const noFindings =
+      receipt.findings === undefined || (Array.isArray(receipt.findings) && receipt.findings.length === 0);
+    if (receipt.stage === "final" && receipt.outcome === "PASS" && validDigest && noFindings) {
+      return { ok: true };
+    }
+    return { ok: false, code: "invalid" };
+  }
+  return { ok: false, code: "invalid" };
 }
 
 function inspectHandoffFields(input) {
@@ -187,6 +223,40 @@ function evaluate(input) {
     }
 
     const scribeCoverage = isPlainObject(input.journey) ? evaluateScribeCoverage(input) : null;
+
+    if (input.mode === "handoff") {
+      if (scribeCoverage && scribeCoverage.outcome !== "PASS") {
+        return {
+          ...result("REROUTE", "handoff_refused:scribe_" + scribeCoverage.outcome + ":" + scribeCoverage.reason,
+            RECOVERY_SCRIBE_HANDOFF),
+          scribe_coverage: scribeCoverage,
+        };
+      }
+      const rawReceipt = input.final_freeze_receipt !== undefined
+        ? input.final_freeze_receipt
+        : (isPlainObject(input.handoff) ? input.handoff.final_freeze_receipt : undefined);
+      const freezeCheck = inspectFinalFreezeReceipt(rawReceipt);
+      if (!freezeCheck.ok) {
+        return result(
+          "REROUTE",
+          "handoff_refused:final_freeze_receipt_" + freezeCheck.code,
+          RECOVERY_FINAL_FREEZE_HANDOFF
+        );
+      }
+      const hasHandoffEnvelope = isPlainObject(input.handoff) ||
+        HANDOFF_FIELDS.some((field) => input[field] !== undefined);
+      if (hasHandoffEnvelope) {
+        const { missing, invalid } = inspectHandoffFields(input);
+        if (missing.length > 0) {
+          return result("REROUTE", "handoff_incomplete:" + missing.join(","), RECOVERY_HANDOFF);
+        }
+        if (invalid.length > 0) {
+          return result("REROUTE", "handoff_invalid:" + invalid.join(","), RECOVERY_INVALID_VERDICT);
+        }
+      }
+      const complete = result("ADVISE", "handoff_complete", RECOVERY_COMPLETE);
+      return scribeCoverage ? { ...complete, scribe_coverage: scribeCoverage } : complete;
+    }
 
     const mode =
       input.mode === "protected_completion" || input.protected_completion === true
@@ -342,6 +412,7 @@ module.exports = {
   OUTCOMES,
   ENFORCEMENT,
   HANDOFF_FIELDS,
+  PLANNING_HANDOFF_FIELDS,
   VERDICT_VALUES,
   NEGATIVE_VERDICTS,
   evaluate,
