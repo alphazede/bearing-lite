@@ -366,12 +366,10 @@ describe("Alphazedehq#594 planning handoff requires final freeze receipt", () =>
   });
 
   it("handoff template settles target-host transport, approval authority, and local landing (#614)", () => {
-    const handoffTpl = readFileSync(path.join(ROOT, "skills/bearing-lite/templates/handoff.md"), "utf8");
-    assert.match(handoffTpl, /candidate_transport:/);
-    assert.match(handoffTpl, /transport_approval:/);
-    assert.match(handoffTpl, /local_landing_when_host_gate_unavailable:/);
-    assert.match(handoffTpl, /exact candidate/i);
-    assert.match(handoffTpl, /proof/i);
-    assert.match(handoffTpl, /target host/i);
+    const handoffTpl = readFileSync(path.join(ROOT, "skills/bearing-lite/templates/handoff.md"), "utf8")
+      .replace(/\s+/g, " ");
+    assert.match(handoffTpl, /exact candidate and its (?:proof|evidence).*(?:travel|deliver).*target host/i);
+    assert.match(handoffTpl, /who may approve.*transport.*owner or (?:explicit |recorded )?delegate.*authority\.json/i);
+    assert.match(handoffTpl, /(?:land locally|local landing).*(?:host gate cannot run|host gate is unavailable)/i);
   });
 });
