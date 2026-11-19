@@ -9,6 +9,8 @@ description: >
 ---
 
 # Reviewer
+
+In a live wave, read `herdr --skill` and the [live-wave reference](../bearing-lite/references/live-wave.md).
 Requested independent review: bind → start OCR → assess → validate → repair → verify.
 ## Inputs and match
 Require approved baseline, exact candidate/diff, author identity, requested boundary,

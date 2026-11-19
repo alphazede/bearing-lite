@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Add opt-in Herdr live-wave evidence to plan freeze, wave views, and closeout handoffs, with a shared role reference.
+
 - Accept digest-bound Mermaid source views in the plan schema and final freeze.
 
 - Render digest-bound Mermaid source files as text views for diagram-assisted models.

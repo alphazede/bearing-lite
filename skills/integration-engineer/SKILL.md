@@ -10,6 +10,8 @@ description: >
 
 # Integration Engineer
 
+In a live wave, read `herdr --skill` and the [live-wave reference](../bearing-lite/references/live-wave.md).
+
 Independent execution assessment role (`roles.integration_engineer.sessions.execution`);
 planning boundary and assembly authorship lives in `../integration-test/SKILL.md`.
 Run once on the frozen route and actual candidate dependencies when requested

@@ -25,6 +25,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const crypto = require("node:crypto");
+const { StringDecoder } = require("node:string_decoder");
 const { isDeepStrictEqual } = require("node:util");
 
 const { checkReviewRounds } = require("./assurance-budget.cjs");
@@ -1118,6 +1119,118 @@ function checkSerialChains(implementation) {
   return findings;
 }
 
+const EXCHANGE_DIGEST = /^[0-9a-f]{64}$/i;
+const EXCHANGE_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|\+00:00)$/;
+
+function validExchangeRecord(record) {
+  const validDigest = (value) => typeof value === "string" && EXCHANGE_DIGEST.test(value);
+  return isPlain(record) && [record.from, record.to, record.request_id, record.body_path].every(isNonEmptyStr) &&
+    typeof record.time === "string" && EXCHANGE_TIME.test(record.time) && Number.isFinite(Date.parse(record.time)) &&
+    (record.reply_to === null || isNonEmptyStr(record.reply_to)) &&
+    validDigest(record.body_sha256) && typeof record.delivered === "boolean" &&
+    (record.attempts === 1 || record.attempts === 2) && typeof record.allowed === "boolean" &&
+    isPlain(record.role_file_digests) && Object.entries(record.role_file_digests).every(([role, files]) =>
+      isNonEmptyStr(role) && isPlain(files) && Object.entries(files).every(([file, digest]) =>
+        isNonEmptyStr(file) && validDigest(digest)));
+}
+
+function withLiveFile(root, relativePath, read) {
+  const inside = (file) => {
+    const relative = path.relative(root, file);
+    return relative && relative !== ".." && !relative.startsWith(".." + path.sep) && !path.isAbsolute(relative);
+  };
+  const resolved = path.resolve(root, relativePath);
+  if (path.isAbsolute(relativePath) || !inside(resolved)) throw new Error("live file path escapes plan directory");
+  const file = fs.realpathSync(resolved);
+  if (!inside(file)) throw new Error("live file symlink escapes plan directory");
+
+  // Opening nonblocking prevents a named pipe in the evidence directory from hanging a hook.
+  const fd = fs.openSync(file, fs.constants.O_RDONLY | fs.constants.O_NONBLOCK | fs.constants.O_NOFOLLOW);
+  try {
+    if (!fs.fstatSync(fd).isFile()) throw new Error("live evidence must be a regular file");
+    return read(fd);
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
+function* exchangeLines(fd) {
+  const chunk = Buffer.alloc(8192);
+  const decoder = new StringDecoder("utf8");
+  let remainder = "";
+  let bytes;
+  while ((bytes = fs.readSync(fd, chunk, 0, chunk.length, null)) > 0) {
+    const lines = (remainder + decoder.write(chunk.subarray(0, bytes))).split("\n");
+    remainder = lines.pop();
+    yield* lines;
+  }
+  remainder += decoder.end();
+  if (remainder) yield remainder;
+}
+
+function readLiveExchange(dir, wave, findings) {
+  const summary = { wave, records: 0, undelivered: [], not_allowed: [] };
+  const exchangePath = `live/${wave}/exchange.jsonl`;
+  const malformed = (details = {}) => findings.push({ code: "live_exchange_malformed", path: exchangePath, ...details });
+  const requestIds = new Set();
+  try {
+    if (!isNonEmptyStr(wave) || /[\\/]/.test(wave) || wave === "." || wave === "..") {
+      malformed({ reason: "invalid_wave_id" });
+      return summary;
+    }
+    const root = fs.realpathSync(dir);
+    withLiveFile(root, exchangePath, (fd) => {
+      let line = 0;
+      for (const text of exchangeLines(fd)) {
+        line += 1;
+        let record;
+        try {
+          record = JSON.parse(text);
+        } catch {
+          malformed({ line });
+          continue;
+        }
+        if (!validExchangeRecord(record) || (record.reply_to !== null && !requestIds.has(record.reply_to))) {
+          malformed({ line });
+          continue;
+        }
+        if (record.reply_to === null) requestIds.add(record.request_id);
+        summary.records += 1;
+        if (!record.delivered) summary.undelivered.push(record.request_id);
+        if (!record.allowed) summary.not_allowed.push(record.request_id);
+        let digest;
+        try {
+          digest = withLiveFile(root, record.body_path, (body) => sha256(fs.readFileSync(body)));
+        } catch {
+          // An unreadable or out-of-directory body cannot substantiate the recorded digest.
+        }
+        if (digest !== record.body_sha256.toLowerCase()) {
+          findings.push({ code: "live_exchange_body_digest_mismatch", path: exchangePath, line, request_id: record.request_id });
+        }
+      }
+    });
+  } catch (error) {
+    if (error.code === "ENOENT") summary.missing = true;
+    else malformed({ reason: "exchange_unreadable" });
+  }
+  return summary;
+}
+
+function readLiveWave(dir, findings, implementation) {
+  if (!isNonEmptyStr(dir)) return undefined;
+  if (implementation === undefined) {
+    try {
+      implementation = withLiveFile(fs.realpathSync(dir), "implementation.json", (fd) => JSON.parse(fs.readFileSync(fd, "utf8")));
+    } catch {
+      // Closeout's optional plan directory cannot establish live-wave opt-in without a readable plan.
+      return undefined;
+    }
+  }
+  if (implementation?.journey_settings?.live_wave !== "herdr") return undefined;
+  const waves = Array.isArray(implementation.waves) ? implementation.waves : [];
+  return { waves: waves.map((wave) => readLiveExchange(dir, wave?.id, findings)) };
+}
+
 function freeze(dir, { stage = "final" } = {}) {
   try {
     const digests = verifyDigests(dir);
@@ -1143,8 +1256,10 @@ function freeze(dir, { stage = "final" } = {}) {
       ...checkLivePins(dir),
       ...digests.findings,
     ];
+    const live_wave = stage === "final" ? readLiveWave(dir, findings, implementation) : undefined;
     const blocking = findings.some((f) => f && f.blocking !== false);
-    return { outcome: blocking ? "FAIL" : "PASS", stage, manifest_digest: digests.manifest_digest, findings };
+    return { outcome: blocking ? "FAIL" : "PASS", stage, manifest_digest: digests.manifest_digest, findings,
+      ...(live_wave ? { live_wave } : {}) };
   } catch (error) {
     const rawPath = error?.filePath || error?.path;
     const filePath = typeof rawPath === "string" && rawPath
@@ -1230,17 +1345,21 @@ function waveView(dir, waveId) {
     ? wave.exit_command_ids
     : [...new Set(String(wave.exit || "").match(COMMAND_ID) || [])];
   const exit_commands = resolve(waveId, exitIds);
+  const live_exchange = implementation.journey_settings?.live_wave === "herdr"
+    ? readLiveExchange(dir, waveId, findings) : undefined;
   return {
     outcome: findings.length ? "FAIL" : "PASS",
     wave: { id: wave.id, name: wave.name ?? null, entry: wave.entry ?? null, exit: wave.exit ?? null },
     slices,
     exit_commands,
     findings,
+    ...(live_exchange ? { live_exchange } : {}),
   };
 }
 
 module.exports = {
   waveView,
+  readLiveWave,
   readyView,
   checkManifestProjection,
   checkReviewRounds,
