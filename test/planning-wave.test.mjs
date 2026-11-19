@@ -152,6 +152,17 @@ describe("#205 one planning wave, one consolidated review", () => {
   it("one review plus one repair with deterministic closure closes the wave", () => {
     assert.deepEqual(evaluatePlanningReview(review()), { outcome: "PASS", reason: "repair_gate_passed" });
   });
+  it("uses a recorded closing return at the planning review transition", () => {
+    const planning_review = review();
+    const author = planning_review.planning_wave.sessions[0];
+    author.verdict = "GAPS";
+    author.closing_return = {
+      author: author.session, reason: "gaps", items: ["Missing requirement link"],
+      candidate, verdict: "READY",
+    };
+    const result = transition.evaluate({ action_kind: "planning_review_transition", planning_review });
+    assert.equal(result.reason, "planning_review:PASS");
+  });
   it("refuses to open the review until every declared session has returned", () => {
     const missing = review().planning_wave;
     missing.sessions.pop();

@@ -536,74 +536,6 @@ function checkManifestProjection(implementation) {
  * sessions or reviewer identities; one explicit repair links that reviewed
  * candidate to closure.
  */
-const text = (value) => typeof value === "string" && value.trim().length > 0;
-
-/**
- * #593/#595: Validate at most one closing return per declared specialist session
- * (recorded as session.closing_return or wave.closing_returns[]) and project the
- * resulting READY/CANDIDATE_READY view for session completeness checks.
- */
-function resolveWaveWithClosingReturns(wave) {
-  if (wave?.closing_returns !== undefined && !Array.isArray(wave.closing_returns)) {
-    return { ok: false, wave };
-  }
-  const sessions = Array.isArray(wave?.sessions) ? wave.sessions : [];
-  const hasWaveClosing = Array.isArray(wave?.closing_returns) && wave.closing_returns.length > 0;
-  const hasSessionClosing = sessions.some((session) => session && session.closing_return !== undefined);
-  if (!hasWaveClosing && !hasSessionClosing) {
-    return { ok: true, wave };
-  }
-  const declared = new Set(Array.isArray(wave?.required_sessions) ? wave.required_sessions : []);
-  const byAuthor = new Map();
-  for (const cr of wave.closing_returns || []) {
-    if (!cr || typeof cr !== "object" || Array.isArray(cr)) return { ok: false, wave };
-    if (!text(cr.author) || !declared.has(cr.author)) return { ok: false, wave };
-    if (byAuthor.has(cr.author)) return { ok: false, wave };
-    byAuthor.set(cr.author, cr);
-  }
-  for (const session of sessions) {
-    if (!session || session.closing_return === undefined) continue;
-    const cr = session.closing_return;
-    if (!cr || typeof cr !== "object" || Array.isArray(cr)) return { ok: false, wave };
-    if (!text(cr.author) || cr.author !== session.session || !declared.has(cr.author)) {
-      return { ok: false, wave };
-    }
-    if (byAuthor.has(cr.author)) return { ok: false, wave };
-    byAuthor.set(cr.author, cr);
-  }
-  for (const [author, cr] of byAuthor.entries()) {
-    const session = sessions.find((item) => item?.session === author);
-    if (!session || !sameCandidate(session, session)) return { ok: false, wave };
-    const priorAllowed = session.verdict === "GAPS" ||
-      REVIEW_POLICY.planning_session_ready_verdicts.includes(session.verdict);
-    if (!priorAllowed) return { ok: false, wave };
-    if (!text(cr.reason)) return { ok: false, wave };
-    if (!Array.isArray(cr.items) || cr.items.length === 0 || !cr.items.every(text)) {
-      return { ok: false, wave };
-    }
-    if (!sameCandidate(cr.candidate, cr.candidate)) return { ok: false, wave };
-    const effectiveVerdict = cr.verdict !== undefined
-      ? cr.verdict
-      : (session.verdict === "GAPS" ? null : session.verdict);
-    if (!text(effectiveVerdict) || !REVIEW_POLICY.planning_session_ready_verdicts.includes(effectiveVerdict)) {
-      return { ok: false, wave };
-    }
-  }
-  const normalizedSessions = sessions.map((session) => {
-    if (!session || !byAuthor.has(session.session)) return session;
-    const cr = byAuthor.get(session.session);
-    const effectiveVerdict = cr.verdict !== undefined ? cr.verdict : session.verdict;
-    return {
-      ...session,
-      ...cr.candidate,
-      verdict: effectiveVerdict,
-      ...(cr.inputs !== undefined ? { inputs: cr.inputs } : {}),
-      ...(cr.adopted_to !== undefined ? { adopted_to: cr.adopted_to } : {}),
-    };
-  });
-  return { ok: true, wave: { ...wave, sessions: normalizedSessions } };
-}
-
 function checkWaveRecord(wave, { expectedDigest, isLatest, stage = "final", dir, inputDigests, correctionId = null }) {
   if (!wave || typeof wave !== "object" || Array.isArray(wave)) {
     return [{ code: "planning_wave_missing", ...(correctionId ? { correction_id: correctionId } : {}) }];
@@ -645,9 +577,8 @@ function checkWaveRecord(wave, { expectedDigest, isLatest, stage = "final", dir,
     if (!sameCandidate(closing, closing) || closing.candidate_digest !== wave.candidate_digest) {
       push({ code: "planning_wave_candidate_mismatch", recorded: closing ?? null, actual: expectedDigest });
     } else if (Array.isArray(wave.sessions)) {
-      const resolved = resolveWaveWithClosingReturns(wave);
-      if (!resolved.ok || planningSessionsVerdict(
-        resolved.wave,
+      if (planningSessionsVerdict(
+        wave,
         closing,
         isLatest ? inputDigests : wave.input_digests,
         { requireSnapshot: isLatest || correctionId !== null || wave.input_digests !== undefined },
@@ -681,14 +612,9 @@ function checkWaveRecord(wave, { expectedDigest, isLatest, stage = "final", dir,
     }
   }
   if (review) {
-    const resolvedReviewWave = resolveWaveWithClosingReturns(review.planning_wave);
     let result;
     try {
-      result = evaluatePlanningReview({
-        ...review,
-        ...(resolvedReviewWave.ok && review.planning_wave ? { planning_wave: resolvedReviewWave.wave } : {}),
-        plan_dir: dir,
-      });
+      result = evaluatePlanningReview({ ...review, plan_dir: dir });
     } catch {
       result = { outcome: "FAIL", reason: "receipt_invalid" };
     }
@@ -704,8 +630,7 @@ function checkWaveRecord(wave, { expectedDigest, isLatest, stage = "final", dir,
         !isDeepStrictEqual(wave.closing_returns ?? null, review.planning_wave?.closing_returns ?? null)) {
       push({ code: "planning_wave_session_provenance_mismatch" });
     }
-    const resolvedWave = resolveWaveWithClosingReturns(wave);
-    if (!resolvedWave.ok || planningSessionsVerdict(resolvedWave.wave, review.candidate, review.input_digests)) {
+    if (planningSessionsVerdict(wave, review.candidate, review.input_digests)) {
       push({ code: "planning_wave_sessions_incomplete" });
     }
     const closing = wave.closing_candidate;
