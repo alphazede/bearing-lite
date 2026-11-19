@@ -98,7 +98,7 @@ request is the dispatch authority for every declared boundary;
 `automatic_phase_or_wave_end_review: "required"` means the parent controller
 does not ask again.
 
-- As soon as a declared unit's integrated candidate passes its deterministic
+- As soon as a declared unit's integrated candidate passes its focused deterministic
   checks, the parent controller dispatches every requested session for that
   boundary that has yet to start. It never waits for a later wave, batches several units into one
   review, or defers the review to lifecycle end.
@@ -108,8 +108,9 @@ does not ask again.
   The same session joins the last slice's receipts before issuing its verdict
   on the final integrated candidate. It credits early evidence only where the
   verified inputs and claims still apply to that candidate. Preserve single-run
-  role and gate budgets. Run any integrated gate once when its final inputs
-  exist, then validate its receipt independently against that candidate.
+  role and gate budgets. Run the landing repository gate once after requested
+  review and any repair, using the final commit. Validate its receipt against
+  that candidate.
 - When waves are declared, `phase` cadence resolves to each wave (see Unit
   identity). The default therefore reviews at every wave end, and no separate
   `wave` cadence value is needed.
