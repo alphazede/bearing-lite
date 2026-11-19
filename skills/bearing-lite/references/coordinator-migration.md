@@ -8,7 +8,7 @@ The Coordinator is retired on this runtime. Before removal, verify every duty an
 
 | Duty | Receiving owner | Component |
 | --- | --- | --- |
-| D1 | Implementation Orchestrator | Wave scheduling through `hooks/ready-set.cjs` |
+| D1 | Implementation Orchestrator | Graph-wide scheduling through `plan-package.cjs ready` |
 | D2 | Implementation Orchestrator | Wave receipts and one task graph through `hooks/plan-package.cjs` |
 | D3 | Implementation Orchestrator | Dependency checks through `hooks/ready-set.cjs` |
 | D4 | Implementation Orchestrator | Lease checks through `hooks/reconcile.cjs` |
@@ -57,7 +57,15 @@ Decide routine scheduling, ready-packet dispatch, and dependency order within th
 
 ## Completion notifications and recovery
 
-Read the wave once with `node <plugin root>/hooks/plan-package.cjs wave <plan dir> <wave id>`.
+The Implementation Orchestrator evaluates the complete frozen graph with
+`node <plugin root>/hooks/plan-package.cjs ready <plan dir>`, passing the
+current scheduling state as JSON on stdin. Supply the assignment statuses
+for all waves in `assignments`, outstanding decisions and out-of-scope slices
+in `pending` (rows with `slice` IDs), and externally held resources in
+`busy_resources`. Start eligible ready
+slices across waves within the frozen authority and agent cap.
+Read a ready slice's commands with
+`node <plugin root>/hooks/plan-package.cjs wave <plan dir> <wave id>`.
 Launch with the packet's frozen-route form unchanged. Subscribe to native response
 notifications; wait and wake on each agent return. Read its result/log once and
 schedule newly ready independent work immediately. Never poll logs, processes,

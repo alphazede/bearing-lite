@@ -17,6 +17,7 @@
 // resource that causes the exclusion. Pure: inputs are not mutated.
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -208,6 +209,40 @@ describe("F08 ready-set flow over the frozen graph (SEIT-F08)", () => {
 });
 
 describe("real inputs and held resource scheduling (Alphazedehq#608)", () => {
+  it("schedules across the frozen graph while holding cross-wave inputs, resources, and explicit edges", (t) => {
+    const dir = tempDir(t, "graph-608-");
+    writeFileSync(path.join(dir, "implementation.json"), JSON.stringify({
+      waves: [
+        { id: "W1", slice_ids: ["produce", "collect"] },
+        { id: "W2", slice_ids: ["report", "shared", "ordered"], slices: [
+          slice("independent", [], ["free.md"], { resource: "host:c" }),
+        ] },
+      ],
+      slices: [
+        slice("produce", [], ["output.json"], { resource: "host:a" }),
+        slice("collect", [], ["collection.md"]),
+        slice("report", [], ["report.md"], { inputs: ["output.json"] }),
+        slice("shared", [], ["different.md"], { resource: "host:a" }),
+        slice("ordered", [], ["ordered.md"]),
+      ],
+      dependencies: [{ from: "produce", to: "ordered" }],
+    }));
+    function schedule(state) {
+      const cli = spawnSync(process.execPath, [path.join(ROOT, "hooks/plan-package.cjs"), "ready", dir], {
+        input: JSON.stringify(state), encoding: "utf8",
+      });
+      assert.equal(cli.status, 0, cli.stderr || cli.stdout);
+      return JSON.parse(cli.stdout);
+    }
+    const active = schedule({ assignments: { produce: "DISPATCHED" } });
+    assert.deepEqual(active.ready, ["collect", "independent"]);
+    assertExcluded(active, "report", /input/, "output.json");
+    assertExcluded(active, "shared", /resource/, "host:a");
+    assertExcluded(active, "ordered", /dependency/, "produce");
+    const done = schedule({ assignments: { produce: "COMPLETED", collect: "COMPLETED" } });
+    assert.deepEqual(done.ready, ["report", "shared", "ordered", "independent"]);
+  });
+
   it("starts every slice whose inputs are met and whose held resource is free, without serializing across resources", () => {
     const slices = [
       slice("i7-preserve", [], ["i7/preserve.log"], { inputs: [], resource: "host:i7" }),

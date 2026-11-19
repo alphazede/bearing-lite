@@ -18,6 +18,8 @@
  * (#205): every check except the completed planning-wave receipt.
  * CLI: node <plugin root>/hooks/plan-package.cjs wave <plan dir> <wave id> -> one wave's
  * slices, write sets, and resolved commands (#190), exit 1 on any finding.
+ * CLI: node <plugin root>/hooks/plan-package.cjs ready <plan dir> -> ready slices
+ * across all waves, using scheduling state read as JSON on stdin.
  */
 
 const fs = require("node:fs");
@@ -27,6 +29,7 @@ const { isDeepStrictEqual } = require("node:util");
 
 const { checkReviewRounds } = require("./assurance-budget.cjs");
 const { checkRegisterFiles } = require("./register-precheck.cjs");
+const { evaluate: evaluateReadySet } = require("./ready-set.cjs");
 const { POLICY: REVIEW_POLICY, planningSessionsVerdict, evaluatePlanningReview, sameCandidate } = require("./planning-review.cjs");
 
 const sha256 = (data) => crypto.createHash("sha256").update(data).digest("hex");
@@ -1070,6 +1073,24 @@ function freeze(dir, { stage = "final" } = {}) {
 /** #190: CMD-* / PROC-* ids named in a wave's free-text exit criterion. */
 const COMMAND_ID = /\b(?:CMD|PROC)-[A-Z0-9.-]*[A-Z0-9]/g;
 
+function readyView(dir, state) {
+  const implementation = JSON.parse(fs.readFileSync(path.join(dir, "implementation.json"), "utf8"));
+  const byId = new Map();
+  for (const slice of sliceNodes(implementation)) {
+    if (typeof slice.id !== "string" || !slice.id || byId.has(slice.id)) continue;
+    byId.set(slice.id, {
+      ...slice,
+      depends_on: Array.isArray(slice.depends_on) ? [...slice.depends_on] : [],
+    });
+  }
+  for (const edge of Array.isArray(implementation.dependencies) ? implementation.dependencies : []) {
+    if (byId.has(edge?.from) && byId.has(edge?.to)) {
+      byId.get(edge.to).depends_on.push(edge.from);
+    }
+  }
+  return evaluateReadySet({ ...state, slices: [...byId.values()] });
+}
+
 /**
  * #190: one wave's slices, write sets, and resolved commands, so a
  * Coordinator never re-derives the package layout. Slices come from
@@ -1127,6 +1148,7 @@ function waveView(dir, waveId) {
 
 module.exports = {
   waveView,
+  readyView,
   checkManifestProjection,
   checkReviewRounds,
   checkPlanningWave,
@@ -1165,6 +1187,15 @@ if (require.main === module && process.argv[2] === "control") {
   }
   process.stdout.write(JSON.stringify(result, null, 2) + "\n");
   process.exitCode = result.outcome === "PASS" ? 0 : 1;
+} else if (require.main === module && process.argv[2] === "ready") {
+  try {
+    const state = JSON.parse(fs.readFileSync(0, "utf8"));
+    const result = readyView(process.argv[3], state);
+    process.stdout.write(JSON.stringify(result, null, 2) + "\n");
+  } catch {
+    process.stderr.write("ready-set: unable to read the planning package or scheduling state\n");
+    process.exitCode = 1;
+  }
 } else if (require.main === module && process.argv[2] === "wave") {
   const [dir, waveId] = process.argv.slice(3);
   if (!dir || !waveId) {
