@@ -50,7 +50,7 @@ with no alias. Each session can be enabled or disabled. Cadence keys attach to
 `roles.test_engineer.sessions.assurance`, `roles.reviewer`, and
 `roles.integration_engineer.sessions.execution`
 with values `slice`, `phase`, or `lifecycle`. Defaults are `phase`, `phase`,
-and `lifecycle`. `scribe.cadence` is `event` (default: after each owner
+and `lifecycle`. `roles.scribe.cadence` is `event` (default: after each owner
 decision, authority event, or landing), `phase`, or `lifecycle`; handoff and
 closeout check history coverage at every Scribe cadence. Scribe is optional:
 when omitted or disabled, Orchestrator records history; when enabled, reuse one
@@ -212,8 +212,8 @@ Migration preserves meaning from `planned_planning_assignments` and
 `implementation_assignments`. Map Crewmate to Implementer, Park Ranger to
 Reviewer, and keep Light Implementer unchanged. Report Explorer as retired
 and retain any already-frozen Coordinator assignment on its pinned runtime. Map Test
-Engineer planning-phase rows to `integration_test.planning`, and
-implementation-phase rows to `test_engineer.assurance`. Do not auto-assign
+Engineer planning-phase rows to `roles.integration_test.sessions.planning`, and
+implementation-phase rows to `roles.test_engineer.sessions.assurance`. Do not auto-assign
 Integration Engineer execution from Surveyor; if that optional session is enabled,
 onboard-bearing asks which route to assign. Migration asks for a missing Test
 Implementer route only in `tdd`; it never copies or invents `test_implementer` from Product
