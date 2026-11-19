@@ -90,6 +90,7 @@ When false, continue from the durable handoff here. Resolve an unset choice
 during integrated owner confirmation. The owner opens a fresh session.
 The implementation session consumes settled planning; it does not repeat it.
 Handoff and closeout pass `journey` to `hooks/closeout.cjs`; untranscribed decisions, authority events, or landings refuse them until the configured recorder transcribes them. On `mode: "handoff"`, `hooks/closeout.cjs` also requires a valid `final_freeze_receipt` and refuses the handoff when absent or `draft`-only.
+For live-wave evidence, pass the confirmed directory as top-level `plan_dir`.
 ## Dispatch and recovery
 
 Preserve the recorded profile; use `references/profiles.md` for authorized amendments.

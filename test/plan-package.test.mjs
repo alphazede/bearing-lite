@@ -1161,6 +1161,30 @@ describe("plan-package live-wave exchange.jsonl reader (HLW-VC-025)", () => {
     assert.equal(out.reason, "handoff_complete");
   });
 
+  it("live-wave closeout carries advisory evidence from the final freeze receipt", (t) => {
+    const dir = livePlan(t);
+    const payload = JSON.parse(handoff(dir));
+    delete payload.plan_dir;
+
+    const missing = run([HOOK, dir]);
+    assert.equal(missing.status, 0, missing.stdout);
+    payload.final_freeze_receipt = JSON.parse(missing.stdout);
+    assert.deepEqual(waveSummary(payload.final_freeze_receipt), {
+      wave: "W1", records: 0, missing: true, undelivered: [], not_allowed: [],
+    });
+    const advised = JSON.parse(run([CLOSEOUT], JSON.stringify(payload)).stdout);
+    assert.equal(advised.reason, "handoff_complete");
+    assert.deepEqual(advised.live_wave, payload.final_freeze_receipt.live_wave);
+
+    validExchange(dir);
+    const recorded = run([HOOK, dir]);
+    assert.equal(recorded.status, 0, recorded.stdout);
+    payload.final_freeze_receipt = JSON.parse(recorded.stdout);
+    const summarized = JSON.parse(run([CLOSEOUT], JSON.stringify(payload)).stdout);
+    assert.equal(summarized.reason, "handoff_complete");
+    expectSummary(waveSummary(summarized));
+  });
+
   it("live-wave closeout handoff refuses with a named exchange finding", (t) => {
     const dir = livePlan(t);
     validExchange(dir);

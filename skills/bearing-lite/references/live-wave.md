@@ -43,8 +43,9 @@ launcher appends one JSON object per send.
 | `attempts` | Integer delivery attempt count, 1 or 2 |
 | `role_file_digests` | Map from role to file paths and their hex SHA-256 digests |
 
-Final freeze and closeout handoff report `live_wave.waves`. Pass the top-level
-`plan_dir` to closeout. The wave view reports `live_exchange`. Each wave summary
+Final freeze and closeout handoff report `live_wave.waves`. Closeout reads the
+exchange again when given top-level `plan_dir` and otherwise carries the summary
+from the final freeze receipt. The wave view reports `live_exchange`. Each wave summary
 contains the record count and the `undelivered` and `not_allowed` message IDs.
 `missing: true` means the exchange file was absent. These summary fields are
 advisory. A malformed line or unverifiable body digest is a named finding.

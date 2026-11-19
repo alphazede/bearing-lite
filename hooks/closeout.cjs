@@ -192,6 +192,7 @@ function evaluate(input) {
     const protectedCompletion = input.mode === "protected_completion" || input.protected_completion === true;
     const planningHandoff = input.mode === "handoff" && (scribeOnly || !protectedCompletion);
 
+    let freezeReceipt;
     if (planningHandoff) {
       if (scribeCoverage && scribeCoverage.outcome !== "PASS") {
         return {
@@ -200,10 +201,10 @@ function evaluate(input) {
           scribe_coverage: scribeCoverage,
         };
       }
-      const rawReceipt = input.final_freeze_receipt !== undefined
+      freezeReceipt = input.final_freeze_receipt !== undefined
         ? input.final_freeze_receipt
         : (isPlainObject(input.handoff) ? input.handoff.final_freeze_receipt : undefined);
-      const issue = finalFreezeReceiptIssue(rawReceipt);
+      const issue = finalFreezeReceiptIssue(freezeReceipt);
       if (issue) {
         return result(
           "REROUTE",
@@ -319,19 +320,26 @@ function evaluate(input) {
     }
 
     const findings = [];
-    const live_wave = planningHandoff ? readLiveWave(input.plan_dir, findings) : undefined;
+    let liveWave;
+    if (planningHandoff) {
+      if (input.plan_dir !== undefined) {
+        liveWave = readLiveWave(input.plan_dir, findings);
+      } else if (Array.isArray(freezeReceipt.live_wave?.waves)) {
+        liveWave = { waves: freezeReceipt.live_wave.waves };
+      }
+    }
     if (findings.length) {
       return {
         ...result("REROUTE", "handoff_refused:final_freeze_receipt_invalid:" + findings[0].code,
           RECOVERY_FINAL_FREEZE_HANDOFF),
-        live_wave,
+        live_wave: liveWave,
         findings,
       };
     }
     return {
       ...result("ADVISE", "handoff_complete", RECOVERY_COMPLETE),
       ...(planningHandoff && scribeCoverage ? { scribe_coverage: scribeCoverage } : {}),
-      ...(live_wave ? { live_wave } : {}),
+      ...(liveWave ? { live_wave: liveWave } : {}),
     };
   } catch {
     return unavailable("adapter_exception");
