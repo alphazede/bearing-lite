@@ -107,28 +107,8 @@ const DEEP_COUPLING_PATTERNS = [
 
 /** The approved compact prompt frontmatter has a content-bound exemption; every privacy/security pattern still applies. */
 const TRUSTED_PUBLIC_PROMPT_SKILL = "skills/prompt/SKILL.md";
-const TRUSTED_PUBLIC_PROMPT_SKILL_SHA256 =
-  "d26b2a2dda0ef0db2fd445da1031ce2e5973b3586d9435aae153773903aea92b";
-
-/**
- * @param {string} content
- * @returns {string}
- */
-function sha256Utf8(content) {
-  return createHash("sha256").update(content).digest("hex");
-}
-
-/**
- * @param {string} relPath
- * @param {string} content
- * @returns {boolean}
- */
-function isTrustedUnchangedPromptSkill(relPath, content) {
-  return (
-    relPath === TRUSTED_PUBLIC_PROMPT_SKILL &&
-    sha256Utf8(content) === TRUSTED_PUBLIC_PROMPT_SKILL_SHA256
-  );
-}
+const APPROVED_PROMPT_FRONTMATTER_SHA256 =
+  "d179352dd0352b72fedea20979cfdc028d156acf1e52fe8c92dc994dc8343908";
 
 /**
  * @typedef {{ code: string, message: string, path?: string }} PublicDiagnostic
@@ -150,11 +130,17 @@ export function scanContent(relPath, content) {
     ...DEEP_COUPLING_PATTERNS,
     ...INTERNAL_STANDARD_PATTERNS,
   ];
-  const trustedPrompt = isTrustedUnchangedPromptSkill(relPath, content);
+  const frontmatter = relPath === TRUSTED_PUBLIC_PROMPT_SKILL
+    ? content.match(/^---\r?\n[\s\S]*?\r?\n---(?:\r?\n|$)/)?.[0]
+    : undefined;
+  const approvedFrontmatter = frontmatter !== undefined &&
+    createHash("sha256").update(frontmatter).digest("hex") === APPROVED_PROMPT_FRONTMATTER_SHA256;
   for (const pattern of groups) {
-    if (trustedPrompt && pattern === INTERNAL_METADATA_COUPLING) continue;
+    const inspected = approvedFrontmatter && pattern === INTERNAL_METADATA_COUPLING
+      ? content.slice(frontmatter.length)
+      : content;
     const { code, re } = pattern;
-    if (!re.test(content)) continue;
+    if (!re.test(inspected)) continue;
     diagnostics.push({
       code,
       message: `${relPath} matches prohibited pattern ${re}`,
@@ -404,10 +390,17 @@ describe("CMD-PUBLIC-01 public-boundary (SEIT-PUBLIC-01, SEIT-MODEL-01, SEIT-IND
     }
   });
 
-  it("scans the unchanged prompt skill and still rejects hostile prompt-directory content", () => {
+  it("exempts approved prompt frontmatter while scanning prompt prose and sibling files", () => {
     const trusted = readFileSync(path.join(ROOT, TRUSTED_PUBLIC_PROMPT_SKILL), "utf8");
-    assert.equal(sha256Utf8(trusted), TRUSTED_PUBLIC_PROMPT_SKILL_SHA256);
     assert.equal(scanContent(TRUSTED_PUBLIC_PROMPT_SKILL, trusted).length, 0);
+    assert.equal(scanContent(TRUSTED_PUBLIC_PROMPT_SKILL,
+      trusted + "\nRecord the resulting packet with the assignment.\n").length, 0);
+
+    const mutatedBody = scanContent(
+      TRUSTED_PUBLIC_PROMPT_SKILL,
+      trusted + "\nThis body contains okf_status guidance.\n"
+    );
+    assert.ok(mutatedBody.some((d) => d.code === "deep_product_coupling"));
 
     const mutatedMetadata = scanContent(
       TRUSTED_PUBLIC_PROMPT_SKILL,
