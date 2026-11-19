@@ -103,7 +103,11 @@ assurance session produces `assurance`.
 Deterministic gate-chain claims use the mutation, changed-line coverage, and
 red-then-green claim types, each naming the target repository's own tool plus
 its threshold; `method` stays a plain string, never a schema enum. Each claim
-type defines a typed-gap outcome: a declared gate with a missing tool or a
-`not_run` outcome is a typed gap, never PASS. The Assurance Test Engineer independently reruns the gate-chain at the declared cadence boundary; author gate-chain receipts are diagnostic and cannot satisfy an assurance gate. When a gate or role turn carries an explicit **one-run budget**, assurance uses **independent validation of a single-run receipt** (validating the recorded inputs, digest, and log instead of re-running the command). Every
-red-then-green receipt binds the baseline failing run and the candidate passing run
-over the same test ids.
+type defines a typed gap for a declared gate with a missing tool or a `not_run`
+outcome. The Assurance Test Engineer normally reruns the gate-chain at the
+declared cadence boundary. For a gate or role turn with an explicit **one-run
+budget**, the Assurance Test Engineer uses **independent validation of a
+single-run receipt**. The author receipt supplies the recorded inputs, digest,
+and log. The independent assurance receipt supplies the assurance verdict and
+references the original run. Every red-then-green receipt binds the baseline
+failing run and the candidate passing run over the same test IDs.
