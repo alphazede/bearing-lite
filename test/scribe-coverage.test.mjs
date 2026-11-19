@@ -226,7 +226,9 @@ describe("#194 Scribe coverage", () => {
       };
       const pending = run(journey());
       assert.equal(pending.status, 1);
-      assert.equal(JSON.parse(pending.stdout).outcome, "SCRIBE_REQUIRED");
+      const coverage = JSON.parse(pending.stdout);
+      assert.equal(coverage.outcome, "SCRIBE_REQUIRED");
+      assert.match(coverage.recovery, /launch[^.]*never-launched enabled Scribe[^.]*frozen cadence/i);
       const current = run(journey({ history: fullHistory }));
       assert.equal(current.status, 0);
       assert.equal(JSON.parse(current.stdout).outcome, "PASS");
@@ -291,6 +293,7 @@ describe("Alphazedehq#642 enabled Scribe launch and never-launched gap", () => {
     assert.equal(resumeGap.outcome, "ADVISE");
     assert.match(resumeGap.reason, /^scribe_coverage:SCRIBE_REQUIRED/);
     assert.match(resumeGap.recovery, /launch[^.]*never-launched enabled Scribe[^.]*frozen cadence/i);
+    assert.equal(resumeGap.scribe_coverage.recovery, resumeGap.recovery);
 
     const advisoryGap = closeout.evaluate({ ...completion(journey()), mode: undefined });
     assert.equal(advisoryGap.outcome, "REROUTE");
