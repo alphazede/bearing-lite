@@ -78,6 +78,9 @@ Every configured planning-review slot uses the same candidate ref, revision,
 and digest. Findings stay isolated until one aggregation. Slot exhaustion is
 `FAIL_ROUND`; policy violations halt or require an owner amendment. The binding
 does not populate `required_assurance` and does not dispatch reviewers.
+When planning completes and `hooks/plan-package.cjs` final freeze passes, record
+`final_freeze_receipt` (`stage: final`, `outcome: PASS`, `manifest_digest`,
+command, and exit code) in `handoff.md` per `templates/handoff.md`.
 
 ## Checkout lease (record before any planning write)
 
