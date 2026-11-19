@@ -2097,6 +2097,27 @@ def owner_stop_cases() -> list:
     for status in ["asked", "answered", "cancelled"]:
         out.append(("OWNER-STOP", "missing_" + status + "_timestamp", "journey",
                     complete_journey(open_decisions=[question | {"status": status}]), "reject"))
+    delegate = {"approver": "Implementation Orchestrator", "delegation_ref": SYN_DEC}
+    out.extend([
+        ("OWNER-STOP", "delegate_approval_with_delegation_ref", "authority",
+         complete_authority(delegate_approval=delegate), "accept"),
+        ("OWNER-STOP", "delegate_approval_with_timestamp", "authority",
+         complete_authority(delegate_approval=delegate | {"approved_at": "2026-11-18T12:00:00Z"}), "accept"),
+        ("OWNER-STOP", "delegate_approval_missing_delegation_ref", "authority",
+         complete_authority(delegate_approval={"approver": "Implementation Orchestrator"}), "reject"),
+        ("OWNER-STOP", "delegate_approval_empty_delegation_ref", "authority",
+         complete_authority(delegate_approval=delegate | {"delegation_ref": ""}), "reject"),
+        ("OWNER-STOP", "delegate_approval_blank_delegation_ref", "authority",
+         complete_authority(delegate_approval=delegate | {"delegation_ref": "   "}), "reject"),
+        ("OWNER-STOP", "delegate_approval_missing_approver", "authority",
+         complete_authority(delegate_approval={"delegation_ref": SYN_DEC}), "reject"),
+        ("OWNER-STOP", "delegate_approval_empty_approver", "authority",
+         complete_authority(delegate_approval=delegate | {"approver": ""}), "reject"),
+        ("OWNER-STOP", "delegate_approval_bad_timestamp", "authority",
+         complete_authority(delegate_approval=delegate | {"approved_at": "2026-11-18T12:00:00+00:00"}), "reject"),
+        ("OWNER-STOP", "delegate_approval_non_object", "authority",
+         complete_authority(delegate_approval="Implementation Orchestrator"), "reject"),
+    ])
     return out
 
 

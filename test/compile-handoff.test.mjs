@@ -221,6 +221,20 @@ describe("positive path (F04, SM05.T1-T2, B30-306)", () => {
     ready(f, "S1", {}, { PATH: bin });
     assert.equal(existsSync(marker), false);
   });
+
+  it("compiles an authority.json recording a delegate approval with its delegation reference (#604)", (t) => {
+    const f = fixture(t);
+    mutate(f.authority, (auth) => {
+      auth.delegate_approval = {
+        approver: "Implementation Orchestrator",
+        delegation_ref: "DEC-DEL-01",
+      };
+    });
+    const expectedSha = sha256(readFileSync(f.authority));
+    const { json } = ready(f);
+    assert.equal(json.identity.authority_id, "AUTH-FX");
+    assert.equal(json.identity.authority_sha256, expectedSha);
+  });
 });
 
 describe("stable sections first (SEIT-B30-311)", () => {

@@ -59,6 +59,17 @@
     "expiry_conditions": {"type": "array", "items": {"type": "string", "minLength": 1}},
     "supersedes": {"type": "array", "items": {"type": "string"}},
     "approval_receipt": {"type": "object", "additionalProperties": true},
+    "delegate_approval": {
+      "type": "object",
+      "description": "Optional record of an owner delegate's approval and the delegation grant it rests on.",
+      "additionalProperties": true,
+      "required": ["approver", "delegation_ref"],
+      "properties": {
+        "approver": {"type": "string", "minLength": 1, "pattern": "\\S"},
+        "delegation_ref": {"type": "string", "minLength": 1, "pattern": "\\S"},
+        "approved_at": {"type": "string", "format": "date-time", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3})?Z$"}
+      }
+    },
     "continuation": {
       "type": "object",
       "additionalProperties": false,
