@@ -33,11 +33,10 @@ explicit setup or catalog-edit request uses [onboard-bearing](../onboard-bearing
    only their own artifact checker; the repository gate runs once at assembly, and
    evidence returns digests, commands, and exit codes, not narrative logs. Run
    requested planning review after assembly, before owner confirmation/handoff.
-4. **Implementation:** at intake, read `handoff.md` and confirm it carries a
-   passing `final_freeze_receipt` (`stage: "final"`, `outcome: "PASS"`,
-   matching `manifest_digest`). If the final freeze receipt is absent, invalid,
-   or `draft`-only, refuse implementation dispatch and return to planning to
-   complete `hooks/plan-package.cjs` final freeze. Otherwise consume the handoff; in selected TDD run the frozen Test Implementer (`roles.test_implementer`)
+4. **Implementation:** at intake, verify the `final_freeze_receipt` in
+   `handoff.md` using the [handoff template](templates/handoff.md). If the receipt
+   is absent, invalid, or `draft`-only, return to planning before dispatch.
+   Once verified, consume the handoff. In selected TDD, run the frozen Test Implementer (`roles.test_implementer`)
    before Product Implementer. Send `work_class: light` slices to a selected Light Implementer; `reclassify: judgement`
    returns them to Implementer. Honor dependencies, commands, and write sets. When `snapshot.fellow` is present, follow `references/consultation.md` at its four Fellow consultation checkpoints: before a major decision (with options and a leaning in hand), when stuck after two genuine attempts or on unexplained behavior or before a workaround, before declaring a task done, and when the owner asks. The Implementation Orchestrator owns new waves. For a frozen legacy Coordinator assignment, use its pinned runtime or obtain an explicit handover before continuing.
 5. **Review:** dispatch the owner-requested review immediately after the

@@ -24,11 +24,6 @@ const HANDOFF_FIELDS = Object.freeze([
   "blocker",
 ]);
 
-const PLANNING_HANDOFF_FIELDS = Object.freeze([
-  ...HANDOFF_FIELDS,
-  "final_freeze_receipt",
-]);
-
 /** Closed role-return tokens. Task-block `outcome` is intent and cannot satisfy this. */
 const VERDICT_VALUES = new Set([
   "ACCEPT",
@@ -78,7 +73,7 @@ const RECOVERY_SCRIBE_HANDOFF =
   "Do not render the handoff; complete the listed transcription with Orchestrator when Scribe is off, otherwise continue the existing Scribe session or report its typed capability gap, then retry";
 
 const RECOVERY_FINAL_FREEZE_HANDOFF =
-  "Refuse the handoff and return to planning to run hooks/plan-package.cjs final and record the final freeze receipt";
+  "Return to planning. Run node <plugin root>/hooks/plan-package.cjs <plan dir> and record the final freeze receipt";
 
 const SAFE_CHANNELS = new Set([
   "repair",
@@ -119,32 +114,15 @@ function normalizeAssurance(value) {
   return [String(value)].filter((s) => s && s !== "none");
 }
 
-function inspectFinalFreezeReceipt(receipt) {
-  if (receipt === undefined || receipt === null) {
-    return { ok: false, code: "missing" };
-  }
-  if (typeof receipt === "string") {
-    const trimmed = receipt.trim();
-    if (!trimmed || /^(none|null|pending|skipped|n\/a)$/i.test(trimmed)) {
-      return { ok: false, code: "missing" };
-    }
-    if ((/\bdraft\b/i.test(trimmed) && !/\bfinal\b/i.test(trimmed)) ||
-        /\b(fail|failed|refused|error)\b/i.test(trimmed)) {
-      return { ok: false, code: "invalid" };
-    }
-    return { ok: true };
-  }
-  if (isPlainObject(receipt)) {
-    const validDigest =
-      typeof receipt.manifest_digest === "string" && /^[0-9a-f]{64}$/i.test(receipt.manifest_digest);
-    const noFindings =
-      receipt.findings === undefined || (Array.isArray(receipt.findings) && receipt.findings.length === 0);
-    if (receipt.stage === "final" && receipt.outcome === "PASS" && validDigest && noFindings) {
-      return { ok: true };
-    }
-    return { ok: false, code: "invalid" };
-  }
-  return { ok: false, code: "invalid" };
+function finalFreezeReceiptIssue(receipt) {
+  if (receipt === undefined || receipt === null ||
+      (typeof receipt === "string" && !receipt.trim())) return "missing";
+  const valid = isPlainObject(receipt) &&
+    receipt.stage === "final" && receipt.outcome === "PASS" &&
+    typeof receipt.manifest_digest === "string" && /^[0-9a-f]{64}$/i.test(receipt.manifest_digest) &&
+    (receipt.findings === undefined || (Array.isArray(receipt.findings) && receipt.findings.length === 0)) &&
+    (receipt.exit_code === undefined || receipt.exit_code === 0);
+  return valid ? null : "invalid";
 }
 
 function inspectHandoffFields(input) {
@@ -211,20 +189,10 @@ function evaluate(input) {
       }
     }
 
-    // #194: resume lists untranscribed events; handoff refuses until history is current.
-    if (input.action_kind === "scribe_coverage") {
-      const coverage = evaluateScribeCoverage(input);
-      if (input.mode === "handoff" && coverage.outcome !== "PASS") {
-        return { ...result("REROUTE", "handoff_refused:scribe_" + coverage.outcome + ":" + coverage.reason,
-          RECOVERY_SCRIBE_HANDOFF), scribe_coverage: coverage };
-      }
-      return { ...result("ADVISE", "scribe_coverage:" + coverage.outcome + ":" + coverage.reason,
-        coverage.recovery), scribe_coverage: coverage };
-    }
-
-    const scribeCoverage = isPlainObject(input.journey) ? evaluateScribeCoverage(input) : null;
+    const scribeOnly = input.action_kind === "scribe_coverage";
+    const scribeCoverage = scribeOnly || isPlainObject(input.journey) ? evaluateScribeCoverage(input) : null;
     const protectedCompletion = input.mode === "protected_completion" || input.protected_completion === true;
-    const planningHandoff = input.mode === "handoff" && !protectedCompletion;
+    const planningHandoff = input.mode === "handoff" && (scribeOnly || !protectedCompletion);
 
     if (planningHandoff) {
       if (scribeCoverage && scribeCoverage.outcome !== "PASS") {
@@ -237,14 +205,19 @@ function evaluate(input) {
       const rawReceipt = input.final_freeze_receipt !== undefined
         ? input.final_freeze_receipt
         : (isPlainObject(input.handoff) ? input.handoff.final_freeze_receipt : undefined);
-      const freezeCheck = inspectFinalFreezeReceipt(rawReceipt);
-      if (!freezeCheck.ok) {
+      const issue = finalFreezeReceiptIssue(rawReceipt);
+      if (issue) {
         return result(
           "REROUTE",
-          "handoff_refused:final_freeze_receipt_" + freezeCheck.code,
+          "handoff_refused:final_freeze_receipt_" + issue,
           RECOVERY_FINAL_FREEZE_HANDOFF
         );
       }
+    }
+
+    if (scribeOnly) {
+      return { ...result("ADVISE", "scribe_coverage:" + scribeCoverage.outcome + ":" + scribeCoverage.reason,
+        scribeCoverage.recovery), scribe_coverage: scribeCoverage };
     }
 
     const planningVerdict = input.planning_review
@@ -399,7 +372,6 @@ module.exports = {
   OUTCOMES,
   ENFORCEMENT,
   HANDOFF_FIELDS,
-  PLANNING_HANDOFF_FIELDS,
   VERDICT_VALUES,
   NEGATIVE_VERDICTS,
   evaluate,

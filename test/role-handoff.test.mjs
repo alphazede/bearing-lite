@@ -315,7 +315,7 @@ describe("Alphazedehq#594 planning handoff requires final freeze receipt", () =>
     });
     assert.equal(missing.outcome, "REROUTE");
     assert.match(missing.reason, /^handoff_refused:final_freeze_receipt_missing/);
-    assert.match(missing.recovery, /return to planning/i);
+    assert.match(missing.recovery, /node <plugin root>\/hooks\/plan-package\.cjs <plan dir>/);
 
     const draftOnly = closeout.evaluate({
       mode: "handoff",
@@ -341,6 +341,17 @@ describe("Alphazedehq#594 planning handoff requires final freeze receipt", () =>
     assert.equal(valid.outcome, "ADVISE");
     assert.equal(valid.reason, "handoff_complete");
   });
+
+  for (const [label, final_freeze_receipt] of [
+    ["a receipt note", "Receipt to come"],
+    ["a nonzero exit code", { stage: "final", outcome: "PASS", manifest_digest: "a".repeat(64), exit_code: 1 }],
+  ]) {
+    it(`refuses ${label} as final freeze evidence`, () => {
+      const result = closeout.evaluate({ mode: "handoff", final_freeze_receipt });
+      assert.equal(result.outcome, "REROUTE");
+      assert.equal(result.reason, "handoff_refused:final_freeze_receipt_invalid");
+    });
+  }
 
   it("handoff template records final_freeze_receipt and Implementation Orchestrator intake returns to planning when absent", () => {
     const templatePath = path.join(ROOT, "skills/bearing-lite/templates/handoff.md");
