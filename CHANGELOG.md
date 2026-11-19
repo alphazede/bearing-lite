@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Accept digest-bound Mermaid source views in the plan schema and final freeze.
+
 - Render digest-bound Mermaid source files as text views for diagram-assisted models.
 
 - Specify a single string for MBSE model trace IDs so the authored manifest matches the implementation schema.

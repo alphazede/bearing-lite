@@ -168,7 +168,7 @@ export function bindingRequirement(modelId = "<model.id>") {
     "Minimal planning binding:",
     `  "digest": "sha256:<hex of view bytes>",`,
     `  "view": { "format": "svg"|"png", "path": "<path relative to implementation.json>" }`,
-    'For diagram-assisted models, the renderer also accepts "format": "mermaid" with a path and a digest over the source bytes.',
+    'For diagram-assisted models, "format": "mermaid" accepts a path and a digest over the source bytes.',
     "or SVG only: \"view\": { \"format\": \"svg\", \"inline\": \"<svg ...></svg>\" } with the same digest over UTF-8 inline bytes.",
     "Append-only alternative: dod_manifest.closeout.model_views[] { model_id, digest, view } keyed to a planning model id. Supplemental entries may not rewrite planning rows or override mode, source, viewpoint, trace, limitations, activation, or an already-planned binding.",
     "Inactive (selected=false AND required=false) or not_applicable+reason needs no view.",
@@ -913,6 +913,12 @@ function verifyDigest(model, bytes) {
   return actual;
 }
 
+export function loadVerifiedView(model, assetRoot) {
+  const view = loadView(model, assetRoot);
+  verifyDigest(model, view.bytes);
+  return view;
+}
+
 function tableHint() {
   return `          <p class="table-hint">Tables scroll horizontally on a narrow screen.</p>`;
 }
@@ -1250,8 +1256,7 @@ export function renderDodManifest(doc, opts = {}) {
             `${model.id} has no view binding.\n${bindingRequirement(model.id)}`
           );
         }
-        const loaded = loadView({ id: model.id, mode: model.mode, view: spec }, assetRoot);
-        verifyDigest({ id: model.id, digest: boundDigest }, loaded.bytes);
+        const loaded = loadVerifiedView({ id: model.id, mode: model.mode, view: spec, digest: boundDigest }, assetRoot);
         statusLabel = model.render_status || "Embedded";
         kind = statusKind(statusLabel) === "plan" ? "pass" : statusKind(statusLabel);
         modelRows.push({

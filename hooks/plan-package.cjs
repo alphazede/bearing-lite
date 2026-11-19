@@ -477,7 +477,7 @@ function checkLivePins(dir, findings = []) {
 }
 
 /** #153: the owner projection carries content, not just source references. */
-function checkManifestProjection(implementation) {
+function checkManifestProjection(implementation, dir) {
   const manifest = implementation?.dod_manifest;
   // Older digest-only packages have no renderer input; validate supplied projections.
   if (manifest === undefined) return [];
@@ -558,12 +558,25 @@ function checkManifestProjection(implementation) {
     if (!["diagram-assisted", "sysml-v2"].includes(model?.mode)) continue;
     const views = model.view ? [model.view] : rows(model.views);
     const supplement = rows(manifest.closeout?.model_views).filter((row) => row?.model_id === model.id);
-    const bound = [...views, ...supplement.map((row) => row.view)].some((view) =>
+    let bound = [...views, ...supplement.map((row) => row.view)].some((view) =>
       ["svg", "png"].includes(view?.format) &&
       (text(view.path) || (view.format === "svg" && text(view.inline))));
+    const view = views[0] || supplement[0]?.view;
+    let reason;
+    if (view?.format === "mermaid") {
+      try {
+        const { loadVerifiedView } = require("../tools/render-dod-manifest.mjs");
+        const digest = views[0] ? model.digest : supplement[0].digest;
+        loadVerifiedView({ id: model.id, mode: model.mode, view, digest }, dir);
+        bound = true;
+      } catch (error) {
+        bound = false;
+        reason = error.code || "UNSAFE_ASSET";
+      }
+    }
     // N/A or deselection cannot override a selected modeling mode.
     if (model.not_applicable === true || model.selected === false || !bound) {
-      findings.push({ code: "manifest_model_view_missing", id: model.id ?? null, mode: model.mode });
+      findings.push({ code: "manifest_model_view_missing", id: model.id ?? null, mode: model.mode, ...(reason && { reason }) });
     }
   }
   return findings;
@@ -1118,7 +1131,7 @@ function freeze(dir, { stage = "final" } = {}) {
         ...checkBoundaryContract(implementation, seit),
         ...checkSerialChains(implementation),
       ] : []),
-      ...checkManifestProjection(implementation),
+      ...checkManifestProjection(implementation, dir),
       ...checkRoles(seit, implementation),
       ...checkWorkClass(implementation),
       ...checkPlanningRoles(implementation),
