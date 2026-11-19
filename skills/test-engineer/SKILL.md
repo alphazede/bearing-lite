@@ -28,18 +28,20 @@ assessment.
 1. Assurance Test Engineer runs only when requested, in a fresh session without
    author ancestry, on the exact candidate; refuse an unconfigured
    slice or round boundary. `VALIDATING` belongs here.
-2. The Assurance Test Engineer independently reruns the gate-chain at the
-   declared boundary for required claims (including mutation,
-   changed-line coverage, and red-then-green claims using the target
-   repository's own tools and thresholds, plus Reverify only for applicable
-   binary-level claims) and attaches `assurance` receipts;
-   author gate-chain receipts are diagnostic-only and cannot satisfy independent assurance. When a declared SEIT gate or role turn carries an explicit
-   **one-run budget**, use **independent validation of a single-run receipt**:
-   independently validate the recorded inputs, digest, and log (plus candidate
-   and command binding) instead of re-running the command. A
-   declared gate with a missing tool or a `not_run` outcome is a typed gap,
-   never PASS. Every red-then-green receipt binds the baseline failing run and
-   the candidate passing run over the same test IDs.
+2. At the declared boundary, the Assurance Test Engineer checks required gate-chain
+   claims and attaches `assurance` receipts. Use the target repository's tools
+   and thresholds for mutation, changed-line coverage, and red-then-green claims.
+   Apply Reverify only to applicable binary-level claims.
+   - By default, independently rerun the gate-chain. Author receipts are diagnostic evidence.
+   - For a declared gate or role turn with an explicit **one-run budget**, use
+     **independent validation of a single-run receipt**. Verify the recorded
+     inputs, digest, and retained log against the exact candidate, command, and
+     pass/fail rule. Cite the original run in the independent assurance receipt
+     and record your verdict there.
+
+   A missing tool or a `not_run` outcome for a declared gate is a typed gap.
+   Every red-then-green receipt binds the baseline failing run and the candidate
+   passing run over the same test IDs.
 3. Evaluate expectations and proof against `references/verification-case.md` and
    `references/shared-machine-tests.md`. Reject as typed verification gaps, not
    PASS: expectations circularly derived from the candidate implementation, tests

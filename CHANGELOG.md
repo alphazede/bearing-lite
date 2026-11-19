@@ -9,6 +9,7 @@
 - Preserve planning-review, assurance, and protected-completion checks alongside the final-freeze receipt check.
 - Require a structured passing final-freeze receipt on both planning handoff routes and document the intake digest comparison.
 - Preserve significant SVG text and attribute whitespace while cleaning whitespace-only source lines in rendered DoD Manifests.
+- Keep SEIT planning checks within their authorized run budget and tie independent single-run assurance to the original run.
 
 - `sanitizeSvg` in `tools/render-dod-manifest.mjs` drops whitespace-only text outside the root `<svg>` element and clears horizontal whitespace on whitespace-only lines so rendered DoD Manifests emit no whitespace-only lines from leading or inter-element SVG comments. (Alphazedehq#597)
 - Add optional `delegate_approval` (`approver`, `delegation_ref`, optional UTC `approved_at`) to `schemas/authority.schema.json` and document it in `skills/bearing-lite/references/owner-stops.md` so delegate approvals validate with a delegation reference, fail validation without one, and compile without a separate effective-authority file. (Alphazedehq#604)

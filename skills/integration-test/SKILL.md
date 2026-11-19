@@ -77,16 +77,17 @@ independent assurance (`../test-engineer/SKILL.md`) and execution assessment
    (`method` stays a plain string; missing tool or `not_run` is a typed gap,
    never PASS; red-then-green receipts bind the baseline failing run and
    candidate passing run over the same test IDs). When a gate or role turn has
-   a **one-run budget**, specify **independent validation of a single-run receipt**
-   (assurance validates the recorded inputs, digest, and log instead of
-   re-running the command).
-4. **Self-check and deltas:** run only your own artifact checker (self-check
-   boundary, assembly, and `seit.json` completeness, `plan-package.cjs` rules,
-   and source bindings)—never run the repository gate (the repository gate runs
-   once at assembly). Also run each authored/frozen SEIT command
-   (`procedures_and_commands[]`) once before returning to verify syntax,
-   selectors, and exit behavior—or record the specific reason it cannot run
-   before implementation (for example, it depends on unimplemented product code).
+   a **one-run budget**, specify **independent validation of a single-run receipt**.
+   The Assurance Test Engineer validates the recorded inputs, digest, and log.
+4. **Self-check and deltas:** for artifact validation, run only your own artifact
+   checker for boundary, assembly, and `seit.json` completeness,
+   `plan-package.cjs` rules, and source bindings. The Planning Orchestrator runs
+   the repository gate once at assembly.
+   For each authored SEIT command (`procedures_and_commands[]`), run it once
+   before returning to verify syntax, selectors, and exit behavior when planning
+   authority covers the action, inputs, and side effects. Record the specific
+   reason to defer a command reserved for another role, the repository gate, a
+   later one-run budget, or unavailable prerequisites.
    Repair your own defects in this assignment, folding
    all known corrections into this first return to the Planning Orchestrator
    with proof cases, boundary/assembly inputs, selected capability bindings,

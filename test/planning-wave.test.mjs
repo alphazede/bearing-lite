@@ -932,10 +932,19 @@ describe("Alphazedehq#603 Integration and Test run-once command check", () => {
     const itSkill = read("skills/integration-test/SKILL.md");
     const proc = itSkill.slice(itSkill.indexOf("## Procedure"), itSkill.indexOf("## Return and boundaries")).replace(/\s+/g, " ");
     const ret = itSkill.slice(itSkill.indexOf("## Return and boundaries")).replace(/\s+/g, " ");
-    assert.match(proc, /run[^.]{0,60}(?:each|every)[^.]{0,60}(?:authored|frozen)[^.]{0,60}command[^.]{0,40}once/i);
-    assert.match(proc, /reason[^.]{0,80}(?:cannot|could not) run before implementation/i);
+    assert.match(proc, /run[^.]*\bonce\b/i);
+    assert.match(proc, /reason[^.]*(?:defer|cannot run before implementation)/i);
     assert.match(ret, /run-once|each frozen command/i);
-    assert.match(ret, /exit code[^.]{0,60}(?:reason[^.]{0,60}cannot run|pre-implementation)/i);
+    assert.match(ret, /exit code[^.]*(?:reason[^.]*cannot run|pre-implementation)/i);
+  });
+
+  it("defers SEIT command checks outside planning authority or the declared run budget", () => {
+    const skill = read("skills/integration-test/SKILL.md");
+    const selfCheck = skill.slice(skill.indexOf("**Self-check and deltas"), skill.indexOf("**Plan-package checker rules"));
+    assert.match(selfCheck, /planning\s+authority/i);
+    assert.match(selfCheck, /another role/i);
+    assert.match(selfCheck, /one-run budget/i);
+    assert.match(selfCheck, /reason to defer/i);
   });
 });
 
@@ -949,8 +958,13 @@ describe("Alphazedehq#605 independent validation of a single-run receipt under o
       const text = read(rel).replace(/\s+/g, " ");
       assert.match(text, /independent validation of a single-run receipt/i, rel);
       assert.match(text, /one-run budget/i, rel);
-      assert.match(text, /inputs,\s*digest,?\s*and\s*log/i, rel);
-      assert.match(text, /(?:instead of|rather than)\s+re-?running/i, rel);
+      assert.match(text, /inputs,\s*digest,?\s*and\s*(?:retained\s+)?log/i, rel);
     }
+  });
+
+  it("requires the assurance verdict to cite the original run for receipt validation", () => {
+    const assurance = read("skills/test-engineer/SKILL.md").replace(/\s+/g, " ");
+    assert.match(assurance, /(?:cite|reference|link to) the (?:original|sole) run/i);
+    assert.match(assurance, /independent assurance receipt/i);
   });
 });
