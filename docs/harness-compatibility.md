@@ -44,8 +44,8 @@ D1 gate explicitly does not cover.
 | Claude Code, `plugin marketplace add` + `plugin install` | PASS (`TC-CLAUDE-DISC-01`) | UNVERIFIED (`TC-CLAUDE-DISC-01`, resources byte-compared; invocation UNVERIFIED) | UNVERIFIED (`TC-CLAUDE-EXEC-UNVERIFIED`) | UNVERIFIED (`TC-CLAUDE-EXEC-UNVERIFIED`) | UNVERIFIED (`TC-CLAUDE-EXEC-UNVERIFIED`) | UNVERIFIED (`TC-CLAUDE-EXEC-UNVERIFIED`) |
 | Muse Code, per-skill `skills install` | PASS (`TC-MUSE-ISC-01`) | PASS (`TC-MUSE-ISC-01`) | UNSUPPORTED (`TC-MUSE-ISC-01`) | UNSUPPORTED (`TC-MUSE-ISC-01`) | UNSUPPORTED (`TC-MUSE-ISC-01`) | UNSUPPORTED (`TC-MUSE-ISC-01`) |
 | Muse Code, portable bundle `plugins install` | PASS (`TC-MUSE-PLUG-01`) | PASS (`TC-MUSE-PLUG-01`) | UNSUPPORTED (`TC-MUSE-PLUG-01`) | UNSUPPORTED (`TC-MUSE-PLUG-01`) | UNSUPPORTED (`TC-MUSE-PLUG-01`) | UNSUPPORTED (`TC-MUSE-PLUG-01`) |
-| AGY, `plugin install` from a copied payload | PASS (`TC-AGY-DISC-01`) | PASS (`TC-AGY-DISC-01`) | PASS (`TC-AGY-DISC-01`, 7 hooks via root `hooks.json`) | PASS (`SessionStart` `injectSteps`; `Stop` quiet on advisory) | PASS (`PreToolUse` `decision: "deny"`; `Stop` `decision: "continue"`; no `SubagentStop`) | PASS (malformed/empty fail-open, exit 0) |
-| AGY, `plugin install` from the documented symlink root | FAIL (`TC-AGY-SYMLINK-01`) | UNVERIFIED | UNVERIFIED | UNVERIFIED | UNVERIFIED | UNVERIFIED |
+| AGY, `plugin install` from a copied payload | PASS (`TC-AGY-DISC-01`) | PASS (`TC-AGY-DISC-01`) | PASS (`TC-AGY-DISC-01`, 7 hooks via root `hooks.json`) | UNVERIFIED natively (component replay covers SessionStart injection and quiet advisory Stop) | UNVERIFIED natively (component replay covers PreToolUse deny and Stop continuation) | UNVERIFIED natively (component replay covers malformed input) |
+| AGY, `plugin install` from the former symlink layout | FAIL (`TC-AGY-SYMLINK-01`) | UNVERIFIED | UNVERIFIED | UNVERIFIED | UNVERIFIED | UNVERIFIED |
 | Cursor editor, Customize Install / local symlink | UNVERIFIED (`TC-CURSOR-UNAVAIL-01`) | UNVERIFIED | UNVERIFIED | UNVERIFIED | UNVERIFIED | UNVERIFIED |
 | Cursor Agent CLI, `--plugin-dir` | UNVERIFIED (`TC-CURSOR-UNAVAIL-01`) | UNVERIFIED | UNVERIFIED | UNVERIFIED | UNVERIFIED | UNVERIFIED |
 | GitHub Copilot in VS Code, Chat: Install Plugin From Source | UNVERIFIED (`TC-VSCODE-UNVERIFIED-01`) | UNVERIFIED | UNVERIFIED | UNVERIFIED | UNVERIFIED | UNVERIFIED |
@@ -97,7 +97,14 @@ session in a disposable profile); `TC-CLAUDE-DISC-01` now fails when a
 referenced resource such as `assurance-policy.md` is missing from the
 installed artifact.
 
-AGY `1.5.12` (2026-11-19 live probe and candidate plugin install) validates root `hooks.json` with `16 skills` and `7 hooks` (`bearing-lite-activation`, `bearing-lite-assurance-dispatch`, `bearing-lite-te-write`, `bearing-lite-orchestrator-write-lock`, `bearing-lite-closeout`, `bearing-lite-te-completion`, `bearing-lite-git-sync`), rejecting Claude-style `hookSpecificOutput` via strict `protojson` unmarshaling and omitting `SubagentStop` (unsupported on AGY). Via `hooks/com.google.antigravity/host.cjs`, live `agy2` runs proved `SessionStart` `injectSteps` system-context injection, `PreToolUse` `decision: "deny"` tool blocking on `run_command`/`write_file`/`edit_file`, and all 7 installed hooks completing on `SessionStart`, `PreToolUse`, and `Stop` with `continuationActive` re-entry handling.
+### AGY candidate run on 2026-11-19
+
+The Implementer reported 16 skills and seven hook registrations on AGY
+`1.5.12`. All seven hooks ran live across `SessionStart`, `PreToolUse`, and
+`Stop`. The `PreToolUse` observations included `write_file` and `run_command`.
+AGY runs the relative commands from the installed plugin directory and exposes
+no `SubagentStop` event. Component replay in `test/agy-hooks.test.mjs` checks
+the JSON responses for context injection, tool denial, and Stop continuation.
 
 ## Decision-adapter column
 

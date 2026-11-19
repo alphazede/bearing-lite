@@ -213,14 +213,16 @@ copilot plugin install bearing-lite@bearing-lite
 
 ```
 
+### Antigravity CLI installation
+
+Stage the npm payload with the Antigravity manifest to install the skills and
+seven hook registrations. Follow the [Antigravity installation instructions](https://github.com/alphazede/bearing-lite/tree/main/.agy#install).
+
 ### Skills-only installation
 
-AGY, Pi, DeepCode, and Muse Code load skills without command hooks.
+Pi, DeepCode, and Muse Code load skills without command hooks.
 
 ```sh
-# AGY (Antigravity) — install the .agy root, not the repo root
-agy plugin install /path/to/bearing-lite/.agy
-
 # Pi — published skills package
 pi install npm:@alphazede/bearing-lite
 
@@ -233,16 +235,17 @@ done
 **DeepCode** has no plugin-install or command-hook surface. Copy `skills/`
 into `~/.deepcode/skills` or `~/.agents/skills`.
 
-Claude Code, Codex, Cursor, and GitHub Copilot clients
+Claude Code, Codex, Cursor, Antigravity CLI, and GitHub Copilot clients
 are **partial** hook clients: only an explicitly bound current Bearing task runs
 the activation/closeout advice, ownership lock, and git-sync. Ordinary or stale
 sessions stay quiet and never fetch or fast-forward. Active git-sync fast-forwards
 the session checkout from origin and names anything still unpushed. GitHub Copilot also has the implemented Test
-Engineering channels `PreToolUse`, `Stop`, and `SubagentStop`. AGY,
-Pi, DeepCode, and Muse Code are **skills-only**.
+Engineering channels `PreToolUse`, `Stop`, and `SubagentStop`. Antigravity
+maps `SessionStart`, `PreToolUse`, and `Stop`. Pi, DeepCode, and Muse Code
+are **skills-only**.
 General transition-order, protected-action and planning-review checks stay
 procedural. The assurance budget has a mandatory bound pretool dispatch barrier
-on the common, Cursor and Copilot mappings; see the explicit host test status
+on the common, Cursor, Antigravity and Copilot mappings. See the host test status
 in [the mapping](hooks/com.anthropic.claude-code/mapping.md#bound-assurance-dispatch-capability)
 and the [binding contract](skills/bearing-lite/references/assurance-policy.md#mandatory-bound-dispatch-209--210). Node.js must be on `PATH` for the hook
 adapters.

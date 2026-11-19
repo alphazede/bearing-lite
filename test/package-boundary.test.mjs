@@ -266,6 +266,7 @@ describe("CMD-PACKAGE-01 package-boundary (SEIT-PACKAGE-01)", () => {
     assert.equal(parsed[0].name, "@alphazede/bearing-lite");
     const paths = parsed[0].files.map(/** @param {{path:string}} f */ (f) => f.path);
     assert.ok(paths.includes("plugin.json"));
+    assert.ok(paths.includes("hooks.json"), "AGY requires hooks.json at the package root");
     assert.ok(paths.some((p) => p.startsWith("hooks/")));
     assert.ok(paths.includes("hooks/hooks.json"));
     assert.ok(paths.includes("hooks/com.anthropic.claude-code/host.cjs"));
