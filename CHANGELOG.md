@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [3.0.0-rc.3] - 2026-11-19
+
 ### Fixed
 
 - Use the recorded specialist closing return when opening planning review and when freezing the final plan.
