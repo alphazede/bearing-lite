@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Retain the prior planning tier when supplied scope, repository, owner tier, or full-tier risk flags leave containment unconfirmed. (Alphazedehq#643)
+
 - Document Antigravity installation from a staged npm payload with the AGY manifest and all seven hook registrations. (Alphazedehq#636)
 
 - Preserve single replacements, batch edits, and replace-all options when forwarding AGY tool calls to Bearing hooks. (Alphazedehq#636)

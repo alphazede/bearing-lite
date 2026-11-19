@@ -18,6 +18,10 @@ const STAGES = Object.freeze([
 const EXPECTED = Object.freeze(["VERIFIED", "REFUTED"]);
 const EVIDENCE_TIERS = Object.freeze(["observed", "derived"]);
 const PROCESS_TIERS = Object.freeze(["light", "standard", "full"]);
+const FULL_TIER_RISK_FLAGS = [
+  "trust_boundary", "irreversible_loss", "high_impact_loss", "stateful_protocol",
+  "concurrency_contract", "multi_wave", "specification_register",
+];
 const COPY_OR_READ_OPERATIONS = new Set(["copy", "read"]);
 const SHA256 = /^[0-9a-f]{64}$/;
 const CANDIDATE_FIELDS = Object.freeze([
@@ -367,9 +371,7 @@ function evaluateVerification(input) {
 }
 
 function confirmedOneRepository(phase) {
-  if (phase.multi_repo === true || phase.cross_repo === true || phase.one_repository === false) {
-    return false;
-  }
+  if (phase.one_repository === false) return false;
   if (phase.one_repository !== undefined && typeof phase.one_repository !== "boolean") return false;
   if (phase.repository_count !== undefined && phase.repository_count !== 1) return false;
   const repoArrayOne =
@@ -394,6 +396,13 @@ function confirmedNoLiveHost(phase) {
     if (phase[key] === true) return false;
   }
   return phase.live_host === false || phase.crosses_live_host === false || phase.live_services === false;
+}
+
+function confirmedContainedRisk(phase) {
+  const exclusions = [
+    ...FULL_TIER_RISK_FLAGS, "multi_repo", "cross_repo", "explicit_owner_tier", "risk_unknown", "unconfirmed_scope",
+  ];
+  return phase.journey_type === undefined && exclusions.every((key) => phase[key] === undefined || phase[key] === false);
 }
 
 /**
@@ -432,14 +441,7 @@ function resolveProcessTier(phase) {
     const crossesLiveHost =
       phase.live_host === true || phase.crosses_live_host === true || phase.live_services === true;
     const otherFullRisk =
-      phase.trust_boundary === true ||
-      phase.irreversible_loss === true ||
-      phase.high_impact_loss === true ||
-      phase.stateful_protocol === true ||
-      phase.concurrency_contract === true ||
-      phase.multi_wave === true ||
-      phase.specification_register === true ||
-      phase.journey_type === "specification";
+      phase.journey_type === "specification" || FULL_TIER_RISK_FLAGS.some((key) => phase[key] === true);
     const planningScope =
       (phase.scope === undefined || phase.scope === "planning") &&
       (phase.stage === undefined || phase.stage === "planning");
@@ -450,9 +452,7 @@ function resolveProcessTier(phase) {
       confirmedOneRepository(phase) &&
       confirmedNoNewTrustBoundary(phase) &&
       confirmedNoLiveHost(phase) &&
-      !otherFullRisk &&
-      phase.risk_unknown !== true &&
-      phase.unconfirmed_scope !== true
+      confirmedContainedRisk(phase)
     ) {
       return {
         ...result("READY", "contained_tool_change", "light"),
