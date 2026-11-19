@@ -35,6 +35,72 @@ function manifestGenerated(input) {
 const nonempty = (value) => typeof value === "string" && value.trim().length > 0;
 
 /**
+ * #593/#595: Validate at most one closing return per declared specialist session
+ * (recorded as session.closing_return or wave.closing_returns[]) and project the
+ * resulting READY/CANDIDATE_READY view for session completeness checks.
+ */
+function resolveWaveWithClosingReturns(wave) {
+  if (wave?.closing_returns !== undefined && !Array.isArray(wave.closing_returns)) {
+    return { ok: false, wave };
+  }
+  const sessions = Array.isArray(wave?.sessions) ? wave.sessions : [];
+  const hasWaveClosing = Array.isArray(wave?.closing_returns) && wave.closing_returns.length > 0;
+  const hasSessionClosing = sessions.some((session) => session && session.closing_return !== undefined);
+  if (!hasWaveClosing && !hasSessionClosing) {
+    return { ok: true, wave };
+  }
+  const declared = new Set(Array.isArray(wave?.required_sessions) ? wave.required_sessions : []);
+  const byAuthor = new Map();
+  for (const cr of wave.closing_returns || []) {
+    if (!cr || typeof cr !== "object" || Array.isArray(cr)) return { ok: false, wave };
+    if (!nonempty(cr.author) || !declared.has(cr.author)) return { ok: false, wave };
+    if (byAuthor.has(cr.author)) return { ok: false, wave };
+    byAuthor.set(cr.author, cr);
+  }
+  for (const session of sessions) {
+    if (!session || session.closing_return === undefined) continue;
+    const cr = session.closing_return;
+    if (!cr || typeof cr !== "object" || Array.isArray(cr)) return { ok: false, wave };
+    if (!nonempty(cr.author) || cr.author !== session.session || !declared.has(cr.author)) {
+      return { ok: false, wave };
+    }
+    if (byAuthor.has(cr.author)) return { ok: false, wave };
+    byAuthor.set(cr.author, cr);
+  }
+  for (const [author, cr] of byAuthor.entries()) {
+    const session = sessions.find((item) => item?.session === author);
+    if (!session || !sameCandidate(session, session)) return { ok: false, wave };
+    const priorAllowed = session.verdict === "GAPS" ||
+      POLICY.planning_session_ready_verdicts.includes(session.verdict);
+    if (!priorAllowed) return { ok: false, wave };
+    if (!nonempty(cr.reason)) return { ok: false, wave };
+    if (!Array.isArray(cr.items) || cr.items.length === 0 || !cr.items.every(nonempty)) {
+      return { ok: false, wave };
+    }
+    if (!sameCandidate(cr.candidate, cr.candidate)) return { ok: false, wave };
+    const effectiveVerdict = cr.verdict !== undefined
+      ? cr.verdict
+      : (session.verdict === "GAPS" ? null : session.verdict);
+    if (!nonempty(effectiveVerdict) || !POLICY.planning_session_ready_verdicts.includes(effectiveVerdict)) {
+      return { ok: false, wave };
+    }
+  }
+  const normalizedSessions = sessions.map((session) => {
+    if (!session || !byAuthor.has(session.session)) return session;
+    const cr = byAuthor.get(session.session);
+    const effectiveVerdict = cr.verdict !== undefined ? cr.verdict : session.verdict;
+    return {
+      ...session,
+      ...cr.candidate,
+      verdict: effectiveVerdict,
+      ...(cr.inputs !== undefined ? { inputs: cr.inputs } : {}),
+      ...(cr.adopted_to !== undefined ? { adopted_to: cr.adopted_to } : {}),
+    };
+  });
+  return { ok: true, wave: { ...wave, sessions: normalizedSessions } };
+}
+
+/**
  * #205: the declared planning sessions of the one planning wave. The wave
  * declares exactly the profile-enabled specialist sessions the task needs
  * (possibly none); no session is unconditionally required and final Planning
@@ -58,7 +124,11 @@ function planningSessionsVerdict(wave, candidate, inputDigests, { requireSnapsho
   ) {
     return { outcome: "OWNER_AMENDMENT_REQUIRED", reason: "planning_sessions_invalid" };
   }
-  const sessions = Array.isArray(wave.sessions) ? wave.sessions : [];
+  const resolved = resolveWaveWithClosingReturns(wave);
+  if (!resolved.ok) {
+    return { outcome: "NEEDS_MORE_EVIDENCE", reason: "planning_sessions_incomplete" };
+  }
+  const sessions = Array.isArray(resolved.wave.sessions) ? resolved.wave.sessions : [];
   const names = sessions.map((session) => session?.session);
   if (new Set(names).size !== names.length || names.some((name) => !declared.includes(name))) {
     return { outcome: "OWNER_AMENDMENT_REQUIRED", reason: "planning_sessions_invalid" };
