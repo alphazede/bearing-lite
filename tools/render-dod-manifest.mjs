@@ -5,9 +5,13 @@
  * or fills absent evidence. Node.js standard library only.
  */
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync, realpathSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import bindings from "./manifest-view-binding.cjs";
+
+const { MAX_TEXT_VIEW_BYTES, loadVerifiedMermaidView, verifyDigest } = bindings;
+export const { RenderError, bindingRequirement, normalizeDigest, resolveUnder, sha256Hex } = bindings;
 
 export const TEMPLATE_VERSION = "1.0.1";
 export const TEMPLATE_RELATIVE = "templates/dod-manifest-v1.html";
@@ -24,7 +28,6 @@ function packagedArtwork(className, filename, width, height) {
 }
 
 const PNG_MAGIC = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-const MAX_TEXT_VIEW_BYTES = 512 * 1024;
 const MAX_PNG_BYTES = 2 * 1024 * 1024;
 
 const SECTIONS = Object.freeze([
@@ -144,49 +147,8 @@ const SVG_ALLOWED_ATTRS = new Set([
   "dominant-baseline",
 ]);
 
-export class RenderError extends Error {
-  /**
-   * @param {string} code
-   * @param {string} message
-   * @param {{ html?: string, failures?: object[] }} [extra]
-   */
-  constructor(code, message, extra = {}) {
-    super(message);
-    this.name = "RenderError";
-    this.code = code;
-    this.html = extra.html;
-    this.failures = extra.failures || [];
-  }
-}
-
 const SUPPLEMENT_KEYS = new Set(["model_id", "digest", "view"]);
 const VIEW_KEYS = new Set(["format", "path", "inline", "alt"]);
-
-export function bindingRequirement(modelId = "<model.id>") {
-  return [
-    `BINDING_REQUIRED ${modelId}: activated model (selected OR required, including render_status READY/MISSING/STALE) must bind a digest-checked view.`,
-    "Minimal planning binding:",
-    `  "digest": "sha256:<hex of view bytes>",`,
-    `  "view": { "format": "svg"|"png", "path": "<path relative to implementation.json>" }`,
-    'For diagram-assisted models, "format": "mermaid" accepts a path and a digest over the source bytes.',
-    "or SVG only: \"view\": { \"format\": \"svg\", \"inline\": \"<svg ...></svg>\" } with the same digest over UTF-8 inline bytes.",
-    "Append-only alternative: dod_manifest.closeout.model_views[] { model_id, digest, view } keyed to a planning model id. Supplemental entries may not rewrite planning rows or override mode, source, viewpoint, trace, limitations, activation, or an already-planned binding.",
-    "Inactive (selected=false AND required=false) or not_applicable+reason needs no view.",
-    "Do not invent SVG/PNG semantics. Renderer will not scrape design.md or architecture HTML.",
-  ].join("\n");
-}
-
-export function sha256Hex(buf) {
-  return createHash("sha256").update(buf).digest("hex");
-}
-
-export function normalizeDigest(value) {
-  if (value == null || value === "") return "";
-  return String(value)
-    .trim()
-    .toLowerCase()
-    .replace(/^sha256:/, "");
-}
 
 export function esc(value) {
   return String(value ?? "")
@@ -265,23 +227,6 @@ function asRows(value) {
   if (parsed.na) return parsed;
   if (Array.isArray(parsed.value)) return { na: false, value: parsed.value };
   return { na: false, value: [parsed.value] };
-}
-
-export function resolveUnder(rootDir, relativePath) {
-  const rel = String(relativePath ?? "");
-  if (!rel || rel.includes("\0")) {
-    throw new RenderError("PATH_TRAVERSAL", "Asset path is empty or contains NUL.");
-  }
-  if (path.isAbsolute(rel) || /^[A-Za-z]:[\\/]/.test(rel)) {
-    throw new RenderError("PATH_TRAVERSAL", `Absolute asset path rejected: ${rel}`);
-  }
-  const root = path.resolve(rootDir);
-  const resolved = path.resolve(root, rel);
-  const relToRoot = path.relative(root, resolved);
-  if (relToRoot.startsWith("..") || path.isAbsolute(relToRoot) || relToRoot.includes("\0")) {
-    throw new RenderError("PATH_TRAVERSAL", `Asset path escapes root: ${rel}`);
-  }
-  return resolved;
 }
 
 function isCssWhitespace(ch) {
@@ -857,8 +802,7 @@ function loadView(model, assetRoot) {
   const spec = viewSpec(model);
   if (!spec) return null;
   const format = String(spec.format || "").toLowerCase();
-  const mermaid = format === "mermaid" && model.mode === "diagram-assisted";
-  if (format !== "svg" && format !== "png" && !mermaid) {
+  if (format !== "svg" && format !== "png") {
     throw new RenderError(
       "MISSING_VIEW",
       `${model.id || "model"} view.format must be "svg" or "png".\n${bindingRequirement(model.id)}`
@@ -878,16 +822,6 @@ function loadView(model, assetRoot) {
   if (!existsSync(resolved)) {
     throw new RenderError("MISSING_VIEW", `${model.id || "model"} view path not found: ${spec.path}`);
   }
-  if (mermaid) {
-    const root = realpathSync(assetRoot);
-    const file = realpathSync(resolved);
-    resolveUnder(root, path.relative(root, file));
-    const stat = statSync(file);
-    if (!stat.isFile() || stat.size > MAX_TEXT_VIEW_BYTES) {
-      throw new RenderError("UNSAFE_ASSET", "Mermaid source must be a regular file within the text view size limit.");
-    }
-    return { format, bytes: readFileSync(file) };
-  }
   const bytes = readFileSync(resolved);
   if (format === "svg") {
     return { format, bytes, svg: sanitizeSvg(bytes.toString("utf8")), pngUri: null };
@@ -895,25 +829,11 @@ function loadView(model, assetRoot) {
   return { format, bytes, svg: null, pngUri: embedPng(bytes) };
 }
 
-function verifyDigest(model, bytes) {
-  const expected = normalizeDigest(model.digest);
-  if (!expected) {
-    throw new RenderError(
-      "MISSING_VIEW",
-      `${model.id || "model"} is missing digest.\n${bindingRequirement(model.id)}`
-    );
-  }
-  const actual = sha256Hex(bytes);
-  if (actual !== expected) {
-    throw new RenderError(
-      "STALE_VIEW",
-      `${model.id || "model"} view digest is stale: expected sha256:${expected}, actual sha256:${actual}`
-    );
-  }
-  return actual;
-}
-
 export function loadVerifiedView(model, assetRoot) {
+  const spec = viewSpec(model);
+  if (String(spec?.format || "").toLowerCase() === "mermaid") {
+    return loadVerifiedMermaidView({ ...model, view: spec }, assetRoot);
+  }
   const view = loadView(model, assetRoot);
   verifyDigest(model, view.bytes);
   return view;

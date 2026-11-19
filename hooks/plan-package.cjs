@@ -28,6 +28,7 @@ const crypto = require("node:crypto");
 const { StringDecoder } = require("node:string_decoder");
 const { isDeepStrictEqual } = require("node:util");
 
+const { loadVerifiedMermaidView } = require("../tools/manifest-view-binding.cjs");
 const { checkReviewRounds } = require("./assurance-budget.cjs");
 const { checkRegisterFiles } = require("./register-precheck.cjs");
 const { evaluate: evaluateReadySet } = require("./ready-set.cjs");
@@ -566,9 +567,8 @@ function checkManifestProjection(implementation, dir) {
     let reason;
     if (view?.format === "mermaid") {
       try {
-        const { loadVerifiedView } = require("../tools/render-dod-manifest.mjs");
         const digest = views[0] ? model.digest : supplement[0].digest;
-        loadVerifiedView({ id: model.id, mode: model.mode, view, digest }, dir);
+        loadVerifiedMermaidView({ id: model.id, mode: model.mode, view, digest }, dir);
         bound = true;
       } catch (error) {
         bound = false;

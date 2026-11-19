@@ -395,6 +395,15 @@ describe("S3 DoD Manifest template, schema, and renderer", () => {
     const input = writeFixture(dir, doc, { [view.path]: source });
     const frozen = planPackage.freeze(dir);
     assert.equal(frozen.outcome, "PASS", JSON.stringify(frozen));
+    const flags = process.allowedNodeEnvironmentFlags.has("--no-experimental-require-module")
+      ? ["--no-experimental-require-module"] : [];
+    const cliFreeze = spawnSync(process.execPath, [...flags, path.join(ROOT, "hooks/plan-package.cjs"), dir], {
+      encoding: "utf8",
+      timeout: 10_000,
+    });
+    assert.ifError(cliFreeze.error);
+    assert.equal(cliFreeze.status, 0, cliFreeze.stdout);
+    assert.equal(JSON.parse(cliFreeze.stdout).manifest_digest, frozen.manifest_digest);
     const schema = JSON.parse(readFileSync(SCHEMA, "utf8"));
     assert.ok(schema.$defs.dodView.properties.format.enum.includes(view.format));
     assert.match(renderFile(input).html, /flowchart LR/);
