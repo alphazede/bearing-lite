@@ -102,8 +102,8 @@ This is the default dependency order, not a requirement to enable every role:
      expected gate cost, and selected verification claims) bound to the frozen
      requirement UIDs, running only its own SEIT/boundary artifact self-checks.
      Do not write product tests.
-   Pending cross-artifact bindings are reconciled at assembly; do not serialize
-   `mbse` and `integration_test` into sequential specialist gates.
+   Dispatch the first `mbse` and `integration_test` authoring passes independently.
+   Reconcile pending cross-artifact bindings and order any verify-only returns at assembly.
 3. **Planning Orchestrator — final Planning and Design:** synthesize the completed
    inputs into the technical plan and `design.md` (keeping **one plan per phase**;
    split multi-phase work into separate phase plans), copy the confirmed quantity
@@ -219,14 +219,12 @@ item belongs to the Orchestrator or another author, the author returns
 every listed external item is closed by its declared owner (`status: "closed"`
 with `closed_by` matching `owner`, inline or in `external_closures`). Record
 this report on the session. A later closing return leaves earlier items open
-until the same item ID and owner have a closure. Author
-returns check only each author's own and upstream authored artifacts and do not
-depend on generated `implementation.json`; follow the planning return order:
-Orchestrator inputs, then `integration_test`, then verify-only `mbse`, then
-regeneration of `implementation.json` (and if any verify-only author return
-explicitly inspects `implementation.json`, regenerate `implementation.json` first
-and bind the packet to that regenerated candidate so it never reads a stale
-copy).
+until the same item ID and owner have a closure. Author returns use each
+author's own and upstream authored artifacts. At assembly, update Orchestrator
+inputs, then `integration_test` inputs, then complete the verify-only `mbse`
+return, then regenerate `implementation.json`. If the packet requires a
+verify-only author to inspect `implementation.json`, regenerate it before
+dispatch and bind the packet to the regenerated candidate to avoid a stale copy.
 
 ### Author-known deltas (#221)
 
