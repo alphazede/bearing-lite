@@ -421,6 +421,7 @@ function confirmedContainedRisk(phase) {
  *   separate_assurance?: boolean,
  *   live_service_observation?: { required: boolean, stages: string[] },
  *   planning_sessions?: number,
+ *   required_sessions?: [],
  *   same_freeze?: boolean
  * }}
  */
@@ -457,6 +458,7 @@ function resolveProcessTier(phase) {
       return {
         ...result("READY", "contained_tool_change", "light"),
         planning_sessions: 0,
+        required_sessions: [],
         same_freeze: true,
         reviews: 1,
       };
