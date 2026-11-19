@@ -56,7 +56,11 @@ explicit setup or catalog-edit request uses [onboard-bearing](../onboard-bearing
    before continuing.
 5. **Review:** dispatch the owner-requested review immediately after the
    recorded boundary passes deterministic checks. Use the approved
-   slice, phase, or lifecycle cadence for the selected review. The approved
+   slice, phase, or lifecycle cadence for the selected review. When independent
+   assurance is requested on a multi-slice phase or wave, assurance may start
+   early on finished slices' immutable receipts and the pinned candidate while
+   the last slice runs, joining the last slice's receipts before its verdict
+   while keeping single-run role and gate budgets. The approved
    task plan supplies task and rolling batch boundaries. A recorded request
    requires no further approval. An independent evaluator is a reviewer.
    Preserve selected assistance tools; preauthorize bounded same-session repair in the

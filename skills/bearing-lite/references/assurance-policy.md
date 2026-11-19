@@ -101,7 +101,11 @@ does not ask again.
 - As soon as a declared unit's integrated candidate passes its deterministic
   checks, the parent controller dispatches every requested session for that
   boundary. It never waits for a later wave, batches several units into one
-  review, or defers the review to lifecycle end.
+  review, or defers the review to lifecycle end. For a multi-slice declared
+  phase or wave, independent assurance may start early on the finished slices'
+  immutable receipts and the pinned candidate while the last slice runs,
+  joining the last slice's receipts before issuing its verdict while keeping
+  single-run role and gate budgets (one assurance run and no extra gate rerun).
 - When waves are declared, `phase` cadence resolves to each wave (see Unit
   identity). The default therefore reviews at every wave end, and no separate
   `wave` cadence value is needed.
