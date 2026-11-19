@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Lint changed files with [`az-lint`](https://github.com/alphazede/az-lint) as a blocking step before tests, locally and in the hosted gate. ([#264](https://github.com/alphazede/bearing-lite/pull/264))
 ## [3.0.0-rc.7] - 2026-11-19
 
 - Add opt-in Herdr live-wave evidence to plan freeze, wave views, and closeout handoffs, with a shared role reference.
