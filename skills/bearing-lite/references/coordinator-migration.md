@@ -83,7 +83,13 @@ schedule newly ready independent work immediately. Never poll logs, processes,
 agent status, or worktrees, or use timer loops to simulate notifications.
 If notifications are unavailable, return `WAITING_ON`; resume on the actual return.
 One liveness check after disconnection may recover state; it never permits relaunch.
-Land the closed wave per `task-state.md#landing-a-closed-unit`: finish the change and focused checks, push and open a draft PR to get its number, commit the `CHANGELOG` link and number-dependent text, run exit commands after that last commit to gate once on that head (reusing a push gate result for the unchanged head via input-hash-matched reuse), then mark ready and merge only under express authority on that same head with its exact-head receipt unchanged (a head change after gating is a procedure defect, not a reason to gate again). Keep raw logs out of commits.
+Follow the [landing order](task-state.md#landing-a-closed-unit). Finish the change
+and focused checks, then push and open a draft PR to get its number. Commit the
+`CHANGELOG` link and number-dependent text. Gate once and push the verified
+commit to the draft. If a push runs the gate, reuse its result for the unchanged
+head with matching input hashes. After review closure, mark ready and merge only under express authority
+on the same head with its exact-head receipt. A head change after gating is a
+procedure defect. Keep raw logs out of commits.
 Return `READY`, `REROUTED`, `WAITING_ON`, or `OWNER_DECISION_REQUIRED` with verdict, candidate_ref,
 changed_paths, tests, findings, and blocker, plus completed/remaining work and next action. Use `owner-stops.md` for authority or intent stops.
 Never implement, self-assure, select models, expand scope, or invent attempt limits.

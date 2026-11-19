@@ -118,13 +118,13 @@ does not ask again.
 - When dispatch is unavailable at the boundary, record `WAITING_ON` for that
   unit and dispatch on recovery. The waiting review never counts as passed,
   and ready work continues meanwhile.
-- Landing follows closure (`task-state.md#landing-a-closed-unit`): finish the
-  change and focused checks, push and open a draft PR for its number, commit the
-  `CHANGELOG` link, gate once on that head (reusing a push gate result for the
-  unchanged head via input-hash-matched reuse), then mark ready and merge that same
-  head (a head change after gating is a procedure defect, not a reason to gate
-  again; exact-head merge receipt unchanged). A unit with
-  requested review is not landed before its round closes.
+- Follow the [landing order](task-state.md#landing-a-closed-unit). Finish the
+  change and focused checks, then push and open a draft PR for its number.
+  Commit the `CHANGELOG` link and number-dependent text. Gate once and push the
+  verified commit to the draft. If a push runs the gate, reuse its result for
+  the unchanged head with matching input hashes. After the requested review
+  closes, mark ready and merge the same head with its exact-head receipt.
+  A head change after gating is a procedure defect.
 
 ## Planning review stays separate
 
