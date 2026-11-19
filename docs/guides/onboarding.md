@@ -10,10 +10,13 @@ For an existing profile, name the profile and the setting you want to change.
 1. The agent checks your user catalog at `~/.agents/bearing-lite/profiles.json`
    before proposing changes. Name the profile and confirm whether to create,
    edit, or replace it.
-2. Choose the [roles and sessions](roles.md) you want to enable. You supply
-   every harness, model, reasoning setting, and fallback. Use
-   `single_implementer` for one author of code and tests, or supply both
-   Test Implementer and Product Implementer routes independently for `tdd`.
+2. Supply routes for the required roles (`roles.implementer` for
+   `single_implementer`, or both `roles.test_implementer` and
+   `roles.implementer` independently for `tdd`): required roles are always
+   enabled, so onboarding skips the enable question and goes straight to the
+   route question. For optional [roles and sessions](roles.md), keep the
+   enable question (enable with a route, explicitly decline, or defer). You
+   supply every harness, model, reasoning setting, and fallback.
 3. If you want a Fellow, supply one catalog-wide route. Every profile uses the
    same [Fellow](../../skills/bearing-lite/references/consultation.md#fellow).
    The Orchestrator itself uses the session you open.

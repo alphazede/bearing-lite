@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Skip the enable question and go straight to the route question for required profile roles (`roles.implementer`, and `roles.test_implementer` under `tdd`) in onboarding, keeping the enable question for optional roles. (Alphazedehq#638)
+
 ## [3.0.0-rc.5] - 2026-11-19
 
 - Test Codex hook trust in an isolated install. Current saved trust runs SessionStart and all three Stop hooks. Stale plugin content trust reports modified trust and fails the hooks. (Alphazedehq#634)

@@ -79,13 +79,19 @@ validate readback → optional consented launch probe → return.
       vs. edit vs. replace.
    3. **Development strategy (`development_strategy.mode`):** `single_implementer`
       or `tdd`. Collect before author routes.
-   4. **Role and session routes (`roles.*`):** optional; for enabled routes
-      collect `enabled: true`, `primary` (`{ harness, model, reasoning }`),
-      `ordered_fallbacks` (`[{ condition, harness, model, reasoning }]`), and
-      `cadence`. For a fresh explicit decline save `{ "enabled": false }` (or
-      `sessions.<session>: { "enabled": false }`); when disabling an existing
-      route preserve its `primary`/`ordered_fallbacks`; omit deferred roles:
-      - `roles.implementer` (Product Implementer; required enabled for `tdd`)
+   4. **Role and session routes (`roles.*`):** required roles
+      (`roles.implementer`, plus `roles.test_implementer` when
+      `development_strategy.mode` is `tdd`) skip the enable question (`enabled:
+      true`) and go straight to collecting `primary` (`{ harness, model,
+      reasoning }`) and `ordered_fallbacks` (`[{ condition, harness, model,
+      reasoning }]`). Optional roles and sessions keep the enable question: for
+      enabled routes collect `enabled: true`, `primary`, `ordered_fallbacks`,
+      and `cadence`; for a fresh explicit decline save `{ "enabled": false }`
+      (or `sessions.<session>: { "enabled": false }`); when disabling an
+      existing route preserve its `primary`/`ordered_fallbacks`; omit deferred
+      roles:
+      - `roles.implementer` (Product Implementer; required enabled for
+        implementation profiles)
       - `roles.test_implementer` (Test Implementer; required with `enabled: true`
         when `development_strategy.mode` is `tdd`, collected independently of
         Product Implementer `roles.implementer`; missing/disabled/malformed
