@@ -1363,6 +1363,58 @@ def cases() -> list[tuple[str, str, str, object, str]]:
                 ]
             }
         ), "reject"),
+        ("SEIT-EMV-022", "implementation_candidate_ready_with_external_open_items", "implementation", planning_contract_implementation(
+            wave={
+                "sessions": [
+                    {
+                        "session": "mbse",
+                        "candidate_ref": "plan",
+                        "candidate_revision": SYN_REV,
+                        "candidate_digest": SYN_DIGEST,
+                        "verdict": "CANDIDATE_READY",
+                        "external_open_items": [{
+                            "id": "EXT-1",
+                            "owner": "orchestrator",
+                            "summary": "Finalize slice write_set mapping.",
+                            "status": "closed",
+                            "closed_by": "orchestrator",
+                        }],
+                    },
+                    {
+                        "session": "integration_test",
+                        "candidate_ref": "plan",
+                        "candidate_revision": SYN_REV,
+                        "candidate_digest": SYN_DIGEST,
+                        "verdict": "READY",
+                    },
+                ]
+            }
+        ), "accept"),
+        ("SEIT-EMV-022", "implementation_candidate_ready_external_item_missing_owner", "implementation", planning_contract_implementation(
+            wave={
+                "sessions": [
+                    {
+                        "session": "mbse",
+                        "candidate_ref": "plan",
+                        "candidate_revision": SYN_REV,
+                        "candidate_digest": SYN_DIGEST,
+                        "verdict": "CANDIDATE_READY",
+                        "external_open_items": [{
+                            "id": "EXT-1",
+                            "summary": "Missing owner.",
+                            "status": "open",
+                        }],
+                    },
+                    {
+                        "session": "integration_test",
+                        "candidate_ref": "plan",
+                        "candidate_revision": SYN_REV,
+                        "candidate_digest": SYN_DIGEST,
+                        "verdict": "READY",
+                    },
+                ]
+            }
+        ), "reject"),
         ("SEIT-EMV-022", "implementation_planning_corrections_rc2_sessions_accepted", "implementation",
             planning_contract_implementation() | {
                 "journey_settings": planning_contract_implementation()["journey_settings"] | {

@@ -629,13 +629,18 @@ function checkWaveRecord(wave, { expectedDigest, isLatest, stage = "final", dir,
     if (!sameCandidate(closing, closing) || closing.candidate_digest !== wave.candidate_digest) {
       push({ code: "planning_wave_candidate_mismatch", recorded: closing ?? null, actual: expectedDigest });
     } else if (Array.isArray(wave.sessions)) {
-      if (planningSessionsVerdict(
+      const sessionVerdict = planningSessionsVerdict(
         wave,
         closing,
         isLatest ? inputDigests : wave.input_digests,
         { requireSnapshot: isLatest || correctionId !== null || wave.input_digests !== undefined },
-      )) {
-        push({ code: "planning_wave_sessions_incomplete" });
+      );
+      if (sessionVerdict) {
+        push({
+          code: sessionVerdict.reason === "external_items_open"
+            ? "planning_wave_external_items_open"
+            : "planning_wave_sessions_incomplete",
+        });
       }
     }
     return findings;
@@ -679,11 +684,17 @@ function checkWaveRecord(wave, { expectedDigest, isLatest, stage = "final", dir,
     // Keep the original review and specialist provenance, even after repair.
     if (!isDeepStrictEqual(wave.required_sessions, review.planning_wave?.required_sessions) ||
         !isDeepStrictEqual(wave.sessions, review.planning_wave?.sessions) ||
-        !isDeepStrictEqual(wave.closing_returns ?? null, review.planning_wave?.closing_returns ?? null)) {
+        !isDeepStrictEqual(wave.closing_returns ?? null, review.planning_wave?.closing_returns ?? null) ||
+        !isDeepStrictEqual(wave.external_closures ?? null, review.planning_wave?.external_closures ?? null)) {
       push({ code: "planning_wave_session_provenance_mismatch" });
     }
-    if (planningSessionsVerdict(wave, review.candidate, review.input_digests)) {
-      push({ code: "planning_wave_sessions_incomplete" });
+    const sessionVerdict = planningSessionsVerdict(wave, review.candidate, review.input_digests);
+    if (sessionVerdict) {
+      push({
+        code: sessionVerdict.reason === "external_items_open"
+          ? "planning_wave_external_items_open"
+          : "planning_wave_sessions_incomplete",
+      });
     }
     const closing = wave.closing_candidate;
     if (!sameCandidate(closing, closing) || closing.candidate_digest !== wave.candidate_digest) {
