@@ -919,9 +919,11 @@ describe("Alphazedehq#600 Implementation Orchestrator links consultation.md and 
       router.indexOf("4. **Implementation:**"),
       router.indexOf("5. **Review:**"),
     );
-    assert.match(implStep, /references\/consultation\.md/);
+    const [, target] = /\[[^\]]+\]\(([^)]+\/consultation\.md)\)/.exec(implStep) ?? [];
+    assert.ok(target && existsSync(path.resolve(ROOT, "skills/bearing-lite", target)),
+      "The Implementation step links to the Fellow consultation guide");
     assert.match(implStep, /before a major decision/i);
-    assert.match(implStep, /stuck after two genuine attempts|before a workaround/i);
+    assert.match(implStep, /stuck after two genuine attempts/i);
     assert.match(implStep, /before declaring a task done/i);
     assert.match(implStep, /when the owner asks/i);
   });
