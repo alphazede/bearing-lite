@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Bind early assurance to the final integrated candidate. Reuse applicable slice evidence, join the final receipts, and independently validate the single gate run in the same session.
 - Use target-host handoff details when scheduling host work and keep the intake return to planning scoped to final-freeze receipt checks.
 - Keep the prior live-host tier when any planned operation is unspecified, including an empty slot in the operation list.
 - Gate once per landing in `skills/bearing-lite/references/task-state.md#landing-a-closed-unit` and closeout descriptions (finish change and focused checks, push and open draft PR for its number, commit `CHANGELOG` link, gate once on that head with unchanged-head push-gate reuse, mark ready and merge that same head; head change after gating is a procedure defect, exact-head merge receipt unchanged). (Alphazedehq#618)

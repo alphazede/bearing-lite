@@ -32,9 +32,12 @@ assessment.
    author ancestry, on the exact candidate; refuse an unconfigured
    slice or round boundary. `VALIDATING` belongs here. For a multi-slice
    declared phase or wave, independent assurance may start on finished slices'
-   immutable receipts and the pinned candidate while the last slice runs, and
-   must join the last slice's receipts before issuing its verdict while keeping
-   single-run role and gate budgets. A live-host phase
+   immutable receipts and the pinned candidate while the last slice runs.
+   In the same session, join the last slice's receipts before issuing its
+   verdict on the final integrated candidate. Credit early evidence only
+   when its verified inputs and claims still apply to that candidate. Keep
+   single-run role and gate budgets by independently validating the single-run
+   receipt as described below. A live-host phase
    classified per operation (not by a whole-phase label) where every planned
    operation is a copy or a read resolves to `standard` with a before and after
    live-service observation, one implementer, one review, and no separate

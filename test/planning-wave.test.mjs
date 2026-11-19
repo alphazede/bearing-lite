@@ -1112,9 +1112,10 @@ describe("Alphazedehq#615 early assurance start and join before verdict", () => 
       operatorInstruction(rel, [
         /immutable receipts/i,
         /pinned candidate/i,
-        /while the last slice runs/i,
+        /while the last\s+slice\s+runs/i,
         /join\w* the last slice/i,
         /before (issuing )?(its )?verdict/i,
+        /final integrated candidate/i,
         /single-run/i,
         /budget/i,
       ], /\n\s*\n/);
