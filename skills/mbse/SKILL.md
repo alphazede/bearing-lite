@@ -108,6 +108,10 @@ Loop: author → self requirements-quality pass → model and map → self-check
      (`activity|kind|role|exit`).
    - **Planning-only role (`checkPlanningRoles`):** `MBSE` is planning-only and
      must never appear as a Lifecycle implementation slice's `role`.
+   - **Planning input rows (`inputs`):** each session `inputs[]` row requires
+     `path` (non-empty path) and `sha256` (64-hex SHA-256 of the file bytes),
+     and may optionally carry `git_blob` (40-hex or 64-hex Git object id for
+     tracked inputs); `git_blob`-only rows without `sha256` are rejected.
 
 ## Return and boundaries
 

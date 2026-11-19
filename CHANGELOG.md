@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Document and schema-validate the planning input row shape (`path` and 64-hex `sha256` required, optional `git_blob`) across `schemas/seit.schema.json`, `schemas/implementation.schema.json`, `skills/mbse/SKILL.md`, and `skills/integration-test/SKILL.md`, with `sha256_required` detail on `malformed_planning_input`. (Alphazedehq#625)
 - Ignore unrelated `*.json` files during `hooks/plan-package.cjs` freeze checks and include the offending `path` in `planning_input_unreadable` findings. (Alphazedehq#628)
 
 ## [3.0.0-rc.4] - 2026-11-19

@@ -1202,6 +1202,20 @@ describe("Alphazedehq#618 gate once per landing", () => {
   });
 });
 
+describe("Alphazedehq#625 planning input row shape in skills", () => {
+  it("documents path and 64-hex sha256 required with optional git_blob in mbse and integration-test", () => {
+    for (const rel of ["skills/mbse/SKILL.md", "skills/integration-test/SKILL.md"]) {
+      operatorInstruction(rel, [
+        /planning_inputs|`?inputs`?/i,
+        /`?path`?/,
+        /`?sha256`?/,
+        /64-hex/i,
+        /`?git_blob`?/,
+      ], /\n\s*\n/);
+    }
+  });
+});
+
 function operatorInstruction(rel, expectations, breakAt = /(?<=[.!?])\s+/) {
   const parts = read(rel).split(/\n\s*\n/).flatMap(paragraph => paragraph
     .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")

@@ -205,4 +205,53 @@ describe("model-neutral planning review", () => {
       { outcome: "OWNER_AMENDMENT_REQUIRED", reason: "correction_id_invalid" }
     );
   });
+
+  it("accepts adopted session inputs with optional git_blob and rejects git_blob-only rows (#625)", () => {
+    const planSha = "a".repeat(64);
+    const seitSha = "b".repeat(64);
+    const inputDigests = [
+      { path: "plan.md", sha256: planSha },
+      { path: "seit.json", sha256: seitSha },
+    ];
+    const targetCandidate = {
+      candidate_ref: "plan",
+      candidate_revision: "r2",
+      candidate_digest: "c".repeat(64),
+    };
+    const { createHash } = require("node:crypto");
+    targetCandidate.candidate_digest = createHash("sha256")
+      .update(inputDigests.map((r) => r.sha256).join("\n"))
+      .digest("hex");
+    const baseReview = (inputs) => review({
+      candidate: targetCandidate,
+      input_digests: inputDigests,
+      planning_wave: {
+        required_sessions: ["integration_test"],
+        sessions: [{
+          session: "integration_test",
+          candidate_ref: "plan",
+          candidate_revision: "r1",
+          candidate_digest: "1".repeat(64),
+          verdict: "READY",
+          adopted_to: targetCandidate,
+          inputs,
+        }],
+      },
+      receipts: [
+        { slot_id: "slot-a", selected_route_ref: "route-a", ...targetCandidate, independent: true, findings_isolated: true },
+      ],
+    });
+    assert.equal(
+      core.evaluatePlanningReview(baseReview([{ path: "plan.md", sha256: planSha, git_blob: "d".repeat(40) }])).outcome,
+      "PASS"
+    );
+    assert.deepEqual(
+      core.evaluatePlanningReview(baseReview([{ path: "plan.md", git_blob: "d".repeat(40) }])),
+      { outcome: "NEEDS_MORE_EVIDENCE", reason: "planning_sessions_incomplete" }
+    );
+    assert.deepEqual(
+      core.evaluatePlanningReview(baseReview([{ path: "plan.md", sha256: planSha, git_blob: "not-hex" }])),
+      { outcome: "NEEDS_MORE_EVIDENCE", reason: "planning_sessions_incomplete" }
+    );
+  });
 });

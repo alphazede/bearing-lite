@@ -35,6 +35,17 @@
       "type": "string",
       "minLength": 1
     },
+    "planningInputRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "description": "Planning input row shape: path and 64-hex file sha256 are required; git_blob (40-hex or 64-hex Git object id) is optional.",
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "git_blob": { "type": "string", "pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$" }
+      }
+    },
     "proofCase": {
       "type": "object",
       "additionalProperties": true,
@@ -109,7 +120,18 @@
   "properties": {
     "schema_version": { "$ref": "#/$defs/contentfulString" },
     "artifact": { "$ref": "#/$defs/contentfulObject" },
-    "source_baseline": { "$ref": "#/$defs/contentfulObject" },
+    "source_baseline": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": true,
+      "properties": {
+        "planning_inputs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/planningInputRow" }
+        }
+      }
+    },
     "decision_baseline": {
       "type": "object",
       "minProperties": 1,

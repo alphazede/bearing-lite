@@ -922,3 +922,43 @@ describe("plan-package (Alphazedehq#628 declared artifacts and named unreadable 
     }
   });
 });
+
+describe("plan-package (Alphazedehq#625 planning input row shape)", () => {
+  it("accepts optional git_blob alongside path and sha256, and emits a named finding for git_blob-only rows", (t) => {
+    const dir = mkdtempSync(path.join(os.tmpdir(), "plan-pkg-625-"));
+    t.after(() => rmSync(dir, { recursive: true, force: true }));
+    mkdirSync(path.join(dir, ".git"), { recursive: true });
+    const plan = "# Plan\n";
+    writeFileSync(path.join(dir, "plan.md"), plan);
+    const gitBlob = "a".repeat(40);
+    const writePackage = (planningInputs) => {
+      const seitDoc = JSON.stringify({
+        source_baseline: { planning_inputs: planningInputs },
+        procedures_and_commands: [],
+        proof_cases: [],
+      });
+      writeFileSync(path.join(dir, "seit.json"), seitDoc);
+      const digest = sha([sha(plan), sha(seitDoc)].join("\n"));
+      const contract = planningContract(digest, { units: ["W1"], kind: "wave", dir });
+      const doc = {
+        journey_settings: { planning_review: { candidate_digest: digest }, ...contract.journey_settings },
+        boundary_contract: contract.boundary_contract,
+        waves: [{ id: "W1", slice_ids: ["S1"] }],
+        dependencies: [],
+        slices: [{ id: "S1", role: "Implementer", write_set: ["a.js"], command_ids: [] }],
+      };
+      writeFileSync(path.join(dir, "implementation.json"), JSON.stringify(doc));
+    };
+
+    writePackage([{ path: "plan.md", sha256: sha(plan), git_blob: gitBlob }]);
+    const okRes = freeze(dir, { stage: "final" });
+    assert.equal(okRes.outcome, "PASS", JSON.stringify(okRes));
+
+    writePackage([{ path: "plan.md", git_blob: gitBlob }]);
+    const badRes = freeze(dir, { stage: "final" });
+    assert.equal(badRes.outcome, "FAIL");
+    const finding = badRes.findings.find((f) => f.code === "malformed_planning_input");
+    assert.ok(finding, JSON.stringify(badRes));
+    assert.equal(finding.reason, "sha256_required", JSON.stringify(finding));
+  });
+});

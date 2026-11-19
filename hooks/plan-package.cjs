@@ -151,7 +151,11 @@ function verifyDigests(dir) {
   const input_digests = [];
   for (const input of inputs || []) {
     if (typeof input?.path !== "string" || !/^[0-9a-f]{64}$/.test(input?.sha256 || "")) {
-      findings.push({ code: "malformed_planning_input", input });
+      findings.push({
+        code: "malformed_planning_input",
+        ...(typeof input?.git_blob === "string" ? { reason: "sha256_required" } : {}),
+        input,
+      });
       continue;
     }
     const file = path.resolve(root, input.path);

@@ -134,7 +134,10 @@ function planningSessionsVerdict(wave, candidate, inputDigests, { requireSnapsho
   }
   // An adoption preserves the source return; its consumed inputs must resolve
   // unchanged in the snapshot bound to the target candidate's manifest digest.
-  const validInputRow = (row) => nonempty(row?.path) && /^[0-9a-f]{64}$/.test(row?.sha256);
+  const validInputRow = (row) =>
+    nonempty(row?.path) &&
+    /^[0-9a-f]{64}$/.test(row?.sha256) &&
+    (row?.git_blob === undefined || /^[0-9a-f]{40}(?:[0-9a-f]{24})?$/.test(row.git_blob));
   const snapshotBound = Array.isArray(inputDigests) && inputDigests.length > 0 &&
     inputDigests.every(validInputRow) &&
     new Set(inputDigests.map((row) => row.path)).size === inputDigests.length &&
