@@ -8,6 +8,7 @@
 - Preserve advisory live-wave evidence when closeout uses the final freeze receipt.
 - Resolve the late technical plan within the checkout and reuse the verified bytes for register precheck.
 - Ship the JSON Schema for each live-wave exchange record.
+- Display missing, stale, and invalid model views as gaps in the manifest diagnostic.
 
 - Accept digest-bound Mermaid source views in the plan schema and final freeze.
 

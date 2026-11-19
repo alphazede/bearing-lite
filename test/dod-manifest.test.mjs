@@ -348,11 +348,23 @@ describe("S3 DoD Manifest template, schema, and renderer", () => {
     const { html } = renderFile(input);
     assert.match(html, /flowchart LR/);
     assert.match(html, /Start &lt; Finish/);
+    const assertViewGap = (err, code, label) => {
+      assert.equal(err.code, code);
+      const row = [...err.html.matchAll(/<tr class="row-gap">([\s\S]*?)<\/tr>/g)]
+        .map((match) => match[1])
+        .find((cells) => cells.includes(`>${model.id}</th>`));
+      assert.ok(row, "the failed model has a diagnostic row");
+      assert.ok(row.includes('class="status status-gap"') && row.includes(`</span>${label}</span>`), row);
+      return true;
+    };
 
     const unbound = writeFixture(dir, { dod_manifest: baseManifest({
       models: [{ ...model, digest: undefined }],
     }) });
-    assert.throws(() => renderFile(unbound), err => err.code === "MISSING_VIEW" && /missing digest/.test(err.message));
+    assert.throws(() => renderFile(unbound), err => {
+      assert.match(err.message, /missing digest/);
+      return assertViewGap(err, "MISSING_VIEW", "Missing");
+    });
 
     const sysml = writeFixture(dir, { dod_manifest: baseManifest({
       models: [{ ...model, mode: "sysml-v2" }],
@@ -361,7 +373,7 @@ describe("S3 DoD Manifest template, schema, and renderer", () => {
 
     writeFixture(dir, doc);
     writeFileSync(path.join(dir, model.view.path), source.replace("Done", "Changed"));
-    assert.throws(() => renderFile(input), err => err.code === "STALE_VIEW");
+    assert.throws(() => renderFile(input), err => assertViewGap(err, "STALE_VIEW", "Stale"));
 
     const outside = path.join(tempDir(), "model.mmd");
     writeFileSync(outside, source);
@@ -1081,13 +1093,13 @@ function renderOutcome(render, doc, assetRoot) {
 
 describe("SEIT-B30-524 content parity and artwork", () => {
   // SHA-256 of the normalized content from the pre-restyle renderer at 9fdf4d0
-  // (updated for #580 MBSE role rename in tools/render-dod-manifest.mjs).
+  // Updated for the #580 MBSE role rename and the BL-R07 missing-view badge.
   const baseline = {
     ready: "8287adb19c55f5933e8840c3fcccfa140dca21e559f0d5a02a24ee438b09c08a",
     "manifest-complete.json": "5393f1903a242d13f49b6be59ec7b7f4a3b09c776b85e374ad9e693d01c0dd96",
     "manifest-reference-index.json": "5d945b06b7a0c5ab2101d91cdc862db1b37a09984c9b55bb790312bb2731cbc3",
     empty: "6a2b5960dfde949875f29fecc8c9ae9a2ab3ae62d7a53d988d732de190d19510",
-    missing: "d323dc07b33308cf2da2b3d337f80486678899270532ccae5493306ad0aa6f89",
+    missing: "cf07d0adf80438aefad18e6546504e778c6c17d9ea472b1ba87ebc7ec48f58c0",
   };
 
   function assertSameContent(name, doc, assetRoot, expectedCode = null) {
