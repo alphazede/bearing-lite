@@ -42,6 +42,13 @@ function readStdinSync() {
   }
 }
 
+function fileTargets(args, nativeKey) {
+  const paths = [...new Set([args[nativeKey], args.Path, args.TargetFile, args.path]
+    .filter((value) => typeof value === "string" && value.trim()))];
+  const [file_path = ""] = paths;
+  return paths.length > 1 ? { file_path, file_paths: paths } : { file_path };
+}
+
 /** Map AGY `toolCall` names/args to the canonical names expected by write/TE hooks. */
 function mapToolCall(toolCall) {
   if (!isPlainObject(toolCall)) return {};
@@ -57,7 +64,7 @@ function mapToolCall(toolCall) {
     return {
       tool_name: "Write",
       tool_input: {
-        file_path: args.Path ?? args.TargetFile ?? args.path ?? "",
+        ...fileTargets(args, name === "write_file" ? "Path" : "TargetFile"),
         content: args.Content ?? args.CodeContent ?? "",
       },
     };
@@ -70,7 +77,7 @@ function mapToolCall(toolCall) {
     return {
       tool_name: "Edit",
       tool_input: {
-        file_path: args.Path ?? args.TargetFile ?? args.path ?? "",
+        ...fileTargets(args, name === "edit_file" ? "Path" : "TargetFile"),
         old_string: args.Target ?? "",
         new_string: args.Replacement ?? "",
       },
