@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Update landing guidance across `skills/bearing-lite/references/task-state.md`, `skills/bearing-lite/SKILL.md`, `skills/bearing-lite/references/planning-assembly.md`, `skills/bearing-lite/references/assurance-policy.md`, `skills/bearing-lite/references/storage-lifecycle.md`, and `skills/bearing-lite/references/coordinator-migration.md` to run the single repository gate once after the review repair on the final head rather than gating before review and again on the repaired head. (Alphazedehq#618)
 - Require Integration and Test to prove each frozen SEIT command can fail (one run on the expected input and one on a seeded bad input, or a recorded reason it cannot) instead of passing vacuously (`skills/integration-test/SKILL.md`). (Alphazedehq#633)
 - Keep author returns independent of generated `implementation.json` and order the Orchestrator to regenerate `implementation.json` before dispatching any verify-only author return so it never reads a stale copy (`skills/bearing-lite/references/planning-assembly.md`, `skills/planning-and-design/SKILL.md`, `skills/mbse/SKILL.md`, `skills/integration-test/SKILL.md`). (Alphazedehq#627)
 - Align `skills/bearing-lite/references/planning-assembly.md`, `skills/planning-and-design/SKILL.md`, `schemas/implementation.schema.json`, `hooks/planning-review.cjs`, and `hooks/plan-package.cjs` so `adopted()` preserves adopted returns across recorded mechanical ID and hash-binding `edit_records[]` (`before_sha256` to `after_sha256`) while still blocking inputs whose meaning changed. (Alphazedehq#624)

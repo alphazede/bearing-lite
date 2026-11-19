@@ -5,11 +5,12 @@ worker handoff or a draft PR.
 
 Follow the [landing order](task-state.md#landing-a-closed-unit). Finish the
 change and focused checks, then push and open a draft PR for its number.
-Commit the `CHANGELOG` link and number-dependent text. Gate once and push the
-verified commit to the draft. If a push runs the gate, reuse its result for the
-unchanged head with matching input hashes. After review closure, mark ready
-and merge the same head with its exact-head receipt. A head change after gating
-is a procedure defect. Verify delivery, then clean merged resources after
+Complete the requested review and any review repair, then commit the
+`CHANGELOG` link and number-dependent text. Gate once after the review repair
+on that final head and push the verified commit to the draft. If a push runs
+the gate, reuse its result for the unchanged head with matching input hashes.
+Mark ready and merge the same head with its exact-head receipt. A head change
+after gating is a procedure defect. Verify delivery, then clean merged resources after
 resolving live references.
 
 Run storage maintenance at intake/resume, wave boundaries, and closeout. Start

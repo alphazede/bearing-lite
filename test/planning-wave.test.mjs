@@ -1216,6 +1216,30 @@ describe("Alphazedehq#618 gate once per landing", () => {
       ], /\n\s*\n/);
     }
   });
+
+  it("orders the single landing gate after review repair on the final head across task-state and closeout descriptions", () => {
+    for (const rel of [
+      "skills/bearing-lite/references/task-state.md",
+      "skills/bearing-lite/SKILL.md",
+      "skills/bearing-lite/references/coordinator-migration.md",
+      "skills/bearing-lite/references/planning-assembly.md",
+      "skills/bearing-lite/references/assurance-policy.md",
+      "skills/bearing-lite/references/storage-lifecycle.md",
+    ]) {
+      operatorInstruction(rel, [
+        /draft/i,
+        /review repair/i,
+        /after[^.]*review repair/i,
+        /final head/i,
+        /gate once|one[^.]*gate/i,
+      ], /\n\s*\n/);
+    }
+    const landing = read("skills/bearing-lite/references/task-state.md")
+      .split("## Landing a closed unit\n")[1]
+      .split(/\n## /)[0]
+      .replace(/\s+/g, " ");
+    assert.doesNotMatch(landing, /supply the same exact-head gate result to the review/i);
+  });
 });
 
 describe("Alphazedehq#625 planning input row shape in skills", () => {

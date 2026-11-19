@@ -84,11 +84,12 @@ agent status, or worktrees, or use timer loops to simulate notifications.
 If notifications are unavailable, return `WAITING_ON`; resume on the actual return.
 One liveness check after disconnection may recover state; it never permits relaunch.
 Follow the [landing order](task-state.md#landing-a-closed-unit). Finish the change
-and focused checks, then push and open a draft PR to get its number. Commit the
-`CHANGELOG` link and number-dependent text. Gate once on the final commit.
+and focused checks, then push and open a draft PR to get its number. Complete the
+requested review and any review repair, then commit the `CHANGELOG` link and
+number-dependent text. Gate once after the review repair on that final head.
 When gating locally, run exit commands after that last commit and push the verified
 commit to the draft. If a push runs the gate, reuse its result for the unchanged
-head with matching input hashes. After review closure, mark ready and merge only under express authority
+head with matching input hashes. Mark ready and merge only under express authority
 on the same head with its exact-head receipt. A head change after gating is a
 procedure defect. Keep raw logs out of commits.
 Return `READY`, `REROUTED`, `WAITING_ON`, or `OWNER_DECISION_REQUIRED` with verdict, candidate_ref,

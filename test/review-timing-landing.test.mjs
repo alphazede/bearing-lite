@@ -62,9 +62,9 @@ describe("#223 closed units are landed", () => {
   it("updates the draft to the verified head before ready and merge", () => {
     const landing = TASK_STATE.split("## Landing a closed unit\n")[1].split(/\n## /)[0]
       .replace(/\s+/g, " ");
-    assert.match(landing, /draft .*CHANGELOG.*gate once.*push the verified commit.*mark .*ready.*merge/i);
+    assert.match(landing, /draft .*review repair.*CHANGELOG.*gate once.*final head.*push the verified commit.*mark .*ready.*merge/i);
     assert.match(landing, /push runs the repository gate.*reuse the result for the unchanged head.*input hashes match/i);
-    assert.match(landing, /review and landing share.*same exact-head gate result to the review/i);
+    assert.doesNotMatch(landing, /supply the same exact-head gate result to the review/i);
     assert.match(landing, /PR head matches the exact-head merge receipt/i);
     assert.match(landing, /head change after gating is a procedure defect/i);
   });
