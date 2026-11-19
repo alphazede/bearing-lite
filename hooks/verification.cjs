@@ -17,6 +17,8 @@ const STAGES = Object.freeze([
 ]);
 const EXPECTED = Object.freeze(["VERIFIED", "REFUTED"]);
 const EVIDENCE_TIERS = Object.freeze(["observed", "derived"]);
+const PROCESS_TIERS = Object.freeze(["light", "standard", "full"]);
+const NON_MUTATING_OPERATIONS = new Set(["copy", "read", "observe", "inspect"]);
 const SHA256 = /^[0-9a-f]{64}$/;
 const CANDIDATE_FIELDS = Object.freeze([
   "candidate_ref",
@@ -364,10 +366,135 @@ function evaluateVerification(input) {
   }
 }
 
+/**
+ * Resolve a phase's process tier under the stated risk rule (Alphazedehq#611).
+ * A copy-only or read-only phase crossing into a host with live services (and
+ * no other full-tier risk factor) resolves to `standard` with a required before
+ * and after live-service observation (one implementer, one review, no separate
+ * assurance). Any phase that deletes or mutates resolves as before.
+ *
+ * @param {unknown} phase
+ * @returns {{
+ *   schema_version: "1",
+ *   kind: "tier_resolution",
+ *   outcome: string,
+ *   reason: string,
+ *   tier: "light" | "standard" | "full" | null,
+ *   implementers: number,
+ *   reviews: number,
+ *   separate_assurance: boolean,
+ *   live_service_observation: { required: boolean, stages: string[] }
+ * }}
+ */
+function resolveProcessTier(phase) {
+  const empty = (outcome, reason) => ({
+    schema_version: "1",
+    kind: "tier_resolution",
+    outcome,
+    reason,
+    tier: null,
+    implementers: 0,
+    reviews: 0,
+    separate_assurance: false,
+    live_service_observation: { required: false, stages: [] },
+  });
+  try {
+    if (!isPlainObject(phase)) return empty("NEEDS_MORE_EVIDENCE", "tier_input_missing");
+    if (phase.prior_tier !== undefined && !PROCESS_TIERS.includes(phase.prior_tier)) {
+      return empty("REJECT", "tier_invalid");
+    }
+    if (
+      phase.operations !== undefined &&
+      (!Array.isArray(phase.operations) || phase.operations.some((op) => !nonempty(op)))
+    ) {
+      return empty("REJECT", "operations_invalid");
+    }
+
+    const crossesLiveHost =
+      phase.live_host === true ||
+      phase.crosses_live_host === true ||
+      phase.live_services === true;
+    const ops = Array.isArray(phase.operations)
+      ? phase.operations.map((op) => op.trim().toLowerCase())
+      : null;
+    const opMutatesOrDeletes = Boolean(
+      ops && ops.some((op) => !NON_MUTATING_OPERATIONS.has(op)),
+    );
+    const opCopyOrReadOnly = Boolean(
+      ops && ops.length > 0 && ops.every((op) => NON_MUTATING_OPERATIONS.has(op)),
+    );
+    const deletesOrMutates =
+      phase.deletes === true || phase.mutates === true || opMutatesOrDeletes;
+    const copyOrReadOnly =
+      !deletesOrMutates &&
+      (phase.copy_only === true || phase.read_only === true || opCopyOrReadOnly);
+
+    const otherFullRisk =
+      phase.trust_boundary === true ||
+      phase.irreversible_loss === true ||
+      phase.stateful_protocol === true ||
+      phase.multi_wave === true ||
+      phase.specification_register === true ||
+      phase.journey_type === "specification";
+    const standardRisk =
+      phase.multi_module === true ||
+      phase.behavioral_change === true ||
+      phase.moderate_risk === true;
+
+    const baselineTier =
+      phase.prior_tier !== undefined
+        ? phase.prior_tier
+        : crossesLiveHost || otherFullRisk
+          ? "full"
+          : standardRisk
+            ? "standard"
+            : "light";
+
+    if (crossesLiveHost && copyOrReadOnly && !otherFullRisk) {
+      return {
+        schema_version: "1",
+        kind: "tier_resolution",
+        outcome: "READY",
+        reason: "copy_or_read_only_live_host",
+        tier: "standard",
+        implementers: 1,
+        reviews: 1,
+        separate_assurance: false,
+        live_service_observation: {
+          required: true,
+          stages: ["before", "after"],
+        },
+      };
+    }
+
+    return {
+      schema_version: "1",
+      kind: "tier_resolution",
+      outcome: "READY",
+      reason:
+        deletesOrMutates && crossesLiveHost
+          ? "live_host_mutates_or_deletes"
+          : "stated_risk_rule",
+      tier: baselineTier,
+      implementers: 1,
+      reviews: baselineTier === "light" ? 0 : 1,
+      separate_assurance: baselineTier === "full",
+      live_service_observation: {
+        required: false,
+        stages: [],
+      },
+    };
+  } catch {
+    return empty("NEEDS_MORE_EVIDENCE", "verification_adapter_unavailable");
+  }
+}
+
 module.exports = {
   evaluateVerification,
+  resolveProcessTier,
   STATUSES,
   AUTHORITIES,
   STAGES,
+  PROCESS_TIERS,
   CANDIDATE_FIELDS,
 };

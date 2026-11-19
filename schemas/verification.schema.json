@@ -5,7 +5,8 @@
   "description": "DES-BDL-008 / AC-BDL-009. A request binds candidate, claim, backend, stage, authority, expected result, and command/configuration. A receipt binds the same candidate, claim, backend, version, command/configuration, and evidence digest. Schema validates structure only; hooks/verification.cjs enforces diagnostic-versus-assurance, independence, and gate eligibility. Extra lifecycle metadata is not allowed.",
   "oneOf": [
     { "$ref": "#/$defs/request" },
-    { "$ref": "#/$defs/receipt" }
+    { "$ref": "#/$defs/receipt" },
+    { "$ref": "#/$defs/tier_resolution" }
   ],
   "$defs": {
     "nonempty": {
@@ -122,7 +123,61 @@
         "stage": { "$ref": "#/$defs/stage" },
         "evidence_tier": { "type": "string", "enum": ["observed", "derived"] },
         "backend_verdict": { "$ref": "#/$defs/status" },
-        "evidence_engine": { "$ref": "#/$defs/nonempty" }
+        "evidence_engine": { "$ref": "#/$defs/nonempty" },
+        "live_service_observation": { "$ref": "#/$defs/live_service_observation" }
+      }
+    },
+    "live_service_observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "stages"],
+      "properties": {
+        "required": { "type": "boolean" },
+        "stages": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["before", "after"] },
+          "uniqueItems": true
+        }
+      },
+      "if": {
+        "properties": { "required": { "const": true } },
+        "required": ["required"]
+      },
+      "then": {
+        "properties": {
+          "stages": {
+            "allOf": [
+              { "contains": { "const": "before" } },
+              { "contains": { "const": "after" } }
+            ]
+          }
+        }
+      }
+    },
+    "tier_resolution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "kind",
+        "outcome",
+        "reason",
+        "tier",
+        "implementers",
+        "reviews",
+        "separate_assurance",
+        "live_service_observation"
+      ],
+      "properties": {
+        "schema_version": { "type": "string", "const": "1" },
+        "kind": { "type": "string", "const": "tier_resolution" },
+        "outcome": { "$ref": "#/$defs/nonempty" },
+        "reason": { "$ref": "#/$defs/nonempty" },
+        "tier": { "type": ["string", "null"], "enum": ["light", "standard", "full", null] },
+        "implementers": { "type": "integer", "minimum": 0 },
+        "reviews": { "type": "integer", "minimum": 0 },
+        "separate_assurance": { "type": "boolean" },
+        "live_service_observation": { "$ref": "#/$defs/live_service_observation" }
       }
     }
   }

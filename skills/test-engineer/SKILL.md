@@ -27,7 +27,11 @@ assessment.
 
 1. Assurance Test Engineer runs only when requested, in a fresh session without
    author ancestry, on the exact candidate; refuse an unconfigured
-   slice or round boundary. `VALIDATING` belongs here.
+   slice or round boundary. `VALIDATING` belongs here. A copy-only or read-only
+   live-host phase resolved to `standard` runs with a before and after
+   live-service observation, one implementer, one review, and no separate
+   assurance (`../bearing-lite/references/verification.md#process-tier-resolution`);
+   phases that delete or mutate resolve as before.
 2. By default, the Assurance Test Engineer independently reruns the gate-chain
    at the declared boundary for required claims and attaches `assurance` receipts.
    Author gate-chain receipts are diagnostic evidence. Use the target repository's

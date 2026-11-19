@@ -43,16 +43,22 @@ established in Alignment/Scope (unless the owner explicitly specifies a tier):
 - **`standard`:** moderate-risk multi-module feature or behavioral change within
   settled architecture and contracts without new trust boundaries, protocol
   state machines, multi-wave coordination, or specification-register authoring.
-  Dispatch only the enabled specialist(s) the work needs (for example
-  `integration_test` for SEIT/boundary updates, or `mbse` only when new
-  requirements or placements are needed; skip unneeded specialists).
+  Also applies to a **copy-only or read-only** phase that crosses into a host
+  with **live services** (and carries no other `full`-tier risk factor) when
+  paired with a required **before and after live-service observation** (one
+  implementer, one review, no separate assurance; see
+  `verification.md#process-tier-resolution`). Dispatch only the enabled
+  specialist(s) the work needs (for example `integration_test` for
+  SEIT/boundary updates, or `mbse` only when new requirements or placements are
+  needed; skip unneeded specialists).
 - **`full`:** high-risk or specification-grade work — touches trust boundaries
   (auth, authorization, crypto, privilege, tenant/data isolation), irreversible
-  or high-impact state/money/data loss, new or changed stateful protocols or
-  concurrency contracts, multi-wave architecture, or specification-register
-  authoring (`journey_type: specification`). Runs the full enabled planning wave
-  (`mbse` and `integration_test` in parallel from the frozen requirement
-  skeleton) and full declared execution/assurance cadence.
+  or high-impact state/money/data loss (including any live-host phase that
+  deletes or mutates, which resolves as before), new or changed stateful
+  protocols or concurrency contracts, multi-wave architecture, or
+  specification-register authoring (`journey_type: specification`). Runs the
+  full enabled planning wave (`mbse` and `integration_test` in parallel from
+  the frozen requirement skeleton) and full declared execution/assurance cadence.
 
 ## Planning order
 

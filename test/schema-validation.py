@@ -1812,6 +1812,28 @@ def verification_cases() -> list[tuple[str, str, object, str]]:
         ("SEIT-BDL-004", "sealed_receipt_evidence_tier_invalid", {**observed, "evidence_tier": "guessed"}, "reject"),
         ("SEIT-BDL-004", "sealed_receipt_backend_verdict_invalid", {**observed, "backend_verdict": "PASS"}, "reject"),
         ("SEIT-BDL-004", "sealed_receipt_evidence_engine_empty", {**sealed["derived"], "evidence_engine": ""}, "reject"),
+        ("SEIT-BDL-004", "tier_resolution_standard_live_host_accept", {
+            "schema_version": "1",
+            "kind": "tier_resolution",
+            "outcome": "READY",
+            "reason": "copy_or_read_only_live_host",
+            "tier": "standard",
+            "implementers": 1,
+            "reviews": 1,
+            "separate_assurance": False,
+            "live_service_observation": {"required": True, "stages": ["before", "after"]},
+        }, "accept"),
+        ("SEIT-BDL-004", "tier_resolution_missing_after_observation_reject", {
+            "schema_version": "1",
+            "kind": "tier_resolution",
+            "outcome": "READY",
+            "reason": "copy_or_read_only_live_host",
+            "tier": "standard",
+            "implementers": 1,
+            "reviews": 1,
+            "separate_assurance": False,
+            "live_service_observation": {"required": True, "stages": ["before"]},
+        }, "reject"),
     ])
     for field in VERIFICATION_REQUEST_FIELDS:
         out.append((
