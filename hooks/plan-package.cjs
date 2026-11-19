@@ -28,7 +28,7 @@ const crypto = require("node:crypto");
 const { StringDecoder } = require("node:string_decoder");
 const { isDeepStrictEqual } = require("node:util");
 
-const { loadVerifiedMermaidView } = require("../tools/manifest-view-binding.cjs");
+const { loadVerifiedMermaidView } = require("./manifest-view-binding.cjs");
 const { checkReviewRounds } = require("./assurance-budget.cjs");
 const { checkRegisterFiles } = require("./register-precheck.cjs");
 const { evaluate: evaluateReadySet } = require("./ready-set.cjs");
