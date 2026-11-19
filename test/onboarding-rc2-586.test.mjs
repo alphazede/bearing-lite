@@ -480,4 +480,22 @@ describe("Alphazedehq#586 onboarding R01-R22 and guided first-profile path", () 
     assert.equal(badRes.json.catalog_valid, false);
     assert.equal(readFileSync(targetFile, "utf8"), emptyBytes, "rejected candidate leaves disk catalog intact");
   });
+
+  it("Alphazedehq#638: onboarding guide and skill skip the enable question for required roles and keep it for optional roles", () => {
+    const guide = readFileSync(path.join(ROOT, "docs/guides/onboarding.md"), "utf8");
+    const skill = readFileSync(path.join(ONBOARD_DIR, "SKILL.md"), "utf8");
+    const guided = readFileSync(path.join(ONBOARD_DIR, "references/guided-first-profile.md"), "utf8");
+
+    assert.doesNotMatch(guide, /Choose the \[roles and sessions\]\(roles\.md\) you want to enable/i);
+    assert.match(guide, /required roles[\s\S]{0,160}(?:skip the enable question|route question|straight to)/i);
+    assert.match(guide, /optional[\s\S]{0,160}enable/i);
+
+    assert.doesNotMatch(skill, /\*\*Role and session routes \(`roles\.\*`\):\*\*\s*optional;/);
+    assert.match(skill, /`roles\.implementer` \(Product Implementer; required/);
+    assert.match(skill, /required roles[\s\S]{0,160}(?:skip the enable question|straight to)/i);
+    assert.match(skill, /optional[\s\S]{0,160}enable/i);
+
+    assert.match(guided, /required roles[\s\S]{0,160}(?:skip the enable question|straight to)/i);
+    assert.match(guided, /optional[\s\S]{0,160}enable/i);
+  });
 });

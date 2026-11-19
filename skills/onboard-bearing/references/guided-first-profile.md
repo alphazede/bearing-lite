@@ -95,19 +95,23 @@ Ask one setting at a time with no preselected value:
    `roles.implementer` independently (even when using the same CLI)—never copy
    one into the other.
 3. **Role/session enablement and owner-supplied identities:**
-   For each role/session in the chosen scope:
+   For required roles (`roles.implementer`, plus `roles.test_implementer` when
+   `development_strategy.mode` is `tdd`), skip the enable question (`enabled:
+   true`) and go straight to collecting the owner's `harness`, `model`,
+   `reasoning`, and `ordered_fallbacks`. For optional roles/sessions in the
+   chosen scope, keep the enable question:
    - If the owner **enables** it: collect the owner's `harness`, `model`,
      `reasoning`, `ordered_fallbacks` (`[]` if none, or ordered entries with
      `condition`, `harness`, `model`, `reasoning`), and `cadence` where
      supported (`reviewer`, `test_engineer.sessions.assurance`,
      `integration_engineer.sessions.execution`: `slice` | `phase` | `lifecycle`;
      `scribe`: `event` | `phase` | `lifecycle`).
-   - If the owner **explicitly declines** a role/session: save
+   - If the owner **explicitly declines** an optional role/session: save
      `{ "enabled": false }` (for sessioned roles, `{ "sessions": { "<session>": { "enabled": false } } }`)
      without inventing a `primary` or `ordered_fallbacks`—or if disabling an
      existing complete route, keep its `primary` and `ordered_fallbacks` and
      set `enabled: false`.
-   - If a role/session is **deferred / unasked**: omit its key.
+   - If an optional role/session is **deferred / unasked**: omit its key.
 4. **Reviewer availability vs task review request:** explain that enabling
    `roles.reviewer` (and setting its `cadence`) makes a fresh Reviewer
    available; whether planning review runs on a specific task is recorded per
