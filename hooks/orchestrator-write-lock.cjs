@@ -26,6 +26,7 @@ const HOST_SUPPORT = Object.freeze({
   "claude-code": NATIVE,
   copilot: NATIVE,
   cursor: NATIVE,
+  agy: NATIVE,
 });
 const DEFAULT_HOST = "claude-code";
 

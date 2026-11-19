@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Add root `hooks.json` and `hooks/com.google.antigravity/host.cjs` AGY adapter so all 7 Bearing hooks with AGY events (`SessionStart`, `PreToolUse`, `Stop`) run natively under AGY, and update `docs/harness-compatibility.md` and `hooks/com.anthropic.claude-code/mapping.md` from live AGY 1.5.12 verification. (Alphazedehq#636)
+
 - Define `test_engineer.assurance` and `integration_engineer.execution` in `assurance-policy.md` as cadence keys distinct from `profiles.json` schema paths (`roles.<role>.sessions.<session>`), and use schema session paths consistently in `profiles.md` and onboarding docs. (Alphazedehq#639)
 
 - Skip the enable question and go straight to the route question for required profile roles (`roles.implementer`, and `roles.test_implementer` under `tdd`) in onboarding, keeping the enable question for optional roles. (Alphazedehq#638)

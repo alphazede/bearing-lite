@@ -19,7 +19,7 @@ integrations.
 | Grok Build | legacy `.grok-plugin/` metadata | `hooks/hooks.json` | unsupported |
 | Cursor | `.cursor-plugin/` | `hooks/com.cursor/hooks.json` (`sessionStart`, `stop`) | partial |
 | Kimi Code | legacy `.kimi-plugin/plugin.json` | manifest `hooks` array | unsupported |
-| AGY | `.agy/` (strict `plugin.json`) | none | skills-only |
+| AGY | `.agy/` (strict `plugin.json`, copied payload) | root `hooks.json` -> `hooks/com.google.antigravity/host.cjs` (`SessionStart`, `PreToolUse`, `Stop`) | partial |
 | Pi | `package.json` `"pi"` + `pi-package` | none (TypeScript extensions, not command hooks) | skills-only |
 | DeepCode | `.deepcode/skills` or interoperable `.agents/skills` discovery | none | skills-only |
 | Qwen Code | legacy Agent Plugins 1.0 metadata | none | unsupported |
@@ -68,8 +68,8 @@ reaches activation/closeout and TE completion.
 The shared planning-review evaluator is used by transition and closeout when a
 client supplies a structured `planning_review` record. Current session-start /
 stop mappings cannot derive that nested record safely, so Claude Code, Codex,
-Cursor, and GitHub Copilot remain partial and the check is
-procedural there. AGY, Pi, and DeepCode remain skills-only. Do not
+Cursor, AGY, and GitHub Copilot remain partial and the check is
+procedural there. Pi and DeepCode remain skills-only. Do not
 claim full planning-review enforcement for any of these hosts until a native
 event supplies the complete record.
 
@@ -125,17 +125,19 @@ this adapter must not advertise enforcement it cannot perform.
 | Cursor | native `preToolUse` and `beforeShellExecution` deny | te_completion UNAVAILABLE | child te_completion UNAVAILABLE |
 | Kimi Code | te_test_write UNAVAILABLE | te_completion UNAVAILABLE | child te_completion UNAVAILABLE |
 | Pi | te_test_write UNAVAILABLE | te_completion UNAVAILABLE | child te_completion UNAVAILABLE |
-| AGY | te_test_write UNAVAILABLE | te_completion UNAVAILABLE | child te_completion UNAVAILABLE |
+| AGY | native `PreToolUse` deny | native `Stop` deny | child te_completion UNAVAILABLE |
 | DeepCode | te_test_write UNAVAILABLE | te_completion UNAVAILABLE | child te_completion UNAVAILABLE |
 | Qwen Code | te_test_write UNAVAILABLE | te_completion UNAVAILABLE | child te_completion UNAVAILABLE |
 | GitHub Copilot | native `PreToolUse` deny | native `Stop` deny | native `SubagentStop` deny |
 
 Cursor's `stop` guidance message is advisory text, not a hard completion
 block, and Cursor exposes no distinct hard child-stop deny; neither is
-registered as one. Kimi Code, Pi, AGY, DeepCode, and Qwen Code carry no
+registered as one. Kimi Code, Pi, DeepCode, and Qwen Code carry no
 verified native Test Engineering blocking in this adapter, so
 `hooks/te-host.cjs` returns `UNAVAILABLE` for every class on those hosts rather
-than claiming an enforcement it cannot deliver.
+than claiming an enforcement it cannot deliver. AGY has no `SubagentStop` event,
+so child completion stays `UNAVAILABLE` while `PreToolUse` and `Stop` enforce
+natively through root `hooks.json` and `hooks/com.google.antigravity/host.cjs`.
 
 GitHub Copilot in VS Code is a native TE host. Agent Plugins 1.0 discovers
 `com.github.copilot/hooks/hooks.json` and expands `${PLUGIN_ROOT}`; the TE
@@ -185,9 +187,10 @@ the adapter. `PreToolUse` follows a model tool request, so it is not an
 adapter call site.
 
 The handler calls the adapter only when that registration supplies a
-positive timeout. Claude Code and Codex `hooks/hooks.json` entries do.
+positive timeout. Claude Code and Codex `hooks/hooks.json` entries and AGY root
+`hooks.json` entries do.
 Cursor passes `--host=cursor` for `sessionStart` and `stop`. Neither
-registration declares a timeout, so the handler skips inference on both. AGY, Pi, DeepCode, and Muse Code register no command hook that
+registration declares a timeout, so the handler skips inference on both. Pi, DeepCode, and Muse Code register no command hook that
 can invoke the adapter.
 
 A returned proposal is advisory context on `SessionStart` only. `Stop`
@@ -206,8 +209,8 @@ The frozen review/repair transition and parent-record guards remain enforced.
 
 | Host | write-set lock |
 |---|---|
-| Claude Code, Codex, Grok Build, Cursor | native `PreToolUse` / Cursor write-time deny |
-| GitHub Copilot, Kimi Code, Pi, AGY, DeepCode, Qwen Code, Muse Code | no lock in this mapping; fallback is procedural plus `write_lock: absent` on skill-copy |
+| Claude Code, Codex, Grok Build, Cursor, AGY | native `PreToolUse` / Cursor write-time deny |
+| GitHub Copilot, Kimi Code, Pi, DeepCode, Qwen Code, Muse Code | no lock in this mapping; fallback is procedural plus `write_lock: absent` on skill-copy |
 
 Activation receipts include `write_lock: present` when plugin `hooks.json`
 wires the evaluator, otherwise `write_lock: absent`.
@@ -256,8 +259,11 @@ on `decision: "block"` and rejects Stop `additionalContext`. Kimi Code and
 GitHub Copilot run this same adapter. Those wires omit advisory Stop context.
 `decision: "block"` is the only continue request. Cursor stop commands pass
 `--host=cursor` and keep advice as `additional_context`. `followup_message`
-is sent only for `decision: "block"` and is not a completion deny. Pi, AGY,
-DeepCode, and Qwen Code register no stop hook.
+is sent only for `decision: "block"` and is not a completion deny. AGY
+`Stop` maps through `hooks/com.google.antigravity/host.cjs` with
+`continuationActive` re-entry protection, keeping advisory closeout and
+`git-sync` quiet (`{}`) and translating `decision: "block"` to
+`decision: "continue"`. Pi, DeepCode, and Qwen Code register no stop hook.
 
 A discoverable Journey supplies context only: `task_id`, `assigned_role`, a
 non-placeholder journey marker, or `checkout_lease` never substitutes for the
@@ -282,7 +288,8 @@ adapter is a host gap, not a passing budget check.
 | Claude Code | common `PreToolUse`, nested `permissionDecision: deny` | component replay; native qualification not run |
 | Cursor | `preToolUse` for agent/MCP launches; `beforeShellExecution` for shell | component replay; native qualification not run |
 | GitHub Copilot | `PreToolUse`, nested `permissionDecision: deny` | component replay; native qualification not run / client unavailable locally |
-| AGY, Pi, DeepCode, skill-copy | no registered barrier | skills-only / procedural |
+| AGY | `PreToolUse`, native `decision: deny` via `hooks/com.google.antigravity/host.cjs` | component replay and live AGY 1.5.12 hook run |
+| Pi, DeepCode, skill-copy | no registered barrier | skills-only / procedural |
 | Qwen Code, Kimi Code, Grok Build | no maintained barrier | unsupported; excluded from native tests |
 
 Cursor's generic `preToolUse` shell event defers to `beforeShellExecution`,

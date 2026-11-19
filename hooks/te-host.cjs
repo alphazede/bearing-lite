@@ -79,7 +79,11 @@ const HOST_SUPPORT = Object.freeze({
   }),
   kimi: NO_NATIVE,
   pi: NO_NATIVE,
-  agy: NO_NATIVE,
+  agy: Object.freeze({
+    write_time_deny: NATIVE,
+    completion_deny: NATIVE,
+    child_stop_deny: UNAVAILABLE,
+  }),
   deepcode: NO_NATIVE,
 });
 const DEFAULT_HOST = "claude-code";
@@ -545,9 +549,11 @@ function handle(envelope, options) {
   }
 
   if (
-    host === "copilot" &&
     hookClass === TE_COMPLETION &&
-    (isTruthyFlag(input.stop_hook_active) || isTruthyFlag(input.stopHookActive))
+    ((host === "copilot" &&
+      (isTruthyFlag(input.stop_hook_active) || isTruthyFlag(input.stopHookActive))) ||
+      (host === "agy" &&
+        (isTruthyFlag(input.continuationActive) || isTruthyFlag(input.continuation_active))))
   ) {
     return hostOutput(
       hookClass,

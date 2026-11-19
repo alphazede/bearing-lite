@@ -1,0 +1,80 @@
+{
+  "bearing-lite-activation": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "node ./hooks/com.google.antigravity/host.cjs activation",
+        "timeout": 15
+      }
+    ]
+  },
+  "bearing-lite-assurance-dispatch": {
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ./hooks/com.google.antigravity/host.cjs assurance-dispatch",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  },
+  "bearing-lite-te-write": {
+    "PreToolUse": [
+      {
+        "matcher": "run_command|write_file|edit_file|replace_file_content|multi_replace_file_content|write_to_file",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ./hooks/com.google.antigravity/host.cjs te-write",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  },
+  "bearing-lite-orchestrator-write-lock": {
+    "PreToolUse": [
+      {
+        "matcher": "run_command|write_file|edit_file|replace_file_content|multi_replace_file_content|write_to_file",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ./hooks/com.google.antigravity/host.cjs orchestrator-write-lock",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  },
+  "bearing-lite-closeout": {
+    "Stop": [
+      {
+        "type": "command",
+        "command": "node ./hooks/com.google.antigravity/host.cjs closeout",
+        "timeout": 15
+      }
+    ]
+  },
+  "bearing-lite-te-completion": {
+    "Stop": [
+      {
+        "type": "command",
+        "command": "node ./hooks/com.google.antigravity/host.cjs te-completion",
+        "timeout": 15
+      }
+    ]
+  },
+  "bearing-lite-git-sync": {
+    "Stop": [
+      {
+        "type": "command",
+        "command": "node ./hooks/com.google.antigravity/host.cjs git-sync",
+        "timeout": 15
+      }
+    ]
+  }
+}

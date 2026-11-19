@@ -527,14 +527,14 @@ describe("CMD-HOOK-01 hook-contract (SEIT-HOOK-CLASS-01, SEIT-HOOK-COVERAGE-01)"
       "utf8"
     );
     assert.match(mapping, /assurance/i, "the mapping must classify the per-unit assurance record");
-    for (const host of ["Claude Code", "Codex", "Cursor"]) {
+    for (const host of ["Claude Code", "Codex", "Cursor", "AGY"]) {
       assert.match(
         mapping,
         new RegExp(`\\| ${host} \\|[^\n]*\\| partial \\|`),
         `${host} must stay partial`
       );
     }
-    for (const host of ["AGY", "Pi", "DeepCode"]) {
+    for (const host of ["Pi", "DeepCode"]) {
       assert.match(
         mapping,
         new RegExp(`\\| ${host} \\|[^\n]*\\| skills-only \\|`),

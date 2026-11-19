@@ -12,11 +12,11 @@ const HOST_SUPPORT = Object.freeze({
   codex: { executable: true, test_status: 'native_qualification_required' },
   cursor: { executable: true, test_status: 'component_replay' },
   copilot: { executable: true, test_status: 'component_replay' },
-  agy: { executable: false, test_status: 'skills_only' },
+  agy: { executable: true, test_status: 'component_replay' },
   pi: { executable: false, test_status: 'skills_only' },
   deepcode: { executable: false, test_status: 'skills_only' },
 });
-const SAFE_TOOLS = new Set(['Read', 'Glob', 'Grep', 'List', 'read_file', 'list_dir', 'view_image', 'request_user_input', 'Write', 'Edit', 'MultiEdit', 'NotebookEdit', 'apply_patch']);
+const SAFE_TOOLS = new Set(['Read', 'Glob', 'Grep', 'List', 'read_file', 'list_dir', 'view_image', 'request_user_input', 'Write', 'Edit', 'MultiEdit', 'NotebookEdit', 'apply_patch', 'write_file', 'edit_file', 'view_file', 'find_by_name', 'grep_search', 'write_to_file', 'replace_file_content', 'multi_replace_file_content']);
 const KINDS = new Set(['review', 'repair', 'deterministic', 'qualification']);
 const CLOSED = new Set(['PASS', 'REPAIR_REQUIRED', 'FAIL']);
 function stable(v) {

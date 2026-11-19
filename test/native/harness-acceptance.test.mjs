@@ -519,19 +519,21 @@ function agyVersion(t, fx) {
 }
 
 describe("AGY (TC-AGY-DISC-01, TC-AGY-SYMLINK-01)", () => {
-  it(`copy install of packed payload registers ${N} skills and 0 hooks`, (t) => {
+  it(`copy install of packed payload registers ${N} skills and 7 hooks`, (t) => {
     const fx = freshAgy(t);
     agyVersion(t, fx);
     const root = path.join(fx.dir, "install-root");
     mkdirSync(path.join(root, "skills"), { recursive: true });
     cpSync(path.join(ROOT, ".agy", "plugin.json"), path.join(root, "plugin.json"));
+    cpSync(path.join(ROOT, "hooks.json"), path.join(root, "hooks.json"));
+    cpSync(path.join(shared.pkg, "hooks"), path.join(root, "hooks"), { recursive: true, dereference: true });
     cpSync(path.join(shared.pkg, "skills"), path.join(root, "skills"), { recursive: true, dereference: true });
     const installOut = ok(AGY, ["plugin", "install", root], { env: fx.env, cwd: fx.repo });
     const list = jsonTail(ok(AGY, ["plugin", "list", "--json"], { env: fx.env, cwd: fx.repo }), "[");
     assert.ok(list.some((p) => p.name === "bearing-lite"), `plugin not listed: ${JSON.stringify(list).slice(0, 300)}`);
     const validated = jsonTail(ok(AGY, ["plugin", "validate", root, "--json"], { env: fx.env, cwd: fx.repo }), "{");
     assert.equal(validated.components.skills, N, `validate must find ${N} packaged skills`);
-    assert.equal(validated.components.hooks, 0, "AGY is skills-only: validate must report 0 hooks");
+    assert.equal(validated.components.hooks, 7, "AGY root hooks.json registers 7 mapped Bearing hooks");
     const installedSkill = path.join(fx.home, ".gemini", "config", "plugins", "bearing-lite", "skills", "intake", "SKILL.md");
     assert.ok(existsSync(installedSkill), "installed skill missing");
     assert.equal(sha256(installedSkill), sha256(path.join(shared.pkg, "skills", "intake", "SKILL.md")),
@@ -540,7 +542,7 @@ describe("AGY (TC-AGY-DISC-01, TC-AGY-SYMLINK-01)", () => {
     assert.ok(existsSync(installedResource), "installed referenced resource missing");
     assert.equal(sha256(installedResource), sha256(path.join(shared.pkg, "skills", "bearing-lite", "references", "assurance-policy.md")),
       "installed referenced resource differs from packed artifact");
-    t.diagnostic(`install+discovery PASS; skill load PASS; hooks UNSUPPORTED (validate hooks=0). install out: ${installOut.trim().split("\n").filter(Boolean).slice(-2).join(" | ").slice(0, 300)}`);
+    t.diagnostic(`install+discovery PASS; skill load PASS; hooks PASS (validate hooks=7). install out: ${installOut.trim().split("\n").filter(Boolean).slice(-2).join(" | ").slice(0, 300)}`);
   });
 
   it("documented symlink install FAILS natively on this build", (t) => {
