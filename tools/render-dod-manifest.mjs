@@ -635,10 +635,14 @@ export function sanitizeSvg(raw) {
   while (i < input.length) {
     const lt = input.indexOf("<", i);
     if (lt < 0) {
-      if (input.slice(i).trim()) out.push(esc(decodeSvgXmlValue(input.slice(i), "text")));
+      const text = esc(decodeSvgXmlValue(input.slice(i), "text"));
+      if (text.trim()) out.push(text);
       break;
     }
-    if (lt > i) out.push(esc(decodeSvgXmlValue(input.slice(i, lt), "text")));
+    if (lt > i) {
+      const text = esc(decodeSvgXmlValue(input.slice(i, lt), "text"));
+      if (depth > 0 || text.trim()) out.push(text);
+    }
     if (input.startsWith("<!--", lt)) {
       const end = input.indexOf("-->", lt + 4);
       if (end < 0) throw new RenderError("UNSAFE_ASSET", "Unterminated SVG comment.");
@@ -732,7 +736,7 @@ export function sanitizeSvg(raw) {
     throw new RenderError("UNSAFE_ASSET", "SVG tags were not closed.");
   }
   if (!sawSvg) throw new RenderError("UNSAFE_ASSET", "View is not an SVG document.");
-  return out.join("");
+  return out.join("").replace(/^[ \t]+(?=\r?$)/gm, "");
 }
 
 export function embedPng(buf) {

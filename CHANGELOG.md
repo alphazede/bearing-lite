@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- `sanitizeSvg` in `tools/render-dod-manifest.mjs` drops whitespace-only text outside the root `<svg>` element and clears horizontal whitespace on whitespace-only lines so rendered DoD Manifests emit no whitespace-only lines from leading or inter-element SVG comments. (Alphazedehq#597)
+
 ## [3.0.0-rc.2] - 2026-11-18
 
 ### Added
