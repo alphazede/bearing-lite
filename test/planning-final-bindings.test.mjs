@@ -141,6 +141,12 @@ test("RC6-6 final freeze binds the technical plan written after the SEIT return"
   assert.equal(frozen.manifest_digest, expected);
   assert.equal(readFileSync(path.join(fx.dir, "seit.json"), "utf8"), seitBytes);
 
+  fx.doc.journey_settings.final_technical_plan = { ...technicalPlan, path: path.join(fx.dir, "plan.md") };
+  const absolute = fx.run();
+  rejects(absolute);
+  assert.ok(absolute.findings.some(f => f.code === "malformed_planning_input"));
+
+  fx.doc.journey_settings.final_technical_plan = technicalPlan;
   fx.put("plan.md", read("./fixtures/register-precheck/plan.md") + "Unbound change.\n");
   const stale = fx.run();
   rejects(stale);

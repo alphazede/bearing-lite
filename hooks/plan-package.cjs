@@ -134,14 +134,14 @@ function planningInputs(seit, implementation) {
   return finalPlan === undefined ? seitInputs : [...seitInputs, finalPlan];
 }
 
-function verifyDigests(dir) {
+function verifyPackageDigests(dir, parsed) {
   const findings = [];
   for (const name of ["seit.json", "implementation.json"]) {
     if (!fs.existsSync(path.join(dir, name))) findings.push({ code: "missing_artifact", path: name });
   }
   if (findings.length) return { manifest_digest: null, findings };
-  const seit = readJson(path.join(dir, "seit.json"), "seit.json");
-  const implementation = readJson(path.join(dir, "implementation.json"), "implementation.json");
+  const seit = parsed ? parsed.seit : readJson(path.join(dir, "seit.json"), "seit.json");
+  const implementation = parsed ? parsed.implementation : readJson(path.join(dir, "implementation.json"), "implementation.json");
   const root = repoRoot(dir);
   const inputs = seit?.source_baseline?.planning_inputs;
   if (!Array.isArray(inputs) || !inputs.length) {
@@ -149,6 +149,8 @@ function verifyDigests(dir) {
   }
   const actual = [];
   const input_digests = [];
+  const lateInput = implementation?.journey_settings?.final_technical_plan;
+  let finalPlanText;
   for (const input of planningInputs(seit, implementation)) {
     if (typeof input?.path !== "string" || !/^[0-9a-f]{64}$/.test(input?.sha256 || "")) {
       findings.push({
@@ -158,12 +160,27 @@ function verifyDigests(dir) {
       });
       continue;
     }
-    const file = path.resolve(root, input.path);
-    if (!fs.existsSync(file)) {
-      findings.push({ code: "missing_input", path: input.path });
-      continue;
+    let bytes;
+    if (input === lateInput) {
+      try {
+        if (path.win32.isAbsolute(input.path)) throw new Error("late technical plan path must be relative");
+        bytes = withContainedFile(fs.realpathSync(root), input.path, (fd) => fs.readFileSync(fd));
+        finalPlanText = bytes.toString("utf8");
+      } catch (error) {
+        findings.push(error.code === "ENOENT"
+          ? { code: "missing_input", path: input.path }
+          : { code: "malformed_planning_input", field: "journey_settings.final_technical_plan" });
+        continue;
+      }
+    } else {
+      const file = path.resolve(root, input.path);
+      if (!fs.existsSync(file)) {
+        findings.push({ code: "missing_input", path: input.path });
+        continue;
+      }
+      bytes = readFileChecked(file, input.path);
     }
-    const digest = sha256(readFileChecked(file, input.path));
+    const digest = sha256(bytes);
     actual.push(digest);
     input_digests.push({ path: input.path, sha256: digest });
     if (digest !== input.sha256) {
@@ -189,7 +206,12 @@ function verifyDigests(dir) {
       findings.push({ code: "missing_requirement_register", recorded: register ?? null });
     }
   }
-  return { manifest_digest, input_digests: findings.length ? undefined : input_digests, findings };
+  return { manifest_digest, input_digests: findings.length ? undefined : input_digests, findings, finalPlanText };
+}
+
+function verifyDigests(dir) {
+  const { finalPlanText, ...digests } = verifyPackageDigests(dir);
+  return digests;
 }
 
 const HISTORICAL_GATE = new Set([
@@ -850,7 +872,7 @@ function checkBoundaryContract(implementation, seit) {
 }
 
 /** Final assembly must close the requirements-stage pending case bindings. */
-function checkFinalRegister(dir, seit, implementation) {
+function checkFinalRegister(dir, seit, implementation, finalPlanText) {
   const settings = implementation?.journey_settings || {};
   const authority = readJson(path.join(dir, "authority.json"), "authority.json");
   if (settings.journey_type !== "specification" && settings.requirement_register == null && authority?.requirement_register == null) return [];
@@ -859,12 +881,21 @@ function checkFinalRegister(dir, seit, implementation) {
   const plans = planningInputs(seit, implementation).filter(input =>
     typeof input?.path === "string" && (input.path.endsWith("-technical-plan.md") || path.basename(input.path) === "plan.md"));
   if (plans.length !== 1) return [{ code: "register_precheck_context_invalid", count: plans.length }];
+  const isLatePlan = plans[0] === settings.final_technical_plan;
+  if (isLatePlan && finalPlanText === undefined) return []; // Digest validation already named the unreadable input.
   const root = repoRoot(dir);
   const regAbs = path.resolve(root, register);
   const planAbs = path.resolve(root, plans[0].path);
   let result;
   try {
-    result = checkRegisterFiles({ registerPath: regAbs, planPath: planAbs, root, stage: "final", seitPath: path.join(dir, "seit.json") });
+    result = checkRegisterFiles({
+      registerPath: regAbs,
+      planPath: planAbs,
+      root,
+      stage: "final",
+      seitPath: path.join(dir, "seit.json"),
+      technicalPlan: isLatePlan ? finalPlanText : undefined,
+    });
   } catch (error) {
     const offending = error?.path === planAbs ? plans[0].path : register;
     throw withFilePath(error, offending);
@@ -1134,20 +1165,22 @@ function validExchangeRecord(record) {
         isNonEmptyStr(file) && validDigest(digest)));
 }
 
-function withLiveFile(root, relativePath, read) {
+function withContainedFile(root, relativePath, read) {
   const inside = (file) => {
     const relative = path.relative(root, file);
     return relative && relative !== ".." && !relative.startsWith(".." + path.sep) && !path.isAbsolute(relative);
   };
   const resolved = path.resolve(root, relativePath);
-  if (path.isAbsolute(relativePath) || !inside(resolved)) throw new Error("live file path escapes plan directory");
+  if (path.isAbsolute(relativePath) || !inside(resolved)) {
+    throw new Error("file path escapes its root");
+  }
   const file = fs.realpathSync(resolved);
-  if (!inside(file)) throw new Error("live file symlink escapes plan directory");
+  if (!inside(file)) throw new Error("file symlink escapes its root");
 
-  // Opening nonblocking prevents a named pipe in the evidence directory from hanging a hook.
+  // Opening nonblocking prevents a named pipe from hanging a hook.
   const fd = fs.openSync(file, fs.constants.O_RDONLY | fs.constants.O_NONBLOCK | fs.constants.O_NOFOLLOW);
   try {
-    if (!fs.fstatSync(fd).isFile()) throw new Error("live evidence must be a regular file");
+    if (!fs.fstatSync(fd).isFile()) throw new Error("input must be a regular file");
     return read(fd);
   } finally {
     fs.closeSync(fd);
@@ -1179,7 +1212,7 @@ function readLiveExchange(dir, wave, findings) {
       return summary;
     }
     const root = fs.realpathSync(dir);
-    withLiveFile(root, exchangePath, (fd) => {
+    withContainedFile(root, exchangePath, (fd) => {
       let line = 0;
       for (const text of exchangeLines(fd)) {
         line += 1;
@@ -1200,7 +1233,7 @@ function readLiveExchange(dir, wave, findings) {
         if (!record.allowed) summary.not_allowed.push(record.request_id);
         let digest;
         try {
-          digest = withLiveFile(root, record.body_path, (body) => sha256(fs.readFileSync(body)));
+          digest = withContainedFile(root, record.body_path, (body) => sha256(fs.readFileSync(body)));
         } catch {
           // An unreadable or out-of-directory body cannot substantiate the recorded digest.
         }
@@ -1220,7 +1253,7 @@ function readLiveWave(dir, findings, implementation) {
   if (!isNonEmptyStr(dir)) return undefined;
   if (implementation === undefined) {
     try {
-      implementation = withLiveFile(fs.realpathSync(dir), "implementation.json", (fd) => JSON.parse(fs.readFileSync(fd, "utf8")));
+      implementation = withContainedFile(fs.realpathSync(dir), "implementation.json", (fd) => JSON.parse(fs.readFileSync(fd, "utf8")));
     } catch {
       // Closeout's optional plan directory cannot establish live-wave opt-in without a readable plan.
       return undefined;
@@ -1233,14 +1266,14 @@ function readLiveWave(dir, findings, implementation) {
 
 function freeze(dir, { stage = "final" } = {}) {
   try {
-    const digests = verifyDigests(dir);
     const seit = readJson(path.join(dir, "seit.json"), "seit.json");
     const implementation = readJson(path.join(dir, "implementation.json"), "implementation.json");
+    const digests = verifyPackageDigests(dir, { seit, implementation });
     const findings = [
       ...(implementation ? [
         ...checkReviewRounds(implementation),
         ...checkPlanningWave(implementation, digests.manifest_digest, stage, dir, digests.input_digests),
-        ...(stage === "final" ? checkFinalRegister(dir, seit, implementation) : []),
+        ...(stage === "final" ? checkFinalRegister(dir, seit, implementation, digests.finalPlanText) : []),
         ...checkBoundaryContract(implementation, seit),
         ...checkSerialChains(implementation),
       ] : []),
