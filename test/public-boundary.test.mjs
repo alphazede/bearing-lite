@@ -540,7 +540,11 @@ describe("CMD-PUBLIC-01 public-boundary (SEIT-PUBLIC-01, SEIT-MODEL-01, SEIT-IND
     assert.match(install, /Qwen Code, Kimi Code, and Grok Build are no longer supported/);
     assert.doesNotMatch(install, /grok plugin (?:marketplace|install)/);
     assert.doesNotMatch(install, /\/plugins install/);
-    assert.match(install, /agy plugin install \/path\/to\/bearing-lite\/\.agy/);
+    assert.match(install, /\]\([^\n)]*\/\.agy#install\)/);
+    const agyInstall = readFileSync(path.join(ROOT, ".agy/README.md"), "utf8");
+    assert.match(agyInstall, /^## Install$/m);
+    assert.match(agyInstall, /agy plugin install "\$stage\/package"/);
+    assert.doesNotMatch(install, /agy plugin install \/path\/to\/bearing-lite\/\.agy/);
     assert.match(install, /pi install npm:@alphazede\/bearing-lite/);
     assert.match(install, /~\/\.deepcode\/skills/);
     assert.match(install, /Chat:\s*Install Plugin From Source/);

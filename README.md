@@ -213,7 +213,7 @@ copilot plugin install bearing-lite@bearing-lite
 
 ```
 
-### Antigravity CLI installation
+### Antigravity CLI (AGY) installation
 
 Stage the npm payload with the Antigravity manifest to install the skills and
 seven hook registrations. Follow the [Antigravity installation instructions](https://github.com/alphazede/bearing-lite/tree/main/.agy#install).
