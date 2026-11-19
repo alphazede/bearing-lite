@@ -669,3 +669,131 @@ describe("Alphazedehq#583 planning speed rules", () => {
     }
   });
 });
+
+describe("Alphazedehq#593 one closing return for GAPS", () => {
+  it("documents who authorizes a closing return, that it resumes the author's session, and is not a relaunch", () => {
+    const assembly = read("skills/bearing-lite/references/planning-assembly.md").replace(/\s+/g, " ");
+    assert.match(assembly, /one closing return/i);
+    assert.match(assembly, /Planning Orchestrator[^.]{0,120}(?:authorize|resume)[^.]{0,120}(?:author's own session|own session)/i);
+    assert.match(assembly, /(?:not a relaunch|does not count as a relaunch|outside the zero author-known relaunch budget)/i);
+    assert.match(assembly, /recorded[^.]{0,80}author[^.]{0,30}reason[^.]{0,30}items[^.]{0,30}candidate/i);
+  });
+
+  it("refuses unclosed GAPS and accepts one recorded closing return closing GAPS to READY at final freeze", () => {
+    const unclosed = planPackage((doc, digest) => {
+      doc.journey_settings.planning_wave = unreviewedPlanningWave(digest, ["mbse"]);
+      doc.journey_settings.planning_wave.sessions[0].verdict = "GAPS";
+    });
+    const unclosedResult = freeze(unclosed.dir);
+    assert.equal(unclosedResult.outcome, "FAIL");
+    assert.ok(codes(unclosedResult).includes("planning_wave_sessions_incomplete"), JSON.stringify(unclosedResult));
+
+    const closedOnSession = planPackage((doc, digest) => {
+      doc.journey_settings.planning_wave = unreviewedPlanningWave(digest, ["mbse"]);
+      const closing = doc.journey_settings.planning_wave.closing_candidate;
+      doc.journey_settings.planning_wave.sessions[0] = {
+        session: "mbse",
+        candidate_ref: "plan",
+        candidate_revision: "r0",
+        candidate_digest: "1".repeat(64),
+        verdict: "GAPS",
+        closing_return: {
+          author: "mbse",
+          reason: "gaps",
+          items: ["REQ-1 acceptance criteria"],
+          candidate: closing,
+          verdict: "READY",
+        },
+      };
+    });
+    const cliSession = spawnSync(process.execPath, [PLAN_PACKAGE, closedOnSession.dir], { encoding: "utf8" });
+    assert.equal(cliSession.status, 0, cliSession.stdout);
+    assert.equal(JSON.parse(cliSession.stdout).outcome, "PASS");
+
+    const closedOnWave = planPackage((doc, digest, dir) => {
+      doc.journey_settings.planning_wave = planningWave(digest, {}, dir);
+      const closing = doc.journey_settings.planning_wave.closing_candidate;
+      doc.journey_settings.planning_wave.sessions[0].verdict = "GAPS";
+      doc.journey_settings.planning_wave.closing_returns = [{
+        author: "mbse",
+        reason: "gaps",
+        items: ["REQ-1 acceptance criteria"],
+        candidate: closing,
+        verdict: "READY",
+      }];
+      const reviewPath = path.join(dir, "gate-evidence/planning-review.json");
+      const reviewDoc = JSON.parse(readFileSync(reviewPath, "utf8"));
+      reviewDoc.planning_wave = {
+        required_sessions: doc.journey_settings.planning_wave.required_sessions,
+        sessions: structuredClone(doc.journey_settings.planning_wave.sessions),
+        closing_returns: structuredClone(doc.journey_settings.planning_wave.closing_returns),
+      };
+      const reviewBytes = JSON.stringify(reviewDoc);
+      writeFileSync(reviewPath, reviewBytes);
+      doc.journey_settings.planning_wave.review_receipt.sha256 = sha(reviewBytes);
+    });
+    const cliWave = spawnSync(process.execPath, [PLAN_PACKAGE, closedOnWave.dir], { encoding: "utf8" });
+    assert.equal(cliWave.status, 0, cliWave.stdout);
+    assert.equal(JSON.parse(cliWave.stdout).outcome, "PASS");
+  });
+
+  it("refuses a second closing return or an incomplete/unready closing return", () => {
+    const cases = [
+      ["a second closing return on the same author", (doc) => {
+        const closing = doc.journey_settings.planning_wave.closing_candidate;
+        doc.journey_settings.planning_wave.sessions[0].verdict = "GAPS";
+        doc.journey_settings.planning_wave.sessions[0].closing_return = {
+          author: "mbse", reason: "gaps", items: ["gap-1"], candidate: closing, verdict: "READY",
+        };
+        doc.journey_settings.planning_wave.closing_returns = [{
+          author: "mbse", reason: "gaps", items: ["gap-2"], candidate: closing, verdict: "READY",
+        }];
+      }],
+      ["two entries for one author in closing_returns", (doc) => {
+        const closing = doc.journey_settings.planning_wave.closing_candidate;
+        doc.journey_settings.planning_wave.sessions[0].verdict = "GAPS";
+        doc.journey_settings.planning_wave.closing_returns = [
+          { author: "mbse", reason: "gaps", items: ["gap-1"], candidate: closing, verdict: "READY" },
+          { author: "mbse", reason: "gaps", items: ["gap-2"], candidate: closing, verdict: "READY" },
+        ];
+      }],
+      ["missing items on closing_return", (doc) => {
+        const closing = doc.journey_settings.planning_wave.closing_candidate;
+        doc.journey_settings.planning_wave.sessions[0].verdict = "GAPS";
+        doc.journey_settings.planning_wave.sessions[0].closing_return = {
+          author: "mbse", reason: "gaps", items: [], candidate: closing, verdict: "READY",
+        };
+      }],
+      ["unready closing_return verdict", (doc) => {
+        const closing = doc.journey_settings.planning_wave.closing_candidate;
+        doc.journey_settings.planning_wave.sessions[0].verdict = "GAPS";
+        doc.journey_settings.planning_wave.sessions[0].closing_return = {
+          author: "mbse", reason: "gaps", items: ["gap-1"], candidate: closing, verdict: "GAPS",
+        };
+      }],
+      ["stale closing_return candidate", (doc) => {
+        const closing = doc.journey_settings.planning_wave.closing_candidate;
+        doc.journey_settings.planning_wave.sessions[0].verdict = "GAPS";
+        doc.journey_settings.planning_wave.sessions[0].closing_return = {
+          author: "mbse", reason: "gaps", items: ["gap-1"], candidate: { ...closing, candidate_revision: "stale" }, verdict: "READY",
+        };
+      }],
+      ["closing_return on a WAITING_ON session", (doc) => {
+        const closing = doc.journey_settings.planning_wave.closing_candidate;
+        doc.journey_settings.planning_wave.sessions[0].verdict = "WAITING_ON";
+        doc.journey_settings.planning_wave.sessions[0].closing_return = {
+          author: "mbse", reason: "gaps", items: ["gap-1"], candidate: closing, verdict: "READY",
+        };
+      }],
+    ];
+    for (const [label, mutate] of cases) {
+      const pkg = planPackage((doc, digest) => {
+        doc.journey_settings.planning_wave = unreviewedPlanningWave(digest, ["mbse"]);
+        mutate(doc);
+      });
+      const result = freeze(pkg.dir);
+      assert.equal(result.outcome, "FAIL", label);
+      assert.ok(codes(result).includes("planning_wave_sessions_incomplete"), `${label}: ${JSON.stringify(result)}`);
+    }
+  });
+});

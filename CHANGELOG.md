@@ -6,6 +6,7 @@
 
 - `sanitizeSvg` in `tools/render-dod-manifest.mjs` drops whitespace-only text outside the root `<svg>` element and clears horizontal whitespace on whitespace-only lines so rendered DoD Manifests emit no whitespace-only lines from leading or inter-element SVG comments. (Alphazedehq#597)
 - Add optional `delegate_approval` (`approver`, `delegation_ref`, optional UTC `approved_at`) to `schemas/authority.schema.json` and document it in `skills/bearing-lite/references/owner-stops.md` so delegate approvals validate with a delegation reference, fail validation without one, and compile without a separate effective-authority file. (Alphazedehq#604)
+- Define the Planning Orchestrator's one closing return (`author`, `reason`, `items`, `candidate`, resulting `READY`; resuming the author's own session without counting as a relaunch) in `skills/bearing-lite/references/planning-assembly.md`, and accept one valid closing return closing a `GAPS` session in `hooks/plan-package.cjs` final freeze while refusing unclosed `GAPS`, incomplete records, or a second closing return. (Alphazedehq#593)
 
 ## [3.0.0-rc.2] - 2026-11-18
 
