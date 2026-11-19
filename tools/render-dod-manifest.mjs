@@ -1198,8 +1198,9 @@ export function renderDodManifest(doc, opts = {}) {
         const code = err instanceof RenderError ? err.code : "UNSAFE_ASSET";
         const message = err instanceof Error ? err.message : String(err);
         failures.push({ code, message, modelId: model.id });
-        const gapLabel =
-          code === "STALE_VIEW" ? model.render_status || "Stale" : model.render_status || "Missing";
+        let gapLabel = "View error";
+        if (code === "STALE_VIEW") gapLabel = "Stale";
+        if (code === "MISSING_VIEW") gapLabel = "Missing";
         modelRows.push({
           kind: "gap",
           status: gapLabel,
