@@ -49,6 +49,15 @@ function fileTargets(args, nativeKey) {
   return paths.length > 1 ? { file_path, file_paths: paths } : { file_path };
 }
 
+function replacementFields(value, nativeEdit) {
+  const args = isPlainObject(value) ? value : {};
+  return {
+    old_string: nativeEdit ? args.Target : args.TargetContent ?? args.Target,
+    new_string: nativeEdit ? args.Replacement : args.ReplacementContent ?? args.Replacement,
+    replace_all: args.AllowMultiple ?? false,
+  };
+}
+
 /** Map AGY `toolCall` names/args to the canonical names expected by write/TE hooks. */
 function mapToolCall(toolCall) {
   if (!isPlainObject(toolCall)) return {};
@@ -74,13 +83,21 @@ function mapToolCall(toolCall) {
     name === "replace_file_content" ||
     name === "multi_replace_file_content"
   ) {
+    const nativeEdit = name === "edit_file";
+    const targets = fileTargets(args, nativeEdit ? "Path" : "TargetFile");
+    const chunks = nativeEdit ? args.Edits : args.ReplacementChunks;
+    if (Array.isArray(chunks) || name === "multi_replace_file_content") {
+      return {
+        tool_name: "MultiEdit",
+        tool_input: {
+          ...targets,
+          edits: Array.isArray(chunks) ? chunks.map((chunk) => replacementFields(chunk, nativeEdit)) : [],
+        },
+      };
+    }
     return {
       tool_name: "Edit",
-      tool_input: {
-        ...fileTargets(args, name === "edit_file" ? "Path" : "TargetFile"),
-        old_string: args.Target ?? "",
-        new_string: args.Replacement ?? "",
-      },
+      tool_input: { ...targets, ...replacementFields(args, nativeEdit) },
     };
   }
   return { tool_name: name, tool_input: args };
