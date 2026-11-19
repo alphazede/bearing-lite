@@ -169,6 +169,20 @@ in an edit record, while any change of meaning returns to the owning author
 under an authorized return rather than silent rewrite. Only end-of-planning
 review findings on specialist-owned content return to that author as a named delta.
 
+### One closing return (authorized return)
+
+To close a specialist `GAPS` return or resolve a meaning defect found during
+assembly, the Planning Orchestrator authorizes **one closing return**: it may
+resume the owning author's (`mbse` or `integration_test`) own session once to
+close the listed gaps or fix the named meaning defect. That resume is **not a
+relaunch** (it does not count against the zero author-known relaunch budget).
+It is recorded (`author`, `reason`, `items`, `candidate`, and resulting
+`verdict`: `READY` or `CANDIDATE_READY`) on the session (`closing_return`) or in
+`planning_wave.closing_returns[]`. `hooks/plan-package.cjs` (`final`) accepts
+the resulting `READY` when one valid closing return is recorded and refuses
+unclosed `GAPS`, incomplete records, or a second closing return for the same
+author.
+
 ### Author-known deltas (#221)
 
 No correction loops in planning (#578, #581): specialists fold known corrections
@@ -282,7 +296,8 @@ lineage, deterministic closure, and `closing_candidate`—keeping round-1
 (`planning`, append-only closeout). Use
 `node <plugin root>/hooks/plan-package.cjs draft <plan dir>` for draft checks and
 the candidate-bound final freeze when its receipts are complete: every declared
-session `READY`, required artifacts present, and deterministic closure. Earlier specialist returns may be explicitly adopted to the no-review closing
+session `READY` (or a `GAPS` session closed to `READY` through one recorded
+closing return), required artifacts present, and deterministic closure. Earlier specialist returns may be explicitly adopted to the no-review closing
 candidate only when every consumed input matches the actual verified closing
 snapshot; retain the original return identity. Changed consumed inputs block
 adoption, and recorded hashes never substitute for checking file bytes. Missing
