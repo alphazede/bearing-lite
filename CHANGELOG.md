@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Render digest-bound Mermaid source files as text views for diagram-assisted models.
+
 - Specify a single string for MBSE model trace IDs so the authored manifest matches the implementation schema.
 
 - Bind the final technical plan in the implementation package when it is written after the SEIT return.

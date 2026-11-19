@@ -333,6 +333,41 @@ describe("S3 DoD Manifest template, schema, and renderer", () => {
     assert.throws(() => renderFile(traversalInput), (err) => err.code === "PATH_TRAVERSAL");
   });
 
+  it("RC6-3 renders a digest-bound Mermaid source view for a diagram-assisted model", () => {
+    const dir = tempDir();
+    const source = 'flowchart LR\n    A["Start < Finish"] --> B["Done"]\n';
+    const model = boundSvgModel({
+      source: "views/model.mmd",
+      digest: `sha256:${sha256Hex(Buffer.from(source, "utf8"))}`,
+      view: { format: "mermaid", path: "views/model.mmd" },
+    });
+    const doc = { dod_manifest: baseManifest({ models: [model] }) };
+    const input = writeFixture(dir, doc, { "views/model.mmd": source });
+    const { html } = renderFile(input);
+    assert.match(html, /flowchart LR/);
+    assert.match(html, /Start &lt; Finish/);
+
+    const unbound = writeFixture(dir, { dod_manifest: baseManifest({
+      models: [{ ...model, digest: undefined }],
+    }) });
+    assert.throws(() => renderFile(unbound), err => err.code === "MISSING_VIEW" && /missing digest/.test(err.message));
+
+    const sysml = writeFixture(dir, { dod_manifest: baseManifest({
+      models: [{ ...model, mode: "sysml-v2" }],
+    }) });
+    assert.throws(() => renderFile(sysml), err => err.code === "MISSING_VIEW");
+
+    writeFixture(dir, doc);
+    writeFileSync(path.join(dir, model.view.path), source.replace("Done", "Changed"));
+    assert.throws(() => renderFile(input), err => err.code === "STALE_VIEW");
+
+    const outside = path.join(tempDir(), "model.mmd");
+    writeFileSync(outside, source);
+    rmSync(path.join(dir, model.view.path));
+    symlinkSync(outside, path.join(dir, model.view.path));
+    assert.throws(() => renderFile(input), err => err.code === "PATH_TRAVERSAL");
+  });
+
   it("keeps explicit N/A sections visible and does not fail inactive unselected/unrequired models", () => {
     const dir = tempDir();
     const doc = {
