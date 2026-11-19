@@ -859,3 +859,18 @@ describe("Alphazedehq#596 pre-packet and task-state scope handoff compiler to ex
     assert.match(taskState, /implementation\.json[^.]{0,40}seit\.json/i);
   });
 });
+
+describe("Alphazedehq#600 Implementation Orchestrator links consultation.md and checkpoints", () => {
+  it("links references/consultation.md and names all four consultation checkpoints in the Implementation step", () => {
+    const router = read("skills/bearing-lite/SKILL.md");
+    const implStep = router.slice(
+      router.indexOf("4. **Implementation:**"),
+      router.indexOf("5. **Review:**"),
+    );
+    assert.match(implStep, /references\/consultation\.md/);
+    assert.match(implStep, /before a major decision/i);
+    assert.match(implStep, /stuck after two genuine attempts|before a workaround/i);
+    assert.match(implStep, /before declaring a task done/i);
+    assert.match(implStep, /when the owner asks/i);
+  });
+});
