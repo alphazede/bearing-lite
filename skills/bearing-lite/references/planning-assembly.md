@@ -171,10 +171,10 @@ review findings on specialist-owned content return to that author as a named del
 
 ### One closing return (authorized return)
 
-To close a specialist `GAPS` return or resolve a meaning defect found during
-assembly, the Planning Orchestrator authorizes **one closing return**: it may
-resume the owning author's (`mbse` or `integration_test`) own session once to
-close the listed gaps or fix the named meaning defect. That resume is **not a
+To close a specialist `GAPS` return (#593) or fix a meaning defect found at
+assembly (#595), the Planning Orchestrator authorizes **one closing return**: it
+may resume the owning author's (`mbse` or `integration_test`) own session once
+to close the listed gaps or fix the named meaning defect. That resume is **not a
 relaunch** (it does not count against the zero author-known relaunch budget).
 It is recorded (`author`, `reason`, `items`, `candidate`, and resulting
 `verdict`: `READY` or `CANDIDATE_READY`) on the session (`closing_return`) or in

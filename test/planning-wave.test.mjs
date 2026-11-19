@@ -797,3 +797,51 @@ describe("Alphazedehq#593 one closing return for GAPS", () => {
     }
   });
 });
+
+describe("Alphazedehq#595 meaning defect at assembly uses one closing return", () => {
+  it("names one closing return and its record in both planning-assembly.md and planning-and-design/SKILL.md", () => {
+    const assembly = read("skills/bearing-lite/references/planning-assembly.md").replace(/\s+/g, " ");
+    const pd = read("skills/planning-and-design/SKILL.md").replace(/\s+/g, " ");
+    for (const [name, text] of [["planning-assembly", assembly], ["planning-and-design", pd]]) {
+      assert.match(text, /one closing return/i, name);
+      assert.match(text, /meaning defect/i, name);
+      assert.match(text, /(?:resum(?:e|ing)[^.]{0,80}(?:own )?session|author's own session)/i, name);
+      assert.match(text, /(?:not a relaunch|not count(?:ed)? as a relaunch|does not count as a relaunch)/i, name);
+      assert.match(text, /author[^.]{0,30}reason[^.]{0,30}items[^.]{0,30}candidate/i, name);
+    }
+  });
+
+  it("accepts one recorded closing return for a meaning defect found at assembly and refuses a second", () => {
+    const pkg = planPackage((doc, digest) => {
+      doc.journey_settings.planning_wave = unreviewedPlanningWave(digest, ["integration_test"]);
+      const closing = doc.journey_settings.planning_wave.closing_candidate;
+      doc.journey_settings.planning_wave.sessions[0] = {
+        session: "integration_test",
+        candidate_ref: "plan",
+        candidate_revision: "r0",
+        candidate_digest: "2".repeat(64),
+        verdict: "READY",
+        closing_return: {
+          author: "integration_test",
+          reason: "meaning_defect",
+          items: ["CMD-B-SVC-SNAP probed live socket instead of fixture"],
+          candidate: closing,
+          verdict: "READY",
+        },
+      };
+    });
+    assert.deepEqual(freeze(pkg.dir).findings, []);
+
+    const second = planPackage((doc, digest) => {
+      doc.journey_settings.planning_wave = unreviewedPlanningWave(digest, ["integration_test"]);
+      const closing = doc.journey_settings.planning_wave.closing_candidate;
+      doc.journey_settings.planning_wave.closing_returns = [
+        { author: "integration_test", reason: "gaps", items: ["gap-1"], candidate: closing, verdict: "READY" },
+        { author: "integration_test", reason: "meaning_defect", items: ["fix-2"], candidate: closing, verdict: "READY" },
+      ];
+    });
+    const secondResult = freeze(second.dir);
+    assert.equal(secondResult.outcome, "FAIL");
+    assert.ok(codes(secondResult).includes("planning_wave_sessions_incomplete"), JSON.stringify(secondResult));
+  });
+});
