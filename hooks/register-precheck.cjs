@@ -54,6 +54,7 @@ function parseRegister(text) {
 function checkRegister({
 	register,
 	technicalPlan,
+	decisionContext = "",
 	registerPath = "register.sdoc",
 	planPath = "technical-plan.md",
 	files = {},
@@ -85,8 +86,15 @@ function checkRegister({
 	const uidOf = (row) =>
 		row.fields.find((f) => f.name === "UID")?.value.trim() || "<missing>";
 	const uids = new Set(rows.map(uidOf));
-	const decisions = new Set(),
-		definitions = new Set(),
+	const decisions = new Set(
+		Array.from(
+			`${decisionContext}\n${technicalPlan}`.matchAll(
+				/^(?:#{1,6}[^\S\r\n]+|\|[^\S\r\n]*)`?(DEC-[A-Z0-9.-]+)\b/gm,
+			),
+			(match) => match[1],
+		),
+	);
+	const definitions = new Set(),
 		terms = new Set();
 	let glossary = false;
 	const planLines = technicalPlan.split(/\r?\n/);
@@ -94,12 +102,9 @@ function checkRegister({
 		if (/^#{1,6}\s/.test(line))
 			glossary = /^#{1,6}\s+(Glossary|Quantity[- ]definitions)\b/i.test(line);
 		const declaration = line.match(
-			/^(?:#{1,6}\s+|\|\s*)`?((?:DEC|DEF|GLOSS)-[A-Z0-9.-]+)\b/,
+			/^(?:#{1,6}\s+|\|\s*)`?((?:DEF|GLOSS)-[A-Z0-9.-]+)\b/,
 		);
-		if (declaration)
-			(declaration[1].startsWith("DEC-") ? decisions : definitions).add(
-				declaration[1],
-			);
+		if (declaration) definitions.add(declaration[1]);
 		if (glossary && /^\|/.test(line)) {
 			const cells = line
 				.split("|")
@@ -314,6 +319,7 @@ function checkRegisterFiles({
 	stage = "final",
 	seitPath,
 	technicalPlan,
+	decisionContext,
 }) {
 	const register = fs.readFileSync(registerPath, "utf8");
 	technicalPlan ??= fs.readFileSync(planPath, "utf8");
@@ -335,6 +341,7 @@ function checkRegisterFiles({
 	return checkRegister({
 		register,
 		technicalPlan,
+		decisionContext,
 		registerPath,
 		planPath,
 		files,
@@ -373,16 +380,18 @@ if (require.main === module) {
 	};
 	const stage = flag("--stage") ?? "final";
 	const seitPath = flag("--seit");
+	const alignmentPath = flag("--alignment");
 	const [registerPath, planPath, root] = args;
 	if (
 		!registerPath ||
 		!planPath ||
 		!STAGES.includes(stage) ||
 		seitPath === "" ||
+		alignmentPath === "" ||
 		(seitPath && stage !== "final")
 	) {
 		process.stderr.write(
-			"usage: node hooks/register-precheck.cjs [--stage requirements|final] [--seit <seit.json>] <register.sdoc> <context-or-technical-plan.md> [repository root]\n",
+			"usage: node hooks/register-precheck.cjs [--stage requirements|final] [--seit <seit.json>] [--alignment <alignment.md>] <register.sdoc> <context-or-technical-plan.md> [repository root]\n",
 		);
 		process.exit(2);
 	}
@@ -393,6 +402,9 @@ if (require.main === module) {
 			root,
 			stage,
 			seitPath,
+			decisionContext: alignmentPath
+				? fs.readFileSync(alignmentPath, "utf8")
+				: undefined,
 		});
 		process.stdout.write(JSON.stringify(result, null, 2) + "\n");
 		process.exitCode = result.outcome === "PASS" ? 0 : 1;
