@@ -605,7 +605,7 @@
         "planning_to_implementation_clean_session": { "type": "boolean" },
         "review_rounds": {
           "type": "array",
-          "description": "#157: per declared wave or phase plus the planning unit, one Reviewer round, at most one aggregated repair, deterministic closure. hooks/plan-package.cjs requires one row per declared unit and no other; hooks/assurance-budget.cjs consumes the same rows.",
+          "description": "#157: per declared wave or phase plus the planning unit, one Reviewer round (zero for a review-free wave), at most one aggregated repair, deterministic closure. Final freeze requires one row per declared unit and the assurance budget consumes the same rows.",
           "items": {
             "type": "object",
             "additionalProperties": false,
@@ -613,10 +613,12 @@
             "properties": {
               "unit_id": { "type": "string", "minLength": 1 },
               "unit_kind": { "type": "string", "enum": ["planning", "wave", "phase"] },
-              "reviewer_rounds": { "const": 1 },
+              "reviewer_rounds": { "enum": [0, 1] },
               "repairs_max": { "const": 1 },
               "closure": { "const": "deterministic_PASS" }
-            }
+            },
+            "if": { "properties": { "unit_kind": { "const": "wave" } } },
+            "else": { "properties": { "reviewer_rounds": { "const": 1 } } }
           }
         },
         "planning_wave": {

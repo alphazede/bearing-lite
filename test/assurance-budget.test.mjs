@@ -25,12 +25,13 @@
  * is a second pure evaluator behind the existing `transition` class, exactly as
  * `planning-review.cjs` already is.
  */
-import { describe, it, after } from "node:test";
+
 import assert from "node:assert/strict";
-import { createRequire } from "node:module";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { after, describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -41,14 +42,19 @@ const transition = require(path.join(ROOT, "hooks/transition-order.cjs"));
 const budgetHook = () => require(path.join(ROOT, "hooks/assurance-budget.cjs"));
 
 /** Frozen declarations. Ids only; names and titles are never identity. */
-const WAVE_DECLARATION = { waves: [{ id: "W3", name: "third" }, { id: "W4", name: "fourth" }] };
+const WAVE_DECLARATION = {
+	waves: [
+		{ id: "W3", name: "third" },
+		{ id: "W4", name: "fourth" },
+	],
+};
 const PHASE_DECLARATION = { phases: [{ phaseId: "P1", title: "only phase" }] };
 const NO_UNIT_DECLARATION = { slices: [{ id: "S1" }] };
 
 /** @type {string[]} */
 const tempDirs = [];
 after(() => {
-  for (const dir of tempDirs) rmSync(dir, { recursive: true, force: true });
+	for (const dir of tempDirs) rmSync(dir, { recursive: true, force: true });
 });
 
 /**
@@ -56,391 +62,555 @@ after(() => {
  * carries the spent budget. Both live on disk, not in the request.
  */
 function fixture(declaration, units) {
-  const dir = mkdtempSync(path.join(tmpdir(), "lite-assurance-"));
-  tempDirs.push(dir);
-  const declaration_path = path.join(dir, "declaration.json");
-  const task_record_path = path.join(dir, "task-record.json");
-  writeFileSync(declaration_path, JSON.stringify(declaration, null, 2));
-  writeFileSync(task_record_path, JSON.stringify({ journey: "J", units }, null, 2));
-  return { dir, declaration_path, task_record_path };
+	const dir = mkdtempSync(path.join(tmpdir(), "lite-assurance-"));
+	tempDirs.push(dir);
+	const declaration_path = path.join(dir, "declaration.json");
+	const task_record_path = path.join(dir, "task-record.json");
+	writeFileSync(declaration_path, JSON.stringify(declaration, null, 2));
+	writeFileSync(
+		task_record_path,
+		JSON.stringify({ journey: "J", units }, null, 2),
+	);
+	return { dir, declaration_path, task_record_path };
 }
 
 const request = (fx, extra = {}) => ({
-  journey: "J",
-  unit_kind: "wave",
-  assurance_unit: "W3",
-  request_scope: "wave",
-  declaration_path: fx.declaration_path,
-  task_record_path: fx.task_record_path,
-  ...extra,
+	journey: "J",
+	unit_kind: "wave",
+	assurance_unit: "W3",
+	request_scope: "wave",
+	declaration_path: fx.declaration_path,
+	task_record_path: fx.task_record_path,
+	...extra,
 });
 
 /** The real shared path: transition adapter delegating to the budget evaluator. */
 const viaTransition = (assurance) =>
-  transition.evaluate({ action_kind: "assurance_transition", assurance });
+	transition.evaluate({ action_kind: "assurance_transition", assurance });
 
 const spentW3 = [
-  { unit_kind: "wave", assurance_unit: "W3", assurance_rounds: 1, assurance_repairs: 0 },
+	{
+		unit_kind: "wave",
+		assurance_unit: "W3",
+		assurance_rounds: 1,
+		assurance_repairs: 0,
+	},
 ];
 
 describe("CMD-LITE-CADENCE-NODE-TEST per-declared-unit assurance budget", () => {
-  it("T-UNIT-NEXT-LITE: the next distinct declared wave carries its own budget", () => {
-    const fx = fixture(WAVE_DECLARATION, [
-      {
-        unit_kind: "wave",
-        assurance_unit: "W3",
-        assurance_rounds: 1,
-        assurance_repairs: 1,
-        deterministic_gate: "PASS",
-      },
-    ]);
-    const before = readFileSync(fx.task_record_path, "utf8");
+	it("zero review rounds halt wave review and preserve slice review cadence", () => {
+		const fx = fixture(
+			{
+				...WAVE_DECLARATION,
+				slices: [{ id: "S1" }],
+				journey_settings: {
+					review_rounds: [
+						["planning", "planning", 1],
+						["W3", "wave", 0],
+						["W4", "wave", 1],
+					].map(([unit_id, unit_kind, reviewer_rounds]) => ({
+						unit_id,
+						unit_kind,
+						reviewer_rounds,
+						repairs_max: 1,
+						closure: "deterministic_PASS",
+					})),
+				},
+			},
+			[],
+		);
+		const check = (extra) =>
+			budgetHook().evaluateAssuranceBudget(request(fx, extra));
+		assert.deepEqual(check(), {
+			outcome: "HALT",
+			reason: "assurance_round_limit",
+		});
+		assert.equal(check({ assurance_unit: "W4" }).outcome, "PASS");
+		assert.equal(
+			check({
+				assurance_unit: "S1",
+				unit_kind: "slice",
+				request_scope: "slice",
+				cadence: "slice",
+			}).outcome,
+			"PASS",
+		);
+	});
 
-    const next = viaTransition(request(fx, { assurance_unit: "W4" }));
-    assert.equal(next.hook_class, "transition");
-    assert.equal(next.outcome, "ADVISE");
-    assert.match(String(next.reason), /assurance_budget:PASS/);
-    assert.deepEqual(budgetHook().evaluateAssuranceBudget(request(fx, { assurance_unit: "W4" })), {
-      outcome: "PASS",
-      reason: "assurance_round_available",
-    });
+	it("T-UNIT-NEXT-LITE: the next distinct declared wave carries its own budget", () => {
+		const fx = fixture(WAVE_DECLARATION, [
+			{
+				unit_kind: "wave",
+				assurance_unit: "W3",
+				assurance_rounds: 1,
+				assurance_repairs: 1,
+				deterministic_gate: "PASS",
+			},
+		]);
+		const before = readFileSync(fx.task_record_path, "utf8");
 
-    // The closed W3 unit is untouched and stays closed.
-    assert.equal(readFileSync(fx.task_record_path, "utf8"), before);
-    assert.equal(viaTransition(request(fx)).outcome, "BLOCK");
-  });
+		const next = viaTransition(request(fx, { assurance_unit: "W4" }));
+		assert.equal(next.hook_class, "transition");
+		assert.equal(next.outcome, "ADVISE");
+		assert.match(String(next.reason), /assurance_budget:PASS/);
+		assert.deepEqual(
+			budgetHook().evaluateAssuranceBudget(
+				request(fx, { assurance_unit: "W4" }),
+			),
+			{
+				outcome: "PASS",
+				reason: "assurance_round_available",
+			},
+		);
 
-  it("T-UNIT-SAME-LITE: the same declared wave refuses a second round through every churn", () => {
-    const fx = fixture(WAVE_DECLARATION, spentW3);
-    const churn = [
-      {},
-      { candidate_revision: "0".repeat(40) },
-      { candidate_revision: "1".repeat(40) },
-      { lease_generation: 7 },
-      { assigned_role: "explorer" },
-      { assigned_role: "park-ranger" },
-      { session: "fresh-session-b" },
-      { resumed: true },
-    ];
-    for (const extra of churn) {
-      const verdict = viaTransition(request(fx, extra));
-      assert.equal(verdict.outcome, "BLOCK", JSON.stringify(extra));
-      assert.match(String(verdict.reason), /assurance_budget:HALT:assurance_round_limit/, JSON.stringify(extra));
-    }
+		// The closed W3 unit is untouched and stays closed.
+		assert.equal(readFileSync(fx.task_record_path, "utf8"), before);
+		assert.equal(viaTransition(request(fx)).outcome, "BLOCK");
+	});
 
-    // Renaming the declared wave's display name is the same unit, not a new one.
-    const renamed = fixture({ waves: [{ id: "W3", name: "renamed third" }, { id: "W4" }] }, spentW3);
-    assert.match(
-      String(viaTransition(request(renamed)).reason),
-      /assurance_budget:HALT:assurance_round_limit/
-    );
+	it("T-UNIT-SAME-LITE: the same declared wave refuses a second round through every churn", () => {
+		const fx = fixture(WAVE_DECLARATION, spentW3);
+		const churn = [
+			{},
+			{ candidate_revision: "0".repeat(40) },
+			{ candidate_revision: "1".repeat(40) },
+			{ lease_generation: 7 },
+			{ assigned_role: "explorer" },
+			{ assigned_role: "park-ranger" },
+			{ session: "fresh-session-b" },
+			{ resumed: true },
+		];
+		for (const extra of churn) {
+			const verdict = viaTransition(request(fx, extra));
+			assert.equal(verdict.outcome, "BLOCK", JSON.stringify(extra));
+			assert.match(
+				String(verdict.reason),
+				/assurance_budget:HALT:assurance_round_limit/,
+				JSON.stringify(extra),
+			);
+		}
 
-    // A completed repair with a deterministic PASS still closes the unit.
-    const closed = fixture(WAVE_DECLARATION, [
-      {
-        unit_kind: "wave",
-        assurance_unit: "W3",
-        assurance_rounds: 1,
-        assurance_repairs: 1,
-        deterministic_gate: "PASS",
-      },
-    ]);
-    assert.match(
-      String(viaTransition(request(closed)).reason),
-      /assurance_budget:HALT:assurance_round_limit/
-    );
-  });
+		// Renaming the declared wave's display name is the same unit, not a new one.
+		const renamed = fixture(
+			{ waves: [{ id: "W3", name: "renamed third" }, { id: "W4" }] },
+			spentW3,
+		);
+		assert.match(
+			String(viaTransition(request(renamed)).reason),
+			/assurance_budget:HALT:assurance_round_limit/,
+		);
 
-  it("T-LITE-01R: the hook POLICY is an exact mirror of the declared assurance policy", () => {
-    const document = readFileSync(
-      path.join(ROOT, "skills/bearing-lite/references/assurance-policy.md"),
-      "utf8"
-    );
-    const documented = JSON.parse(document.match(/```json\n([\s\S]*?)\n```/)[1]);
-    const { POLICY } = budgetHook();
-    assert.deepEqual(POLICY, documented);
-    assert.equal(POLICY.budget_scope, "per_declared_cadence_unit");
-    assert.equal(POLICY.automatic_per_slice_review, "cadence_gated");
-    assert.equal(POLICY.default_cadence.reviewer, "phase");
-    assert.equal(POLICY.review_rounds, 1);
-    assert.equal(POLICY.aggregated_repairs_max, 1);
-  });
+		// A completed repair with a deterministic PASS still closes the unit.
+		const closed = fixture(WAVE_DECLARATION, [
+			{
+				unit_kind: "wave",
+				assurance_unit: "W3",
+				assurance_rounds: 1,
+				assurance_repairs: 1,
+				deterministic_gate: "PASS",
+			},
+		]);
+		assert.match(
+			String(viaTransition(request(closed)).reason),
+			/assurance_budget:HALT:assurance_round_limit/,
+		);
+	});
 
-  it("T-LITE-03R: a second aggregate repair and a missing deterministic gate both HALT", () => {
-    const second = fixture(WAVE_DECLARATION, [
-      { unit_kind: "wave", assurance_unit: "W3", assurance_rounds: 1, assurance_repairs: 2 },
-    ]);
-    assert.match(
-      String(viaTransition(request(second)).reason),
-      /assurance_budget:HALT:assurance_repair_limit/
-    );
+	it("T-LITE-01R: the hook POLICY is an exact mirror of the declared assurance policy", () => {
+		const document = readFileSync(
+			path.join(ROOT, "skills/bearing-lite/references/assurance-policy.md"),
+			"utf8",
+		);
+		const documented = JSON.parse(
+			document.match(/```json\n([\s\S]*?)\n```/)[1],
+		);
+		const { POLICY } = budgetHook();
+		assert.deepEqual(POLICY, documented);
+		assert.equal(POLICY.budget_scope, "per_declared_cadence_unit");
+		assert.equal(POLICY.automatic_per_slice_review, "cadence_gated");
+		assert.equal(POLICY.default_cadence.reviewer, "phase");
+		assert.equal(POLICY.review_rounds, 1);
+		assert.equal(POLICY.aggregated_repairs_max, 1);
+	});
 
-    for (const gate of [undefined, "FAIL", "pass", "PENDING"]) {
-      const unit = { unit_kind: "wave", assurance_unit: "W3", assurance_rounds: 1, assurance_repairs: 1 };
-      if (gate !== undefined) unit.deterministic_gate = gate;
-      const fx = fixture(WAVE_DECLARATION, [unit]);
-      assert.match(
-        String(viaTransition(request(fx)).reason),
-        /assurance_budget:HALT:deterministic_post_repair_gate_required/,
-        String(gate)
-      );
-    }
-  });
+	it("T-LITE-03R: a second aggregate repair and a missing deterministic gate both HALT", () => {
+		const second = fixture(WAVE_DECLARATION, [
+			{
+				unit_kind: "wave",
+				assurance_unit: "W3",
+				assurance_rounds: 1,
+				assurance_repairs: 2,
+			},
+		]);
+		assert.match(
+			String(viaTransition(request(second)).reason),
+			/assurance_budget:HALT:assurance_repair_limit/,
+		);
 
-  it("T-LITE-04R: automatic rereview and a per-slice request need an owner amendment", () => {
-    const fx = fixture(WAVE_DECLARATION, spentW3);
-    for (const extra of [{ automatic_rereview_requested: true }, { review_after_repair: true }]) {
-      const verdict = viaTransition(request(fx, extra));
-      assert.equal(verdict.outcome, "BLOCK", JSON.stringify(extra));
-      assert.match(
-        String(verdict.reason),
-        /assurance_budget:OWNER_AMENDMENT_REQUIRED:automatic_rereview_prohibited/,
-        JSON.stringify(extra)
-      );
-    }
+		for (const gate of [undefined, "FAIL", "pass", "PENDING"]) {
+			const unit = {
+				unit_kind: "wave",
+				assurance_unit: "W3",
+				assurance_rounds: 1,
+				assurance_repairs: 1,
+			};
+			if (gate !== undefined) unit.deterministic_gate = gate;
+			const fx = fixture(WAVE_DECLARATION, [unit]);
+			assert.match(
+				String(viaTransition(request(fx)).reason),
+				/assurance_budget:HALT:deterministic_post_repair_gate_required/,
+				String(gate),
+			);
+		}
+	});
 
-    const open = fixture(WAVE_DECLARATION, []);
-    const perSlice = viaTransition(request(open, { request_scope: "slice", slice_id: "S70" }));
-    assert.equal(perSlice.outcome, "BLOCK");
-    assert.match(
-      String(perSlice.reason),
-      /assurance_budget:OWNER_AMENDMENT_REQUIRED:automatic_per_slice_review_prohibited/
-    );
+	it("T-LITE-04R: automatic rereview and a per-slice request need an owner amendment", () => {
+		const fx = fixture(WAVE_DECLARATION, spentW3);
+		for (const extra of [
+			{ automatic_rereview_requested: true },
+			{ review_after_repair: true },
+		]) {
+			const verdict = viaTransition(request(fx, extra));
+			assert.equal(verdict.outcome, "BLOCK", JSON.stringify(extra));
+			assert.match(
+				String(verdict.reason),
+				/assurance_budget:OWNER_AMENDMENT_REQUIRED:automatic_rereview_prohibited/,
+				JSON.stringify(extra),
+			);
+		}
 
-    // A unit id absent from the frozen declaration fails closed; renaming an id
-    // to escape a spent budget never mints a fresh round.
-    const undeclared = viaTransition(request(fx, { assurance_unit: "W9" }));
-    assert.equal(undeclared.outcome, "BLOCK");
-    assert.match(
-      String(undeclared.reason),
-      /assurance_budget:OWNER_AMENDMENT_REQUIRED:undeclared_review_unit/
-    );
-  });
+		const open = fixture(WAVE_DECLARATION, []);
+		const perSlice = viaTransition(
+			request(open, { request_scope: "slice", slice_id: "S70" }),
+		);
+		assert.equal(perSlice.outcome, "BLOCK");
+		assert.match(
+			String(perSlice.reason),
+			/assurance_budget:OWNER_AMENDMENT_REQUIRED:automatic_per_slice_review_prohibited/,
+		);
 
-  it("T-LITE-05R: a changed candidate revision never resets the unit budget", () => {
-    const fx = fixture(WAVE_DECLARATION, spentW3);
-    const first = viaTransition(request(fx, { candidate_revision: "a".repeat(40) }));
-    const repairCommit = viaTransition(request(fx, { candidate_revision: "b".repeat(40) }));
-    assert.equal(first.outcome, "BLOCK");
-    assert.equal(repairCommit.outcome, "BLOCK");
-    assert.match(String(repairCommit.reason), /assurance_round_limit/);
-    assert.equal(
-      JSON.stringify(first),
-      JSON.stringify(repairCommit),
-      "candidate revision is not a key component"
-    );
-    assert.equal(
-      readFileSync(fx.task_record_path, "utf8").includes('"assurance_rounds": 1'),
-      true,
-      "a changed candidate never lowers the recorded round count"
-    );
-  });
+		// A unit id absent from the frozen declaration fails closed; renaming an id
+		// to escape a spent budget never mints a fresh round.
+		const undeclared = viaTransition(request(fx, { assurance_unit: "W9" }));
+		assert.equal(undeclared.outcome, "BLOCK");
+		assert.match(
+			String(undeclared.reason),
+			/assurance_budget:OWNER_AMENDMENT_REQUIRED:undeclared_review_unit/,
+		);
+	});
 
-  it("T-LITE-06R: role, session, and lease generation are absent from the key", () => {
-    const fx = fixture(WAVE_DECLARATION, []);
-    const baseline = viaTransition(request(fx));
-    const variants = [
-      { assigned_role: "crewmate" },
-      { assigned_role: "surveyor" },
-      { session: "session-a" },
-      { session: "session-b" },
-      { lease_generation: 1 },
-      { lease_generation: 99 },
-    ];
-    for (const extra of variants) {
-      assert.equal(
-        JSON.stringify(viaTransition(request(fx, extra))),
-        JSON.stringify(baseline),
-        JSON.stringify(extra)
-      );
-    }
+	it("T-LITE-05R: a changed candidate revision never resets the unit budget", () => {
+		const fx = fixture(WAVE_DECLARATION, spentW3);
+		const first = viaTransition(
+			request(fx, { candidate_revision: "a".repeat(40) }),
+		);
+		const repairCommit = viaTransition(
+			request(fx, { candidate_revision: "b".repeat(40) }),
+		);
+		assert.equal(first.outcome, "BLOCK");
+		assert.equal(repairCommit.outcome, "BLOCK");
+		assert.match(String(repairCommit.reason), /assurance_round_limit/);
+		assert.equal(
+			JSON.stringify(first),
+			JSON.stringify(repairCommit),
+			"candidate revision is not a key component",
+		);
+		assert.equal(
+			readFileSync(fx.task_record_path, "utf8").includes(
+				'"assurance_rounds": 1',
+			),
+			true,
+			"a changed candidate never lowers the recorded round count",
+		);
+	});
 
-    const policy = readFileSync(
-      path.join(ROOT, "skills/bearing-lite/references/assurance-policy.md"),
-      "utf8"
-    );
-    assert.match(
-      policy,
-      /records no route, provider, model, harness, account, or agent identity/
-    );
-  });
+	it("T-LITE-06R: role, session, and lease generation are absent from the key", () => {
+		const fx = fixture(WAVE_DECLARATION, []);
+		const baseline = viaTransition(request(fx));
+		const variants = [
+			{ assigned_role: "crewmate" },
+			{ assigned_role: "surveyor" },
+			{ session: "session-a" },
+			{ session: "session-b" },
+			{ lease_generation: 1 },
+			{ lease_generation: 99 },
+		];
+		for (const extra of variants) {
+			assert.equal(
+				JSON.stringify(viaTransition(request(fx, extra))),
+				JSON.stringify(baseline),
+				JSON.stringify(extra),
+			);
+		}
 
-  it("T-LITE-07R: a transport failure is not a spent round", () => {
-    const fx = fixture(WAVE_DECLARATION, [
-      { unit_kind: "wave", assurance_unit: "W3", assurance_rounds: 0, assurance_repairs: 0 },
-    ]);
-    const before = readFileSync(fx.task_record_path, "utf8");
-    for (const verdictToken of ["WAITING_ON", "UNAVAILABLE"]) {
-      const result = viaTransition(request(fx, { receipts: [{ verdict: verdictToken }] }));
-      assert.equal(result.outcome, "REROUTE", verdictToken);
-      assert.match(String(result.reason), /assurance_budget:NEEDS_MORE_EVIDENCE/, verdictToken);
-      assert.doesNotMatch(String(result.reason), /HALT/, verdictToken);
-    }
-    assert.equal(readFileSync(fx.task_record_path, "utf8"), before);
+		const policy = readFileSync(
+			path.join(ROOT, "skills/bearing-lite/references/assurance-policy.md"),
+			"utf8",
+		);
+		assert.match(
+			policy,
+			/records no route, provider, model, harness, account, or agent identity/,
+		);
+	});
 
-    // A closed verdict on an unspent unit is the round that may be taken.
-    assert.equal(viaTransition(request(fx)).outcome, "ADVISE");
-  });
+	it("T-LITE-07R: a transport failure is not a spent round", () => {
+		const fx = fixture(WAVE_DECLARATION, [
+			{
+				unit_kind: "wave",
+				assurance_unit: "W3",
+				assurance_rounds: 0,
+				assurance_repairs: 0,
+			},
+		]);
+		const before = readFileSync(fx.task_record_path, "utf8");
+		for (const verdictToken of ["WAITING_ON", "UNAVAILABLE"]) {
+			const result = viaTransition(
+				request(fx, { receipts: [{ verdict: verdictToken }] }),
+			);
+			assert.equal(result.outcome, "REROUTE", verdictToken);
+			assert.match(
+				String(result.reason),
+				/assurance_budget:NEEDS_MORE_EVIDENCE/,
+				verdictToken,
+			);
+			assert.doesNotMatch(String(result.reason), /HALT/, verdictToken);
+		}
+		assert.equal(readFileSync(fx.task_record_path, "utf8"), before);
 
-  it("T-LITE-08R: malformed input and an unresolved unit never fabricate PASS", () => {
-    const declaredWaves = fixture(WAVE_DECLARATION, []);
-    const cases = [
-      undefined,
-      null,
-      "",
-      42,
-      [],
-      {},
-      { journey: "J" },
-      request(declaredWaves, { assurance_unit: undefined }),
-      request(declaredWaves, { assurance_unit: "" }),
-      { ...request(declaredWaves), declaration_path: path.join(declaredWaves.dir, "absent.json") },
-      { ...request(declaredWaves), task_record_path: path.join(declaredWaves.dir, "absent.json") },
-    ];
-    for (const input of cases) {
-      const verdict = viaTransition(input);
-      assert.notEqual(verdict.outcome, "ADVISE", JSON.stringify(input));
-      assert.doesNotMatch(String(verdict.reason), /:PASS/, JSON.stringify(input));
-      assert.ok(
-        ["REROUTE", "UNAVAILABLE", "BLOCK"].includes(verdict.outcome),
-        `${JSON.stringify(input)} -> ${verdict.outcome}`
-      );
-    }
+		// A closed verdict on an unspent unit is the round that may be taken.
+		assert.equal(viaTransition(request(fx)).outcome, "ADVISE");
+	});
 
-    // A single declared phase keys as the phase, never as `direct`.
-    const single = fixture(PHASE_DECLARATION, [
-      { unit_kind: "phase", assurance_unit: "P1", assurance_rounds: 1, assurance_repairs: 0 },
-    ]);
-    assert.match(
-      String(
-        viaTransition(request(single, { unit_kind: "phase", assurance_unit: "P1", request_scope: "phase" }))
-          .reason
-      ),
-      /assurance_budget:HALT:assurance_round_limit/
-    );
+	it("T-LITE-08R: malformed input and an unresolved unit never fabricate PASS", () => {
+		const declaredWaves = fixture(WAVE_DECLARATION, []);
+		const cases = [
+			undefined,
+			null,
+			"",
+			42,
+			[],
+			{},
+			{ journey: "J" },
+			request(declaredWaves, { assurance_unit: undefined }),
+			request(declaredWaves, { assurance_unit: "" }),
+			{
+				...request(declaredWaves),
+				declaration_path: path.join(declaredWaves.dir, "absent.json"),
+			},
+			{
+				...request(declaredWaves),
+				task_record_path: path.join(declaredWaves.dir, "absent.json"),
+			},
+		];
+		for (const input of cases) {
+			const verdict = viaTransition(input);
+			assert.notEqual(verdict.outcome, "ADVISE", JSON.stringify(input));
+			assert.doesNotMatch(
+				String(verdict.reason),
+				/:PASS/,
+				JSON.stringify(input),
+			);
+			assert.ok(
+				["REROUTE", "UNAVAILABLE", "BLOCK"].includes(verdict.outcome),
+				`${JSON.stringify(input)} -> ${verdict.outcome}`,
+			);
+		}
 
-    // A legacy record with no unit id derives once as the single direct unit and
-    // never lowers the spent count it already shows.
-    const legacy = fixture(NO_UNIT_DECLARATION, [{ assurance_rounds: 1, assurance_repairs: 1, deterministic_gate: "PASS" }]);
-    const derived = viaTransition({
-      journey: "J",
-      unit_kind: "direct",
-      request_scope: "direct",
-      declaration_path: legacy.declaration_path,
-      task_record_path: legacy.task_record_path,
-    });
-    assert.equal(derived.outcome, "BLOCK");
-    assert.match(String(derived.reason), /assurance_budget:HALT:assurance_round_limit/);
-  });
+		// A single declared phase keys as the phase, never as `direct`.
+		const single = fixture(PHASE_DECLARATION, [
+			{
+				unit_kind: "phase",
+				assurance_unit: "P1",
+				assurance_rounds: 1,
+				assurance_repairs: 0,
+			},
+		]);
+		assert.match(
+			String(
+				viaTransition(
+					request(single, {
+						unit_kind: "phase",
+						assurance_unit: "P1",
+						request_scope: "phase",
+					}),
+				).reason,
+			),
+			/assurance_budget:HALT:assurance_round_limit/,
+		);
 
-  it("W14-R5: task-record lookup uses the full journey, kind, and unit key", () => {
-    const fx = fixture(WAVE_DECLARATION, spentW3);
-    writeFileSync(
-      fx.task_record_path,
-      JSON.stringify({ journey: "OTHER", units: spentW3 }, null, 2)
-    );
+		// A legacy record with no unit id derives once as the single direct unit and
+		// never lowers the spent count it already shows.
+		const legacy = fixture(NO_UNIT_DECLARATION, [
+			{ assurance_rounds: 1, assurance_repairs: 1, deterministic_gate: "PASS" },
+		]);
+		const derived = viaTransition({
+			journey: "J",
+			unit_kind: "direct",
+			request_scope: "direct",
+			declaration_path: legacy.declaration_path,
+			task_record_path: legacy.task_record_path,
+		});
+		assert.equal(derived.outcome, "BLOCK");
+		assert.match(
+			String(derived.reason),
+			/assurance_budget:HALT:assurance_round_limit/,
+		);
+	});
 
-    assert.equal(
-      budgetHook().evaluateAssuranceBudget(request(fx)).outcome,
-      "NEEDS_MORE_EVIDENCE"
-    );
-  });
+	it("W14-R5: task-record lookup uses the full journey, kind, and unit key", () => {
+		const fx = fixture(WAVE_DECLARATION, spentW3);
+		writeFileSync(
+			fx.task_record_path,
+			JSON.stringify({ journey: "OTHER", units: spentW3 }, null, 2),
+		);
 
-  it("S7-002: declared slice and lifecycle cadence units resolve and retain spent budgets", () => {
-    const declaration = {
-      journey_settings: {
-        lifecycle_id: "L1",
-        assurance_cadence: { reviewer: "slice" },
-      },
-      waves: [{ id: "P1" }],
-      slices: [{ id: "S1" }, { id: "S2" }],
-    };
-    const open = fixture(declaration, []);
-    const sliceReq = {
-      journey: "L1",
-      unit_kind: "slice",
-      request_scope: "slice",
-      cadence: "slice",
-      assurance_unit: "S1",
-      declaration_path: open.declaration_path,
-      task_record_path: open.task_record_path,
-    };
-    writeFileSync(open.task_record_path, JSON.stringify({ journey: "L1", units: [] }, null, 2));
-    const sliceOpen = viaTransition(sliceReq);
-    assert.equal(sliceOpen.outcome, "ADVISE");
-    assert.match(String(sliceOpen.reason), /assurance_budget:PASS/);
+		assert.equal(
+			budgetHook().evaluateAssuranceBudget(request(fx)).outcome,
+			"NEEDS_MORE_EVIDENCE",
+		);
+	});
 
-    const phaseOpen = viaTransition({
-      ...sliceReq,
-      unit_kind: "phase",
-      request_scope: "phase",
-      cadence: "phase",
-      assurance_unit: "P1",
-    });
-    assert.equal(phaseOpen.outcome, "ADVISE");
-    assert.match(String(phaseOpen.reason), /assurance_budget:PASS/);
+	it("S7-002: declared slice and lifecycle cadence units resolve and retain spent budgets", () => {
+		const declaration = {
+			journey_settings: {
+				lifecycle_id: "L1",
+				assurance_cadence: { reviewer: "slice" },
+			},
+			waves: [{ id: "P1" }],
+			slices: [{ id: "S1" }, { id: "S2" }],
+		};
+		const open = fixture(declaration, []);
+		const sliceReq = {
+			journey: "L1",
+			unit_kind: "slice",
+			request_scope: "slice",
+			cadence: "slice",
+			assurance_unit: "S1",
+			declaration_path: open.declaration_path,
+			task_record_path: open.task_record_path,
+		};
+		writeFileSync(
+			open.task_record_path,
+			JSON.stringify({ journey: "L1", units: [] }, null, 2),
+		);
+		const sliceOpen = viaTransition(sliceReq);
+		assert.equal(sliceOpen.outcome, "ADVISE");
+		assert.match(String(sliceOpen.reason), /assurance_budget:PASS/);
 
-    const lifeOpen = viaTransition({
-      ...sliceReq,
-      unit_kind: "lifecycle",
-      request_scope: "lifecycle",
-      cadence: "lifecycle",
-      assurance_unit: "L1",
-    });
-    assert.equal(lifeOpen.outcome, "ADVISE");
-    assert.match(String(lifeOpen.reason), /assurance_budget:PASS/);
+		const phaseOpen = viaTransition({
+			...sliceReq,
+			unit_kind: "phase",
+			request_scope: "phase",
+			cadence: "phase",
+			assurance_unit: "P1",
+		});
+		assert.equal(phaseOpen.outcome, "ADVISE");
+		assert.match(String(phaseOpen.reason), /assurance_budget:PASS/);
 
-    const spentSlice = fixture(declaration, [
-      { unit_kind: "slice", assurance_unit: "S1", assurance_rounds: 1, assurance_repairs: 0 },
-    ]);
-    writeFileSync(spentSlice.task_record_path, JSON.stringify({
-      journey: "L1",
-      units: [{ unit_kind: "slice", assurance_unit: "S1", assurance_rounds: 1, assurance_repairs: 0 }],
-    }, null, 2));
-    const sliceSpent = viaTransition({
-      journey: "L1",
-      unit_kind: "slice",
-      request_scope: "slice",
-      cadence: "slice",
-      assurance_unit: "S1",
-      declaration_path: spentSlice.declaration_path,
-      task_record_path: spentSlice.task_record_path,
-    });
-    assert.equal(sliceSpent.outcome, "BLOCK");
-    assert.match(String(sliceSpent.reason), /assurance_budget:HALT:assurance_round_limit/);
+		const lifeOpen = viaTransition({
+			...sliceReq,
+			unit_kind: "lifecycle",
+			request_scope: "lifecycle",
+			cadence: "lifecycle",
+			assurance_unit: "L1",
+		});
+		assert.equal(lifeOpen.outcome, "ADVISE");
+		assert.match(String(lifeOpen.reason), /assurance_budget:PASS/);
 
-    const spentLife = fixture(declaration, []);
-    writeFileSync(spentLife.task_record_path, JSON.stringify({
-      journey: "L1",
-      units: [{ unit_kind: "lifecycle", assurance_unit: "L1", assurance_rounds: 1, assurance_repairs: 0 }],
-    }, null, 2));
-    const lifeSpent = viaTransition({
-      journey: "L1",
-      unit_kind: "lifecycle",
-      request_scope: "lifecycle",
-      cadence: "lifecycle",
-      assurance_unit: "L1",
-      declaration_path: spentLife.declaration_path,
-      task_record_path: spentLife.task_record_path,
-    });
-    assert.equal(lifeSpent.outcome, "BLOCK");
-    assert.match(String(lifeSpent.reason), /assurance_budget:HALT:assurance_round_limit/);
-  });
+		const spentSlice = fixture(declaration, [
+			{
+				unit_kind: "slice",
+				assurance_unit: "S1",
+				assurance_rounds: 1,
+				assurance_repairs: 0,
+			},
+		]);
+		writeFileSync(
+			spentSlice.task_record_path,
+			JSON.stringify(
+				{
+					journey: "L1",
+					units: [
+						{
+							unit_kind: "slice",
+							assurance_unit: "S1",
+							assurance_rounds: 1,
+							assurance_repairs: 0,
+						},
+					],
+				},
+				null,
+				2,
+			),
+		);
+		const sliceSpent = viaTransition({
+			journey: "L1",
+			unit_kind: "slice",
+			request_scope: "slice",
+			cadence: "slice",
+			assurance_unit: "S1",
+			declaration_path: spentSlice.declaration_path,
+			task_record_path: spentSlice.task_record_path,
+		});
+		assert.equal(sliceSpent.outcome, "BLOCK");
+		assert.match(
+			String(sliceSpent.reason),
+			/assurance_budget:HALT:assurance_round_limit/,
+		);
 
-  it("W14-R6: invalid assurance counters fail closed", () => {
-    for (const field of ["assurance_rounds", "assurance_repairs"]) {
-      for (const value of ["corrupt", 1.5, -1]) {
-        const unit = {
-          unit_kind: "wave",
-          assurance_unit: "W3",
-          assurance_rounds: 0,
-          assurance_repairs: 0,
-          [field]: value,
-        };
-        const fx = fixture(WAVE_DECLARATION, [unit]);
-        const verdict = budgetHook().evaluateAssuranceBudget(request(fx));
-        assert.equal(verdict.outcome, "NEEDS_MORE_EVIDENCE", `${field}=${value}`);
-      }
-    }
-  });
+		const spentLife = fixture(declaration, []);
+		writeFileSync(
+			spentLife.task_record_path,
+			JSON.stringify(
+				{
+					journey: "L1",
+					units: [
+						{
+							unit_kind: "lifecycle",
+							assurance_unit: "L1",
+							assurance_rounds: 1,
+							assurance_repairs: 0,
+						},
+					],
+				},
+				null,
+				2,
+			),
+		);
+		const lifeSpent = viaTransition({
+			journey: "L1",
+			unit_kind: "lifecycle",
+			request_scope: "lifecycle",
+			cadence: "lifecycle",
+			assurance_unit: "L1",
+			declaration_path: spentLife.declaration_path,
+			task_record_path: spentLife.task_record_path,
+		});
+		assert.equal(lifeSpent.outcome, "BLOCK");
+		assert.match(
+			String(lifeSpent.reason),
+			/assurance_budget:HALT:assurance_round_limit/,
+		);
+	});
+
+	it("W14-R6: invalid assurance counters fail closed", () => {
+		for (const field of ["assurance_rounds", "assurance_repairs"]) {
+			for (const value of ["corrupt", 1.5, -1]) {
+				const unit = {
+					unit_kind: "wave",
+					assurance_unit: "W3",
+					assurance_rounds: 0,
+					assurance_repairs: 0,
+					[field]: value,
+				};
+				const fx = fixture(WAVE_DECLARATION, [unit]);
+				const verdict = budgetHook().evaluateAssuranceBudget(request(fx));
+				assert.equal(
+					verdict.outcome,
+					"NEEDS_MORE_EVIDENCE",
+					`${field}=${value}`,
+				);
+			}
+		}
+	});
 });

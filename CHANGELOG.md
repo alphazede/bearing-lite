@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Allow a zero-round budget for waves without wave-level review.
+
 - Use digest-bound Alignment decisions for final register validation.
 
 - Report final planning-wave closure gaps as advisory findings during draft freeze.

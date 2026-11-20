@@ -1903,6 +1903,22 @@ def cases() -> list[tuple[str, str, str, object, str]]:
             ),
             (
                 "SEIT-EMV-022",
+                "implementation_wave_without_review",
+                "implementation",
+                planning_contract_implementation(rounds={"reviewer_rounds": 0}),
+                "accept",
+            ),
+            (
+                "SEIT-EMV-022",
+                "implementation_phase_cannot_omit_review_round",
+                "implementation",
+                planning_contract_implementation(
+                    rounds={"unit_kind": "phase", "reviewer_rounds": 0}
+                ),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-022",
                 "implementation_review_round_second_round",
                 "implementation",
                 planning_contract_implementation(rounds={"reviewer_rounds": 2}),
