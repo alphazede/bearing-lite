@@ -295,7 +295,8 @@ function verifyPackageDigests(dir, parsed) {
 }
 
 function verifyDigests(dir) {
-	const { finalPlanText, ...digests } = verifyPackageDigests(dir);
+	const { finalPlanText, decisionContext, ...digests } =
+		verifyPackageDigests(dir);
 	return digests;
 }
 
@@ -1835,7 +1836,9 @@ function readLiveExchange(dir, wave, findings) {
 				}
 				if (
 					!validExchangeRecord(record) ||
-					(record.reply_to !== null && !requestIds.has(record.reply_to))
+					(record.attempts > 0 &&
+						record.reply_to !== null &&
+						!requestIds.has(record.reply_to))
 				) {
 					malformed({ line });
 					continue;
@@ -1844,6 +1847,7 @@ function readLiveExchange(dir, wave, findings) {
 				summary.records += 1;
 				if (!record.allowed) summary.not_allowed.push(record.request_id);
 				else if (!record.delivered) summary.undelivered.push(record.request_id);
+				if (record.attempts === 0) continue;
 				let digest;
 				try {
 					digest = withContainedFile(root, record.body_path, (body) =>

@@ -1570,6 +1570,14 @@ describe("plan-package live-wave exchange.jsonl reader (HLW-VC-025)", () => {
 			},
 		],
 		[
+			"an attempted reply to an unlogged request",
+			(dir, lines) =>
+				writeExchange(dir, [
+					...lines,
+					{ ...record(dir, 4), reply_to: "unlogged-request" },
+				]),
+		],
+		[
 			"attempts outside 1-2",
 			(dir, lines) =>
 				writeExchange(dir, [...lines, record(dir, 4, { attempts: 3 })]),
@@ -1669,6 +1677,29 @@ describe("plan-package live-wave exchange.jsonl reader (HLW-VC-025)", () => {
 		assert.equal(out.reason, "handoff_complete");
 		expectSummary(waveSummary(out));
 	});
+
+	for (const issue of ["missing body", "unlogged reply target"]) {
+		it(`live-wave refusal remains advisory despite ${issue}`, (t) => {
+			const dir = livePlan(t);
+			const records = validExchange(dir);
+			const refusal = records.at(-1);
+			if (issue === "missing body") rmSync(path.join(dir, refusal.body_path));
+			else refusal.reply_to = "unlogged-request";
+			writeExchange(dir, records);
+
+			const final = run([HOOK, dir]);
+			assert.equal(final.status, 0, final.stdout);
+			expectSummary(waveSummary(JSON.parse(final.stdout)));
+
+			const view = run([HOOK, "wave", dir, "W1"]);
+			assert.equal(view.status, 0, view.stdout);
+			expectSummary(JSON.parse(view.stdout).live_exchange);
+
+			const closeout = JSON.parse(run([CLOSEOUT], handoff(dir)).stdout);
+			assert.equal(closeout.reason, "handoff_complete");
+			expectSummary(waveSummary(closeout));
+		});
+	}
 
 	it("live-wave closeout carries advisory evidence from the final freeze receipt", (t) => {
 		const dir = livePlan(t);
