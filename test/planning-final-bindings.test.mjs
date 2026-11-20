@@ -103,7 +103,12 @@ test("draft advises on final-only planning wave gaps", (t) => {
 	const { closing_candidate: closing } = fx.wave;
 	fx.wave.required_sessions = ["mbse"];
 	fx.wave.sessions = [
-		{ session: "mbse", ...closing, candidate_revision: "earlier", verdict: "READY" },
+		{
+			session: "mbse",
+			...closing,
+			candidate_revision: "earlier",
+			verdict: "READY",
+		},
 	];
 	const cases = [
 		["reviews", "planning_wave_review_count"],
@@ -122,7 +127,10 @@ test("draft advises on final-only planning wave gaps", (t) => {
 		}
 	};
 	for (const stage of ["final", "draft"]) {
-		expectGaps(stage, cases.map(([, code]) => code));
+		expectGaps(
+			stage,
+			cases.map(([, code]) => code),
+		);
 	}
 	Object.assign(fx.wave, {
 		reviews: 0,
@@ -137,6 +145,24 @@ test("draft advises on final-only planning wave gaps", (t) => {
 	fx.wave.sessions[0].inputs = [fx.initial.inputs[0]];
 	assert.deepEqual(fx.run("draft").findings, []);
 	assert.deepEqual(fx.run().findings, []);
+});
+
+test("final freeze accepts zero review rounds for a review-free wave", (t) => {
+	const fx = fixture(t);
+	const rows = fx.doc.journey_settings.review_rounds;
+	const wave = rows.find((row) => row.unit_kind === "wave");
+	wave.reviewer_rounds = 0;
+	const final = fx.run();
+	assert.equal(final.outcome, "PASS", JSON.stringify(final));
+	const planning = rows.find((row) => row.unit_kind === "planning");
+	planning.reviewer_rounds = 0;
+	const invalid = fx.run();
+	rejects(invalid);
+	assert.ok(
+		invalid.findings.some(
+			(f) => f.code === "review_round_invalid" && f.unit_id === "planning",
+		),
+	);
 });
 
 test("final freeze rejects requirements-stage pending case bindings while draft remains valid", (t) => {
@@ -225,7 +251,9 @@ test("final freeze shares the requirements-stage decision context in bound align
 	const stale = fx.run();
 	rejects(stale);
 	assert.ok(
-		stale.findings.some((f) => f.code === "digest_mismatch" && f.path === "alignment.md"),
+		stale.findings.some(
+			(f) => f.code === "digest_mismatch" && f.path === "alignment.md",
+		),
 	);
 	fx.put("plan.md", alignment);
 	fx.put("alignment.md", "# Alignment without decision declarations\n");

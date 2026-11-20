@@ -57,7 +57,9 @@ declared unit's display name never mints a fresh budget.
 When the frozen declaration carries `journey_settings.review_rounds` (every
 package frozen under the planning-wave contract), that per-unit declaration is
 the budget source for wave and phase units: one row per declared unit plus
-`planning`, each one Reviewer round, at most one repair, deterministic closure.
+`planning`, each with a Reviewer round budget, at most one repair, and
+deterministic closure. A wave without wave-level review can declare zero
+Reviewer rounds. Review requested at slice cadence uses the slice budget.
 An invalid declaration returns `review_round_declaration_invalid`; the
 `planning` unit never answers an implementation request. `hooks/plan-package.cjs`
 freezes the same rows, so there is no second source of truth.
