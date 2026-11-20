@@ -1486,7 +1486,12 @@ describe("plan-package live-wave exchange.jsonl reader (HLW-VC-025)", () => {
 		const lines = [
 			record(dir, 1),
 			record(dir, 2, { delivered: false, attempts: 2 }),
-			record(dir, 3, { to: "test-engineer", allowed: false }),
+			record(dir, 3, {
+				to: "test-engineer",
+				allowed: false,
+				delivered: false,
+				attempts: 0,
+			}),
 		];
 		writeExchange(dir, lines);
 		return lines;
@@ -1521,21 +1526,21 @@ describe("plan-package live-wave exchange.jsonl reader (HLW-VC-025)", () => {
 		);
 	});
 
-	it("live-wave final freeze accepts and summarizes a valid exchange.jsonl", (t) => {
+	it("live-wave final freeze summarizes a refused record without a delivery failure", (t) => {
 		const dir = livePlan(t);
 		validExchange(dir);
 		const res = run([HOOK, dir]);
 		const out = JSON.parse(res.stdout);
-		expectSummary(waveSummary(out));
 		assert.equal(res.status, 0, res.stdout);
 		assert.equal(out.outcome, "PASS");
+		expectSummary(waveSummary(out));
 		assert.deepEqual(
 			out.findings.filter((f) => /^live_/.test(f.code)),
 			[],
 		);
 	});
 
-	it("live-wave wave view summarizes the wave's exchange.jsonl", (t) => {
+	it("live-wave wave view summarizes a refused record", (t) => {
 		const dir = livePlan(t);
 		validExchange(dir);
 		const res = run([HOOK, "wave", dir, "W1"]);
@@ -1568,6 +1573,22 @@ describe("plan-package live-wave exchange.jsonl reader (HLW-VC-025)", () => {
 			"attempts outside 1-2",
 			(dir, lines) =>
 				writeExchange(dir, [...lines, record(dir, 4, { attempts: 3 })]),
+		],
+		[
+			"zero attempts for an allowed message",
+			(dir, lines) =>
+				writeExchange(dir, [
+					...lines,
+					record(dir, 4, { delivered: false, attempts: 0 }),
+				]),
+		],
+		[
+			"a delivered message with zero attempts",
+			(dir, lines) =>
+				writeExchange(dir, [
+					...lines,
+					record(dir, 4, { allowed: false, attempts: 0 }),
+				]),
 		],
 	]) {
 		it(`live-wave final freeze names a malformed exchange line: ${label}`, (t) => {
@@ -1639,14 +1660,14 @@ describe("plan-package live-wave exchange.jsonl reader (HLW-VC-025)", () => {
 			final_freeze_receipt: RECEIPT,
 		});
 
-	it("live-wave closeout handoff summarizes a valid exchange.jsonl", (t) => {
+	it("live-wave closeout handoff summarizes a refused record", (t) => {
 		const dir = livePlan(t);
 		validExchange(dir);
 		const res = run([CLOSEOUT], handoff(dir));
 		const out = JSON.parse(res.stdout);
-		expectSummary(waveSummary(out));
-		assert.equal(out.outcome, "ADVISE");
+		assert.equal(out.outcome, "ADVISE", res.stdout);
 		assert.equal(out.reason, "handoff_complete");
+		expectSummary(waveSummary(out));
 	});
 
 	it("live-wave closeout carries advisory evidence from the final freeze receipt", (t) => {

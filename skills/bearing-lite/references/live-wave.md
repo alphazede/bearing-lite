@@ -29,7 +29,7 @@ at the end of the wave and before replacing the active plugin.
 ## Exchange evidence
 
 The wave's declared evidence artifact is `live/<wave>/exchange.jsonl`. The
-launcher appends one JSON object per send using the
+launcher appends one JSON object per send or refusal using the
 [exchange record schema](../../../schemas/live-exchange-record.schema.json).
 
 | Key | Value |
@@ -41,12 +41,13 @@ launcher appends one JSON object per send using the
 | `body_path` | Body file path relative to the plan directory |
 | `body_sha256` | Hex SHA-256 of the exact body bytes |
 | `delivered`, `allowed` | Booleans for delivery and whether the pair is allowed |
-| `attempts` | Integer delivery attempt count, 1 or 2 |
+| `attempts` | 1 or 2 for a send, or 0 when the pair was refused (`allowed: false`, `delivered: false`) |
 | `role_file_digests` | Map from role to file paths and their hex SHA-256 digests |
 
 Final freeze and closeout handoff report `live_wave.waves`. Closeout reads the
 exchange again when given top-level `plan_dir` and otherwise carries the summary
 from the final freeze receipt. The wave view reports `live_exchange`. Each wave summary
-contains the record count and the `undelivered` and `not_allowed` message IDs.
+contains the record count, allowed messages that failed delivery (`undelivered`),
+and out-of-table messages (`not_allowed`).
 `missing: true` means the exchange file was absent. These summary fields are
 advisory. A malformed line or unverifiable body digest is a named finding.

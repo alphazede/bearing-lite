@@ -1725,7 +1725,11 @@ function validExchangeRecord(record) {
 		(record.reply_to === null || isNonEmptyStr(record.reply_to)) &&
 		validDigest(record.body_sha256) &&
 		typeof record.delivered === "boolean" &&
-		(record.attempts === 1 || record.attempts === 2) &&
+		(record.attempts === 1 ||
+			record.attempts === 2 ||
+			(record.attempts === 0 &&
+				record.allowed === false &&
+				!record.delivered)) &&
 		typeof record.allowed === "boolean" &&
 		isPlain(record.role_file_digests) &&
 		Object.entries(record.role_file_digests).every(
@@ -1828,8 +1832,8 @@ function readLiveExchange(dir, wave, findings) {
 				}
 				if (record.reply_to === null) requestIds.add(record.request_id);
 				summary.records += 1;
-				if (!record.delivered) summary.undelivered.push(record.request_id);
 				if (!record.allowed) summary.not_allowed.push(record.request_id);
+				else if (!record.delivered) summary.undelivered.push(record.request_id);
 				let digest;
 				try {
 					digest = withContainedFile(root, record.body_path, (body) =>
@@ -1896,12 +1900,7 @@ function freeze(dir, { stage = "final" } = {}) {
 							digests.input_digests,
 						),
 						...(stage === "final"
-							? checkFinalRegister(
-									dir,
-									seit,
-									implementation,
-									digests,
-								)
+							? checkFinalRegister(dir, seit, implementation, digests)
 							: []),
 						...checkBoundaryContract(implementation, seit),
 						...checkSerialChains(implementation),
