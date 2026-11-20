@@ -1,6 +1,7 @@
 /** Final freeze regressions from the owner-approved three-finding follow-up. */
 
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
 	mkdirSync,
@@ -13,6 +14,7 @@ import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { test } from "node:test";
+import { fileURLToPath } from "node:url";
 import { unreviewedPlanningWave } from "./planning-contract-fixture.mjs";
 
 const require = createRequire(import.meta.url);
@@ -50,7 +52,7 @@ function fixture(t) {
 	);
 	const wave = doc.journey_settings.planning_wave;
 	let revision = 0;
-	function refresh() {
+	function refresh(extraInputs = []) {
 		const register = readFileSync(path.join(dir, "register.sdoc"));
 		put(
 			"authority.json",
@@ -62,6 +64,7 @@ function fixture(t) {
 			"plan.md",
 			"register.sdoc",
 			"notes.md",
+			...extraInputs,
 		].map((file) => ({
 			path: file,
 			sha256: sha(readFileSync(path.join(dir, file))),
@@ -181,6 +184,54 @@ test("final freeze resolves bound case IDs against actual SEIT and accepts valid
 		),
 		JSON.stringify(result),
 	);
+});
+
+test("final freeze shares the requirements-stage decision context in bound alignment", (t) => {
+	const fx = fixture(t);
+	const alignment = read("./fixtures/register-precheck/plan.md");
+	const register = read("./fixtures/register-precheck/valid.sdoc");
+	fx.put("alignment.md", alignment);
+	fx.put("plan.md", alignment.replace(/^\| DEC-1[^\n]*\n/m, ""));
+	const early = checkRegister({
+		register,
+		technicalPlan: alignment,
+		files: {
+			"evidence.txt": read("./fixtures/register-precheck/evidence.txt"),
+		},
+		stage: "requirements",
+	});
+	assert.equal(early.outcome, "PASS");
+	fx.refresh();
+	assert.ok(fx.run().findings.some((f) => f.class === "decision"));
+	fx.refresh(["alignment.md"]);
+	const final = fx.run();
+	assert.equal(final.outcome, "PASS", JSON.stringify(final));
+	const cli = spawnSync(
+		process.execPath,
+		[
+			fileURLToPath(new URL("../hooks/register-precheck.cjs", import.meta.url)),
+			"--seit",
+			"seit.json",
+			"--alignment",
+			"alignment.md",
+			"register.sdoc",
+			"plan.md",
+			fx.dir,
+		],
+		{ cwd: fx.dir, encoding: "utf8", timeout: 10_000 },
+	);
+	assert.equal(cli.status, 0, cli.stdout || cli.stderr);
+	fx.put("alignment.md", alignment.replace("DEC-1", "DEC-2"));
+	const stale = fx.run();
+	rejects(stale);
+	assert.ok(
+		stale.findings.some((f) => f.code === "digest_mismatch" && f.path === "alignment.md"),
+	);
+	fx.put("plan.md", alignment);
+	fx.put("alignment.md", "# Alignment without decision declarations\n");
+	fx.refresh(["alignment.md"]);
+	const planOnly = fx.run();
+	assert.equal(planOnly.outcome, "PASS", JSON.stringify(planOnly));
 });
 
 test("an authority-declared register also requires strict final validation", (t) => {

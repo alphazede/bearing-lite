@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Use digest-bound Alignment decisions for final register validation.
+
 - Report final planning-wave closure gaps as advisory findings during draft freeze.
 
 - Lint changed files with [`az-lint`](https://github.com/alphazede/az-lint) as a blocking step before tests, locally and in the hosted gate. ([#264](https://github.com/alphazede/bearing-lite/pull/264))

@@ -183,6 +183,7 @@ function verifyPackageDigests(dir, parsed) {
 	const input_digests = [];
 	const lateInput = implementation?.journey_settings?.final_technical_plan;
 	let finalPlanText;
+	let alignmentText;
 	for (const input of planningInputs(seit, implementation)) {
 		if (
 			typeof input?.path !== "string" ||
@@ -197,6 +198,9 @@ function verifyPackageDigests(dir, parsed) {
 			});
 			continue;
 		}
+		const isAlignment =
+			input !== lateInput &&
+			path.resolve(root, input.path) === path.resolve(dir, "alignment.md");
 		let bytes;
 		if (input === lateInput) {
 			try {
@@ -235,6 +239,8 @@ function verifyPackageDigests(dir, parsed) {
 				recorded: input.sha256,
 				actual: digest,
 			});
+		} else if (isAlignment) {
+			alignmentText = bytes.toString("utf8");
 		}
 	}
 	// The manifest binds the planning inputs and seit.json itself (#70).
@@ -281,6 +287,7 @@ function verifyPackageDigests(dir, parsed) {
 		input_digests: findings.length ? undefined : input_digests,
 		findings,
 		finalPlanText,
+		...(alignmentText === undefined ? {} : { alignmentText }),
 	};
 }
 
@@ -1265,7 +1272,12 @@ function checkBoundaryContract(implementation, seit) {
 }
 
 /** Final assembly must close the requirements-stage pending case bindings. */
-function checkFinalRegister(dir, seit, implementation, finalPlanText) {
+function checkFinalRegister(
+	dir,
+	seit,
+	implementation,
+	{ finalPlanText, alignmentText },
+) {
 	const settings = implementation?.journey_settings || {};
 	const authority = readJson(
 		path.join(dir, "authority.json"),
@@ -1303,6 +1315,7 @@ function checkFinalRegister(dir, seit, implementation, finalPlanText) {
 			stage: "final",
 			seitPath: path.join(dir, "seit.json"),
 			technicalPlan: isLatePlan ? finalPlanText : undefined,
+			decisionContext: alignmentText,
 		});
 	} catch (error) {
 		const offending = error?.path === planAbs ? plans[0].path : register;
@@ -1887,7 +1900,7 @@ function freeze(dir, { stage = "final" } = {}) {
 									dir,
 									seit,
 									implementation,
-									digests.finalPlanText,
+									digests,
 								)
 							: []),
 						...checkBoundaryContract(implementation, seit),

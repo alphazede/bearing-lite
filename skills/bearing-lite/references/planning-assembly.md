@@ -124,8 +124,12 @@ This is the default dependency order, not a requirement to enable every role:
    `seit.json` to compute the candidate digest from the newline-separated
    SHA-256 hex values. Run the repository gate once at assembly
    alongside final-stage `hooks/register-precheck.cjs` with `--seit` and
-   cross-artifact coverage checks; pending bindings block assembly until
-   completed.
+   cross-artifact coverage checks. Both stages recognize decision declarations
+   in confirmed `alignment.md` and the technical plan when available. With the
+   technical plan as the precheck context, also pass `--alignment <alignment.md>`.
+   Final freeze uses Alignment when SEIT binds it by digest and checks glossary
+   and definitions against the technical plan. Pending bindings block assembly
+   until completed.
    This final planning step runs in the existing controller, not another agent.
 4. **Requested planning review:** after the complete final plan/design and assembly,
    run the profile-enabled Reviewer only when the owner requested review at this
