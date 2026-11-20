@@ -21,11 +21,69 @@ jobs:
     timeout-minutes: 20
 
     steps:
+      - name: Check out az-lint
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: alphazede/az-lint
+          ref: 3e01af29e532a7f9f6cbb69722cd37d283cf228e
+          path: .az-lint-runner
+          persist-credentials: false
+
+      - name: Move az-lint outside the checkout
+        run: mv .az-lint-runner "$RUNNER_TEMP/az-lint"
+
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
+
+      - name: Install pinned linters
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" == pull_request ]]; then
+            installer_dir=$(mktemp -d "$RUNNER_TEMP/az-lint-installer.XXXXXX")
+            cd "$installer_dir"
+            # Update both blob IDs when changing the hosted installer inputs.
+            git -C "$GITHUB_WORKSPACE" cat-file blob \
+              fb141dece139c8403d3f5fdf97adb1d934f85172 > install-az-lint.sh
+            git -C "$GITHUB_WORKSPACE" cat-file blob \
+            2d4917b591c30e251b8cbc1740c409eecf956cfd > az-lint-requirements.txt
+            bash install-az-lint.sh
+          else
+            bash .github/scripts/install-az-lint.sh
+          fi
+
+      - name: Resolve lint base
+        env:
+          AZ_LINT_BASE: >-
+            ${{ github.event.pull_request.base.sha || github.event.before }}
+          AZ_LINT_FORCED: ${{ github.event.forced }}
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" != pull_request ]]; then
+            if [[ -z "$AZ_LINT_BASE" || "$AZ_LINT_BASE" =~ ^0+$ ]]; then
+              AZ_LINT_BASE=$(git rev-parse --verify --quiet HEAD^ || true)
+            fi
+            if [[ "$AZ_LINT_FORCED" == true || -z "$AZ_LINT_BASE" ]]; then
+              # Use a commit so az-lint can diff the entire published tree.
+              empty_tree=$(git hash-object -t tree -w --stdin < /dev/null)
+              AZ_LINT_BASE=$(git -c user.name=CI \
+                -c user.email=ci@example.invalid \
+                commit-tree "$empty_tree" -m 'Empty lint baseline')
+            fi
+          fi
+          if ! git cat-file -e "$AZ_LINT_BASE^{commit}"; then
+            git fetch --no-tags origin "$AZ_LINT_BASE"
+          fi
+          printf 'AZ_LINT_BASE=%s\n' "$AZ_LINT_BASE" >> "$GITHUB_ENV"
+
+      - name: Lint pull request files
+        if: github.event_name == 'pull_request'
+        run: |
+          export PATH="$RUNNER_TEMP/az-lint-tools/bin:$PATH"
+          AZ_LINT_CONFIG="$RUNNER_TEMP/az-lint-base.toml"
+          git show "$AZ_LINT_BASE:.az-lint.toml" > "$AZ_LINT_CONFIG"
+          "$RUNNER_TEMP/az-lint/az-lint" \
+            --untrusted --config "$AZ_LINT_CONFIG" --changed "$AZ_LINT_BASE"
 
       - name: Set up Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -40,39 +98,11 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
-      - name: Check out az-lint
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          repository: alphazede/az-lint
-          ref: 3e01af29e532a7f9f6cbb69722cd37d283cf228e
-          path: .az-lint-runner
-          persist-credentials: false
-
-      - name: Install pinned linters
-        run: |
-          mv .az-lint-runner "$RUNNER_TEMP/az-lint"
-          bash .github/scripts/install-az-lint.sh
-
       - name: Lint changed files
-        env:
-          AZ_LINT_BASE: >-
-            ${{ github.event.pull_request.base.sha || github.event.before }}
+        if: github.event_name != 'pull_request'
         run: |
-          if [[ -z "$AZ_LINT_BASE" || "$AZ_LINT_BASE" =~ ^0+$ ]]; then
-            AZ_LINT_BASE=$(git rev-parse HEAD^)
-          fi
-          if ! git cat-file -e "$AZ_LINT_BASE^{commit}"; then
-            git fetch --no-tags origin "$AZ_LINT_BASE"
-          fi
           export PATH="$RUNNER_TEMP/az-lint-tools/bin:$PATH"
-          if [[ "$GITHUB_EVENT_NAME" == pull_request ]]; then
-            AZ_LINT_CONFIG="$RUNNER_TEMP/az-lint-base.toml"
-            git show "$AZ_LINT_BASE:.az-lint.toml" > "$AZ_LINT_CONFIG"
-            "$RUNNER_TEMP/az-lint/az-lint" \
-              --untrusted --config "$AZ_LINT_CONFIG" --changed "$AZ_LINT_BASE"
-          else
-            "$RUNNER_TEMP/az-lint/az-lint" --changed "$AZ_LINT_BASE"
-          fi
+          "$RUNNER_TEMP/az-lint/az-lint" --changed "$AZ_LINT_BASE"
 
       - name: Test public Lite contract
         run: node --test test/*.test.mjs
