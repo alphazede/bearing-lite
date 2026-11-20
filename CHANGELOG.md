@@ -2,26 +2,21 @@
 
 ## [Unreleased]
 
+## [3.0.0](https://github.com/alphazede/bearing-lite/releases/tag/v3.0.0) - 2026-11-20
+
 - Pin `az-lint` to `v0.1.2`, which stops pull-request lint from reporting `EXE001` on executable scripts. ([#268](https://github.com/alphazede/bearing-lite/pull/268))
 - Harden the hosted lint step: hash-pinned Python tools, pull requests linted in untrusted mode with the base revision's configuration, and `az-lint` pinned to `v0.1.1`. ([#267](https://github.com/alphazede/bearing-lite/pull/267))
 - Pin `az-lint` to its re-authored `v0.1.0` commit; the files are unchanged. ([#266](https://github.com/alphazede/bearing-lite/pull/266))
-- Keep refused messages advisory when a body or reply target is unavailable.
-
-- Exclude fenced examples when resolving register decision traces.
-
-- Use the digest-bound workspace decision record in final register validation.
-
-- Keep unreadable planning-wave closure evidence advisory during draft freeze.
-
-- Summarize refused live-wave messages without counting them as delivery failures.
-
-- Allow a zero-round budget for waves without wave-level review.
-
-- Use digest-bound Alignment decisions for final register validation.
-
-- Report final planning-wave closure gaps as advisory findings during draft freeze.
-
+- Keep refused messages advisory when a body or reply target is unavailable. ([#265](https://github.com/alphazede/bearing-lite/pull/265))
+- Exclude fenced examples when resolving register decision traces. ([#265](https://github.com/alphazede/bearing-lite/pull/265))
+- Use the digest-bound workspace decision record in final register validation. ([#265](https://github.com/alphazede/bearing-lite/pull/265))
+- Keep unreadable planning-wave closure evidence advisory during draft freeze. ([#265](https://github.com/alphazede/bearing-lite/pull/265))
+- Summarize refused live-wave messages without counting them as delivery failures. ([#265](https://github.com/alphazede/bearing-lite/pull/265))
+- Allow a zero-round budget for waves without wave-level review. ([#265](https://github.com/alphazede/bearing-lite/pull/265))
+- Use digest-bound Alignment decisions for final register validation. ([#265](https://github.com/alphazede/bearing-lite/pull/265))
+- Report final planning-wave closure gaps as advisory findings during draft freeze. ([#265](https://github.com/alphazede/bearing-lite/pull/265))
 - Lint changed files with [`az-lint`](https://github.com/alphazede/az-lint) as a blocking step before tests, locally and in the hosted gate. ([#264](https://github.com/alphazede/bearing-lite/pull/264))
+
 ## [3.0.0-rc.7] - 2026-11-19
 
 - Add opt-in Herdr live-wave evidence to plan freeze, wave views, and closeout handoffs, with a shared role reference.
