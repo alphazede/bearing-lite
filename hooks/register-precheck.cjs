@@ -51,6 +51,34 @@ function parseRegister(text) {
 	return rows;
 }
 
+function decisionIds(text) {
+	const ids = [];
+	let fence;
+	for (const line of text.split(/\r?\n/)) {
+		const marker = line.match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
+		if (marker) {
+			const [, run, suffix] = marker;
+			if (!fence && (run[0] === "~" || !suffix.includes("`"))) {
+				fence = run;
+			} else if (
+				fence &&
+				run[0] === fence[0] &&
+				run.length >= fence.length &&
+				!suffix.trim()
+			) {
+				fence = undefined;
+			}
+			continue;
+		}
+		if (fence) continue;
+		const declaration = line.match(
+			/^(?:#{1,6}[^\S\r\n]+|\|[^\S\r\n]*)`?(DEC-[A-Z0-9.-]+)\b/,
+		);
+		if (declaration) ids.push(declaration[1]);
+	}
+	return ids;
+}
+
 function checkRegister({
 	register,
 	technicalPlan,
@@ -87,12 +115,7 @@ function checkRegister({
 		row.fields.find((f) => f.name === "UID")?.value.trim() || "<missing>";
 	const uids = new Set(rows.map(uidOf));
 	const decisions = new Set(
-		Array.from(
-			`${decisionContext}\n${technicalPlan}`.matchAll(
-				/^(?:#{1,6}[^\S\r\n]+|\|[^\S\r\n]*)`?(DEC-[A-Z0-9.-]+)\b/gm,
-			),
-			(match) => match[1],
-		),
+		[decisionContext ?? "", technicalPlan].flatMap(decisionIds),
 	);
 	const definitions = new Set(),
 		terms = new Set();

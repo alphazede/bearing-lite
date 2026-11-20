@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Exclude fenced examples when resolving register decision traces.
+
 - Use the digest-bound workspace decision record in final register validation.
 
 - Keep unreadable planning-wave closure evidence advisory during draft freeze.
