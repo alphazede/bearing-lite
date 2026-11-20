@@ -823,17 +823,8 @@ function checkManifestProjection(implementation, dir) {
  * sessions or reviewer identities; one explicit repair links that reviewed
  * candidate to closure.
  */
-function checkWaveRecord(
-	wave,
-	{
-		expectedDigest,
-		isLatest,
-		stage = "final",
-		dir,
-		inputDigests,
-		correctionId = null,
-	},
-) {
+function checkWaveRecord(wave, context) {
+	const { stage = "final", correctionId = null } = context;
 	if (!wave || typeof wave !== "object" || Array.isArray(wave)) {
 		return [
 			{
@@ -873,6 +864,20 @@ function checkWaveRecord(
 			...(correctionId ? { correction_id: correctionId } : {}),
 			...(stage === "draft" ? { blocking: false } : {}),
 		});
+	try {
+		checkWaveClosure(wave, context, push);
+	} catch (error) {
+		if (stage !== "draft") throw error;
+		push({ code: "planning_wave_closure_unreadable" });
+	}
+	return findings;
+}
+
+function checkWaveClosure(
+	wave,
+	{ expectedDigest, isLatest, dir, inputDigests, correctionId = null },
+	push,
+) {
 	if (!Array.isArray(wave.sessions)) {
 		push({ code: "planning_wave_sessions_incomplete" });
 	}
@@ -963,7 +968,7 @@ function checkWaveRecord(
 				});
 			}
 		}
-		return findings;
+		return;
 	}
 	if (wave.reviews !== REVIEW_POLICY.review_rounds) {
 		push({
@@ -989,7 +994,7 @@ function checkWaveRecord(
 			if (path.isAbsolute(ref.path) || !file.startsWith(root + path.sep)) {
 				invalidReview("receipt_path_invalid");
 			} else {
-				const bytes = fs.readFileSync(file);
+				const bytes = withRegularFile(file, fs.readFileSync);
 				if (sha256(bytes) !== ref.sha256)
 					invalidReview("receipt_digest_mismatch");
 				else review = JSON.parse(bytes);
@@ -1082,7 +1087,6 @@ function checkWaveRecord(
 	} else if (review !== undefined) {
 		invalidReview("receipt_invalid");
 	}
-	return findings;
 }
 
 function checkPlanningWave(
@@ -1759,7 +1763,10 @@ function withContainedFile(root, relativePath, read) {
 	}
 	const file = fs.realpathSync(resolved);
 	if (!inside(file)) throw new Error("file symlink escapes its root");
+	return withRegularFile(file, read);
+}
 
+function withRegularFile(file, read) {
 	// Opening nonblocking prevents a named pipe from hanging a hook.
 	const fd = fs.openSync(
 		file,
