@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Keep refused messages advisory when a body or reply target is unavailable.
+
 - Exclude fenced examples when resolving register decision traces.
 
 - Use the digest-bound workspace decision record in final register validation.

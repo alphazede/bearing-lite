@@ -48,6 +48,7 @@ Final freeze and closeout handoff report `live_wave.waves`. Closeout reads the
 exchange again when given top-level `plan_dir` and otherwise carries the summary
 from the final freeze receipt. The wave view reports `live_exchange`. Each wave summary
 contains the record count, allowed messages that failed delivery (`undelivered`),
-and out-of-table messages (`not_allowed`).
-`missing: true` means the exchange file was absent. These summary fields are
-advisory. A malformed line or unverifiable body digest is a named finding.
+and out-of-table messages (`not_allowed`). Well-formed zero-attempt refusals
+are advisory even when the reply target or body file is unavailable.
+`missing: true` means the exchange file was absent. A malformed line or an
+attempted message with an unverifiable body digest is a named finding.
