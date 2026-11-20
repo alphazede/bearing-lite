@@ -95,6 +95,47 @@ function fixture(t) {
 const rejects = (result) =>
 	assert.equal(result.outcome, "FAIL", JSON.stringify(result));
 
+test("draft advises on final-only planning wave gaps", (t) => {
+	const fx = fixture(t);
+	const { closing_candidate: closing } = fx.wave;
+	fx.wave.required_sessions = ["mbse"];
+	fx.wave.sessions = [
+		{ session: "mbse", ...closing, candidate_revision: "earlier", verdict: "READY" },
+	];
+	const cases = [
+		["reviews", "planning_wave_review_count"],
+		["repairs", "planning_wave_repair_limit"],
+		["closure", "planning_wave_closure_missing"],
+		["closing_candidate", "planning_wave_candidate_mismatch"],
+	];
+	for (const [field] of cases) delete fx.wave[field];
+	const expectGaps = (stage, codes) => {
+		const result = fx.run(stage);
+		assert.equal(result.outcome, stage === "draft" ? "PASS" : "FAIL");
+		for (const code of codes) {
+			const finding = result.findings.find((item) => item.code === code);
+			assert.ok(finding, `${stage}: missing ${code}`);
+			assert.equal(finding.blocking === false, stage === "draft");
+		}
+	};
+	for (const stage of ["final", "draft"]) {
+		expectGaps(stage, cases.map(([, code]) => code));
+	}
+	Object.assign(fx.wave, {
+		reviews: 0,
+		repairs: 0,
+		closure: "deterministic_PASS",
+		closing_candidate: closing,
+	});
+	for (const stage of ["final", "draft"]) {
+		expectGaps(stage, ["planning_wave_sessions_incomplete"]);
+	}
+	fx.wave.sessions[0].adopted_to = closing;
+	fx.wave.sessions[0].inputs = [fx.initial.inputs[0]];
+	assert.deepEqual(fx.run("draft").findings, []);
+	assert.deepEqual(fx.run().findings, []);
+});
+
 test("final freeze rejects requirements-stage pending case bindings while draft remains valid", (t) => {
 	const fx = fixture(t);
 	const register = read("./fixtures/register-precheck/valid.sdoc").replace(

@@ -859,12 +859,13 @@ function checkWaveRecord(
 			},
 		];
 	}
-	if (stage === "draft") return [];
 	const findings = [];
 	const push = (finding) =>
-		findings.push(
-			correctionId ? { ...finding, correction_id: correctionId } : finding,
-		);
+		findings.push({
+			...finding,
+			...(correctionId ? { correction_id: correctionId } : {}),
+			...(stage === "draft" ? { blocking: false } : {}),
+		});
 	if (!Array.isArray(wave.sessions)) {
 		push({ code: "planning_wave_sessions_incomplete" });
 	}
@@ -902,6 +903,17 @@ function checkWaveRecord(
 			actual: expectedDigest,
 		});
 	}
+	const closing = wave.closing_candidate;
+	const closingMatches =
+		sameCandidate(closing, closing) &&
+		closing.candidate_digest === wave.candidate_digest;
+	if (!closingMatches) {
+		push({
+			code: "planning_wave_candidate_mismatch",
+			recorded: closing ?? null,
+			actual: expectedDigest,
+		});
+	}
 	if (wave.review_requested === false) {
 		// Unrequested review is recorded, never dispatched or forged.
 		if (wave.reviews !== 0)
@@ -920,17 +932,7 @@ function checkWaveRecord(
 				reason: "unrequested_review_evidence",
 			});
 		}
-		const closing = wave.closing_candidate;
-		if (
-			!sameCandidate(closing, closing) ||
-			closing.candidate_digest !== wave.candidate_digest
-		) {
-			push({
-				code: "planning_wave_candidate_mismatch",
-				recorded: closing ?? null,
-				actual: expectedDigest,
-			});
-		} else if (Array.isArray(wave.sessions)) {
+		if (closingMatches && Array.isArray(wave.sessions)) {
 			const sessionVerdict = planningSessionsVerdict(
 				wave,
 				closing,
@@ -1052,17 +1054,6 @@ function checkWaveRecord(
 					sessionVerdict.reason === "external_items_open"
 						? "planning_wave_external_items_open"
 						: "planning_wave_sessions_incomplete",
-			});
-		}
-		const closing = wave.closing_candidate;
-		if (
-			!sameCandidate(closing, closing) ||
-			closing.candidate_digest !== wave.candidate_digest
-		) {
-			push({
-				code: "planning_wave_candidate_mismatch",
-				recorded: closing ?? null,
-				actual: expectedDigest,
 			});
 		}
 		const repair = wave.repair;
