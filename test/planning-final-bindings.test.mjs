@@ -147,6 +147,27 @@ test("draft advises on final-only planning wave gaps", (t) => {
 	assert.deepEqual(fx.run().findings, []);
 });
 
+test("a malformed closing receipt advises in draft and blocks final freeze", (t) => {
+	const fx = fixture(t);
+	const receipt = JSON.stringify({ aggregated_repairs: { toString: null } });
+	fx.put("review-receipt.json", receipt);
+	Object.assign(fx.wave, {
+		review_requested: true,
+		reviews: 1,
+		review_receipt: { path: "review-receipt.json", sha256: sha(receipt) },
+	});
+
+	const draft = fx.run("draft");
+	assert.equal(draft.outcome, "PASS", JSON.stringify(draft));
+	assert.ok(
+		draft.findings.some(
+			(f) =>
+				f.code === "planning_wave_closure_unreadable" && f.blocking === false,
+		),
+	);
+	rejects(fx.run());
+});
+
 test("final freeze accepts zero review rounds for a review-free wave", (t) => {
 	const fx = fixture(t);
 	const rows = fx.doc.journey_settings.review_rounds;

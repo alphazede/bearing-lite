@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Keep unreadable planning-wave closure evidence advisory during draft freeze.
+
 - Summarize refused live-wave messages without counting them as delivery failures.
 
 - Allow a zero-round budget for waves without wave-level review.
