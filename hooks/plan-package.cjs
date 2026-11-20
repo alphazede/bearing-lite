@@ -182,8 +182,10 @@ function verifyPackageDigests(dir, parsed) {
 	const actual = [];
 	const input_digests = [];
 	const lateInput = implementation?.journey_settings?.final_technical_plan;
+	const workspacePath = path.resolve(dir, "workspace.md");
+	const alignmentPath = path.resolve(dir, "alignment.md");
 	let finalPlanText;
-	let alignmentText;
+	let decisionContext;
 	for (const input of planningInputs(seit, implementation)) {
 		if (
 			typeof input?.path !== "string" ||
@@ -198,9 +200,7 @@ function verifyPackageDigests(dir, parsed) {
 			});
 			continue;
 		}
-		const isAlignment =
-			input !== lateInput &&
-			path.resolve(root, input.path) === path.resolve(dir, "alignment.md");
+		const file = path.resolve(root, input.path);
 		let bytes;
 		if (input === lateInput) {
 			try {
@@ -222,7 +222,6 @@ function verifyPackageDigests(dir, parsed) {
 				continue;
 			}
 		} else {
-			const file = path.resolve(root, input.path);
 			if (!fs.existsSync(file)) {
 				findings.push({ code: "missing_input", path: input.path });
 				continue;
@@ -239,8 +238,12 @@ function verifyPackageDigests(dir, parsed) {
 				recorded: input.sha256,
 				actual: digest,
 			});
-		} else if (isAlignment) {
-			alignmentText = bytes.toString("utf8");
+		} else if (
+			input !== lateInput &&
+			(file === workspacePath ||
+				(file === alignmentPath && decisionContext === undefined))
+		) {
+			decisionContext = bytes.toString("utf8");
 		}
 	}
 	// The manifest binds the planning inputs and seit.json itself (#70).
@@ -287,7 +290,7 @@ function verifyPackageDigests(dir, parsed) {
 		input_digests: findings.length ? undefined : input_digests,
 		findings,
 		finalPlanText,
-		...(alignmentText === undefined ? {} : { alignmentText }),
+		decisionContext,
 	};
 }
 
@@ -1280,7 +1283,7 @@ function checkFinalRegister(
 	dir,
 	seit,
 	implementation,
-	{ finalPlanText, alignmentText },
+	{ finalPlanText, decisionContext },
 ) {
 	const settings = implementation?.journey_settings || {};
 	const authority = readJson(
@@ -1319,7 +1322,7 @@ function checkFinalRegister(
 			stage: "final",
 			seitPath: path.join(dir, "seit.json"),
 			technicalPlan: isLatePlan ? finalPlanText : undefined,
-			decisionContext: alignmentText,
+			decisionContext,
 		});
 	} catch (error) {
 		const offending = error?.path === planAbs ? plans[0].path : register;
