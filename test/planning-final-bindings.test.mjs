@@ -20,6 +20,9 @@ import { unreviewedPlanningWave } from "./planning-contract-fixture.mjs";
 const require = createRequire(import.meta.url);
 const { freeze } = require("../hooks/plan-package.cjs");
 const { checkRegister } = require("../hooks/register-precheck.cjs");
+const precheck = fileURLToPath(
+	new URL("../hooks/register-precheck.cjs", import.meta.url),
+);
 const read = (rel) => readFileSync(new URL(rel, import.meta.url), "utf8");
 const corpus = JSON.parse(read("./fixtures/planning-repair-package.json"));
 const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
@@ -256,7 +259,7 @@ test("final freeze shares the requirements-stage decision context in bound align
 	const cli = spawnSync(
 		process.execPath,
 		[
-			fileURLToPath(new URL("../hooks/register-precheck.cjs", import.meta.url)),
+			precheck,
 			"--seit",
 			"seit.json",
 			"--alignment",
@@ -298,6 +301,44 @@ test("final freeze uses the bound workspace used by MBSE precheck", (t) => {
 	fx.refresh(["workspace.md", "alignment.md"]);
 	const bound = fx.run();
 	assert.equal(bound.outcome, "PASS", JSON.stringify(bound));
+});
+
+test("fenced decision examples do not satisfy register traces", (t) => {
+	const fx = fixture(t);
+	const context = read("./fixtures/register-precheck/plan.md");
+	fx.put(
+		"alignment.md",
+		"# Decision syntax\n\n```markdown\n| DEC-1 | Example only. |\n```\n\n" +
+			"~~~markdown\n## DEC-1 Example heading\n~~~\n",
+	);
+	fx.put("plan.md", context.replace(/^\| DEC-1[^\n]*\n/m, ""));
+	fx.refresh(["alignment.md"]);
+	const final = fx.run();
+	rejects(final);
+	assert.ok(final.findings.some((f) => f.class === "decision"));
+
+	const cli = spawnSync(
+		process.execPath,
+		[
+			precheck,
+			"--alignment",
+			"alignment.md",
+			"register.sdoc",
+			"plan.md",
+			fx.dir,
+		],
+		{ cwd: fx.dir, encoding: "utf8", timeout: 10_000 },
+	);
+	assert.equal(cli.status, 1, cli.stdout || cli.stderr);
+	assert.ok(
+		JSON.parse(cli.stdout).findings.some((f) => f.class === "decision"),
+	);
+
+	fx.put("alignment.md", "~~~markdown\n## DEC-2 Example heading\n");
+	fx.put("plan.md", context);
+	fx.refresh(["alignment.md"]);
+	const declared = fx.run();
+	assert.equal(declared.outcome, "PASS", JSON.stringify(declared));
 });
 
 test("an authority-declared register also requires strict final validation", (t) => {
