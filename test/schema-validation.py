@@ -1061,6 +1061,27 @@ def cases() -> list[tuple[str, str, str, object, str]]:
         ("HLW-VC-025", "exchange_advisory_flags", "live_exchange", exchange, "accept"),
         (
             "HLW-VC-025",
+            "exchange_refused",
+            "live_exchange",
+            dict(exchange, attempts=0),
+            "accept",
+        ),
+        (
+            "HLW-VC-025",
+            "exchange_undelivered_without_attempt",
+            "live_exchange",
+            dict(exchange, attempts=0, allowed=True),
+            "reject",
+        ),
+        (
+            "HLW-VC-025",
+            "exchange_delivered_without_attempt",
+            "live_exchange",
+            dict(exchange, attempts=0, delivered=True),
+            "reject",
+        ),
+        (
+            "HLW-VC-025",
             "exchange_reply",
             "live_exchange",
             dict(exchange, reply_to="request-0"),

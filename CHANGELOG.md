@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Summarize refused live-wave messages without counting them as delivery failures.
+
 - Allow a zero-round budget for waves without wave-level review.
 
 - Use digest-bound Alignment decisions for final register validation.

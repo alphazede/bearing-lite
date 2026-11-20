@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/alphazede/bearing-lite/schemas/live-exchange-record.schema.json",
   "title": "Bearing Lite live-wave exchange record",
-  "description": "One message send in exchange.jsonl. Readers also check references to earlier requests and the digest of the body file.",
+  "description": "One message send or refusal in exchange.jsonl. Readers also check references to earlier requests and the digest of the body file.",
   "type": "object",
   "$defs": {
     "nonempty": { "type": "string", "pattern": "\\S" },
@@ -28,7 +28,7 @@
     },
     "body_sha256": { "$ref": "#/$defs/digest" },
     "delivered": { "type": "boolean" },
-    "attempts": { "type": "integer", "enum": [1, 2] },
+    "attempts": { "type": "integer", "enum": [0, 1, 2] },
     "allowed": { "type": "boolean" },
     "role_file_digests": {
       "type": "object",
@@ -39,5 +39,7 @@
         "additionalProperties": { "$ref": "#/$defs/digest" }
       }
     }
-  }
+  },
+  "if": { "properties": { "attempts": { "const": 0 } } },
+  "then": { "properties": { "allowed": { "const": false }, "delivered": { "const": false } } }
 }
