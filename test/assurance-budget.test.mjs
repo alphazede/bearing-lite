@@ -119,13 +119,11 @@ describe("CMD-LITE-CADENCE-NODE-TEST per-declared-unit assurance budget", () => 
 			},
 			[],
 		);
-		const check = (extra) =>
-			budgetHook().evaluateAssuranceBudget(request(fx, extra));
-		assert.deepEqual(check(), {
-			outcome: "HALT",
-			reason: "assurance_round_limit",
-		});
-		assert.equal(check({ assurance_unit: "W4" }).outcome, "PASS");
+		const check = (extra) => viaTransition(request(fx, extra));
+		const blocked = check();
+		assert.equal(blocked.outcome, "BLOCK");
+		assert.equal(blocked.reason, "assurance_budget:HALT:assurance_round_limit");
+		assert.equal(check({ assurance_unit: "W4" }).outcome, "ADVISE");
 		assert.equal(
 			check({
 				assurance_unit: "S1",
@@ -133,7 +131,7 @@ describe("CMD-LITE-CADENCE-NODE-TEST per-declared-unit assurance budget", () => 
 				request_scope: "slice",
 				cadence: "slice",
 			}).outcome,
-			"PASS",
+			"ADVISE",
 		);
 	});
 
