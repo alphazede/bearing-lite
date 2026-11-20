@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Pin `az-lint` to `v0.1.2`, which stops pull-request lint from reporting `EXE001` on executable scripts. ([#268](https://github.com/alphazede/bearing-lite/pull/268))
 - Harden the hosted lint step: hash-pinned Python tools, pull requests linted in untrusted mode with the base revision's configuration, and `az-lint` pinned to `v0.1.1`. ([#267](https://github.com/alphazede/bearing-lite/pull/267))
 - Pin `az-lint` to its re-authored `v0.1.0` commit; the files are unchanged. ([#266](https://github.com/alphazede/bearing-lite/pull/266))
 - Keep refused messages advisory when a body or reply target is unavailable.
