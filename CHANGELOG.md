@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Pin `az-lint` to its re-authored `v0.1.0` commit; the files are unchanged. ([#266](https://github.com/alphazede/bearing-lite/pull/266))
 - Keep refused messages advisory when a body or reply target is unavailable.
 
 - Exclude fenced examples when resolving register decision traces.
