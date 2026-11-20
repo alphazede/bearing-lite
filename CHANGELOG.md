@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Use the digest-bound workspace decision record in final register validation.
+
 - Keep unreadable planning-wave closure evidence advisory during draft freeze.
 
 - Summarize refused live-wave messages without counting them as delivery failures.

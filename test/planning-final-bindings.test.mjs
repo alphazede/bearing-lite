@@ -283,6 +283,23 @@ test("final freeze shares the requirements-stage decision context in bound align
 	assert.equal(planOnly.outcome, "PASS", JSON.stringify(planOnly));
 });
 
+test("final freeze uses the bound workspace used by MBSE precheck", (t) => {
+	const fx = fixture(t);
+	const context = read("./fixtures/register-precheck/plan.md");
+	fx.put("workspace.md", context);
+	fx.put("alignment.md", context.replace("DEC-1", "DEC-2"));
+	fx.put("plan.md", context.replace(/^\| DEC-1[^\n]*\n/m, ""));
+
+	fx.refresh(["alignment.md"]);
+	const unbound = fx.run();
+	rejects(unbound);
+	assert.ok(unbound.findings.some((f) => f.class === "decision"));
+
+	fx.refresh(["workspace.md", "alignment.md"]);
+	const bound = fx.run();
+	assert.equal(bound.outcome, "PASS", JSON.stringify(bound));
+});
+
 test("an authority-declared register also requires strict final validation", (t) => {
 	const fx = fixture(t);
 	delete fx.doc.journey_settings.journey_type;
