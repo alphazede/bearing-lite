@@ -145,6 +145,9 @@ validate readback → optional consented launch probe → return.
        (enabled mode needs scoped task authority, exclusions, expiry).
    11. **Catalog defaults (`defaults`):** optional `defaults.planning`,
        `defaults.implementation` resolving to exact profile keys; never silent.
+   12. **Default execution mode (`execution.live_wave`):** ask whether to use
+       `herdr` or `headless` when creating a profile or editing this setting.
+       Leave the field absent if deferred on create. Preserve it on unrelated edits.
 4. Validate before/after write and preserve extension keys losslessly:
    - **Pre-write:** run `scripts/validate-profiles.mjs --stdin` (using
      `references/profiles.schema.json` / `schemas/profiles.schema.json` and

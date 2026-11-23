@@ -413,8 +413,9 @@ function prefixCssSelectors(css, prefix, rootId) {
 				// descendant of it (that could never match and colours died).
 				if (rootId && t.startsWith(`#${rootId}`)) {
 					const rest = t.slice(rootId.length + 1);
+					// Also constrain the subject: a sibling combinator can leave the SVG.
 					if (rest === "" || /^[\s>+~.[:#]/.test(rest))
-						return `${prefix}${rest}`;
+						return `:is(${prefix}${rest}):where(${prefix}, ${prefix} *)`;
 				}
 				return `${prefix} ${t}`;
 			})

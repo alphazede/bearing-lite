@@ -254,6 +254,17 @@ const mismatch = (out) =>
 	out.findings.filter((f) => f.code === "live_wave_profile_mismatch");
 
 describe("#270 Planning and Design sets journey_settings.live_wave from the frozen snapshot", () => {
+	it("the planning assembly procedure copies the mode from the frozen profile", () => {
+		const assembly = readFileSync(
+			path.join(ROOT, "skills/bearing-lite/references/planning-assembly.md"),
+			"utf8",
+		);
+		assert.match(
+			assembly,
+			/Copy\s+`profile_freeze\.snapshot\.execution\.live_wave` into\s+`journey_settings\.live_wave`/,
+		);
+	});
+
 	it("implementation schema accepts headless as an explicit plan value", () => {
 		const schema = JSON.parse(
 			readFileSync(
@@ -384,10 +395,25 @@ describe("#270 wave view is a read-only plan inspection with no availability cla
 			/launcher[^.]*unavailable[^.]*typed gap|typed gap[^.]*launcher/is,
 		);
 	});
+
+	it("#272 live-wave reference describes tab creation, reuse and label", () => {
+		const doc = readFileSync(
+			path.join(ROOT, "skills/bearing-lite/references/live-wave.md"),
+			"utf8",
+		);
+		assert.match(doc, /labels it with\s+the journey ID and wave ID/);
+		assert.match(doc, /creates a tab on the first launch/);
+		assert.match(doc, /reuses the tab/);
+	});
 });
 
 describe("#270 onboard-bearing asks for the default execution mode", () => {
 	const read = (f) => readFileSync(path.join(ONBOARD, f), "utf8");
+
+	it("the main onboarding checklist includes the optional execution mode", () => {
+		const skill = readFileSync(path.join(ONBOARD, "../SKILL.md"), "utf8");
+		assert.match(skill, /Default execution mode \(`execution\.live_wave`\)/);
+	});
 
 	it("Full setup walks the execution mode", () => {
 		const full =

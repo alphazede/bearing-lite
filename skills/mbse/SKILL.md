@@ -89,9 +89,10 @@ Loop: author → self requirements-quality pass → model and map → self-check
    `digest` `sha256:` + view hex and `view`, or `views[0]` when `view` is
    absent. Use `format` `svg` or `png` with `path` relative to
    `implementation.json`, or `format` `svg` with `inline`. For a
-   diagram-assisted Mermaid model, render the view to a manifest-safe SVG
-   with `node tools/render-mermaid-view.mjs <input.mmd> <output.svg>` and
-   bind that file as `format` `svg` so the owner sees the diagram; it uses
+   diagram-assisted Mermaid model, run
+   `node "<plugin root>/tools/render-mermaid-view.mjs" <input.mmd> <output.svg>`
+   from the plan directory, using the installed plugin's absolute path.
+   Bind the output as `format` `svg` so the owner sees the diagram. The helper uses
    a local `mmdc` (`BEARING_MMDC` overrides the command,
    `BEARING_MMDC_PUPPETEER_CONFIG` is passed as `-p`), renders with
    `htmlLabels: false`, inlines computed presentation attributes, and

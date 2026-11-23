@@ -124,7 +124,7 @@ function shapeFills(svg, classPattern) {
 describe("issue #271 documented Mermaid-to-SVG path", () => {
 	it("the MBSE skill documents the Mermaid-to-SVG helper for diagram-assisted views", () => {
 		const skill = readFileSync(MBSE_SKILL, "utf8");
-		assert.match(skill, /tools\/render-mermaid-view\.mjs/);
+		assert.match(skill, /<plugin root>\/tools\/render-mermaid-view\.mjs/);
 	});
 
 	it("is a packaged helper that fails closed and names mmdc when no local renderer is available", () => {
@@ -192,6 +192,30 @@ describe("issue #271 documented Mermaid-to-SVG path", () => {
 			() => assertDocumentedPath(source, labels),
 		);
 	}
+
+	it("keeps marker references local when different flowcharts share one Manifest", {
+		skip: !MMDC && "opt-in: set BEARING_MMDC to a local mmdc",
+	}, () => {
+		const dir = tempDir();
+		const markerIds = [];
+		for (const [index, lineColor] of ["#257550", "#943132"].entries()) {
+			const input = path.join(dir, `flow-${index}.mmd`);
+			const output = path.join(dir, `flow-${index}.svg`);
+			writeFileSync(
+				input,
+				`---\nconfig:\n  theme: base\n  themeVariables:\n    lineColor: "${lineColor}"\n---\n${FLOWCHART}`,
+			);
+			const result = runHelper([input, output]);
+			assert.equal(result.status, 0, result.stderr);
+			const svg = readFileSync(output, "utf8");
+			const marker = /marker-end="url\(#([^"]+)\)"/.exec(svg)?.[1];
+			assert.ok(marker, "a directed edge has a marker");
+			assert.ok(svg.includes(`<marker id="${marker}"`));
+			assert.ok(svg.includes(`fill="${lineColor}"`));
+			markerIds.push(marker);
+		}
+		assert.notEqual(...markerIds);
+	});
 
 	for (const [kind, name, labels] of [
 		["flowchart", "flowchart", ["Plan", "Review?", "Land", "pass"]],
@@ -298,6 +322,10 @@ describe("issue #271 renderer reports what to fix and never drops colours silent
 			out,
 			new RegExp(`\\.${scope}\\s+#my-svg\\b`),
 			`colour rule silently dead: ${out}`,
+		);
+		assert.ok(
+			out.includes(`:where(.${scope}, .${scope} *)`),
+			"the subject of a rewritten selector must stay within its SVG",
 		);
 	});
 });
