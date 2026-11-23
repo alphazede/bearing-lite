@@ -89,8 +89,15 @@ Loop: author → self requirements-quality pass → model and map → self-check
    `digest` `sha256:` + view hex and `view`, or `views[0]` when `view` is
    absent. Use `format` `svg` or `png` with `path` relative to
    `implementation.json`, or `format` `svg` with `inline`. For a
-   diagram-assisted model, `format` `mermaid` with a relative `path` embeds
-   the source as text. The digest binds the exact source file bytes. Supply `mode`,
+   diagram-assisted Mermaid model, render the view to a manifest-safe SVG
+   with `node tools/render-mermaid-view.mjs <input.mmd> <output.svg>` and
+   bind that file as `format` `svg` so the owner sees the diagram; it uses
+   a local `mmdc` (`BEARING_MMDC` overrides the command,
+   `BEARING_MMDC_PUPPETEER_CONFIG` is passed as `-p`), renders with
+   `htmlLabels: false`, inlines computed presentation attributes, and
+   fails closed without writing when no local renderer is available.
+   Binding `format` `mermaid` with a relative `path` instead embeds the
+   source as text. The digest binds the exact source file bytes. Supply `mode`,
    `source`, `revision`, `viewpoint`, `trace`, `limitations`, `render_status`,
    and view `alt`; inactive or not-applicable gives `reason` and no view).
    Write `trace` as one string containing comma-separated requirement or decision
