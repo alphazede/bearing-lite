@@ -162,6 +162,31 @@ function escAttr(value) {
 		.replace(/"/g, "&quot;");
 }
 
+const XML_ENTITIES = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
+
+function decodeXmlText(value) {
+	return value.replace(/&([^&;]+);|&/g, (_reference, entity) => {
+		if (Object.hasOwn(XML_ENTITIES, entity)) return XML_ENTITIES[entity];
+		const number = /^#(?:(\d+)|[xX]([0-9a-fA-F]+))$/.exec(entity ?? "");
+		if (number) {
+			const code = number[1]
+				? Number.parseInt(number[1], 10)
+				: Number.parseInt(number[2], 16);
+			if (
+				code === 9 ||
+				code === 10 ||
+				code === 13 ||
+				(code >= 0x20 && code <= 0xd7ff) ||
+				(code >= 0xe000 && code <= 0xfffd) ||
+				(code >= 0x10000 && code <= 0x10ffff)
+			) {
+				return String.fromCodePoint(code);
+			}
+		}
+		throw new Error("Malformed or unsupported XML reference in mmdc output.");
+	});
+}
+
 function safeCssValue(value) {
 	const v = String(value);
 	if (/javascript:|expression\s*\(|[<]/i.test(v)) return false;
@@ -292,9 +317,8 @@ function specificity(parts) {
 	return [ids, classes, tags];
 }
 
-function parseCssRules(css) {
+function parseCssRules(css, rules) {
 	const s = String(css).replace(/\/\*[\s\S]*?\*\//g, "");
-	const rules = [];
 	let i = 0;
 	const skipBlock = (open) => {
 		let depth = 0;
@@ -336,7 +360,6 @@ function parseCssRules(css) {
 		}
 		i = end;
 	}
-	return rules;
 }
 
 function matchesCompound(comp, el) {
@@ -400,70 +423,47 @@ function computedDecls(rules, el, ancestors) {
 
 function parseAttrList(raw) {
 	const attrs = [];
-	for (const m of raw.matchAll(
-		/([A-Za-z_:][\w:.-]*)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'))?/g,
-	)) {
-		attrs.push([m[1], m[2] ?? m[3] ?? ""]);
+	const input = raw.trim();
+	const attribute =
+		/\s*([A-Za-z_:][\w:.-]*)\s*=\s*(?:"([^"]*)"|'([^']*)')(?=\s|$)/gy;
+	let i = 0;
+	while (i < input.length) {
+		const match = attribute.exec(input);
+		if (!match) throw new Error("Malformed SVG attribute in mmdc output.");
+		attrs.push([match[1], decodeXmlText(match[2] ?? match[3])]);
+		i = attribute.lastIndex;
 	}
 	return attrs;
 }
 
-/** Turn raw `mmdc` SVG into an SVG the Manifest sanitizer accepts unchanged. */
-export function toManifestSafeSvg(raw) {
-	if (/<script/i.test(raw))
-		throw new Error("mmdc output contains a script element.");
-	if (/<foreignobject/i.test(raw)) {
-		throw new Error(
-			"mmdc output contains a foreignObject element; htmlLabels must stay disabled.",
-		);
-	}
-	let css = "";
-	const input = String(raw).replace(
-		/<style\b[^>]*>([\s\S]*?)<\/style>/gi,
-		(_m, body) => {
-			css += `${body}\n`;
-			return "";
-		},
-	);
-	const rules = parseCssRules(css);
-	const out = [];
-	const stack = [];
-	let skipDepth = 0;
+function* svgTokens(input) {
 	let i = 0;
 	while (i < input.length) {
 		const lt = input.indexOf("<", i);
 		if (lt < 0) {
-			if (!skipDepth) out.push(input.slice(i));
+			yield { type: "text", value: input.slice(i) };
 			break;
 		}
-		if (lt > i && !skipDepth) out.push(input.slice(i, lt));
+		if (lt > i) yield { type: "text", value: input.slice(i, lt) };
 		if (input.startsWith("<!--", lt)) {
 			const end = input.indexOf("-->", lt + 4);
-			i = end < 0 ? input.length : end + 3;
+			if (end < 0) throw new Error("Unterminated SVG comment in mmdc output.");
+			i = end + 3;
 			continue;
 		}
-		if (input.startsWith("<?", lt) || input.startsWith("<!", lt)) {
-			const end = input.indexOf(">", lt);
-			i = end < 0 ? input.length : end + 1;
+		const xmlDeclaration = lt === 0 && /^<\?xml\s[^<>?]*\?>/.exec(input);
+		if (xmlDeclaration) {
+			i = xmlDeclaration[0].length;
 			continue;
 		}
 		const endM = /^<\/([A-Za-z][\w:-]*)\s*>/.exec(input.slice(lt));
 		if (endM) {
 			i = lt + endM[0].length;
-			if (skipDepth) {
-				skipDepth -= 1;
-				continue;
-			}
-			const top = stack.pop();
-			if (!top?.unwrap) out.push(`</${endM[1]}>`);
+			yield { type: "end", rawName: endM[1] };
 			continue;
 		}
-		const tagM = /^<([A-Za-z][\w:-]*)/.exec(input.slice(lt));
-		if (!tagM) {
-			if (!skipDepth) out.push("<");
-			i = lt + 1;
-			continue;
-		}
+		const tagM = /^<([A-Za-z][\w:-]*)(?=[\s/>])/.exec(input.slice(lt));
+		if (!tagM) throw new Error("Malformed SVG markup in mmdc output.");
 		const rawName = tagM[1];
 		const name = rawName.toLowerCase();
 		let q = lt + tagM[0].length;
@@ -476,9 +476,55 @@ export function toManifestSafeSvg(raw) {
 			else if (ch === ">") break;
 			q += 1;
 		}
+		if (q === input.length)
+			throw new Error("Unterminated SVG tag in mmdc output.");
 		const inside = input.slice(lt + tagM[0].length, q);
 		const selfClosing = /\/\s*$/.test(inside);
 		i = q + 1;
+		if (name === "style") {
+			if (selfClosing) continue;
+			const close = input.indexOf("<", i);
+			const end = close >= 0 && /^<\/style\s*>/i.exec(input.slice(close));
+			if (!end) throw new Error("Unterminated SVG style in mmdc output.");
+			yield { type: "style", value: input.slice(i, close) };
+			i = close + end[0].length;
+			continue;
+		}
+		yield { type: "start", rawName, name, inside, selfClosing };
+	}
+}
+
+/** Turn raw `mmdc` SVG into an SVG the Manifest sanitizer accepts unchanged. */
+export function toManifestSafeSvg(raw) {
+	if (/<script/i.test(raw))
+		throw new Error("mmdc output contains a script element.");
+	if (/<foreignobject/i.test(raw)) {
+		throw new Error(
+			"mmdc output contains a foreignObject element; htmlLabels must stay disabled.",
+		);
+	}
+	// Read each stylesheet separately. Removing nodes never changes how the SVG is tokenized.
+	const tokens = [...svgTokens(String(raw).replace(/^\uFEFF/, ""))];
+	const rules = [];
+	for (const token of tokens) {
+		if (token.type === "style")
+			parseCssRules(decodeXmlText(token.value), rules);
+	}
+	const out = [];
+	const stack = [];
+	let skipDepth = 0;
+	for (const token of tokens) {
+		if (token.type === "style") continue;
+		if (token.type === "text") {
+			if (!skipDepth) out.push(escAttr(decodeXmlText(token.value)));
+			continue;
+		}
+		if (token.type === "end") {
+			if (skipDepth) skipDepth -= 1;
+			else if (!stack.pop()?.unwrap) out.push(`</${token.rawName}>`);
+			continue;
+		}
+		const { rawName, name, inside, selfClosing } = token;
 		if (skipDepth) {
 			if (!selfClosing) skipDepth += 1;
 			continue;
@@ -529,7 +575,7 @@ export function toManifestSafeSvg(raw) {
 				!value.trim().startsWith("#")
 			)
 				continue;
-			kept.push([attrName, value, false]);
+			kept.push([attrName, value]);
 		}
 		for (const [prop, d] of computedDecls(rules, el, stack)) {
 			if (!safeCssValue(d.value)) continue;
@@ -539,8 +585,8 @@ export function toManifestSafeSvg(raw) {
 					styleMap.delete(prop);
 				}
 				const existing = kept.findIndex(([k]) => k.toLowerCase() === prop);
-				if (existing >= 0) kept[existing] = [prop, d.value, true];
-				else kept.push([prop, d.value, true]);
+				if (existing >= 0) kept[existing] = [prop, d.value];
+				else kept.push([prop, d.value]);
 			} else if (
 				STYLE_PROPS.has(prop) &&
 				(!styleMap.has(prop) || d.important)
@@ -549,8 +595,7 @@ export function toManifestSafeSvg(raw) {
 			}
 		}
 		let attrHtml = "";
-		for (const [k, v, computed] of kept)
-			attrHtml += ` ${k}="${computed ? escAttr(v) : v}"`;
+		for (const [k, v] of kept) attrHtml += ` ${k}="${escAttr(v)}"`;
 		if (styleMap.size) {
 			const style = [...styleMap].map(([k, v]) => `${k}: ${v}`).join("; ");
 			attrHtml += ` style="${escAttr(style)}"`;

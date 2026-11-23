@@ -32,6 +32,7 @@ import {
 	sha256Hex,
 	TEMPLATE_VERSION,
 } from "../tools/render-dod-manifest.mjs";
+import { toManifestSafeSvg } from "../tools/render-mermaid-view.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const HELPER = path.join(ROOT, "tools/render-mermaid-view.mjs");
@@ -245,6 +246,36 @@ describe("issue #271 renderer reports what to fix and never drops colours silent
 	// Minimal shapes of Mermaid's default (htmlLabels on) output.
 	const svgWith = (inner, attrs = "") =>
 		`<svg id="my-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"${attrs}>${inner}</svg>`;
+
+	it("applies stylesheet order without reading styles from XML comments", () => {
+		const svg = toManifestSafeSvg(
+			svgWith(
+				'<style>g rect{fill:green;}</style><g><rect width="4" height="4"/></g>' +
+					"<style>g &gt; rect{fill:blue;}</style><!-- <style>g rect{fill:pink;}</style> -->",
+			),
+		);
+		assert.match(sanitizeSvg(svg), /<rect[^>]+fill="blue"/);
+		assert.doesNotMatch(svg, /<style|pink/);
+	});
+
+	it("serializes encoded labels and quoted attributes as text", () => {
+		const svg = toManifestSafeSvg(
+			svgWith(
+				`<text aria-label='Draft "A" &amp; Review'>Draft &#38; Review &lt;2&gt;</text>`,
+			),
+		);
+		assert.match(
+			sanitizeSvg(svg),
+			/<text aria-label="Draft &quot;A&quot; &amp; Review">Draft &amp; Review &lt;2&gt;<\/text>/,
+		);
+	});
+
+	it("refuses a stylesheet with no closing tag", () => {
+		assert.throws(
+			() => toManifestSafeSvg(svgWith("<style>rect{fill:blue;}")),
+			/Unterminated SVG style/,
+		);
+	});
 
 	it("names foreignObject as the element to fix in a Mermaid HTML-label SVG", () => {
 		assert.throws(
