@@ -1396,6 +1396,8 @@ describe("plan-package live-wave exchange.jsonl reader (HLW-VC-025)", () => {
 			cwd: ROOT,
 			encoding: "utf8",
 			timeout: 30_000,
+			// #270: these cases model an Orchestrator inside a Herdr pane.
+			env: { ...process.env, HERDR_ENV: "1" },
 			...(input === undefined ? {} : { input }),
 		});
 
@@ -1511,7 +1513,7 @@ describe("plan-package live-wave exchange.jsonl reader (HLW-VC-025)", () => {
 		assert.deepEqual(summary.not_allowed, ["implementer-test-engineer-3"]);
 	};
 
-	it("live-wave schema declares journey_settings.live_wave as an optional herdr enum", () => {
+	it("live-wave schema declares journey_settings.live_wave as an optional herdr/headless enum (#270)", () => {
 		const schema = JSON.parse(
 			readFileSync(
 				path.join(ROOT, "schemas/implementation.schema.json"),
@@ -1519,7 +1521,10 @@ describe("plan-package live-wave exchange.jsonl reader (HLW-VC-025)", () => {
 			),
 		);
 		const settings = schema.properties.journey_settings;
-		assert.deepEqual(settings.properties?.live_wave?.enum, ["herdr"]);
+		assert.deepEqual(settings.properties?.live_wave?.enum, [
+			"herdr",
+			"headless",
+		]);
 		assert.ok(
 			!(settings.required || []).includes("live_wave"),
 			"live_wave stays optional",
