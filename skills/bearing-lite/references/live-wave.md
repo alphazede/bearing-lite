@@ -1,9 +1,22 @@
 # Live waves
 
-Set `journey_settings.live_wave` to `"herdr"` to opt in. Omit the setting for
-headless execution. Read `herdr --skill` for Herdr's commands. If the launcher
-reports that live execution is unavailable, use the same frozen packet and
-role headless and record the reason.
+A profile may declare its default in `execution.live_wave` (`"herdr"` or
+`"headless"` in `profiles.json`); the freeze copies it into
+`profile_freeze.snapshot.execution` and the configuration digest, and Planning
+and Design writes it into `journey_settings.live_wave`. Omit `execution` in
+the profile and `live_wave` in the plan for legacy headless-by-omission
+execution; an omitted plan value counts as `headless`. A plan value that
+differs from the frozen mode needs a recorded
+`journey_settings.live_wave_owner_amendment` (`{from, to, owner_decision}`),
+otherwise final freeze reports `live_wave_profile_mismatch`. Read
+`herdr --skill` for Herdr's commands.
+
+When the plan selects `"herdr"` but Herdr is unavailable for the whole wave at
+dispatch, the wave view reports the typed gap `live_wave_unavailable`
+(`gap: true`, `mode: "herdr"`) and does not pass; do not switch the wave to
+headless silently. A role whose harness has no live startup still runs
+headless with the recorded reason, as before. A cooperating launcher opens
+slice-labelled panes in the wave's own tab without changing focus.
 
 ## Messages and completion
 

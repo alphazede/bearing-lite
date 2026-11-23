@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Add an optional profile default execution mode (`execution.live_wave`: `herdr` or `headless`) frozen into the snapshot and configuration digest, copied by Planning and Design into `journey_settings.live_wave`, with a recorded owner amendment for plan overrides and a `live_wave_unavailable` typed gap instead of silent headless dispatch; live-wave guidance now states a cooperating launcher opens slice-labelled panes in the wave's own tab without changing focus. ([#270](https://github.com/alphazede/bearing-lite/issues/270), [#272](https://github.com/alphazede/bearing-lite/issues/272))
+
 ## [3.0.0](https://github.com/alphazede/bearing-lite/releases/tag/v3.0.0) - 2026-11-20
 
 - Pin `az-lint` to `v0.1.2`, which stops pull-request lint from reporting `EXE001` on executable scripts. ([#268](https://github.com/alphazede/bearing-lite/pull/268))

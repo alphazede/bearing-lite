@@ -135,6 +135,12 @@ Ask one setting at a time with no preselected value:
    - `assurance_repair.enabled` and `holds` (in Full setup or when requested)
    - `defaults.planning` / `defaults.implementation` (separate question, never
      a silent grant).
+7. **Default execution mode (`execution.live_wave`):** ask whether the profile's
+   lifecycles default to connected live-wave execution (`herdr`) or to
+   `headless` execution, with no preselected value. If deferred, omit
+   `execution` entirely (headless-by-omission, as before). The frozen mode is
+   copied into each plan's `journey_settings.live_wave`; a plan override needs
+   a recorded owner amendment.
 
 ## Step 4 — Editable preview (one row per changed choice)
 

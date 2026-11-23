@@ -555,6 +555,23 @@
               "description": "When true, the frozen profile preauthorizes one bounded same-session repair of proven test-side defects per assurance round, reusing the Reviewer repair_transition contract. Absent or false means no repair authority."
             }
           }
+        },
+        "execution": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "live_wave"
+          ],
+          "description": "Optional default execution mode for this profile. Omission keeps legacy headless-by-omission behaviour.",
+          "properties": {
+            "live_wave": {
+              "type": "string",
+              "enum": [
+                "herdr",
+                "headless"
+              ]
+            }
+          }
         }
       }
     }

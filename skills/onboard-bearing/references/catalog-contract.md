@@ -34,6 +34,7 @@ Bearing Lite 3.0.0-rc.2. Always verify against `references/profiles.schema.json`
 | `deterministic_verification.additional_tools` | array of `{ name, enabled, command?, pass?, evidence? }` | `enabled: true` requires `command`, `pass`, `evidence`; `enabled: false` needs only `name` and `enabled`. |
 | `assurance_repair` | `{ enabled: boolean }` | Preauthorizes one bounded same-session test-side repair per assurance round (R16). |
 | `holds` | array of `{ id, effect, ... }` | Must be objects, never bare strings (R17). Example: `{"id":"orchestrator-delegation","effect":"Scoped delegation only","enabled":false}`. |
+| `execution.live_wave` | `"herdr" \| "headless"` | Optional default execution mode; editable on create or edit. Omission keeps headless-by-omission. Frozen into `snapshot.execution` and the configuration digest; Planning and Design copies it to `journey_settings.live_wave`. |
 
 Minimal valid catalog example (single profile, one enabled author, empty fallbacks):
 
@@ -72,7 +73,7 @@ Minimal valid catalog example (single profile, one enabled author, empty fallbac
   the session the owner opens, observed at start, and never auto-lowers effort, R08).
 - **Route digest vs. `lifecycle_settings` (R10):** `hooks/profiles.cjs`
   `freezeSelectedRoutes` computes `digest` over `roles`, `fellow`, `review`,
-  `deterministic_verification`, `assurance_repair`, and `holds` (excluding
+  `deterministic_verification`, `assurance_repair`, `holds`, and `execution` (excluding
   `cadence`, `route`, `authority`), and separately returns `lifecycle_settings`
   (`development_strategy`, `planning_to_implementation_clean_session`,
   `concurrency`, `selection_source`) with `settings_digest`. Equal route

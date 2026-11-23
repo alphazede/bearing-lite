@@ -16,6 +16,7 @@ const NAME_PATTERN = /^[A-Za-z][A-Za-z0-9_-]*$/;
 const CADENCE_VALUES = new Set(["slice", "phase", "lifecycle"]);
 const SCRIBE_CADENCE_VALUES = new Set(["event", "phase", "lifecycle"]);
 const STRATEGY_MODES = new Set(["single_implementer", "tdd"]);
+const LIVE_WAVE_MODES = new Set(["herdr", "headless"]);
 const DIRECT_ROLE_KEYS = new Set(["implementer", "test_implementer", "light_implementer", "coordinator"]);
 const SESSIONED_PLANNING_ROLES = new Set(["mbse", "integration_test"]);
 const ALLOWED_ROLE_KEYS = new Set([
@@ -749,6 +750,7 @@ function validateProfileEntry(name, profile, errors, diagnostics, preservedExten
     "deterministic_verification",
     "review",
     "assurance_repair",
+    "execution",
   ];
   for (const key of Object.keys(profile)) {
     if (!allowedProfileKeys.includes(key)) {
@@ -946,6 +948,12 @@ function validateProfileEntry(name, profile, errors, diagnostics, preservedExten
     const ar = profile.assurance_repair;
     if (!isClosedPlainObject(ar, ["enabled"]) || typeof ar.enabled !== "boolean") {
       errors.push(`${prefix}.assurance_repair: must define boolean enabled`);
+    }
+  }
+  if (Object.hasOwn(profile, "execution")) {
+    const ex = profile.execution;
+    if (!isClosedPlainObject(ex, ["live_wave"]) || !LIVE_WAVE_MODES.has(ex.live_wave)) {
+      errors.push(`${prefix}.execution.live_wave: must be 'herdr' or 'headless'`);
     }
   }
 }
@@ -1151,6 +1159,10 @@ function freezeSelectedRoutes(input) {
   if (Array.isArray(profile.holds)) {
     snapshot.holds = deepCopy(profile.holds);
     material.holds = snapshot.holds;
+  }
+  if (isPlainObject(profile.execution)) {
+    snapshot.execution = deepCopy(profile.execution);
+    material.execution = snapshot.execution;
   }
 
   // Separate task-setting binding outside the route digest (R10).
