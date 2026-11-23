@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [3.0.1](https://github.com/alphazede/bearing-lite/releases/tag/v3.0.1) - 2026-11-23
+
 - Add `tools/render-mermaid-view.mjs`, a deterministic local helper that renders a Mermaid view with `mmdc` (`htmlLabels: false`) into a manifest-safe SVG by inlining computed presentation attributes and applying the DoD Manifest SVG allowlist, and document it in the MBSE skill for diagram-assisted views. The SVG sanitizer now names the actual offending element, attribute, or at-rule in its refusals and scopes root-id stylesheet selectors onto the root scope class so colours are no longer silently dropped, while still refusing scripts, `foreignObject`, event handlers, external URLs, and unsafe CSS. ([#271](https://github.com/alphazede/bearing-lite/issues/271))
 - Add an optional profile default execution mode (`execution.live_wave`: `herdr` or `headless`) frozen into the snapshot and configuration digest, copied by Planning and Design into `journey_settings.live_wave`, with a recorded owner amendment for plan overrides and the launcher reporting a `live_wave_unavailable` typed gap instead of silent headless dispatch; live-wave guidance now states a cooperating launcher opens slice-labelled panes in the wave's own tab without changing focus. ([#270](https://github.com/alphazede/bearing-lite/issues/270), [#272](https://github.com/alphazede/bearing-lite/issues/272))
 
