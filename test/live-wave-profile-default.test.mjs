@@ -15,10 +15,11 @@
  *   `{ from: <frozen mode>, to: <plan mode>, owner_decision: <non-empty> }`.
  *   A mismatch without that record is the blocking finding
  *   `live_wave_profile_mismatch`.
- * - The wave view used at dispatch (`node hooks/plan-package.cjs wave <dir> <wave>`)
- *   reports the typed gap `live_wave_unavailable` (gap: true, outcome not PASS)
- *   when the plan selects "herdr" and the Orchestrator is not inside a Herdr
- *   pane (`HERDR_ENV` unset), instead of a silent headless dispatch.
+ * - The wave view (`node hooks/plan-package.cjs wave <dir> <wave>`) is an
+ *   offline read-only inspection: it keeps the plan's mode and makes no
+ *   transport-availability claim, inside or outside a Herdr pane. Whole-wave
+ *   unavailability is the private launcher's typed failure; the public
+ *   live-wave reference documents it as a typed gap, never silent headless.
  * - onboard-bearing asks for the default when creating or editing a profile.
  */
 import assert from "node:assert/strict";
@@ -339,38 +340,50 @@ describe("#270 Planning and Design sets journey_settings.live_wave from the froz
 	}
 });
 
-describe("#270 dispatch reports a typed gap when the selected live mode is unavailable", () => {
-	const gap = (out) =>
+describe("#270 wave view is a read-only plan inspection with no availability claim", () => {
+	// The wave view runs offline and outside a Herdr pane; the private launcher
+	// can start a new Herdr server with HERDR_ENV unset, and a stale flag proves
+	// nothing. Transport availability is the launcher's typed failure, not this view's.
+	const unavailable = (out) =>
 		out.findings.filter((f) => f.code === "live_wave_unavailable");
 
-	it("herdr selected outside a Herdr pane: wave view names live_wave_unavailable", (t) => {
-		const dir = plan(t, { frozen: "herdr", planMode: "herdr" });
-		const { status, out, stdout } = run([HOOK, "wave", dir, "W1"]);
-		const [finding] = gap(out);
-		assert.ok(finding, `typed gap: ${stdout}`);
-		assert.equal(finding.gap, true, stdout);
-		assert.equal(finding.mode, "herdr", stdout);
-		assert.notEqual(out.outcome, "PASS", stdout);
-		assert.notEqual(status, 0, stdout);
-	});
-
-	it("herdr selected inside a Herdr pane: no gap", (t) => {
-		const dir = plan(t, { frozen: "herdr", planMode: "herdr" });
-		const { out, stdout } = run([HOOK, "wave", dir, "W1"], { HERDR_ENV: "1" });
-		assert.deepEqual(gap(out), [], stdout);
-	});
-
 	for (const [label, opts] of [
-		["headless selected", { frozen: "headless", planMode: "headless" }],
+		["legacy live plan (no frozen mode)", { planMode: "herdr" }],
+		["frozen live plan", { frozen: "herdr", planMode: "herdr" }],
+		["frozen headless plan", { frozen: "headless", planMode: "headless" }],
 		["field absent", {}],
 	]) {
-		it(`${label} outside a Herdr pane: no gap and dispatch proceeds headless`, (t) => {
-			const { status, out, stdout } = run([HOOK, "wave", plan(t, opts), "W1"]);
-			assert.deepEqual(gap(out), [], stdout);
-			assert.equal(out.outcome, "PASS", stdout);
-			assert.equal(status, 0, stdout);
+		it(`${label}: inspects outside a Herdr pane without an availability finding`, (t) => {
+			const dir = plan(t, opts);
+			const outside = run([HOOK, "wave", dir, "W1"]);
+			assert.deepEqual(unavailable(outside.out), [], outside.stdout);
+			assert.equal(outside.out.outcome, "PASS", outside.stdout);
+			assert.equal(outside.status, 0, outside.stdout);
+			// No silent mode swap: a live plan keeps its live exchange view.
+			assert.equal(
+				Boolean(outside.out.live_exchange),
+				opts.planMode === "herdr",
+				outside.stdout,
+			);
+			// A pane flag changes nothing: the view makes no availability claim.
+			const inside = run([HOOK, "wave", dir, "W1"], { HERDR_ENV: "1" });
+			assert.deepEqual(inside.out, outside.out);
+			assert.equal(inside.status, outside.status);
 		});
 	}
+
+	it("live-wave reference assigns whole-wave unavailability to the launcher as a typed gap", () => {
+		const doc = readFileSync(
+			path.join(ROOT, "skills/bearing-lite/references/live-wave.md"),
+			"utf8",
+		);
+		assert.doesNotMatch(doc, /wave view reports the typed gap/i);
+		assert.doesNotMatch(doc, /HERDR_ENV/);
+		assert.match(
+			doc,
+			/launcher[^.]*unavailable[^.]*typed gap|typed gap[^.]*launcher/is,
+		);
+	});
 });
 
 describe("#270 onboard-bearing asks for the default execution mode", () => {

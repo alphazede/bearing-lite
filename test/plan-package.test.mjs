@@ -1396,8 +1396,6 @@ describe("plan-package live-wave exchange.jsonl reader (HLW-VC-025)", () => {
 			cwd: ROOT,
 			encoding: "utf8",
 			timeout: 30_000,
-			// #270: these cases model an Orchestrator inside a Herdr pane.
-			env: { ...process.env, HERDR_ENV: "1" },
 			...(input === undefined ? {} : { input }),
 		});
 
