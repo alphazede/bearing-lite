@@ -15,8 +15,12 @@ When the plan selects `"herdr"` but the launcher reports Herdr unavailable
 for the whole wave at dispatch, the Orchestrator records the typed gap
 `live_wave_unavailable` and the wave does not pass; do not switch the wave to
 headless silently. A role whose harness has no live startup still runs
-headless with the recorded reason, as before. A cooperating launcher opens
-slice-labelled panes in the wave's own tab without changing focus.
+headless with the recorded reason, as before.
+
+A cooperating launcher creates a tab on the first launch and labels it with
+the journey ID and wave ID. It reuses the tab for later roles in that wave.
+Each pane carries its slice ID. Launches preserve focus and leave panes
+outside the wave tab unchanged.
 
 ## Messages and completion
 

@@ -24,7 +24,7 @@ import {
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { sanitizeSvg } from "./render-dod-manifest.mjs";
+import { sanitizeSvg, sha256Hex } from "./render-dod-manifest.mjs";
 
 const ALLOWED_TAGS = new Set([
 	"svg",
@@ -575,6 +575,10 @@ function main(argv) {
 	const mmdc = process.env.BEARING_MMDC || "mmdc";
 	const tmp = mkdtempSync(path.join(tmpdir(), "render-mermaid-view-"));
 	try {
+		const source = readFileSync(input);
+		const svgId = `mermaid-${sha256Hex(source).slice(0, 16)}`;
+		const stagedInput = path.join(tmp, `input${path.extname(input)}`);
+		writeFileSync(stagedInput, source);
 		const config = path.join(tmp, "mermaid-config.json");
 		// Top-level htmlLabels is the effective switch in current mmdc;
 		// flowchart.htmlLabels alone still emits foreignObject labels.
@@ -586,9 +590,11 @@ function main(argv) {
 		const rendered = path.join(tmp, "view.svg");
 		const args = [
 			"-i",
-			input,
+			stagedInput,
 			"-o",
 			rendered,
+			"--svgId",
+			svgId,
 			"-c",
 			config,
 			"-b",

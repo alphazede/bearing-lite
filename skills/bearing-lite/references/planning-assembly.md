@@ -115,7 +115,11 @@ This is the default dependency order, not a requirement to enable every role:
    inputs into the technical plan and `design.md` (keeping **one plan per phase**;
    split multi-phase work into separate phase plans), copy the confirmed quantity
    table into its glossary, allocate against the placement receipt, then assemble
-   the implementation graph and Manifest. When the final technical plan was
+   the implementation graph and Manifest. Copy
+   `profile_freeze.snapshot.execution.live_wave` into
+   `journey_settings.live_wave` when the frozen profile declares it.
+   Record the owner's explicit decision for any override using the amendment
+   in [Live waves](live-wave.md). When the final technical plan was
    written after the SEIT return, bind its repository-relative path and
    SHA-256 in `implementation.json` at `journey_settings.final_technical_plan`
    as `{ "path": "...", "sha256": "..." }`. Keep the SEIT author's input list and
