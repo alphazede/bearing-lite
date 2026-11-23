@@ -18,9 +18,13 @@ headless silently. A role whose harness has no live startup still runs
 headless with the recorded reason, as before.
 
 A cooperating launcher creates a tab on the first launch and labels it with
-the journey ID and wave ID. It reuses the tab for later roles in that wave.
-Each pane carries its slice ID. Launches preserve focus and leave panes
-outside the wave tab unchanged.
+the journey ID and wave ID. It reuses the tab while any pane in that wave
+remains open. If Herdr removes the tab when its last pane closes, the next
+launch creates a new tab with the same label.
+
+Each pane carries its slice ID. If the launch omits `--slice`, the pane uses
+the role key as its label. Launches preserve focus and leave panes outside
+the wave tab unchanged.
 
 ## Messages and completion
 
