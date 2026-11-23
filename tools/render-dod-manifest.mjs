@@ -348,11 +348,21 @@ function unsafeCssValue(value) {
 	return false;
 }
 
-function prefixCssSelectors(css, prefix) {
+function unsafeStylesheetError(css) {
+	const at = /@([a-zA-Z-]+)/.exec(normalizedCss(css));
+	return new RenderError(
+		"UNSAFE_ASSET",
+		at
+			? `Unsafe SVG stylesheet: @${at[1].toLowerCase()} is not allowed.`
+			: "Unsafe SVG stylesheet.",
+	);
+}
+
+function prefixCssSelectors(css, prefix, rootId) {
 	const s = normalizedCss(css).trim();
 	if (!s) return s;
 	if (/@/.test(s) || /</.test(s)) {
-		throw new RenderError("UNSAFE_ASSET", "Unsafe SVG stylesheet.");
+		throw unsafeStylesheetError(s);
 	}
 	let out = "";
 	let i = 0;
@@ -397,7 +407,16 @@ function prefixCssSelectors(css, prefix) {
 			.map((sel) => {
 				const t = sel.trim();
 				if (!t) throw new RenderError("UNSAFE_ASSET", "Unsafe SVG stylesheet.");
-				return t.startsWith(prefix) ? t : `${prefix} ${t}`;
+				if (t.startsWith(prefix)) return t;
+				// The scope class sits on the root <svg> itself, so a selector
+				// opening with the root id must become the scope class, not a
+				// descendant of it (that could never match and colours died).
+				if (rootId && t.startsWith(`#${rootId}`)) {
+					const rest = t.slice(rootId.length + 1);
+					if (rest === "" || /^[\s>+~.[:#]/.test(rest))
+						return `${prefix}${rest}`;
+				}
+				return `${prefix} ${t}`;
 			})
 			.join(", ");
 		out += `${prefixed} ${body}`;
@@ -406,11 +425,12 @@ function prefixCssSelectors(css, prefix) {
 	return out;
 }
 
-function sanitizeStylesheet(css, scopeSelector) {
+function sanitizeStylesheet(css, scopeSelector, rootId) {
+	if (/@/.test(normalizedCss(css))) throw unsafeStylesheetError(css);
 	if (unsafeCssValue(css) || /</.test(String(css))) {
 		throw new RenderError("UNSAFE_ASSET", "Unsafe SVG stylesheet.");
 	}
-	return prefixCssSelectors(css, scopeSelector);
+	return prefixCssSelectors(css, scopeSelector, rootId);
 }
 
 function sanitizeStyleAttr(value) {
@@ -550,10 +570,7 @@ function decodeSvgXmlValue(value, where) {
 		throw new RenderError("UNSAFE_ASSET", "SVG contains NUL.");
 	}
 	if (/javascript:/i.test(decoded)) {
-		throw new RenderError(
-			"UNSAFE_ASSET",
-			"SVG contains script, foreignObject, or javascript: URL.",
-		);
+		throw new RenderError("UNSAFE_ASSET", "SVG contains a javascript: URL.");
 	}
 	return decoded;
 }
@@ -668,20 +685,26 @@ export function sanitizeSvg(raw) {
 			"SVG declares doctype, entity, CDATA, or processing instruction.",
 		);
 	}
-	if (
-		/<script/i.test(input) ||
-		/<foreignobject/i.test(input) ||
-		/javascript:/i.test(input)
-	) {
+	if (/<script/i.test(input)) {
 		throw new RenderError(
 			"UNSAFE_ASSET",
-			"SVG contains script, foreignObject, or javascript: URL.",
+			"SVG contains a script element; remove the script element.",
 		);
+	}
+	if (/<foreignobject/i.test(input)) {
+		throw new RenderError(
+			"UNSAFE_ASSET",
+			"SVG contains a foreignObject element; remove the foreignObject element (render Mermaid with htmlLabels disabled).",
+		);
+	}
+	if (/javascript:/i.test(input)) {
+		throw new RenderError("UNSAFE_ASSET", "SVG contains a javascript: URL.");
 	}
 	const out = [];
 	let i = 0;
 	let depth = 0;
 	let sawSvg = false;
+	let rootId = "";
 	const open = [];
 	while (i < input.length) {
 		const lt = input.indexOf("<", i);
@@ -756,6 +779,9 @@ export function sanitizeSvg(raw) {
 			/\/\s*$/.test(input.slice(p, q)) || input[q - 1] === "/";
 		const attrs = parseAttrs(attrRaw, name);
 		if (name === "svg") {
+			if (!sawSvg) {
+				rootId = attrs.find(([k]) => k.toLowerCase() === "id")?.[1] || "";
+			}
 			sawSvg = true;
 			if (needsScope) {
 				let hasClass = false;
@@ -780,7 +806,7 @@ export function sanitizeSvg(raw) {
 			if (close < 0)
 				throw new RenderError("UNSAFE_ASSET", "Unterminated SVG style.");
 			const css = decodeSvgXmlValue(input.slice(i, close), "style");
-			const scoped = sanitizeStylesheet(css, `.${scopeClass}`);
+			const scoped = sanitizeStylesheet(css, `.${scopeClass}`, rootId);
 			if (/</.test(scoped)) {
 				throw new RenderError("UNSAFE_ASSET", "Unsafe SVG stylesheet.");
 			}
