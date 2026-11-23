@@ -35,6 +35,7 @@ import {
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const HELPER = path.join(ROOT, "tools/render-mermaid-view.mjs");
+const FIXTURES = path.join(ROOT, "test/fixtures/mermaid");
 const MBSE_SKILL = path.join(ROOT, "skills/mbse/SKILL.md");
 const MMDC = process.env.BEARING_MMDC || "";
 const temps = [];
@@ -68,6 +69,7 @@ function renderBoundSvg(dir, rel) {
 	const doc = {
 		dod_manifest: {
 			template_version: TEMPLATE_VERSION,
+			title: "Mermaid view fixture",
 			output_name: "fixture-dod-manifest.html",
 			closeout: {
 				candidate: "pending",
@@ -101,18 +103,20 @@ function renderBoundSvg(dir, rel) {
 
 const BLACK = /^(#000(000)?|black|rgb\(\s*0\s*,\s*0\s*,\s*0\s*\))$/i;
 
-/** Fill colours carried by shape elements, from attributes or style attributes. */
-function shapeFills(svg) {
+/** Fill colours of shape elements whose class matches, from attributes or style attributes. */
+function shapeFills(svg, classPattern) {
 	const fills = [];
 	for (const m of svg.matchAll(
 		/<(rect|polygon|path|circle|ellipse)\b([^>]*)>/gi,
 	)) {
 		const attrs = m[2];
-		const attr = /\sfill="([^"]*)"/i.exec(attrs);
-		if (attr) fills.push(attr[1].trim());
+		const cls = /\sclass="([^"]*)"/i.exec(attrs)?.[1] || "";
+		if (!classPattern.test(cls)) continue;
 		const style = /\sstyle="([^"]*)"/i.exec(attrs);
 		const sfill = style && /(?:^|;)\s*fill\s*:\s*([^;]+)/i.exec(style[1]);
-		if (sfill) fills.push(sfill[1].trim());
+		const attr = /\sfill="([^"]*)"/i.exec(attrs);
+		// A style fill wins over the attribute; a shape with neither reports "" (renders black).
+		fills.push((sfill?.[1] ?? attr?.[1] ?? "").trim());
 	}
 	return fills;
 }
@@ -138,45 +142,76 @@ describe("issue #271 documented Mermaid-to-SVG path", () => {
 		assert.equal(existsSync(output), false, "no partial SVG is written");
 	});
 
+	/** Run the helper twice, then prove the Manifest embeds its output unchanged with node colours. */
+	function assertDocumentedPath(source, labels, env = {}) {
+		const dir = tempDir();
+		mkdirSync(path.join(dir, "views"));
+		const mmd = path.join(dir, "views/model.mmd");
+		writeFileSync(mmd, source, "utf8");
+		const out = path.join(dir, "views/model.svg");
+		const res = runHelper([mmd, out], env);
+		assert.equal(res.status, 0, res.stdout + res.stderr);
+		const first = readFileSync(out);
+
+		// Deterministic: same input, same bytes.
+		const again = path.join(dir, "views/again.svg");
+		const res2 = runHelper([mmd, again], env);
+		assert.equal(res2.status, 0, res2.stdout + res2.stderr);
+		assert.equal(sha256Hex(readFileSync(again)), sha256Hex(first));
+
+		const svg = first.toString("utf8");
+		assert.doesNotMatch(svg, /<foreignObject|<script|javascript:/i);
+
+		// Accepted unchanged: sanitizer and renderer take the helper output as is.
+		assert.doesNotThrow(() => sanitizeSvg(svg));
+		const html = renderBoundSvg(dir, "views/model.svg");
+		const figure = html.split('id="view-model-mmd-001"')[1] || "";
+		const graphic = figure.split("</svg>")[0];
+		assert.match(graphic, /<svg /);
+		for (const label of labels) assert.ok(graphic.includes(label), label);
+
+		// No silent loss of colours: every Mermaid node shape keeps a non-black fill.
+		const nodeFills = shapeFills(graphic, /label-container/);
+		assert.ok(nodeFills.length > 0, "node shapes are present");
+		assert.ok(
+			nodeFills.every((f) => f && f.toLowerCase() !== "none" && !BLACK.test(f)),
+			`node shapes lost their fill: ${JSON.stringify(nodeFills)}`,
+		);
+	}
+
 	for (const [kind, source, labels] of [
-		["flowchart", FLOWCHART, ["Plan", "Review?", "Land"]],
-		["state diagram", STATE, ["Draft", "Review", "Approved"]],
+		["flowchart", FLOWCHART, ["Plan", "Review?", "Land", "pass"]],
+		["state diagram", STATE, ["Draft", "Review", "Approved", "repair"]],
 	]) {
-		it(`renders a Mermaid ${kind} with a real local mmdc into an SVG the Manifest embeds unchanged, with colours`, {
-			skip: MMDC ? false : "opt-in: set BEARING_MMDC to a local mmdc",
-			timeout: 240000,
-		}, () => {
-			const dir = tempDir();
-			mkdirSync(path.join(dir, "views"));
-			writeFileSync(path.join(dir, "views/model.mmd"), source, "utf8");
-			const out = path.join(dir, "views/model.svg");
-			const res = runHelper([path.join(dir, "views/model.mmd"), out]);
-			assert.equal(res.status, 0, res.stdout + res.stderr);
-			const first = readFileSync(out);
+		it(
+			`renders a Mermaid ${kind} with a real local mmdc into an SVG the Manifest embeds unchanged, with colours`,
+			{
+				skip: MMDC ? false : "opt-in: set BEARING_MMDC to a local mmdc",
+				timeout: 240000,
+			},
+			() => assertDocumentedPath(source, labels),
+		);
+	}
 
-			// Deterministic: same input, same bytes.
-			const again = path.join(dir, "views/again.svg");
-			const res2 = runHelper([path.join(dir, "views/model.mmd"), again]);
-			assert.equal(res2.status, 0, res2.stdout + res2.stderr);
-			assert.equal(sha256Hex(readFileSync(again)), sha256Hex(first));
-
-			const svg = first.toString("utf8");
-			assert.doesNotMatch(svg, /<foreignObject|<script|javascript:/i);
-
-			// Accepted unchanged: sanitizer and renderer take the helper output as is.
-			assert.doesNotThrow(() => sanitizeSvg(svg));
-			const html = renderBoundSvg(dir, "views/model.svg");
-			const figure = html.split('id="view-model-mmd-001"')[1] || "";
-			assert.match(figure, /<svg /);
-			for (const label of labels) assert.ok(figure.includes(label), label);
-
-			// No silent loss of colours: shapes carry a non-black fill after sanitizing.
-			const fills = shapeFills(figure.split("</svg>")[0]).filter(
-				(f) => f && f.toLowerCase() !== "none",
+	for (const [kind, name, labels] of [
+		["flowchart", "flowchart", ["Plan", "Review?", "Land", "pass"]],
+		["state diagram", "state", ["Draft", "Approved", "pass"]],
+	]) {
+		it(`turns pre-rendered mmdc ${kind} output into an SVG the Manifest embeds unchanged, with colours`, () => {
+			const raw = path.join(FIXTURES, `${name}.mmdc.svg`);
+			// The raw mmdc output is what the renderer refuses on its own.
+			assert.throws(
+				() => sanitizeSvg(readFileSync(raw, "utf8")),
+				(err) => err.code === "UNSAFE_ASSET",
 			);
-			assert.ok(
-				fills.some((f) => !BLACK.test(f)),
-				`expected a non-black shape fill, got ${JSON.stringify(fills.slice(0, 8))}`,
+			assertDocumentedPath(
+				readFileSync(path.join(FIXTURES, `${name}.mmd`), "utf8"),
+				labels,
+				{
+					BEARING_MMDC: path.join(FIXTURES, "fake-mmdc.mjs"),
+					BEARING_MMDC_PUPPETEER_CONFIG: "",
+					FAKE_MMDC_SVG: raw,
+				},
 			);
 		});
 	}
