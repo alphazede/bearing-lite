@@ -159,6 +159,15 @@ in force. Onboarding explains the choices in
 `../../onboard-bearing/references/verification-tools.md`.
 The parent controller declares Reviewer and assurance packets from that
 frozen snapshot copy, never from the live catalog.
+An optional profile `execution.live_wave` (`herdr` or `headless`) is likewise
+copied into `snapshot.execution` and bound in the configuration digest
+(`digest`, not `settings_digest`); omission keeps headless-by-omission and
+leaves the digest unchanged. Planning and Design copies the frozen mode into
+`journey_settings.live_wave` in `implementation.json`. A differing plan value
+(an omitted plan value counts as `headless`) needs a recorded
+`journey_settings.live_wave_owner_amendment` (`{from, to, owner_decision}`);
+final freeze otherwise reports `live_wave_profile_mismatch`. Later catalog
+edits to `execution` do not mutate the frozen snapshot.
 OCR means OpenCodeReview via `coverage_assist`, not a new role or backend
 hard dependency. Older roles-only snapshots need explicit reconciliation
 or owner amendment, not live-catalog hot reload. Reconcile by re-freezing

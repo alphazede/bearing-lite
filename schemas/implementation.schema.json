@@ -443,8 +443,19 @@
       "properties": {
         "live_wave": {
           "type": "string",
-          "enum": ["herdr"],
-          "description": "Optional live-wave carrier. Omit for headless execution."
+          "enum": ["herdr", "headless"],
+          "description": "Optional live-wave carrier copied from profile_freeze.snapshot.execution.live_wave when the profile declares it. Omit for headless execution when the profile declares no mode."
+        },
+        "live_wave_owner_amendment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["from", "to", "owner_decision"],
+          "description": "Recorded owner amendment required when live_wave overrides the frozen profile execution mode.",
+          "properties": {
+            "from": { "type": "string", "enum": ["herdr", "headless"] },
+            "to": { "type": "string", "enum": ["herdr", "headless"] },
+            "owner_decision": { "type": "string", "minLength": 1, "pattern": "\\S" }
+          }
         },
         "final_technical_plan": {
           "$ref": "#/$defs/planningInputDigest",

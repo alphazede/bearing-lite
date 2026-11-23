@@ -17,6 +17,7 @@ const NAME_PATTERN = /^[A-Za-z][A-Za-z0-9_-]*$/;
 const CADENCE_VALUES = new Set(["slice", "phase", "lifecycle"]);
 const SCRIBE_CADENCE_VALUES = new Set(["event", "phase", "lifecycle"]);
 const STRATEGY_MODES = new Set(["single_implementer", "tdd"]);
+const LIVE_WAVE_MODES = new Set(["herdr", "headless"]);
 const DIRECT_ROLE_KEYS = new Set(["implementer", "test_implementer", "light_implementer", "coordinator"]);
 const SESSIONED_PLANNING_ROLES = new Set(["mbse", "integration_test"]);
 const ALLOWED_ROLE_KEYS = new Set([
@@ -601,6 +602,7 @@ function validate(opts) {
         "deterministic_verification",
         "review",
         "assurance_repair",
+        "execution",
       ];
       for (const k of Object.keys(profile)) {
         if (!allowedProfileKeys.includes(k)) {
@@ -745,6 +747,12 @@ function validate(opts) {
         const ar = profile.assurance_repair;
         if (!isClosedPlainObject(ar, ["enabled"]) || typeof ar.enabled !== "boolean") {
           errors.push(`${pfx}.assurance_repair: must define boolean enabled`);
+        }
+      }
+      if (Object.hasOwn(profile, "execution")) {
+        const ex = profile.execution;
+        if (!isClosedPlainObject(ex, ["live_wave"]) || !LIVE_WAVE_MODES.has(ex.live_wave)) {
+          errors.push(`${pfx}.execution.live_wave: must be 'herdr' or 'headless'`);
         }
       }
       readiness[name] = strategyReadiness(profile);

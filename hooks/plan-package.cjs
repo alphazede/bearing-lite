@@ -1894,6 +1894,34 @@ function readLiveWave(dir, findings, implementation) {
 	};
 }
 
+const LIVE_WAVE_MODES = new Set(["herdr", "headless"]);
+
+function checkLiveWaveProfile(implementation) {
+	const frozen = implementation?.profile_freeze?.snapshot?.execution?.live_wave;
+	if (frozen === undefined) return [];
+	const settings = implementation?.journey_settings || {};
+	const planned =
+		settings.live_wave === undefined ? "headless" : settings.live_wave;
+	if (LIVE_WAVE_MODES.has(frozen) && planned === frozen) return [];
+	const a = settings.live_wave_owner_amendment;
+	if (
+		LIVE_WAVE_MODES.has(frozen) &&
+		LIVE_WAVE_MODES.has(planned) &&
+		a?.from === frozen &&
+		a?.to === planned &&
+		typeof a.owner_decision === "string" &&
+		a.owner_decision.trim().length > 0
+	)
+		return [];
+	return [
+		{
+			code: "live_wave_profile_mismatch",
+			frozen_mode: frozen,
+			plan_mode: planned,
+		},
+	];
+}
+
 function freeze(dir, { stage = "final" } = {}) {
 	try {
 		const seit = readJson(path.join(dir, "seit.json"), "seit.json");
@@ -1918,6 +1946,7 @@ function freeze(dir, { stage = "final" } = {}) {
 							: []),
 						...checkBoundaryContract(implementation, seit),
 						...checkSerialChains(implementation),
+						...checkLiveWaveProfile(implementation),
 					]
 				: []),
 			...checkManifestProjection(implementation, dir),
@@ -2066,6 +2095,11 @@ function waveView(dir, waveId) {
 		? wave.exit_command_ids
 		: [...new Set(String(wave.exit || "").match(COMMAND_ID) || [])];
 	const exit_commands = resolve(waveId, exitIds);
+	if (
+		implementation.journey_settings?.live_wave === "herdr" &&
+		!process.env.HERDR_ENV
+	)
+		findings.push({ code: "live_wave_unavailable", gap: true, mode: "herdr" });
 	const live_exchange =
 		implementation.journey_settings?.live_wave === "herdr"
 			? readLiveExchange(dir, waveId, findings)
@@ -2101,6 +2135,7 @@ module.exports = {
 	checkFrozenHashes,
 	checkLivePins,
 	checkSerialChains,
+	checkLiveWaveProfile,
 	loadControlCatalogue,
 	parameterizeControl,
 	checkSelectedControls,
