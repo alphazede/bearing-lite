@@ -11,9 +11,9 @@ differs from the frozen mode needs a recorded
 otherwise final freeze reports `live_wave_profile_mismatch`. Read
 `herdr --skill` for Herdr's commands.
 
-When the plan selects `"herdr"` but Herdr is unavailable for the whole wave at
-dispatch, the wave view reports the typed gap `live_wave_unavailable`
-(`gap: true`, `mode: "herdr"`) and does not pass; do not switch the wave to
+When the plan selects `"herdr"` but the launcher reports Herdr unavailable
+for the whole wave at dispatch, the Orchestrator records the typed gap
+`live_wave_unavailable` and the wave does not pass; do not switch the wave to
 headless silently. A role whose harness has no live startup still runs
 headless with the recorded reason, as before. A cooperating launcher opens
 slice-labelled panes in the wave's own tab without changing focus.
