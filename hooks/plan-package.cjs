@@ -2095,11 +2095,6 @@ function waveView(dir, waveId) {
 		? wave.exit_command_ids
 		: [...new Set(String(wave.exit || "").match(COMMAND_ID) || [])];
 	const exit_commands = resolve(waveId, exitIds);
-	if (
-		implementation.journey_settings?.live_wave === "herdr" &&
-		!process.env.HERDR_ENV
-	)
-		findings.push({ code: "live_wave_unavailable", gap: true, mode: "herdr" });
 	const live_exchange =
 		implementation.journey_settings?.live_wave === "herdr"
 			? readLiveExchange(dir, waveId, findings)
