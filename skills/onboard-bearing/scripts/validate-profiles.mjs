@@ -685,6 +685,7 @@ function validate(opts) {
 				"deterministic_verification",
 				"review",
 				"assurance_repair",
+				"reviewer_repair",
 				"execution",
 			];
 			for (const k of Object.keys(profile)) {
@@ -938,6 +939,15 @@ function validate(opts) {
 					typeof ar.enabled !== "boolean"
 				) {
 					errors.push(`${pfx}.assurance_repair: must define boolean enabled`);
+				}
+			}
+			if (Object.hasOwn(profile, "reviewer_repair")) {
+				const rr = profile.reviewer_repair;
+				if (
+					!isClosedPlainObject(rr, ["enabled"]) ||
+					typeof rr.enabled !== "boolean"
+				) {
+					errors.push(`${pfx}.reviewer_repair: must define boolean enabled`);
 				}
 			}
 			if (Object.hasOwn(profile, "execution")) {

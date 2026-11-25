@@ -23,6 +23,61 @@ const AGY_SAFE_TOOLS = new Set([
 ]);
 const KINDS = new Set(['review', 'repair', 'deterministic', 'qualification']);
 const CLOSED = new Set(['PASS', 'REPAIR_REQUIRED', 'FAIL']);
+const REVIEWER_TRANSITION_FIELDS = [
+  ['candidate', /\bcandidate(?:_ref|_revision|_digest)?\b/i],
+  ['worktree', /\bworktree\b/i],
+  ['branch', /\bbranch\b/i],
+  ['generation', /\bgeneration\b/i],
+  ['reviewer session', /\breviewer[-_\s]+(?:session|context)\b/i],
+  ['repair paths', /\brepair[-_\s]+(?:paths?|targets?)\b|\bwrite[-_\s_]set\b/i],
+  ['regression tests', /\bregression[-_\s]+tests?\b/i],
+  ['remaining allowance', /\bremaining[-_\s]+allowance\b|\brepair[-_\s]+allowance\b|\brepairs[-_\s_]max\b/i],
+];
+function reviewerRepairEnabled(b) {
+  const d = b?.declaration;
+  return (d?.profile_freeze?.snapshot?.reviewer_repair?.enabled ??
+    d?.snapshot?.reviewer_repair?.enabled ??
+    d?.reviewer_repair?.enabled) === true;
+}
+function packetText(toolInput) {
+  if (!object(toolInput)) return '';
+  const parts = [];
+  for (const key of ['prompt', 'instructions', 'message', 'task', 'description', 'command', 'cmd', 'CommandLine']) {
+    if (typeof toolInput[key] === 'string' && toolInput[key]) parts.push(toolInput[key]);
+  }
+  if (object(toolInput.repair_transition)) parts.push(JSON.stringify(toolInput.repair_transition));
+  return parts.join('\n');
+}
+function isNonReviewerAssurance(src) {
+  return /\b(?:assurance\s+test\s+engineer|test[_-\s]engineer|integration[_-\s]engineer)\b/i.test(src) &&
+    !/\breviewer\b/i.test(src);
+}
+function forbidsRepair(src) {
+  return /\breport[- ]only\b/i.test(src) ||
+    /\breport\s+without\s+repairing\b/i.test(src) ||
+    /\b(?:do\s+not|don't|never|cannot|must\s+not|shall\s+not|not\s+allowed\s+to)\s+repair\b(?!\s+(?:outside|beyond|more\s+than|other|unrelated))/i.test(src) ||
+    /\brepair(?:ing)?\s+(?:is\s+)?(?:forbidden|prohibited|disallowed|not\s+(?:allowed|authorized|permitted))\b/i.test(src) ||
+    /\bforbid(?:s|ding)?\s+repair\b/i.test(src) ||
+    /(?<!\bif\s)\bno\s+repair\b(?!\s+(?:round|budget|reset|proves|is\s+needed|needed))/i.test(src);
+}
+function reviewerRepairAdvisory(b, slot, priorRepairs) {
+  if (!reviewerRepairEnabled(b)) return null;
+  const src = packetText(slot.tool_input);
+  if (isNonReviewerAssurance(src)) return null;
+  if (slot.kind === 'review') {
+    const forbid = forbidsRepair(src);
+    const missing = REVIEWER_TRANSITION_FIELDS.filter(([, re]) => !re.test(src)).map(([name]) => name);
+    if (!forbid && !missing.length) return null;
+    const problems = [];
+    if (forbid) problems.push('forbids repair');
+    if (missing.length) problems.push(`lacks repair_transition fields: ${missing.join(', ')}`);
+    return `Bearing Lite reviewer_repair advisory (reviewer_repair.enabled=true): Reviewer packet ${problems.join(' and ')}.`;
+  }
+  if (slot.kind === 'repair' && priorRepairs === 0) {
+    return 'Bearing Lite reviewer_repair advisory (reviewer_repair.enabled=true): dispatching separate Implementer repair for Reviewer findings while same-session repair is active and unspent.';
+  }
+  return null;
+}
 function stable(v) {
   if (Array.isArray(v)) return '[' + v.map(stable).join(',') + ']';
   if (object(v)) return '{' + Object.keys(v).sort().map(k => JSON.stringify(k) + ':' + stable(v[k])).join(',') + '}';
@@ -99,6 +154,7 @@ function consume(b, slot, slots) {
     const u = record.units.find(u => (u.unit_id || u.assurance_unit) === slot.unit_id);
     if (!u) return gap('assurance_unit_record_missing');
     baseline(record);
+    const priorRepairs = u.assurance_repairs;
     const logs = record.dispatch_log.filter(e => e.unit_id === slot.unit_id);
     if (logs.some(e => e.slot_id === slot.id)) return result('HALT', 'dispatch_slot_already_reserved');
     const bounds = store.validatedBounds(record, slot.unit_id, { reviewer_rounds: 1, repairs_max: 1 }, path.dirname(b.task_record_path));
@@ -155,8 +211,11 @@ function consume(b, slot, slots) {
     record.dispatch_declaration_sha256 = b.declaration_sha256;
     record.dispatch_log.push({ slot_id: slot.id, kind: slot.kind, group: slot.group, unit_id: slot.unit_id,
       candidate: slot.candidate, scope: slot.scope, launch_sha256: store.digest(signature(slot)), reserved_at: new Date().toISOString(), result: 'RESERVED' });
-    if (pendingReviews) return { ...result('PASS', 'dispatch_reserved'),
-      advisory: 'Bearing Lite scheduling advisory: other reviews of this candidate are incomplete. Keep review and OCR read-only; wait for all declared review members and aggregate their results before repair.' };
+    const advisories = [];
+    if (pendingReviews) advisories.push('Bearing Lite scheduling advisory: other reviews of this candidate are incomplete. Keep review and OCR read-only; wait for all declared review members and aggregate their results before repair.');
+    const repairAdvice = reviewerRepairAdvisory(b, slot, priorRepairs);
+    if (repairAdvice) advisories.push(repairAdvice);
+    if (advisories.length) return { ...result('PASS', 'dispatch_reserved'), advisory: advisories.join('\n') };
     return result('PASS', 'dispatch_reserved');
   });
 }

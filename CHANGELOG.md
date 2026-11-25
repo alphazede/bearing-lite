@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Add optional `reviewer_repair` (`{ enabled: boolean }`) to the profile schema, catalog validators, and frozen snapshots to expose same-session Reviewer repair preauthorization as a typed field, advise in `hooks/assurance-dispatch.cjs` when a Reviewer packet forbids repair or lacks `repair_transition` fields or when a separate Implementer repair dispatches while `reviewer_repair.enabled` is active and unspent, and document the evaluator `repair_transition` rule in the Prompt, role-loops, and Orchestrator skills. ([#275](https://github.com/alphazede/bearing-lite/issues/275))
+
 ## [3.0.1](https://github.com/alphazede/bearing-lite/releases/tag/v3.0.1) - 2026-11-23
 
 - Add `tools/render-mermaid-view.mjs`, a deterministic local helper that renders a Mermaid view with `mmdc` (`htmlLabels: false`) into a manifest-safe SVG by inlining computed presentation attributes and applying the DoD Manifest SVG allowlist, and document it in the MBSE skill for diagram-assisted views. The SVG sanitizer now names the actual offending element, attribute, or at-rule in its refusals and scopes root-id stylesheet selectors onto the root scope class so colours are no longer silently dropped, while still refusing scripts, `foreignObject`, event handlers, external URLs, and unsafe CSS. ([#271](https://github.com/alphazede/bearing-lite/issues/271))

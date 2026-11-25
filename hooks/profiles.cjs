@@ -877,6 +877,7 @@ function validateProfileEntry(
 		"deterministic_verification",
 		"review",
 		"assurance_repair",
+		"reviewer_repair",
 		"execution",
 	];
 	for (const key of Object.keys(profile)) {
@@ -1151,6 +1152,15 @@ function validateProfileEntry(
 			errors.push(`${prefix}.assurance_repair: must define boolean enabled`);
 		}
 	}
+	if (Object.hasOwn(profile, "reviewer_repair")) {
+		const rr = profile.reviewer_repair;
+		if (
+			!isClosedPlainObject(rr, ["enabled"]) ||
+			typeof rr.enabled !== "boolean"
+		) {
+			errors.push(`${prefix}.reviewer_repair: must define boolean enabled`);
+		}
+	}
 	if (Object.hasOwn(profile, "execution")) {
 		const ex = profile.execution;
 		if (
@@ -1402,6 +1412,10 @@ function freezeSelectedRoutes(input) {
 	if (isPlainObject(profile.assurance_repair)) {
 		snapshot.assurance_repair = deepCopy(profile.assurance_repair);
 		material.assurance_repair = snapshot.assurance_repair;
+	}
+	if (isPlainObject(profile.reviewer_repair)) {
+		snapshot.reviewer_repair = deepCopy(profile.reviewer_repair);
+		material.reviewer_repair = snapshot.reviewer_repair;
 	}
 	if (Array.isArray(profile.holds)) {
 		snapshot.holds = deepCopy(profile.holds);
