@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import {
   ROOT, aggregateInput, capabilities, configure, controlMode, describe, dispatchInput,
@@ -134,17 +134,46 @@ for (const [name, prepare, input, code] of [
     dispatchInput(), "binding_mismatch"],
   ["no activation", f => rmSync(f.activation), dispatchInput(), "activation_required"],
   ["outside write set", () => {}, { ...dispatchInput(), write_set: ["state/not-assigned.txt"] }, "write_set_denied"],
+  ["dot-dot escape from granted prefix", f => configure(f, { write_set: ["hooks/"] }),
+    { ...dispatchInput(), write_set: ["hooks/../schemas/x.json"] }, "write_set_denied"],
+  ["dot-dot escape via repeated separator", f => configure(f, { write_set: ["hooks/"] }),
+    { ...dispatchInput(), write_set: ["hooks//../schemas/x.json"] }, "write_set_denied"],
+  ["dot-dot escape via backslash separator", f => configure(f, { write_set: ["hooks/"] }),
+    { ...dispatchInput(), write_set: ["hooks\\..\\schemas\\x.json"] }, "write_set_denied"],
+  ["dot-dot to root from granted prefix", f => configure(f, { write_set: ["hooks/"] }),
+    { ...dispatchInput(), write_set: ["hooks/.."] }, "write_set_denied"],
+  ["absolute path in write set", f => configure(f, { write_set: ["state/effects.log"] }),
+    f => ({ ...dispatchInput(), write_set: [path.join(f.workspace, "state/effects.log")] }), "write_set_denied"],
+  ["root-relative absolute path in write set", () => {},
+    { ...dispatchInput(), write_set: ["/state/effects.log"] }, "write_set_denied"],
+  ["empty entry in write set", () => {},
+    { ...dispatchInput(), write_set: [""] }, "write_set_denied"],
 ]) {
   test("BLX-VC-047: " + name + " is refused before the dispatch effect", async t => {
     const f = fixture(t);
     prepare(f);
     const before = workspaceDigest(f);
-    const out = await run(f, request("authority-check", "dispatch", input));
+    const resolvedInput = typeof input === "function" ? input(f) : input;
+    const out = await run(f, request("authority-check", "dispatch", resolvedInput));
     failure(out, code);
     assert.equal(workspaceDigest(f), before);
     assert.deepEqual(effects(f), []);
     assert.ok(!existsSync(path.join(f.workspace, "state/not-assigned.txt")));
     assert.ok(!existsSync(path.join(f.control, "dispatch.log")), "unverified request crossed launcher boundary");
+  });
+}
+
+for (const [name, granted, entry] of [
+  ["dot-dot inside granted directory", ["state/"], "state/sub/../effects.log"],
+  ["repeated separator", ["state/effects.log"], "state//effects.log"],
+  ["backslash separator", ["state/effects.log"], "state\\effects.log"],
+]) {
+  test("BLX-VC-047: normalized " + name + " is accepted and forwarded normalized", async t => {
+    const f = fixture(t, { write_set: granted });
+    const packet = "norm-ok";
+    const out = await run(f, request("norm-" + packet, "dispatch", { ...dispatchInput(packet), write_set: [entry] }));
+    assert.equal(out.status, "COMPLETE", JSON.stringify(out));
+    assert.deepEqual(effects(f), [packet]);
   });
 }
 
@@ -229,4 +258,57 @@ test("BLX-VC-059: approved routine digest, changed source, and generated source 
   failure(await run(f, program("denied-generated", 'return await call("unlisted", {});')), "capability_denied");
   failure(await run(f, program("oversized-generated", "/*" + "x".repeat(65536) + "*/")), "request_limit");
   assert.deepEqual(effects(f), []);
+});
+
+test("BLX-VC-047: plan path rejects absolute, re-entering traversal, backslash escape and symlink escape", async t => {
+  const f = fixture(t);
+  const outsideDir = path.join(f.root, "outside-plan");
+  mkdirSync(outsideDir);
+  symlinkSync(outsideDir, path.join(f.workspace, "plan-link"));
+  for (const [label, planDir] of [
+    ["absolute", path.join(f.workspace, "plan")],
+    ["re-entering traversal", "../" + path.basename(f.workspace) + "/plan"],
+    ["backslash escape", "plan\\..\\..\\outside"],
+    ["symlink escape", "plan-link"],
+  ]) {
+    const out = await run(f, request("bad-plan-" + label, "validate", { plan_dir: planDir, stage: "draft" }));
+    failure(out, "schema_error");
+  }
+});
+
+test("BLX-VC-047: routine path rejects absolute, re-entering traversal and symlink escape", async t => {
+  const f = fixture(t);
+  const outsideRoutine = path.join(f.root, "outside-routine.js");
+  const script = 'return await call("ready-set", ' + JSON.stringify(readyInput) + ");";
+  writeFileSync(outsideRoutine, script);
+  symlinkSync(outsideRoutine, path.join(f.workspace, "routine-link.js"));
+  const insideRoutine = path.join(f.workspace, "routine.js");
+  writeFileSync(insideRoutine, script);
+  configure(f, {
+    reviewed_routines: {
+      abs: { path: insideRoutine, sha256: sha(script) },
+      reenter: { path: "../" + path.basename(f.workspace) + "/routine.js", sha256: sha(script) },
+      symlink: { path: "routine-link.js", sha256: sha(script) },
+    },
+  });
+  for (const name of ["abs", "reenter", "symlink"]) {
+    const out = await run(f, { request_id: "bad-routine-" + name, idempotency_key: "bad-routine-" + name, generation: 1, routine: name });
+    failure(out, "routine_digest_mismatch");
+  }
+});
+
+test("BLX-VC-047: evidence path rejects absolute and re-entering traversal and normalizes relative paths", async t => {
+  const f = fixture(t);
+  for (const [label, refPath] of [
+    ["absolute", path.join(f.evidenceDir, "source.json")],
+    ["re-entering traversal", "../" + path.basename(f.evidenceDir) + "/source.json"],
+  ]) {
+    const out = await run(f, request("bad-ref-" + label, "evidence", { path: refPath, sha256: f.sourceRef.sha256 }));
+    failure(out, "evidence_ref_invalid");
+  }
+  const normalizedRef = await run(f, request("norm-ref", "evidence", {
+    path: "sub/../source.json", sha256: f.sourceRef.sha256,
+  }));
+  assert.equal(normalizedRef.status, "COMPLETE", JSON.stringify(normalizedRef));
+  assert.deepEqual(resultOf(f, normalizedRef, "evidence"), f.sourceRef);
 });

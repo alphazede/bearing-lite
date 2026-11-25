@@ -276,9 +276,12 @@ const CAPABILITIES = {
 		input: AGGREGATE,
 		output: AGGREGATE,
 		run: (ctx, input, state) => {
-			for (const ref of input.evidence_refs) verifyRef(ctx, ref);
-			state.aggregate = input;
-			return input;
+			const evidence_refs = input.evidence_refs.map((ref) =>
+				verifyRef(ctx, ref),
+			);
+			const normalized = { ...input, evidence_refs };
+			state.aggregate = normalized;
+			return normalized;
 		},
 	},
 };
@@ -392,22 +395,65 @@ function alive(pid) {
 	}
 }
 
+function normalizeRelativePath(value) {
+	if (typeof value !== "string" || !value || value.includes("\0")) return null;
+	const slash = value.replaceAll("\\", "/");
+	if (slash.startsWith("/") || /^[a-zA-Z]:(?:\/|$)/.test(slash)) return null;
+	const norm = path.posix.normalize(slash);
+	if (
+		!norm ||
+		norm === "." ||
+		norm === "./" ||
+		norm === ".." ||
+		norm.startsWith("../")
+	) {
+		return null;
+	}
+	return norm;
+}
+
+function existingRealPath(probe) {
+	let current = probe;
+	while (true) {
+		try {
+			return fs.realpathSync(current);
+		} catch (error) {
+			if (error.code !== "ENOENT") return null;
+			try {
+				if (fs.lstatSync(current).isSymbolicLink()) return null;
+			} catch {
+				/* missing segment: walk to parent */
+			}
+			const parent = path.dirname(current);
+			if (parent === current) return null;
+			current = parent;
+		}
+	}
+}
+
 function inside(root, relative) {
-	const file = path.resolve(root, relative);
-	if (!file.startsWith(path.resolve(root) + path.sep))
+	const norm = normalizeRelativePath(relative);
+	if (!norm) throw new Fail("schema_error");
+	const base = fs.realpathSync(root);
+	const file = path.resolve(base, norm);
+	const real = file.startsWith(base + path.sep) ? existingRealPath(file) : null;
+	if (!real || (real !== base && !real.startsWith(base + path.sep))) {
 		throw new Fail("schema_error");
+	}
 	return file;
 }
 
 function verifyRef(ctx, ref) {
+	const norm = normalizeRelativePath(ref?.path);
+	if (!norm) throw new Fail("evidence_ref_invalid");
 	try {
 		const store = fs.realpathSync(ctx.evidence_dir);
-		const file = fs.realpathSync(path.resolve(store, ref.path));
+		const file = fs.realpathSync(path.resolve(store, norm));
 		if (
 			file.startsWith(store + path.sep) &&
 			sha(fs.readFileSync(file)) === ref.sha256
 		) {
-			return { path: ref.path, sha256: ref.sha256 };
+			return { path: norm, sha256: ref.sha256 };
 		}
 	} catch {
 		/* missing or unreadable: refused below */
@@ -528,22 +574,28 @@ function authorize(ctx, input) {
 	});
 	if (activation.reason !== "context_ready")
 		throw new Fail("activation_required");
-	const allowed = ctx.write_set ?? [];
+	const allowed = (ctx.write_set ?? [])
+		.map(normalizeRelativePath)
+		.filter(Boolean);
+	const normalized = input.write_set.map(normalizeRelativePath);
 	const covered = (entry) =>
+		entry !== null &&
 		allowed.some(
 			(own) => own === entry || (own.endsWith("/") && entry.startsWith(own)),
 		);
-	if (!input.write_set.every(covered)) throw new Fail("write_set_denied");
+	if (!normalized.every(covered)) throw new Fail("write_set_denied");
+	return normalized;
 }
 
 // Journal before the effect; on resume, ask the launcher what durably happened.
 async function runDispatch(ctx, input, state, key) {
-	authorize(ctx, input);
+	const writeSet = authorize(ctx, input);
 	const file = journalFile(ctx, "call", key);
 	const recorded = read(file);
 	if (recorded?.state === "done") return recorded.result;
 	const bound = {
 		...input,
+		write_set: writeSet,
 		binding_path: ctx.binding_path,
 		binding_sha256: ctx.binding_sha256,
 	};
