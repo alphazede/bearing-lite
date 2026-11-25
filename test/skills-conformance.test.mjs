@@ -1627,9 +1627,18 @@ describe("shared-machine test standard", () => {
 	});
 
 	it("#275 prompt, role-loops, and bearing-lite document evaluator repair_transition when binding enables it", () => {
-		const prompt = readFileSync(path.join(SKILLS_DIR, "prompt", "SKILL.md"), "utf8");
-		const roleLoops = readFileSync(path.join(SKILLS_DIR, "prompt", "references", "role-loops.md"), "utf8");
-		const bearingLite = readFileSync(path.join(SKILLS_DIR, "bearing-lite", "SKILL.md"), "utf8");
+		const prompt = readFileSync(
+			path.join(SKILLS_DIR, "prompt", "SKILL.md"),
+			"utf8",
+		);
+		const roleLoops = readFileSync(
+			path.join(SKILLS_DIR, "prompt", "references", "role-loops.md"),
+			"utf8",
+		);
+		const bearingLite = readFileSync(
+			path.join(SKILLS_DIR, "bearing-lite", "SKILL.md"),
+			"utf8",
+		);
 
 		assert.match(prompt, /reviewer_repair\.enabled/);
 		assert.match(prompt, /repair_transition/);
