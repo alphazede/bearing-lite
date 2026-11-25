@@ -425,6 +425,12 @@ describe("freezeSelectedRoutes capability preservation (#114)", () => {
 		const absentA = profilesHook.freezeSelectedRoutes({
 			profile: baseProfile(),
 		});
+		// Recorded from the same placeholder profile on the pre-feature baseline.
+		assert.deepEqual(absentA.snapshot, baseProfile());
+		assert.equal(
+			absentA.digest,
+			"800581df0b06f32a55031ce72b8ae638a7e1b8f93608546b718072b3a2052978",
+		);
 		assert.equal("reviewer_repair" in absentA.snapshot, false);
 		assert.equal(
 			absentA.digest,
