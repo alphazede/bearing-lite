@@ -1,0 +1,67 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://github.com/alphazede/bearing-lite/schemas/owner-feedback.schema.json",
+	"title": "Bearing Lite owner feedback record",
+	"description": "One line of <feedback_dir>/<candidate_digest>/feedback.jsonl, written by tools/plannotator-adapter.mjs outside the frozen plan package. A record is feedback or an approve intent for the existing owner-decision procedure; it never grants authority.",
+	"type": "object",
+	"$defs": {
+		"nonempty": {
+			"type": "string",
+			"pattern": "\\S"
+		},
+		"digest": {
+			"type": "string",
+			"pattern": "^[0-9a-fA-F]{64}$"
+		}
+	},
+	"required": [
+		"candidate_digest",
+		"revision",
+		"owner_stop_id",
+		"request_id",
+		"timestamp",
+		"artifact_path",
+		"section_id",
+		"kind",
+		"body"
+	],
+	"properties": {
+		"candidate_digest": {
+			"$ref": "#/$defs/digest",
+			"description": "Manifest digest from plan-package draft for the reviewed candidate."
+		},
+		"revision": {
+			"$ref": "#/$defs/nonempty",
+			"description": "Candidate revision from seit.json source_baseline."
+		},
+		"owner_stop_id": {
+			"$ref": "#/$defs/nonempty"
+		},
+		"request_id": {
+			"$ref": "#/$defs/nonempty",
+			"description": "One per review session; shared by every record of that session."
+		},
+		"timestamp": {
+			"type": "string",
+			"format": "date-time",
+			"description": "Adapter clock when the session ended; Plannotator exports no annotation times.",
+			"pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+		},
+		"artifact_path": {
+			"$ref": "#/$defs/nonempty",
+			"description": "Package-relative path of the annotated artifact."
+		},
+		"section_id": {
+			"$ref": "#/$defs/nonempty",
+			"description": "Markdown heading or HTML section id; 'candidate' for an approve intent."
+		},
+		"kind": {
+			"enum": ["comment", "request_changes", "approve_intent"]
+		},
+		"body": {
+			"type": "string",
+			"description": "Owner comment with &, < and > escaped; empty for an approve intent."
+		}
+	},
+	"additionalProperties": false
+}
