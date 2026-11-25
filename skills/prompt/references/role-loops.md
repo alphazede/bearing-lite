@@ -14,8 +14,9 @@ While evaluating, an evaluator checks its report without mutating the candidate.
 When the frozen binding enables Reviewer repair (`reviewer_repair.enabled`), the
 original review packet tells the Reviewer to fix what it finds in the same session,
 within the packet's paths, and to rerun the checks. When `assurance_repair.enabled`
-is true, Assurance Test Engineer repairs proven test-side defects in the same
-session; when absent or disabled, the evaluator reports without repairing.
+is true, preauthorize Assurance Test Engineer's same-session test-side repair
+with the original `repair_transition` per the [assurance repair contract](../../test-engineer/references/assurance-repair.md).
+When the respective setting is absent or disabled, the evaluator reports without repairing.
 Additional invocations and role transitions require their existing explicit authority.
 
 | Selected role/session | Loop | Canonical skill |

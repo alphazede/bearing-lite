@@ -1641,14 +1641,24 @@ describe("shared-machine test standard", () => {
 		);
 
 		assert.match(prompt, /reviewer_repair\.enabled/);
-		assert.match(prompt, /plain request to review and fix/i);
+		assert.match(prompt, /plain\s+request to review and fix/i);
 		assert.match(prompt, /do not forbid repair/i);
-		assert.doesNotMatch(prompt, /repair_transition/);
+		assert.match(prompt, /test-engineer\/references\/assurance-repair\.md/);
 		assert.match(roleLoops, /reviewer_repair\.enabled/);
 		assert.match(roleLoops, /within the packet's paths/i);
-		assert.doesNotMatch(roleLoops, /reviewer session|remaining allowance/);
+		assert.doesNotMatch(
+			roleLoops.match(/^\| Reviewer \|.*$/m)?.[0] ?? "",
+			/repair_transition/,
+		);
+		assert.match(
+			roleLoops,
+			/^\| Assurance Test Engineer \|.*repair_transition/m,
+		);
 		assert.match(bearingLite, /reviewer_repair\.enabled/);
-		assert.doesNotMatch(bearingLite, /repair_transition/);
+		assert.match(
+			bearingLite,
+			/test-engineer\/references\/assurance-repair\.md/,
+		);
 		assert.match(bearingLite, /\.\.\/prompt\/SKILL\.md/);
 		assert.match(bearingLite, /\.\.\/prompt\/references\/role-loops\.md/);
 	});

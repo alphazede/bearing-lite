@@ -932,6 +932,12 @@ def reviewer_repair_missing_enabled() -> dict:
     return doc
 
 
+def reviewer_repair_non_boolean_enabled() -> dict:
+    doc = complete_user_catalog()
+    doc["profiles"]["fixture-alpha"]["reviewer_repair"] = {"enabled": "true"}
+    return doc
+
+
 def reviewer_repair_unknown_key() -> dict:
     doc = complete_user_catalog()
     doc["profiles"]["fixture-alpha"]["reviewer_repair"] = {
@@ -3371,6 +3377,13 @@ def profiles_cases() -> list[tuple[str, str, object, str, str | None]]:
                 "SEIT-BDL-002",
                 "reviewer_repair_unknown_field_rejected",
                 reviewer_repair_unknown_key(),
+                "reject",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "reviewer_repair_non_boolean_enabled_rejected",
+                reviewer_repair_non_boolean_enabled(),
                 "reject",
                 None,
             ),
