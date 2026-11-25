@@ -1719,3 +1719,15 @@ describe("shared-machine test standard", () => {
 		);
 	});
 });
+
+describe("selective skill adoption", () => {
+	it("shipped skills contain no foreign harness instruction markers", () => {
+		const marker = /<important\s+if\b|\{SKILLBASE\}|\.humanlayer\//;
+		for (const rel of readdirSync(SKILLS_DIR, { recursive: true })) {
+			const file = path.join(SKILLS_DIR, rel);
+			if (statSync(file).isFile()) {
+				assert.doesNotMatch(readFileSync(file, "utf8"), marker, rel);
+			}
+		}
+	});
+});
