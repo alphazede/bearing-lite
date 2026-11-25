@@ -1,0 +1,60 @@
+{
+	"manifest": {
+		"template_version": "1.0.1",
+		"output_name": "sample-dod-manifest.html",
+		"title": "Sample Definition of Done",
+		"state": "implementation",
+		"definition_of_done": [
+			{
+				"id": "ACCEPT-VIS",
+				"criterion": "Sample is preserved and reported.",
+				"status": "PLANNED"
+			}
+		],
+		"architecture": [
+			{
+				"id": "DES-VIS",
+				"decision": "Record then report.",
+				"status": "PLANNED"
+			}
+		],
+		"documentation": [{ "surface": "plan.md", "impact": "Record the sample." }],
+		"closeout": {
+			"owner_acceptance": "pending",
+			"current_execution_state": {
+				"slice_state": { "SYN-S1": "PASS", "SYN-S2": "HOLD" }
+			}
+		}
+	},
+	"requirements": [
+		{
+			"id": "AC-VIS-01",
+			"statement": "Preserve the sample record.",
+			"source": "plan.md",
+			"status": "CONFIRMED"
+		},
+		{
+			"id": "AC-VIS-02",
+			"statement": "Report the sample result.",
+			"source": "plan.md",
+			"status": "PLANNED"
+		}
+	],
+	"cases": [
+		{
+			"id": "SEIT-VIS-01",
+			"requirement_id": "AC-VIS-01",
+			"observable_evidence": "evidence/preserve.txt"
+		},
+		{
+			"id": "SEIT-VIS-02",
+			"requirement_id": "AC-VIS-01",
+			"observable_evidence": "evidence/compare &amp; sample's.txt"
+		},
+		{
+			"id": "SEIT-VIS-03",
+			"requirement_id": "AC-VIS-02",
+			"observable_evidence": "evidence/result.txt"
+		}
+	]
+}
