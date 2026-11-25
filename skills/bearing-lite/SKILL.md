@@ -66,10 +66,11 @@ explicit setup or catalog-edit request uses [onboard-bearing](../onboard-bearing
    recorded boundary passes deterministic checks. The approved
    task plan supplies task and rolling batch boundaries. A recorded request
    requires no further approval. An independent evaluator is a reviewer.
-   Preserve selected assistance tools; when the frozen binding enables same-session
-   repair (`reviewer_repair.enabled` or `assurance_repair.enabled`), preauthorize the
-   bounded `repair_transition` in the original packet per
-   [Prompt](../prompt/SKILL.md) and [role loops](../prompt/references/role-loops.md)
+   Preserve selected assistance tools; when the frozen binding enables Reviewer
+   repair (`reviewer_repair.enabled`), tell the Reviewer in the original review
+   packet to fix what it finds in the same session, within the packet's paths,
+   and to rerun the checks (for `assurance_repair.enabled`, follow
+   [Prompt](../prompt/SKILL.md) and [role loops](../prompt/references/role-loops.md))
    and consume consolidated evidence without per-finding approval. For
    a review before a first live apply, include the frozen host and class rows and
    the exact proposed operand list, not only the executor diff. Add no quality agents.

@@ -1626,7 +1626,7 @@ describe("shared-machine test standard", () => {
 		}
 	});
 
-	it("#275 prompt, role-loops, and bearing-lite document evaluator repair_transition when binding enables it", () => {
+	it("#275 prompt, role-loops, and bearing-lite document plain Reviewer repair without repair_transition control fields", () => {
 		const prompt = readFileSync(
 			path.join(SKILLS_DIR, "prompt", "SKILL.md"),
 			"utf8",
@@ -1641,10 +1641,14 @@ describe("shared-machine test standard", () => {
 		);
 
 		assert.match(prompt, /reviewer_repair\.enabled/);
-		assert.match(prompt, /repair_transition/);
+		assert.match(prompt, /plain request to review and fix/i);
+		assert.match(prompt, /do not forbid repair/i);
+		assert.doesNotMatch(prompt, /repair_transition/);
 		assert.match(roleLoops, /reviewer_repair\.enabled/);
-		assert.match(roleLoops, /repair_transition/);
+		assert.match(roleLoops, /within the packet's paths/i);
+		assert.doesNotMatch(roleLoops, /reviewer session|remaining allowance/);
 		assert.match(bearingLite, /reviewer_repair\.enabled/);
+		assert.doesNotMatch(bearingLite, /repair_transition/);
 		assert.match(bearingLite, /\.\.\/prompt\/SKILL\.md/);
 		assert.match(bearingLite, /\.\.\/prompt\/references\/role-loops\.md/);
 	});

@@ -952,25 +952,13 @@ test("229 unreadable or missing cwd with resolved explicit task binding stays fa
 	assert.equal(denied(r), true);
 });
 
-const TRANSITION_PACKET = [
-	"ROLE / SESSION: Reviewer",
-	"STATE / INPUTS:",
-	"- candidate: cand-a / rev-1 / digest-1",
-	"- worktree: /worktrees/wt-1",
-	"- branch: fix/example",
-	"- generation: 1",
-	"- reviewer session: rev-sess-1",
-	"LOOP: repair_transition when findings validate:",
-	"- repair paths: src/app.js",
-	"- regression tests: test/app.test.mjs",
-	"- remaining allowance: 1",
-].join("\n");
-
 function setupReviewerRepairFixture(t, reviewerRepair, overrides = {}) {
 	const f = fixture(t);
 	f.slots[0].tool_input = {
 		command: f.slots[0].tool_input.command,
-		prompt: overrides.reviewPrompt ?? TRANSITION_PACKET,
+		prompt:
+			overrides.reviewPrompt ??
+			"ROLE / SESSION: Reviewer\nReview this pull request and fix what you find.",
 	};
 	const repairSlot = f.slots.find((s) => s.id === "repair");
 	repairSlot.tool_input = {
@@ -978,11 +966,6 @@ function setupReviewerRepairFixture(t, reviewerRepair, overrides = {}) {
 		prompt:
 			overrides.repairPrompt ??
 			"ROLE / SESSION: Implementer. Repair Reviewer findings F1.",
-	};
-	const extraSlot = f.slots.find((s) => s.id === "repair-extra");
-	extraSlot.tool_input = {
-		command: extraSlot.tool_input.command,
-		prompt: "ROLE / SESSION: Implementer. Repair Reviewer findings F1.",
 	};
 	if (reviewerRepair !== undefined) {
 		f.declaration.profile_freeze = {
@@ -1038,207 +1021,73 @@ test("275 reviewer_repair absent, disabled, or prose-only hold stays silent on r
 	}
 });
 
-test("275 reviewer_repair enabled advises on forbidding or incomplete Reviewer packet and stays silent on matching packet", (t) => {
-	const matching = setupReviewerRepairFixture(t, { enabled: true });
-	const ok = run(matching, envelope(matching, "review-a"));
-	assert.equal(denied(ok), false);
-	assert.equal(ok.detail.outcome, "PASS");
-	assert.equal(ok.detail.advisory, undefined);
-	assert.deepEqual(ok.wire, {});
-
-	for (const host of ["claude-code", "cursor"]) {
-		const forbidding = setupReviewerRepairFixture(
+test("275 reviewer_repair enabled stays silent on plain or bounded Reviewer packets and on repair slots", (t) => {
+	for (const reviewPrompt of [
+		"Review this pull request and fix what you find.",
+		"ROLE / SESSION: Reviewer\nReview PR #276.",
+		"ROLE / SESSION: Reviewer\nReview PR #276. Do not repair until all reviews finish. No repair outside the write set.",
+		"ROLE / SESSION: Reviewer\nDo not edit unrelated files.",
+	]) {
+		const f = setupReviewerRepairFixture(
 			t,
 			{ enabled: true },
-			{
-				reviewPrompt:
-					"ROLE / SESSION: Reviewer. You report; you do not repair. Report-only.",
-			},
+			{ reviewPrompt },
 		);
-		const res = run(forbidding, envelope(forbidding, "review-a"), host);
-		assert.equal(denied(res), false, "advisory must never refuse");
+		const res = run(f, envelope(f, "review-a"));
+		assert.equal(denied(res), false);
 		assert.equal(res.detail.outcome, "PASS");
-		assert.match(res.detail.advisory, /reviewer_repair\.enabled/);
-		assert.match(res.detail.advisory, /forbids repair/i);
-		for (const field of [
-			"candidate",
-			"worktree",
-			"branch",
-			"generation",
-			"reviewer session",
-			"repair paths",
-			"regression tests",
-			"remaining allowance",
-		]) {
-			assert.match(
-				res.detail.advisory,
-				new RegExp(field, "i"),
-				`missing field ${field}`,
-			);
-		}
-		if (host === "cursor") {
-			assert.equal(res.wire.permission, "allow");
-			assert.equal(res.wire.agent_message, res.detail.advisory);
-		} else {
-			assert.equal(
-				res.wire.hookSpecificOutput.additionalContext,
-				res.detail.advisory,
-			);
-			assert.equal(res.wire.hookSpecificOutput.permissionDecision, undefined);
-		}
+		assert.equal(res.detail.advisory, undefined);
+		assert.deepEqual(res.wire, {});
 	}
 
-	const partial = setupReviewerRepairFixture(
-		t,
-		{ enabled: true },
-		{
-			reviewPrompt: [
-				"ROLE / SESSION: Reviewer",
-				"candidate: cand-a",
-				"worktree: /wt",
-				"branch: main",
-				"generation: 1",
-				"reviewer session: s1",
-				"repair paths: src/a.js",
-			].join("\n"),
-		},
-	);
-	const partialRes = run(partial, envelope(partial, "review-a"));
-	assert.equal(denied(partialRes), false);
-	assert.match(partialRes.detail.advisory, /reviewer_repair\.enabled/);
-	assert.match(partialRes.detail.advisory, /regression tests/i);
-	assert.match(partialRes.detail.advisory, /remaining allowance/i);
-	assert.doesNotMatch(partialRes.detail.advisory, /\bworktree\b/i);
-});
-
-test("275 reviewer_repair enabled advises on Implementer repair for Reviewer findings while active and unspent", (t) => {
 	const f = setupReviewerRepairFixture(t, { enabled: true });
 	assert.equal(denied(run(f, envelope(f, "review-a"))), false);
 	const record = f.read();
 	record.dispatch_log[0].result = "REPAIR_REQUIRED";
 	json(f.task_record_path, record);
-	assert.equal(f.read().units[0].assurance_repairs, 0);
-
 	const rep = run(f, envelope(f, "repair"));
-	assert.equal(denied(rep), false, "advisory must never refuse");
+	assert.equal(denied(rep), false);
 	assert.equal(rep.detail.outcome, "PASS");
-	assert.match(rep.detail.advisory, /reviewer_repair\.enabled/);
-	assert.equal(
-		rep.wire.hookSpecificOutput.additionalContext,
-		rep.detail.advisory,
-	);
-	assert.equal(rep.wire.hookSpecificOutput.permissionDecision, undefined);
-
-	// Once spent, an amended extra repair no longer claims unspent reviewer_repair.
-	const dispatch = require("../hooks/assurance-dispatch.cjs");
-	const after = f.read();
-	after.dispatch_log[1].result = "PASS";
-	json(f.task_record_path, after);
-	const detail = {
-		additional_rounds: 0,
-		additional_repairs: 1,
-		slot_ids: ["repair-extra"],
-	};
-	assert.equal(
-		dispatch.amend(f.dir, {
-			id: "amend-repair",
-			unit_id: "W1",
-			scope: "issue-209",
-			candidate: "candidate-a",
-			...detail,
-			authority_path: authority(
-				f,
-				"assurance_budget_amendment",
-				"amend-repair",
-				detail,
-			),
-		}).outcome,
-		"PASS",
-	);
-	const spent = run(f, envelope(f, "repair-extra"));
-	assert.equal(denied(spent), false);
-	assert.equal(spent.detail.advisory, undefined);
-	assert.deepEqual(spent.wire, {});
+	assert.equal(rep.detail.advisory, undefined);
+	assert.deepEqual(rep.wire, {});
 });
 
-test("275 reviewer repair advice distinguishes actual prohibitions from bounded repair", (t) => {
-	const prohibited = setupReviewerRepairFixture(
-		t,
-		{ enabled: true },
-		{
-			reviewPrompt: TRANSITION_PACKET + "\nDo not fix findings.",
-		},
-	);
-	const deniedRepair = run(prohibited, envelope(prohibited, "review-a"));
-	assert.equal(denied(deniedRepair), false);
-	assert.match(
-		deniedRepair.wire.hookSpecificOutput?.additionalContext ?? "",
-		/reviewer_repair\.enabled.*forbids repair/,
-	);
-});
-
-test("275 complete repair packet can restrict when and where repair occurs", (t) => {
-	const bounded = setupReviewerRepairFixture(
-		t,
-		{ enabled: true },
-		{
-			reviewPrompt:
-				TRANSITION_PACKET +
-				"\nDo not repair until all reviews finish. No repair outside the write set.",
-		},
-	);
-	const allowed = run(bounded, envelope(bounded, "review-a"));
-	assert.equal(denied(allowed), false);
-	assert.deepEqual(allowed.wire, {});
-});
-
-test("275 reviewer repair advice requires repair details, not just their names", (t) => {
-	const f = setupReviewerRepairFixture(
-		t,
-		{ enabled: true },
-		{
-			reviewPrompt:
-				"ROLE / SESSION: Reviewer\nInclude candidate, worktree, branch, generation, reviewer session, repair paths, regression tests and remaining allowance in repair_transition.",
-		},
-	);
-	const r = run(f, envelope(f, "review-a"));
-	assert.equal(denied(r), false);
-	const message = r.wire.hookSpecificOutput?.additionalContext ?? "";
-	assert.match(message, /reviewer_repair\.enabled/);
-	for (const name of [
-		"candidate",
-		"worktree",
-		"branch",
-		"generation",
-		"reviewer session",
-		"repair paths",
-		"regression tests",
-		"remaining allowance",
+test("275 reviewer_repair enabled advises without blocking when Reviewer packet forbids repair", (t) => {
+	for (const phrase of [
+		"Do not edit.",
+		"Report only.",
+		"Read-only review.",
+		"You report; you do not repair.",
+		"Do not fix findings.",
 	]) {
-		assert.match(message, new RegExp(name));
+		for (const host of ["claude-code", "cursor"]) {
+			const forbidding = setupReviewerRepairFixture(
+				t,
+				{ enabled: true },
+				{
+					reviewPrompt: `ROLE / SESSION: Reviewer. ${phrase}`,
+				},
+			);
+			const res = run(forbidding, envelope(forbidding, "review-a"), host);
+			assert.equal(denied(res), false, "advisory must never refuse");
+			assert.equal(res.detail.outcome, "PASS");
+			assert.match(res.detail.advisory, /reviewer_repair\.enabled/);
+			assert.match(res.detail.advisory, /forbids repair/i);
+			if (host === "cursor") {
+				assert.equal(res.wire.permission, "allow");
+				assert.equal(res.wire.agent_message, res.detail.advisory);
+			} else {
+				assert.equal(
+					res.wire.hookSpecificOutput.additionalContext,
+					res.detail.advisory,
+				);
+				assert.equal(res.wire.hookSpecificOutput.permissionDecision, undefined);
+			}
+		}
 	}
 });
 
-test("275 empty repair field is reported as missing", (t) => {
-	const empty = setupReviewerRepairFixture(
-		t,
-		{ enabled: true },
-		{
-			reviewPrompt: TRANSITION_PACKET.replace(
-				"- regression tests: test/app.test.mjs",
-				"- regression tests:",
-			),
-		},
-	);
-	const incomplete = run(empty, envelope(empty, "review-a"));
-	assert.equal(denied(incomplete), false);
-	assert.match(
-		incomplete.wire.hookSpecificOutput?.additionalContext ?? "",
-		/regression tests/,
-	);
-});
-
-test("275 reviewer repair advice does not apply to non-Reviewer assurance findings", (t) => {
+test("275 reviewer repair advice does not apply to non-Reviewer assurance packets", (t) => {
 	const f = setupReviewerRepairFixture(
 		t,
 		{ enabled: true },
@@ -1252,20 +1101,7 @@ test("275 reviewer repair advice does not apply to non-Reviewer assurance findin
 	const review = run(f, envelope(f, "review-a"));
 	assert.equal(denied(review), false);
 	assert.deepEqual(review.wire, {});
-});
 
-test("275 separate repair of test-side findings gets no Reviewer advisory", (t) => {
-	const f = setupReviewerRepairFixture(
-		t,
-		{ enabled: true },
-		{
-			reviewPrompt:
-				"ROLE / SESSION: Assurance Test Engineer\nRead the Reviewer receipt. Report-only.",
-			repairPrompt:
-				"ROLE / SESSION: Implementer\nRepair test-side findings F1.",
-		},
-	);
-	assert.equal(denied(run(f, envelope(f, "review-a"))), false);
 	const record = f.read();
 	record.dispatch_log[0].result = "REPAIR_REQUIRED";
 	json(f.task_record_path, record);
@@ -1285,36 +1121,4 @@ test("275 reviewer repair advice uses only the frozen profile setting", (t) => {
 	const r = run(f, envelope(f, "review-a"));
 	assert.equal(denied(r), false);
 	assert.deepEqual(r.wire, {});
-});
-
-test("275 structured repair transition accepts supplied details and reports empty ones", (t) => {
-	for (const regression_tests of [["test/app.test.mjs"], []]) {
-		const f = setupReviewerRepairFixture(
-			t,
-			{ enabled: true },
-			{
-				reviewPrompt: "ROLE / SESSION: Reviewer",
-			},
-		);
-		f.slots[0].tool_input.repair_transition = {
-			candidate_ref: "candidate-a",
-			worktree: "/worktrees/example",
-			branch: "fix/example",
-			generation: 1,
-			reviewer_context: "session-a",
-			write_set: ["src/app.js", "test/app.test.mjs"],
-			regression_tests,
-			repairs_max: 1,
-		};
-		json(f.declaration_path, f.declaration);
-		f.bind();
-		const result = run(f, envelope(f, "review-a"));
-		assert.equal(denied(result), false);
-		if (regression_tests.length) assert.deepEqual(result.wire, {});
-		else
-			assert.match(
-				result.wire.hookSpecificOutput?.additionalContext ?? "",
-				/regression tests/,
-			);
-	}
 });

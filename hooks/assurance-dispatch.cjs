@@ -43,19 +43,6 @@ const AGY_SAFE_TOOLS = new Set([
 ]);
 const KINDS = new Set(["review", "repair", "deterministic", "qualification"]);
 const CLOSED = new Set(["PASS", "REPAIR_REQUIRED", "FAIL"]);
-const REVIEWER_TRANSITION_FIELDS = [
-	["candidate", /\bcandidate(?:_ref|_revision|_digest)?\b/i],
-	["worktree", /\bworktree\b/i],
-	["branch", /\bbranch\b/i],
-	["generation", /\bgeneration\b/i],
-	["reviewer session", /\breviewer[-_\s]+(?:session|context)\b/i],
-	["repair paths", /\brepair[-_\s]+(?:paths?|targets?)\b|\bwrite[-_\s_]set\b/i],
-	["regression tests", /\bregression[-_\s]+tests?\b/i],
-	[
-		"remaining allowance",
-		/\bremaining[-_\s]+allowance\b|\brepair[-_\s]+allowance\b|\brepairs[-_\s_]max\b/i,
-	],
-];
 function reviewerRepairEnabled(b) {
 	return (
 		b.declaration?.profile_freeze?.snapshot?.reviewer_repair?.enabled === true
@@ -92,68 +79,29 @@ function isNonReviewerAssurance(src) {
 function forbidsRepair(src) {
 	return (
 		/\breport[- ]only\b/i.test(src) ||
-		/\breport\s+without\s+(?:repairing|fixing)\b/i.test(src) ||
-		/\b(?:do\s+not|don't|never|cannot|must\s+not|shall\s+not|not\s+allowed\s+to)\s+(?:repair|fix)\b(?!\s+(?:outside|beyond|more\s+than|other|unrelated|until|before|while|during|without|unless))/i.test(
+		/\bread[- ]only(?:\s+review)?\b(?!\s+(?:while|until|during|before|unless))/i.test(
 			src,
 		) ||
-		/\b(?:repair(?:ing)?|fix(?:ing|es)?)\s+(?:is\s+)?(?:forbidden|prohibited|disallowed|not\s+(?:allowed|authorized|permitted))\b/i.test(
+		/\b(?:report|review)\s+without\s+(?:repairing|fixing|editing)\b/i.test(
 			src,
 		) ||
-		/\bforbid(?:s|ding)?\s+(?:repair|fixes)\b/i.test(src) ||
-		/(?<!\bif\s)\bno\s+(?:repair|fixes)\b(?!\s+(?:round|budget|reset|proves|is\s+needed|needed|outside|beyond|until|before|while|during|without|unless))/i.test(
+		/\b(?:do\s+not|don't|never|cannot|must\s+not|shall\s+not|not\s+allowed\s+to)\s+(?:repair|fix|edit|modify)\b(?!\s+(?:outside|beyond|more\s+than|other|unrelated|until|before|while|during|without|unless))/i.test(
+			src,
+		) ||
+		/\b(?:repair(?:ing)?|fix(?:ing|es)?|edit(?:ing|s)?)\s+(?:(?:is|are)\s+)?(?:forbidden|prohibited|disallowed|not\s+(?:allowed|authorized|permitted))\b/i.test(
+			src,
+		) ||
+		/\bforbid(?:s|ding)?\s+(?:repair|fixes|editing)\b/i.test(src) ||
+		/(?<!\bif\s)\bno\s+(?:repair|fixes|edits?)\b(?!\s+(?:round|budget|reset|proves|is\s+needed|needed|outside|beyond|until|before|while|during|without|unless))/i.test(
 			src,
 		)
 	);
 }
-function transitionFieldPresent(src, transition, re) {
-	// Advisory only: a named field needs a supplied value, not just a mention.
-	const labelled = new RegExp(
-		`(?:${re.source})[\x60*"' \t]*[:=][ \t]*\\S`,
-		"i",
-	);
-	if (labelled.test(src)) return true;
-	if (!object(transition)) return false;
-	return Object.entries(transition).some(([key, value]) => {
-		if (!re.test(key)) return false;
-		if (typeof value === "string") return value.trim().length > 0;
-		if (Array.isArray(value)) return value.length > 0;
-		return typeof value === "number" && Number.isFinite(value);
-	});
-}
-function reviewerRepairAdvisory(b, slot, priorRepairs, logs, slots) {
-	if (!reviewerRepairEnabled(b)) return null;
+function reviewerRepairAdvisory(b, slot) {
+	if (!reviewerRepairEnabled(b) || slot.kind !== "review") return null;
 	const src = packetText(slot.tool_input);
-	if (isNonReviewerAssurance(src)) return null;
-	if (slot.kind === "review") {
-		const forbid = forbidsRepair(src);
-		const missing = REVIEWER_TRANSITION_FIELDS.filter(
-			([, re]) =>
-				!transitionFieldPresent(src, slot.tool_input.repair_transition, re),
-		).map(([name]) => name);
-		if (!forbid && !missing.length) return null;
-		const problems = [];
-		if (forbid) problems.push("forbids repair");
-		if (missing.length)
-			problems.push(`lacks repair_transition fields: ${missing.join(", ")}`);
-		return `Bearing Lite reviewer_repair advisory (reviewer_repair.enabled=true): Reviewer packet ${problems.join(" and ")}.`;
-	}
-	if (
-		slot.kind === "repair" &&
-		priorRepairs === 0 &&
-		logs.some(
-			(e) =>
-				e.kind === "review" &&
-				e.result === "REPAIR_REQUIRED" &&
-				e.candidate === slot.candidate &&
-				e.scope === slot.scope &&
-				!isNonReviewerAssurance(
-					packetText(slots.find((s) => s.id === e.slot_id)?.tool_input),
-				),
-		)
-	) {
-		return "Bearing Lite reviewer_repair advisory (reviewer_repair.enabled=true): dispatching separate Implementer repair for Reviewer findings while same-session repair is active and unspent.";
-	}
-	return null;
+	if (isNonReviewerAssurance(src) || !forbidsRepair(src)) return null;
+	return "Bearing Lite reviewer_repair advisory (reviewer_repair.enabled=true): Reviewer packet forbids repair.";
 }
 function stable(v) {
 	if (Array.isArray(v)) return "[" + v.map(stable).join(",") + "]";
@@ -347,7 +295,6 @@ function consume(b, slot, slots) {
 		);
 		if (!u) return gap("assurance_unit_record_missing");
 		baseline(record);
-		const priorRepairs = u.assurance_repairs;
 		const logs = record.dispatch_log.filter((e) => e.unit_id === slot.unit_id);
 		if (logs.some((e) => e.slot_id === slot.id))
 			return result("HALT", "dispatch_slot_already_reserved");
@@ -534,13 +481,7 @@ function consume(b, slot, slots) {
 			advisories.push(
 				"Bearing Lite scheduling advisory: other reviews of this candidate are incomplete. Keep review and OCR read-only; wait for all declared review members and aggregate their results before repair.",
 			);
-		const repairAdvice = reviewerRepairAdvisory(
-			b,
-			slot,
-			priorRepairs,
-			logs,
-			slots,
-		);
+		const repairAdvice = reviewerRepairAdvisory(b, slot);
 		if (repairAdvice) advisories.push(repairAdvice);
 		if (advisories.length)
 			return {
