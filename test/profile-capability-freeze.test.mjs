@@ -3,12 +3,13 @@
  * Proves that review and deterministic_verification capability sections
  * are deep-copied into snapshot and bound to the configuration digest.
  */
-import { describe, it } from "node:test";
+
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
+import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -18,371 +19,496 @@ const profilesHook = require(path.join(ROOT, "hooks/profiles.cjs"));
 const clone = (obj) => JSON.parse(JSON.stringify(obj));
 
 function baseProfile() {
-  return {
-    roles: {
-      implementer: {
-        enabled: true,
-        primary: {
-          harness: "harness-a",
-          model: "model-a",
-          reasoning: "reasoning-a",
-        },
-        ordered_fallbacks: [],
-      },
-      reviewer: {
-        enabled: true,
-        primary: {
-          harness: "harness-b",
-          model: "model-b",
-          reasoning: "reasoning-b",
-        },
-        ordered_fallbacks: [],
-      },
-    },
-  };
+	return {
+		roles: {
+			implementer: {
+				enabled: true,
+				primary: {
+					harness: "harness-a",
+					model: "model-a",
+					reasoning: "reasoning-a",
+				},
+				ordered_fallbacks: [],
+			},
+			reviewer: {
+				enabled: true,
+				primary: {
+					harness: "harness-b",
+					model: "model-b",
+					reasoning: "reasoning-b",
+				},
+				ordered_fallbacks: [],
+			},
+		},
+	};
 }
 
 describe("freezeSelectedRoutes capability preservation (#114)", () => {
-  it("freezes decision-policy holds and binds delegation changes to the digest", () => {
-    const profile = baseProfile();
-    profile.holds = [
-      { id: "coordinator-decisions", effect: "Escalate unresolved routine issues", routine_resolution_attempts: 2 },
-      { id: "orchestrator-delegation", effect: "Explicitly scoped delegation only", enabled: false },
-    ];
-    const frozen = profilesHook.freezeSelectedRoutes({ profile });
-    assert.deepEqual(frozen.snapshot.holds, profile.holds);
-    for (const change of [
-      p => { p.holds[1].enabled = true; },
-      p => { p.holds[0].routine_resolution_attempts = 3; },
-      p => { p.holds[1].effect = "Changed delegation scope"; },
-    ]) {
-      const candidate = clone(profile);
-      change(candidate);
-      assert.notEqual(profilesHook.freezeSelectedRoutes({ profile: candidate }).digest, frozen.digest);
-    }
-    profile.holds[1].enabled = true;
-    assert.equal(frozen.snapshot.holds[1].enabled, false);
-  });
+	it("freezes decision-policy holds and binds delegation changes to the digest", () => {
+		const profile = baseProfile();
+		profile.holds = [
+			{
+				id: "coordinator-decisions",
+				effect: "Escalate unresolved routine issues",
+				routine_resolution_attempts: 2,
+			},
+			{
+				id: "orchestrator-delegation",
+				effect: "Explicitly scoped delegation only",
+				enabled: false,
+			},
+		];
+		const frozen = profilesHook.freezeSelectedRoutes({ profile });
+		assert.deepEqual(frozen.snapshot.holds, profile.holds);
+		for (const change of [
+			(p) => {
+				p.holds[1].enabled = true;
+			},
+			(p) => {
+				p.holds[0].routine_resolution_attempts = 3;
+			},
+			(p) => {
+				p.holds[1].effect = "Changed delegation scope";
+			},
+		]) {
+			const candidate = clone(profile);
+			change(candidate);
+			assert.notEqual(
+				profilesHook.freezeSelectedRoutes({ profile: candidate }).digest,
+				frozen.digest,
+			);
+		}
+		profile.holds[1].enabled = true;
+		assert.equal(frozen.snapshot.holds[1].enabled, false);
+	});
 
-  it("preserves additional testing tools and binds command, enabled, pass, and evidence changes", () => {
-    const profile = baseProfile();
-    const tool = { name: "Repository tests", enabled: true, command: "node --test test/*.test.mjs", pass: "Exit 0", evidence: "Test summary" };
-    profile.deterministic_verification = { additional_tools: [clone(tool)] };
-    const frozen = profilesHook.freezeSelectedRoutes({ profile });
-    assert.deepEqual(frozen.snapshot.deterministic_verification.additional_tools, [tool]);
-    for (const [field, value] of Object.entries({ enabled: false, command: "node --test test/profiles-empty.test.mjs", pass: "Exit 0 and no skipped cases", evidence: "Bound test summary and exit code" })) {
-      const changed = clone(profile);
-      changed.deterministic_verification.additional_tools[0][field] = value;
-      assert.notEqual(profilesHook.freezeSelectedRoutes({ profile: changed }).digest, frozen.digest, field);
-    }
-    profile.deterministic_verification.additional_tools[0].command = "changed after freeze";
-    assert.equal(frozen.snapshot.deterministic_verification.additional_tools[0].command, tool.command);
-  });
+	it("preserves additional testing tools and binds command, enabled, pass, and evidence changes", () => {
+		const profile = baseProfile();
+		const tool = {
+			name: "Repository tests",
+			enabled: true,
+			command: "node --test test/*.test.mjs",
+			pass: "Exit 0",
+			evidence: "Test summary",
+		};
+		profile.deterministic_verification = { additional_tools: [clone(tool)] };
+		const frozen = profilesHook.freezeSelectedRoutes({ profile });
+		assert.deepEqual(
+			frozen.snapshot.deterministic_verification.additional_tools,
+			[tool],
+		);
+		for (const [field, value] of Object.entries({
+			enabled: false,
+			command: "node --test test/profiles-empty.test.mjs",
+			pass: "Exit 0 and no skipped cases",
+			evidence: "Bound test summary and exit code",
+		})) {
+			const changed = clone(profile);
+			changed.deterministic_verification.additional_tools[0][field] = value;
+			assert.notEqual(
+				profilesHook.freezeSelectedRoutes({ profile: changed }).digest,
+				frozen.digest,
+				field,
+			);
+		}
+		profile.deterministic_verification.additional_tools[0].command =
+			"changed after freeze";
+		assert.equal(
+			frozen.snapshot.deterministic_verification.additional_tools[0].command,
+			tool.command,
+		);
+	});
 
-  it("deep-copies review capability into snapshot and isolates from subsequent mutation", () => {
-    const profile = baseProfile();
-    profile.review = {
-      coverage_assist: {
-        enabled: true,
-        required: false,
-      },
-    };
+	it("deep-copies review capability into snapshot and isolates from subsequent mutation", () => {
+		const profile = baseProfile();
+		profile.review = {
+			coverage_assist: {
+				enabled: true,
+				required: false,
+			},
+		};
 
-    const frozen = profilesHook.freezeSelectedRoutes({ profile });
+		const frozen = profilesHook.freezeSelectedRoutes({ profile });
 
-    assert.ok(frozen.snapshot, "snapshot must exist");
-    assert.deepEqual(frozen.snapshot.review, {
-      coverage_assist: {
-        enabled: true,
-        required: false,
-      },
-    });
+		assert.ok(frozen.snapshot, "snapshot must exist");
+		assert.deepEqual(frozen.snapshot.review, {
+			coverage_assist: {
+				enabled: true,
+				required: false,
+			},
+		});
 
-    // Mutate input profile after freezing
-    profile.review.coverage_assist.enabled = false;
-    profile.review.coverage_assist.required = true;
-    profile.review.extra = "mutated";
+		// Mutate input profile after freezing
+		profile.review.coverage_assist.enabled = false;
+		profile.review.coverage_assist.required = true;
+		profile.review.extra = "mutated";
 
-    assert.equal(
-      frozen.snapshot.review.coverage_assist.enabled,
-      true,
-      "frozen snapshot must not reflect subsequent input mutation"
-    );
-    assert.equal(
-      frozen.snapshot.review.coverage_assist.required,
-      false,
-      "frozen snapshot must not reflect subsequent input mutation"
-    );
-    assert.equal(
-      frozen.snapshot.review.extra,
-      undefined,
-      "frozen snapshot must not receive new properties added after freeze"
-    );
-  });
+		assert.equal(
+			frozen.snapshot.review.coverage_assist.enabled,
+			true,
+			"frozen snapshot must not reflect subsequent input mutation",
+		);
+		assert.equal(
+			frozen.snapshot.review.coverage_assist.required,
+			false,
+			"frozen snapshot must not reflect subsequent input mutation",
+		);
+		assert.equal(
+			frozen.snapshot.review.extra,
+			undefined,
+			"frozen snapshot must not receive new properties added after freeze",
+		);
+	});
 
-  it("deep-copies deterministic_verification capability into snapshot and isolates from subsequent mutation", () => {
-    const profile = baseProfile();
-    profile.deterministic_verification = {
-      reverify: {
-        enabled: true,
-      },
-    };
+	it("deep-copies deterministic_verification capability into snapshot and isolates from subsequent mutation", () => {
+		const profile = baseProfile();
+		profile.deterministic_verification = {
+			reverify: {
+				enabled: true,
+			},
+		};
 
-    const frozen = profilesHook.freezeSelectedRoutes({ profile });
+		const frozen = profilesHook.freezeSelectedRoutes({ profile });
 
-    assert.ok(frozen.snapshot, "snapshot must exist");
-    assert.deepEqual(frozen.snapshot.deterministic_verification, {
-      reverify: {
-        enabled: true,
-      },
-    });
+		assert.ok(frozen.snapshot, "snapshot must exist");
+		assert.deepEqual(frozen.snapshot.deterministic_verification, {
+			reverify: {
+				enabled: true,
+			},
+		});
 
-    // Mutate input profile after freezing
-    profile.deterministic_verification.reverify.enabled = false;
-    profile.deterministic_verification.reverify.extra = "mutated";
+		// Mutate input profile after freezing
+		profile.deterministic_verification.reverify.enabled = false;
+		profile.deterministic_verification.reverify.extra = "mutated";
 
-    assert.equal(
-      frozen.snapshot.deterministic_verification.reverify.enabled,
-      true,
-      "frozen snapshot must not reflect subsequent input mutation"
-    );
-    assert.equal(
-      frozen.snapshot.deterministic_verification.reverify.extra,
-      undefined,
-      "frozen snapshot must not receive new properties added after freeze"
-    );
-  });
+		assert.equal(
+			frozen.snapshot.deterministic_verification.reverify.enabled,
+			true,
+			"frozen snapshot must not reflect subsequent input mutation",
+		);
+		assert.equal(
+			frozen.snapshot.deterministic_verification.reverify.extra,
+			undefined,
+			"frozen snapshot must not receive new properties added after freeze",
+		);
+	});
 
-  it("capability selection changes the configuration digest", () => {
-    const baseline = baseProfile();
-    const frozenBaseline = profilesHook.freezeSelectedRoutes({ profile: baseline });
+	it("capability selection changes the configuration digest", () => {
+		const baseline = baseProfile();
+		const frozenBaseline = profilesHook.freezeSelectedRoutes({
+			profile: baseline,
+		});
 
-    const withReview = baseProfile();
-    withReview.review = {
-      coverage_assist: {
-        enabled: true,
-        required: false,
-      },
-    };
-    const frozenWithReview = profilesHook.freezeSelectedRoutes({ profile: withReview });
+		const withReview = baseProfile();
+		withReview.review = {
+			coverage_assist: {
+				enabled: true,
+				required: false,
+			},
+		};
+		const frozenWithReview = profilesHook.freezeSelectedRoutes({
+			profile: withReview,
+		});
 
-    assert.notEqual(
-      frozenWithReview.digest,
-      frozenBaseline.digest,
-      "selecting review capability must change configuration digest"
-    );
+		assert.notEqual(
+			frozenWithReview.digest,
+			frozenBaseline.digest,
+			"selecting review capability must change configuration digest",
+		);
 
-    const withVerification = baseProfile();
-    withVerification.deterministic_verification = {
-      reverify: {
-        enabled: true,
-      },
-    };
-    const frozenWithVerification = profilesHook.freezeSelectedRoutes({
-      profile: withVerification,
-    });
+		const withVerification = baseProfile();
+		withVerification.deterministic_verification = {
+			reverify: {
+				enabled: true,
+			},
+		};
+		const frozenWithVerification = profilesHook.freezeSelectedRoutes({
+			profile: withVerification,
+		});
 
-    assert.notEqual(
-      frozenWithVerification.digest,
-      frozenBaseline.digest,
-      "selecting deterministic_verification capability must change configuration digest"
-    );
+		assert.notEqual(
+			frozenWithVerification.digest,
+			frozenBaseline.digest,
+			"selecting deterministic_verification capability must change configuration digest",
+		);
 
-    assert.notEqual(
-      frozenWithReview.digest,
-      frozenWithVerification.digest,
-      "distinct capabilities must produce distinct configuration digests"
-    );
+		assert.notEqual(
+			frozenWithReview.digest,
+			frozenWithVerification.digest,
+			"distinct capabilities must produce distinct configuration digests",
+		);
 
-    // Changing capability value changes digest
-    const withReviewDisabled = baseProfile();
-    withReviewDisabled.review = {
-      coverage_assist: {
-        enabled: false,
-        required: false,
-      },
-    };
-    const frozenWithReviewDisabled = profilesHook.freezeSelectedRoutes({
-      profile: withReviewDisabled,
-    });
+		// Changing capability value changes digest
+		const withReviewDisabled = baseProfile();
+		withReviewDisabled.review = {
+			coverage_assist: {
+				enabled: false,
+				required: false,
+			},
+		};
+		const frozenWithReviewDisabled = profilesHook.freezeSelectedRoutes({
+			profile: withReviewDisabled,
+		});
 
-    assert.notEqual(
-      frozenWithReviewDisabled.digest,
-      frozenWithReview.digest,
-      "changing capability enabled value must change configuration digest"
-    );
-  });
+		assert.notEqual(
+			frozenWithReviewDisabled.digest,
+			frozenWithReview.digest,
+			"changing capability enabled value must change configuration digest",
+		);
+	});
 
-  it("subsequent input mutation leaves frozen digest unchanged", () => {
-    const profile = baseProfile();
-    profile.review = {
-      coverage_assist: {
-        enabled: true,
-        required: false,
-      },
-    };
-    profile.deterministic_verification = {
-      reverify: {
-        enabled: true,
-      },
-    };
+	it("subsequent input mutation leaves frozen digest unchanged", () => {
+		const profile = baseProfile();
+		profile.review = {
+			coverage_assist: {
+				enabled: true,
+				required: false,
+			},
+		};
+		profile.deterministic_verification = {
+			reverify: {
+				enabled: true,
+			},
+		};
 
-    const frozen = profilesHook.freezeSelectedRoutes({ profile });
-    const originalDigest = frozen.digest;
+		const frozen = profilesHook.freezeSelectedRoutes({ profile });
+		const originalDigest = frozen.digest;
 
-    profile.review.coverage_assist.enabled = false;
-    profile.deterministic_verification.reverify.enabled = false;
+		profile.review.coverage_assist.enabled = false;
+		profile.deterministic_verification.reverify.enabled = false;
 
-    assert.equal(
-      frozen.digest,
-      originalDigest,
-      "mutating input profile after freeze must not alter frozen digest"
-    );
-  });
+		assert.equal(
+			frozen.digest,
+			originalDigest,
+			"mutating input profile after freeze must not alter frozen digest",
+		);
+	});
 
-  it("omitted settings stay omitted in frozen snapshot", () => {
-    const profile = baseProfile();
-    const frozen = profilesHook.freezeSelectedRoutes({ profile });
+	it("omitted settings stay omitted in frozen snapshot", () => {
+		const profile = baseProfile();
+		const frozen = profilesHook.freezeSelectedRoutes({ profile });
 
-    assert.equal("review" in frozen.snapshot, false, "omitted review must not be present in snapshot");
-    assert.equal(
-      "deterministic_verification" in frozen.snapshot,
-      false,
-      "omitted deterministic_verification must not be present in snapshot"
-    );
-    assert.equal(frozen.snapshot.review, undefined);
-    assert.equal(frozen.snapshot.deterministic_verification, undefined);
-  });
+		assert.equal(
+			"review" in frozen.snapshot,
+			false,
+			"omitted review must not be present in snapshot",
+		);
+		assert.equal(
+			"deterministic_verification" in frozen.snapshot,
+			false,
+			"omitted deterministic_verification must not be present in snapshot",
+		);
+		assert.equal(frozen.snapshot.review, undefined);
+		assert.equal(frozen.snapshot.deterministic_verification, undefined);
+	});
 
-  it("explicit disabled capability values survive into frozen snapshot", () => {
-    const profile = baseProfile();
-    profile.review = {
-      coverage_assist: {
-        enabled: false,
-        required: false,
-      },
-    };
-    profile.deterministic_verification = {
-      reverify: {
-        enabled: false,
-      },
-    };
+	it("explicit disabled capability values survive into frozen snapshot", () => {
+		const profile = baseProfile();
+		profile.review = {
+			coverage_assist: {
+				enabled: false,
+				required: false,
+			},
+		};
+		profile.deterministic_verification = {
+			reverify: {
+				enabled: false,
+			},
+		};
 
-    const frozen = profilesHook.freezeSelectedRoutes({ profile });
+		const frozen = profilesHook.freezeSelectedRoutes({ profile });
 
-    assert.deepEqual(frozen.snapshot.review, {
-      coverage_assist: {
-        enabled: false,
-        required: false,
-      },
-    });
-    assert.deepEqual(frozen.snapshot.deterministic_verification, {
-      reverify: {
-        enabled: false,
-      },
-    });
-  });
+		assert.deepEqual(frozen.snapshot.review, {
+			coverage_assist: {
+				enabled: false,
+				required: false,
+			},
+		});
+		assert.deepEqual(frozen.snapshot.deterministic_verification, {
+			reverify: {
+				enabled: false,
+			},
+		});
+	});
 
-  it("retains legacy roles-only digest when no capabilities are present", () => {
-    const profile = baseProfile();
-    const frozen = profilesHook.freezeSelectedRoutes({ profile });
+	it("retains legacy roles-only digest when no capabilities are present", () => {
+		const profile = baseProfile();
+		const frozen = profilesHook.freezeSelectedRoutes({ profile });
 
-    // Calculate expected legacy digest directly from roles
-    const crypto = require("node:crypto");
-    const canonicalJson = (val) => {
-      if (val === null || typeof val !== "object") return JSON.stringify(val);
-      if (Array.isArray(val)) return "[" + val.map(canonicalJson).join(",") + "]";
-      const keys = Object.keys(val).sort();
-      return "{" + keys.map((k) => JSON.stringify(k) + ":" + canonicalJson(val[k])).join(",") + "}";
-    };
-    const expectedLegacyDigest = crypto
-      .createHash("sha256")
-      .update(canonicalJson(profile.roles), "utf8")
-      .digest("hex");
+		// Calculate expected legacy digest directly from roles
+		const crypto = require("node:crypto");
+		const canonicalJson = (val) => {
+			if (val === null || typeof val !== "object") return JSON.stringify(val);
+			if (Array.isArray(val))
+				return "[" + val.map(canonicalJson).join(",") + "]";
+			const keys = Object.keys(val).sort();
+			return (
+				"{" +
+				keys
+					.map((k) => JSON.stringify(k) + ":" + canonicalJson(val[k]))
+					.join(",") +
+				"}"
+			);
+		};
+		const expectedLegacyDigest = crypto
+			.createHash("sha256")
+			.update(canonicalJson(profile.roles), "utf8")
+			.digest("hex");
 
-    assert.equal(
-      frozen.digest,
-      expectedLegacyDigest,
-      "roles-only profile must produce byte-identical digest to legacy roles-only digest"
-    );
-  });
+		assert.equal(
+			frozen.digest,
+			expectedLegacyDigest,
+			"roles-only profile must produce byte-identical digest to legacy roles-only digest",
+		);
+	});
 
-  it("digest excludes excluded keys (cadence, route, authority) inside capabilities", () => {
-    const baseline = baseProfile();
-    baseline.review = {
-      coverage_assist: {
-        enabled: true,
-        required: false,
-      },
-    };
-    const frozenBaseline = profilesHook.freezeSelectedRoutes({ profile: baseline });
+	it("digest excludes excluded keys (cadence, route, authority) inside capabilities", () => {
+		const baseline = baseProfile();
+		baseline.review = {
+			coverage_assist: {
+				enabled: true,
+				required: false,
+			},
+		};
+		const frozenBaseline = profilesHook.freezeSelectedRoutes({
+			profile: baseline,
+		});
 
-    const withExcludedKey = baseProfile();
-    withExcludedKey.review = {
-      coverage_assist: {
-        enabled: true,
-        required: false,
-        cadence: "lifecycle",
-        route: "should-be-excluded",
-        authority: "should-be-excluded",
-      },
-    };
-    const frozenWithExcludedKey = profilesHook.freezeSelectedRoutes({
-      profile: withExcludedKey,
-    });
+		const withExcludedKey = baseProfile();
+		withExcludedKey.review = {
+			coverage_assist: {
+				enabled: true,
+				required: false,
+				cadence: "lifecycle",
+				route: "should-be-excluded",
+				authority: "should-be-excluded",
+			},
+		};
+		const frozenWithExcludedKey = profilesHook.freezeSelectedRoutes({
+			profile: withExcludedKey,
+		});
 
-    assert.equal(
-      frozenWithExcludedKey.digest,
-      frozenBaseline.digest,
-      "excluded keys (cadence, route, authority) must not affect configuration digest"
-    );
-  });
+		assert.equal(
+			frozenWithExcludedKey.digest,
+			frozenBaseline.digest,
+			"excluded keys (cadence, route, authority) must not affect configuration digest",
+		);
+	});
 
-  it("#275 reviewer_repair schema, catalog validation, and freeze preserve omission and bind enabled state", () => {
-    const repoSchema = readFileSync(path.join(ROOT, "schemas/profiles.schema.json"), "utf8");
-    assert.equal(repoSchema, readFileSync(path.join(ROOT, "skills/onboard-bearing/references/profiles.schema.json"), "utf8"));
-    const schema = JSON.parse(repoSchema);
-    const rrSchema = schema.$defs.profile.properties.reviewer_repair;
-    assert.equal(rrSchema.additionalProperties, false);
-    assert.deepEqual(rrSchema.required, ["enabled"]);
-    assert.equal(rrSchema.properties?.enabled?.type, "boolean");
-    assert.equal((schema.$defs.profile.required ?? []).includes("reviewer_repair"), false);
+	it("#275 reviewer_repair schema, catalog validation, and freeze preserve omission and bind enabled state", () => {
+		const repoSchema = readFileSync(
+			path.join(ROOT, "schemas/profiles.schema.json"),
+			"utf8",
+		);
+		assert.equal(
+			repoSchema,
+			readFileSync(
+				path.join(
+					ROOT,
+					"skills/onboard-bearing/references/profiles.schema.json",
+				),
+				"utf8",
+			),
+		);
+		const schema = JSON.parse(repoSchema);
+		const rrSchema = schema.$defs.profile.properties.reviewer_repair;
+		assert.equal(rrSchema.additionalProperties, false);
+		assert.deepEqual(rrSchema.required, ["enabled"]);
+		assert.equal(rrSchema.properties?.enabled?.type, "boolean");
+		assert.equal(
+			(schema.$defs.profile.required ?? []).includes("reviewer_repair"),
+			false,
+		);
 
-    assertReviewerRepairValidation();
+		assertReviewerRepairValidation();
 
-    const absentA = profilesHook.freezeSelectedRoutes({ profile: baseProfile() });
-    assert.equal("reviewer_repair" in absentA.snapshot, false);
-    assert.equal(absentA.digest, profilesHook.freezeSelectedRoutes({ profile: baseProfile() }).digest);
+		const absentA = profilesHook.freezeSelectedRoutes({
+			profile: baseProfile(),
+		});
+		assert.equal("reviewer_repair" in absentA.snapshot, false);
+		assert.equal(
+			absentA.digest,
+			profilesHook.freezeSelectedRoutes({ profile: baseProfile() }).digest,
+		);
 
-    // Hold prose alone never creates reviewer_repair in snapshot.
-    const holdOnly = { ...baseProfile(), holds: [{ id: "reviewer-repair", effect: "Preauthorize same-session Reviewer repair" }] };
-    assert.equal("reviewer_repair" in profilesHook.freezeSelectedRoutes({ profile: holdOnly }).snapshot, false);
+		// Hold prose alone never creates reviewer_repair in snapshot.
+		const holdOnly = {
+			...baseProfile(),
+			holds: [
+				{
+					id: "reviewer-repair",
+					effect: "Preauthorize same-session Reviewer repair",
+				},
+			],
+		};
+		assert.equal(
+			"reviewer_repair" in
+				profilesHook.freezeSelectedRoutes({ profile: holdOnly }).snapshot,
+			false,
+		);
 
-    const enabledProfile = { ...baseProfile(), reviewer_repair: { enabled: true } };
-    const frozenEnabled = profilesHook.freezeSelectedRoutes({ profile: enabledProfile });
-    assert.deepEqual(frozenEnabled.snapshot.reviewer_repair, { enabled: true });
-    assert.notEqual(frozenEnabled.digest, absentA.digest);
-    enabledProfile.reviewer_repair.enabled = false;
-    assert.equal(frozenEnabled.snapshot.reviewer_repair.enabled, true, "snapshot isolated from later mutation");
+		const enabledProfile = {
+			...baseProfile(),
+			reviewer_repair: { enabled: true },
+		};
+		const frozenEnabled = profilesHook.freezeSelectedRoutes({
+			profile: enabledProfile,
+		});
+		assert.deepEqual(frozenEnabled.snapshot.reviewer_repair, { enabled: true });
+		assert.notEqual(frozenEnabled.digest, absentA.digest);
+		enabledProfile.reviewer_repair.enabled = false;
+		assert.equal(
+			frozenEnabled.snapshot.reviewer_repair.enabled,
+			true,
+			"snapshot isolated from later mutation",
+		);
 
-    const frozenDisabled = profilesHook.freezeSelectedRoutes({ profile: { ...baseProfile(), reviewer_repair: { enabled: false } } });
-    assert.deepEqual(frozenDisabled.snapshot.reviewer_repair, { enabled: false });
-    assert.notEqual(frozenDisabled.digest, frozenEnabled.digest);
-    assert.notEqual(frozenDisabled.digest, absentA.digest);
-  });
+		const frozenDisabled = profilesHook.freezeSelectedRoutes({
+			profile: { ...baseProfile(), reviewer_repair: { enabled: false } },
+		});
+		assert.deepEqual(frozenDisabled.snapshot.reviewer_repair, {
+			enabled: false,
+		});
+		assert.notEqual(frozenDisabled.digest, frozenEnabled.digest);
+		assert.notEqual(frozenDisabled.digest, absentA.digest);
+	});
 });
 
 function assertReviewerRepairValidation() {
-  const validator = path.join(ROOT, "skills/onboard-bearing/scripts/validate-profiles.mjs");
-  const catalog = (rr) => JSON.stringify({
-    schema_version: 1,
-    profiles: { Work: { ...baseProfile(), ...(rr === undefined ? {} : { reviewer_repair: rr }) } },
-  });
-  for (const [valid, expectOk] of [[undefined, true], [{ enabled: true }, true], [{ enabled: false }, true], [{}, false], [{ enabled: "yes" }, false], [{ enabled: true, extra: 1 }, false]]) {
-    const raw = catalog(valid);
-    assert.equal(profilesHook.validateCatalog({ raw }).catalog_valid, expectOk, JSON.stringify(valid));
-    const cli = spawnSync(process.execPath, [validator, "--stdin"], { input: raw, encoding: "utf8", timeout: 15_000 });
-    assert.equal(cli.status, expectOk ? 0 : 1, cli.stdout);
-    assert.equal(JSON.parse(cli.stdout).catalog_valid, expectOk);
-  }
+	const validator = path.join(
+		ROOT,
+		"skills/onboard-bearing/scripts/validate-profiles.mjs",
+	);
+	const catalog = (rr) =>
+		JSON.stringify({
+			schema_version: 1,
+			profiles: {
+				Work: {
+					...baseProfile(),
+					...(rr === undefined ? {} : { reviewer_repair: rr }),
+				},
+			},
+		});
+	for (const [valid, expectOk] of [
+		[undefined, true],
+		[{ enabled: true }, true],
+		[{ enabled: false }, true],
+		[{}, false],
+		[{ enabled: "yes" }, false],
+		[{ enabled: true, extra: 1 }, false],
+	]) {
+		const raw = catalog(valid);
+		assert.equal(
+			profilesHook.validateCatalog({ raw }).catalog_valid,
+			expectOk,
+			JSON.stringify(valid),
+		);
+		const cli = spawnSync(process.execPath, [validator, "--stdin"], {
+			input: raw,
+			encoding: "utf8",
+			timeout: 15_000,
+		});
+		assert.equal(cli.status, expectOk ? 0 : 1, cli.stdout);
+		assert.equal(JSON.parse(cli.stdout).catalog_valid, expectOk);
+	}
 }
