@@ -17,14 +17,14 @@ for the whole wave at dispatch, the Orchestrator records the typed gap
 headless silently. A role whose harness has no live startup still runs
 headless with the recorded reason, as before.
 
-A cooperating launcher creates a tab on the first launch and labels it with
-the journey ID and wave ID. It reuses the tab while any pane in that wave
-remains open. If Herdr removes the tab when its last pane closes, the next
-launch creates a new tab with the same label.
+A cooperating launcher opens each role pane in the orchestrator's own tab by
+splitting the orchestrator's pane without taking focus, and reports the live wave
+as unavailable when it cannot verify that pane. Existing panes in the
+orchestrator's tab stay open while wave panes open and close.
 
 Each pane carries its slice ID. If the launch omits `--slice`, the pane uses
-the role key as its label. Launches preserve focus and leave panes outside
-the wave tab unchanged.
+the role key as its label. Launches preserve focus and leave existing panes
+outside the new split unchanged.
 
 ## Messages and completion
 
