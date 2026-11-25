@@ -26,3 +26,17 @@ child `COMPLETE` is not permission to delete integration evidence. The
 Orchestrator guarantees cleanup by running the storage `recover` command in
 finally, cancellation, and restart paths (see
 `storage-lifecycle.md`).
+
+## Measured repair loop
+
+Use this loop only when a packet opts in. Each repair or follow-up packet then
+names its starting reading: the failing gate or case IDs and the open finding
+IDs it must close, with the command that produced them. Size each packet to one
+reviewable increment of that reading, not from narrative. The return receipt
+reruns the same command and states the reading after the run with its exit
+code. Record both readings in the existing task graph. Dispatch another packet
+only within the remaining authority and repair allowance. The loop ends when
+the named gates pass or when its repair allowance ends; an exhausted allowance
+leaves the failure open. Send standing lessons through reflect-and-correct. The
+loop adds no agent, review, gate, stop, memory file or cadence change, and the
+existing caps still apply.
