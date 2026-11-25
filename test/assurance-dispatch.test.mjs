@@ -1027,6 +1027,15 @@ test("275 reviewer_repair enabled stays silent on plain or bounded Reviewer pack
 		"ROLE / SESSION: Reviewer\nReview PR #276.",
 		"ROLE / SESSION: Reviewer\nReview PR #276. Do not repair until all reviews finish. No repair outside the write set.",
 		"ROLE / SESSION: Reviewer\nDo not edit unrelated files.",
+		"Review and fix. Do not push. Do not edit files outside the PR. Report what you could not fix.",
+		"Review and fix. Do not change unrelated files. No edits to documentation.",
+		"Review and fix. Read-only evidence is available. Do not forbid repair.",
+		"Review and fix. Report only findings you cannot fix.",
+		"Review and fix. Review without editing until OCR completes.",
+		"Review and fix. Use a read-only review before repairing.",
+		"Review and fix. Do not edit code.js.",
+		"Review and fix. Do not edit files\noutside the PR.",
+		"Review and fix. Read-only review\nwhile OCR runs.",
 	]) {
 		const f = setupReviewerRepairFixture(
 			t,
@@ -1036,7 +1045,7 @@ test("275 reviewer_repair enabled stays silent on plain or bounded Reviewer pack
 		const res = run(f, envelope(f, "review-a"));
 		assert.equal(denied(res), false);
 		assert.equal(res.detail.outcome, "PASS");
-		assert.equal(res.detail.advisory, undefined);
+		assert.equal(res.detail.advisory, undefined, reviewPrompt);
 		assert.deepEqual(res.wire, {});
 	}
 
@@ -1059,8 +1068,16 @@ test("275 reviewer_repair enabled advises without blocking when Reviewer packet 
 		"Read-only review.",
 		"You report; you do not repair.",
 		"Do not fix findings.",
+		"Review only.",
+		"Do not make any changes.",
+		"No edits allowed.",
+		"Do not change the candidate.",
+		"Report findings only.",
+		"Only report findings.",
+		"No code changes.",
+		"You must stay read-only.",
 	]) {
-		for (const host of ["claude-code", "cursor"]) {
+		for (const host of ["claude-code", "codex", "cursor", "copilot", "agy"]) {
 			const forbidding = setupReviewerRepairFixture(
 				t,
 				{ enabled: true },
@@ -1071,8 +1088,13 @@ test("275 reviewer_repair enabled advises without blocking when Reviewer packet 
 			const res = run(forbidding, envelope(forbidding, "review-a"), host);
 			assert.equal(denied(res), false, "advisory must never refuse");
 			assert.equal(res.detail.outcome, "PASS");
-			assert.match(res.detail.advisory, /reviewer_repair\.enabled/);
+			assert.match(res.detail.advisory, /reviewer_repair\.enabled/, phrase);
 			assert.match(res.detail.advisory, /forbids repair/i);
+			assert.equal(
+				res.detail.advisory.match(/reviewer_repair\.enabled/g).length,
+				1,
+			);
+			assert.equal(forbidding.read().dispatch_log[0].result, "RESERVED");
 			if (host === "cursor") {
 				assert.equal(res.wire.permission, "allow");
 				assert.equal(res.wire.agent_message, res.detail.advisory);
@@ -1093,11 +1115,14 @@ test("275 reviewer repair advice does not apply to non-Reviewer assurance packet
 		{ enabled: true },
 		{
 			reviewPrompt:
-				"ROLE / SESSION: Assurance Test Engineer\nRead the Reviewer receipt. Report-only.",
+				"ROLE / SESSION: Assurance Test Engineer (consume Reviewer receipt)\nReport-only.",
 			repairPrompt:
 				"ROLE / SESSION: Implementer\nRepair test-side findings F1.",
 		},
 	);
+	f.declaration.profile_freeze.snapshot.assurance_repair = { enabled: true };
+	json(f.declaration_path, f.declaration);
+	f.bind();
 	const review = run(f, envelope(f, "review-a"));
 	assert.equal(denied(review), false);
 	assert.deepEqual(review.wire, {});

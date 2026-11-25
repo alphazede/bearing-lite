@@ -516,5 +516,14 @@ function assertReviewerRepairValidation() {
 		});
 		assert.equal(cli.status, expectOk ? 0 : 1, cli.stdout);
 		assert.equal(JSON.parse(cli.stdout).catalog_valid, expectOk);
+		const frozen = profilesHook.freezeSelectedRoutes({
+			profile: "Work",
+			catalog: JSON.parse(raw),
+		});
+		if (expectOk) {
+			assert.deepEqual(frozen.snapshot.reviewer_repair, valid);
+		} else {
+			assert.equal(frozen.snapshot, undefined);
+		}
 	}
 }

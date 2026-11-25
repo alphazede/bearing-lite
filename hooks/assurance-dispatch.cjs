@@ -64,7 +64,7 @@ function packetText(toolInput) {
 		if (typeof toolInput[key] === "string" && toolInput[key])
 			parts.push(toolInput[key]);
 	}
-	return parts.join("\n");
+	return parts.join("\n\n");
 }
 function isNonReviewerAssurance(src) {
 	const role = src.match(
@@ -73,29 +73,26 @@ function isNonReviewerAssurance(src) {
 	return (
 		/\b(?:assurance\s+test\s+engineer|test[_-\s]engineer|integration[_-\s]engineer)\b/i.test(
 			role ?? src,
-		) && !/\breviewer\b/i.test(role ?? src)
+		) && !/^\s*reviewer\b/i.test(role ?? "")
 	);
 }
 function forbidsRepair(src) {
-	return (
-		/\breport[- ]only\b/i.test(src) ||
-		/\bread[- ]only(?:\s+review)?\b(?!\s+(?:while|until|during|before|unless))/i.test(
-			src,
-		) ||
-		/\b(?:report|review)\s+without\s+(?:repairing|fixing|editing)\b/i.test(
-			src,
-		) ||
-		/\b(?:do\s+not|don't|never|cannot|must\s+not|shall\s+not|not\s+allowed\s+to)\s+(?:repair|fix|edit|modify)\b(?!\s+(?:outside|beyond|more\s+than|other|unrelated|until|before|while|during|without|unless))/i.test(
-			src,
-		) ||
-		/\b(?:repair(?:ing)?|fix(?:ing|es)?|edit(?:ing|s)?)\s+(?:(?:is|are)\s+)?(?:forbidden|prohibited|disallowed|not\s+(?:allowed|authorized|permitted))\b/i.test(
-			src,
-		) ||
-		/\bforbid(?:s|ding)?\s+(?:repair|fixes|editing)\b/i.test(src) ||
-		/(?<!\bif\s)\bno\s+(?:repair|fixes|edits?)\b(?!\s+(?:round|budget|reset|proves|is\s+needed|needed|outside|beyond|until|before|while|during|without|unless))/i.test(
-			src,
-		)
-	);
+	// Match complete, unqualified instructions rather than words in scope or timing limits.
+	// shortcut: ambiguous prose stays silent; this is an advisory, not an authority parser.
+	return src.split(/\n(?![ \t]*[a-z])|;|[.!?](?=\s|$)/).some((part) => {
+		const clause = part.trim().replace(/^[-*]\s+/, "");
+		return (
+			/^(?:review[- ]only|(?:review and )?report(?: findings)?[- ]only|only report findings|read[- ]only(?: review)?|(?:you must )?(?:stay|remain) read[- ]only|(?:report|review)(?: findings)? without (?:repairing|fixing|editing))$/i.test(
+				clause,
+			) ||
+			/^(?:you\s+)?(?:do not|don't|never|cannot|must not|shall not|may not|are not allowed to)\s+(?:(?:repair|fix|edit|modify|change)(?:\s+(?:(?:the|any|all)\s+)?(?:findings|defects|bugs|code|files|candidate))?|make\s+(?:any\s+)?(?:changes|edits|repairs|fixes))$/i.test(
+				clause,
+			) ||
+			/^(?:no\s+(?:repairs?|fixes|edits?|(?:code )?changes)(?:\s+allowed)?|(?:repairs?|repairing|fixes|fixing|edits?|editing|changes|modifying)\s+(?:(?:is|are)\s+)?(?:forbidden|prohibited|disallowed|not (?:allowed|authorized|permitted)))$/i.test(
+				clause,
+			)
+		);
+	});
 }
 function reviewerRepairAdvisory(b, slot) {
 	if (!reviewerRepairEnabled(b) || slot.kind !== "review") return null;

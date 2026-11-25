@@ -562,11 +562,11 @@
           "required": [
             "enabled"
           ],
-          "description": "Optional Reviewer bounded same-session repair preauthorization. When true, original review packets preauthorize one bounded same-session Repair Implementer transition per unit via repair_transition; when absent or false, Reviewer behaves as report-only without preauthorized same-session repair.",
+          "description": "Optional Reviewer bounded same-session repair preauthorization. When true, ask the Reviewer in the original packet to review and fix in-scope findings, then rerun the checks; when absent or false, Reviewer behaves as report-only without preauthorized same-session repair.",
           "properties": {
             "enabled": {
               "type": "boolean",
-              "description": "When true, the frozen profile preauthorizes one bounded same-session Repair Implementer transition in the original review packet per unit. Absent or false means no same-session repair preauthorization."
+              "description": "When true, the frozen profile preauthorizes one bounded same-session Reviewer repair per unit in the original review packet. Absent or false means no same-session repair preauthorization."
             }
           }
         },

@@ -17,10 +17,11 @@ for the whole wave at dispatch, the Orchestrator records the typed gap
 headless silently. A role whose harness has no live startup still runs
 headless with the recorded reason, as before.
 
-A cooperating launcher opens each role pane in the orchestrator's own tab by
-splitting the orchestrator's pane without taking focus, and reports the live wave
-as unavailable when it cannot verify that pane. Existing panes in the
-orchestrator's tab stay open while wave panes open and close.
+A cooperating launcher opens role panes in the orchestrator's own tab without
+taking focus. It splits the orchestrator's pane or a surviving wave pane in that
+tab, and reports the live wave as unavailable when it cannot verify the
+orchestrator's pane. Existing panes in the tab stay open while wave panes open
+and close.
 
 Each pane carries its slice ID. If the launch omits `--slice`, the pane uses
 the role key as its label. Launches preserve focus and leave existing panes

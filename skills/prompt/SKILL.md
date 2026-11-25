@@ -53,10 +53,12 @@ independent review also requires the owner's requested scope and cadence.
    remain bounded to their named UIDs).
 5. Include the selected loop only. MBSE owns its requirements-
    quality pass and self-repairs. Other authors check and repair their own outputs.
-   When the frozen binding enables Reviewer repair (`reviewer_repair.enabled`), write
-   the review packet as a plain request to review and fix; do not forbid repair.
-   When `assurance_repair.enabled` is true, preauthorize same-session test-side repair;
-   when absent or disabled, evaluators report without repairing. Light
+   While evaluating, evaluators remain read-only. When the frozen binding enables
+   Reviewer repair (`reviewer_repair.enabled`), write the review packet as a plain
+   request to review and fix; do not forbid repair. Specify the repair paths and
+   deterministic checks. When `assurance_repair.enabled` is true, preauthorize
+   same-session test-side repair per the [Assurance Test Engineer contract](../test-engineer/references/assurance-repair.md).
+   When the respective setting is absent or disabled, evaluators report without repairing. Light
    Implementer executes the exact command and returns failure without repair.
 6. Controllers wait on completion events, wake on responses, and consume each
    result once. Never poll or add automatic fan-out, reviews, or agent invocations.

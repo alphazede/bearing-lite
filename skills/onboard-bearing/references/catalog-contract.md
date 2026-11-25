@@ -33,7 +33,7 @@ Bearing Lite 3.0.0-rc.2. Always verify against `references/profiles.schema.json`
 | `deterministic_verification.reverify` | `{ enabled: boolean }` | `false` saves an explicit Reverify decline (R22). |
 | `deterministic_verification.additional_tools` | array of `{ name, enabled, command?, pass?, evidence? }` | `enabled: true` requires `command`, `pass`, `evidence`; `enabled: false` needs only `name` and `enabled`. |
 | `assurance_repair` | `{ enabled: boolean }` | Preauthorizes one bounded same-session test-side repair per assurance round (R16). |
-| `reviewer_repair` | `{ enabled: boolean }` | Preauthorizes one bounded same-session Reviewer repair transition in the original review packet per unit. |
+| `reviewer_repair` | `{ enabled: boolean }` | When true, ask the Reviewer to review and fix in the original packet, with one bounded same-session repair per unit. Omission or false keeps report-only behavior. |
 | `holds` | array of `{ id, effect, ... }` | Must be objects, never bare strings (R17). Example: `{"id":"orchestrator-delegation","effect":"Scoped delegation only","enabled":false}`. |
 | `execution.live_wave` | `"herdr" \| "headless"` | Optional default execution mode; editable on create or edit. Omission keeps headless-by-omission. Frozen into `snapshot.execution` and the configuration digest; Planning and Design copies it to `journey_settings.live_wave`. |
 
