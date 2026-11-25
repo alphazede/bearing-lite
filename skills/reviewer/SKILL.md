@@ -40,16 +40,21 @@ The assigned parent controller dispatches review at the frozen boundary. The Imp
    a specific suspected test defect. Findings count toward `REPAIR_REQUIRED` or `BLOCK` only with `file:line` plus a failing test or reproducer; prove reachability and assign P0–P3.
    Otherwise findings are advisory and spend no repair budget. A verdict built only on advisory findings cannot be `REPAIR_REQUIRED` or `BLOCK`.
    On a redesign, check that every reference uses the new terms, that leftover terms are gone, that evidence is a run of the real artifact, and that the diff is the smallest complete change with one source per decision. When a check fails, suspect the observation method before the system. Optional deeper checks are in `references/optional-techniques.md` and run only on an explicit owner request.
-5. While Reviewer, never edit the candidate; freeze the receipt first: ref/revision/digest,
-   finding IDs, proof, repair targets and write set. For validated in-scope findings,
-   use the explicit Repair Implementer transition with preserved loaded context and
-   same lineage under advance authority; no parent reproduction/acceptance round-trip.
-   Consume `repair_transition` in `.bearing-round.lock`, `references/repair-transition.md`.
-   Without advance authority, use the legacy parent-accepted `REPAIR_REQUIRED` route.
-6. Aggregate all findings before the one repair. Run deterministic verification on the
+5. While evaluating, remain read-only; finish OCR and all declared review inputs before
+   the first repair. When the frozen profile enables Reviewer repair (`reviewer_repair.enabled`
+   is true) and the packet does not forbid it, aggregate all validated in-scope findings
+   and fix what you find in the same session, within the packet's paths, without requiring
+   a `repair_transition` control record, eight named fields, or a controller round-trip.
+   Protected planning-artifact writes while `.bearing-round.lock` is active remain governed
+   by `repair_transition` in `.bearing-round.lock` (`references/repair-transition.md`).
+   When `reviewer_repair.enabled` is absent or false, or the packet forbids repair, do not
+   edit the candidate; return `REPAIR_REQUIRED` (or a terminal verdict) without mutating
+   the candidate.
+6. After the one aggregated repair, rerun deterministic verification checks on the
    repaired candidate without another review. Never self-review or self-certify repair.
-   Return both original review identity and repaired candidate, findings, coverage,
-   exclusions, commands, usage, actual repairs and verification evidence to the parent.
+   Return both original review identity and repaired candidate, and report each finding with
+   whether it was fixed, plus coverage, exclusions, commands, usage, actual repairs and
+   verification evidence to the parent.
 ## Return and recovery
 Return verdict, candidate_ref, changed_paths, tests, findings, and blocker.
 `REPAIR_REQUIRED` permits bounded correction; a repairable verdict permits one repair.
@@ -57,7 +62,7 @@ Return verdict, candidate_ref, changed_paths, tests, findings, and blocker.
 `ACCEPT_WITH_FINDINGS` requires owner-approved residual risk; do not follow it with another repair. Preserve `max_assurance_rounds`
 of 1 per declared phase or wave and at most one aggregated repair; no rereview or reset.
 The next distinct declared phase or wave carries its own budget. Changed scope, protected
-boundary, failed repair, findings outside the frozen receipt or exhausted allowance returns `OWNER_DECISION_REQUIRED`.
-Late findings follow the repair reference; preserve proof, remaining allowance and closed-round finality.
+boundary, failed repair, findings outside the packet's paths or exhausted allowance returns `OWNER_DECISION_REQUIRED`.
+Preserve proof, remaining allowance and closed-round finality.
 A session that cannot continue returns `WAITING_ON`; dispatch needs existing authority.
 The parent records deterministic closure; no publication authority or unrelated edits.

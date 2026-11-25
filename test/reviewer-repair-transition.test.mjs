@@ -227,12 +227,12 @@ describe("#116 Reviewer to Repair Implementer transition", () => {
     assert.match(REVIEWER, /without another review/);
   });
 
-  it("rule 1: Reviewer never edits; frozen receipt is required before mutation", () => {
-    assert.match(REVIEWER, /While Reviewer,\s+never edit/);
-    assert.match(REVIEWER, /freeze the receipt first/);
-    assert.match(REVIEWER, /ref\/revision\/digest/);
-    assert.match(REVIEWER, /finding IDs/);
-    assert.match(REVIEWER, /write set/);
+  it("rule 1: Reviewer stays read-only while evaluating; plain packet repair or receipt-bound lock transition", () => {
+    assert.match(REVIEWER, /While evaluating,\s+remain read-only/);
+    assert.match(REVIEWER, /finish OCR/);
+    assert.match(REVIEWER, /reviewer_repair\.enabled/);
+    assert.match(REVIEWER, /within the packet's paths/);
+    assert.match(REVIEWER, /without requiring\s+a `repair_transition` control record/);
     assert.equal(evaluateRepairTransition({ authority: "reviewer", mutate: true, receipt: frozenReceipt() }).code, "reviewer_must_not_mutate");
     assert.equal(
       evaluateRepairTransition({ ...allowedRepair, receipt: frozenReceipt({ persisted: false }) }).code,
@@ -244,10 +244,10 @@ describe("#116 Reviewer to Repair Implementer transition", () => {
     );
   });
 
-  it("rule 2: parent-accepted REPAIR_REQUIRED, explicit Repair Implementer, lineage and write set", () => {
-    assert.match(REVIEWER, /parent-accepted `REPAIR_REQUIRED`/i);
-    assert.match(REVIEWER, /explicit Repair Implementer transition/);
-    assert.match(REVIEWER, /same lineage/);
+  it("rule 2: plain Reviewer packet repairs in scope or returns REPAIR_REQUIRED; local transition checks lineage and write set", () => {
+    assert.match(REVIEWER, /REPAIR_REQUIRED/);
+    assert.match(REVIEWER, /same session/);
+    assert.match(REVIEWER, /report each finding with\s+whether it was fixed/i);
     assert.match(IMPLEMENTER, /frozen review receipt/);
     assert.match(IMPLEMENTER, /parent-accepted `REPAIR_REQUIRED`/);
     assert.match(IMPLEMENTER, /worktree\/branch\/generation/);
@@ -280,7 +280,7 @@ describe("#116 Reviewer to Repair Implementer transition", () => {
   });
 
   it("rule 3: preserve context or fall back to dispatch", () => {
-    assert.match(REVIEWER, /Preserve context|preserve(?:d)? loaded context/i);
+    assert.match(REVIEWER, /same session/i);
     assert.match(REVIEWER, /dispatch/);
     // A non-continuable session returns WAITING_ON; a new invocation needs explicit authority.
     assert.match(IMPLEMENTER, /If it cannot continue, return `WAITING_ON`; a new invocation needs explicit\s+authority/);
@@ -335,9 +335,9 @@ describe("#116 Reviewer to Repair Implementer transition", () => {
     );
   });
 
-  it("rule 5: one repair; defects outside the frozen receipt escalate", () => {
+  it("rule 5: one repair; defects outside the packet paths escalate", () => {
     assert.match(REVIEWER, /permits one repair/);
-    assert.match(REVIEWER, /outside the frozen receipt/);
+    assert.match(REVIEWER, /outside the packet's paths/);
     assert.match(IMPLEMENTER, /An authorized repair closes by deterministic checks/);
     assert.equal(evaluateRepairTransition({ ...allowedRepair, repairs_used: 1 }).code, "one_repair_limit");
     assert.equal(

@@ -166,17 +166,25 @@ Field rules:
 
 `required_assurance` lists only roles that must accept the same candidate (for example `Assurance Test Engineer`, and `Reviewer` or `Integration Engineer execution` when their triggers apply).
 
-For requested review, include advance same-session repair authority in the original
-packet: exact candidate/session, allocated repair paths and regression tests, one
-remaining repair allowance, required deterministic commands and protected-action
-holds. For a review before a first live apply, include the frozen host and class
-rows and the exact proposed operand list, not only the executor diff. Follow
-`skills/reviewer/references/repair-transition.md`; do not grant new
-scope through a receipt. Reviewer starts bug/security OCR and performs complementary
-architecture, requirements, implementation/V&V and lint/quality work concurrently,
-then validates all findings, freezes one receipt, repairs and verifies in the same
-assignment. No parent reproduction/acceptance round-trip is needed. Aggregate any
-split review before repair; do not mutate a candidate still under inspection.
+When the frozen profile enables Reviewer repair (`reviewer_repair.enabled`), write
+the review packet as a plain request to review and fix in the same session, within
+the packet's paths, and to rerun the deterministic checks; do not forbid repair and
+do not require a `repair_transition` control record or eight named fields. Specify
+the packet's allowed paths, required deterministic commands, and protected-action
+holds. When `reviewer_repair.enabled` is absent or false, Reviewer reports without
+mutating the candidate. When `assurance_repair.enabled` is true, preauthorize
+Assurance Test Engineer test-side repair per
+`skills/test-engineer/references/assurance-repair.md` (and
+`skills/reviewer/references/repair-transition.md` for `repair_transition` in
+`.bearing-round.lock` and protected planning-artifact repair writes). For a review
+before a first live apply, include the frozen host and class rows and the exact
+proposed operand list, not only the executor diff. Reviewer starts bug/security OCR
+and performs complementary architecture, requirements, implementation/V&V and
+lint/quality work concurrently, then validates all findings, repairs in-scope
+findings when enabled and not forbidden, reruns checks, and reports each finding
+with whether it was fixed; no parent reproduction/acceptance round-trip is needed.
+Aggregate any split review before repair; do not mutate a candidate still under
+inspection.
 
 The parent declares selected capabilities and frozen enabled/required/mode settings.
 For Reviewer coverage assist, the Reviewer resolves backend availability once,
