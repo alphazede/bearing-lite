@@ -5,6 +5,8 @@
  */
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -335,4 +337,52 @@ describe("freezeSelectedRoutes capability preservation (#114)", () => {
       "excluded keys (cadence, route, authority) must not affect configuration digest"
     );
   });
+
+  it("#275 reviewer_repair schema, catalog validation, and freeze preserve omission and bind enabled state", () => {
+    const repoSchema = readFileSync(path.join(ROOT, "schemas/profiles.schema.json"), "utf8");
+    assert.equal(repoSchema, readFileSync(path.join(ROOT, "skills/onboard-bearing/references/profiles.schema.json"), "utf8"));
+    const schema = JSON.parse(repoSchema);
+    const rrSchema = schema.$defs.profile.properties.reviewer_repair;
+    assert.equal(rrSchema.additionalProperties, false);
+    assert.deepEqual(rrSchema.required, ["enabled"]);
+    assert.equal(rrSchema.properties?.enabled?.type, "boolean");
+    assert.equal((schema.$defs.profile.required ?? []).includes("reviewer_repair"), false);
+
+    assertReviewerRepairValidation();
+
+    const absentA = profilesHook.freezeSelectedRoutes({ profile: baseProfile() });
+    assert.equal("reviewer_repair" in absentA.snapshot, false);
+    assert.equal(absentA.digest, profilesHook.freezeSelectedRoutes({ profile: baseProfile() }).digest);
+
+    // Hold prose alone never creates reviewer_repair in snapshot.
+    const holdOnly = { ...baseProfile(), holds: [{ id: "reviewer-repair", effect: "Preauthorize same-session Reviewer repair" }] };
+    assert.equal("reviewer_repair" in profilesHook.freezeSelectedRoutes({ profile: holdOnly }).snapshot, false);
+
+    const enabledProfile = { ...baseProfile(), reviewer_repair: { enabled: true } };
+    const frozenEnabled = profilesHook.freezeSelectedRoutes({ profile: enabledProfile });
+    assert.deepEqual(frozenEnabled.snapshot.reviewer_repair, { enabled: true });
+    assert.notEqual(frozenEnabled.digest, absentA.digest);
+    enabledProfile.reviewer_repair.enabled = false;
+    assert.equal(frozenEnabled.snapshot.reviewer_repair.enabled, true, "snapshot isolated from later mutation");
+
+    const frozenDisabled = profilesHook.freezeSelectedRoutes({ profile: { ...baseProfile(), reviewer_repair: { enabled: false } } });
+    assert.deepEqual(frozenDisabled.snapshot.reviewer_repair, { enabled: false });
+    assert.notEqual(frozenDisabled.digest, frozenEnabled.digest);
+    assert.notEqual(frozenDisabled.digest, absentA.digest);
+  });
 });
+
+function assertReviewerRepairValidation() {
+  const validator = path.join(ROOT, "skills/onboard-bearing/scripts/validate-profiles.mjs");
+  const catalog = (rr) => JSON.stringify({
+    schema_version: 1,
+    profiles: { Work: { ...baseProfile(), ...(rr === undefined ? {} : { reviewer_repair: rr }) } },
+  });
+  for (const [valid, expectOk] of [[undefined, true], [{ enabled: true }, true], [{ enabled: false }, true], [{}, false], [{ enabled: "yes" }, false], [{ enabled: true, extra: 1 }, false]]) {
+    const raw = catalog(valid);
+    assert.equal(profilesHook.validateCatalog({ raw }).catalog_valid, expectOk, JSON.stringify(valid));
+    const cli = spawnSync(process.execPath, [validator, "--stdin"], { input: raw, encoding: "utf8", timeout: 15_000 });
+    assert.equal(cli.status, expectOk ? 0 : 1, cli.stdout);
+    assert.equal(JSON.parse(cli.stdout).catalog_valid, expectOk);
+  }
+}

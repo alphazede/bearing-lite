@@ -920,6 +920,27 @@ def assurance_repair_unknown_key() -> dict:
     return doc
 
 
+def with_reviewer_repair(enabled: bool) -> dict:
+    doc = complete_user_catalog()
+    doc["profiles"]["fixture-alpha"]["reviewer_repair"] = {"enabled": enabled}
+    return doc
+
+
+def reviewer_repair_missing_enabled() -> dict:
+    doc = complete_user_catalog()
+    doc["profiles"]["fixture-alpha"]["reviewer_repair"] = {}
+    return doc
+
+
+def reviewer_repair_unknown_key() -> dict:
+    doc = complete_user_catalog()
+    doc["profiles"]["fixture-alpha"]["reviewer_repair"] = {
+        "enabled": True,
+        "not_a_field": True,
+    }
+    return doc
+
+
 def complete_profile() -> dict:
     return copy.deepcopy(complete_user_catalog()["profiles"]["fixture-alpha"])
 
@@ -3322,6 +3343,34 @@ def profiles_cases() -> list[tuple[str, str, object, str, str | None]]:
                 "SEIT-BDL-002",
                 "assurance_repair_unknown_field_rejected",
                 assurance_repair_unknown_key(),
+                "reject",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "reviewer_repair_enabled_accepted",
+                with_reviewer_repair(True),
+                "accept",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "reviewer_repair_disabled_accepted",
+                with_reviewer_repair(False),
+                "accept",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "reviewer_repair_without_enabled_rejected",
+                reviewer_repair_missing_enabled(),
+                "reject",
+                None,
+            ),
+            (
+                "SEIT-BDL-002",
+                "reviewer_repair_unknown_field_rejected",
+                reviewer_repair_unknown_key(),
                 "reject",
                 None,
             ),

@@ -10,8 +10,16 @@ Select one row for one authorized assignment. The linked role skill is canonical
 this index summarizes its sequence and never grants another role or invocation.
 If a row and its skill disagree, return the conflict before composing a packet.
 Every author checks and repairs its own deliverable inside the current assignment.
-An evaluator checks its report, not the candidate it is evaluating. Additional
-invocations and role transitions require their existing explicit authority.
+While evaluating, an evaluator checks its report without mutating the candidate.
+When the frozen binding enables same-session repair (`reviewer_repair.enabled` for
+Reviewer, or `assurance_repair.enabled` for Assurance Test Engineer), the original
+evaluator packet carries the bounded `repair_transition`
+([repair-transition.md](../../reviewer/references/repair-transition.md): candidate,
+worktree, branch, generation, reviewer session, repair paths, regression tests,
+remaining allowance) so it freezes its receipt, transitions once, repairs in scope,
+and closes by deterministic checks without a controller round-trip; when absent or
+disabled, the evaluator reports without repairing. Additional invocations and role
+transitions require their existing explicit authority.
 
 | Selected role/session | Loop | Canonical skill |
 | --- | --- | --- |
@@ -23,8 +31,8 @@ invocations and role transitions require their existing explicit authority.
 | Product Implementer | Consume tests/contract → implement → run checks → inspect evidence → repair own defects → recheck → return | [Implementer](../../implementer/SKILL.md) |
 | Combined Implementer | Establish regression evidence → author tests and product → check both → repair in scope → recheck → return | [Implementer](../../implementer/SKILL.md) |
 | Light Implementer | Execute the exact mechanical packet → run its deterministic command → return evidence or typed failure without a repair loop | [Light Implementer](../../light-implementer/SKILL.md) |
-| Reviewer | Bind exact wave/PR → own OCR preflight and start bug/security review → concurrently assess architecture, requirements, implementation/V&V and quality evidence → validate/deduplicate all findings → freeze receipt → use advance-authorized same-session Repair Implementer → deterministic checks → return one consolidated result; no controller acceptance round-trip, extra review or budget reset | [Reviewer](../../reviewer/SKILL.md) |
-| Assurance Test Engineer | Bind exact independent candidate → execute planned V&V methods → evaluate proof → check report → return evidence and gaps without candidate mutation | [Test Engineer](../../test-engineer/SKILL.md) |
+| Reviewer | Bind exact wave/PR → own OCR preflight and start bug/security review → concurrently assess architecture, requirements, implementation/V&V and quality evidence → validate/deduplicate all findings → freeze receipt → when `reviewer_repair.enabled` is true in the frozen binding, use the packet's preauthorized `repair_transition` same-session Repair Implementer → deterministic checks → return one consolidated result (else return report-only without candidate mutation); no controller acceptance round-trip, extra review or budget reset | [Reviewer](../../reviewer/SKILL.md) |
+| Assurance Test Engineer | Bind exact independent candidate → execute planned V&V methods → evaluate proof → check report → when `assurance_repair.enabled` is true in the frozen binding, repair proven test-side defects via `repair_transition` and deterministic checks (else return evidence and gaps without candidate mutation) | [Test Engineer](../../test-engineer/SKILL.md) |
 | Integration Engineer execution | Bind integrated candidate/outcome → run system-level checks → assess compatibility and evidence → check report → return without product repair | [Integration Engineer](../../integration-engineer/SKILL.md) |
 | Scribe | Consume source-backed event scope → transcribe → check coverage → repair own transcription → recheck → return; event streams stay in the same invocation | [Scribe](../../scribe/SKILL.md) |
 
