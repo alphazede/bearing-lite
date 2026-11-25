@@ -1,0 +1,119 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://github.com/alphazede/bearing-lite/schemas/code-mode.schema.json",
+	"title": "Bearing Lite Code Mode outcome",
+	"description": "Compact typed outcome printed by hooks/code-mode.cjs. Raw results and logs stay in the evidence store.",
+	"$ref": "#/$defs/outcome",
+	"$defs": {
+		"evidence_ref": {
+			"type": "object",
+			"required": ["path", "sha256", "kind"],
+			"additionalProperties": false,
+			"properties": {
+				"path": {
+					"type": "string",
+					"minLength": 1,
+					"description": "Path relative to the evidence store."
+				},
+				"sha256": {
+					"type": "string",
+					"pattern": "^[a-f0-9]{64}$"
+				},
+				"kind": {
+					"enum": ["call", "result", "diagnostic"]
+				},
+				"capability": {
+					"type": "string"
+				},
+				"bytes": {
+					"type": "integer",
+					"minimum": 0
+				},
+				"observed_bytes": {
+					"type": "integer",
+					"minimum": 0
+				},
+				"truncated": {
+					"type": "boolean"
+				}
+			}
+		},
+		"outcome": {
+			"type": "object",
+			"required": [
+				"request_id",
+				"status",
+				"blockers",
+				"next_action",
+				"evidence_refs",
+				"mode"
+			],
+			"additionalProperties": false,
+			"properties": {
+				"request_id": {
+					"type": "string"
+				},
+				"status": {
+					"enum": ["COMPLETE", "READY", "WAITING_ON", "OWNER_DECISION_REQUIRED"]
+				},
+				"blockers": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				},
+				"next_action": {
+					"type": ["string", "null"]
+				},
+				"evidence_refs": {
+					"type": "array",
+					"items": {
+						"$ref": "#/$defs/evidence_ref"
+					}
+				},
+				"mode": {
+					"enum": ["runtime", "direct"]
+				},
+				"calls": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"required": ["capability", "status"],
+						"additionalProperties": false,
+						"properties": {
+							"capability": {
+								"type": "string"
+							},
+							"status": {
+								"enum": ["COMPLETE", "WAITING_ON"]
+							},
+							"error": {
+								"type": "object",
+								"required": ["code"],
+								"properties": {
+									"code": {
+										"type": "string"
+									}
+								}
+							}
+						}
+					}
+				},
+				"error": {
+					"type": "object",
+					"required": ["code"],
+					"additionalProperties": false,
+					"properties": {
+						"code": {
+							"type": "string",
+							"pattern": "^[a-z_]{1,64}$"
+						},
+						"limit": {
+							"enum": ["cpu", "memory", "wall", "scratch", "file_descriptors"]
+						}
+					}
+				}
+			}
+		}
+	}
+}

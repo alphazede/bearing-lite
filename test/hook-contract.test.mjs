@@ -83,6 +83,7 @@ const EVALUATOR_MODULES = new Set([
 	"dispatch-record.cjs", // S07 dispatch recovery record; no HOOK_CLASS
 	"ready-set.cjs", // S07 ready-set evaluator; no HOOK_CLASS
 	"decision-adapter.cjs", // S10 advisory decision adapter; no HOOK_CLASS
+	"code-mode.cjs", // opt-in Code Mode pilot runtime; no HOOK_CLASS
 ]);
 /** Additional TE class modules, allowed but not yet required by this case. */
 const TE_CLASS_FILES = Object.freeze(["te-capability.cjs", "te-host.cjs"]);
