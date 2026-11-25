@@ -248,9 +248,16 @@ review/repair allowance, and never establishes independent assurance PASS.
 ## Advance-authorized inline repair
 
 A single review slot may declare `inline_repair: true` for one bounded invocation
-that reviews, freezes validated findings, transitions to Repair Implementer and
-runs deterministic verification. The parent supplies advance authority and exact
-repair paths as described in `skills/reviewer/references/repair-transition.md`.
+that reviews, fixes validated in-scope findings in the same session, reruns
+deterministic verification, and reports each finding with whether it was fixed.
+For a Reviewer packet when `reviewer_repair.enabled` is true and the packet does
+not forbid repair, write a plain request to review and fix within the packet's
+paths and rerun the checks; no `repair_transition` control record or eight named
+fields are required. Assurance Test Engineer test-side repair under
+`assurance_repair.enabled` and protected planning-artifact repair writes under
+`.bearing-round.lock` still use `repair_transition` as described in
+`skills/test-engineer/references/assurance-repair.md` and
+`skills/reviewer/references/repair-transition.md`.
 At review reservation the dispatch hook also reserves one repair allowance; this
 is expenditure, not proof that a repair occurred. No refund or second repair follows
 from zero findings. Preserve actual repair counts separately in the role receipt.

@@ -1661,5 +1661,61 @@ describe("shared-machine test standard", () => {
 		);
 		assert.match(bearingLite, /\.\.\/prompt\/SKILL\.md/);
 		assert.match(bearingLite, /\.\.\/prompt\/references\/role-loops\.md/);
+
+		const reviewerSkill = readFileSync(
+			path.join(SKILLS_DIR, "reviewer", "SKILL.md"),
+			"utf8",
+		);
+		const repairTransitionRef = readFileSync(
+			path.join(SKILLS_DIR, "reviewer", "references", "repair-transition.md"),
+			"utf8",
+		);
+		const taskTemplate = readFileSync(
+			path.join(SKILLS_DIR, "bearing-lite", "templates", "task.md"),
+			"utf8",
+		);
+		const assurancePolicy = readFileSync(
+			path.join(
+				SKILLS_DIR,
+				"bearing-lite",
+				"references",
+				"assurance-policy.md",
+			),
+			"utf8",
+		);
+
+		assert.match(reviewerSkill, /reviewer_repair\.enabled/);
+		assert.match(reviewerSkill, /within the packet's paths/);
+		assert.match(reviewerSkill, /each finding with\s+whether it was fixed/);
+		assert.match(
+			reviewerSkill,
+			/without requiring\s+a `repair_transition` control record/,
+		);
+		assert.match(
+			repairTransitionRef,
+			/Ordinary Reviewer packets do not use this control record/,
+		);
+		assert.match(
+			repairTransitionRef,
+			/test-engineer\/references\/assurance-repair\.md/,
+		);
+		assert.match(taskTemplate, /reviewer_repair\.enabled/);
+		assert.match(
+			taskTemplate,
+			/do not require a `repair_transition` control record/,
+		);
+		assert.match(
+			taskTemplate,
+			/test-engineer\/references\/assurance-repair\.md/,
+		);
+		assert.match(assurancePolicy, /reviewer_repair\.enabled/);
+		assert.match(
+			assurancePolicy,
+			/no `repair_transition` control record or eight named\s+fields are required/,
+		);
+		assert.match(
+			assurancePolicy,
+			/test-engineer\/references\/assurance-repair\.md/,
+		);
 	});
 });

@@ -297,7 +297,9 @@ describe("#206 unchanged guards", () => {
     const hooks = readFileSync(path.join(ROOT, "hooks/hooks.json"), "utf8");
     assert.match(hooks, /orchestrator-write-lock\.cjs/);
     const skill = readFileSync(path.join(ROOT, "skills/reviewer/SKILL.md"), "utf8");
-    assert.match(skill, /`repair_transition` in `\.bearing-round\.lock`, `references\/repair-transition\.md`/);
+    assert.match(skill, /reviewer_repair\.enabled/);
+    assert.match(skill, /within the packet's paths/);
+    assert.match(skill, /Protected planning-artifact writes[\s\S]*?\.bearing-round\.lock[\s\S]*?repair_transition[\s\S]*?references\/repair-transition\.md/);
     const reviewer = readFileSync(path.join(ROOT, "skills/reviewer/references/repair-transition.md"), "utf8");
     for (const field of [".bearing-round.lock", "repair_transition", "accepted_by", "reviewer_context",
       "receipt_sha256", "candidate_digest", "worktree", "branch", "generation", "repair_round"]) {

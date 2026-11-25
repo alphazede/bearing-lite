@@ -1,18 +1,33 @@
-# Recorded Repair Implementer transition
+# Recorded Repair Implementer transition (`repair_transition`)
 
-The Implementation Orchestrator controls new waves and direct packets. On a frozen legacy wave, the Coordinator remains the controller on its pinned runtime until explicit handover. Prefer advance authorization in the original requested review
-packet: the same reviewer context may validate findings, freeze its receipt,
-transition to Repair Implementer, fix the consolidated in-scope findings and run
-deterministic checks without a controller round-trip. While reviewing it remains
-read-only. Finish OCR and all declared review inputs before the first repair.
-Selected repair routes/holds and independent acceptance still apply; an incompatible
-route is a typed authority gap, never a silent model substitution.
+Ordinary Reviewer packets do not use this control record: when the frozen profile
+enables Reviewer repair (`reviewer_repair.enabled` is true) and the packet does not
+forbid repair, the Reviewer packet is a plain request to review and fix in the same
+session, within the packet's paths, rerun deterministic checks, and report each finding
+with whether it was fixed—with no `repair_transition` control record in
+`.bearing-round.lock` and no eight named fields.
+
+This `repair_transition` contract applies to:
+- **Assurance Test Engineer (`assurance_repair`):** preauthorized test-side repair per
+  `../../test-engineer/references/assurance-repair.md`.
+- **Protected planning-artifact writes:** repairs touching planning artifacts while
+  `.bearing-round.lock` is active, enforced by `hooks/orchestrator-write-lock.cjs`.
+- **Legacy parent-accepted `REPAIR_REQUIRED` rounds:** existing transitions recorded
+  by the parent controller.
+
+The Implementation Orchestrator controls new waves and direct packets. On a frozen
+legacy wave, the Coordinator remains the controller on its pinned runtime until explicit
+handover. While evaluating, remain read-only; finish OCR and all declared assurance
+inputs before the first repair. Selected routes/holds and independent acceptance still
+apply; an incompatible route is a typed authority gap, never a silent model substitution.
 
 ## Advance authorization
 
-The parent records `repair_transition` in `.bearing-round.lock` before dispatch.
-Only the parent may write this control record; Reviewer cannot grant itself scope.
-Keep `candidate` and integer `generation` on the round record. The transition carries:
+When preauthorizing Assurance Test Engineer test-side repair (`assurance_repair: { enabled: true }`)
+or protected planning-artifact repair writes, the parent records `repair_transition` in
+`.bearing-round.lock` before dispatch. Only the parent may write this control record;
+child roles cannot grant themselves scope. Keep `candidate` and integer `generation` on
+the round record. The transition carries:
 
 | Field | Required value |
 | --- | --- |
@@ -55,19 +70,20 @@ it does not make a host's later filesystem write atomic with a later revocation.
 Product paths remain governed by the packet's ordinary write-set contract; this hook
 continues enforcing planning-artifact ownership, not a new general filesystem sandbox.
 
-For bound implementation dispatch, the single review slot declares `inline_repair: true`.
+For bound implementation dispatch, a single review slot may declare `inline_repair: true`.
 The existing dispatch hook reserves one repair allowance along with the review before
 launch, even if no repair proves necessary. Reservation is not an actual repair or PASS;
-report actual repairs separately and never refund the reserved allowance. The slot
-must be the only reviewer in its group; a split review must aggregate all independent
-returns before a separately authorized repair. Never repair while another reviewer
-is still inspecting that candidate. If an amended inline launch overlaps another
-opened group with unfinished or missing review members, the dispatch hook advises
-without denying the launch. Continue review and OCR read-only; the parent schedules
-repair only after every declared review finishes and the results are aggregated.
-An allowed launch or absent advisory does not authorize early mutation. Planning
-retains its separate 1/1 budget and records the advance allowance in its review
-packet, without an implementation slot.
+report actual repairs separately and never refund the reserved allowance. For Reviewer
+packets under `reviewer_repair.enabled`, no `repair_transition` control record is needed
+for product or test paths; `inline_repair` reflects the combined review-and-fix slot.
+The slot must be the only reviewer in its group; a split review must aggregate all
+independent returns before a separately authorized repair. Never repair while another
+reviewer is still inspecting that candidate. If an amended inline launch overlaps another
+opened group with unfinished or missing review members, the dispatch hook advises without
+denying the launch. Continue review and OCR read-only; the parent schedules repair only
+after every declared review finishes and the results are aggregated. An allowed launch or
+absent advisory does not authorize early mutation. Planning retains its separate 1/1
+budget.
 
 ## Legacy transition and closure
 
