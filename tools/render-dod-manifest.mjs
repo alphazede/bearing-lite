@@ -3,6 +3,8 @@
  * Deterministic Definition of Done Manifest renderer (DES-BDL-009, DEC-BDL-045).
  * Consumes implementation.json.dod_manifest. Never authors model semantics
  * or fills absent evidence. Node.js standard library only.
+ * --visual: the same view with requirement-to-case trace links and the V&V
+ * table read from the adjacent seit.json; read-only.
  */
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
@@ -1038,7 +1040,8 @@ function renderTable(captionId, caption, headers, rows) {
 					return `                  <td${digestClass}>${cell}</td>`;
 				})
 				.join("\n");
-			return `                <tr class="row-${kind}">\n${cells}\n                </tr>`;
+			const id = row.id ? ` id="${esc(row.id)}"` : "";
+			return `                <tr${id} class="row-${kind}">\n${cells}\n                </tr>`;
 		})
 		.join("\n");
 	return [
@@ -1359,6 +1362,18 @@ export function renderDodManifest(doc, opts = {}) {
 		);
 	}
 	const assetRoot = opts.assetRoot || process.cwd();
+	// Visual view: seit.json is authoritative for cases; links are relative to the output.
+	const cases = opts.seit ? asRows(opts.seit.proof_cases).value || [] : null;
+	const caseLink = (id) =>
+		`<a href="#${esc(encodeURIComponent(`case-${id}`))}">${esc(id)}</a>`;
+	const evidenceLink = (evidence) => {
+		const rel = path.relative(
+			opts.outDir || assetRoot,
+			path.resolve(assetRoot, String(evidence)),
+		);
+		const href = rel.split(path.sep).map(encodeURIComponent).join("/");
+		return `<a href="${esc(href)}">${esc(evidence)}</a>`;
+	};
 	const failures = [];
 	const modelFigures = [];
 	const modelsParsed = asRows(man.models);
@@ -1495,9 +1510,21 @@ export function renderDodManifest(doc, opts = {}) {
 		"          </div>",
 	].join("\n");
 
+	const candidate = cases
+		? [
+				["Candidate revision", doc?.source_baseline?.candidate_revision],
+				[
+					"Candidate digest",
+					doc?.journey_settings?.planning_review?.candidate_digest,
+				],
+			].map(([label, value]) => [
+				label,
+				`<code>${esc(value || "none recorded")}</code>`,
+			])
+		: [];
 	const s2 = [
 		heading(2, SECTIONS[1]),
-		metaBlock(identityEntries(man, doc)),
+		metaBlock([...identityEntries(man, doc), ...candidate]),
 	].join("\n");
 
 	const dodParsed = asRows(man.definition_of_done);
@@ -1535,17 +1562,32 @@ export function renderDodManifest(doc, opts = {}) {
 		: renderTable(
 				"cap-req",
 				"Requirements and acceptance",
-				["ID", "Statement", "Source", "Status"],
-				reqParsed.value.map((row) => ({
-					kind: statusKind(row.status),
-					status: row.status,
-					cells: [
-						esc(row.id),
-						cellText(row.statement),
-						cellText(row.source),
-						cellStatus(row),
-					],
-				})),
+				cases
+					? ["ID", "Statement", "Source", "Verification", "Status"]
+					: ["ID", "Statement", "Source", "Status"],
+				reqParsed.value.map((row) => {
+					const traced = cases?.filter((c) => c.requirement_id === row.id);
+					return {
+						kind: statusKind(row.status),
+						status: row.status,
+						cells: [
+							esc(row.id),
+							cellText(row.statement),
+							cellText(row.source),
+							...(!cases
+								? []
+								: traced.length
+									? [traced.map((c) => caseLink(c.id)).join(", ")]
+									: [
+											statusChip(
+												"Gap: untraced",
+												"No seit.json proof case names this requirement.",
+											),
+										]),
+							cellStatus(row),
+						],
+					};
+				}),
 			);
 	const archParsed = asRows(man.architecture);
 	const archTable = archParsed.na
@@ -1690,24 +1732,54 @@ export function renderDodManifest(doc, opts = {}) {
 	].join("\n");
 
 	const vvParsed = asRows(man.vv);
-	const vvTable = vvParsed.na
-		? naBlock("V&V", vvParsed.reason)
-		: renderTable(
+	const vvStatus = new Map(
+		vvParsed.na ? [] : vvParsed.value.map((row) => [row.id, row.status]),
+	);
+	const vvTable = cases
+		? renderTable(
 				"cap-seit",
-				"SEIT cases and projected evidence",
-				["ID", "Method", "Cadence", "Evidence", "Status"],
-				vvParsed.value.map((row) => ({
-					kind: statusKind(row.status),
-					status: row.status,
+				"SEIT proof cases from seit.json, with evidence links",
+				[
+					"ID",
+					"Requirement",
+					"Method",
+					"Expected result",
+					"Evidence",
+					"Status",
+				],
+				cases.map((c) => ({
+					id: `case-${c.id}`,
+					kind: statusKind(vvStatus.get(c.id)),
 					cells: [
-						esc(row.id),
-						cellText(row.method),
-						cellText(row.cadence),
-						cellText(row.evidence),
-						cellStatus(row),
+						esc(c.id),
+						cellText(c.requirement_id),
+						cellText(c.method),
+						cellText(c.expected_result),
+						c.observable_evidence
+							? evidenceLink(c.observable_evidence)
+							: cellText(""),
+						statusChip(vvStatus.get(c.id)),
 					],
 				})),
-			);
+			)
+		: vvParsed.na
+			? naBlock("V&V", vvParsed.reason)
+			: renderTable(
+					"cap-seit",
+					"SEIT cases and projected evidence",
+					["ID", "Method", "Cadence", "Evidence", "Status"],
+					vvParsed.value.map((row) => ({
+						kind: statusKind(row.status),
+						status: row.status,
+						cells: [
+							esc(row.id),
+							cellText(row.method),
+							cellText(row.cadence),
+							cellText(row.evidence),
+							cellStatus(row),
+						],
+					})),
+				);
 	// #157: the frozen per-unit review-round plan, shown at the owner gate.
 	const roundRows = Array.isArray(doc?.journey_settings?.review_rounds)
 		? doc.journey_settings.review_rounds.filter(
@@ -1936,6 +2008,9 @@ export function renderDodManifest(doc, opts = {}) {
 		`            <span class="stamp stamp-state">State: ${esc(stateLabel)}</span>`,
 		`            <span class="stamp">Template ${esc(TEMPLATE_VERSION)}</span>`,
 		`            <span class="stamp stamp-warn">Not authority</span>`,
+		...(cases
+			? [`            <span class="stamp">Visual trace view</span>`]
+			: []),
 		`          </div>`,
 		`          <h1>${esc(man.title)}</h1>`,
 		`          <p class="lede">${esc(lede)}</p>`,
@@ -1990,7 +2065,10 @@ export function renderDodManifest(doc, opts = {}) {
 	}
 	return {
 		html: normalized,
-		outputName: man.output_name,
+		// The visual view never overwrites the planning manifest by default.
+		outputName: cases
+			? String(man.output_name).replace(/(\.html)?$/, "-visual.html")
+			: man.output_name,
 		digest: sha256Hex(Buffer.from(normalized, "utf8")),
 	};
 }
@@ -2012,9 +2090,14 @@ export function renderFile(inputPath, options = {}) {
 	const resolved = path.resolve(inputPath);
 	const raw = readFileSync(resolved, "utf8").replace(/^\uFEFF/, "");
 	const doc = JSON.parse(raw);
+	const dir = path.dirname(resolved);
+	const seit = options.visual
+		? JSON.parse(readFileSync(path.join(dir, "seit.json"), "utf8"))
+		: options.seit;
 	return renderDodManifest(doc, {
 		...options,
-		assetRoot: options.assetRoot || path.dirname(resolved),
+		seit,
+		assetRoot: options.assetRoot || dir,
 	});
 }
 
@@ -2022,10 +2105,12 @@ function parseArgs(argv) {
 	const args = argv.slice(2);
 	let input = null;
 	let check = false;
+	let visual = false;
 	let out = null;
 	for (let i = 0; i < args.length; i += 1) {
 		const arg = args[i];
 		if (arg === "--check") check = true;
+		else if (arg === "--visual") visual = true;
 		else if (arg === "--out") {
 			out = args[i + 1];
 			i += 1;
@@ -2039,16 +2124,17 @@ function parseArgs(argv) {
 	if (!input) {
 		throw new RenderError(
 			"USAGE",
-			"Usage: node tools/render-dod-manifest.mjs <implementation.json> [--check] [--out path]",
+			"Usage: node tools/render-dod-manifest.mjs <implementation.json> [--visual] [--check] [--out path]",
 		);
 	}
-	return { input, check, out };
+	return { input, check, visual, out };
 }
 
 function main(argv = process.argv) {
 	try {
-		const { input, check, out } = parseArgs(argv);
-		const result = renderFile(input, {});
+		const { input, check, visual, out } = parseArgs(argv);
+		const outDir = path.dirname(out ? path.resolve(out) : path.resolve(input));
+		const result = renderFile(input, { visual, outDir });
 		const target = outputPathFor(input, result.outputName, out);
 		if (check) {
 			if (!existsSync(target)) {
