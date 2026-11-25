@@ -263,7 +263,12 @@ const CAPABILITIES = {
 		},
 		run: runDispatch,
 		after: (ctx, result) => {
-			if (result.receipt) verifyRef(ctx, result.receipt);
+			// Retain the exact launcher result; only accept canonical receipt paths.
+			if (
+				result.receipt &&
+				verifyRef(ctx, result.receipt).path !== result.receipt.path
+			)
+				throw new Fail("evidence_ref_invalid");
 			if (result.status !== "COMPLETE")
 				throw new Fail(result.error?.code ?? "partial_effect");
 			if (!result.receipt) throw new Fail("evidence_ref_invalid");
@@ -276,9 +281,10 @@ const CAPABILITIES = {
 		input: AGGREGATE,
 		output: AGGREGATE,
 		run: (ctx, input, state) => {
-			const evidence_refs = input.evidence_refs.map((ref) =>
-				verifyRef(ctx, ref),
-			);
+			const evidence_refs = input.evidence_refs.map((ref) => ({
+				...ref,
+				...verifyRef(ctx, ref),
+			}));
 			const normalized = { ...input, evidence_refs };
 			state.aggregate = normalized;
 			return normalized;
@@ -396,16 +402,23 @@ function alive(pid) {
 }
 
 function normalizeRelativePath(value) {
-	if (typeof value !== "string" || !value || value.includes("\0")) return null;
+	if (
+		typeof value !== "string" ||
+		!value ||
+		!value.isWellFormed() ||
+		value.includes("\0")
+	)
+		return null;
 	const slash = value.replaceAll("\\", "/");
-	if (slash.startsWith("/") || /^[a-zA-Z]:(?:\/|$)/.test(slash)) return null;
+	if (slash.startsWith("/") || /^[a-zA-Z]:/.test(slash)) return null;
 	const norm = path.posix.normalize(slash);
 	if (
 		!norm ||
 		norm === "." ||
 		norm === "./" ||
 		norm === ".." ||
-		norm.startsWith("../")
+		norm.startsWith("../") ||
+		/^[a-zA-Z]:/.test(norm)
 	) {
 		return null;
 	}
@@ -416,13 +429,16 @@ function existingRealPath(probe) {
 	let current = probe;
 	while (true) {
 		try {
-			return fs.realpathSync(current);
+			return {
+				real: fs.realpathSync.native(current),
+				exists: current === probe,
+			};
 		} catch (error) {
 			if (error.code !== "ENOENT") return null;
 			try {
 				if (fs.lstatSync(current).isSymbolicLink()) return null;
-			} catch {
-				/* missing segment: walk to parent */
+			} catch (missing) {
+				if (missing.code !== "ENOENT") return null;
 			}
 			const parent = path.dirname(current);
 			if (parent === current) return null;
@@ -431,13 +447,30 @@ function existingRealPath(probe) {
 	}
 }
 
+function descendant(base, file) {
+	const relative = path.relative(base, file);
+	return (
+		relative !== "" &&
+		relative !== ".." &&
+		!relative.startsWith(`..${path.sep}`) &&
+		!path.isAbsolute(relative)
+	);
+}
+
 function inside(root, relative) {
 	const norm = normalizeRelativePath(relative);
 	if (!norm) throw new Fail("schema_error");
-	const base = fs.realpathSync(root);
+	const base = fs.realpathSync.native(root);
 	const file = path.resolve(base, norm);
-	const real = file.startsWith(base + path.sep) ? existingRealPath(file) : null;
-	if (!real || (real !== base && !real.startsWith(base + path.sep))) {
+	const resolved = descendant(base, file) ? existingRealPath(file) : null;
+	if (
+		!resolved ||
+		(!descendant(base, resolved.real) &&
+			(resolved.exists || resolved.real !== base)) ||
+		(resolved.exists &&
+			norm.endsWith("/") &&
+			!fs.statSync(resolved.real).isDirectory())
+	) {
 		throw new Fail("schema_error");
 	}
 	return file;
@@ -445,12 +478,13 @@ function inside(root, relative) {
 
 function verifyRef(ctx, ref) {
 	const norm = normalizeRelativePath(ref?.path);
-	if (!norm) throw new Fail("evidence_ref_invalid");
+	if (!norm || norm.endsWith("/")) throw new Fail("evidence_ref_invalid");
 	try {
-		const store = fs.realpathSync(ctx.evidence_dir);
-		const file = fs.realpathSync(path.resolve(store, norm));
+		const store = fs.realpathSync.native(ctx.evidence_dir);
+		const file = fs.realpathSync.native(path.resolve(store, norm));
 		if (
-			file.startsWith(store + path.sep) &&
+			descendant(store, file) &&
+			fs.statSync(file).isFile() &&
 			sha(fs.readFileSync(file)) === ref.sha256
 		) {
 			return { path: norm, sha256: ref.sha256 };
@@ -587,6 +621,27 @@ function authorize(ctx, input) {
 	return normalized;
 }
 
+// Write grants describe names, not aliases. Missing suffixes are valid for
+// creation, but every existing component must be of the expected kind.
+function writePathSafe(base, entry) {
+	const directory = entry.endsWith("/");
+	const parts = entry.split("/").filter(Boolean);
+	let file = base;
+	for (const [i, part] of parts.entries()) {
+		file = path.join(file, part);
+		try {
+			const stat = fs.lstatSync(file);
+			if (stat.isSymbolicLink()) return false;
+			if (i < parts.length - 1 || directory) {
+				if (!stat.isDirectory()) return false;
+			} else if (!stat.isFile() && !stat.isDirectory()) return false;
+		} catch (error) {
+			return error.code === "ENOENT";
+		}
+	}
+	return true;
+}
+
 // Journal before the effect; on resume, ask the launcher what durably happened.
 async function runDispatch(ctx, input, state, key) {
 	const writeSet = authorize(ctx, input);
@@ -603,6 +658,9 @@ async function runDispatch(ctx, input, state, key) {
 	try {
 		if (generation(ctx) !== state.request.generation)
 			throw new Fail("stale_state");
+		const base = fs.realpathSync.native(ctx.workspace);
+		if (!writeSet.every((entry) => writePathSafe(base, entry)))
+			throw new Fail("write_set_denied");
 		if (recorded?.state === "started") {
 			const observed = await adapter(ctx.launcher, {
 				...bound,
@@ -966,7 +1024,8 @@ function programSource(ctx, req) {
 	if (!entry) throw new Fail("capability_denied");
 	let source = null;
 	try {
-		source = fs.readFileSync(inside(ctx.workspace, entry.path));
+		const file = inside(ctx.workspace, entry.path);
+		if (fs.statSync(file).isFile()) source = fs.readFileSync(file);
 	} catch {
 		/* unreadable: mismatch */
 	}
