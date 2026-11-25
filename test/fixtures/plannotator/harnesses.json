@@ -1,0 +1,12 @@
+{
+	"claude-code": {
+		"hook_event_name": "Stop",
+		"session_id": "sample-claude-session",
+		"stop_hook_active": false
+	},
+	"codex": {
+		"hook_event_name": "Stop",
+		"session_id": "sample-codex-session",
+		"stop_hook_active": false
+	}
+}
