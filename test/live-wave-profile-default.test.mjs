@@ -396,14 +396,15 @@ describe("#270 wave view is a read-only plan inspection with no availability cla
 		);
 	});
 
-	it("#272 live-wave reference describes tab creation, reuse and label", () => {
+	it("#272 live-wave reference describes pane placement in the orchestrator's tab", () => {
 		const doc = readFileSync(
 			path.join(ROOT, "skills/bearing-lite/references/live-wave.md"),
 			"utf8",
 		);
-		assert.match(doc, /labels it with\s+the journey ID and wave ID/);
-		assert.match(doc, /creates a tab on the first launch/);
-		assert.match(doc, /reuses the tab/);
+		assert.match(doc, /opens role panes in the orchestrator's own tab/);
+		assert.match(doc, /without\s+taking focus/);
+		assert.match(doc, /reports the live wave as unavailable/);
+		assert.doesNotMatch(doc, /creates a tab on the first launch/);
 	});
 });
 
