@@ -1160,3 +1160,161 @@ test("275 reviewer_repair enabled advises on Implementer repair for Reviewer fin
 	assert.equal(spent.detail.advisory, undefined);
 	assert.deepEqual(spent.wire, {});
 });
+
+test("275 reviewer repair advice distinguishes actual prohibitions from bounded repair", (t) => {
+	const prohibited = setupReviewerRepairFixture(
+		t,
+		{ enabled: true },
+		{
+			reviewPrompt: TRANSITION_PACKET + "\nDo not fix findings.",
+		},
+	);
+	const deniedRepair = run(prohibited, envelope(prohibited, "review-a"));
+	assert.equal(denied(deniedRepair), false);
+	assert.match(
+		deniedRepair.wire.hookSpecificOutput?.additionalContext ?? "",
+		/reviewer_repair\.enabled.*forbids repair/,
+	);
+});
+
+test("275 complete repair packet can restrict when and where repair occurs", (t) => {
+	const bounded = setupReviewerRepairFixture(
+		t,
+		{ enabled: true },
+		{
+			reviewPrompt:
+				TRANSITION_PACKET +
+				"\nDo not repair until all reviews finish. No repair outside the write set.",
+		},
+	);
+	const allowed = run(bounded, envelope(bounded, "review-a"));
+	assert.equal(denied(allowed), false);
+	assert.deepEqual(allowed.wire, {});
+});
+
+test("275 reviewer repair advice requires repair details, not just their names", (t) => {
+	const f = setupReviewerRepairFixture(
+		t,
+		{ enabled: true },
+		{
+			reviewPrompt:
+				"ROLE / SESSION: Reviewer\nInclude candidate, worktree, branch, generation, reviewer session, repair paths, regression tests and remaining allowance in repair_transition.",
+		},
+	);
+	const r = run(f, envelope(f, "review-a"));
+	assert.equal(denied(r), false);
+	const message = r.wire.hookSpecificOutput?.additionalContext ?? "";
+	assert.match(message, /reviewer_repair\.enabled/);
+	for (const name of [
+		"candidate",
+		"worktree",
+		"branch",
+		"generation",
+		"reviewer session",
+		"repair paths",
+		"regression tests",
+		"remaining allowance",
+	]) {
+		assert.match(message, new RegExp(name));
+	}
+});
+
+test("275 empty repair field is reported as missing", (t) => {
+	const empty = setupReviewerRepairFixture(
+		t,
+		{ enabled: true },
+		{
+			reviewPrompt: TRANSITION_PACKET.replace(
+				"- regression tests: test/app.test.mjs",
+				"- regression tests:",
+			),
+		},
+	);
+	const incomplete = run(empty, envelope(empty, "review-a"));
+	assert.equal(denied(incomplete), false);
+	assert.match(
+		incomplete.wire.hookSpecificOutput?.additionalContext ?? "",
+		/regression tests/,
+	);
+});
+
+test("275 reviewer repair advice does not apply to non-Reviewer assurance findings", (t) => {
+	const f = setupReviewerRepairFixture(
+		t,
+		{ enabled: true },
+		{
+			reviewPrompt:
+				"ROLE / SESSION: Assurance Test Engineer\nRead the Reviewer receipt. Report-only.",
+			repairPrompt:
+				"ROLE / SESSION: Implementer\nRepair test-side findings F1.",
+		},
+	);
+	const review = run(f, envelope(f, "review-a"));
+	assert.equal(denied(review), false);
+	assert.deepEqual(review.wire, {});
+});
+
+test("275 separate repair of test-side findings gets no Reviewer advisory", (t) => {
+	const f = setupReviewerRepairFixture(
+		t,
+		{ enabled: true },
+		{
+			reviewPrompt:
+				"ROLE / SESSION: Assurance Test Engineer\nRead the Reviewer receipt. Report-only.",
+			repairPrompt:
+				"ROLE / SESSION: Implementer\nRepair test-side findings F1.",
+		},
+	);
+	assert.equal(denied(run(f, envelope(f, "review-a"))), false);
+	const record = f.read();
+	record.dispatch_log[0].result = "REPAIR_REQUIRED";
+	json(f.task_record_path, record);
+	const repair = run(f, envelope(f, "repair"));
+	assert.equal(denied(repair), false);
+	assert.deepEqual(repair.wire, {});
+});
+
+test("275 reviewer repair advice uses only the frozen profile setting", (t) => {
+	const f = setupReviewerRepairFixture(t, undefined, {
+		reviewPrompt: "ROLE / SESSION: Reviewer\nReport-only.",
+	});
+	f.declaration.profile_freeze = { state: "frozen", snapshot: {} };
+	f.declaration.reviewer_repair = { enabled: true };
+	json(f.declaration_path, f.declaration);
+	f.bind();
+	const r = run(f, envelope(f, "review-a"));
+	assert.equal(denied(r), false);
+	assert.deepEqual(r.wire, {});
+});
+
+test("275 structured repair transition accepts supplied details and reports empty ones", (t) => {
+	for (const regression_tests of [["test/app.test.mjs"], []]) {
+		const f = setupReviewerRepairFixture(
+			t,
+			{ enabled: true },
+			{
+				reviewPrompt: "ROLE / SESSION: Reviewer",
+			},
+		);
+		f.slots[0].tool_input.repair_transition = {
+			candidate_ref: "candidate-a",
+			worktree: "/worktrees/example",
+			branch: "fix/example",
+			generation: 1,
+			reviewer_context: "session-a",
+			write_set: ["src/app.js", "test/app.test.mjs"],
+			regression_tests,
+			repairs_max: 1,
+		};
+		json(f.declaration_path, f.declaration);
+		f.bind();
+		const result = run(f, envelope(f, "review-a"));
+		assert.equal(denied(result), false);
+		if (regression_tests.length) assert.deepEqual(result.wire, {});
+		else
+			assert.match(
+				result.wire.hookSpecificOutput?.additionalContext ?? "",
+				/regression tests/,
+			);
+	}
+});
