@@ -101,13 +101,14 @@ owner question box (`OWNER_DECISION_REQUIRED`), even under delegation.
    the rendered Manifest). Before asking for integrated owner confirmation,
    open the rendered DoD Manifest HTML in the owner's browser (Chrome when
    available) and deliver the file through the harness's file-delivery
-   mechanism. Name the Manifest path in the approval question. If neither
-   browser display nor file delivery succeeds, return the typed gap
+   mechanism. Name the Manifest path in the approval question. If either
+   browser display or file delivery fails, return the typed gap
    `manifest_not_delivered` and do not ask for approval. After delivery, obtain
    one integrated owner confirmation (never insert a profile or route pause),
    record `manifest_delivery` (`path`, `sha256`, `opened_in`, `delivered_at`)
-   on the confirmation record in `journey.json`, run the final freeze, write
-   the handoff, and recommend a new Implementation Orchestrator session.
+   on the answered Class E confirmation record in `journey.json`, run the final
+   freeze, write the handoff, and recommend a new Implementation Orchestrator
+   session.
 
 ## Return and recovery
 

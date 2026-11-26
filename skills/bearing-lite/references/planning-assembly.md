@@ -145,12 +145,13 @@ This is the default dependency order, not a requirement to enable every role:
    confirmation, open the rendered DoD Manifest HTML in the owner's browser
    (Chrome when available) and deliver the file through the harness's
    file-delivery mechanism. Name the Manifest path in the approval question.
-   If neither browser display nor file delivery succeeds, return the typed gap
-   `manifest_not_delivered` and do not ask for approval. Record
+   If either browser display or file delivery fails, return the typed gap
+   `manifest_not_delivered` and do not ask for approval. Obtain the execution
+   authority required for the exact package, then record
    `manifest_delivery` (`path`, `sha256`, `opened_in`, `delivered_at`) on the
-   confirmation record in `journey.json`, obtain the execution authority
-   required for the exact package, complete its declared final checks, and
-   write `handoff.md`. Apply the approved clean-session choice.
+   answered Class E confirmation record in `journey.json`. Complete the
+   package's declared final checks and write `handoff.md`. Apply the approved
+   clean-session choice.
 
 Skip inactive roles without creating substitute sessions. Record actual input
 dependencies: independent work may run in parallel once its inputs exist, while
@@ -434,8 +435,8 @@ blockers, and next action. Every dispatched packet carries a time target and
 "at the limit, return what you have and list the gaps". Before writing `handoff.md`, run the
 handoff check in `hooks/closeout.cjs` with `journey` (`mode: "handoff"`) and
 the structured `final_freeze_receipt` from `node <plugin root>/hooks/plan-package.cjs <plan dir>`.
-For a live wave, also pass the confirmed directory as top-level `plan_dir`
-so closeout can re-read the exchange evidence.
+Pass the confirmed directory as top-level `plan_dir` so closeout can verify
+the rendered HTML digest and, for a live wave, re-read the exchange evidence.
 A missing or invalid final freeze receipt refuses the
 handoff (`handoff_refused:final_freeze_receipt_missing` or `_invalid`), a
 missing or SHA-256-mismatched Manifest delivery refuses the handoff

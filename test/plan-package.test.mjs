@@ -1665,20 +1665,29 @@ describe("plan-package live-wave exchange.jsonl reader (HLW-VC-025)", () => {
 		const manifestPath = path.join(dir, manifestName);
 		const manifestHtml = "<!doctype html><title>Live DoD Manifest</title>\n";
 		writeFileSync(manifestPath, manifestHtml);
+		const delivery = {
+			path: `docs/plans/x/${manifestName}`,
+			sha256: sha(manifestHtml),
+			opened_in: "Chrome",
+			delivered_at: "2026-11-26T00:00:00Z",
+		};
 		return JSON.stringify({
 			mode: "handoff",
 			plan_dir: dir,
 			journey: {
 				schema_version: "1",
 				journey: { id: "x", status: "implementation" },
+				decisions: [
+					{
+						id: "DEC-APPROVAL",
+						status: "confirmed",
+						manifest_delivery: delivery,
+					},
+				],
+				history: { decisions: [{ id: "DEC-APPROVAL" }] },
 			},
 			final_freeze_receipt: RECEIPT,
-			manifest_delivery: {
-				path: `docs/plans/x/${manifestName}`,
-				sha256: sha(manifestHtml),
-				opened_in: "Chrome",
-				delivered_at: "2026-11-26T00:00:00Z",
-			},
+			manifest_delivery: delivery,
 		});
 	};
 

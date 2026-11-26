@@ -20,7 +20,7 @@ result with the command and its exit code.
   - findings: []
   - exit_code: 0
 - manifest_delivery:
-  - path: <plan_dir>/<plan-name>-dod-manifest.html
+  - path: <plan_dir>/<dod_manifest.output_name>
   - sha256: <64-hex sha256 of rendered DoD Manifest HTML>
   - opened_in: <browser used to open the Manifest, e.g. Chrome>
   - delivered_at: <UTC timestamp>
@@ -48,12 +48,15 @@ result with the command and its exit code.
 
 At intake, the Implementation Orchestrator checks `stage: final`, `outcome: PASS`,
 and `exit_code: 0` on the structured receipt, plus `manifest_delivery.path` and
-`manifest_delivery.sha256` against the owner confirmation and rendered Manifest.
+`manifest_delivery.sha256` against the current answered Class E confirmation
+and rendered Manifest. Copy the delivery evidence from that confirmation;
+the handoff is not a substitute for it.
 Compare `manifest_digest` with
 `journey_settings.planning_review.candidate_digest` in the handoff's
 `implementation.json` and verify the recorded artifact hashes against their files.
 If the final freeze receipt or Manifest delivery record is absent or a receipt check
-fails, return to planning before dispatch.
+fails, return to planning before dispatch. Do not invent evidence for an older
+handoff that lacks a delivery record.
 
 When scheduling work on a target host, use `target_host_delivery` to identify
 how the exact candidate and its proof travel to the target host, who may approve

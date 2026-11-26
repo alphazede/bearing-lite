@@ -174,37 +174,45 @@ function inspectHandoffFields(input) {
 }
 
 function findManifestDeliveryInJourney(journey) {
-	if (!isPlainObject(journey)) return undefined;
-	for (const key of ["decisions", "authority_events"]) {
-		const list = journey[key];
-		if (!Array.isArray(list)) continue;
-		for (let i = list.length - 1; i >= 0; i -= 1) {
-			const entry = list[i];
-			if (!isPlainObject(entry)) continue;
-			if (
-				key === "decisions" &&
-				entry.record_type === "owner_stop" &&
-				entry.status !== "answered"
-			) {
-				continue;
-			}
-			if (entry.manifest_delivery !== undefined) {
-				return entry.manifest_delivery;
-			}
+	if (!Array.isArray(journey.decisions)) return undefined;
+	let legacy;
+	for (let i = journey.decisions.length - 1; i >= 0; i -= 1) {
+		const entry = journey.decisions[i];
+		if (!isPlainObject(entry)) continue;
+		if (entry.record_type === "owner_stop" && entry.class === "E") {
+			return entry.status === "answered" ? entry.manifest_delivery : undefined;
+		}
+		if (
+			legacy === undefined &&
+			entry.record_type !== "owner_stop" &&
+			entry.status === "confirmed"
+		) {
+			legacy = entry;
 		}
 	}
-	return undefined;
+	return legacy?.manifest_delivery;
 }
 
 function resolveManifestDelivery(input) {
-	if (input.manifest_delivery !== undefined) return input.manifest_delivery;
+	const copies = [
+		input.manifest_delivery,
+		input.handoff?.manifest_delivery,
+	].filter((delivery) => delivery !== undefined);
+	if (!isPlainObject(input.journey)) return copies[0];
+	// The Journey confirmation is authoritative; a handoff carries only a copy.
+	const confirmed = findManifestDeliveryInJourney(input.journey);
 	if (
-		isPlainObject(input.handoff) &&
-		input.handoff.manifest_delivery !== undefined
+		!isPlainObject(confirmed) ||
+		copies.some(
+			(copy) =>
+				!isPlainObject(copy) ||
+				copy.path !== confirmed.path ||
+				copy.sha256 !== confirmed.sha256,
+		)
 	) {
-		return input.handoff.manifest_delivery;
+		return undefined;
 	}
-	return findManifestDeliveryInJourney(input.journey);
+	return confirmed;
 }
 
 function resolveManifestFileInPlanDir(planDir, deliveryPath) {
