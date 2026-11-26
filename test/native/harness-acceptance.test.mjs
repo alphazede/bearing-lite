@@ -3,8 +3,8 @@
  *
  * Opt-in native suite (the default gate `test/*.test.mjs` does not run files under
  * `test/native/`). It packs the actual distributable with `npm pack`, extracts it,
- * overlays only the host manifest from the checkout (`.claude-plugin/`, `.codex-plugin/`,
- * `.cursor-plugin/` and `.agy/plugin.json` ship outside the npm file set), installs the
+ * overlays only the host manifest from the checkout (`.claude-plugin/`,
+ * `.cursor-plugin/` and `.agy/plugin.json` ship outside the npm file set; `.codex-plugin/` ships), installs the
  * result into disposable HOMEs, and asserts native harness evidence:
  *
  *   TC-PACK-01    packed artifact identity (digest, version, file set)

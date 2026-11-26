@@ -152,17 +152,20 @@ codex plugin add bearing-lite@bearing-lite
 
 ```
 
-**Codex needs the prepared marketplace.** Codex 0.162.1 registers zero plugin
-hooks when the root `plugin.json` carries the Agent Plugins `$schema` key, and
-reports no warning or error. Adding the repository root as a marketplace
-(including the root `.agents/plugins/marketplace.json`, which points at the
-GitHub repository) installs the skills but no hooks. `tools/prepare-codex-plugin.mjs`
-writes a new local marketplace whose `bearing-lite/` payload is the npm package
-file set plus `.codex-plugin/`, byte for byte, except that root `plugin.json`
+**Codex needs the prepared marketplace.** When the root `plugin.json` carries
+the Agent Plugins `$schema` key, Codex (0.162.1 through at least 0.172.0) reads
+it instead of `.codex-plugin/plugin.json` and loads no plugin hooks for that
+format. It reports no warning or error. Adding the repository root, or a copy of
+the npm package, as a marketplace (including the root
+`.agents/plugins/marketplace.json`, which points at the GitHub repository)
+installs the skills but no hooks. `tools/prepare-codex-plugin.mjs` writes a new
+local marketplace whose `bearing-lite/` payload is the npm package file set
+(which includes `.codex-plugin/`), byte for byte, except that root `plugin.json`
 omits `$schema`. The portable source is not changed.
 
-- Run it from a git checkout. The npm package omits `.codex-plugin/`, and the
-  tool stops if that metadata is missing. It also needs Node 22 and `npm` on
+- Run it from a git checkout or from an extracted npm package
+  (`node package/tools/prepare-codex-plugin.mjs --out <new dir>`). Never install
+  the package directory itself into Codex. The tool needs Node 22 and `npm` on
   `PATH` (it reads the file set from `npm pack --dry-run`; no network).
 - `--out` must be a new directory with an existing parent, outside the
   checkout. The tool refuses an existing path, the checkout, a path inside it,
@@ -170,7 +173,8 @@ omits `$schema`. The portable source is not changed.
 - Rerun it into a fresh directory after updating the checkout, then reinstall.
 
 `node --test test/native/codex-hook-discovery.test.mjs` is the native proof: it
-installs the prepared artifact into a disposable Codex home and checks that
+packs the npm package, runs the packed tool, installs the prepared artifact into
+a disposable Codex home and checks that
 Codex lists all eight `hooks/hooks.json` registrations and every packaged skill
 when enabled, and no Bearing hook when disabled. It proves registration only,
 not that a hook runs or denies anything. Release smoke must still show a

@@ -1,8 +1,9 @@
 /**
  * D1 native regression: Codex must discover every hook the candidate package declares.
  *
- * Prepares the Codex-only install artifact with `tools/prepare-codex-plugin.mjs`, installs it
- * through the real `codex plugin marketplace add` / `codex plugin add` path into a disposable
+ * Packs the distributable with `npm pack` (the bytes a release or local candidate installs from),
+ * runs the packed copy of `tools/prepare-codex-plugin.mjs` to prepare the Codex-only artifact,
+ * installs it through the real `codex plugin marketplace add` / `codex plugin add` path into a disposable
  * HOME/CODEX_HOME, then asks the real Codex app-server `hooks/list` and `skills/list`
  * (credential-free, no model call) what it registered for the plugin.
  * Enabled install: every hooks/hooks.json registration and every packaged skill is present.
@@ -156,8 +157,14 @@ describe("Codex native hook discovery for the installed candidate (D1)", () => {
     assert.ok(!version.error && version.status === 0,
       `ENVIRONMENT_FAILURE: required native prerequisite '${CODEX}' unavailable (${version.error?.message ?? `status ${version.status}`}); install Codex CLI or set BEARING_CODEX_BIN`);
 
-    const generator = path.join(ROOT, "tools", "prepare-codex-plugin.mjs");
-    assert.ok(existsSync(generator), "contract: tools/prepare-codex-plugin.mjs is missing");
+    // Alphazedehq#787: prepare from the packed distributable, not the checkout, so the test covers
+    // what an install from the npm package can produce.
+    const pkg = path.join(tmp, "pkg");
+    mkdirSync(pkg);
+    const report = JSON.parse(run("npm", ["pack", "--ignore-scripts", "--json", "--pack-destination", tmp], { cwd: ROOT }))[0];
+    run("tar", ["xzf", path.join(tmp, path.basename(report.filename)), "-C", pkg, "--strip-components=1"]);
+    const generator = path.join(pkg, "tools", "prepare-codex-plugin.mjs");
+    assert.ok(existsSync(generator), "contract: the npm package must ship tools/prepare-codex-plugin.mjs");
     run(process.execPath, [generator, "--out", mkt]);
 
     run(CODEX, ["plugin", "marketplace", "add", mkt]);
