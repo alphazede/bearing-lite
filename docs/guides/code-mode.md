@@ -10,7 +10,10 @@ each request goes to the context's direct adapter, as before.
 
 - Linux with Node.js 22 or later.
 - `systemd-run --user`, `prlimit` (util-linux) and `bwrap` (bubblewrap) on
-  `PATH`, for routines only. Capability requests do not start the sandbox.
+  `PATH`, for routines only. Routines require systemd 253 or later (or a
+  backport of `OOMPolicy=` for scope units). If the user manager rejects the
+  required scope properties, the runtime reports `sandbox_unavailable`.
+  Capability requests do not start the sandbox.
 - No root access is needed.
 
 ## Commands
@@ -117,8 +120,9 @@ the same key returns the recorded outcome for the same operation and trusted con
 
 A routine runs in this chain:
 
-1. `systemd-run --user --scope` sets `MemoryMax`, `MemorySwapMax=0` and
-   `TasksMax=64`.
+1. `systemd-run --user --scope --slice=background.slice` sets `MemoryMax`,
+   `MemorySwapMax=0`, `TasksMax=64` and `OOMPolicy=continue` (so routine memory
+   kills stay enforced without marking the scope `oom-kill` failed).
 2. `prlimit` sets CPU seconds and 48 open files.
 3. `bwrap` gives no network, an empty environment, a read-only system tree
    and a 16 MiB `/tmp` scratch area.
@@ -129,7 +133,8 @@ Defaults are 10 CPU seconds, 512 MiB of memory, 30 seconds of wall time and
 The broker caps the number of capability calls at 128 per request and reads
 routine frames through a byte-limited pipe. Before sending routine code, the
 host reads the effective memory, swap and task limits from the child’s cgroup.
-The host reports a memory kill only when the kernel records one.
+A trusted scope wrapper reads the final kernel OOM counter before leaving the
+scope. The host reports a memory kill only when the kernel records one.
 
 ## Turn the pilot on or off
 
