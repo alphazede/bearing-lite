@@ -276,7 +276,10 @@ test("BLX-VC-044: pre-ready memory limit kill reports resource_limit while setup
 		limits: { memory_bytes: 8 * 1024 * 1024, wall_ms: 10000 },
 	});
 	const oomBefore = workspaceDigest(oomFixture);
-	const oomOut = await run(oomFixture, program("pre-ready-memory", "return true;"));
+	const oomOut = await run(
+		oomFixture,
+		program("pre-ready-memory", "return true;"),
+	);
 	failure(oomOut, "resource_limit");
 	assert.equal(oomOut.status, "WAITING_ON");
 	assert.deepEqual(oomOut.blockers, ["resource_limit"]);
