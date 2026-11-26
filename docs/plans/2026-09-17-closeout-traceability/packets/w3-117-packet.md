@@ -6,7 +6,7 @@ Close the last #117 remainder with a doc-only slice.
 
 STATE
 Facts:
-- Baseline: commit 27072cb (W2 #114 committed), branch main, repo /home/spectre/alphazede/Alphazedehq/bearing-lite.
+- Baseline: commit 27072cb (W2 #114 committed), branch main, repo /home/<user>/alphazede/Alphazedehq/bearing-lite.
 - Owner decision (final): KEEP the OpenCodeReview name in `skills/reviewer/SKILL.md` step 4 (committed in 254c60b, line 40: "OpenCodeReview (OCR) is one"). No move to packet-plus-reference only.
 - Remaining work: record that per-harness host readiness (binary on PATH, Cursor allowlist) is owner-machine configuration and folds into #92 plugin-install testing, not this repo. Put that note where it belongs — likely `skills/bearing-lite/references/review-capability.md` — WITHOUT touching `skills/reviewer/SKILL.md` (its 60-line / 600-word conformance caps must hold; run `node --test test/skills-conformance.test.mjs`).
 - If the note already exists somewhere, make no change and say so.

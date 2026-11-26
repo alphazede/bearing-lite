@@ -39,7 +39,7 @@
   "candidate_revision": "b5cec79f04f6f6ea506a2ad89bf937aab143d876",
   "candidate_identity": {
     "repository": "alphazede/bearing-lite",
-    "checkout": "/home/spectre/alphazede/Alphazedehq/bearing-lite",
+    "checkout": "/home/<user>/alphazede/Alphazedehq/bearing-lite",
     "branch": "main",
     "head": "b5cec79f04f6f6ea506a2ad89bf937aab143d876",
     "baseline": "b5cec79f04f6f6ea506a2ad89bf937aab143d876",
@@ -161,7 +161,7 @@
       "id": "CMD-BDL-RENDER",
       "command": "node tools/render-dod-manifest.mjs docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/implementation.json --check",
       "exit_code": 0,
-      "output": "RENDER_CHECK_PASS digest=sha256:8c3f1acf5163044510ac9fc06cf96ea94e08107b1e84fca6ebaa8a7d653fdcc0 output=/home/spectre/alphazede/Alphazedehq/bearing-lite/docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/bearing-delivery-lifecycle-alignment-dod-manifest.html template=1.0.1",
+      "output": "RENDER_CHECK_PASS digest=sha256:8c3f1acf5163044510ac9fc06cf96ea94e08107b1e84fca6ebaa8a7d653fdcc0 output=/home/<user>/alphazede/Alphazedehq/bearing-lite/docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/bearing-delivery-lifecycle-alignment-dod-manifest.html template=1.0.1",
       "structural_inspection": {
         "csp_meta": "default-src 'none'; img-src data:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'",
         "template_version": "1.0.1",

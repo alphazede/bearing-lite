@@ -5,7 +5,7 @@
 > `journey.json.planning_repair_authority`.
 
 ## Repository Identity
-- Root: `/home/spectre/alphazede/Alphazedehq/bearing-lite`
+- Root: `/home/<user>/alphazede/Alphazedehq/bearing-lite`
 - Repository: `alphazede/bearing-lite`
 - Plan directory: `docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment`
 

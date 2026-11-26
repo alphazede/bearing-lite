@@ -30,7 +30,7 @@
   "candidate_revision": "b5cec79f04f6f6ea506a2ad89bf937aab143d876",
   "candidate_identity": {
     "repository": "alphazede/bearing-lite",
-    "checkout": "/home/spectre/alphazede/Alphazedehq/bearing-lite",
+    "checkout": "/home/<user>/alphazede/Alphazedehq/bearing-lite",
     "branch": "main",
     "head": "b5cec79f04f6f6ea506a2ad89bf937aab143d876",
     "baseline": "b5cec79f04f6f6ea506a2ad89bf937aab143d876",

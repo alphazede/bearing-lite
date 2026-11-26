@@ -6,7 +6,7 @@ Implement one approved slice: the #112 Orchestrator role-boundary enforcement (p
 
 STATE
 Facts:
-- Baseline: commit 1344d67 (Wave A repair), branch main, repo /home/spectre/alphazede/Alphazedehq/bearing-lite.
+- Baseline: commit 1344d67 (Wave A repair), branch main, repo /home/<user>/alphazede/Alphazedehq/bearing-lite.
 - Owner decisions (final): full mechanical lock plus wording (docs-only rejected as already-failed); documented fallback acceptable on hosts without a pre-write hook.
 - Current state (verified by controller, verify yourself before changing):
   - No `BEARING_ROLE` mechanism exists; only Test Engineer `write_set` in `hooks/te-host.cjs`.

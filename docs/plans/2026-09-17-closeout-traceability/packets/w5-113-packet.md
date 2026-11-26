@@ -6,7 +6,7 @@ Implement one approved slice: the #113 Orchestrator/Scribe/repair-budget hardeni
 
 STATE
 Facts:
-- Baseline: commit 9a0f9e9 (W4 #112 committed). Branch main, repo /home/spectre/alphazede/Alphazedehq/bearing-lite. Build on W4's wording; do not revert or duplicate it.
+- Baseline: commit 9a0f9e9 (W4 #112 committed). Branch main, repo /home/<user>/alphazede/Alphazedehq/bearing-lite. Build on W4's wording; do not revert or duplicate it.
 - Issue #113 notes a local personal override exists on the owner's machine but is uncommitted upstream: you cannot see it. Reconstruct strictly from the acceptance boxes below; do not invent extra rules.
 - Current state (verified by controller; W4 may have moved some lines — confirm before changing):
   - `skills/architectural-alignment/SKILL.md:33-36` records gaps and activates Systems Modeler rather than inventing architecture, but lacks an explicit map-only handoff and no-repeat boundary.

@@ -1,7 +1,7 @@
 # Workspace Environment: Assurance gate chain and review flow
 
 ## Repository Identity
-- Root: `/home/spectre/src/bearing-lite-agr` (git worktree of `alphazede/bearing-lite`, package `@alphazede/bearing-lite` 1.1.3 per `package.json`)
+- Root: `/home/<user>/src/bearing-lite-agr` (git worktree of `alphazede/bearing-lite`, package `@alphazede/bearing-lite` 1.1.3 per `package.json`)
 - Plan directory: `docs/plans/2026-09-22-assurance-gate-and-review-flow/`
 - Scope issues: #143, #144, #145, #136, #135 (journey `AGR-2026-09-22`, `journey.json` owned by the Orchestrator)
 

@@ -6,7 +6,7 @@ Implement one approved slice: the #114 remainder after the frozen-helper fix.
 
 STATE
 Facts:
-- Baseline: commit 10ea397 (W1 #111 committed), branch main, repo /home/spectre/alphazede/Alphazedehq/bearing-lite.
+- Baseline: commit 10ea397 (W1 #111 committed), branch main, repo /home/<user>/alphazede/Alphazedehq/bearing-lite.
 - Done already (do not redo): `hooks/profiles.cjs` `freezeSelectedRoutes` copies `review` and `deterministic_verification` into snapshot and digest material; `test/profile-capability-freeze.test.mjs` covers freeze; `skills/bearing-lite/references/profiles.md:117-121` states packets must consume the binding and old roles-only snapshots need reconciliation, not hot reload; `skills/bearing-lite/SKILL.md:40` and `references/assurance-policy.md:78-82` state planning review never consumes implementation assurance; W1 added a `proceed` halt/note signal to both evaluators.
 - Verify-before-change (fix only what is actually missing):
   a. Controller declaration path: the Reviewer consumes a declared packet (`skills/reviewer/SKILL.md` step 4). Check whether any instruction tells the parent controller to declare from the FROZEN snapshot rather than the live catalog; add it where missing (likely `references/review-capability.md` and/or `references/profiles.md`).

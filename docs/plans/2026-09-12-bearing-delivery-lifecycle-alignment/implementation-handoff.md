@@ -4,7 +4,7 @@ Orchestrator
 Coordinate the three-packet Wave 1 implementation on the exact candidate below. Do not implement product changes, perform assurance, review the result, or act as Integration Engineer.
 
 STATE
-- Repository: /home/spectre/alphazede/Alphazedehq/bearing-lite; identity alphazede/bearing-lite; branch main.
+- Repository: /home/<user>/alphazede/Alphazedehq/bearing-lite; identity alphazede/bearing-lite; branch main.
 - Baseline/HEAD: b5cec79f04f6f6ea506a2ad89bf937aab143d876. The candidate is an uncommitted working tree.
 - Lifecycle: BDL-2026-09-12. Planning directory: docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment.
 - Authority: DEC-BDL-060 and DEC-BDL-062 authorize implementation; DEC-BDL-068 selects routes; DEC-BDL-069 binds this Wave 1 and its exact write sets.

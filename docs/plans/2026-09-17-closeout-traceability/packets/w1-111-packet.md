@@ -6,7 +6,7 @@ Implement one approved slice: distinct `required` vs `enabled` capability semant
 
 STATE
 Facts:
-- Baseline: commit 254c60bb1c5bd496878cb8ba9ea8c7448926f458, branch main, repo /home/spectre/alphazede/Alphazedehq/bearing-lite.
+- Baseline: commit 254c60bb1c5bd496878cb8ba9ea8c7448926f458, branch main, repo /home/<user>/alphazede/Alphazedehq/bearing-lite.
 - Issue #111: `required` is currently a no-op whenever `enabled` is true. Activation is `enabled || required` and unavailability is handled identically either way.
 - Owner decision (final): give `required` force. `required` means the role may not proceed without the capability (halt). `enabled` means the role may proceed with a recorded note. Activated-but-unavailable stays a typed gap in both cases.
 - Code pointers: `hooks/review-capability.cjs` lines 67 (`declared` shape) and 80 (OR activation); `hooks/verification.cjs` line 183 (`selected || required`) and lines 188-193 (unavailable handling). Schema: `schemas/profiles.schema.json` around line 364 (`coverage_assist`, requires only `enabled`). Contract doc: `skills/bearing-lite/references/review-capability.md`.

@@ -6,7 +6,7 @@ status: complete
 # Assurance gate chain and review flow — Technical Plan
 
 Lifecycle `AGR-2026-09-22`. Baseline `alphazede/bearing-lite` main @ `174773e`
-(worktree `/home/spectre/src/bearing-lite-agr`, branch
+(worktree `/home/<user>/src/bearing-lite-agr`, branch
 `feat/assurance-gate-review-flow`). Scope: #143, #144, #145, #136, #135, #146
 (DEC-AGR-002, DEC-AGR-005). Out of scope: #139, #122, #92, npm release
 (DEC-AGR-012). Strategy `tdd`; reverify enabled; coverage_assist enabled, not

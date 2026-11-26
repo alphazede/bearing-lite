@@ -6,7 +6,7 @@ Apply the Wave B reviewer findings (one authorized repair round).
 
 STATE
 Facts:
-- Baseline: commit db44fa0 (W6 #116), branch main, repo /home/spectre/alphazede/Alphazedehq/bearing-lite.
+- Baseline: commit db44fa0 (W6 #116), branch main, repo /home/<user>/alphazede/Alphazedehq/bearing-lite.
 - Reviewer verdict: ACCEPT_WITH_FINDINGS, no blocker. Repair exactly these three; the fourth (P3 zero headroom) is advisory only — do not chase it.
   1. P2 — `apply_patch`/patch-body fail-open. `collectPaths` in `hooks/orchestrator-write-lock.cjs` scans only path-ish fields and the `command` string. Proven: `{tool_input:{patch:'*** Update File: design.md...'}}` → ALLOW, as do `{file:...}` / `{filename:...}`. Since `hooks.json` wires the `apply_patch` matcher, a pathless patch envelope carrying locked filenames in a diff/patch/content field passes through. Repair: run the existing locked-token regex over `patch`/`diff`/`content`/`text`/`edits` fields too, plus a regression test in `test/orchestrator-write-lock.test.mjs`.
   2. P3 — `handle()` drops envelope-carried role. `handle()` (~line 259) sources role only from `opts.role`/`process.env.BEARING_ROLE`, ignoring `input.role`/`BEARING_ROLE`/`assigned_role` that `evaluate()` understands (fail-closed today, but an evaluate-vs-handle contract inconsistency). Repair: fall back to envelope role fields in `handle()` before defaulting, + test.
