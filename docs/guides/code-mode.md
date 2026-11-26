@@ -133,7 +133,8 @@ Defaults are 10 CPU seconds, 512 MiB of memory, 30 seconds of wall time and
 The broker caps the number of capability calls at 128 per request and reads
 routine frames through a byte-limited pipe. Before sending routine code, the
 host reads the effective memory, swap and task limits from the child’s cgroup.
-The host reports a memory kill only when the kernel records one.
+A trusted scope wrapper reads the final kernel OOM counter before leaving the
+scope. The host reports a memory kill only when the kernel records one.
 
 ## Turn the pilot on or off
 

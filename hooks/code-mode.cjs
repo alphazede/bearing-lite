@@ -880,6 +880,34 @@ function limitsOf(ctx) {
 	return limits;
 }
 
+// Keep the scope populated until the trusted wrapper reads the final kernel
+// counter. The routine must never inherit the observation pipe (fd 4).
+const SCOPE_OBSERVER = `
+IFS=: read -r hierarchy controllers group < /proc/self/cgroup || exit 1
+[ "$hierarchy" = 0 ] && [ -n "$group" ] || exit 1
+events=/sys/fs/cgroup$group/memory.events
+read_oom() {
+	while read -r key value; do
+		if [ "$key" = oom_kill ]; then oom=$value; return 0; fi
+	done < "$events"
+	return 1
+}
+read_oom || exit 1
+before=$oom
+"$@" 4>&-
+status=$?
+if read_oom; then
+	if [ "$oom" -gt "$before" ]; then
+		printf 'oom\\n' >&4
+	else
+		printf 'clear\\n' >&4
+	fi
+else
+	printf 'error\\n' >&4
+fi
+exit "$status"
+`;
+
 // systemd user scope in background.slice (memory, tasks, no oom-kill unit
 // failure) -> prlimit (CPU, open files) -> bwrap (no network, clean
 // environment, read-only minimal root, tmpfs scratch) -> node --permission (no
@@ -901,6 +929,10 @@ function sandboxArgs(limits) {
 		"-p",
 		"OOMPolicy=continue",
 		"--",
+		"/bin/sh",
+		"-c",
+		SCOPE_OBSERVER,
+		"code-mode-scope",
 		"prlimit",
 		`--cpu=${limits.cpu_seconds}:${limits.cpu_seconds + 1}`,
 		`--nofile=${OPEN_FILES}`,
@@ -1127,11 +1159,13 @@ function runProgram(ctx, state, code) {
 	for (const key of ["XDG_RUNTIME_DIR", "DBUS_SESSION_BUS_ADDRESS"])
 		if (process.env[key]) env[key] = process.env[key];
 	const child = spawn("systemd-run", sandboxArgs(limits), {
-		stdio: ["ignore", "pipe", "pipe", "pipe"],
+		stdio: ["ignore", "pipe", "pipe", "pipe", "pipe"],
 		env,
 	});
 	const closed = track(child);
 	const out = collector(limits.output_bytes, child);
+	let scopeObservation = "";
+	child.stdio[4].on("data", (chunk) => (scopeObservation += chunk));
 	const run = {
 		started: false,
 		finished: null,
@@ -1139,6 +1173,9 @@ function runProgram(ctx, state, code) {
 		wall: false,
 		pending: new Set(),
 	};
+	child.stdio[4].on("error", () => {
+		run.observerError = true;
+	});
 	serve(ctx, state, child, code, run, limits);
 	const timer = setTimeout(() => {
 		run.wall = true;
@@ -1152,8 +1189,14 @@ function runProgram(ctx, state, code) {
 			await Promise.all(run.pending);
 			clearTimeout(timer);
 			run.memoryWatch?.close();
-			if (run.oom) throw new Fail("resource_limit", { limit: "memory" });
-			if (run.observerError) throw new Fail("sandbox_unavailable");
+			if (run.oom || scopeObservation === "oom\n")
+				throw new Fail("resource_limit", { limit: "memory" });
+			if (
+				run.observerError ||
+				scopeObservation === "error\n" ||
+				(run.started && exit.code === 0 && scopeObservation !== "clear\n")
+			)
+				throw new Fail("sandbox_unavailable");
 			if (run.protocolError) throw run.protocolError;
 			if (run.callError && !run.wall && !out.overflow) throw run.callError;
 			if (out.observed > 0) {
