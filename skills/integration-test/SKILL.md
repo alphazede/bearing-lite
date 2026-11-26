@@ -104,6 +104,10 @@ independent assurance (`../test-engineer/SKILL.md`) and execution assessment
    It runs only each command's declared `<executable> --help` dry-run form and
    names a missing required or unknown option (`seit_command_args_rejected`) or
    an unresolved executable (`seit_command_unresolved`); repair each finding.
+   The check runs the help form on the planning host, so declare a
+   `dry_run_form` only when `<executable> --help` is side-effect free there.
+   It checks only the options before the first script, subcommand or
+   positional word.
    Repair your own defects in this assignment, folding
    all known corrections into this first return to the Planning Orchestrator
    with proof cases, boundary/assembly inputs, selected capability bindings,

@@ -1780,7 +1780,9 @@ p.add_argument("--remote")
 p.parse_args()
 pathlib.Path("ran.marker").write_text("real command ran")
 `;
-	function runCommands(t, rows) {
+	// A tool whose `--help` prints `usage` and exits 0 without running anything.
+	const helpTool = (usage) => `#!/bin/sh\ncat <<'EOF'\n${usage}\nEOF\n`;
+	function runCommands(t, rows, tools = {}) {
 		const root = mkdtempSync(path.join(os.tmpdir(), "plan-package-cmds-"));
 		t.after(() => rmSync(root, { recursive: true, force: true }));
 		mkdirSync(path.join(root, ".git"));
@@ -1788,6 +1790,10 @@ pathlib.Path("ran.marker").write_text("real command ran")
 		writeFileSync(path.join(root, "tools/lint/az-lint"), AZ_LINT, {
 			mode: 0o755,
 		});
+		for (const [name, usage] of Object.entries(tools))
+			writeFileSync(path.join(root, "tools", name), helpTool(usage), {
+				mode: 0o755,
+			});
 		const dir = path.join(root, "docs/plans/p");
 		mkdirSync(dir, { recursive: true });
 		writeFileSync(
@@ -1867,5 +1873,87 @@ pathlib.Path("ran.marker").write_text("real command ran")
 			result.findings.map((f) => [f.code, f.command_id]),
 			[["seit_command_unresolved", "CMD-X"]],
 		);
+	});
+
+	// The CPython help shape: option text follows the usage line directly.
+	const PY_HELP = `usage: py [option] ... [-c cmd | -m mod | file | -] [arg] ...
+Options (and corresponding environment variables):
+-b     : issue warnings about bytes (-bb: issue errors)
+-c cmd : program passed in as string
+-m mod : run library module as a script
+-q     : don't print version messages`;
+	// The git help shape: top-level options, then a subcommand with its own options.
+	const VCS_HELP = `usage: vcs [-v | --version] [-h | --help] [-C <path>]
+           <command> [<args>]
+
+These are common commands:
+   diff      Show changes`;
+
+	it("SEIT-781-06: ends the usage synopsis at the CPython option text", (t) => {
+		const { cli, result } = runCommands(
+			t,
+			[
+				{
+					id: "CMD-PY",
+					command: "tools/py tools/run.py --host build-01 --dry-run",
+					dry_run_form: "tools/py --help",
+				},
+				{
+					id: "CMD-PY-M",
+					command: "tools/py -m pytest -x --tb=short",
+					dry_run_form: "tools/py --help",
+				},
+			],
+			{ py: PY_HELP },
+		);
+		assert.equal(cli.status, 0, cli.stdout);
+		assert.deepEqual(result.findings, []);
+	});
+
+	it("SEIT-781-07: leaves a script's or subcommand's own options unchecked", (t) => {
+		const { cli, result } = runCommands(
+			t,
+			[
+				{
+					id: "CMD-DIFF",
+					command: "tools/vcs diff --name-only origin/main...HEAD",
+					dry_run_form: "tools/vcs --help",
+				},
+				{
+					id: "CMD-C",
+					command: "tools/vcs -C sub diff --stat",
+					dry_run_form: "tools/vcs --help",
+				},
+				{
+					id: "CMD-BAD",
+					command: "tools/vcs --bogus diff --stat",
+					dry_run_form: "tools/vcs --help",
+				},
+			],
+			{ vcs: VCS_HELP },
+		);
+		assert.equal(cli.status, 1);
+		assert.deepEqual(
+			result.findings.map((f) => [f.command_id, f.reason]),
+			[["CMD-BAD", "tools/vcs --help usage: unknown option --bogus"]],
+		);
+	});
+
+	it("SEIT-781-08: lists a usage line with unbalanced brackets as unchecked", (t) => {
+		const { cli, result } = runCommands(
+			t,
+			[
+				{
+					id: "CMD-ODD",
+					command: "tools/odd",
+					dry_run_form: "tools/odd --help",
+				},
+			],
+			{ odd: "usage: odd [-a]] --req REQ" },
+		);
+		assert.equal(cli.status, 0, cli.stdout);
+		assert.deepEqual(result.unchecked, [
+			{ command_id: "CMD-ODD", reason: "usage brackets do not balance" },
+		]);
 	});
 });
