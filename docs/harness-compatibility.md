@@ -114,7 +114,9 @@ skills (down from 17 on the 2026-11-17 `2.0.3` run above after the 2026-11-18
 role changes). On this host, `GitHub Copilot CLI 1.0.114` is present: offline
 `copilot plugin marketplace add` and `copilot plugin install bearing-lite@bearing-lite`
 registered the plugin and all 16 skills in `copilot plugin list --json` and
-`copilot skill list`. Hook registration and execution remain `UNVERIFIED`
+`copilot skill list --json`. The disposable marketplace was outside the
+operator's home; only exact, enabled plugin-source skills from that marketplace
+count as discovery evidence. Hook registration and execution remain `UNVERIFIED`
 because Copilot CLI exposes no headless hook-listing command and hook
 execution requires a model session (excluded by the no-paid-provider-call
 rule).
