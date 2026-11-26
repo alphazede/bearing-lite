@@ -10,7 +10,10 @@ each request goes to the context's direct adapter, as before.
 
 - Linux with Node.js 22 or later.
 - `systemd-run --user`, `prlimit` (util-linux) and `bwrap` (bubblewrap) on
-  `PATH`, for routines only. Capability requests do not start the sandbox.
+  `PATH`, for routines only. Routines require systemd 253 or later (or a
+  backport of `OOMPolicy=` for scope units). If the user manager rejects the
+  required scope properties, the runtime reports `sandbox_unavailable`.
+  Capability requests do not start the sandbox.
 - No root access is needed.
 
 ## Commands
