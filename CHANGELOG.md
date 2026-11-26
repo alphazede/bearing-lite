@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [3.1.2](https://github.com/alphazede/bearing-lite/releases/tag/v3.1.2) - 2026-11-26
+
 - Split `.github/workflows/bearing-publish.yml` into an unapproved `verify` job that runs all release checks and packs a SHA-256-verified tarball artifact, followed by the `npm-publish`-gated `publish` job that confirms the tag commit and tarball hash before publishing that exact file with npm trusted publishing.
 - Place the Code Mode sandbox scope in `background.slice` with `OOMPolicy=continue` so routine memory-limit kills stay enforced without triggering desktop `oom-kill` notifications.
 
