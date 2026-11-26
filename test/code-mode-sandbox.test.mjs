@@ -16,8 +16,13 @@ import {
 	readyInput,
 	request,
 	run,
+	sandboxSkip,
 	workspaceDigest,
 } from "./fixtures/code-mode/fixture.mjs";
+
+// Tests that start a real sandboxed routine skip where the runtime reports
+// its sandbox unavailable.
+const sandbox = await sandboxSkip();
 
 async function allowed(f, id = "allowed-sibling") {
 	const out = await run(f, request(id, "ready-set", readyInput));
@@ -46,6 +51,7 @@ test("BLX-VC-041: known but excluded capability cannot run; allowlisted sibling 
 });
 
 test("BLX-VC-042: ordinary TCP connection is unavailable in the isolated network", async (t) => {
+	if (sandbox) return t.skip(sandbox);
 	const f = fixture(t);
 	let connections = 0;
 	const server = createServer((socket) => {
@@ -105,6 +111,7 @@ test("BLX-VC-042: ordinary TCP connection is unavailable in the isolated network
 });
 
 test("BLX-VC-043: synthetic ambient variables and synthetic home file are inaccessible", async (t) => {
+	if (sandbox) return t.skip(sandbox);
 	const f = fixture(t);
 	const marker = path.join(f.home, "owned-marker.txt");
 	writeFileSync(marker, "synthetic-not-a-credential");
@@ -167,6 +174,7 @@ for (const [limit, limits, code] of [
 			limit +
 			" limit terminates finite test work without state effects",
 		async (t) => {
+			if (sandbox) return t.skip(sandbox);
 			const f = fixture(t, { limits });
 			await allowed(f);
 			const before = workspaceDigest(f);
@@ -179,6 +187,7 @@ for (const [limit, limits, code] of [
 }
 
 test("BLX-VC-044: child process and worker creation are denied for harmless local workloads", async (t) => {
+	if (sandbox) return t.skip(sandbox);
 	const f = fixture(t);
 	const before = workspaceDigest(f);
 	const out = await run(
@@ -212,6 +221,7 @@ test("BLX-VC-044: child process and worker creation are denied for harmless loca
 });
 
 test("BLX-VC-044: scratch capacity and open-file limits contain bounded local workloads", async (t) => {
+	if (sandbox) return t.skip(sandbox);
 	const f = fixture(t);
 	const before = workspaceDigest(f);
 	const scratchRoot = JSON.stringify(f.root);
@@ -270,6 +280,7 @@ test("BLX-VC-044: scratch capacity and open-file limits contain bounded local wo
 });
 
 test("BLX-VC-045: scratch write works; outside write cannot alter the owned sentinel", async (t) => {
+	if (sandbox) return t.skip(sandbox);
 	const f = fixture(t);
 	const sentinel = path.join(f.workspace, "state", "sentinel.txt");
 	writeFileSync(sentinel, "original");
@@ -301,6 +312,7 @@ test("BLX-VC-045: scratch write works; outside write cannot alter the owned sent
 });
 
 test("BLX-VC-108: limit measures combined output, retains bounded hashed evidence and permits below-bound output", async (t) => {
+	if (sandbox) return t.skip(sandbox);
 	const limit = 64 * 1024;
 	const f = fixture(t, { limits: { output_bytes: limit } });
 	const before = workspaceDigest(f);
@@ -352,6 +364,7 @@ test("BLX-VC-108: limit measures combined output, retains bounded hashed evidenc
 });
 
 test("a routine result above its byte limit stays out of the evidence store", async (t) => {
+	if (sandbox) return t.skip(sandbox);
 	const f = fixture(t, { limits: { output_bytes: 4096 } });
 	const out = await run(
 		f,

@@ -27,16 +27,23 @@ import {
 	failure,
 	fixture,
 	json,
+	offlineSkip,
 	program,
 	ROOT,
 	readyInput,
 	request,
 	run,
+	sandboxSkip,
 	sha,
 	transitionInput,
 	validationInput,
 	workspaceDigest,
 } from "./fixtures/code-mode/fixture.mjs";
+
+// Tests that start a real sandboxed routine skip where the runtime reports
+// its sandbox unavailable; the offline entry needs a network namespace.
+const sandbox = await sandboxSkip();
+const offline = offlineSkip();
 
 const golden = json(path.join(ROOT, "test/fixtures/code-mode/golden.json"));
 const call = (capability, input) => ({ capability, input });
@@ -64,6 +71,88 @@ function schemaChecks(rows) {
 	assert.equal(validated.status, 0, validated.stderr);
 }
 
+// Schema-guided malformed inputs. Starting from a valid input, walk the
+// capability's input schema and derive, for every object reached: each required
+// field missing, each field replaced by a value of a type the schema does not
+// allow, and an unknown field where the object is closed. A fixed seed picks
+// the wrong-typed sample, so the generated set is the same on every run.
+const SEED = 0x038;
+function seeded(seed) {
+	let s = seed >>> 0;
+	return () => {
+		s = (s + 0x6d2b79f5) >>> 0;
+		let x = Math.imul(s ^ (s >>> 15), 1 | s);
+		x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x;
+		return ((x ^ (x >>> 14)) >>> 0) / 2 ** 32;
+	};
+}
+const SAMPLES = [null, true, 3, 2.5, "sample", ["sample"], { sample: 1 }];
+const kindOf = (value) =>
+	value === null
+		? "null"
+		: Array.isArray(value)
+			? "array"
+			: Number.isInteger(value)
+				? "integer"
+				: typeof value;
+const isPlain = (value) => kindOf(value) === "object";
+
+function allowedKinds(schema) {
+	const kinds = schema.type
+		? [].concat(schema.type)
+		: schema.enum
+			? schema.enum.map(kindOf)
+			: "const" in schema
+				? [kindOf(schema.const)]
+				: null;
+	return (
+		kinds &&
+		new Set(kinds.flatMap((k) => (k === "number" ? [k, "integer"] : [k])))
+	);
+}
+
+function* wrongType(schema, at, pick) {
+	const kinds = isPlain(schema) && allowedKinds(schema);
+	if (!kinds) return;
+	const wrong = SAMPLES.filter((sample) => !kinds.has(kindOf(sample)));
+	const value = wrong[Math.floor(pick() * wrong.length)];
+	yield [`${at} as ${kindOf(value)}`, value];
+}
+
+function* malformedInputs(schema, value, pick, at = "$") {
+	const branch = schema.oneOf
+		? schema.oneOf.find((sub) =>
+				(sub.required ?? []).every((key) => Object.hasOwn(value, key)),
+			)
+		: schema;
+	if (!branch) return;
+	if (isPlain(value)) {
+		for (const key of branch.required ?? []) {
+			const { [key]: _, ...rest } = value;
+			yield [`${at}.${key} missing`, rest];
+		}
+		for (const [key, child] of Object.entries(value)) {
+			const sub = Object.hasOwn(branch.properties ?? {}, key)
+				? branch.properties[key]
+				: branch.additionalProperties;
+			if (!isPlain(sub)) continue;
+			for (const [label, bad] of [
+				...wrongType(sub, `${at}.${key}`, pick),
+				...malformedInputs(sub, child, pick, `${at}.${key}`),
+			])
+				yield [label, { ...value, [key]: bad }];
+		}
+		if (branch.additionalProperties === false)
+			yield [`${at} unknown field`, { ...value, unexpected_field: "sample" }];
+	} else if (Array.isArray(value) && value.length && isPlain(branch.items)) {
+		for (const [label, bad] of [
+			...wrongType(branch.items, `${at}[0]`, pick),
+			...malformedInputs(branch.items, value[0], pick, `${at}[0]`),
+		])
+			yield [label, [bad, ...value.slice(1)]];
+	}
+}
+
 test("BLX-VC-038: closed typed catalogue, valid and malformed input for every capability", async (t) => {
 	const f = fixture(t);
 	const catalogue = await describe(f);
@@ -82,6 +171,13 @@ test("BLX-VC-038: closed typed catalogue, valid and malformed input for every ca
 		"ready-set": readyInput,
 		validate: validationInput,
 	};
+	// Each lifecycle-state input branch gets its own valid starting point.
+	const starts = {
+		"lifecycle-state": [transitionInput, { read: "generation" }],
+	};
+	const outcomeSchema = json(path.join(ROOT, "schemas/code-mode.schema.json"));
+	const pick = seeded(SEED);
+	const generated = {};
 	const malformed = {
 		aggregate: { ...aggregateInput, status: 3 },
 		dispatch: { ...dispatchInput(), role: 3 },
@@ -131,12 +227,32 @@ test("BLX-VC-038: closed typed catalogue, valid and malformed input for every ca
 			[entry.output_schema, output, true],
 		);
 		const before = workspaceDigest(f);
-		for (const [i, input] of [null, [], malformed[name]].entries()) {
+		const cases = [null, [], malformed[name]].map((input, i) => [
+			"fixed sample " + i,
+			input,
+		]);
+		for (const start of starts[name] ?? [valid[name]])
+			cases.push(...malformedInputs(entry.input_schema, start, pick));
+		generated[name] = cases.slice(3).map(([label]) => label);
+		const topLevel = (entry.input_schema.oneOf ?? [entry.input_schema])
+			.flatMap((schema) => schema.required ?? [])
+			.map((key) => "$." + key + " missing");
+		for (const label of topLevel)
+			assert.ok(generated[name].includes(label), name + ": no case " + label);
+		assert.ok(
+			generated[name].some((label) => / as [a-z]+$/.test(label)),
+			name + ": no wrong-type case",
+		);
+		if (entry.input_schema.additionalProperties === false)
+			assert.ok(generated[name].includes("$ unknown field"), name);
+		for (const [i, [label, input]] of cases.entries()) {
 			const denied = await run(
 				f,
 				request("bad-" + name + "-" + i, name, input),
 			);
+			assert.equal(denied.error?.code, "schema_error", name + " " + label);
 			failure(denied, "schema_error");
+			rows.push([outcomeSchema, denied, true]);
 			assert.equal(
 				workspaceDigest(f),
 				before,
@@ -153,6 +269,17 @@ test("BLX-VC-038: closed typed catalogue, valid and malformed input for every ca
 		}
 	}
 	schemaChecks(rows);
+	t.diagnostic(
+		"generated malformed inputs: " +
+			JSON.stringify(
+				Object.fromEntries(
+					Object.entries(generated).map(([name, labels]) => [
+						name,
+						labels.length,
+					]),
+				),
+			),
+	);
 });
 
 test("BLX-VC-039: same bytes as pinned ready-set, transition and draft plan routines", async (t) => {
@@ -169,6 +296,7 @@ test("BLX-VC-039: same bytes as pinned ready-set, transition and draft plan rout
 });
 
 test("BLX-VC-040: compact outcome refers to the exact retained raw result", async (t) => {
+	if (sandbox) return t.skip(sandbox);
 	const f = fixture(t);
 	const payload = { sample: "fixture-payload:" + "x".repeat(32 * 1024) };
 	const out = await run(
@@ -514,6 +642,7 @@ test("BLX-VC-049: absent opt-in, enabled, and eligible unsupported direct path",
 });
 
 test("BLX-VC-058: offline shell entry gives equivalent outcomes for the two native envelopes", async (t) => {
+	if (offline) return t.skip(offline);
 	const outcomes = [];
 	for (const filename of [
 		"claude-pretooluse-test-write.json",
@@ -548,6 +677,7 @@ test("BLX-VC-058: offline shell entry gives equivalent outcomes for the two nati
 });
 
 test("BLX-VC-059: approved routine digest, changed source, and generated source admission", async (t) => {
+	if (sandbox) return t.skip(sandbox);
 	const f = fixture(t);
 	const routine = path.join(f.workspace, "routine.js");
 	const script =

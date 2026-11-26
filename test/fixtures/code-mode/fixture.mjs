@@ -513,6 +513,45 @@ export async function run(f, req, options) {
 	return outcome;
 }
 
+let sandboxProbe;
+// Asks the runtime itself whether it can start its routine sandbox: a trivial
+// routine either completes, or the runtime refuses it as sandbox_unavailable
+// through the same checks every routine run uses. Resolves false when the
+// sandbox works, otherwise a skip reason carrying the runtime's diagnostic.
+export function sandboxSkip() {
+	sandboxProbe ??= (async () => {
+		const after = [];
+		const f = fixture({ after: (fn) => after.push(fn) });
+		try {
+			const out = await run(f, program("sandbox-probe", "return true;"));
+			if (out.status === "COMPLETE") return false;
+			assert.equal(out.error?.code, "sandbox_unavailable", JSON.stringify(out));
+			const ref = out.evidence_refs.find(
+				(entry) => entry.kind === "diagnostic",
+			);
+			const detail = ref
+				? evidenceBytes(f, ref).toString().trim().split("\n")[0]
+				: "no diagnostic";
+			return "routine sandbox unavailable on this host: " + detail;
+		} finally {
+			for (const fn of after) await fn();
+		}
+	})();
+	return sandboxProbe;
+}
+
+// The offline entry starts the runtime in an unprivileged user and network
+// namespace. Resolves false when the host allows one, otherwise a skip reason.
+export function offlineSkip() {
+	const probe = spawnSync("unshare", ["-rn", "true"], {
+		encoding: "utf8",
+		timeout: 10000,
+	});
+	if (probe.status === 0) return false;
+	const detail = (probe.error?.message ?? probe.stderr).trim();
+	return "unprivileged network namespace unavailable on this host: " + detail;
+}
+
 export function failure(outcome, code) {
 	assert.notEqual(outcome.status, "COMPLETE", JSON.stringify(outcome));
 	assert.notEqual(outcome.status, "READY", JSON.stringify(outcome));
