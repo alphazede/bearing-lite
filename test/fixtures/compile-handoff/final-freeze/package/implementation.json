@@ -4,7 +4,55 @@
   "source_baseline": {
     "demo": "0000000000000000000000000000000000000000"
   },
-  "journey_settings": {},
+  "journey_settings": {
+    "planning_review": {
+      "candidate_digest": "03a86fbe59ddbe60ac78dbd221126dc289555a276f374048de4f597a8c709570"
+    },
+    "review_rounds": [
+      {
+        "unit_id": "planning",
+        "unit_kind": "planning",
+        "reviewer_rounds": 1,
+        "repairs_max": 1,
+        "closure": "deterministic_PASS"
+      },
+      {
+        "unit_id": "W0",
+        "unit_kind": "wave",
+        "reviewer_rounds": 1,
+        "repairs_max": 1,
+        "closure": "deterministic_PASS"
+      },
+      {
+        "unit_id": "W1",
+        "unit_kind": "wave",
+        "reviewer_rounds": 1,
+        "repairs_max": 1,
+        "closure": "deterministic_PASS"
+      },
+      {
+        "unit_id": "W2",
+        "unit_kind": "wave",
+        "reviewer_rounds": 1,
+        "repairs_max": 1,
+        "closure": "deterministic_PASS"
+      }
+    ],
+    "planning_wave": {
+      "required_sessions": [],
+      "sessions": [],
+      "review_requested": false,
+      "reviews": 0,
+      "repairs": 0,
+      "closure": "deterministic_PASS",
+      "candidate_digest": "03a86fbe59ddbe60ac78dbd221126dc289555a276f374048de4f597a8c709570",
+      "closing_candidate": {
+        "candidate_ref": "plan",
+        "candidate_revision": "r1",
+        "candidate_digest": "03a86fbe59ddbe60ac78dbd221126dc289555a276f374048de4f597a8c709570"
+      }
+    }
+  },
   "profile_freeze": {
     "binding": "binding.json"
   },
@@ -123,7 +171,8 @@
         "demo: test/ff-unit.test.mjs"
       ],
       "command_ids": [
-        "CMD-FF-UNIT"
+        "CMD-FF-UNIT",
+        "CMD-FF-LINT"
       ],
       "stop_condition": "STOP-T1: CMD-FF-UNIT fails for the intended reason.",
       "human_decision": null,
@@ -189,5 +238,9 @@
       "work_class": "judgement"
     }
   ],
-  "traceability": {}
+  "traceability": {},
+  "boundary_contract": {
+    "not_applicable": true,
+    "reason": "Synthetic single-module fixture; no cross-component boundary."
+  }
 }

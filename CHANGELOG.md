@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-- Compile every slice of a plan that passes final freeze in `tools/compile-handoff.mjs`. A slice with an empty `seit_proof_rows` list takes its goal as acceptance and its `stop_condition` as evidence. A slice with an empty `command_ids` list takes the commands of the Test Implementer slices that share its SEIT proof rows, else no command; a light slice without a command stays a `commands` gap. The compiled route now applies `scoped_owner_amendment` before the snapshot, as the route guard does, including an empty `ordered_fallbacks`. `schemas/handoff.schema.json` allows an empty `commands` list. (Alphazedehq#779)
+- Compile every slice of a plan that passes final freeze in `tools/compile-handoff.mjs`. A slice with an empty `seit_proof_rows` list takes its goal as acceptance and its `stop_condition` as evidence. A slice with an empty `command_ids` list takes, for each of its SEIT proof rows, the command `seit.json` ties to that row (`proof_cases[].command_id`) when a Test Implementer slice sharing the row lists it, else no command; a light slice without a command and a malformed paired command list stay `commands` gaps. The compiled route now applies `scoped_owner_amendment` before the snapshot, as the route guard does, including its own `enabled` flag and an empty `ordered_fallbacks`, and a binding without a snapshot `roles` object is a `binding` gap. `schemas/handoff.schema.json` allows an empty `commands` list. (Alphazedehq#779)
 
 ## [3.1.3](https://github.com/alphazede/bearing-lite/releases/tag/v3.1.3) - 2026-11-26
 

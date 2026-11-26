@@ -620,21 +620,44 @@ describe("frozen identity and authority (SM05.X1, SM05.X2, F04 failure_recovery)
 
 /** The synthetic final-freeze plan beside the base fixture (README: final-freeze/). */
 function finalFreeze(t) {
-	const f = fixture(t);
-	const dir = path.join(f.dir, "final-freeze");
+	const root = mkdtempSync(path.join(tmpdir(), "compile-handoff-ff-"));
+	t.after(() => rmSync(root, { recursive: true, force: true }));
+	// Repository layout, so final freeze resolves the fixture's repo-relative planning input.
+	writeFileSync(path.join(root, ".git"), "synthetic repository marker\n");
+	const dir = path.join(root, "test", "fixtures", "compile-handoff");
+	cpSync(FX, dir, { recursive: true });
+	const ff = path.join(dir, "final-freeze");
 	return {
-		...f,
-		plan: path.join(dir, "package"),
-		implementation: path.join(dir, "package", "implementation.json"),
-		seit: path.join(dir, "package", "seit.json"),
-		binding: path.join(dir, "binding.json"),
+		root,
+		dir,
+		plan: path.join(ff, "package"),
+		implementation: path.join(ff, "package", "implementation.json"),
+		seit: path.join(ff, "package", "seit.json"),
+		authority: path.join(dir, "authority.json"),
+		binding: path.join(ff, "binding.json"),
 	};
 }
 const FF_SLICES = ["T0", "P0", "T1", "I1", "D1"];
 
+/** Final freeze (hooks/plan-package.cjs, stage final) passes on the plan copy. */
+function assertFreezePass(f) {
+	const r = spawnSync(
+		process.execPath,
+		[path.join(ROOT, "hooks", "plan-package.cjs"), f.plan],
+		{ cwd: f.root, encoding: "utf8", timeout: 30_000 },
+	);
+	assert.equal(
+		r.status,
+		0,
+		`${r.stdout.slice(0, 800)} ${r.stderr.slice(-400)}`,
+	);
+	assert.equal(JSON.parse(r.stdout).outcome, "PASS");
+}
+
 describe("final-freeze plan compiles every slice (Alphazedehq#779)", () => {
 	it("compiles every slice of a plan that final freeze accepts", (t) => {
 		const f = finalFreeze(t);
+		assertFreezePass(f);
 		for (const id of FF_SLICES)
 			assert.equal(ready(f, id).json.identity.slice, id);
 	});
@@ -655,7 +678,7 @@ describe("final-freeze plan compiles every slice (Alphazedehq#779)", () => {
 		}
 	});
 
-	it("a slice with no command ids takes the commands of the Test Implementer slice that shares its proof rows", (t) => {
+	it("a slice with no command ids takes only the command seit.json ties to the proof rows it shares with a Test Implementer slice", (t) => {
 		const f = finalFreeze(t);
 		const i1 = ready(f, "I1").json;
 		assert.deepEqual(i1.commands, [
@@ -745,6 +768,45 @@ describe("final-freeze plan compiles every slice (Alphazedehq#779)", () => {
 		assertGap(f, "T1", "route");
 	});
 
+	it("a malformed paired command list or shared proof-row command is a commands gap", (t) => {
+		const f = finalFreeze(t);
+		mutate(f.implementation, (impl) => {
+			slice(impl, "T1").command_ids = "CMD-FF-UNIT";
+		});
+		assertGap(f, "I1", "commands");
+		mutate(f.implementation, (impl) => {
+			slice(impl, "T1").command_ids = [42];
+		});
+		assertGap(f, "I1", "commands");
+		mutate(f.implementation, (impl) => {
+			slice(impl, "T1").command_ids = ["CMD-FF-UNIT", "CMD-FF-LINT"];
+		});
+		mutate(f.seit, (seit) => {
+			seit.proof_cases.find((c) => c.id === "SEIT-FF-1").command_id = "";
+		});
+		assertGap(f, "I1", "commands");
+	});
+
+	it("an amended route disabled by its own enabled flag is a route gap, as the route guard refuses it", (t) => {
+		const f = finalFreeze(t);
+		mutate(f.binding, (b) => {
+			b.scoped_owner_amendment.test_implementer.enabled = false;
+		});
+		assertGap(f, "T1", "route");
+	});
+
+	it("a binding without a snapshot roles object is a binding gap, even with an amendment", (t) => {
+		const f = finalFreeze(t);
+		mutate(f.binding, (b) => {
+			delete b.snapshot.roles;
+		});
+		assertGap(f, "T1", "binding");
+		mutate(f.binding, (b) => {
+			b.snapshot.roles = [];
+		});
+		assertGap(f, "T1", "binding");
+	});
+
 	it("a light slice with no command is still a commands gap, as final freeze refuses it", (t) => {
 		const f = finalFreeze(t);
 		mutate(f.implementation, (impl) => {
@@ -757,6 +819,10 @@ describe("final-freeze plan compiles every slice (Alphazedehq#779)", () => {
 		const f = finalFreeze(t);
 		mutate(f.implementation, (impl) => {
 			slice(impl, "T1").command_ids = ["CMD-FF-NOPE"];
+		});
+		mutate(f.seit, (seit) => {
+			seit.proof_cases.find((c) => c.id === "SEIT-FF-1").command_id =
+				"CMD-FF-NOPE";
 		});
 		assertGap(f, "I1", "commands");
 	});
