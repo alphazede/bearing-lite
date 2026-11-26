@@ -1838,6 +1838,22 @@ pathlib.Path("ran.marker").write_text("real command ran")
 		assert.match(result.findings[0].reason, /--fix/);
 	});
 
+	it("SEIT-781-05: refuses a help form with extra words and runs nothing", (t) => {
+		const { root, cli, result } = runCommands(t, [
+			{
+				id: "CMD-SH",
+				command: "sh -c 'touch ran.marker' --help",
+				dry_run_form: "sh -c 'touch ran.marker' --help",
+			},
+		]);
+		assert.equal(cli.status, 0);
+		assert.deepEqual(
+			result.unchecked.map((u) => u.command_id),
+			["CMD-SH"],
+		);
+		assert.equal(existsSync(path.join(root, "ran.marker")), false);
+	});
+
 	it("SEIT-781-04: names an executable that does not resolve", (t) => {
 		const { cli, result } = runCommands(t, [
 			{

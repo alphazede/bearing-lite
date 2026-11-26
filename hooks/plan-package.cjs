@@ -2182,8 +2182,10 @@ function usageOf(help) {
 
 /**
  * Alphazedehq#781: check each SEIT command whose `dry_run_form` is the command's
- * own executable plus `--help` or `-h`. Only that declared help form runs (no
- * shell, stdin closed, 10 s limit); the real command never runs. A missing
+ * own executable plus `--help` or `-h`, and nothing else. Only that declared
+ * help form runs (no shell, stdin closed, 10 s limit); the real command never
+ * runs. Extra words are refused because they could carry a real action
+ * (`sh -c "<action>" --help`). A missing
  * required option, an unknown option, or an executable that does not resolve
  * is a named finding. Other rows are listed as unchecked with a reason. This
  * check is advisory: the freeze does not run it.
@@ -2207,11 +2209,10 @@ function checkSeitCommands(dir) {
 		}
 		const command = shellWords(row.command);
 		const dry = shellWords(row.dry_run_form);
-		const head = dry.slice(0, -1);
 		if (
-			!["--help", "-h"].includes(dry.at(-1)) ||
-			!head.length ||
-			head.some((word, i) => word !== command[i])
+			dry.length !== 2 ||
+			!["--help", "-h"].includes(dry[1]) ||
+			dry[0] !== command[0]
 		) {
 			unchecked.push({
 				command_id: id,
@@ -2219,8 +2220,8 @@ function checkSeitCommands(dir) {
 			});
 			continue;
 		}
-		const exe = head[0].includes("/") ? path.resolve(root, head[0]) : head[0];
-		const help = spawnSync(exe, [...head.slice(1), dry.at(-1)], {
+		const exe = dry[0].includes("/") ? path.resolve(root, dry[0]) : dry[0];
+		const help = spawnSync(exe, [dry[1]], {
 			cwd: root,
 			encoding: "utf8",
 			stdio: ["ignore", "pipe", "pipe"],
@@ -2231,7 +2232,7 @@ function checkSeitCommands(dir) {
 				code: "seit_command_unresolved",
 				command_id: id,
 				command: row.command,
-				reason: `${head[0]} does not resolve to an executable (${help.error.code})`,
+				reason: `${dry[0]} does not resolve to an executable (${help.error.code})`,
 			});
 			continue;
 		}
@@ -2248,7 +2249,7 @@ function checkSeitCommands(dir) {
 			});
 			continue;
 		}
-		const args = command.slice(head.length);
+		const args = command.slice(1);
 		const end = args.findIndex((a) => /^(\||\|\||&&|;|--|\d*[<>].*)$/.test(a));
 		const given = (end < 0 ? args : args.slice(0, end))
 			.filter((a) => /^--[A-Za-z0-9]|^-[A-Za-z]$/.test(a))
