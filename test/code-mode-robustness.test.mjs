@@ -24,11 +24,16 @@ import {
 	release,
 	request,
 	run,
+	sandboxSkip,
 	start,
 	transitionInput,
 	waitFor,
 	workspaceDigest,
 } from "./fixtures/code-mode/fixture.mjs";
+
+// Tests that start a real sandboxed routine skip where the runtime reports
+// its sandbox unavailable.
+const sandbox = await sandboxSkip();
 
 const dispatch = (id, packet = id, generation = 1) =>
 	request(id, "dispatch", dispatchInput(packet), generation);
@@ -113,6 +118,7 @@ for (const [packet, stage] of [
 			" confirmation of " +
 			packet,
 		async (t) => {
+			if (sandbox) return t.skip(sandbox);
 			const f = fixture(t);
 			controlMode(f, packet, { hold: stage });
 			const code =
@@ -235,6 +241,7 @@ async function waitForReadEvidence(f, active) {
 }
 
 test("BLX-VC-055: generation changes after read; stale request cannot write", async (t) => {
+	if (sandbox) return t.skip(sandbox);
 	const f = fixture(t);
 	const req = program(
 		"stale-request",
