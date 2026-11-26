@@ -15,6 +15,7 @@ import path from "node:path";
 import { test } from "node:test";
 import {
 	aggregateInput,
+	authorizeFixtureWrites,
 	capabilities,
 	configure,
 	controlMode,
@@ -376,6 +377,7 @@ test("BLX-VC-047: new paths and directory markers reach the launcher in normaliz
 			JSON.stringify({ status: "COMPLETE", receipt: f.sourceRef }),
 		],
 	});
+	authorizeFixtureWrites(f, ["state/new.txt", "state/new-dir/"]);
 	const out = await run(
 		f,
 		request("new-paths", "dispatch", {
@@ -394,6 +396,7 @@ test("BLX-VC-047: new paths and directory markers reach the launcher in normaliz
 			JSON.stringify({ status: "COMPLETE", receipt }),
 		],
 	});
+	authorizeFixtureWrites(f, ["state/effects.log"]);
 	const refused = await run(
 		f,
 		request("receipt-form", "dispatch", dispatchInput()),

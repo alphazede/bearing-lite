@@ -6,8 +6,9 @@
 // to the context's direct adapter as before. See docs/guides/code-mode.md.
 const fs = require("node:fs");
 const path = require("node:path");
-const { createHash } = require("node:crypto");
-const { spawn } = require("node:child_process");
+const { Socket } = require("node:net");
+const { createHash, randomUUID } = require("node:crypto");
+const { spawn, spawnSync } = require("node:child_process");
 
 const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const isObject = (value) =>
@@ -34,7 +35,10 @@ const SIGXCPU_EXIT = 128 + 24;
 class Fail extends Error {
 	constructor(code, extra = {}) {
 		super(code);
-		this.code = code;
+		this.code =
+			typeof code === "string" && /^[a-z_]{1,64}$/.test(code)
+				? code
+				: "output_schema_error";
 		this.extra = extra;
 	}
 }
@@ -349,9 +353,11 @@ function checkArray(schema, value, at) {
 
 function checkObject(schema, value, at) {
 	for (const key of schema.required ?? [])
-		if (!(key in value)) return `${at}.${key}`;
+		if (!Object.hasOwn(value, key)) return `${at}.${key}`;
 	for (const [key, item] of Object.entries(value)) {
-		const sub = schema.properties?.[key] ?? schema.additionalProperties;
+		const sub = Object.hasOwn(schema.properties ?? {}, key)
+			? schema.properties[key]
+			: schema.additionalProperties;
 		const error = sub !== undefined && check(sub, item, `${at}.${key}`);
 		if (error) return error;
 	}
@@ -379,12 +385,26 @@ function check(schema, value, at = "$") {
 
 // --- Files, evidence, journal and lock --------------------------------------
 
-function put(file, value) {
-	fs.mkdirSync(path.dirname(file), { recursive: true });
-	const temp = `${file}.${process.pid}.tmp`;
-	fs.writeFileSync(temp, JSON.stringify(value));
-	fs.renameSync(temp, file);
+function atomicWrite(file, bytes, durable = false) {
+	const dir = path.dirname(file);
+	fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+	const temp = path.join(dir, "." + randomUUID() + ".tmp");
+	try {
+		fs.writeFileSync(temp, bytes, { flag: "wx", mode: 0o600, flush: durable });
+		fs.renameSync(temp, file);
+		if (durable) {
+			const fd = fs.openSync(dir, "r");
+			try {
+				fs.fsyncSync(fd);
+			} finally {
+				fs.closeSync(fd);
+			}
+		}
+	} finally {
+		fs.rmSync(temp, { force: true });
+	}
 }
+const put = (file, value) => atomicWrite(file, JSON.stringify(value), true);
 const read = (file) => {
 	try {
 		return JSON.parse(fs.readFileSync(file, "utf8"));
@@ -477,17 +497,33 @@ function inside(root, relative) {
 	return file;
 }
 
+function fileDigest(file, maxBytes = Infinity) {
+	const fd = fs.openSync(file, fs.constants.O_RDONLY | fs.constants.O_NONBLOCK);
+	try {
+		const stat = fs.fstatSync(fd);
+		if (!stat.isFile() || stat.size > maxBytes) return null;
+		const hash = createHash("sha256"),
+			buffer = Buffer.alloc(64 * 1024);
+		let seen = 0;
+		for (;;) {
+			const count = fs.readSync(fd, buffer, 0, buffer.length, null);
+			if (!count) return hash.digest("hex");
+			seen += count;
+			if (seen > maxBytes) return null;
+			hash.update(buffer.subarray(0, count));
+		}
+	} finally {
+		fs.closeSync(fd);
+	}
+}
+
 function verifyRef(ctx, ref) {
 	const norm = normalizeRelativePath(ref?.path);
 	if (!norm || norm.endsWith("/")) throw new Fail("evidence_ref_invalid");
 	try {
 		const store = fs.realpathSync.native(ctx.evidence_dir);
 		const file = fs.realpathSync.native(path.resolve(store, norm));
-		if (
-			descendant(store, file) &&
-			fs.statSync(file).isFile() &&
-			sha(fs.readFileSync(file)) === ref.sha256
-		) {
+		if (descendant(store, file) && fileDigest(file) === ref.sha256) {
 			return { path: norm, sha256: ref.sha256 };
 		}
 	} catch {
@@ -498,12 +534,15 @@ function verifyRef(ctx, ref) {
 
 function store(ctx, state, bytes, meta) {
 	const digest = sha(bytes);
-	const file = path.join(ctx.evidence_dir, "code-mode", digest);
-	if (!fs.existsSync(file)) {
-		fs.mkdirSync(path.dirname(file), { recursive: true });
-		fs.writeFileSync(`${file}.tmp`, bytes);
-		fs.renameSync(`${file}.tmp`, file);
-	}
+	const dir = path.join(fs.realpathSync.native(ctx.evidence_dir), "code-mode");
+	fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+	if (fs.realpathSync.native(dir) !== dir)
+		throw new Fail("evidence_ref_invalid");
+	const file = path.join(dir, digest);
+	if (fs.existsSync(file)) {
+		if (fs.lstatSync(file).isSymbolicLink() || fileDigest(file) !== digest)
+			throw new Fail("evidence_ref_invalid");
+	} else atomicWrite(file, bytes);
 	const ref = { path: `code-mode/${digest}`, sha256: digest, ...meta };
 	state.refs.push(ref);
 	return ref;
@@ -514,38 +553,42 @@ const journalFile = (ctx, kind, key) =>
 const generation = (ctx) =>
 	JSON.parse(fs.readFileSync(ctx.journey_path, "utf8")).state_generation;
 
-// shortcut: a crashed holder's lock is taken over without a compare-and-swap;
-// two simultaneous takeovers could both proceed. Upgrade before multi-host use.
-function acquire(file) {
-	for (let attempt = 0; attempt < 2; attempt++) {
-		try {
-			fs.writeFileSync(file, String(process.pid), { flag: "wx" });
-			live.locks.add(file);
-			return;
-		} catch (error) {
-			if (error.code !== "EEXIST") throw error;
-		}
-		let holder = NaN;
-		try {
-			holder = Number(fs.readFileSync(file, "utf8"));
-		} catch {
-			continue;
-		}
-		if (alive(holder)) throw new Fail("lock_busy");
-		fs.rmSync(file, { force: true });
+// Serialize the short PID-file claim/release using the existing directory inode.
+function withLockDirectory(file, fn) {
+	const fd = fs.openSync(path.dirname(file), "r");
+	try {
+		const locked = spawnSync("flock", ["-x", "3"], {
+			stdio: ["ignore", "ignore", "ignore", fd],
+			timeout: 5000,
+		});
+		if (locked.error?.code === "ETIMEDOUT") throw new Fail("lock_busy");
+		if (locked.status !== 0) throw new Fail("lock_unavailable");
+		return fn();
+	} finally {
+		fs.closeSync(fd);
 	}
-	throw new Fail("lock_busy");
+}
+function acquire(file, busy = "lock_busy") {
+	withLockDirectory(file, () => {
+		if (fs.existsSync(file)) {
+			const pid = Number(fs.readFileSync(file, "utf8"));
+			if (!Number.isSafeInteger(pid) || pid < 1 || alive(pid))
+				throw new Fail(busy);
+		}
+		put(file, process.pid);
+		live.locks.add(file);
+	});
+}
+function release(file) {
+	if (!live.locks.has(file)) return;
+	withLockDirectory(file, () => {
+		if (Number(fs.readFileSync(file, "utf8")) === process.pid)
+			fs.unlinkSync(file);
+		live.locks.delete(file);
+	});
 }
 function releaseLocks() {
-	for (const file of live.locks) {
-		try {
-			if (fs.readFileSync(file, "utf8") === String(process.pid))
-				fs.rmSync(file);
-		} catch {
-			/* already gone */
-		}
-	}
-	live.locks.clear();
+	for (const file of live.locks) release(file);
 }
 
 // --- External adapters ----------------------------------------------------
@@ -567,14 +610,17 @@ function track(child) {
 	return closed;
 }
 
-async function adapter(command, payload) {
+async function adapter(command, payload, limit = Infinity) {
 	const child = spawn(command[0], command.slice(1), {
 		stdio: ["pipe", "pipe", "inherit"],
 	});
 	const closed = track(child);
-	let out = "";
+	const parts = [];
+	let size = 0;
 	child.stdout.on("data", (chunk) => {
-		out += chunk;
+		size += chunk.length;
+		if (size > limit) child.kill("SIGKILL");
+		else parts.push(chunk);
 	});
 	child.stdin.on("error", () => {});
 	child.stdin.end(JSON.stringify(payload));
@@ -582,8 +628,9 @@ async function adapter(command, payload) {
 		child.once("error", reject),
 	);
 	await Promise.race([closed, spawned]);
+	if (size > limit) throw new Fail("output_limit");
 	try {
-		return JSON.parse(out);
+		return JSON.parse(Buffer.concat(parts));
 	} catch {
 		throw new Fail("output_schema_error");
 	}
@@ -595,21 +642,16 @@ function resolvePacketDigest(ctx, input) {
 	const packetPath = path.isAbsolute(input.packet)
 		? input.packet
 		: path.resolve(ctx.workspace, input.packet);
-	let bytes = null;
+	let actual;
 	try {
-		if (fs.statSync(packetPath).isFile()) bytes = fs.readFileSync(packetPath);
+		actual = fileDigest(packetPath, 4 * 1024 * 1024);
+		if (!actual) throw new Fail("grant_mismatch");
 	} catch {
-		/* non-file packet identifier in mock tests */
-	}
-	if (bytes !== null) {
-		const actual = sha(bytes);
-		if (input.packet_sha256 && input.packet_sha256 !== actual)
-			throw new Fail("grant_mismatch");
-		return actual;
-	}
-	if (ctx.grant_path !== undefined || ctx.grant_sha256 !== undefined)
 		throw new Fail("grant_mismatch");
-	return input.packet_sha256 ?? sha(Buffer.from(input.packet, "utf8"));
+	}
+	if (input.packet_sha256 && input.packet_sha256 !== actual)
+		throw new Fail("grant_mismatch");
+	return actual;
 }
 
 function sameNormalizedWrites(left, right) {
@@ -620,7 +662,6 @@ function sameNormalizedWrites(left, right) {
 }
 
 function verifyGrant(ctx, input, writeSet, packetSha256) {
-	if (ctx.grant_path === undefined && ctx.grant_sha256 === undefined) return;
 	if (!ctx.grant_path || !ctx.grant_sha256) throw new Fail("grant_mismatch");
 	let grant = null;
 	try {
@@ -679,7 +720,7 @@ function authorize(ctx, input) {
 		);
 	if (!normalized.every(covered)) throw new Fail("write_set_denied");
 	const packetSha256 = resolvePacketDigest(ctx, input);
-	verifyGrant(ctx, input, normalized, packetSha256);
+
 	return { writeSet: normalized, packetSha256 };
 }
 
@@ -706,48 +747,71 @@ function writePathSafe(base, entry) {
 
 // Journal before the effect; on resume, ask the launcher what durably happened.
 async function runDispatch(ctx, input, state, key) {
-	const { writeSet, packetSha256 } = authorize(ctx, input);
-	const file = journalFile(ctx, "call", key);
-	const recorded = read(file);
-	if (recorded?.state === "done") return recorded.result;
-	const bound = {
-		...input,
-		write_set: writeSet,
-		packet_sha256: packetSha256,
-		binding_path: ctx.binding_path,
-		binding_sha256: ctx.binding_sha256,
-		idempotency_key: key,
-		...(ctx.grant_path
-			? { grant_path: ctx.grant_path, grant_sha256: ctx.grant_sha256 }
-			: {}),
-	};
 	acquire(ctx.lock_path);
 	try {
 		if (generation(ctx) !== state.request.generation)
 			throw new Fail("stale_state");
-		const base = fs.realpathSync.native(ctx.workspace);
-		if (!writeSet.every((entry) => writePathSafe(base, entry)))
+		const { writeSet, packetSha256 } = authorize(ctx, input);
+		const file = journalFile(ctx, "call", key);
+
+		const bound = {
+			...input,
+			workspace: fs.realpathSync.native(ctx.workspace),
+			write_set: writeSet,
+			packet_sha256: packetSha256,
+			binding_path: ctx.binding_path,
+			binding_sha256: ctx.binding_sha256,
+			idempotency_key: key,
+			grant_path: ctx.grant_path,
+			grant_sha256: ctx.grant_sha256,
+		};
+		if (!writeSet.every((entry) => writePathSafe(bound.workspace, entry)))
 			throw new Fail("write_set_denied");
-		if (recorded?.state === "started") {
-			const observed = await adapter(ctx.launcher, {
-				...bound,
-				operation: "reconcile",
-			});
+		verifyGrant(ctx, input, writeSet, packetSha256);
+		const identity = sha(
+			JSON.stringify([
+				bound.workspace,
+				bound.binding_sha256,
+				bound.grant_sha256,
+				bound.role,
+				packetSha256,
+				[...writeSet].sort(),
+			]),
+		);
+		const recorded = read(file);
+		if (recorded?.identity && recorded.identity !== identity)
+			throw new Fail("idempotency_conflict");
+		if (!recorded && fs.existsSync(file)) throw new Fail("partial_effect");
+		if (recorded?.state === "done" && recorded.identity === identity)
+			return recorded.result;
+		if (recorded) {
+			const observed = await adapter(
+				ctx.launcher,
+				{
+					...bound,
+					operation: "reconcile",
+				},
+				limitsOf(ctx).output_bytes,
+			);
 			if (observed?.status === "COMPLETE") {
-				put(file, { state: "done", result: observed });
+				put(file, { state: "done", identity, result: observed });
 				return observed;
 			}
 			if (observed?.status !== "NOT_STARTED") return observed;
 		}
-		put(file, { state: "started" });
-		const result = await adapter(ctx.launcher, {
-			...bound,
-			operation: "dispatch",
-		});
-		put(file, { state: "done", result });
+		put(file, { state: "started", identity });
+		const result = await adapter(
+			ctx.launcher,
+			{
+				...bound,
+				operation: "dispatch",
+			},
+			limitsOf(ctx).output_bytes,
+		);
+		put(file, { state: "done", identity, result });
 		return result;
 	} finally {
-		releaseLocks();
+		release(ctx.lock_path);
 	}
 }
 
@@ -771,6 +835,7 @@ async function runParallel(ctx, input, state, key) {
 }
 
 async function execute(ctx, state, name, input, key) {
+	if (++state.callCount > 128) throw new Fail("request_limit");
 	const cap = Object.hasOwn(CAPABILITIES, name) ? CAPABILITIES[name] : null;
 	if (!cap || !(ctx.allowed_capabilities ?? []).includes(name))
 		throw new Fail("capability_denied");
@@ -783,12 +848,16 @@ async function execute(ctx, state, name, input, key) {
 }
 
 async function direct(ctx, state, name, input) {
-	const result = await adapter(ctx.direct, {
-		capability: name,
-		input,
-		binding_path: ctx.binding_path,
-		binding_sha256: ctx.binding_sha256,
-	});
+	const result = await adapter(
+		ctx.direct,
+		{
+			capability: name,
+			input,
+			binding_path: ctx.binding_path,
+			binding_sha256: ctx.binding_sha256,
+		},
+		ctx.code_mode === true ? limitsOf(ctx).output_bytes : Infinity,
+	);
 	store(ctx, state, JSON.stringify(result), { kind: "call", capability: name });
 	if (
 		isObject(result) &&
@@ -846,7 +915,6 @@ function sandboxArgs(limits) {
 }
 
 function bwrapArgs(runner) {
-	const nodeDir = path.dirname(fs.realpathSync(process.execPath));
 	const system = ["/lib", "/lib64", "/bin"].flatMap((dir) => {
 		try {
 			return fs.lstatSync(dir).isSymbolicLink()
@@ -868,12 +936,6 @@ function bwrapArgs(runner) {
 		"/usr",
 		"/usr",
 		...system,
-		"--ro-bind",
-		nodeDir,
-		nodeDir,
-		"--ro-bind",
-		runner,
-		runner,
 		"--dev",
 		"/dev",
 		"--proc",
@@ -882,12 +944,15 @@ function bwrapArgs(runner) {
 		String(SCRATCH_BYTES),
 		"--tmpfs",
 		"/tmp",
+		"--ro-bind",
+		fs.realpathSync(process.execPath),
+		process.execPath,
+		"--ro-bind",
+		runner,
+		runner,
 		"--setenv",
 		"HOME",
 		"/tmp",
-		"--setenv",
-		"NODE_CHANNEL_FD",
-		"3",
 		"--chdir",
 		"/tmp",
 	];
@@ -914,29 +979,142 @@ function collector(limit, child) {
 }
 
 // Answers the routine's call() requests in the trusted process.
-function serve(ctx, state, child, code, run) {
-	const reply = (message) => child.connected && child.send(message);
-	child.on("message", (message) => {
-		if (message?.type === "ready") {
-			run.started = true;
-			child.send({ type: "run", code });
-		} else if (message?.type === "call") {
-			const key = `${state.request.idempotency_key}#${message.id}`;
-			execute(ctx, state, message.capability, message.input, key).then(
-				(value) => reply({ type: "reply", id: message.id, value }),
-				(error) => {
-					run.callError ??= error;
-					reply({
-						type: "reply",
-						id: message.id,
-						error: { code: error.code ?? "program_error" },
-					});
-				},
-			);
-		} else if (message?.type === "result" || message?.type === "error") {
-			run.finished ??= message;
+// Decode complete newline-delimited frames only after accounting for their bytes.
+// The parent reads fd 3 as a stream so Node never deserializes unbounded child IPC.
+function frames(stream, budget, receive, failed) {
+	let pending = Buffer.alloc(0),
+		remaining = budget;
+	let stopped = false;
+	stream.on("error", (error) => {
+		if (!stopped) failed(error);
+		stopped = true;
+	});
+	stream.on("data", (chunk) => {
+		if (stopped) return;
+		try {
+			remaining -= chunk.length;
+			if (remaining < 0) throw new Fail("output_limit");
+			pending = Buffer.concat([pending, chunk]);
+			for (
+				let end = pending.indexOf(10);
+				end !== -1;
+				end = pending.indexOf(10)
+			) {
+				const msg = JSON.parse(pending.subarray(0, end));
+				pending = pending.subarray(end + 1);
+				receive(msg);
+			}
+		} catch (error) {
+			stopped = true;
+			failed(error);
 		}
 	});
+}
+function sendFrame(stream, msg, callback) {
+	if (!stream.destroyed && stream.writable)
+		stream.write(JSON.stringify(msg) + "\n", callback);
+}
+
+// Inspect effective kernel controls before sending any routine source.
+function sandboxScope(pid, limits) {
+	const group = fs
+		.readFileSync(`/proc/${pid}/cgroup`, "utf8")
+		.split("\n")
+		.find((line) => line.startsWith("0::"))
+		?.slice(3);
+	if (!group) throw new Fail("sandbox_unavailable");
+	const root = path.join("/sys/fs/cgroup", group);
+	for (const [file, maximum] of [
+		["memory.max", limits.memory_bytes],
+		["memory.swap.max", 0],
+		["pids.max", 64],
+	]) {
+		const actual = Number(
+			fs.readFileSync(path.join(root, file), "utf8").trim(),
+		);
+		if (!Number.isFinite(actual) || actual > maximum)
+			throw new Fail("sandbox_unavailable");
+	}
+	return root;
+}
+
+function observeLimits(pid, limits, run) {
+	try {
+		const scope = sandboxScope(pid, limits);
+		const events = path.join(scope, "memory.events");
+		const count = () =>
+			Number(/^oom_kill (\d+)$/m.exec(fs.readFileSync(events, "utf8"))?.[1]);
+		const before = count();
+		run.memoryWatch = fs.watch(events, () => {
+			try {
+				if (count() > before) run.oom = true;
+			} catch (error) {
+				if (error.code !== "ENOENT" && error.code !== "ENODEV")
+					run.observerError = true;
+			}
+		});
+		run.memoryWatch.on("error", () => {
+			run.observerError = true;
+		});
+	} catch {
+		throw new Fail("sandbox_unavailable");
+	}
+}
+
+function serve(ctx, state, child, code, run, limits) {
+	const stream = child.stdio[3];
+	let ordinal = 0;
+	const fail = (error) => {
+		run.protocolError ??=
+			error instanceof Fail ? error : new Fail("output_schema_error");
+		child.kill("SIGKILL");
+	};
+	frames(
+		stream,
+		MAX_REQUEST_BYTES + limits.output_bytes,
+		(message) => {
+			if (run.finished || run.protocolError || run.wall) return;
+			if (!run.started && message?.type === "ready") {
+				observeLimits(child.pid, limits, run);
+				run.started = true;
+				sendFrame(stream, { type: "run", code });
+			} else if (
+				run.started &&
+				message?.type === "call" &&
+				message.id === ++ordinal
+			) {
+				const key = `${state.request.idempotency_key}#${ordinal}`;
+				const work = execute(ctx, state, message.capability, message.input, key)
+					.then(
+						(value) =>
+							sendFrame(stream, { type: "reply", id: message.id, value }),
+						(error) => {
+							run.callError ??= error;
+							sendFrame(stream, {
+								type: "reply",
+								id: message.id,
+								error: { code: error.code ?? "program_error" },
+							});
+						},
+					)
+					.catch(fail);
+				run.pending.add(work);
+				work.finally(() => run.pending.delete(work));
+			} else if (
+				run.started &&
+				(message?.type === "result" || message?.type === "error")
+			) {
+				if (
+					message.type === "result" &&
+					Buffer.byteLength(JSON.stringify(message.value) ?? "") >
+						limits.output_bytes
+				)
+					throw new Fail("output_limit");
+				run.finished = message;
+			} else throw new Fail("output_schema_error");
+		},
+		fail,
+	);
 }
 
 function runProgram(ctx, state, code) {
@@ -945,21 +1123,35 @@ function runProgram(ctx, state, code) {
 	for (const key of ["XDG_RUNTIME_DIR", "DBUS_SESSION_BUS_ADDRESS"])
 		if (process.env[key]) env[key] = process.env[key];
 	const child = spawn("systemd-run", sandboxArgs(limits), {
-		stdio: ["ignore", "pipe", "pipe", "ipc"],
+		stdio: ["ignore", "pipe", "pipe", "pipe"],
 		env,
 	});
 	const closed = track(child);
 	const out = collector(limits.output_bytes, child);
-	const run = { started: false, finished: null, callError: null, wall: false };
-	serve(ctx, state, child, code, run);
+	const run = {
+		started: false,
+		finished: null,
+		callError: null,
+		wall: false,
+		pending: new Set(),
+	};
+	serve(ctx, state, child, code, run, limits);
 	const timer = setTimeout(() => {
 		run.wall = true;
-		child.kill("SIGKILL");
+		for (const active of live.children.keys()) active.kill("SIGKILL");
 	}, limits.wall_ms);
 	const spawnError = new Promise((resolve) => child.once("error", resolve));
 	return Promise.race([closed, spawnError.then(() => ({ code: -1 }))]).then(
-		(exit) => {
+		async (exit) => {
+			if (run.pending.size && (run.wall || run.protocolError || out.overflow))
+				for (const active of live.children.keys()) active.kill("SIGKILL");
+			await Promise.all(run.pending);
 			clearTimeout(timer);
+			run.memoryWatch?.close();
+			if (run.oom) throw new Fail("resource_limit", { limit: "memory" });
+			if (run.observerError) throw new Fail("sandbox_unavailable");
+			if (run.protocolError) throw run.protocolError;
+			if (run.callError && !run.wall && !out.overflow) throw run.callError;
 			if (out.observed > 0) {
 				const truncated =
 					out.observed > out.retained
@@ -971,7 +1163,12 @@ function runProgram(ctx, state, code) {
 					...truncated,
 				});
 			}
-			if (run.finished?.type === "result" && !out.overflow && !run.wall) {
+			if (
+				run.finished?.type === "result" &&
+				exit.code === 0 &&
+				!out.overflow &&
+				!run.wall
+			) {
 				store(ctx, state, JSON.stringify(run.finished.value), {
 					kind: "result",
 				});
@@ -996,13 +1193,11 @@ function exitFailure({
 	if (finished?.type === "error") return callError ?? new Fail("program_error");
 	if (code === SIGXCPU_EXIT || signal === "SIGXCPU")
 		return new Fail("resource_limit", { limit: "cpu" });
-	// Not killed by this process: the scope's out-of-memory stop is the remaining killer.
-	if (signal || code > 128)
-		return new Fail("resource_limit", { limit: "memory" });
 	return new Fail(started ? "program_error" : "sandbox_unavailable");
 }
 
 function sandboxMain() {
+	const stream = new Socket({ fd: 3, readable: true, writable: true });
 	const AsyncFunction = (async () => {}).constructor;
 	const pending = new Map();
 	let next = 0;
@@ -1010,37 +1205,42 @@ function sandboxMain() {
 		new Promise((resolve, reject) => {
 			const id = ++next;
 			pending.set(id, { resolve, reject });
-			process.send({ type: "call", id, capability, input });
+			sendFrame(stream, { type: "call", id, capability, input });
 		});
-	const finish = (message) => process.send(message, () => process.exit(0));
-	process.on("message", (message) => {
-		if (message.type === "reply") {
-			const entry = pending.get(message.id);
-			pending.delete(message.id);
-			if (message.error)
-				entry?.reject(
-					Object.assign(new Error(message.error.code), message.error),
-				);
-			else entry?.resolve(message.value);
-		} else if (message.type === "run") {
-			Promise.resolve()
-				.then(() =>
-					new AsyncFunction("call", "require", message.code)(call, require),
-				)
-				.then(
-					(value) =>
-						finish({
-							type: "result",
-							value: value === undefined ? null : value,
-						}),
-					(error) => {
-						console.error(error?.stack ?? String(error));
-						finish({ type: "error" });
-					},
-				);
-		}
-	});
-	process.send({ type: "ready" });
+	const finish = (message) => sendFrame(stream, message, () => process.exit(0));
+	frames(
+		stream,
+		DEFAULT_LIMITS.output_bytes + MAX_REQUEST_BYTES,
+		(message) => {
+			if (message.type === "reply") {
+				const entry = pending.get(message.id);
+				pending.delete(message.id);
+				if (message.error)
+					entry?.reject(
+						Object.assign(new Error(message.error.code), message.error),
+					);
+				else entry?.resolve(message.value);
+			} else if (message.type === "run") {
+				Promise.resolve()
+					.then(() =>
+						new AsyncFunction("call", "require", message.code)(call, require),
+					)
+					.then(
+						(value) =>
+							finish({
+								type: "result",
+								value: value === undefined ? null : value,
+							}),
+						(error) => {
+							console.error(error?.stack ?? String(error));
+							finish({ type: "error" });
+						},
+					);
+			}
+		},
+		() => process.exit(1),
+	);
+	sendFrame(stream, { type: "ready" });
 }
 
 // --- Request handling -------------------------------------------------------
@@ -1048,7 +1248,10 @@ function sandboxMain() {
 function outcome(state, error) {
 	const agg = state.aggregate;
 	const result = {
-		request_id: state.request.request_id ?? "",
+		request_id:
+			typeof state.request.request_id === "string"
+				? state.request.request_id
+				: "",
 		status: error ? "WAITING_ON" : (agg?.status ?? "COMPLETE"),
 		blockers: error ? [error.code] : (agg?.blockers ?? []),
 		next_action: error
@@ -1065,6 +1268,23 @@ function outcome(state, error) {
 			code: error.code,
 			...(error.extra?.limit ? { limit: error.extra.limit } : {}),
 		};
+	if (Buffer.byteLength(JSON.stringify(result)) > 64 * 1024) {
+		return {
+			request_id:
+				typeof state.request.request_id === "string" &&
+				Buffer.byteLength(state.request.request_id) <= 4096
+					? state.request.request_id
+					: "",
+			status: "WAITING_ON",
+			blockers: ["output_limit"],
+			next_action: "inspect the retained evidence",
+			evidence_refs: state.refs
+				.filter((r) => r.kind === "diagnostic")
+				.slice(0, 1),
+			mode: state.mode,
+			error: { code: "output_limit" },
+		};
+	}
 	return result;
 }
 
@@ -1102,6 +1322,49 @@ function programSource(ctx, req) {
 	return source.toString("utf8");
 }
 
+function operationDigest(ctx, req) {
+	const { request_id, ...operation } = req;
+	return sha(
+		JSON.stringify([ctx, operation], (_, value) =>
+			isObject(value)
+				? Object.fromEntries(
+						Object.entries(value).sort(([a], [b]) =>
+							a < b ? -1 : a > b ? 1 : 0,
+						),
+					)
+				: value,
+		),
+	);
+}
+
+function beginRequest(ctx, req, fallback) {
+	const file = journalFile(ctx, "request", req.idempotency_key);
+	fs.mkdirSync(ctx.journal_dir, { recursive: true, mode: 0o700 });
+	acquire(file + ".lock", "in_progress");
+	const recorded = read(file);
+	const digest = operationDigest(ctx, req);
+	if (fs.existsSync(file) && (!recorded || !recorded.digest))
+		throw new Fail("partial_effect");
+	if (recorded && !["running", "retryable", "done"].includes(recorded.state))
+		throw new Fail("partial_effect");
+	if (recorded && recorded.digest !== digest)
+		throw new Fail("idempotency_conflict");
+	if (recorded?.state === "done") {
+		for (const ref of recorded.outcome.evidence_refs) verifyRef(ctx, ref);
+		return { replay: { ...recorded.outcome, request_id: req.request_id } };
+	}
+	if (recorded?.mode === "direct") throw new Fail("partial_effect");
+	put(file, {
+		state: "running",
+		pid: process.pid,
+		digest,
+		mode: fallback ? "direct" : "runtime",
+	});
+	live.journal = file;
+	live.digest = digest;
+	return null;
+}
+
 async function handle(ctx, req, state) {
 	if (!validRequest(req)) throw new Fail("schema_error");
 	if (ctx.code_mode !== true) {
@@ -1113,23 +1376,14 @@ async function handle(ctx, req, state) {
 			throw new Fail("capability_denied");
 		return direct(ctx, state, req.capability, req.input);
 	}
-	const file = journalFile(ctx, "request", req.idempotency_key);
-	const recorded = read(file);
-	if (recorded?.state === "done")
-		return { replay: { ...recorded.outcome, request_id: req.request_id } };
-	if (
-		recorded?.state === "running" &&
-		recorded.pid !== process.pid &&
-		alive(recorded.pid)
-	)
-		throw new Fail("in_progress");
-	put(file, { state: "running", pid: process.pid });
-	live.journal = file;
+	const fallback =
+		"capability" in req &&
+		!Object.hasOwn(CAPABILITIES, req.capability) &&
+		(ctx.allowed_direct ?? []).includes(req.capability);
+	const replay = beginRequest(ctx, req, fallback);
+	if (replay) return replay;
 	if ("capability" in req) {
-		if (
-			!Object.hasOwn(CAPABILITIES, req.capability) &&
-			(ctx.allowed_direct ?? []).includes(req.capability)
-		) {
+		if (fallback) {
 			state.mode = "direct";
 			return direct(ctx, state, req.capability, req.input);
 		}
@@ -1153,9 +1407,14 @@ function emit(result) {
 
 function finishJournal(result) {
 	if (!live.journal) return;
-	if (result.error && TRANSIENT.has(result.error.code))
-		fs.rmSync(live.journal, { force: true });
-	else put(live.journal, { state: "done", outcome: result });
+	if (
+		result.error &&
+		TRANSIENT.has(result.error.code) &&
+		result.mode !== "direct"
+	)
+		put(live.journal, { state: "retryable", digest: live.digest });
+	else
+		put(live.journal, { state: "done", digest: live.digest, outcome: result });
 	live.journal = null;
 }
 
@@ -1163,9 +1422,12 @@ async function cancel() {
 	live.cancelling = true;
 	for (const [child] of live.children) child.kill("SIGKILL");
 	await Promise.all(live.children.values());
-	releaseLocks();
-	const result = outcome(live.request, new Fail("cancelled"));
+	const result = outcome(
+		live.request,
+		new Fail(live.request.mode === "direct" ? "partial_effect" : "cancelled"),
+	);
 	finishJournal(result);
+	releaseLocks();
 	process.stdout.write(`${JSON.stringify(result)}\n`, () => process.exit(1));
 }
 
@@ -1174,13 +1436,19 @@ async function main(argv) {
 	const at = argv.indexOf("--context");
 	const ctx = JSON.parse(fs.readFileSync(argv[at + 1], "utf8"));
 	if (argv[0] === "describe") return emit(catalogue());
-	const state = { request: {}, refs: [], mode: "runtime" };
+	const state = { request: {}, refs: [], mode: "runtime", callCount: 0 };
 	live.request = state;
 	process.once("SIGTERM", cancel);
 	let result;
 	try {
-		const raw = fs.readFileSync(0);
-		if (raw.length > MAX_REQUEST_BYTES) throw new Fail("request_limit");
+		const parts = [];
+		let size = 0;
+		for await (const chunk of process.stdin) {
+			size += chunk.length;
+			if (size > MAX_REQUEST_BYTES) throw new Fail("request_limit");
+			parts.push(chunk);
+		}
+		const raw = Buffer.concat(parts, size);
 		try {
 			state.request = JSON.parse(raw);
 		} catch {
@@ -1188,7 +1456,10 @@ async function main(argv) {
 		}
 		if (!isObject(state.request)) state.request = {};
 		const done = await handle(ctx, state.request, state);
-		if (done?.replay) return emit(done.replay);
+		if (done?.replay) {
+			releaseLocks();
+			return emit(done.replay);
+		}
 		result = outcome(state);
 	} catch (error) {
 		if (!(error instanceof Fail)) console.error(error?.stack ?? String(error));
@@ -1196,11 +1467,13 @@ async function main(argv) {
 			state,
 			error instanceof Fail ? error : new Fail("program_error"),
 		);
+	}
+	if (live.cancelling) return; // cancel() reports this request
+	try {
+		finishJournal(result);
 	} finally {
 		releaseLocks();
 	}
-	if (live.cancelling) return; // cancel() reports this request
-	finishJournal(result);
 	emit(result);
 }
 

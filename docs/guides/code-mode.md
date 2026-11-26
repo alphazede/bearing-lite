@@ -37,7 +37,7 @@ The host writes the context file. A request or a routine cannot change it.
 | `journey_path` | Journey file. Its `state_generation` is the application state generation. |
 | `session_id` | Session that must hold the task activation for `dispatch`. |
 | `binding_path`, `binding_sha256` | Frozen route binding and its digest, required for `dispatch`. |
-| `grant_path`, `grant_sha256` | Optional frozen dispatch grant file and its digest binding `binding_sha256`, `role`, `packet_sha256`, `write_set` and optional `session_id`. |
+| `grant_path`, `grant_sha256` | Frozen grant required for dispatch. Supply the file and its digest binding `binding_sha256`, `role`, `packet_sha256`, `write_set` and optional `session_id`. |
 | `lock_path` | Named lock held during each `dispatch` effect. |
 | `write_set` | Paths a `dispatch` may claim. A path ending in `/` covers a directory. |
 | `allowed_capabilities` | Capabilities this context may run. |
@@ -82,20 +82,17 @@ leaves out is refused, and it never falls back to the direct path.
 
 ## Dispatch
 
-Before the launcher runs, `dispatch` checks, in order: the binding is present
-and its digest matches, the session's task activation is ready, every
-`write_set` entry is inside the context write set, the packet digest matches
-any supplied `packet_sha256`, and any context grant (`grant_path` and
-`grant_sha256`) matches `binding_sha256`, `role`, `packet_sha256`, normalized
-`write_set` and optional `session_id`. It then takes the named lock and checks
-that the request `generation` equals the journey `state_generation`. It
-records the call in the journal before the effect and sends `packet_sha256`,
-`idempotency_key` and any `grant_path`/`grant_sha256` to the launcher. On a
-resumed request, it asks the launcher to reconcile a call that started but was
-not confirmed, proceeds to `dispatch` only if the launcher reports
-`NOT_STARTED`, and otherwise preserves the launcher outcome without starting a
-second worker. A launcher result other than `COMPLETE` is reported with its
-receipt and is not retried.
+The runtime claims the operation key, then takes the named dispatch lock.
+Under that lock it checks the current generation, frozen binding, task
+activation, workspace paths and packet bytes. The grant must bind the same
+binding digest, role, packet digest and normalized write set. If the grant
+names a session, it must match the active session.
+
+Before calling the launcher the runtime records the operation as started. It
+forwards the workspace, grant and binding digests, packet digest, write set
+and operation key. On recovery it asks the launcher to reconcile. A confirmed
+success supplies the saved receipt. Only an explicit `NOT_STARTED` permits
+dispatch to continue. An indeterminate effect returns `WAITING_ON`.
 
 ## Outcome
 
@@ -109,12 +106,12 @@ A refusal has status `WAITING_ON` and `error.code`. The codes are
 `schema_error`, `output_schema_error`, `capability_denied`,
 `binding_required`, `binding_mismatch`, `grant_mismatch`,
 `activation_required`, `write_set_denied`, `evidence_ref_invalid`,
-`routine_digest_mismatch`, `request_limit`, `resource_limit` (with
+`routine_digest_mismatch`, `idempotency_conflict`, `lock_unavailable`, `request_limit`, `resource_limit` (with
 `error.limit`), `output_limit`, `cancelled`, `partial_effect`, `program_error`
 and `sandbox_unavailable`.
 `lock_busy`, `stale_state` and `in_progress` mean "retry later". They are
 not recorded against the idempotency key. Other outcomes are recorded, and
-the same key returns the recorded outcome.
+the same key returns the recorded outcome for the same operation and trusted context. A changed operation or context returns `idempotency_conflict`. An uncertain direct fallback stays pending. The runtime uses Linux `flock` to claim each request before starting work.
 
 ## Sandbox
 
@@ -125,9 +122,11 @@ A routine runs in this chain:
 2. `prlimit` sets CPU seconds and 48 open files.
 3. `bwrap` gives no network, an empty environment, a read-only system tree
    and a 16 MiB `/tmp` scratch area.
-4. `node --permission` allows no child process or worker, and allows reads
-   and writes only in `/tmp`.
+4. `node --permission` allows no child process or worker, and permits writes only in `/tmp`. The runner file is also readable.
 
-Defaults are 10 CPU seconds, 512 MiB of memory, 30 s wall time and 1 MiB of
-combined stdout and stderr. The context can only lower them. Capability calls
-from a routine run in the trusted process over the Node IPC channel.
+Defaults are 10 CPU seconds, 512 MiB of memory, 30 seconds of wall time and
+1 MiB of combined stdout and stderr. The context may lower these limits.
+The broker caps the number of capability calls at 128 per request and reads
+routine frames through a byte-limited pipe. Before sending routine code, the
+host reads the effective memory, swap and task limits from the child’s cgroup.
+The host reports a memory kill only when the kernel records one.

@@ -9,9 +9,11 @@ Interrogation (adversaries) and arena (parallel candidates) run only on an
 explicit owner request. The one-review, one-repair allowance is unchanged.
 No extra agent is started automatically.
 
+## Change outline
+
 Add a change outline only when the owner explicitly requests one, directly or
 in the review packet. Put a "Change outline" section in your own review record
-and name the base and head revisions it describes. Show only the views the
+and name the base and head revisions it describes. Omit that section for a review without an outline request. If an affected view lacks evidence, mark it as a gap in the outline and keep the existing review verdict and return schema. Show only the views the
 change affects: interface or schema contract, key data types, a shallow file
 tree with responsibilities, call or data flow, and pseudocode of the changed
 behavior. Show a changed shape as a `diff` block and a new shape in full. Keep

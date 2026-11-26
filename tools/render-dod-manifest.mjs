@@ -7,7 +7,13 @@
  * table read from the adjacent seit.json; read-only.
  */
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import {
+	existsSync,
+	readFileSync,
+	realpathSync,
+	statSync,
+	writeFileSync,
+} from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import bindings from "../hooks/manifest-view-binding.cjs";
@@ -205,13 +211,13 @@ export function statusKind(raw) {
 	return "plan";
 }
 
-function statusChip(raw, reason) {
+function statusChip(raw, reason, wrapDigests = false) {
 	const kind = statusKind(raw);
 	const label =
 		raw == null || String(raw).trim() === "" ? "unspecified" : String(raw);
 	let html = `<span class="status status-${kind}"><span class="mark" aria-hidden="true"></span>${esc(label)}</span>`;
 	if (reason != null && String(reason).trim() !== "") {
-		html += `<span class="reason">${esc(reason)}</span>`;
+		html += `<span class="reason">${wrapDigests ? esc(reason).replace(/[0-9a-f]{64}/gi, (digest) => digest.match(/.{1,12}/g).join("<wbr>")) : esc(reason)}</span>`;
 	}
 	return html;
 }
@@ -1363,15 +1369,42 @@ export function renderDodManifest(doc, opts = {}) {
 	}
 	const assetRoot = opts.assetRoot || process.cwd();
 	// Visual view: seit.json is authoritative for cases; links are relative to the output.
-	const cases = opts.seit ? asRows(opts.seit.proof_cases).value || [] : null;
+	let cases = null;
+	if (opts.visual || opts.seit !== undefined) {
+		cases = opts.seit?.proof_cases;
+		if (
+			!Array.isArray(cases) ||
+			cases.some((c) => typeof c?.id !== "string" || !c.id.trim()) ||
+			new Set(cases.map((c) => c.id)).size !== cases.length
+		) {
+			throw new RenderError(
+				"SCHEMA",
+				"Visual verification cases need an array of unique case IDs in seit.json.",
+			);
+		}
+	}
 	const caseLink = (id) =>
 		`<a href="#${esc(encodeURIComponent(`case-${id}`))}">${esc(id)}</a>`;
 	const evidenceLink = (evidence) => {
-		const rel = path.relative(
-			opts.outDir || assetRoot,
-			path.resolve(assetRoot, String(evidence)),
-		);
+		const label = String(evidence);
+		const target = path.resolve(assetRoot, label);
+		const relative = path.relative(assetRoot, target);
+		if (
+			!relative ||
+			relative.startsWith(".." + path.sep) ||
+			relative === ".." ||
+			path.isAbsolute(label) ||
+			!existsSync(target) ||
+			!statSync(target, { throwIfNoEntry: false })?.isFile()
+		)
+			return esc(label);
+		const file = realpathSync(target);
+		const physical = path.relative(realpathSync(assetRoot), file);
+		if (physical === ".." || physical.startsWith(".." + path.sep))
+			return esc(label);
+		const rel = path.relative(opts.outDir || assetRoot, target);
 		const href = rel.split(path.sep).map(encodeURIComponent).join("/");
+		opts.onEvidenceLink?.(href, file);
 		return `<a href="${esc(href)}">${esc(evidence)}</a>`;
 	};
 	const failures = [];
@@ -1482,7 +1515,7 @@ export function renderDodManifest(doc, opts = {}) {
 						cellText(model.viewpoint),
 						cellText(model.trace),
 						cellText(model.limitations),
-						statusChip(gapLabel, message.split("\n")[0]),
+						statusChip(gapLabel, message.split("\n")[0], Boolean(cases)),
 					],
 				});
 			}
@@ -1512,7 +1545,11 @@ export function renderDodManifest(doc, opts = {}) {
 
 	const candidate = cases
 		? [
-				["Candidate revision", doc?.source_baseline?.candidate_revision],
+				[
+					"Candidate revision",
+					doc?.journey_settings?.planning_review?.candidate_revision ??
+						doc?.source_baseline?.candidate_revision,
+				],
 				[
 					"Candidate digest",
 					doc?.journey_settings?.planning_review?.candidate_digest,
@@ -1735,51 +1772,54 @@ export function renderDodManifest(doc, opts = {}) {
 	const vvStatus = new Map(
 		vvParsed.na ? [] : vvParsed.value.map((row) => [row.id, row.status]),
 	);
-	const vvTable = cases
-		? renderTable(
-				"cap-seit",
-				"SEIT proof cases from seit.json, with evidence links",
-				[
-					"ID",
-					"Requirement",
-					"Method",
-					"Expected result",
-					"Evidence",
-					"Status",
-				],
-				cases.map((c) => ({
-					id: `case-${c.id}`,
-					kind: statusKind(vvStatus.get(c.id)),
-					cells: [
-						esc(c.id),
-						cellText(c.requirement_id),
-						cellText(c.method),
-						cellText(c.expected_result),
-						c.observable_evidence
-							? evidenceLink(c.observable_evidence)
-							: cellText(""),
-						statusChip(vvStatus.get(c.id)),
-					],
-				})),
-			)
-		: vvParsed.na
-			? naBlock("V&V", vvParsed.reason)
-			: renderTable(
-					"cap-seit",
-					"SEIT cases and projected evidence",
-					["ID", "Method", "Cadence", "Evidence", "Status"],
-					vvParsed.value.map((row) => ({
-						kind: statusKind(row.status),
-						status: row.status,
-						cells: [
-							esc(row.id),
-							cellText(row.method),
-							cellText(row.cadence),
-							cellText(row.evidence),
-							cellStatus(row),
+	const vvTable =
+		cases?.length === 0
+			? '<p id="cap-seit">No verification cases are recorded in seit.json.</p>'
+			: cases
+				? renderTable(
+						"cap-seit",
+						"SEIT proof cases from seit.json, with evidence links",
+						[
+							"ID",
+							"Requirement",
+							"Method",
+							"Expected result",
+							"Evidence",
+							"Status",
 						],
-					})),
-				);
+						cases.map((c) => ({
+							id: `case-${c.id}`,
+							kind: statusKind(vvStatus.get(c.id)),
+							cells: [
+								esc(c.id),
+								cellText(c.requirement_id),
+								cellText(c.method),
+								cellText(c.expected_result),
+								c.observable_evidence
+									? evidenceLink(c.observable_evidence)
+									: cellText(""),
+								statusChip(vvStatus.get(c.id)),
+							],
+						})),
+					)
+				: vvParsed.na
+					? naBlock("V&V", vvParsed.reason)
+					: renderTable(
+							"cap-seit",
+							"SEIT cases and projected evidence",
+							["ID", "Method", "Cadence", "Evidence", "Status"],
+							vvParsed.value.map((row) => ({
+								kind: statusKind(row.status),
+								status: row.status,
+								cells: [
+									esc(row.id),
+									cellText(row.method),
+									cellText(row.cadence),
+									cellText(row.evidence),
+									cellStatus(row),
+								],
+							})),
+						);
 	// #157: the frozen per-unit review-round plan, shown at the owner gate.
 	const roundRows = Array.isArray(doc?.journey_settings?.review_rounds)
 		? doc.journey_settings.review_rounds.filter(
@@ -2050,9 +2090,11 @@ export function renderDodManifest(doc, opts = {}) {
 			"dod-manifest-v1.html is missing required placeholders.",
 		);
 	}
+	// Keep ordinary Manifest bytes stable for existing receipts.
+	const replacement = (value) => (cases ? () => value : value);
 	const html = templateHtml
-		.replace("<!--DOD_TITLE-->", esc(man.title))
-		.replace("<!--DOD_BODY-->", body)
+		.replace("<!--DOD_TITLE-->", replacement(esc(man.title)))
+		.replace("<!--DOD_BODY-->", replacement(body))
 		.replace(/\r\n/g, "\n");
 	const normalized = html.endsWith("\n") ? html : `${html}\n`;
 
@@ -2094,6 +2136,27 @@ export function renderFile(inputPath, options = {}) {
 	const seit = options.visual
 		? JSON.parse(readFileSync(path.join(dir, "seit.json"), "utf8"))
 		: options.seit;
+	if (options.visual && options.out) {
+		const target = path.resolve(options.out);
+		const physical = (file) =>
+			existsSync(file) ? realpathSync(file) : path.resolve(file);
+		const authorities = [
+			resolved,
+			...[
+				"seit.json",
+				"authority.json",
+				"journey.json",
+				doc.dod_manifest?.output_name,
+			]
+				.filter(Boolean)
+				.map((name) => path.resolve(dir, name)),
+		];
+		if (authorities.some((file) => physical(file) === physical(target)))
+			throw new RenderError(
+				"READ_ONLY",
+				"A visual projection cannot replace a canonical package file.",
+			);
+	}
 	return renderDodManifest(doc, {
 		...options,
 		seit,
@@ -2134,7 +2197,7 @@ function main(argv = process.argv) {
 	try {
 		const { input, check, visual, out } = parseArgs(argv);
 		const outDir = path.dirname(out ? path.resolve(out) : path.resolve(input));
-		const result = renderFile(input, { visual, outDir });
+		const result = renderFile(input, { visual, outDir, out });
 		const target = outputPathFor(input, result.outputName, out);
 		if (check) {
 			if (!existsSync(target)) {
