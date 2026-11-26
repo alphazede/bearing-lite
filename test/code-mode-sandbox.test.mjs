@@ -4,7 +4,14 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { once } from "node:events";
-import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+	existsSync,
+	mkdirSync,
+	readdirSync,
+	readFileSync,
+	symlinkSync,
+	writeFileSync,
+} from "node:fs";
 import { connect, createServer } from "node:net";
 import path from "node:path";
 import { test } from "node:test";
@@ -255,6 +262,42 @@ for (const [limit, limits, code] of [
 		},
 	);
 }
+
+test("BLX-VC-044: pre-ready memory limit kill reports resource_limit while setup refusal reports sandbox_unavailable", async (t) => {
+	if (sandbox) return t.skip(sandbox);
+	const oomFixture = fixture(t, {
+		limits: { memory_bytes: 8 * 1024 * 1024, wall_ms: 10000 },
+	});
+	const oomBefore = workspaceDigest(oomFixture);
+	const oomOut = await run(oomFixture, program("pre-ready-memory", "return true;"));
+	failure(oomOut, "resource_limit");
+	assert.equal(oomOut.status, "WAITING_ON");
+	assert.deepEqual(oomOut.blockers, ["resource_limit"]);
+	assert.equal(oomOut.error.limit, "memory", JSON.stringify(oomOut));
+	assert.equal(workspaceDigest(oomFixture), oomBefore);
+
+	const refusalFixture = fixture(t);
+	const refusalBefore = workspaceDigest(refusalFixture);
+	const binDir = path.join(refusalFixture.root, "bin");
+	mkdirSync(binDir);
+	for (const tool of ["flock", "systemd-run", "prlimit"]) {
+		const found = (process.env.PATH ?? "/usr/bin:/bin")
+			.split(path.delimiter)
+			.map((dir) => path.join(dir, tool))
+			.find((candidate) => existsSync(candidate));
+		assert.ok(found, `expected ${tool} on PATH`);
+		symlinkSync(found, path.join(binDir, tool));
+	}
+	const refused = await run(
+		refusalFixture,
+		program("missing-bwrap", "return true;"),
+		{ extraEnv: { PATH: binDir } },
+	);
+	failure(refused, "sandbox_unavailable");
+	assert.equal(refused.status, "WAITING_ON");
+	assert.deepEqual(refused.blockers, ["sandbox_unavailable"]);
+	assert.equal(workspaceDigest(refusalFixture), refusalBefore);
+});
 
 test("BLX-VC-044: child process and worker creation are denied for harmless local workloads", async (t) => {
 	if (sandbox) return t.skip(sandbox);

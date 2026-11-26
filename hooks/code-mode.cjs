@@ -881,7 +881,9 @@ function limitsOf(ctx) {
 }
 
 // Keep the scope populated until the trusted wrapper reads the final kernel
-// counter. The routine must never inherit the observation pipe (fd 4).
+// counter. Emit the scope cgroup path before launching the routine so the
+// parent can verify limits and arm its watcher before ready. The routine must
+// never inherit the observation pipe (fd 4).
 const SCOPE_OBSERVER = `
 IFS=: read -r hierarchy controllers group < /proc/self/cgroup || exit 1
 [ "$hierarchy" = 0 ] && [ -n "$group" ] || exit 1
@@ -894,6 +896,7 @@ read_oom() {
 }
 read_oom || exit 1
 before=$oom
+printf 'scope:%s\\n' "$group" >&4
 "$@" 4>&-
 status=$?
 if read_oom; then
@@ -1052,13 +1055,8 @@ function sendFrame(stream, msg, callback) {
 }
 
 // Inspect effective kernel controls before sending any routine source.
-function sandboxScope(pid, limits) {
-	const group = fs
-		.readFileSync(`/proc/${pid}/cgroup`, "utf8")
-		.split("\n")
-		.find((line) => line.startsWith("0::"))
-		?.slice(3);
-	if (!group) throw new Fail("sandbox_unavailable");
+function verifyScope(group, limits) {
+	if (!group || !group.startsWith("/")) throw new Fail("sandbox_unavailable");
 	const root = path.join("/sys/fs/cgroup", group);
 	for (const [file, maximum] of [
 		["memory.max", limits.memory_bytes],
@@ -1074,25 +1072,41 @@ function sandboxScope(pid, limits) {
 	return root;
 }
 
-function observeLimits(pid, limits, run) {
+function sandboxScope(pid, limits) {
+	const group = fs
+		.readFileSync(`/proc/${pid}/cgroup`, "utf8")
+		.split("\n")
+		.find((line) => line.startsWith("0::"))
+		?.slice(3);
+	return verifyScope(group, limits);
+}
+
+function observeScope(scope, run) {
+	const events = path.join(scope, "memory.events");
+	const count = () =>
+		Number(/^oom_kill (\d+)$/m.exec(fs.readFileSync(events, "utf8"))?.[1]);
+	const before = count();
+	run.memoryWatch = fs.watch(events, () => {
+		try {
+			if (count() > before) run.oom = true;
+		} catch (error) {
+			if (error.code !== "ENOENT" && error.code !== "ENODEV")
+				run.observerError = true;
+		}
+	});
+	run.memoryWatch.on("error", () => {
+		run.observerError = true;
+	});
+}
+
+function observeLimits(pid, limits, run, group = null) {
+	if (run.scopeObserved) return;
 	try {
-		const scope = sandboxScope(pid, limits);
-		const events = path.join(scope, "memory.events");
-		const count = () =>
-			Number(/^oom_kill (\d+)$/m.exec(fs.readFileSync(events, "utf8"))?.[1]);
-		const before = count();
-		run.memoryWatch = fs.watch(events, () => {
-			try {
-				if (count() > before) run.oom = true;
-			} catch (error) {
-				if (error.code !== "ENOENT" && error.code !== "ENODEV")
-					run.observerError = true;
-			}
-		});
-		run.memoryWatch.on("error", () => {
-			run.observerError = true;
-		});
-	} catch {
+		const scope = group ? verifyScope(group, limits) : sandboxScope(pid, limits);
+		observeScope(scope, run);
+		run.scopeObserved = true;
+	} catch (error) {
+		if (group && (error.code === "ENOENT" || error.code === "ENODEV")) return;
 		throw new Fail("sandbox_unavailable");
 	}
 }
@@ -1164,15 +1178,38 @@ function runProgram(ctx, state, code) {
 	});
 	const closed = track(child);
 	const out = collector(limits.output_bytes, child);
-	let scopeObservation = "";
-	child.stdio[4].on("data", (chunk) => (scopeObservation += chunk));
+	let scopeBuffer = "";
 	const run = {
 		started: false,
 		finished: null,
 		callError: null,
 		wall: false,
 		pending: new Set(),
+		scopeGroup: null,
+		scopeObserved: false,
+		scopeResult: null,
 	};
+	child.stdio[4].on("data", (chunk) => {
+		scopeBuffer += chunk;
+		for (
+			let end = scopeBuffer.indexOf("\n");
+			end !== -1;
+			end = scopeBuffer.indexOf("\n")
+		) {
+			const line = scopeBuffer.slice(0, end);
+			scopeBuffer = scopeBuffer.slice(end + 1);
+			if (line.startsWith("scope:")) run.scopeGroup = line.slice(6);
+			else if (line) run.scopeResult = line;
+		}
+		if (run.scopeGroup && !run.scopeObserved && !run.scopeResult) {
+			try {
+				observeLimits(child.pid, limits, run, run.scopeGroup);
+			} catch {
+				run.observerError = true;
+				child.kill("SIGKILL");
+			}
+		}
+	});
 	child.stdio[4].on("error", () => {
 		run.observerError = true;
 	});
@@ -1189,12 +1226,12 @@ function runProgram(ctx, state, code) {
 			await Promise.all(run.pending);
 			clearTimeout(timer);
 			run.memoryWatch?.close();
-			if (run.oom || scopeObservation === "oom\n")
+			if (run.oom || run.scopeResult === "oom")
 				throw new Fail("resource_limit", { limit: "memory" });
 			if (
 				run.observerError ||
-				scopeObservation === "error\n" ||
-				(run.started && exit.code === 0 && scopeObservation !== "clear\n")
+				run.scopeResult === "error" ||
+				(run.started && exit.code === 0 && run.scopeResult !== "clear")
 			)
 				throw new Fail("sandbox_unavailable");
 			if (run.protocolError) throw run.protocolError;
