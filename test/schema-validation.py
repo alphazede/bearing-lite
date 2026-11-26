@@ -178,9 +178,9 @@ CONTROL_CATALOGUE_SCHEMA_NAME = "control-catalogue.schema.json"
 CONTROL_CATALOGUE_MISSING_SCHEMA = f"missing schemas/{CONTROL_CATALOGUE_SCHEMA_NAME}"
 CONTROL_CATALOGUE_DIR = ROOT / "catalog" / "controls"
 # Optional pilot schemas: a removed pilot drops its schema, so its rows are skipped, not passed.
-PILOT_SCHEMA_NAMES = {
-    "code_mode": "code-mode.schema.json",
-    "owner_feedback": "owner-feedback.schema.json",
+PILOT_SCHEMAS = {
+    "code_mode": ("code-mode.schema.json", "hooks/code-mode.cjs"),
+    "owner_feedback": ("owner-feedback.schema.json", "tools/plannotator-adapter.mjs"),
 }
 EXPECTED_SEED_CONTROLS = (
     "CTRL-SEC-LUKS",
@@ -343,8 +343,10 @@ def load_schemas() -> dict[str, dict | None]:
             out["control_catalogue"] = json.load(fh)
     else:
         out["control_catalogue"] = None
-    for key, filename in PILOT_SCHEMA_NAMES.items():
+    for key, (filename, entrypoint) in PILOT_SCHEMAS.items():
         path = SCHEMAS_DIR / filename
+        if (ROOT / entrypoint).is_file() and not path.is_file():
+            die_env(f"missing schemas/{filename} for installed {entrypoint}")
         out[key] = (
             json.loads(path.read_text(encoding="utf-8")) if path.is_file() else None
         )
@@ -4199,15 +4201,14 @@ def pilot_schema_cases() -> list[tuple[str, str, str, object, str]]:
         "next_action": None,
         "evidence_refs": [ref],
         "mode": "runtime",
-        "calls": [{"capability": "ready_set", "status": "COMPLETE"}],
+        "calls": [{"capability": "ready-set", "status": "COMPLETE"}],
     }
     waiting = dict(
         outcome,
         status="WAITING_ON",
-        blockers=["sandbox_unavailable"],
-        next_action="install bwrap",
-        mode="direct",
-        error={"code": "limit_exceeded", "limit": "wall"},
+        blockers=["resource_limit"],
+        next_action="inspect the refusal and its evidence",
+        error={"code": "resource_limit", "limit": "wall"},
     )
     feedback = {
         "candidate_digest": "d" * 64,
@@ -4256,7 +4257,7 @@ def pilot_schema_cases() -> list[tuple[str, str, str, object, str]]:
             "BLX-VC-040",
             "code_mode_unknown_limit",
             cm,
-            dict(waiting, error={"code": "limit_exceeded", "limit": "disk"}),
+            dict(waiting, error={**waiting["error"], "limit": "disk"}),
             "reject",
         ),
         ("BLX-VC-082", "feedback_comment_record", fb, feedback, "accept"),
@@ -4552,9 +4553,9 @@ def run_cases() -> int:
     for seit_id, name, schema_key, instance, expect in (
         cases() + owner_stop_cases() + pilot_schema_cases()
     ):
-        if schemas[schema_key] is None:
+        if schema_key in PILOT_SCHEMAS and schemas[schema_key] is None:
             print(
-                f"SKIP {seit_id} {name}: schemas/{PILOT_SCHEMA_NAMES[schema_key]} absent"
+                f"SKIP {seit_id} {name}: schemas/{PILOT_SCHEMAS[schema_key][0]} absent"
             )
             continue
         messages = errors_for(schemas[schema_key], instance)

@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-- Add the opt-in Code Mode pilot: `hooks/code-mode.cjs` runs one typed capability call or a short reviewed routine in a resource-limited sandbox and prints one compact outcome (`schemas/code-mode.schema.json`); without `code_mode: true` each request takes the direct path as before. Guide: `docs/guides/code-mode.md`.
+- Add the opt-in Code Mode pilot. The broker handles typed capability calls. A resource-limited sandbox runs generated programs and reviewed routines. With the pilot off, only capabilities on the direct allowlist can run. See `docs/guides/code-mode.md` and `schemas/code-mode.schema.json`. ([#279](https://github.com/alphazede/bearing-lite/pull/279))
 - Add the opt-in visual Definition of Done Manifest view (`tools/render-dod-manifest.mjs --visual`), written as a separate HTML file; the default Manifest output is unchanged.
 - Add the opt-in Plannotator owner review adapter (`tools/plannotator-adapter.mjs`, `tools/plannotator-relay.mjs`), which records owner feedback outside the frozen plan package (`schemas/owner-feedback.schema.json`) and hands the answer to the existing owner-decision procedure without granting authority. Guide: `docs/guides/plannotator-review.md`.
 - Add the opt-in review change outline (`skills/reviewer/references/optional-techniques.md`) and measured repair loop (`skills/bearing-lite/references/wave-operations.md`), used only when the owner or packet asks for them.

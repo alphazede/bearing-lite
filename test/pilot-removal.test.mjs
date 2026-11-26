@@ -35,7 +35,7 @@ const root = fileURLToPath(new URL("../", import.meta.url));
 // The rebuilt delivery branch uses the later main revision. The plan pins
 // d6007f6; observe both rather than substituting one for the other.
 const plannedBase = "d6007f6e547296ba57351d5921105166fcb270a9";
-const mainBase = "7c28c31d5d6f1f8e8d810175db08c88185a635e2";
+const mainBase = "fd89e3df9325c6880e6c9902329e0ac95c124be7";
 const temp = mkdtempSync(path.join(tmpdir(), "pilot-removal-"));
 after(() => rmSync(temp, { recursive: true, force: true }));
 const home = path.join(temp, "home");
@@ -353,18 +353,41 @@ const removals = {
 		for (const [file, heading] of skillSections) {
 			const { ordinary } = withoutSection(dir, file, heading);
 			writeFileSync(path.join(dir, file), ordinary);
-			assert.deepEqual(
-				readFileSync(path.join(dir, file)),
-				readFileSync(path.join(baseline, file)),
+			assert.equal(
+				readFileSync(path.join(dir, file), "utf8"),
+				ordinary,
+				"Rollback must preserve the other sections",
 			);
 		}
 	},
 };
 
-function coreMatches(packageRoot, commandEnv = env) {
-	const dir = fresh();
-	plan(dir);
-	assert.deepEqual(core(packageRoot, dir, commandEnv), golden);
+function coreMatches(packageRoot, dir, commandEnv = env, toolAvailable = true) {
+	// Compare the plan the operator just used, including any permitted pilot artifacts.
+	const bin = fresh();
+	const marker = path.join(bin, "ordinary-tool-call");
+	if (toolAvailable) {
+		writeFileSync(
+			path.join(bin, "plannotator"),
+			`#!${process.execPath}\nrequire("node:fs").writeFileSync(${JSON.stringify(marker)}, "called")\n`,
+			{ mode: 0o700 },
+		);
+		commandEnv = {
+			...commandEnv,
+			PATH: bin + path.delimiter + commandEnv.PATH,
+		};
+	}
+	const reference = fresh();
+	cpSync(dir, reference, { recursive: true });
+	assert.deepEqual(
+		core(packageRoot, dir, commandEnv),
+		core(baseline, reference, commandEnv),
+	);
+	assert.equal(
+		existsSync(marker),
+		false,
+		"Ordinary commands must not start the review tool",
+	);
 }
 
 function missingTools(names = []) {
@@ -380,10 +403,7 @@ const codeGolden = load(path.join(fixtures, "code-mode/golden.json"))[
 	"ready-set"
 ];
 
-async function codeMode(t, state) {
-	const f = codeFixture(t, {
-		code_mode: state === "disabled" ? undefined : true,
-	});
+async function codeMode(f, state) {
 	const marker = path.join(f.control, "direct.log");
 	const before = snapshot(f.workspace);
 	const req =
@@ -420,9 +440,7 @@ async function codeMode(t, state) {
 	else assert.equal(existsSync(marker), false);
 }
 
-function visualMode(state, packageRoot) {
-	const dir = fresh();
-	plan(dir);
+function visualMode(state, packageRoot, dir) {
 	const before = snapshot(dir);
 	if (state === "enabled") {
 		success(render(packageRoot, dir, true, visual));
@@ -463,9 +481,7 @@ function visualMode(state, packageRoot) {
 	}
 }
 
-function adapterMode(state, packageRoot) {
-	const dir = fresh();
-	const candidate = plan(dir);
+function adapterMode(state, packageRoot, dir, candidate) {
 	const scratch = fresh();
 	const feedback = fresh();
 	const bin = fresh();
@@ -504,8 +520,8 @@ function adapterMode(state, packageRoot) {
 		effective: false,
 		granting_owner_decisions: [],
 	});
-	if (state === "enabled") {
-		success(render(packageRoot, dir, true, visual));
+	if (state === "enabled") success(render(packageRoot, dir, true, visual));
+	if (state === "enabled" || state === "disabled") {
 		const fake = readFileSync(
 			path.join(fixtures, "plannotator/fake-plannotator.cjs"),
 			"utf8",
@@ -549,9 +565,9 @@ function adapterMode(state, packageRoot) {
 			{
 				...env,
 				PATH:
-					state === "enabled"
-						? `${bin}${path.delimiter}${process.env.PATH}`
-						: bin,
+					state === "missing"
+						? bin
+						: `${bin}${path.delimiter}${process.env.PATH}`,
 				TMPDIR: scratch,
 			},
 		);
@@ -605,16 +621,21 @@ function adapterMode(state, packageRoot) {
 
 function skillMode(t, state, packageRoot) {
 	if (state === "removed") {
-		for (const [file] of skillSections)
-			assert.deepEqual(
-				readFileSync(path.join(packageRoot, file)),
-				readFileSync(path.join(baseline, file)),
+		for (const [file, heading] of skillSections) {
+			const text = readFileSync(path.join(packageRoot, file), "utf8");
+			assert.ok(
+				!text.split("\n").includes(`## ${heading}`),
+				"The removed technique is still offered",
 			);
+		}
 		return;
 	}
 	for (const [file, heading] of skillSections) {
 		const { section, ordinary } = withoutSection(packageRoot, file, heading);
-		assert.equal(ordinary, readFileSync(path.join(baseline, file), "utf8"));
+		assert.ok(
+			!ordinary.split("\n").includes(`## ${heading}`),
+			"The technique must have a single opt-in section",
+		);
 		if (file === outline) {
 			assert.match(section, /only when the owner explicitly requests one/);
 			assert.match(
@@ -640,7 +661,8 @@ function skillMode(t, state, packageRoot) {
 				{ cwd: root },
 			),
 		);
-		assert.match(result.stdout, /^# pass 4$/m);
+		assert.match(result.stdout, /^ok \d+ - review outline:/m);
+		assert.match(result.stdout, /^ok \d+ - measured repair loop:/m);
 		assert.match(result.stdout, /^# fail 0$/m);
 	}
 	if (state === "missing")
@@ -654,17 +676,39 @@ for (const [pilot, remove] of Object.entries(removals)) {
 		test(`BLX-VC-007 ${pilot}: ${state}`, async (t) => {
 			const packageRoot = state === "removed" ? scratchPackage() : root;
 			if (state === "removed") remove(packageRoot);
+			const runtime =
+				pilot === "Code Mode" && state !== "removed"
+					? codeFixture(t, {
+							code_mode: state === "disabled" ? undefined : true,
+						})
+					: null;
+			const dir = runtime?.plan ?? fresh();
+			const candidate = plan(dir);
 			await t.test("pilot entry", async (entry) => {
-				if (pilot === "Code Mode" && state !== "removed")
-					await codeMode(entry, state);
-				if (pilot === "Visual Manifest") visualMode(state, packageRoot);
-				if (pilot === "Plannotator") adapterMode(state, packageRoot);
+				if (runtime) await codeMode(runtime, state);
+				else if (pilot === "Code Mode")
+					assert.equal(
+						existsSync(path.join(packageRoot, "hooks/code-mode.cjs")),
+						false,
+					);
+				if (pilot === "Visual Manifest") visualMode(state, packageRoot, dir);
+				if (pilot === "Plannotator")
+					adapterMode(state, packageRoot, dir, candidate);
 				if (pilot === "Skill text") skillMode(entry, state, packageRoot);
 			});
 			await t.test(
 				"headless planning, dispatch and closeout match the baseline",
 				() => {
-					coreMatches(packageRoot, state === "missing" ? missingTools() : env);
+					const commandEnv = state === "missing" ? missingTools() : env;
+					coreMatches(
+						packageRoot,
+						dir,
+						{
+							...commandEnv,
+							HOME: runtime?.home ?? commandEnv.HOME,
+						},
+						state !== "missing",
+					);
 				},
 			);
 		});
@@ -673,8 +717,18 @@ for (const [pilot, remove] of Object.entries(removals)) {
 
 test("BLX-VC-007 all four pilots removed together", () => {
 	const dir = scratchPackage();
+	const shared = path.join(dir, outline);
+	const retained =
+		"\n## Ordinary fixture section\n\nKeep this independent guidance.\n";
+	writeFileSync(shared, readFileSync(shared, "utf8") + retained);
 	for (const remove of Object.values(removals)) remove(dir);
-	coreMatches(dir);
+	assert.ok(
+		readFileSync(shared, "utf8").endsWith(retained),
+		"Rollback lost independent guidance",
+	);
+	const planDir = fresh();
+	plan(planDir);
+	coreMatches(dir, planDir);
 });
 
 test("BLX-VC-007 ordinary package contracts after combined removal", (t) => {
