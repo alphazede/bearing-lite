@@ -4,8 +4,8 @@ import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import { createReadStream, existsSync } from "node:fs";
 import http from "node:http";
-import path from "node:path";
 import net from "node:net";
+import path from "node:path";
 
 const [socket, command, ...args] = process.argv.slice(2);
 const child = spawn(command, args, { stdio: ["ignore", "ignore", "pipe"] });
