@@ -15,7 +15,8 @@ controls are inconclusive by construction and are not used.
 
 The suite is opt-in (the default `test/*.test.mjs` gate does not run
 `test/native/*`) and installs the actual `npm pack` distributable into
-disposable profiles; operator configuration is never touched.
+disposable profiles; operator configuration is never touched. The current
+`@alphazede/bearing-lite` distributable packages 16 skills.
 
 ```sh
 node --test test/native/harness-acceptance.test.mjs
@@ -49,7 +50,7 @@ D1 gate explicitly does not cover.
 | Cursor editor, Customize Install / local symlink | UNVERIFIED (`TC-CURSOR-UNAVAIL-01`) | UNVERIFIED | UNVERIFIED | UNVERIFIED | UNVERIFIED | UNVERIFIED |
 | Cursor Agent CLI, `--plugin-dir` | UNVERIFIED (`TC-CURSOR-UNAVAIL-01`) | UNVERIFIED | UNVERIFIED | UNVERIFIED | UNVERIFIED | UNVERIFIED |
 | GitHub Copilot in VS Code, Chat: Install Plugin From Source | UNVERIFIED (`TC-VSCODE-UNVERIFIED-01`) | UNVERIFIED | UNVERIFIED | UNVERIFIED | UNVERIFIED | UNVERIFIED |
-| GitHub Copilot CLI, `plugin marketplace add` + `plugin install` | UNAVAILABLE (`TC-COPILOT-CLI-UNAVAIL-01`) | UNAVAILABLE | UNAVAILABLE | UNAVAILABLE | UNAVAILABLE | UNAVAILABLE |
+| GitHub Copilot CLI, `plugin marketplace add` + `plugin install` | PASS (`TC-COPILOT-CLI-UNAVAIL-01`, or `UNAVAILABLE` when CLI absent) | PASS (`TC-COPILOT-CLI-UNAVAIL-01`) | UNVERIFIED (`TC-COPILOT-CLI-UNAVAIL-01`, no CLI hook-inspection surface) | UNVERIFIED | UNVERIFIED | UNVERIFIED |
 | Pi, `pi install npm:@alphazede/bearing-lite` | UNAVAILABLE (`TC-PI-UNAVAIL-01`) | UNAVAILABLE | UNAVAILABLE | UNAVAILABLE | UNAVAILABLE | UNAVAILABLE |
 | DeepCode, copy `skills/` into the skills directory | UNVERIFIED (`TC-DEEPCODE-UNVERIFIED-01`) | UNVERIFIED | UNVERIFIED | UNVERIFIED | UNVERIFIED | UNVERIFIED |
 
@@ -105,6 +106,18 @@ The Implementer reported 16 skills and seven hook registrations on AGY
 AGY runs the relative commands from the installed plugin directory and exposes
 no `SubagentStop` event. Component replay in `test/agy-hooks.test.mjs` checks
 the JSON responses for context injection, tool denial, and Stop continuation.
+
+### Current packaged count and Copilot CLI run on 2026-11-26
+
+The current `@alphazede/bearing-lite` distributable (`3.1.3`) packages 16
+skills (down from 17 on the 2026-11-17 `2.0.3` run above after the 2026-11-18
+role changes). On this host, `GitHub Copilot CLI 1.0.114` is present: offline
+`copilot plugin marketplace add` and `copilot plugin install bearing-lite@bearing-lite`
+registered the plugin and all 16 skills in `copilot plugin list --json` and
+`copilot skill list`. Hook registration and execution remain `UNVERIFIED`
+because Copilot CLI exposes no headless hook-listing command and hook
+execution requires a model session (excluded by the no-paid-provider-call
+rule).
 
 ## Decision-adapter column
 

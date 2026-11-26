@@ -22,8 +22,10 @@
  *   TC-AGY-DISC-01 / TC-AGY-SYMLINK-01
  *                 copy install + validate (N skills, 0 hooks); documented symlink path FAIL
  *   TC-CURSOR-UNAVAIL-01 / TC-COPILOT-CLI-UNAVAIL-01 / TC-PI-UNAVAIL-01
- *                 disposable profiles cannot authenticate (or the binary is absent): the
- *                 blocker is recorded as UNAVAILABLE, never PASS
+ *                 disposable profiles cannot authenticate or the binary is absent:
+ *                 the blocker is recorded as UNAVAILABLE, never PASS (when copilot
+ *                 CLI is present, offline marketplace install and skill discovery are
+ *                 verified while hooks stay UNVERIFIED without a model call)
  *
  * No model call is made against a paid provider: Codex exec uses an owned loopback
  * Responses driver with fixed tool calls (model-refusal confound absent by construction);
@@ -63,6 +65,7 @@ const MUSE = process.env.BEARING_MUSE_BIN || "muse";
 const CLAUDE = process.env.BEARING_CLAUDE_BIN || "claude";
 const AGY = process.env.BEARING_AGY_BIN || "agy";
 const CURSOR = process.env.BEARING_CURSOR_BIN || "cursor-agent";
+const COPILOT = process.env.BEARING_COPILOT_BIN || "copilot";
 const CALL_TIMEOUT_MS = 60_000;
 
 function sha256(file) {
@@ -221,12 +224,19 @@ describe("TC-PACK-01 packed distributable identity", () => {
 			N,
 			"packaged skill count changed; update matrix",
 		);
-		const stated = [
-			...readFileSync(
-				path.join(ROOT, "docs", "harness-compatibility.md"),
-				"utf8",
-			).matchAll(/(\d+)\s+skills/g),
-		].map((m) => Number(m[1]));
+		const compatDoc = readFileSync(
+			path.join(ROOT, "docs", "harness-compatibility.md"),
+			"utf8",
+		);
+		// Preserve the dated 2026-11-17 2.0.3 evidence block (which recorded 17 skills)
+		// while requiring all current matrix and post-2026-11-17 skill counts to match N.
+		const currentCompatDoc = compatDoc.replace(
+			/## Last run evidence \(2026-11-17[\s\S]*?(?=\n#{2,3} )/,
+			"",
+		);
+		const stated = [...currentCompatDoc.matchAll(/(\d+)\s+skills/g)].map((m) =>
+			Number(m[1]),
+		);
 		assert.ok(
 			stated.length >= 1 && stated.every((count) => count === N),
 			`docs/harness-compatibility.md must state packaged skill count ${N}, saw ${stated.join(", ") || "none"}`,
@@ -1317,33 +1327,130 @@ describe("unavailable or unverifiable rows (#92 honest recording)", () => {
 	});
 
 	it("TC-COPILOT-CLI-UNAVAIL-01 copilot CLI binary absent on this host", (t) => {
+		const dir = path.join(shared.tmp, "copilot");
+		const home = path.join(dir, "home");
+		const xdg = path.join(dir, "xdg");
+		const copilotHome = path.join(dir, "copilot-home");
+		const copilotCache = path.join(dir, "copilot-cache");
+		const repo = path.join(dir, "repo");
+		for (const d of [home, xdg, copilotHome, copilotCache, repo])
+			mkdirSync(d, { recursive: true });
 		const env = {
 			PATH: process.env.PATH ?? "",
-			HOME: path.join(shared.tmp, "copilot-home"),
-			XDG_CONFIG_HOME: path.join(shared.tmp, "copilot-xdg"),
+			HOME: home,
+			XDG_CONFIG_HOME: xdg,
+			COPILOT_HOME: copilotHome,
+			COPILOT_CACHE_HOME: copilotCache,
+			COPILOT_AUTO_UPDATE: "false",
+			COPILOT_OFFLINE: "true",
 			LANG: "C.UTF-8",
-			TMPDIR: shared.tmp,
+			TMPDIR: dir,
 		};
-		mkdirSync(env.HOME, { recursive: true });
-		mkdirSync(env.XDG_CONFIG_HOME, { recursive: true });
-		const r = run("copilot", ["plugin", "marketplace", "list"], {
-			cwd: shared.tmp,
-			env,
-		});
-		const out = r.stdout + r.stderr;
-		if (r.error) {
+		const ver = run(COPILOT, ["--version"], { cwd: dir, env });
+		const verOut = ver.stdout + ver.stderr;
+		if (ver.error) {
+			assert.equal(
+				ver.error.code,
+				"ENOENT",
+				`unexpected copilot spawn failure: ${ver.error.message}`,
+			);
 			t.diagnostic(
-				`TC-COPILOT-CLI-UNAVAIL-01 UNAVAILABLE: binary ${r.error.code ?? r.error.message}`,
+				`TC-COPILOT-CLI-UNAVAIL-01 UNAVAILABLE: binary ${ver.error.code}`,
 			);
 			return;
 		}
+		if (/was not found/.test(verOut) || ver.status !== 0) {
+			const probe = run(COPILOT, ["plugin", "marketplace", "list"], {
+				cwd: dir,
+				env,
+			});
+			const probeOut = probe.stdout + probe.stderr;
+			assert.match(
+				probeOut,
+				/was not found/,
+				`copilot shim must report the missing CLI, got: ${probeOut.slice(0, 300)}`,
+			);
+			t.diagnostic(
+				"TC-COPILOT-CLI-UNAVAIL-01 UNAVAILABLE: shipped shim reports the CLI is not installed",
+			);
+			return;
+		}
+		const versionLine = ver.stdout.trim().split("\n")[0];
 		assert.match(
-			out,
-			/was not found/,
-			`copilot shim must report the missing CLI, got: ${out.slice(0, 300)}`,
+			versionLine,
+			/\d+\.\d+\.\d+/,
+			`copilot --version must report a semver, got: ${versionLine.slice(0, 120)}`,
+		);
+		t.diagnostic(`${versionLine}; OS ${shared.os}`);
+
+		const mkt = path.join(dir, "marketplace");
+		mkdirSync(path.join(mkt, ".github", "plugin"), { recursive: true });
+		cpSync(shared.pkg, path.join(mkt, "plugin"), {
+			recursive: true,
+			dereference: true,
+		});
+		writeFileSync(
+			path.join(mkt, ".github", "plugin", "marketplace.json"),
+			JSON.stringify(
+				{
+					name: "bearing-lite",
+					owner: { name: "AlphaZede" },
+					plugins: [{ name: "bearing-lite", source: "./plugin" }],
+				},
+				null,
+				2,
+			),
+		);
+
+		ok(COPILOT, ["plugin", "marketplace", "add", mkt], { env, cwd: repo });
+		const mktList = ok(COPILOT, ["plugin", "marketplace", "list"], {
+			env,
+			cwd: repo,
+		});
+		assert.match(
+			mktList,
+			/bearing-lite/,
+			`marketplace list missing bearing-lite: ${mktList.slice(0, 300)}`,
+		);
+		const installOut = ok(
+			COPILOT,
+			["plugin", "install", "bearing-lite@bearing-lite"],
+			{ env, cwd: repo },
+		);
+		assert.match(
+			installOut,
+			new RegExp(`Installed ${N} skills`),
+			`copilot plugin install must register ${N} skills, got: ${installOut.slice(0, 300)}`,
+		);
+		const plugins = jsonTail(
+			ok(COPILOT, ["plugin", "list", "--json"], { env, cwd: repo }),
+			"[",
+		);
+		const entry = plugins.find(
+			(p) => p.name === "bearing-lite" && p.marketplace === "bearing-lite",
+		);
+		assert.ok(
+			entry,
+			`bearing-lite not listed in copilot plugin list: ${JSON.stringify(plugins).slice(0, 400)}`,
+		);
+		assert.equal(entry.version, PKG.version);
+		assert.equal(entry.enabled, true);
+		const skillList = ok(COPILOT, ["skill", "list"], { env, cwd: repo });
+		for (const skill of shared.skills) {
+			assert.ok(
+				skillList.includes(skill),
+				`skill ${skill} missing from copilot skill list`,
+			);
+		}
+		assert.ok(
+			existsSync(
+				path.join(shared.pkg, "com.github.copilot", "hooks", "hooks.json"),
+			),
+			"packed artifact missing com.github.copilot/hooks/hooks.json",
 		);
 		t.diagnostic(
-			"TC-COPILOT-CLI-UNAVAIL-01 UNAVAILABLE: shipped shim reports the CLI is not installed",
+			`TC-COPILOT-CLI-UNAVAIL-01 PRESENT (${versionLine}): install+discovery PASS (${N} skills); ` +
+				"hooks UNVERIFIED (Copilot CLI exposes no headless hook-listing command, and hook execution requires a model session excluded by no-paid-provider-call policy)",
 		);
 	});
 
