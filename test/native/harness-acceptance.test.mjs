@@ -230,8 +230,9 @@ describe("TC-PACK-01 packed distributable identity", () => {
 		);
 		// Preserve the dated 2026-11-17 2.0.3 evidence block (which recorded 17 skills)
 		// while requiring all current matrix and post-2026-11-17 skill counts to match N.
+		// Stop at the next heading at any level; an inline date reference is not a section.
 		const currentCompatDoc = compatDoc.replace(
-			/## Last run evidence \(2026-11-17[\s\S]*?(?=\n#{2,3} )/,
+			/^## Last run evidence \(2026-11-17(?:, [^\r\n]*)?\)\r?\n[\s\S]*?(?=^#{1,6}[ \t])/m,
 			"",
 		);
 		const stated = [...currentCompatDoc.matchAll(/(\d+)\s+skills/g)].map((m) =>
