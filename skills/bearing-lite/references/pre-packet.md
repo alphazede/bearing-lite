@@ -9,7 +9,9 @@ through assurance. For a review before a first live apply, require the frozen ho
 exact proposed operand list, not only the executor diff. Planning
 specialist packets name only that specialist's own artifact checker; the
 repository gate runs once at assembly. A missing or empty field is a compilation
-gap, not a packet. For **execution packets** (after assembly, once
+gap, not a packet. In an execution packet, an empty proof-row list takes the
+slice goal as acceptance, and an empty command list takes the commands of the
+paired Test Implementer slice that shares its proof rows. For **execution packets** (after assembly, once
 `implementation.json` and `seit.json` exist), the Orchestrator runs the handoff
 compiler (`tools/compile-handoff.mjs`) instead of writing the packet by hand.
 For **planning (pre-assembly) packets** before `implementation.json` and

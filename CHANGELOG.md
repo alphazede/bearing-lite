@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Compile every slice of a plan that passes final freeze in `tools/compile-handoff.mjs`. A slice with an empty `seit_proof_rows` list takes its goal as acceptance and its `stop_condition` as evidence. A slice with an empty `command_ids` list takes the commands of the Test Implementer slices that share its SEIT proof rows, else no command; a light slice without a command stays a `commands` gap. The compiled route now applies `scoped_owner_amendment` before the snapshot, as the route guard does, including an empty `ordered_fallbacks`. `schemas/handoff.schema.json` allows an empty `commands` list. (Alphazedehq#779)
+
 ## [3.1.3](https://github.com/alphazede/bearing-lite/releases/tag/v3.1.3) - 2026-11-26
 
 - Require the Planning Orchestrator to open the rendered DoD Manifest HTML in the owner's browser (Chrome when available) and deliver the file before asking for integrated owner confirmation, record `manifest_delivery` (`path`, `sha256`, `opened_in`, `delivered_at`) on the owner confirmation record in `journey.json` and `skills/bearing-lite/templates/handoff.md`, and refuse `mode: "handoff"` in `hooks/closeout.cjs` with `handoff_refused:manifest_not_delivered` when delivery is missing or mismatched. ([#285](https://github.com/alphazede/bearing-lite/issues/285), [PR #286](https://github.com/alphazede/bearing-lite/pull/286))
