@@ -1,0 +1,193 @@
+{
+  "schema_version": "1",
+  "artifact": "implementation-plan",
+  "source_baseline": {
+    "demo": "0000000000000000000000000000000000000000"
+  },
+  "journey_settings": {},
+  "profile_freeze": {
+    "binding": "binding.json"
+  },
+  "waves": [
+    {
+      "id": "W0",
+      "name": "Setup",
+      "slice_ids": [
+        "T0",
+        "P0"
+      ]
+    },
+    {
+      "id": "W1",
+      "name": "Widget",
+      "slice_ids": [
+        "T1",
+        "I1"
+      ],
+      "exit_command_ids": [
+        "CMD-FF-UNIT"
+      ]
+    },
+    {
+      "id": "W2",
+      "name": "Docs",
+      "slice_ids": [
+        "D1"
+      ]
+    }
+  ],
+  "dependencies": [],
+  "slices": [
+    {
+      "id": "T0",
+      "role": "Test Implementer",
+      "goal": "GOAL-T0: the test runner is configured for the widget tests.",
+      "type": "implementation",
+      "requirement_ids": [],
+      "design_ids": [],
+      "seit_proof_rows": [],
+      "design_lenses": [],
+      "model_route": {
+        "route": "primary"
+      },
+      "reasoning_level": {
+        "effort": "high"
+      },
+      "review_path": {
+        "cadence": "phase"
+      },
+      "write_set": [
+        "demo: test/setup/"
+      ],
+      "command_ids": [],
+      "stop_condition": "STOP-T0: the runner configuration is committed.",
+      "human_decision": null,
+      "authority_id": "AUTH-FX",
+      "work_class": "judgement"
+    },
+    {
+      "id": "P0",
+      "role": "Light Implementer",
+      "goal": "GOAL-P0: the preflight records the tool version.",
+      "type": "implementation",
+      "requirement_ids": [],
+      "design_ids": [],
+      "seit_proof_rows": [],
+      "design_lenses": [],
+      "model_route": {
+        "route": "primary"
+      },
+      "reasoning_level": {
+        "effort": "high"
+      },
+      "review_path": {
+        "cadence": "phase"
+      },
+      "write_set": [
+        "demo: evidence/preflight.txt"
+      ],
+      "command_ids": [
+        "CMD-FF-PREFLIGHT"
+      ],
+      "stop_condition": "STOP-P0: CMD-FF-PREFLIGHT exits 0.",
+      "human_decision": null,
+      "authority_id": "AUTH-FX",
+      "work_class": "light",
+      "work_class_reason": "The command output fully determines the record."
+    },
+    {
+      "id": "T1",
+      "role": "Test Implementer",
+      "goal": "GOAL-T1: failing tests pin the widget rows.",
+      "type": "implementation",
+      "requirement_ids": [
+        "FF-001",
+        "FF-002"
+      ],
+      "design_ids": [],
+      "seit_proof_rows": [
+        "SEIT-FF-1",
+        "SEIT-FF-2"
+      ],
+      "design_lenses": [],
+      "model_route": {
+        "route": "primary"
+      },
+      "reasoning_level": {
+        "effort": "high"
+      },
+      "review_path": {
+        "cadence": "phase"
+      },
+      "write_set": [
+        "demo: test/ff-unit.test.mjs"
+      ],
+      "command_ids": [
+        "CMD-FF-UNIT"
+      ],
+      "stop_condition": "STOP-T1: CMD-FF-UNIT fails for the intended reason.",
+      "human_decision": null,
+      "authority_id": "AUTH-FX",
+      "work_class": "judgement"
+    },
+    {
+      "id": "I1",
+      "role": "Implementer",
+      "goal": "GOAL-I1: the widget renders one row per item.",
+      "type": "implementation",
+      "requirement_ids": [
+        "FF-001"
+      ],
+      "design_ids": [],
+      "seit_proof_rows": [
+        "SEIT-FF-1"
+      ],
+      "design_lenses": [],
+      "model_route": {
+        "route": "primary"
+      },
+      "reasoning_level": {
+        "effort": "high"
+      },
+      "review_path": {
+        "cadence": "phase"
+      },
+      "write_set": [
+        "demo: src/widget.mjs"
+      ],
+      "command_ids": [],
+      "stop_condition": "STOP-I1: CMD-FF-UNIT exits 0.",
+      "human_decision": null,
+      "authority_id": "AUTH-FX",
+      "work_class": "judgement"
+    },
+    {
+      "id": "D1",
+      "role": "Implementer",
+      "goal": "GOAL-D1: the widget guide describes the row rule.",
+      "type": "documentation",
+      "requirement_ids": [],
+      "design_ids": [],
+      "seit_proof_rows": [],
+      "design_lenses": [],
+      "model_route": {
+        "route": "primary"
+      },
+      "reasoning_level": {
+        "effort": "high"
+      },
+      "review_path": {
+        "cadence": "phase"
+      },
+      "write_set": [
+        "demo: docs/widget.md"
+      ],
+      "command_ids": [],
+      "stop_condition": "STOP-D1: the guide names the row rule.",
+      "human_decision": null,
+      "authority_id": "AUTH-FX",
+      "work_class": "judgement"
+    }
+  ],
+  "traceability": {}
+}

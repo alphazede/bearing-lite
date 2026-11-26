@@ -226,6 +226,13 @@ const routeKey = role === "product_implementer" || role === "combined_implemente
 if (slice && binding) {
   const roles = binding.json.snapshot?.roles ?? {};
   route = Object.hasOwn(roles, routeKey) ? roles[routeKey] : null;
+  // Same precedence as the route guard: a scoped owner amendment with a harness replaces the snapshot route.
+  const amendment = binding.json.scoped_owner_amendment;
+  const amended = record(amendment) && Object.hasOwn(amendment, routeKey) ? amendment[routeKey] : null;
+  if (record(amended) && Object.hasOwn(amended, "harness")) {
+    const { harness, model, reasoning, ordered_fallbacks = [] } = amended;
+    route = { enabled: true, primary: { harness, model, reasoning }, ordered_fallbacks };
+  }
   if (!validRoute(route)) gap("route", route == null ? "missing" : "invalid");
   if (!validCapabilities(binding.json.snapshot)) gap("binding", "incomplete");
 }
@@ -241,8 +248,13 @@ if (slice) {
   if (slice.expected_files != null && (!Array.isArray(slice.expected_files) || !slice.expected_files.every(text))) {
     gap("expected_files", "invalid");
   }
-  if (blank(slice.seit_proof_rows)) gap("acceptance", slice.seit_proof_rows == null ? "missing" : "empty");
-  else if (!textList(slice.seit_proof_rows)) gap("acceptance", "invalid");
+  // Final freeze accepts an empty proof-row list (schemas/implementation.schema.json); the goal is then the acceptance.
+  if (slice.seit_proof_rows == null) gap("acceptance", "missing");
+  else if (Array.isArray(slice.seit_proof_rows) && slice.seit_proof_rows.length === 0) {
+    const stop = slice.stop_condition;
+    if (text(stop)) acceptance.push({ id: slice.id, pass_fail_rule: slice.goal, observable_evidence: stop });
+    else gap("evidence", stop == null ? "missing" : blank(stop) ? "empty" : "invalid");
+  } else if (!textList(slice.seit_proof_rows)) gap("acceptance", "invalid");
   else if (seit) {
     const cases = Array.isArray(seit.proof_cases) ? seit.proof_cases : [];
     let unresolved = false;
@@ -266,12 +278,26 @@ if (slice) {
     if (unresolved) gap("acceptance", "unresolved");
     if (evidenceCode) gap("evidence", evidenceCode);
   }
-  if (blank(slice.command_ids)) gap("commands", slice.command_ids == null ? "missing" : "empty");
-  else if (!textList(slice.command_ids)) gap("commands", "invalid");
+  // An empty command list passes final freeze except on a light slice (hooks/plan-package.cjs checkWorkClass).
+  // It then takes the commands of the Test Implementer slices that share its proof rows, else none.
+  let commandIds = null;
+  if (slice.command_ids == null) gap("commands", "missing");
+  else if (!Array.isArray(slice.command_ids) || slice.command_ids.length > 0) commandIds = slice.command_ids;
+  else if (slice.work_class === "light") gap("commands", "empty");
+  else {
+    const rows = textList(slice.seit_proof_rows) ? slice.seit_proof_rows : [];
+    const paired = implementation.json.slices.filter((item) =>
+      item !== slice && roleKey(item?.role) === "test_implementer" &&
+      Array.isArray(item.seit_proof_rows) && item.seit_proof_rows.some((id) => rows.includes(id)));
+    commandIds = [...new Set(paired.flatMap((item) => (Array.isArray(item.command_ids) ? item.command_ids : [])))];
+  }
+  if (commandIds === null) {
+    // Gap already recorded.
+  } else if (!Array.isArray(commandIds) || !commandIds.every(text)) gap("commands", "invalid");
   else if (seit) {
     const table = Array.isArray(seit.procedures_and_commands) ? seit.procedures_and_commands : [];
     let unresolved = false;
-    for (const id of slice.command_ids) {
+    for (const id of commandIds) {
       const row = table.find((item) => item?.id === id);
       if (!row || !text(row.command)) unresolved = true;
       else commands.push({ id: row.id, command: row.command });

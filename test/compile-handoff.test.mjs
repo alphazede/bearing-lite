@@ -298,14 +298,16 @@ function recordedPaths(f) {
 }
 
 describe("required fields (SEIT-B30-327, SM05.X5, B30-409)", () => {
+  // An empty seit_proof_rows or command_ids list passes final freeze (#779); only a missing one is a gap.
   const variants = [
     ["objective", (s) => delete s.goal, (s) => (s.goal = "")],
-    ["acceptance", (s) => delete s.seit_proof_rows, (s) => (s.seit_proof_rows = [])],
+    ["acceptance", (s) => delete s.seit_proof_rows],
     ["write_set", (s) => delete s.write_set, (s) => (s.write_set = [])],
-    ["commands", (s) => delete s.command_ids, (s) => (s.command_ids = [])],
+    ["commands", (s) => delete s.command_ids],
   ];
   for (const [field, missing, empty] of variants) {
     for (const [kind, fn] of [["missing", missing], ["empty", empty]]) {
+      if (!fn) continue;
       it(`${kind} ${field} is a compilation gap naming ${field}`, (t) => {
         const f = fixture(t);
         mutate(f.implementation, (impl) => fn(slice(impl, "S1")));
@@ -456,6 +458,95 @@ describe("frozen identity and authority (SM05.X1, SM05.X2, F04 failure_recovery)
   });
 });
 
+/** The synthetic final-freeze plan beside the base fixture (README: final-freeze/). */
+function finalFreeze(t) {
+  const f = fixture(t);
+  const dir = path.join(f.dir, "final-freeze");
+  return {
+    ...f,
+    plan: path.join(dir, "package"),
+    implementation: path.join(dir, "package", "implementation.json"),
+    seit: path.join(dir, "package", "seit.json"),
+    binding: path.join(dir, "binding.json"),
+  };
+}
+const FF_SLICES = ["T0", "P0", "T1", "I1", "D1"];
+
+describe("final-freeze plan compiles every slice (Alphazedehq#779)", () => {
+  it("compiles every slice of a plan that final freeze accepts", (t) => {
+    const f = finalFreeze(t);
+    for (const id of FF_SLICES) assert.equal(ready(f, id).json.identity.slice, id);
+  });
+
+  it("a slice with no SEIT proof rows takes its goal as acceptance and its stop condition as evidence", (t) => {
+    const f = finalFreeze(t);
+    for (const id of ["T0", "P0", "D1"]) {
+      const s = slice(readJson(f.implementation), id);
+      const { json } = ready(f, id);
+      assert.deepEqual(json.acceptance, [{ id, pass_fail_rule: s.goal, observable_evidence: s.stop_condition }]);
+      assert.ok(json.sections.find((x) => x.title === "OBJECTIVE / ACCEPTANCE").body.includes(s.goal));
+    }
+  });
+
+  it("a slice with no command ids takes the commands of the Test Implementer slice that shares its proof rows", (t) => {
+    const f = finalFreeze(t);
+    const i1 = ready(f, "I1").json;
+    assert.deepEqual(i1.commands, [{ id: "CMD-FF-UNIT", command: "node --test test/ff-unit.test.mjs" }]);
+    assert.ok(i1.sections.find((x) => x.title === "VERIFY").body.includes("node --test test/ff-unit.test.mjs"));
+    assert.deepEqual(i1.acceptance.map((row) => row.id), ["SEIT-FF-1"]);
+    for (const id of ["T0", "D1"]) assert.deepEqual(ready(f, id).json.commands, [], `${id} has no paired commands`);
+    assert.deepEqual(ready(f, "P0").json.commands, [{ id: "CMD-FF-PREFLIGHT", command: "node --version" }]);
+  });
+
+  it("the compiled route equals the route guard's route: scoped_owner_amendment first, then the snapshot", (t) => {
+    const f = finalFreeze(t);
+    const binding = readJson(f.binding);
+    const amended = (key) => {
+      const { harness, model, reasoning, ordered_fallbacks } = binding.scoped_owner_amendment[key];
+      return { enabled: true, primary: { harness, model, reasoning }, ordered_fallbacks };
+    };
+    for (const id of ["T1", "T0"]) {
+      const { json } = ready(f, id);
+      assert.deepEqual(json.route, amended("test_implementer"), id);
+      assert.deepEqual(json.route.ordered_fallbacks, [], "an amendment with empty ordered_fallbacks allows no fallback");
+      assert.ok(!json.text.includes("fixture-model-fb-b"), "no snapshot fallback leaks into an amended route");
+    }
+    for (const id of ["I1", "D1"]) assert.deepEqual(ready(f, id).json.route, amended("implementer"), id);
+    assert.deepEqual(ready(f, "P0").json.route, binding.snapshot.roles.light_implementer, "no amendment: snapshot route");
+  });
+
+  it("an amendment entry without a harness leaves the snapshot route in force", (t) => {
+    const f = finalFreeze(t);
+    mutate(f.binding, (b) => { b.scoped_owner_amendment.test_implementer = { note: "fixture" }; });
+    assert.deepEqual(ready(f, "T1").json.route, readJson(f.binding).snapshot.roles.test_implementer);
+  });
+
+  it("an amended route that breaks the route contract is a route gap", (t) => {
+    const f = finalFreeze(t);
+    mutate(f.binding, (b) => {
+      b.scoped_owner_amendment.test_implementer.ordered_fallbacks = [{ harness: "Amended Harness", model: "fixture-model-x", reasoning: "low" }];
+    });
+    assertGap(f, "T1", "route");
+    mutate(f.binding, (b) => {
+      b.scoped_owner_amendment.test_implementer.ordered_fallbacks = [];
+      b.scoped_owner_amendment.test_implementer.model = "";
+    });
+    assertGap(f, "T1", "route");
+  });
+
+  it("a light slice with no command is still a commands gap, as final freeze refuses it", (t) => {
+    const f = finalFreeze(t);
+    mutate(f.implementation, (impl) => { slice(impl, "P0").command_ids = []; });
+    assertGap(f, "P0", "commands");
+  });
+
+  it("a paired command id that names no existing command is a gap", (t) => {
+    const f = finalFreeze(t);
+    mutate(f.implementation, (impl) => { slice(impl, "T1").command_ids = ["CMD-FF-NOPE"]; });
+    assertGap(f, "I1", "commands");
+  });
+});
+
 describe("handoff schema (SEIT-B30-306, closed schema)", () => {
   const hasJsonschema = spawnSync("python3", ["-c", "import jsonschema"]).status === 0;
   const validate = (file) =>
@@ -481,6 +572,15 @@ describe("handoff schema (SEIT-B30-306, closed schema)", () => {
       writeJson(packet, json);
       const result = validate(packet);
       assert.equal(result.status, 0, result.stderr);
+    }
+  });
+  it("every packet of a final-freeze plan validates (#779)", { skip: !hasJsonschema && "python3 jsonschema not installed" }, (t) => {
+    const f = finalFreeze(t);
+    const packet = path.join(f.root, "packet.json");
+    for (const id of FF_SLICES) {
+      writeJson(packet, ready(f, id).json);
+      const result = validate(packet);
+      assert.equal(result.status, 0, `${id}: ${result.stderr.slice(-800)}`);
     }
   });
   it("a compiled packet validates; an injected authority field does not", { skip: !hasJsonschema && "python3 jsonschema not installed" }, (t) => {
