@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 "use strict";
 
+const fs = require("node:fs");
+const path = require("node:path");
+const crypto = require("node:crypto");
 const { ownerWaitMetrics } = require("./owner-stops.cjs");
 
 /**
@@ -12,9 +15,12 @@ const { ownerWaitMetrics } = require("./owner-stops.cjs");
 const HOOK_CLASS = "closeout";
 const OUTCOMES = Object.freeze(["ADVISE", "REROUTE", "BLOCK", "UNAVAILABLE"]);
 const ENFORCEMENT = "procedural";
-const { evaluatePlanningReview } = require("./planning-review.cjs");
+const { evaluatePlanningReview, repoRoot } = require("./planning-review.cjs");
 const { evaluateScribeCoverage } = require("./scribe-coverage.cjs");
 const { readLiveWave } = require("./plan-package.cjs");
+
+const MANIFEST_NAME = /^(?:[A-Za-z0-9._-]+-dod-manifest|review)\.html$/;
+const SHA256_HEX = /^[0-9a-f]{64}$/i;
 
 const HANDOFF_FIELDS = Object.freeze([
 	"verdict",
@@ -72,6 +78,8 @@ const RECOVERY_CHANNEL =
 
 const RECOVERY_FINAL_FREEZE_HANDOFF =
 	"Return to planning. Run node <plugin root>/hooks/plan-package.cjs <plan dir> and record the final freeze receipt";
+const RECOVERY_MANIFEST_NOT_DELIVERED =
+	"Open the rendered DoD Manifest HTML in the owner's browser (Chrome when available), deliver the file via the harness, obtain owner confirmation naming the Manifest path and SHA-256, and record manifest_delivery";
 
 const SAFE_CHANNELS = new Set([
 	"repair",
@@ -163,6 +171,116 @@ function inspectHandoffFields(input) {
 	}
 	// blocker may be the string "none"; that is present and valid.
 	return { missing, invalid };
+}
+
+function findManifestDeliveryInJourney(journey) {
+	if (!isPlainObject(journey)) return undefined;
+	for (const key of ["decisions", "authority_events"]) {
+		const list = journey[key];
+		if (!Array.isArray(list)) continue;
+		for (let i = list.length - 1; i >= 0; i -= 1) {
+			const entry = list[i];
+			if (!isPlainObject(entry)) continue;
+			if (
+				key === "decisions" &&
+				entry.record_type === "owner_stop" &&
+				entry.status !== "answered"
+			) {
+				continue;
+			}
+			if (entry.manifest_delivery !== undefined) {
+				return entry.manifest_delivery;
+			}
+		}
+	}
+	return undefined;
+}
+
+function resolveManifestDelivery(input) {
+	if (input.manifest_delivery !== undefined) return input.manifest_delivery;
+	if (
+		isPlainObject(input.handoff) &&
+		input.handoff.manifest_delivery !== undefined
+	) {
+		return input.handoff.manifest_delivery;
+	}
+	return findManifestDeliveryInJourney(input.journey);
+}
+
+function resolveManifestFileInPlanDir(planDir, deliveryPath) {
+	if (typeof planDir !== "string" || !planDir.trim()) return null;
+	const baseDir = fs.realpathSync(path.resolve(planDir));
+	if (!fs.statSync(baseDir).isDirectory()) return null;
+	const candidates = path.isAbsolute(deliveryPath)
+		? [path.resolve(deliveryPath)]
+		: [
+				path.resolve(baseDir, deliveryPath),
+				path.resolve(repoRoot(baseDir), deliveryPath),
+			];
+	const target = candidates.find((file) => path.dirname(file) === baseDir);
+	if (!target || !MANIFEST_NAME.test(path.basename(target))) return null;
+	const realFile = fs.realpathSync(target);
+	if (path.dirname(realFile) !== baseDir || !fs.statSync(realFile).isFile()) {
+		return null;
+	}
+	const implPath = path.join(baseDir, "implementation.json");
+	if (fs.existsSync(implPath)) {
+		const impl = JSON.parse(fs.readFileSync(implPath, "utf8"));
+		const declared = impl?.dod_manifest?.output_name;
+		if (
+			typeof declared === "string" &&
+			declared.trim() &&
+			path.basename(realFile) !== declared.trim()
+		) {
+			return null;
+		}
+	}
+	return realFile;
+}
+
+function manifestDeliveryIssue(input) {
+	const delivery = resolveManifestDelivery(input);
+	if (!isPlainObject(delivery)) return "manifest_not_delivered";
+	if (typeof delivery.path !== "string" || !delivery.path.trim()) {
+		return "manifest_not_delivered";
+	}
+	if (
+		typeof delivery.sha256 !== "string" ||
+		!SHA256_HEX.test(delivery.sha256.trim())
+	) {
+		return "manifest_not_delivered";
+	}
+	if (
+		delivery.opened_in !== undefined &&
+		(typeof delivery.opened_in !== "string" || !delivery.opened_in.trim())
+	) {
+		return "manifest_not_delivered";
+	}
+	if (
+		delivery.delivered_at !== undefined &&
+		(typeof delivery.delivered_at !== "string" || !delivery.delivered_at.trim())
+	) {
+		return "manifest_not_delivered";
+	}
+	if (input.plan_dir !== undefined) {
+		try {
+			const file = resolveManifestFileInPlanDir(
+				input.plan_dir,
+				delivery.path.trim(),
+			);
+			if (!file) return "manifest_not_delivered";
+			const actualSha = crypto
+				.createHash("sha256")
+				.update(fs.readFileSync(file))
+				.digest("hex");
+			if (actualSha !== delivery.sha256.trim().toLowerCase()) {
+				return "manifest_not_delivered";
+			}
+		} catch {
+			return "manifest_not_delivered";
+		}
+	}
+	return null;
 }
 
 /**
@@ -407,6 +525,16 @@ function evaluate(input) {
 				live_wave: liveWave,
 				findings,
 			};
+		}
+		if (planningHandoff) {
+			const deliveryIssue = manifestDeliveryIssue(input);
+			if (deliveryIssue) {
+				return result(
+					"REROUTE",
+					"handoff_refused:" + deliveryIssue,
+					RECOVERY_MANIFEST_NOT_DELIVERED,
+				);
+			}
 		}
 		return {
 			...result("ADVISE", "handoff_complete", RECOVERY_COMPLETE),

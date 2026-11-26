@@ -1534,6 +1534,82 @@ def cases() -> list[tuple[str, str, str, object, str]]:
             ),
             (
                 "SEIT-EMV-024",
+                "journey_decision_manifest_delivery_accepted",
+                "journey",
+                complete_journey(
+                    decisions=[
+                        {
+                            "id": SYN_DEC,
+                            "status": "confirmed",
+                            "decision": "Owner approved planning package.",
+                            "manifest_delivery": {
+                                "path": "docs/plans/example/example-dod-manifest.html",
+                                "sha256": SYN_DIGEST,
+                                "opened_in": "Chrome",
+                                "delivered_at": "2026-11-26T00:00:00Z",
+                            },
+                        }
+                    ]
+                ),
+                "accept",
+            ),
+            (
+                "SEIT-EMV-024",
+                "journey_authority_event_manifest_delivery_accepted",
+                "journey",
+                complete_journey(
+                    authority_events=[
+                        {
+                            "id": "AUTH-SYN-EV-001",
+                            "event_type": "authority_activation",
+                            "manifest_delivery": {
+                                "path": "docs/plans/example/example-dod-manifest.html",
+                                "sha256": SYN_DIGEST,
+                            },
+                        }
+                    ]
+                ),
+                "accept",
+            ),
+            (
+                "SEIT-EMV-024",
+                "journey_manifest_delivery_missing_sha256",
+                "journey",
+                complete_journey(
+                    decisions=[
+                        {
+                            "id": SYN_DEC,
+                            "status": "confirmed",
+                            "decision": "Owner approved planning package.",
+                            "manifest_delivery": {
+                                "path": "docs/plans/example/example-dod-manifest.html",
+                            },
+                        }
+                    ]
+                ),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-024",
+                "journey_manifest_delivery_bad_sha256",
+                "journey",
+                complete_journey(
+                    decisions=[
+                        {
+                            "id": SYN_DEC,
+                            "status": "confirmed",
+                            "decision": "Owner approved planning package.",
+                            "manifest_delivery": {
+                                "path": "docs/plans/example/example-dod-manifest.html",
+                                "sha256": "not-a-sha256",
+                            },
+                        }
+                    ]
+                ),
+                "reject",
+            ),
+            (
+                "SEIT-EMV-024",
                 "complete_authority_document",
                 "authority",
                 complete_authority(),
