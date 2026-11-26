@@ -1,5 +1,5 @@
 // BLX-VC-007: opt-in behavior and rollback against the pre-pilot headless contract.
-// The proof pilot was withdrawn (AM-50). No live agent or owner action is used.
+// No live agent or owner action is used.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
