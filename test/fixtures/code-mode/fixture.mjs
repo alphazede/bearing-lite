@@ -4,10 +4,12 @@ import { spawn, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
 	existsSync,
+	lstatSync,
 	mkdirSync,
 	mkdtempSync,
 	readdirSync,
 	readFileSync,
+	readlinkSync,
 	realpathSync,
 	renameSync,
 	rmSync,
@@ -513,30 +515,121 @@ export async function run(f, req, options) {
 	return outcome;
 }
 
-let sandboxProbe;
-// Asks the runtime itself whether it can start its routine sandbox: a trivial
-// routine either completes, or the runtime refuses it as sandbox_unavailable
-// through the same checks every routine run uses. Resolves false when the
-// sandbox works, otherwise a skip reason carrying the runtime's diagnostic.
-export function sandboxSkip() {
-	sandboxProbe ??= (async () => {
-		const after = [];
-		const f = fixture({ after: (fn) => after.push(fn) });
+function hostProbeEnv(extra) {
+	const env = { PATH: process.env.PATH ?? "/usr/bin:/bin", LANG: "C" };
+	for (const key of ["XDG_RUNTIME_DIR", "DBUS_SESSION_BUS_ADDRESS"]) {
+		if (process.env[key]) env[key] = process.env[key];
+	}
+	return { ...env, ...extra };
+}
+
+const HOST_SCOPE_CHECK = `
+IFS=: read -r hierarchy controllers group < /proc/self/cgroup || exit 1
+[ "$hierarchy" = 0 ] && [ -n "$group" ] || exit 1
+root=/sys/fs/cgroup$group
+grep -q '^oom_kill ' "$root/memory.events" || { echo "missing memory.events oom_kill" >&2; exit 1; }
+read -r mem_max < "$root/memory.max" || exit 1
+read -r swap_max < "$root/memory.swap.max" || exit 1
+read -r pids_max < "$root/pids.max" || exit 1
+case "$mem_max:$swap_max:$pids_max" in
+	(*[!0-9:]*) echo "cgroup limits not numeric: $mem_max $swap_max $pids_max" >&2; exit 1 ;;
+esac
+[ "$mem_max" -le 536870912 ] && [ "$swap_max" -le 0 ] && [ "$pids_max" -le 64 ] || {
+	echo "cgroup limits exceed bounds: $mem_max $swap_max $pids_max" >&2
+	exit 1
+}
+exec "$@"
+`;
+
+// Probes the host's sandbox prerequisites (systemd user scope with
+// background.slice and OOMPolicy=continue, cgroup v2 memory/pids limits,
+// prlimit, bwrap, and Node --permission) directly without invoking the code
+// under test. Returns false when the host is capable, otherwise a skip reason.
+export function probeSandboxHost(extraEnv) {
+	if (process.platform !== "linux")
+		return "routine sandbox unavailable on this host: requires Linux";
+	const systemBinds = ["/lib", "/lib64", "/bin"].flatMap((dir) => {
 		try {
-			const out = await run(f, program("sandbox-probe", "return true;"));
-			if (out.status === "COMPLETE") return false;
-			assert.equal(out.error?.code, "sandbox_unavailable", JSON.stringify(out));
-			const ref = out.evidence_refs.find(
-				(entry) => entry.kind === "diagnostic",
-			);
-			const detail = ref
-				? evidenceBytes(f, ref).toString().trim().split("\n")[0]
-				: "no diagnostic";
-			return "routine sandbox unavailable on this host: " + detail;
-		} finally {
-			for (const fn of after) await fn();
+			return lstatSync(dir).isSymbolicLink()
+				? ["--symlink", readlinkSync(dir), dir]
+				: ["--ro-bind", dir, dir];
+		} catch {
+			return [];
 		}
-	})();
+	});
+	const args = [
+		"--user",
+		"--scope",
+		"--slice=background.slice",
+		"--quiet",
+		"--collect",
+		"-p",
+		"MemoryMax=536870912",
+		"-p",
+		"MemorySwapMax=0",
+		"-p",
+		"TasksMax=64",
+		"-p",
+		"OOMPolicy=continue",
+		"--",
+		"/bin/sh",
+		"-c",
+		HOST_SCOPE_CHECK,
+		"code-mode-probe",
+		"prlimit",
+		"--cpu=10:11",
+		"--nofile=48",
+		"--",
+		"bwrap",
+		"--unshare-all",
+		"--clearenv",
+		"--die-with-parent",
+		"--new-session",
+		"--cap-drop",
+		"ALL",
+		"--ro-bind",
+		"/usr",
+		"/usr",
+		...systemBinds,
+		"--dev",
+		"/dev",
+		"--proc",
+		"/proc",
+		"--size",
+		String(16 * 1024 * 1024),
+		"--tmpfs",
+		"/tmp",
+		"--ro-bind",
+		realpathSync(process.execPath),
+		process.execPath,
+		"--setenv",
+		"HOME",
+		"/tmp",
+		"--chdir",
+		"/tmp",
+		"--",
+		process.execPath,
+		"--permission",
+		"--allow-fs-read=/tmp",
+		"--allow-fs-write=/tmp",
+		"-e",
+		"process.exit(0)",
+	];
+	const probe = spawnSync("systemd-run", args, {
+		env: hostProbeEnv(extraEnv),
+		encoding: "utf8",
+		timeout: 10000,
+	});
+	if (probe.status === 0 && !probe.error) return false;
+	const detail =
+		probe.error?.message ??
+		(probe.stderr.trim().split("\n")[0] || `exit ${probe.status}`);
+	return "routine sandbox unavailable on this host: " + detail;
+}
+
+let sandboxProbe;
+export function sandboxSkip() {
+	sandboxProbe ??= Promise.resolve(probeSandboxHost());
 	return sandboxProbe;
 }
 

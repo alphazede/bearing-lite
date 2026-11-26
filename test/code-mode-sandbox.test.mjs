@@ -23,6 +23,7 @@ import {
 	failure,
 	fixture,
 	parseOutcome,
+	probeSandboxHost,
 	program,
 	readyInput,
 	release,
@@ -34,9 +35,15 @@ import {
 	workspaceDigest,
 } from "./fixtures/code-mode/fixture.mjs";
 
-// Tests that start a real sandboxed routine skip where the runtime reports
-// its sandbox unavailable.
+// Tests that start a real sandboxed routine skip only when host prerequisites
+// are unavailable outside the runtime.
 const sandbox = await sandboxSkip();
+
+test("BLX-VC-044: host sandbox probe reports skip reason when prerequisites are unavailable", () => {
+	const skipped = probeSandboxHost({ PATH: "" });
+	assert.equal(typeof skipped, "string");
+	assert.match(skipped, /^routine sandbox unavailable on this host: /);
+});
 
 async function allowed(f, id = "allowed-sibling") {
 	const out = await run(f, request(id, "ready-set", readyInput));
