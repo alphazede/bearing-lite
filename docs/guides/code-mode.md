@@ -130,3 +130,76 @@ The broker caps the number of capability calls at 128 per request and reads
 routine frames through a byte-limited pipe. Before sending routine code, the
 host reads the effective memory, swap and task limits from the child’s cgroup.
 The host reports a memory kill only when the kernel records one.
+
+## Turn the pilot on or off
+
+Switch modes only when no request is open. With `code_mode` absent or
+false, the runtime calls the direct adapter and writes nothing to
+`journal_dir`. With the pilot on, the runtime does not read the direct
+adapter's records. A request that is still open on one path is therefore
+unknown to the other path, and sending it again there can repeat its effect.
+
+1. Stop sending new requests.
+2. Settle each open request on the path that started it. With the pilot on,
+   send the same request again with the same `idempotency_key` and the same
+   trusted context. The runtime returns the recorded outcome, or it asks the
+   launcher to reconcile a dispatch that it recorded as started.
+3. Check that no journal entry is open:
+
+   ```bash
+   grep -lE '"state":"(running|started)"' "$JOURNAL_DIR"/*.json
+   ```
+
+   Each file that the command lists is an open request or dispatch. An empty
+   or unreadable journal file is also open, and the runtime answers it with
+   `partial_effect`.
+4. Change `code_mode` in the trusted context.
+
+Never repeat an effect whose outcome is uncertain. A `WAITING_ON` outcome
+with `partial_effect` means that the runtime cannot tell whether the effect
+happened. Check the launcher's own records for that role and packet. If no
+run started, send a new request with a new `idempotency_key`. If a run
+started, or you cannot tell, do not dispatch again. Collect the result of
+that run instead. Do not send the request again with the pilot off, because
+the direct path does not read the journal. Before you turn the pilot on,
+confirm the result of each direct request in the direct adapter's own
+records, because the journal holds no entry for them.
+
+Keep `journal_dir`, the `code-mode/` results in `evidence_dir` and the
+launcher's receipts after you turn the pilot off or remove it. They are the
+record of what each request did. A repeated key replays its recorded outcome
+only while its journal entry exists.
+
+### Supported combinations
+
+The pilot needs a Bearing Lite release later than 3.0.1 and a trusted
+launcher that accepts the `dispatch` and `reconcile` requests described in
+[Dispatch](#dispatch).
+
+| Bearing Lite | Launcher | Result |
+| --- | --- | --- |
+| 3.0.1 | Any | No Code Mode runtime. 3.0.1 does not ship `hooks/code-mode.cjs`. Ordinary launches work. |
+| Later, pilot off | Without Code Mode support | Supported. Requests use the direct adapter as before. |
+| Later, pilot on | Without Code Mode support | Not supported. Leave the pilot off. |
+| Later, pilot on | With Code Mode support | Supported after a launcher dry run of a saved request passes. |
+
+Turn the pilot on in this order:
+
+1. Update the launcher.
+2. Install the Bearing Lite release with the pilot, and leave `code_mode`
+   off.
+3. Replay a saved request through the launcher's dry-run route check.
+4. Turn the pilot on when no request is open.
+
+To roll back, turn the pilot off first, with no request open. Then downgrade
+Bearing Lite or the launcher.
+
+### Remove the pilot
+
+1. Turn the pilot off as described above, and configure your host to call
+   the direct adapter instead of `hooks/code-mode.cjs`.
+2. Install the previous package, or remove `hooks/code-mode.cjs`,
+   `schemas/code-mode.schema.json` and this guide in a reviewed change.
+   `test/pilot-removal.test.mjs` checks that ordinary commands keep their
+   output after this removal.
+3. Keep the journal, the evidence store and the launcher receipts.

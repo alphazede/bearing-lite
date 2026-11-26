@@ -108,3 +108,20 @@ artifact. The corrected package is a new candidate with a new digest.
 - Plannotator exports no annotation times, so every record of one session
   carries the adapter's clock when the session ended.
 - The adapter runs on Linux only, because isolation uses `bwrap`.
+
+## Turn off or remove
+
+- To turn the pilot off, omit the adapter call, or send `"enabled": false`.
+  The adapter then returns `{"status":"fallback","reason":"disabled"}` and the
+  owner answers at the normal gate.
+- Before you remove the pilot, end any open review session. A session that
+  the owner closes without a decision returns `pending`, and the owner stop
+  stays open.
+- Keep the `feedback.jsonl` records in `feedback_dir`. Removal answers no
+  owner stop and grants no authority. The owner answers a pending stop at the
+  normal gate.
+- To remove the pilot, install the previous package, or remove
+  `tools/plannotator-adapter.mjs`, `tools/plannotator-relay.mjs`,
+  `schemas/owner-feedback.schema.json` and this guide together in a reviewed
+  change. `test/pilot-removal.test.mjs` checks that ordinary commands keep
+  their output after this removal.
