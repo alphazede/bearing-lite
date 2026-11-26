@@ -2153,21 +2153,32 @@ function shellWords(line) {
 }
 
 const OPTION = /(?<![\w-])--?[A-Za-z0-9][\w-]*/g;
+const HELP_TIMEOUT_MS = 10000;
 
-/** Required option groups and known options from an argparse-style usage text. */
+/**
+ * Required option groups, value-taking options and known options from an
+ * argparse-style help text. The synopsis is the `usage:` line plus its indented
+ * continuation lines. A value-taking option is terminal when its group also
+ * offers a positional (`[-m mod | file]`): later words belong to that program.
+ */
 function usageOf(help) {
-	const usage = /usage:\s*\S+([\s\S]*?)(?:\n\s*\n|$)/i.exec(help);
+	const usage = /usage:\s*\S+([^\n]*(?:\n[ \t]+\S[^\n]*)*)/i.exec(help);
 	if (!usage) return null;
 	const required = [];
 	let top = "";
 	let group = null;
 	let depth = 0;
+	let balanced = true;
 	for (const c of usage[1]) {
 		if (c === "[" || c === "(") {
 			if (depth === 0 && c === "(") group = "";
 			else if (group !== null) group += c;
 			depth++;
 		} else if (c === "]" || c === ")") {
+			if (depth === 0) {
+				balanced = false;
+				break;
+			}
 			depth--;
 			if (depth === 0 && group !== null) {
 				required.push(group.match(OPTION) || []);
@@ -2177,17 +2188,36 @@ function usageOf(help) {
 		else if (group !== null) group += c;
 	}
 	for (const option of top.match(OPTION) || []) required.push([option]);
-	return { required, known: [...new Set(help.match(OPTION) || [])] };
+	const takesValue = [
+		...usage[1].matchAll(
+			/(?<![\w-])(--?[A-Za-z0-9][\w-]*)(?:=|\s+(?:\[(?!-)|[^-\s|[\]()]))/g,
+		),
+	].map((m) => m[1]);
+	const terminal = [];
+	for (const [, inner] of usage[1].matchAll(/[[(]([^[\]()]*)[\])]/g)) {
+		const alts = inner.split("|").map((a) => a.trim());
+		if (alts.some((a) => a && !a.startsWith("-")))
+			for (const a of alts)
+				terminal.push(...(a.match(/^--?[A-Za-z0-9][\w-]*/) || []));
+	}
+	return {
+		balanced: balanced && depth === 0,
+		required,
+		takesValue,
+		terminal,
+		known: [...new Set(help.match(OPTION) || [])],
+	};
 }
 
 /**
  * Alphazedehq#781: check each SEIT command whose `dry_run_form` is the command's
  * own executable plus `--help` or `-h`, and nothing else. Only that declared
- * help form runs (no shell, stdin closed, 10 s limit); the real command never
- * runs. Extra words are refused because they could carry a real action
- * (`sh -c "<action>" --help`). A missing
- * required option, an unknown option, or an executable that does not resolve
- * is a named finding. Other rows are listed as unchecked with a reason. This
+ * help form runs (no shell, stdin closed, 10 s limit, own process group); the
+ * real command never runs. Extra words are refused because they could carry a
+ * real action (`sh -c "<action>" --help`). The help form itself must be side
+ * effect free: an executable that ignores `--help` runs its real action. A
+ * missing required option, an unknown option, or an executable that does not
+ * resolve is a named finding. Other rows are listed as unchecked with a reason. This
  * check is advisory: the freeze does not run it.
  */
 function checkSeitCommands(dir) {
@@ -2221,12 +2251,19 @@ function checkSeitCommands(dir) {
 			continue;
 		}
 		const exe = dry[0].includes("/") ? path.resolve(root, dry[0]) : dry[0];
+		// Own process group, killed afterwards, so nothing the help form starts outlives it.
 		const help = spawnSync(exe, [dry[1]], {
 			cwd: root,
+			detached: true,
 			encoding: "utf8",
 			stdio: ["ignore", "pipe", "pipe"],
-			timeout: 10000,
+			timeout: HELP_TIMEOUT_MS,
 		});
+		if (help.pid > 0) {
+			try {
+				process.kill(-help.pid, "SIGKILL");
+			} catch {}
+		}
 		if (help.error?.code === "ENOENT" || help.error?.code === "EACCES") {
 			findings.push({
 				code: "seit_command_unresolved",
@@ -2236,27 +2273,40 @@ function checkSeitCommands(dir) {
 			});
 			continue;
 		}
-		const usage =
-			help.status === 0 ? usageOf(`${help.stdout}\n${help.stderr}`) : null;
-		if (!usage) {
-			unchecked.push({
-				command_id: id,
-				reason: help.error
-					? `help form failed: ${help.error.code}`
-					: help.status !== 0
-						? `help form exited ${help.status}`
-						: "help output has no usage line",
-			});
+		const usage = usageOf(`${help.stdout}\n${help.stderr}`);
+		let reason = "";
+		if (help.error) reason = `help form failed: ${help.error.code}`;
+		else if (help.status !== 0) reason = `help form exited ${help.status}`;
+		else if (!usage) reason = "help output has no usage line";
+		else if (!usage.balanced) reason = "usage brackets do not balance";
+		if (reason) {
+			unchecked.push({ command_id: id, reason });
 			continue;
 		}
 		const args = command.slice(1);
 		const end = args.findIndex((a) => /^(\||\|\||&&|;|--|\d*[<>].*)$/.test(a));
-		const given = (end < 0 ? args : args.slice(0, end))
-			.filter((a) => /^--[A-Za-z0-9]|^-[A-Za-z]$/.test(a))
-			.map((a) => a.split("=")[0]);
+		const words = end < 0 ? args : args.slice(0, end);
+		const optionsIn = (list) =>
+			list
+				.filter((a) => /^--[A-Za-z0-9]|^-[A-Za-z]$/.test(a))
+				.map((a) => a.split("=")[0]);
 		// argparse accepts an unambiguous prefix of a long option.
 		const matches = (option, word) =>
 			option === word || (word.startsWith("--") && option.startsWith(word));
+		// Options after the first bare word that is not an option value belong
+		// to a script, subcommand or positional, not to this help form.
+		let own = words.length;
+		for (let i = 0; i < words.length; i++) {
+			if (words[i].length > 1 && words[i].startsWith("-")) continue;
+			const prev = i > 0 && !words[i - 1].includes("=") ? words[i - 1] : "";
+			const takes = (list) => prev && list.some((o) => matches(o, prev));
+			if (!takes(usage.takesValue)) own = i;
+			else if (takes(usage.terminal)) own = i + 1;
+			else continue;
+			break;
+		}
+		// Required options may follow a positional (argparse interleaves them).
+		const given = optionsIn(words);
 		const problems = [
 			...usage.required
 				.filter(
@@ -2264,7 +2314,7 @@ function checkSeitCommands(dir) {
 						alts.length && !alts.some((o) => given.some((g) => matches(o, g))),
 				)
 				.map((alts) => `missing required option (${alts.join(" | ")})`),
-			...given
+			...optionsIn(words.slice(0, own))
 				.filter((g) => !usage.known.some((o) => matches(o, g)))
 				.map((g) => `unknown option ${g}`),
 		];

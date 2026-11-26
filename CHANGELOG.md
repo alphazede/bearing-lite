@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-- Add the advisory `node hooks/plan-package.cjs commands <plan dir>` planning check, which runs each SEIT command's declared `<executable> --help` dry-run form (never the command) and names a missing required or unknown option (`seit_command_args_rejected`) or an unresolved executable (`seit_command_unresolved`) before final freeze. ([Alphazedehq#781](https://github.com/alphazede/Alphazedehq/issues/781))
+- Add the advisory `node hooks/plan-package.cjs commands <plan dir>` planning check, which runs each SEIT command's declared `<executable> --help` dry-run form (never the command) and names a missing required or unknown option (`seit_command_args_rejected`) or an unresolved executable (`seit_command_unresolved`) before final freeze. The help form must be side-effect free on the planning host; it runs in its own process group, which is killed afterwards. Options after the first script, subcommand or positional word are not checked. ([Alphazedehq#781](https://github.com/alphazede/Alphazedehq/issues/781))
 
 ## [3.1.3](https://github.com/alphazede/bearing-lite/releases/tag/v3.1.3) - 2026-11-26
 
