@@ -543,7 +543,8 @@ export function sandboxSkip() {
 // The offline entry starts the runtime in an unprivileged user and network
 // namespace. Resolves false when the host allows one, otherwise a skip reason.
 export function offlineSkip() {
-	const probe = spawnSync("unshare", ["-rn", "true"], {
+	const probe = spawnSync("unshare", ["-rn", process.execPath, "-e", ""], {
+		env: { PATH: process.env.PATH, LANG: "C" },
 		encoding: "utf8",
 		timeout: 10000,
 	});
