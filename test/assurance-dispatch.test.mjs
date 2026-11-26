@@ -719,17 +719,74 @@ test("bearing-publish workflow verifies release candidate before approval and pu
 
 	const verifyJob = workflow.slice(verifyIdx, publishIdx);
 	const publishJob = workflow.slice(publishIdx);
+	const assertOrderedLines = (job, expected) => {
+		const lines = job.split("\n").map((line) => line.trim());
+		let previous = -1;
+		for (const line of expected) {
+			const next = lines.indexOf(line, previous + 1);
+			assert.ok(next > previous, `Missing or out of order: ${line}`);
+			previous = next;
+		}
+	};
+
+	assert.match(workflow.slice(0, verifyIdx), /^permissions: \{\}$/m);
+	assert.doesNotMatch(workflow, /^\s+(?:if|continue-on-error):/m, "release gates must not be conditional or allowed to fail");
+	assert.doesNotMatch(verifyJob, /^\s*(?:run:\s*)?npm publish\b/m);
 
 	assert.doesNotMatch(verifyJob, /^\s*environment:/m, "verify job must run without approval environment");
 	assert.doesNotMatch(verifyJob, /id-token:\s*write/, "verify job must not request id-token: write");
 	assert.match(verifyJob, /checks:\s*read/);
 	assert.match(verifyJob, /contents:\s*read/);
 	assert.match(verifyJob, /security-events:\s*read/);
-	assert.match(verifyJob, /node --test test\/\*\.test\.mjs/);
-	assert.match(verifyJob, /pnpm audit --audit-level=moderate/);
-	assert.match(verifyJob, /npm pack --dry-run --json/);
-	assert.match(verifyJob, /npm pack --pack-destination/);
-	assert.match(verifyJob, /sha256sum/);
+	assertOrderedLines(verifyJob, [
+		"commit_sha: ${{ steps.verify-tag.outputs.commit_sha }}",
+		"tarball_name: ${{ steps.pack.outputs.tarball_name }}",
+		"tarball_sha256: ${{ steps.pack.outputs.tarball_sha256 }}",
+		"ref: ${{ inputs.tag }}",
+		"fetch-depth: 0",
+		"fetch-tags: true",
+		"persist-credentials: false",
+		"node-version: '22.14.0'",
+		"corepack enable",
+		"corepack prepare pnpm@10.33.0 --activate",
+		"npm install --global npm@11.15.0",
+		"REQUESTED_TAG: ${{ inputs.tag }}",
+		"CONFIRMATION: ${{ inputs.confirm }}",
+		"test \"$REQUESTED_TAG\" = \"$expected_tag\"",
+		"test \"$CONFIRMATION\" = \"$expected_confirmation\"",
+		"commit_sha=\"$(git rev-parse HEAD)\"",
+		"test \"$commit_sha\" = \"$(git rev-parse \"${expected_tag}^{commit}\")\"",
+		"printf 'commit_sha=%s\\n' \"$commit_sha\" >> \"$GITHUB_OUTPUT\"",
+		"checked_out_sha=\"$(git rev-parse HEAD)\"",
+		"main_sha=\"$(gh api \"/repos/${GITHUB_REPOSITORY}/git/ref/heads/main\" --jq .object.sha)\"",
+		"test \"$checked_out_sha\" = \"$main_sha\"",
+		"\"/repos/${GITHUB_REPOSITORY}/commits/${checked_out_sha}/check-runs?filter=latest&per_page=100\" \\",
+		"for (const name of [\"quality\", \"Semgrep scan\", \"Analyze (javascript-typescript)\", \"Analyze (actions)\"]) {",
+		"const latest = runs.filter((run) => run.name === name).sort((a, b) => b.id - a.id)[0];",
+		"if (!latest || latest.status !== \"completed\" || latest.conclusion !== \"success\") {",
+		"throw new Error(`Required check is not successful: ${name}`);",
+		"\"/repos/${GITHUB_REPOSITORY}/code-scanning/alerts?ref=refs/heads/main&state=open&tool_name=CodeQL&per_page=100\" \\",
+		"if (alerts.length) throw new Error(`CodeQL has ${alerts.length} open alert(s)`);",
+		"pnpm install --frozen-lockfile",
+		"node --test test/*.test.mjs",
+		"npm install --prefix \"${RUNNER_TEMP}/bearing-codex\" --ignore-scripts --no-audit --no-fund @openai/codex@0.162.1",
+		"export BEARING_CODEX_BIN=\"${RUNNER_TEMP}/bearing-codex/node_modules/.bin/codex\"",
+		"test \"$(\"$BEARING_CODEX_BIN\" --version)\" = \"codex-cli 0.162.1\"",
+		"node --test test/native/codex-hook-discovery.test.mjs test/native/assurance-dispatch.test.mjs",
+		"pnpm audit --audit-level=moderate",
+		"npm pack --dry-run --json",
+		"npm pack --pack-destination \"$artifact_dir\" --json > \"${RUNNER_TEMP}/pack.json\"",
+		"tarball_path=\"${artifact_dir}/${tarball_name}\"",
+		"test -f \"$tarball_path\"",
+		"sha256sum \"$tarball_name\" > \"${tarball_name}.sha256\"",
+		"tarball_sha256=\"$(awk '{print $1}' \"${tarball_path}.sha256\")\"",
+		"printf 'tarball_name=%s\\n' \"$tarball_name\" >> \"$GITHUB_OUTPUT\"",
+		"printf 'tarball_sha256=%s\\n' \"$tarball_sha256\" >> \"$GITHUB_OUTPUT\"",
+		"- name: Upload verified release tarball",
+		"name: release-tarball",
+		"path: ${{ runner.temp }}/release-artifact",
+		"if-no-files-found: error",
+	]);
 	assert.match(verifyJob, /uses:\s*actions\/upload-artifact@[0-9a-f]{40}/);
 
 	assert.match(publishJob, /^\s*needs:\s*verify\b/m, "publish job must depend on verify");
@@ -739,10 +796,29 @@ test("bearing-publish workflow verifies release candidate before approval and pu
 	assert.doesNotMatch(publishJob, /checks:\s*read/, "publish job must not request checks: read");
 	assert.doesNotMatch(publishJob, /security-events:\s*read/, "publish job must not request security-events: read");
 	assert.match(publishJob, /uses:\s*actions\/download-artifact@[0-9a-f]{40}/);
-	assert.match(publishJob, /needs\.verify\.outputs\.commit_sha/);
-	assert.match(publishJob, /needs\.verify\.outputs\.tarball_sha256/);
-	assert.match(publishJob, /sha256sum -c/);
-	assert.match(publishJob, /npm publish "\$\{RUNNER_TEMP\}\/release-artifact\/\$\{TARBALL_NAME\}" --access public/);
+	assertOrderedLines(publishJob, [
+		"REQUESTED_TAG: ${{ inputs.tag }}",
+		"VERIFIED_SHA: ${{ needs.verify.outputs.commit_sha }}",
+		"test -n \"$VERIFIED_SHA\"",
+		"ref_json=\"$(gh api \"/repos/${GITHUB_REPOSITORY}/git/ref/tags/${REQUESTED_TAG}\")\"",
+		"while [ \"$obj_type\" = \"tag\" ]; do",
+		"tag_json=\"$(gh api \"/repos/${GITHUB_REPOSITORY}/git/tags/${obj_sha}\")\"",
+		"test \"$obj_type\" = \"commit\"",
+		"test \"$obj_sha\" = \"$VERIFIED_SHA\"",
+		"- name: Download verified release tarball",
+		"name: release-tarball",
+		"path: ${{ runner.temp }}/release-artifact",
+		"digest-mismatch: error",
+		"TARBALL_NAME: ${{ needs.verify.outputs.tarball_name }}",
+		"EXPECTED_SHA256: ${{ needs.verify.outputs.tarball_sha256 }}",
+		"test -f \"${artifact_dir}/${TARBALL_NAME}\"",
+		"test -f \"${artifact_dir}/${TARBALL_NAME}.sha256\"",
+		"printf '%s  %s\\n' \"$EXPECTED_SHA256\" \"$TARBALL_NAME\" | sha256sum -c -",
+		"sha256sum -c \"${TARBALL_NAME}.sha256\"",
+		"- name: Publish with npm trusted publishing",
+		"TARBALL_NAME: ${{ needs.verify.outputs.tarball_name }}",
+		"run: npm publish \"${RUNNER_TEMP}/release-artifact/${TARBALL_NAME}\" --access public",
+	]);
 });
 
 test("advance-authorized review reserves its one inline repair before launch", (t) => {
