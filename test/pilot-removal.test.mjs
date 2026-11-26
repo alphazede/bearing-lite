@@ -29,6 +29,7 @@ import {
 	request,
 	start,
 } from "./fixtures/code-mode/fixture.mjs";
+import { plannotatorIsolation } from "./fixtures/plannotator/isolation-probe.mjs";
 import { unreviewedPlanningWave } from "./planning-contract-fixture.mjs";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
@@ -671,27 +672,6 @@ function skillMode(t, state, packageRoot) {
 		);
 }
 
-// Asks the Plannotator adapter itself whether it can isolate a review here.
-// With a fixture plannotator on PATH, an "unavailable" fallback means its
-// review sandbox (bwrap) is missing. Resolves false when the adapter can run.
-function adapterIsolationSkip() {
-	const bin = fresh();
-	writeFileSync(path.join(bin, "plannotator"), "", { mode: 0o700 });
-	const result = node(
-		root,
-		fresh(),
-		"tools/plannotator-adapter.mjs",
-		[],
-		{ enabled: true },
-		{ ...env, PATH: `${bin}${path.delimiter}${process.env.PATH}` },
-	);
-	const outcome = JSON.parse(result.stdout);
-	return outcome.status === "fallback" && outcome.reason === "unavailable"
-		? "Plannotator adapter reports its review sandbox (bwrap) unavailable on this host"
-		: false;
-}
-const adapterIsolation = adapterIsolationSkip();
-
 for (const [pilot, remove] of Object.entries(removals)) {
 	for (const state of ["enabled", "disabled", "missing", "removed"]) {
 		test(`BLX-VC-007 ${pilot}: ${state}`, async (t) => {
@@ -706,8 +686,12 @@ for (const [pilot, remove] of Object.entries(removals)) {
 			const dir = runtime?.plan ?? fresh();
 			const candidate = plan(dir);
 			await t.test("pilot entry", async (entry) => {
-				if (pilot === "Plannotator" && state === "enabled" && adapterIsolation)
-					return entry.skip(adapterIsolation);
+				// This entry opens a real isolated review; the shared probe asks the
+				// adapter itself, once per process, whether one can start here.
+				if (pilot === "Plannotator" && state === "enabled") {
+					const { review } = await plannotatorIsolation();
+					if (review) return entry.skip(review);
+				}
 				if (runtime) await codeMode(runtime, state);
 				else if (pilot === "Code Mode")
 					assert.equal(
