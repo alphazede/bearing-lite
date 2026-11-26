@@ -150,6 +150,31 @@ async function serve(resultFile) {
 			}
 		}
 		console.error(`Review ready at ${url}`);
+		if (scenario.linkedEvidence) {
+			const bytes = await new Promise((resolve, reject) => {
+				http
+					.get(
+						{
+							socketPath: path.join(process.env.TMPDIR, "s"),
+							path: "/api/html-assets/0000000000000000/design.md",
+						},
+						(res) => {
+							let body = "";
+							res.setEncoding("utf8");
+							res.on("data", (part) => {
+								body += part;
+							});
+							res.on("end", () => resolve(body));
+						},
+					)
+					.on("error", reject);
+			});
+			assert.equal(
+				bytes,
+				scenario.linkedEvidence,
+				"The local projection reaches its cited evidence",
+			);
+		}
 		if (scenario.hold) await waitForRelease(resultFile);
 	} finally {
 		await new Promise((resolve) => server.close(resolve));

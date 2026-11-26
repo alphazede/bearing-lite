@@ -270,6 +270,43 @@ export function fixture(t, options = {}) {
 	const sourceRef = { path: "source.json", sha256: sha(readFileSync(source)) };
 	const config = path.join(root, "context.json");
 	const endpoint = path.join(HERE, "launcher.cjs");
+	// Distinct packet names exercise scheduling. Every alias contains the same reviewed instructions.
+	const packetBody = "Write the authorized synthetic ledger entry.\n";
+	for (const packet of [
+		"sample",
+		"authorized",
+		"norm-ok",
+		"only-requested",
+		"bad-output",
+		"bad-ref",
+		"first",
+		"second",
+		"cancel",
+		"after-cancel",
+		"once",
+		"step-1",
+		"step-2",
+		"step-3",
+		"step-4",
+		"stale-effect",
+		"fresh-effect",
+		"left",
+		"right",
+		"locked-first",
+		"locked-second",
+		"partial",
+		"direct-sibling",
+	]) {
+		writeFileSync(path.join(workspace, packet), packetBody);
+	}
+	const grantFile = path.join(root, "grant.json");
+	put(grantFile, {
+		binding_sha256: sha(readFileSync(binding)),
+		role: "implementer",
+		packet_sha256: sha(packetBody),
+		write_set: ["state/effects.log"],
+		session_id: session,
+	});
 	const context = {
 		workspace,
 		evidence_dir: evidenceDir,
@@ -277,6 +314,8 @@ export function fixture(t, options = {}) {
 		journey_path: journey,
 		session_id: session,
 		binding_path: binding,
+		grant_path: grantFile,
+		grant_sha256: sha(readFileSync(grantFile)),
 		binding_sha256: sha(readFileSync(binding)),
 		write_set: ["state/effects.log", "journey.json"],
 		lock_path: path.join(workspace, "lifecycle.lock"),
@@ -324,6 +363,12 @@ export function fixture(t, options = {}) {
 export function configure(f, changes) {
 	Object.assign(f.context, changes);
 	put(f.config, f.context);
+}
+
+export function authorizeFixtureWrites(f, writes) {
+	const file = f.context.grant_path;
+	put(file, { ...json(file), write_set: writes });
+	configure(f, { grant_sha256: sha(readFileSync(file)) });
 }
 
 export const dispatchInput = (packet = "sample") => ({

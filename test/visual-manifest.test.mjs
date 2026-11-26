@@ -509,3 +509,45 @@ test("BLX-VC-074 visual output treats sample markup as data and allows no remote
 		}
 	}
 });
+
+test("visual evidence descriptions remain text and empty verification is explicit", (t) => {
+	const { dir, seit, save } = fixture(t);
+	const description = "Compare retained evidence with the expected value.";
+	seit.proof_cases[0].observable_evidence = description;
+	save();
+	const page = parse(rendered(dir));
+	assert.ok(page.text.includes(description));
+	assert.ok(
+		!page.elements.some(
+			(e) =>
+				e.tag === "a" &&
+				decodeURIComponent(e.attrs.href || "").includes(description),
+		),
+	);
+	seit.proof_cases = [];
+	save();
+	assert.ok(parse(rendered(dir)).text.includes("No verification cases"));
+});
+
+test("the optional visual renders dollar signs literally and preserves the default output", (t) => {
+	const { dir, doc, save } = fixture(t);
+	doc.dod_manifest.title = "Budget $$5";
+	save();
+	assert.ok(parse(rendered(dir)).text.includes("Budget $$5"));
+	assert.ok(parse(rendered(dir, { visual: false })).text.includes("Budget $5"));
+});
+
+test("visual output preserves the canonical manifest when the destinations coincide", (t) => {
+	const { dir, doc } = fixture(t);
+	const original = rendered(dir, {
+		visual: false,
+		name: doc.dod_manifest.output_name,
+	});
+	const refused = render(dir, { name: doc.dod_manifest.output_name });
+	assert.notEqual(refused.status, 0);
+	assert.match(refused.stderr, /READ_ONLY/);
+	assert.deepEqual(
+		readFileSync(path.join(dir, doc.dod_manifest.output_name)),
+		original,
+	);
+});

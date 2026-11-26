@@ -14,26 +14,38 @@ import { createHash, randomUUID } from "node:crypto";
 import {
 	appendFileSync,
 	chmodSync,
+	closeSync,
+	constants,
+	copyFileSync,
 	existsSync,
+	fstatSync,
 	mkdirSync,
 	mkdtempSync,
+	openSync,
 	readFileSync,
+	readSync,
 	realpathSync,
 	rmSync,
 	statSync,
 	writeFileSync,
 } from "node:fs";
 import { createRequire } from "node:module";
-import net from "node:net";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { renderFile } from "./render-dod-manifest.mjs";
 
 const require = createRequire(import.meta.url);
 const { evaluateOwnerStop } = require("../hooks/owner-stops.cjs");
-const { evaluatePlanningReview } = require("../hooks/planning-review.cjs");
+const {
+	repoRoot,
+	evaluatePlanningReview,
+} = require("../hooks/planning-review.cjs");
 const self = fileURLToPath(import.meta.url);
 const root = path.resolve(path.dirname(self), "..");
+const relayFile = fileURLToPath(
+	new URL("./plannotator-relay.mjs", import.meta.url),
+);
 const MAX_RESULT_BYTES = 256 * 1024;
 const DIFF = "revision-diff.md";
 // File types Plannotator 0.29.4 opens in a bundle (its own refusal message lists them).
@@ -80,25 +92,97 @@ function which(name, env = process.env) {
 	return null;
 }
 
+function beneath(dir, file) {
+	const rel = path.relative(dir, file);
+	return (
+		rel &&
+		rel !== ".." &&
+		!rel.startsWith(".." + path.sep) &&
+		!path.isAbsolute(rel)
+	);
+}
+
 function inside(dir, name) {
-	const file = path.resolve(dir, String(name));
-	const relative = path.relative(dir, file);
-	if (!relative || relative.startsWith("..") || path.isAbsolute(relative))
+	if (
+		!text(name) ||
+		path.isAbsolute(name) ||
+		name.split(/[\\/]/).includes("..")
+	)
+		reject("path_outside_package");
+	const file = path.resolve(dir, name);
+	if (
+		!beneath(dir, file) ||
+		!beneath(realpathSync(dir), realpathSync(file)) ||
+		!statSync(file).isFile()
+	)
 		reject("path_outside_package");
 	return file;
 }
 
+// Resolve existing ancestors before creating the destination. A symlink in the
+// caller's output path must not turn a feedback write into a package mutation.
+function feedbackStore(req) {
+	if (!text(req.feedback_dir)) reject("path_outside_package");
+	const base = realpathSync(req.plan_dir);
+	const target = path.resolve(req.feedback_dir, req.candidate.candidate_digest);
+	let ancestor = target;
+	while (!existsSync(ancestor)) ancestor = path.dirname(ancestor);
+	const real = path.resolve(
+		realpathSync(ancestor),
+		path.relative(ancestor, target),
+	);
+	if (real === base || beneath(base, real)) reject("path_outside_package");
+	return real;
+}
+
 // The candidate as plan-package draft sees it, plus the bytes shown to the owner.
-function preflight(req) {
-	const dir = path.resolve(String(req.plan_dir));
-	const { candidate } = req;
-	const seit = readJson(path.join(dir, "seit.json"));
-	const names = [
-		...(seit.source_baseline?.planning_inputs ?? []).map((i) => i.path),
-		"seit.json",
-		"implementation.json",
-		req.visual_path,
-	];
+function snapshot(dir, candidate, visual, onEvidenceLink) {
+	const seit = readJson(inside(dir, "seit.json"));
+	const implementation = readJson(inside(dir, "implementation.json"));
+	const identity = implementation.journey_settings?.planning_review;
+	const revision =
+		identity?.candidate_revision ??
+		seit.source_baseline?.candidate_revision ??
+		implementation.source_baseline?.candidate_revision;
+	if (
+		!text(revision) ||
+		candidate?.candidate_revision !== revision ||
+		(identity?.candidate_ref &&
+			candidate.candidate_ref !== identity.candidate_ref)
+	)
+		reject("stale_candidate");
+	const inputRoot = repoRoot(dir);
+	const shown = new Map();
+	const inputs = [...(seit.source_baseline?.planning_inputs ?? [])];
+	const late = implementation.journey_settings?.final_technical_plan;
+	if (late?.path && !inputs.some((i) => i.path === late.path))
+		inputs.push(late);
+	for (const input of inputs) {
+		const file = inside(inputRoot, input.path);
+		const bytes = readFileSync(file);
+		if (sha256(bytes) !== input.sha256) reject("changed_package");
+		const name = beneath(dir, file) ? path.relative(dir, file) : input.path;
+		if (name === DIFF || shown.has(name)) reject("changed_package");
+		shown.set(name, bytes);
+	}
+	for (const name of ["seit.json", "implementation.json"])
+		shown.set(name, readFileSync(inside(dir, name)));
+	if (visual) {
+		const file = inside(dir, visual);
+		const bytes = readFileSync(file);
+		const rendered = renderFile(path.join(dir, "implementation.json"), {
+			visual: true,
+			outDir: path.dirname(file),
+			onEvidenceLink,
+		});
+		if (
+			sha256(bytes) !== rendered.digest ||
+			shown.has(visual) ||
+			visual === DIFF
+		)
+			reject("changed_package");
+		shown.set(visual, bytes);
+	}
 	const draft = spawnSync(
 		process.execPath,
 		[path.join(root, "hooks/plan-package.cjs"), "draft", dir],
@@ -109,16 +193,19 @@ function preflight(req) {
 		receipt = JSON.parse(draft.stdout);
 	} catch {}
 	if (receipt.outcome !== "PASS") reject("changed_package");
-	if (
-		receipt.manifest_digest !== candidate?.candidate_digest ||
-		seit.source_baseline?.candidate_revision !== candidate.candidate_revision
-	)
+	if (receipt.manifest_digest !== candidate?.candidate_digest)
 		reject("stale_candidate");
-	const shown = new Map(
-		names.map((name) => [name, readFileSync(inside(dir, name))]),
-	);
+	return shown;
+}
+
+function preflight(req, onEvidenceLink) {
+	const dir = realpathSync(req.plan_dir);
+	if (!text(req.visual_path) || !text(req.candidate?.candidate_ref))
+		reject("invalid_request");
+	const shown = snapshot(dir, req.candidate, req.visual_path, onEvidenceLink);
+	feedbackStore(req);
 	checkStop(dir, req);
-	const binding = grantBinding(readJson(path.join(dir, "authority.json")));
+	const binding = grantBinding(readJson(inside(dir, "authority.json")));
 	const wave = readJson(path.join(dir, "implementation.json")).journey_settings
 		?.planning_wave;
 	if (wave?.review_requested === true) {
@@ -131,13 +218,13 @@ function preflight(req) {
 		if (!review || evaluatePlanningReview(review).outcome !== "PASS")
 			reject("planning_review_required");
 	}
-	return { names, shown, binding };
+	return { names: [...shown.keys()], shown, binding };
 }
 
 // The pending owner stop for this candidate, asked in this owner session.
 function checkStop(dir, req) {
 	const { candidate } = req;
-	const journey = readJson(path.join(dir, "journey.json"));
+	const journey = readJson(inside(dir, "journey.json"));
 	const stop = journey.open_decisions?.find(
 		(d) =>
 			d?.record_type === "owner_stop" &&
@@ -146,6 +233,7 @@ function checkStop(dir, req) {
 	);
 	if (!stop) reject("absent_stop");
 	if (
+		(stop.candidate_ref && stop.candidate_ref !== candidate.candidate_ref) ||
 		stop.candidate_digest !== candidate.candidate_digest ||
 		stop.candidate_revision !== candidate.candidate_revision
 	)
@@ -207,16 +295,24 @@ function revisionDiff(names, shown, candidate, last) {
 		`Current: ${candidate.candidate_digest} (revision ${candidate.candidate_revision})`,
 		"",
 	];
-	for (const name of names) {
-		const file = inside(path.resolve(String(last.plan_dir)), name);
-		const before = existsSync(file) ? readFileSync(file) : null;
+	const previousDir = realpathSync(last.plan_dir);
+	const previousVisual = names.at(-1);
+	const previous = snapshot(
+		previousDir,
+		last,
+		existsSync(path.resolve(previousDir, previousVisual))
+			? previousVisual
+			: null,
+	);
+	for (const name of new Set([...names, ...previous.keys()])) {
+		const before = previous.get(name);
 		const after = shown.get(name);
-		if (before?.equals(after)) continue;
+		if (after && before?.equals(after)) continue;
 		if (!name.endsWith(".md")) {
 			out.push(
 				`## ${name}`,
 				"",
-				`Changed bytes: ${before ? sha256(before) : "(absent)"} to ${sha256(after)}`,
+				`Changed bytes: ${before ? sha256(before) : "(absent)"} to ${after ? sha256(after) : "(absent)"}`,
 				"",
 			);
 			continue;
@@ -305,45 +401,39 @@ function mapEntries(entries, names, shown, snap) {
 	});
 }
 
-// Runs inside the sandbox: Plannotator plus a Unix-socket relay to its loopback
-// port, so an owner's SSH forward can reach the isolated session.
-function relay(socket, command, args) {
-	const child = spawn(command, args, { stdio: ["ignore", "ignore", "pipe"] });
-	let port = null;
-	const server = net.createServer((client) => {
-		if (!port) return client.destroy();
-		const upstream = net.connect(Number(port), "127.0.0.1");
-		client.pipe(upstream).pipe(client);
-		upstream.on("error", () => client.destroy());
-		client.on("error", () => upstream.destroy());
-	});
-	server.on("error", (error) =>
-		process.stderr.write(`Owner access socket unavailable: ${error.code}\n`),
-	);
-	server.listen(socket, () =>
-		process.stderr.write(`Owner access socket ${JSON.stringify(socket)}\n`),
-	);
-	child.stderr.on("data", (data) => {
-		process.stderr.write(data);
-		port ??=
-			/http:\/\/(?:127\.0\.0\.1|localhost):(\d+)/.exec(String(data))?.[1] ??
-			null;
-	});
-	child.on("close", (code, signal) => {
-		server.close();
-		if (signal) process.kill(process.pid, signal);
-		else process.exitCode = code;
-	});
-}
-
 // Isolated session: no network but loopback, no capabilities, read-only system,
 // read-only snapshot, writable private scratch only.
+// Plannotator renders HTML in srcdoc at its origin. Snapshot the files the
+// verified renderer linked so a browser can open their bytes at that origin.
+function copyEvidence(links, plan, scratch) {
+	const dir = path.join(scratch, "linked-evidence");
+	mkdirSync(dir, { mode: 0o700 });
+	for (const [url, file] of links) {
+		const fd = openSync(
+			file,
+			constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK,
+		);
+		try {
+			const opened = `/proc/self/fd/${fd}`;
+			if (!fstatSync(fd).isFile() || !beneath(plan, realpathSync(opened)))
+				reject("changed_package");
+			copyFileSync(opened, path.join(dir, sha256(url)));
+		} finally {
+			closeSync(fd);
+		}
+	}
+}
+
 function sandboxArgs(scratch, snap, plannotator, env) {
-	const binds = new Set(
-		["/usr", "/etc", path.dirname(process.execPath), root].concat(
-			[process.execPath, plannotator].map((f) => path.dirname(realpathSync(f))),
-		),
-	);
+	// Mount only the runtime, tool and transport file. Their checkout and install directories stay private.
+	const binds = [
+		["/usr", "/usr"],
+		[realpathSync(process.execPath), process.execPath],
+		[realpathSync(plannotator), plannotator],
+		[relayFile, relayFile],
+	];
+	if (existsSync("/etc/ld.so.cache"))
+		binds.push(["/etc/ld.so.cache", "/etc/ld.so.cache"]);
 	const system = ["/lib", "/lib64", "/bin", "/sbin"].flatMap((dir) => {
 		try {
 			const real = realpathSync(dir);
@@ -360,7 +450,6 @@ function sandboxArgs(scratch, snap, plannotator, env) {
 		"--new-session",
 		"--cap-drop",
 		"ALL",
-		...[...binds].flatMap((dir) => ["--ro-bind", dir, dir]),
 		...system,
 		"--dev",
 		"/dev",
@@ -368,12 +457,16 @@ function sandboxArgs(scratch, snap, plannotator, env) {
 		"/proc",
 		"--tmpfs",
 		"/tmp",
+		...binds.flatMap(([source, target]) => ["--ro-bind", source, target]),
 		"--bind",
 		scratch,
 		scratch,
 		"--ro-bind",
 		snap,
 		snap,
+		"--ro-bind",
+		path.join(scratch, "linked-evidence"),
+		path.join(scratch, "linked-evidence"),
 		"--clearenv",
 		...Object.entries(env).flatMap(([k, v]) => ["--setenv", k, v]),
 		"--chdir",
@@ -382,8 +475,9 @@ function sandboxArgs(scratch, snap, plannotator, env) {
 }
 
 function session(bwrap, plannotator, scratch, targets) {
-	const snap = path.dirname(targets[0]);
+	const snap = path.join(scratch, "candidate");
 	const resultFile = path.join(scratch, "result.json");
+	rmSync(resultFile, { force: true });
 	const env = {
 		...LOCAL_ONLY,
 		PATH: "/usr/bin:/bin",
@@ -399,8 +493,7 @@ function session(bwrap, plannotator, scratch, targets) {
 		...sandboxArgs(scratch, snap, plannotator, env),
 		"--",
 		process.execPath,
-		self,
-		"relay",
+		relayFile,
 		path.join(scratch, "s"),
 		plannotator,
 		"annotate",
@@ -427,9 +520,22 @@ function session(bwrap, plannotator, scratch, targets) {
 // A result counts only with the matching strict exit: 0 approved, 1 annotated or dismissed.
 function readResult({ code, resultFile }) {
 	if (!resultFile || !existsSync(resultFile)) return null;
-	if (statSync(resultFile).size > MAX_RESULT_BYTES)
-		reject("oversized_feedback");
-	const result = readJson(resultFile);
+	const fd = openSync(
+		resultFile,
+		constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK,
+	);
+	let result;
+	try {
+		const info = fstatSync(fd);
+		if (!info.isFile() || info.nlink !== 1) reject("invalid_request");
+		if (info.size > MAX_RESULT_BYTES) reject("oversized_feedback");
+		const bytes = Buffer.alloc(info.size);
+		if (readSync(fd, bytes, 0, bytes.length, 0) !== bytes.length)
+			reject("invalid_request");
+		result = JSON.parse(bytes);
+	} finally {
+		closeSync(fd);
+	}
 	const expected = { approved: 0, annotated: 1, dismissed: 1 }[result.decision];
 	return expected === code ? result : null;
 }
@@ -440,10 +546,17 @@ async function review(req) {
 	const bwrap = which("bwrap");
 	if (!plannotator || !bwrap)
 		return { status: "fallback", reason: "unavailable" };
-	const { names, shown, binding } = preflight(req);
+	const links = new Map();
+	const { names, shown, binding } = preflight(req, (href, file) => {
+		links.set(
+			new URL(href, "http://localhost/api/html-assets/@view/").pathname,
+			file,
+		);
+	});
 	const { candidate } = req;
 	const scratch = mkdtempSync(path.join(tmpdir(), "bor-"));
 	try {
+		copyEvidence(links, realpathSync(req.plan_dir), scratch);
 		const snap = path.join(scratch, "candidate");
 		const view = new Map(shown).set(
 			DIFF,
@@ -454,6 +567,7 @@ async function review(req) {
 				const target = path.join(snap, alias(name));
 				mkdirSync(path.dirname(target), { recursive: true });
 				if (!existsSync(target)) writeFileSync(target, bytes, { mode: 0o444 });
+				else if (!readFileSync(target).equals(bytes)) reject("changed_package");
 				chmodSync(target, 0o444);
 				return target;
 			});
@@ -474,7 +588,11 @@ async function review(req) {
 			);
 		const result = readResult(run);
 		const after = preflight(req);
-		if (names.some((name) => !after.shown.get(name).equals(shown.get(name))))
+		if (
+			JSON.stringify(binding) !== JSON.stringify(after.binding) ||
+			names.length !== after.names.length ||
+			names.some((name) => !after.shown.get(name)?.equals(shown.get(name)))
+		)
 			reject("changed_package");
 		if (!result) return { status: "fallback", reason: "disconnected" };
 		if (result.decision === "dismissed")
@@ -494,8 +612,7 @@ async function review(req) {
 // Appends the typed records outside the package and returns the outcome.
 function deliver(req, approved, notes, binding) {
 	const { candidate } = req;
-	if (!approved && !notes.length)
-		return { status: "pending", reason: "cancelled" };
+	if (!approved && !notes.length) reject("unmappable_annotation");
 	const base = {
 		candidate_digest: candidate.candidate_digest,
 		revision: candidate.candidate_revision,
@@ -516,15 +633,24 @@ function deliver(req, approved, notes, binding) {
 			kind: "approve_intent",
 			body: "",
 		});
-	const store = path.join(
-		path.resolve(String(req.feedback_dir)),
-		candidate.candidate_digest,
-	);
-	mkdirSync(store, { recursive: true });
-	appendFileSync(
+	const store = feedbackStore(req);
+	mkdirSync(store, { recursive: true, mode: 0o700 });
+	const fd = openSync(
 		path.join(store, "feedback.jsonl"),
-		records.map((r) => `${JSON.stringify(r)}\n`).join(""),
+		constants.O_NOFOLLOW |
+			constants.O_NONBLOCK |
+			constants.O_APPEND |
+			constants.O_CREAT |
+			constants.O_WRONLY,
+		0o600,
 	);
+	try {
+		const info = fstatSync(fd);
+		if (!info.isFile() || info.nlink !== 1) reject("path_outside_package");
+		appendFileSync(fd, records.map((r) => JSON.stringify(r) + "\n").join(""));
+	} finally {
+		closeSync(fd);
+	}
 	if (!approved)
 		return { status: "changes_requested", feedback: records.length };
 	const owner = req.owner_session;
@@ -546,21 +672,17 @@ function deliver(req, approved, notes, binding) {
 	};
 }
 
-if (process.argv[2] === "relay") {
-	relay(process.argv[3], process.argv[4], process.argv.slice(5));
-} else {
-	let input = "";
-	process.stdin.setEncoding("utf8");
-	for await (const chunk of process.stdin) input += chunk;
-	let outcome;
-	try {
-		outcome = await review(JSON.parse(input));
-	} catch (error) {
-		outcome = error.outcome ?? {
-			status: "rejected",
-			reason: "invalid_request",
-		};
-	}
-	process.stdout.write(`${JSON.stringify(outcome)}\n`);
-	process.exitCode = outcome.status === "answer_delivered" ? 0 : 1;
+let input = "";
+process.stdin.setEncoding("utf8");
+for await (const chunk of process.stdin) input += chunk;
+let outcome;
+try {
+	outcome = await review(JSON.parse(input));
+} catch (error) {
+	outcome = error.outcome ?? {
+		status: "rejected",
+		reason: "invalid_request",
+	};
 }
+process.stdout.write(`${JSON.stringify(outcome)}\n`);
+process.exitCode = outcome.status === "answer_delivered" ? 0 : 1;

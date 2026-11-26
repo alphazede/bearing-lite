@@ -122,9 +122,13 @@ function packageAt(
 	revision = "a".repeat(40),
 	content = "Keep sample A.",
 	requested = false,
+	nested = false,
 ) {
 	mkdirSync(dir, { recursive: true });
-	writeFileSync(path.join(dir, ".git"), "synthetic worktree marker\n");
+	writeFileSync(
+		path.join(nested ? path.dirname(dir) : dir, ".git"),
+		"synthetic worktree marker\n",
+	);
 	const input = {
 		"plan.md": `## SAMPLE-A\n\n${content}\n\n## CONSTANT\n\nUnchanged specimen QXZ.\n`,
 		"design.md": "## SAMPLE-B\n\nUse sample B.\n",
@@ -139,8 +143,18 @@ function packageAt(
 	doc.source_baseline.revision = revision;
 	seit.source_baseline.candidate_revision = revision;
 	seit.source_baseline.planning_inputs = Object.entries(input).map(
-		([name, bytes]) => ({ path: name, sha256: hash(bytes) }),
+		([name, bytes]) => ({
+			path: nested ? path.join(path.basename(dir), name) : name,
+			sha256: hash(bytes),
+		}),
 	);
+	seit.proof_cases = [
+		{
+			id: "SYN-VC-001",
+			requirement_id: "SYN-REQ-001",
+			observable_evidence: "design.md",
+		},
+	];
 	const seitBytes = JSON.stringify(seit);
 	const digest = hash(
 		[...Object.values(input).map(hash), hash(seitBytes)].join("\n"),
@@ -360,6 +374,7 @@ function fixture(
 		grant = null,
 		requested = false,
 		absent = false,
+		nested = false,
 	} = {},
 ) {
 	const dir = mkdtempSync(path.join(tmpdir(), "bearing-review-"));
@@ -387,6 +402,7 @@ function fixture(
 		undefined,
 		undefined,
 		requested,
+		nested,
 	);
 	const stop = stopRecord(candidate);
 	const ownerSession = {
@@ -1092,7 +1108,10 @@ for (const mode of ["disabled", "absent", "enabled"])
 for (const isolatedCaller of [false, true])
 	test(`BLX-VC-092 child review is local and sharing features are disabled (${isolatedCaller ? "isolated caller" : "normal caller"})`, async (t) => {
 		const fx = fixture(t, {
-			scenario: { parentNetworkNamespace: readlinkSync("/proc/self/ns/net") },
+			scenario: {
+				parentNetworkNamespace: readlinkSync("/proc/self/ns/net"),
+				linkedEvidence: "## SAMPLE-B\n\nUse sample B.\n",
+			},
 		});
 		const run = await runAdapter(t, fx, { isolatedCaller });
 		approve(fx, run);
@@ -1202,3 +1221,28 @@ for (const host of Object.keys(harnesses)) {
 			);
 		});
 }
+
+test("a stale visual projection leaves the owner stop pending", async (t) => {
+	const fx = fixture(t);
+	appendFileSync(
+		path.join(fx.plan, fx.request.visual_path),
+		"\nA previous revision.\n",
+	);
+	const out = await runAdapter(t, fx);
+	noApproval(fx, out, "rejected", "changed_package");
+});
+
+test("feedback storage cannot be the plan directory", async (t) => {
+	const fx = fixture(t);
+	fx.request.feedback_dir = fx.plan;
+	noApproval(fx, await runAdapter(t, fx), "rejected", "path_outside_package");
+	assert.ok(!existsSync(path.join(fx.plan, fx.candidate.candidate_digest)));
+});
+
+test("repository-relative inputs retain package-relative annotation names", async (t) => {
+	const fx = fixture(t, {
+		nested: true,
+		scenario: { decision: "annotated", annotations: [firstNote] },
+	});
+	changes(fx, await runAdapter(t, fx), [firstNote]);
+});

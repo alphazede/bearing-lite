@@ -148,8 +148,8 @@ test("BLX-VC-043: synthetic ambient variables and synthetic home file are inacce
 for (const [limit, limits, code] of [
 	[
 		"cpu",
-		{ cpu_seconds: 1, wall_ms: 10000 },
-		"const until = Date.now() + 5000; while (Date.now() < until) Math.sqrt(42); return true;",
+		{ cpu_seconds: 1, wall_ms: 20000 },
+		"const start = process.cpuUsage(); let used; do { used=process.cpuUsage(start); } while (used.user + used.system < 2500000); return true;",
 	],
 	[
 		"memory",
@@ -349,4 +349,15 @@ test("BLX-VC-108: limit measures combined output, retains bounded hashed evidenc
 	);
 	for (const ref of refs) assert.equal(ref.bytes, evidenceBytes(f, ref).length);
 	assert.equal(workspaceDigest(f), before);
+});
+
+test("a routine result above its byte limit stays out of the evidence store", async (t) => {
+	const f = fixture(t, { limits: { output_bytes: 4096 } });
+	const out = await run(
+		f,
+		program("text-result", 'return "sample".repeat(1000);'),
+	);
+	failure(out, "output_limit");
+	assert.ok(!out.evidence_refs.some((ref) => ref.kind === "result"));
+	await allowed(f);
 });

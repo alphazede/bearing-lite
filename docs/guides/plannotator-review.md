@@ -36,7 +36,7 @@ that grant and its granting owner decision.
   tool-acquisition policy. The pilot was built against 0.29.4.
 - Bubblewrap (`bwrap`) on Linux. The session runs with no network except
   loopback, no capabilities, a read-only system and a read-only candidate copy.
-  Plannotator sharing, remote, AI, Inbox, history and update features are off.
+  The namespace exposes the required binaries, the relay and system runtime files. The checkout and adjacent tools are outside it. The relay serves local evidence links from read-only copies of the files named by the verified visual projection. It presents linked bytes as plain text with scripting disabled. The relay adds a same-origin network policy and removes referrer information. Plannotator sharing, remote, AI, Inbox, history and update features are off.
 
 If Plannotator or `bwrap` is missing, the adapter returns
 `{"status":"fallback","reason":"unavailable"}` and the owner answers at the
@@ -77,11 +77,10 @@ including the local review address, goes to stderr.
 node tools/plannotator-adapter.mjs < request.json
 ```
 
-`feedback_dir` must be outside the plan directory. Omit `last_reviewed` for
+`feedback_dir` must be outside the plan directory. The adapter regenerates the visual view for comparison and verifies the digest and revision of a supplied previous package. Omit `last_reviewed` for
 a first review; the comparison then says `no prior review`.
 
-Over SSH, forward the owner access socket that the adapter prints on stderr
-(`Owner access socket "<path>"`) and open it in a local browser.
+Over SSH, forward a local TCP port to the Unix socket named on stderr. For example, from your client run `ssh -N -L "127.0.0.1:43121:$SOCKET" "$HOST"` with the reported remote socket path and your SSH host. Open `http://127.0.0.1:43121/` in your browser.
 
 ## Outcomes
 

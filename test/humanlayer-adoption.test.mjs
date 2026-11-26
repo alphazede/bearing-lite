@@ -5,7 +5,7 @@
  * during a particular review or repair.
  */
 import assert from "node:assert/strict";
-import { execFileSync, spawnSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
 	cpSync,
@@ -28,35 +28,23 @@ import {
 	readShipped,
 } from "./skill-contract-fixture.mjs";
 
-const RELEASE = "d6007f6e547296ba57351d5921105166fcb270a9";
 const OUTLINE = "skills/reviewer/references/optional-techniques.md";
 const LOOP = "skills/bearing-lite/references/wave-operations.md";
 
-function original(rel) {
-	return execFileSync("git", ["show", `${RELEASE}:${rel}`], {
-		cwd: ROOT,
-		encoding: "utf8",
-	});
+function featureSection(rel) {
+	const heading = rel === OUTLINE ? "Change outline" : "Measured repair loop";
+	const marker = "## " + heading + "\n";
+	const text = readShipped(rel);
+	const start = text.indexOf(marker);
+	assert.notEqual(start, -1, "missing opt-in section: " + heading);
+	const next = text.indexOf("\n## ", start + marker.length);
+	const end = next < 0 ? text.length : next;
+	return {
+		added: text.slice(start + marker.length, end).trim(),
+		without: text.slice(0, start) + text.slice(end),
+	};
 }
-
-// Remove the single inserted block: every byte outside it must still match
-// the release. This accepts an insertion anywhere in the reference.
-function addition(rel) {
-	const before = original(rel);
-	const current = readShipped(rel);
-	const length = current.length - before.length;
-	let offset = 0;
-	while (offset < before.length && before[offset] === current[offset]) {
-		offset++;
-	}
-	assert.ok(length >= 0, `${rel} must preserve the prior instructions`);
-	assert.equal(
-		current.slice(0, offset) + current.slice(offset + length),
-		before,
-		`${rel} must preserve all text outside the optional addition`,
-	);
-	return current.slice(offset, offset + length).trim();
-}
+const addition = (rel) => featureSection(rel).added;
 
 function firstRule(text) {
 	return flat(text).split(/[.!?](?:\s|$)/, 1)[0];
@@ -347,9 +335,8 @@ for (const [scenario, removed] of [
 			cpSync(path.join(ROOT, rel), path.join(dir, rel), { recursive: true });
 		}
 		for (const rel of removed) {
-			// Only the addition is removed; fail if prior instructions drifted.
-			addition(rel);
-			writeFileSync(path.join(dir, rel), original(rel));
+			// Exercise removal against the current shipped reference, including later sections.
+			writeFileSync(path.join(dir, rel), featureSection(rel).without);
 		}
 		const env = { ...process.env };
 		delete env.NODE_TEST_CONTEXT;

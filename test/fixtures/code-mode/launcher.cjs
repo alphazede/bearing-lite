@@ -69,15 +69,16 @@ async function launch(request) {
 		path: path.basename(receiptPath),
 		sha256: sha(fs.readFileSync(receiptPath)),
 	});
+	const controlFile = path.join(control, packet + ".json");
+	const settings = fs.existsSync(controlFile) ? get(controlFile) : {};
 	if (operation === "reconcile") {
+		if (settings.reconcile_unknown) return blocked("partial_effect");
 		return fs.existsSync(receiptPath)
 			? { status: "COMPLETE", receipt: ref() }
 			: { status: "NOT_STARTED" };
 	}
 	if (operation !== "dispatch") return blocked("policy_denied");
 
-	const controlFile = path.join(control, packet + ".json");
-	const settings = fs.existsSync(controlFile) ? get(controlFile) : {};
 	if (settings.invalid_output) return { status: 17 };
 	if (settings.invalid_ref) {
 		return {

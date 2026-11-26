@@ -1,5 +1,5 @@
 {
-  "ready-set": "{\"ready\":[\"B\",\"C\"],\"excluded\":[{\"slice\":\"A\",\"cause\":\"completed\"}]}",
-  "lifecycle-state": "{\"hook_class\":\"transition\",\"outcome\":\"ADVISE\",\"reason\":\"transition_allowed:READY->IN_PROGRESS\",\"recovery\":\"Proceed with the requested transition and update the project plan as the only task record\",\"enforcement\":\"procedural\"}",
-  "validate": "{\"outcome\":\"PASS\",\"stage\":\"draft\",\"manifest_digest\":\"8578f3fd433ac3c81ace3d16713dba863c08d9a32a587357d67742d757a13688\",\"findings\":[]}"
+	"ready-set": "{\"ready\":[\"B\",\"C\"],\"excluded\":[{\"slice\":\"A\",\"cause\":\"completed\"}]}",
+	"lifecycle-state": "{\"hook_class\":\"transition\",\"outcome\":\"ADVISE\",\"reason\":\"transition_allowed:READY->IN_PROGRESS\",\"recovery\":\"Proceed with the requested transition and update the project plan as the only task record\",\"enforcement\":\"procedural\"}",
+	"validate": "{\"outcome\":\"PASS\",\"stage\":\"draft\",\"manifest_digest\":\"8578f3fd433ac3c81ace3d16713dba863c08d9a32a587357d67742d757a13688\",\"findings\":[]}"
 }
