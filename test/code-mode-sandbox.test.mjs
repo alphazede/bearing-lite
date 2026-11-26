@@ -2,21 +2,28 @@
 // and a listener on an OS-selected loopback port.
 
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import { once } from "node:events";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { connect, createServer } from "node:net";
 import path from "node:path";
 import { test } from "node:test";
 import {
+	controlMode,
+	dispatchInput,
 	evidence,
 	evidenceBytes,
 	failure,
 	fixture,
+	parseOutcome,
 	program,
 	readyInput,
+	release,
 	request,
 	run,
 	sandboxSkip,
+	start,
+	waitFor,
 	workspaceDigest,
 } from "./fixtures/code-mode/fixture.mjs";
 
@@ -152,6 +159,24 @@ test("BLX-VC-043: synthetic ambient variables and synthetic home file are inacce
 	await allowed(f);
 });
 
+function sandboxScopeUnit(parentPid) {
+	for (const entry of readdirSync("/proc")) {
+		if (!/^\d+$/.test(entry)) continue;
+		try {
+			const stat = readFileSync(`/proc/${entry}/stat`, "utf8");
+			const fields = stat.slice(stat.lastIndexOf(")") + 2).split(" ");
+			if (Number(fields[1]) !== parentPid) continue;
+			const group = readFileSync(`/proc/${entry}/cgroup`, "utf8")
+				.split("\n")
+				.find((line) => line.startsWith("0::"))
+				?.slice(3);
+			const unit = group?.split("/").at(-1);
+			if (group && /^run-.*\.scope$/.test(unit)) return { group, unit };
+		} catch {}
+	}
+	return null;
+}
+
 for (const [limit, limits, code] of [
 	[
 		"cpu",
@@ -178,6 +203,49 @@ for (const [limit, limits, code] of [
 			const f = fixture(t, { limits });
 			await allowed(f);
 			const before = workspaceDigest(f);
+			if (limit === "memory") {
+				controlMode(f, "sample", { hold: "before" });
+				const active = start(
+					f,
+					program(
+						"scope-placement",
+						`await call("dispatch", ${JSON.stringify(dispatchInput("sample"))}); return true;`,
+					),
+				);
+				try {
+					await waitFor(f, "sample.ready", active);
+					const scope = sandboxScopeUnit(active.child.pid);
+					assert.ok(scope, "expected active systemd scope for sandbox child");
+					assert.ok(
+						!scope.group.includes("/app.slice/"),
+						`scope must sit outside app.slice: ${scope.group}`,
+					);
+					assert.ok(
+						scope.group.includes("/background.slice/"),
+						`scope must sit under background.slice: ${scope.group}`,
+					);
+					const props = execFileSync(
+						"systemctl",
+						[
+							"--user",
+							"show",
+							scope.unit,
+							"-p",
+							"Slice",
+							"-p",
+							"OOMPolicy",
+							"--no-pager",
+						],
+						{ encoding: "utf8" },
+					);
+					assert.match(props, /^Slice=background\.slice$/m);
+					assert.match(props, /^OOMPolicy=continue$/m);
+				} finally {
+					release(f, "sample", true);
+				}
+				failure(parseOutcome(await active.result), "cancelled");
+				assert.equal(workspaceDigest(f), before);
+			}
 			const out = await run(f, program("over-" + limit, code));
 			failure(out, "resource_limit");
 			assert.equal(out.error.limit, limit, JSON.stringify(out));
