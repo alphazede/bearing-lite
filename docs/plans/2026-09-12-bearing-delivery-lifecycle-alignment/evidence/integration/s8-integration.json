@@ -241,6 +241,7 @@
     {
       "path": "docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/evidence/assurance/s6-assurance.json",
       "sha256": "ec1d6df056dc0447cc9d62160f512e07b3f0540d64b4058677ad7d9fbb51032c",
+      "redaction_note": "Historical pre-redaction digest; s6-assurance.json was redacted on 2026-11-26 to replace a real user-home prefix with /home/<user>/.",
       "byte_identity_verified": true,
       "assessment": "Independent S6 on pre-repair tree 24b79eddc21a37460015bc63cbf046e40024bbc4f77d855142fa49282bfd0c9c; executable cases PASS; original visual INCONCLUSIVE retained."
     },
@@ -278,7 +279,7 @@
       "command": "node tools/render-dod-manifest.mjs docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/implementation.json --check",
       "exit_code": 0,
       "result": "PASS",
-      "output": "RENDER_CHECK_PASS digest=sha256:7fbcb9e36a87a3d0d5ff66f34541e78a8684231dedadec98be5feeeb841da456 output=/home/spectre/alphazede/Alphazedehq/bearing-lite/docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/bearing-delivery-lifecycle-alignment-dod-manifest.html template=1.0.0",
+      "output": "RENDER_CHECK_PASS digest=sha256:7fbcb9e36a87a3d0d5ff66f34541e78a8684231dedadec98be5feeeb841da456 output=/home/<user>/alphazede/Alphazedehq/bearing-lite/docs/plans/2026-09-12-bearing-delivery-lifecycle-alignment/bearing-delivery-lifecycle-alignment-dod-manifest.html template=1.0.0",
       "authority": "diagnostic",
       "filesystem_writes": false
     },

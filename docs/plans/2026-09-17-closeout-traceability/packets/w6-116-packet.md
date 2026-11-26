@@ -6,7 +6,7 @@ Implement one approved slice: the #116 bounded Reviewer → Repair Implementer t
 
 STATE
 Facts:
-- Baseline: commit 8be201b (W5 #113 committed). Branch main, repo /home/spectre/alphazede/Alphazedehq/bearing-lite.
+- Baseline: commit 8be201b (W5 #113 committed). Branch main, repo /home/<user>/alphazede/Alphazedehq/bearing-lite.
 - Owner decision (final): ALLOW the bounded same-session transition, owner-gated by the limits below.
 - Current state: `skills/reviewer/SKILL.md:44` says "Never implement a finding"; verdicts at lines 48-53 (`REPAIR_REQUIRED` etc.). The one-repair budget lives in `skills/bearing-lite/SKILL.md:35-37` (`max_assurance_rounds` 1, one review authorizes one repair, deterministic closure without another review) — preserve it, do not expand it.
 - Transition design (approved, implement exactly this):

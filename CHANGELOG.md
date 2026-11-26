@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Redact real user-home prefixes (`/home/<user>/` and URL-encoded equivalent) from historical plan and evidence files under `docs/plans/`, with redaction notes beside affected digest records.
 - Add optional `reviewer_repair` (`{ enabled: boolean }`) to the profile schema, catalog validators, and frozen snapshots to expose same-session Reviewer repair preauthorization as a typed field, advise in `hooks/assurance-dispatch.cjs` only when `reviewer_repair.enabled` is true and a Reviewer packet forbids repair, and document the plain-packet Reviewer repair rule across the Prompt, role-loops, Orchestrator, and Reviewer skills, task template, assurance policy, and `repair-transition.md` (scoping `repair_transition` to Assurance Test Engineer `assurance_repair`, protected planning artifacts, and legacy rounds; plus update `skills/bearing-lite/references/live-wave.md` pane-splitting behavior). ([#275](https://github.com/alphazede/bearing-lite/issues/275))
 
 ## [3.0.1](https://github.com/alphazede/bearing-lite/releases/tag/v3.0.1) - 2026-11-23

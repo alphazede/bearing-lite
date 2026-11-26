@@ -6,7 +6,7 @@ Apply the Wave A reviewer findings (one authorized repair round, docs-only).
 
 STATE
 Facts:
-- Baseline: commit bc9ef20, branch main, repo /home/spectre/alphazede/Alphazedehq/bearing-lite.
+- Baseline: commit bc9ef20, branch main, repo /home/<user>/alphazede/Alphazedehq/bearing-lite.
 - Reviewer verdict: ACCEPT_WITH_FINDINGS on candidate bc9ef20. Three findings, all doc-level, no behavior change:
   1. P2: `skills/bearing-lite/references/verification.md` "Backend activation" never documents the `proceed: "halt"` (required) vs `proceed: "proceed-with-note"` (enabled-only) divergence emitted at `hooks/verification.cjs:193` (pinned by `test/required-semantics.test.mjs:102-104`). Repair: one sentence mirroring `skills/bearing-lite/references/review-capability.md:49-50`.
   2. P3: `skills/bearing-lite/references/review-capability.md` says the controller copies `enabled` and `required` from the frozen snapshot and that legacy omission is false, but never explicitly says the parent must normalize an omitted `required` to `false` before declaring (literal `{enabled:true}` without `required` hits `capability_not_declared` via pre-existing `declarationOf` fail-closed). Repair: one clause stating the normalization.
