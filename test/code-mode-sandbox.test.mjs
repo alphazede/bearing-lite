@@ -248,6 +248,8 @@ for (const [limit, limits, code] of [
 			}
 			const out = await run(f, program("over-" + limit, code));
 			failure(out, "resource_limit");
+			assert.equal(out.status, "WAITING_ON");
+			assert.deepEqual(out.blockers, ["resource_limit"]);
 			assert.equal(out.error.limit, limit, JSON.stringify(out));
 			assert.equal(workspaceDigest(f), before);
 		},
