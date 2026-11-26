@@ -738,6 +738,33 @@ function changes(fx, run, notes) {
 	);
 }
 
+// Observed counts: fixture gate invocations and served review gates from the
+// relayed fixture output; owner stops, decisions and grants from the files.
+function gateCounts(fx, run) {
+	const journey = readJson(path.join(fx.plan, "journey.json"));
+	const envelope = readJson(path.join(fx.plan, "authority.json"));
+	return {
+		invocations: run.stderr.match(/Fixture invocation\r?\n/g)?.length ?? 0,
+		gatesOpened:
+			run.stderr.match(/Review ready at http:\/\/127\.0\.0\.1:\d+\//g)
+				?.length ?? 0,
+		ownerStops: [...journey.open_decisions, ...journey.decisions].filter(
+			({ record_type }) => record_type === "owner_stop",
+		).length,
+		pendingStops: journey.open_decisions.filter(
+			(stop) =>
+				stop.id === fx.stop.id && evaluateOwnerStop(stop).disposition === "ASK",
+		).length,
+		decisionsRecorded: journey.decisions.length - fx.journey.decisions.length,
+		grantsRecorded:
+			envelope.granting_owner_decisions.length -
+			fx.envelope.granting_owner_decisions.length,
+		approveIntents: run.records.filter(({ kind }) => kind === "approve_intent")
+			.length,
+		answers: run.result.answer ? 1 : 0,
+	};
+}
+
 function displayFixture(fx) {
 	const snap = path.join(fx.scratch, "display");
 	mkdirSync(snap);
@@ -1118,10 +1145,22 @@ for (const isolatedCaller of [false, true])
 		assert.match(run.stderr, /http:\/\/127\.0\.0\.1:\d+\//);
 	});
 
-for (const [title, note] of [
-	["parent path", { ...firstNote, file: "../sample-outside.md" }],
-	["unknown path", { ...firstNote, file: "unknown.md" }],
-	["oversized note", { ...firstNote, body: "x".repeat(1024 * 1024) }],
+for (const [title, note, reason] of [
+	[
+		"parent path",
+		{ ...firstNote, file: "../sample-outside.md" },
+		"path_outside_package",
+	],
+	[
+		"unknown path",
+		{ ...firstNote, file: "unknown.md" },
+		"unmappable_annotation",
+	],
+	[
+		"oversized note",
+		{ ...firstNote, body: "x".repeat(1024 * 1024) },
+		"oversized_feedback",
+	],
 ])
 	test(`BLX-VC-093 refuses ${title}`, async (t) => {
 		const fx = fixture(t, {
@@ -1132,10 +1171,174 @@ for (const [title, note] of [
 			"Unrelated synthetic specimen.\n",
 		);
 		const run = await runAdapter(t, fx);
-		noApproval(fx, run, "rejected");
-		assert.ok(run.result.reason);
+		noApproval(fx, run, "rejected", reason);
 		assert.equal(run.records.length, 0);
 	});
+
+// Deterministic generator (mulberry32): a failing variant reproduces from its seed.
+function seeded(seed) {
+	let state = seed;
+	return () => {
+		state = (state + 0x6d2b79f5) | 0;
+		let x = Math.imul(state ^ (state >>> 15), 1 | state);
+		x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x;
+		return ((x ^ (x >>> 14)) >>> 0) / 2 ** 32;
+	};
+}
+
+test("BLX-VC-093 generated path and payload variants are refused with their typed reason", async (t) => {
+	const seed = 0x5eed093;
+	const random = seeded(seed);
+	const pick = (items) => items[Math.floor(random() * items.length)];
+	const count = (low, high) => low + Math.floor(random() * (high - low + 1));
+	const fx = fixture(t);
+	const outside = path.join(fx.dir, "sample-outside.md");
+	writeFileSync(outside, "Unrelated synthetic specimen.\n");
+	const targets = [
+		"authority.json",
+		"journey.json",
+		"plan.md",
+		"sample-outside.md",
+		"plan/authority.json",
+	];
+	const traversal = () =>
+		pick(["", "./", "sub/", "plan/"]) +
+		`..${pick(["/", "\\"])}`.repeat(count(1, 3)) +
+		pick(targets);
+	const markup = ["<script>", "</div>", "&", "<img src=x>", "\"'", "${x}"];
+	const annotation = [
+		...Array.from({ length: 6 }, () => [
+			"traversal",
+			{ ...firstNote, file: traversal() },
+			"path_outside_package",
+		]),
+		// An absolute path names no displayed file; it is unmappable, not opened.
+		...Array.from({ length: 3 }, () => [
+			"absolute path",
+			{
+				...firstNote,
+				file: pick([
+					outside,
+					path.join(fx.plan, "authority.json"),
+					path.join(fx.plan, "plan.md"),
+					"/etc/hostname",
+				]),
+			},
+			"unmappable_annotation",
+		]),
+		...Array.from({ length: 3 }, () => [
+			"oversized body",
+			{ ...firstNote, body: "x".repeat(count(1, 4) * 1024 * 1024) },
+			"oversized_feedback",
+		]),
+		...Array.from({ length: 3 }, () => {
+			const [field, value] = pick([
+				["line", "three"],
+				["line", null],
+				["line", 3.5],
+				["file", 42],
+				["file", true],
+			]);
+			return [
+				`wrong-typed ${field}`,
+				{ ...firstNote, [field]: value },
+				"unmappable_annotation",
+			];
+		}),
+		// Accepted control: markup within the size bound is stored as escaped data.
+		...Array.from({ length: 2 }, () => [
+			"markup body",
+			{
+				...firstNote,
+				body: `${Array.from({ length: count(2, 6) }, () => pick(markup)).join(" ")} ${"y".repeat(count(1, 8) * 1024)}`,
+			},
+			null,
+		]),
+	];
+	const request = [
+		["plan_dir", (r) => Object.assign(r, { plan_dir: 7 }), "invalid_request"],
+		[
+			"visual_path",
+			(r) => Object.assign(r, { visual_path: pick([7, [view], { view }]) }),
+			"invalid_request",
+		],
+		[
+			"candidate_ref",
+			(r) =>
+				Object.assign(r.candidate, { candidate_ref: pick([7, ["sample"]]) }),
+			"invalid_request",
+		],
+		[
+			"feedback_dir",
+			(r) => Object.assign(r, { feedback_dir: pick([7, "", [fx.feedback]]) }),
+			"path_outside_package",
+		],
+		[
+			"owner_identity",
+			(r) =>
+				Object.assign(r.owner_session, { owner_identity: pick([7, "", null]) }),
+			"missing_owner_identity",
+		],
+		[
+			"owner_stop_id",
+			(r) => Object.assign(r, { owner_stop_id: pick([7, [fx.stop.id]]) }),
+			"absent_stop",
+		],
+	];
+	const original = structuredClone(fx.request);
+	const plan = tree(fx.plan);
+	// Each variant starts from an empty store, so its records are its own.
+	const store = path.join(fx.feedback, fx.candidate.candidate_digest);
+	t.beforeEach(() => rmSync(store, { recursive: true, force: true }));
+	for (const [kind, note, reason] of annotation)
+		await t.test(
+			`${kind} ${JSON.stringify({ file: note.file, line: note.line, bytes: note.body.length })} (seed ${seed})`,
+			async (st) => {
+				makeFake(
+					fx.bin,
+					sessionFixture(fx.plan, {
+						decision: "annotated",
+						annotations: [note],
+					}),
+				);
+				const run = await runAdapter(st, fx);
+				const counts = gateCounts(fx, run);
+				assert.equal(counts.gatesOpened, 1);
+				assert.equal(counts.decisionsRecorded, 0);
+				if (!reason) {
+					noApproval(fx, run, "changes_requested");
+					assert.equal(run.records.length, 1);
+					const stored = run.records[0].body;
+					assert.ok(!/[<>]/.test(stored), "Markup stored as escaped data");
+					assert.equal(
+						stored
+							.replaceAll("&lt;", "<")
+							.replaceAll("&gt;", ">")
+							.replaceAll("&amp;", "&"),
+						note.body,
+					);
+					return;
+				}
+				noApproval(fx, run, "rejected", reason);
+				assert.equal(run.records.length, 0, JSON.stringify(note.file));
+			},
+		);
+	for (const [field, modify, reason] of request)
+		await t.test(`wrong-typed ${field} (seed ${seed})`, async (st) => {
+			fx.request = structuredClone(original);
+			modify(fx.request);
+			const run = await runAdapter(st, fx);
+			noApproval(fx, run, "rejected", reason);
+			assert.equal(run.records.length, 0);
+			assert.equal(gateCounts(fx, run).gatesOpened, 0, "Refused before review");
+		});
+	fx.request = original;
+	assert.deepEqual(tree(fx.plan), plan, "Package and authority unchanged");
+	assert.equal(
+		readFileSync(outside, "utf8"),
+		"Unrelated synthetic specimen.\n",
+	);
+});
 
 test("BLX-VC-093 instruction-like wording and markup stay inert feedback", async (t) => {
 	const fx = fixture(t, {
@@ -1214,11 +1417,20 @@ for (const host of Object.keys(harnesses)) {
 			const after = readJson(path.join(fx.plan, "journey.json"));
 			assert.equal(after.open_decisions.length, 1);
 			assert.equal(after.open_decisions[0].id, fx.stop.id);
-			assert.equal(after.decisions.length, 0);
-			assert.equal(
-				evaluateOwnerStop(after.open_decisions[0]).disposition,
-				"ASK",
-			);
+			// One gate opened by this run, the one existing stop still pending, and
+			// no owner decision or grant recorded by the adapter.
+			const approved = run.result.status === "answer_delivered" ? 1 : 0;
+			assert.deepEqual(gateCounts(fx, run), {
+				invocations: 1,
+				gatesOpened: 1,
+				ownerStops: 1,
+				pendingStops: 1,
+				decisionsRecorded: 0,
+				grantsRecorded: 0,
+				approveIntents: approved,
+				answers: approved,
+			});
+			assert.equal(approved, ["094", "099"].includes(caseId) ? 1 : 0);
 		});
 }
 
