@@ -249,6 +249,7 @@ const CAPABILITIES = {
 				role: str,
 				packet: str,
 				write_set: { ...strings, minItems: 1 },
+				packet_sha256: { type: "string", pattern: "^[a-f0-9]{64}$" },
 			},
 		},
 		output: {
@@ -588,6 +589,65 @@ async function adapter(command, payload) {
 	}
 }
 
+function resolvePacketDigest(ctx, input) {
+	if (input.role.includes("\0") || input.packet.includes("\0"))
+		throw new Fail("schema_error");
+	const packetPath = path.isAbsolute(input.packet)
+		? input.packet
+		: path.resolve(ctx.workspace, input.packet);
+	let bytes = null;
+	try {
+		if (fs.statSync(packetPath).isFile()) bytes = fs.readFileSync(packetPath);
+	} catch {
+		/* non-file packet identifier in mock tests */
+	}
+	if (bytes !== null) {
+		const actual = sha(bytes);
+		if (input.packet_sha256 && input.packet_sha256 !== actual)
+			throw new Fail("grant_mismatch");
+		return actual;
+	}
+	if (ctx.grant_path !== undefined || ctx.grant_sha256 !== undefined)
+		throw new Fail("grant_mismatch");
+	return input.packet_sha256 ?? sha(Buffer.from(input.packet, "utf8"));
+}
+
+function sameNormalizedWrites(left, right) {
+	if (left.length !== right.length) return false;
+	const a = [...left].sort();
+	const b = [...right].sort();
+	return a.every((entry, i) => entry === b[i]);
+}
+
+function verifyGrant(ctx, input, writeSet, packetSha256) {
+	if (ctx.grant_path === undefined && ctx.grant_sha256 === undefined) return;
+	if (!ctx.grant_path || !ctx.grant_sha256) throw new Fail("grant_mismatch");
+	let grant = null;
+	try {
+		const raw = fs.readFileSync(ctx.grant_path);
+		if (sha(raw) !== ctx.grant_sha256) throw new Fail("grant_mismatch");
+		grant = JSON.parse(raw.toString("utf8"));
+	} catch (error) {
+		if (error instanceof Fail) throw error;
+		throw new Fail("grant_mismatch");
+	}
+	const grantWrites = Array.isArray(grant?.write_set)
+		? grant.write_set.map(normalizeRelativePath)
+		: null;
+	if (
+		!isObject(grant) ||
+		grant.binding_sha256 !== ctx.binding_sha256 ||
+		grant.role !== input.role ||
+		grant.packet_sha256 !== packetSha256 ||
+		(grant.session_id !== undefined && grant.session_id !== ctx.session_id) ||
+		!grantWrites?.length ||
+		grantWrites.some((entry) => entry === null) ||
+		!sameNormalizedWrites(grantWrites, writeSet)
+	) {
+		throw new Fail("grant_mismatch");
+	}
+}
+
 function authorize(ctx, input) {
 	if (!ctx.binding_path || !ctx.binding_sha256)
 		throw new Fail("binding_required");
@@ -618,7 +678,9 @@ function authorize(ctx, input) {
 			(own) => own === entry || (own.endsWith("/") && entry.startsWith(own)),
 		);
 	if (!normalized.every(covered)) throw new Fail("write_set_denied");
-	return normalized;
+	const packetSha256 = resolvePacketDigest(ctx, input);
+	verifyGrant(ctx, input, normalized, packetSha256);
+	return { writeSet: normalized, packetSha256 };
 }
 
 // Write grants describe names, not aliases. Missing suffixes are valid for
@@ -644,15 +706,20 @@ function writePathSafe(base, entry) {
 
 // Journal before the effect; on resume, ask the launcher what durably happened.
 async function runDispatch(ctx, input, state, key) {
-	const writeSet = authorize(ctx, input);
+	const { writeSet, packetSha256 } = authorize(ctx, input);
 	const file = journalFile(ctx, "call", key);
 	const recorded = read(file);
 	if (recorded?.state === "done") return recorded.result;
 	const bound = {
 		...input,
 		write_set: writeSet,
+		packet_sha256: packetSha256,
 		binding_path: ctx.binding_path,
 		binding_sha256: ctx.binding_sha256,
+		idempotency_key: key,
+		...(ctx.grant_path
+			? { grant_path: ctx.grant_path, grant_sha256: ctx.grant_sha256 }
+			: {}),
 	};
 	acquire(ctx.lock_path);
 	try {
@@ -670,6 +737,7 @@ async function runDispatch(ctx, input, state, key) {
 				put(file, { state: "done", result: observed });
 				return observed;
 			}
+			if (observed?.status !== "NOT_STARTED") return observed;
 		}
 		put(file, { state: "started" });
 		const result = await adapter(ctx.launcher, {
