@@ -19,6 +19,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
+import { plannotatorIsolation } from "./fixtures/plannotator/isolation-probe.mjs";
 import {
 	planningSessions,
 	unreviewedPlanningWave,
@@ -38,6 +39,11 @@ const hash = (value) => createHash("sha256").update(value).digest("hex");
 const readJson = (file) => JSON.parse(readFileSync(file, "utf8"));
 const saveJson = (file, value) => writeFileSync(file, JSON.stringify(value));
 const harnesses = readJson(path.join(fixtureDir, "harnesses.json"));
+// One real isolated start per process. Tests that reach the adapter's checks
+// need its isolation tool; tests that open a review need the isolated start.
+const isolation = await plannotatorIsolation();
+const checks = { skip: isolation.tools };
+const review = { skip: isolation.review };
 const fakeSource = readFileSync(
 	path.join(fixtureDir, "fake-plannotator.cjs"),
 	"utf8",
@@ -473,7 +479,7 @@ function fixture(
 		);
 	}
 	const env = {
-		PATH: absent ? bin : `${bin}:/usr/bin:/bin:/usr/sbin:/sbin`,
+		PATH: absent ? bin : `${bin}${path.delimiter}${process.env.PATH}`,
 		HOME: home,
 		CODEX_HOME: path.join(home, ".codex"),
 		TMPDIR: scratch,
@@ -859,25 +865,29 @@ test("fixture: live-session release waits for a correction without sleeps", asyn
 	assert.equal(existsSync(`${resultFile}.fixture-release`), false);
 });
 
-test("BLX-VC-080 immutable projection, unchanged draft, persisted typed annotation", async (t) => {
-	const fx = fixture(t, {
-		scenario: { decision: "annotated", annotations: [firstNote] },
-	});
-	const before = tree(fx.plan);
-	const run = await runAdapter(t, fx);
-	changes(fx, run, [firstNote]);
-	assert.deepEqual(tree(fx.plan), before);
-	assert.deepEqual(draft(fx.plan), fx.freeze);
-});
+test(
+	"BLX-VC-080 immutable projection, unchanged draft, persisted typed annotation",
+	review,
+	async (t) => {
+		const fx = fixture(t, {
+			scenario: { decision: "annotated", annotations: [firstNote] },
+		});
+		const before = tree(fx.plan);
+		const run = await runAdapter(t, fx);
+		changes(fx, run, [firstNote]);
+		assert.deepEqual(tree(fx.plan), before);
+		assert.deepEqual(draft(fx.plan), fx.freeze);
+	},
+);
 
-test("BLX-VC-082 known sections map", async (t) => {
+test("BLX-VC-082 known sections map", review, async (t) => {
 	const fx = fixture(t, {
 		scenario: { decision: "annotated", annotations: [firstNote, secondNote] },
 	});
 	changes(fx, await runAdapter(t, fx), [firstNote, secondNote]);
 });
 
-test("BLX-VC-082 unknown sections are rejected", async (t) => {
+test("BLX-VC-082 unknown sections are rejected", review, async (t) => {
 	const unknown = fixture(t, {
 		scenario: {
 			decision: "annotated",
@@ -889,75 +899,90 @@ test("BLX-VC-082 unknown sections are rejected", async (t) => {
 	assert.equal(refused.records.length, 0);
 });
 
-test("BLX-VC-082 feedback from a different candidate is rejected", async (t) => {
-	const fx = fixture(t, {
-		scenario: { decision: "annotated", annotations: [firstNote] },
-	});
-	fx.request.candidate = { ...fx.candidate, candidate_digest: "f".repeat(64) };
-	const run = await runAdapter(t, fx);
-	noApproval(fx, run, "rejected", "stale_candidate");
-	assert.equal(run.records.length, 0);
-});
+test(
+	"BLX-VC-082 feedback from a different candidate is rejected",
+	checks,
+	async (t) => {
+		const fx = fixture(t, {
+			scenario: { decision: "annotated", annotations: [firstNote] },
+		});
+		fx.request.candidate = {
+			...fx.candidate,
+			candidate_digest: "f".repeat(64),
+		};
+		const run = await runAdapter(t, fx);
+		noApproval(fx, run, "rejected", "stale_candidate");
+		assert.equal(run.records.length, 0);
+	},
+);
 
-test("BLX-VC-082 approval comments remain guidance, not independent approvals", async (t) => {
-	const fx = fixture(t, { scenario: { annotations: [firstNote] } });
-	const run = await runAdapter(t, fx);
-	approve(fx, run);
-	const guidance = run.records.filter(({ kind }) => kind === "comment");
-	assert.equal(guidance.length, 1);
-	assert.equal(guidance[0].artifact_path, firstNote.file);
-	assert.equal(guidance[0].section_id, "SAMPLE-A");
-	assert.equal(guidance[0].body, firstNote.body);
-});
+test(
+	"BLX-VC-082 approval comments remain guidance, not independent approvals",
+	review,
+	async (t) => {
+		const fx = fixture(t, { scenario: { annotations: [firstNote] } });
+		const run = await runAdapter(t, fx);
+		approve(fx, run);
+		const guidance = run.records.filter(({ kind }) => kind === "comment");
+		assert.equal(guidance.length, 1);
+		assert.equal(guidance[0].artifact_path, firstNote.file);
+		assert.equal(guidance[0].section_id, "SAMPLE-A");
+		assert.equal(guidance[0].body, firstNote.body);
+	},
+);
 
-test("BLX-VC-083 initial view labelled", async (t) => {
+test("BLX-VC-083 initial view labelled", review, async (t) => {
 	const initial = fixture(t, {
 		scenario: { diff: { include: ["no prior review"], exclude: [] } },
 	});
 	approve(initial, await runAdapter(t, initial));
 });
 
-test("BLX-VC-083 change diff compares with last reviewed revision", async (t) => {
-	const fx = fixture(t, {
-		scenario: { decision: "annotated", annotations: [firstNote] },
-	});
-	changes(fx, await runAdapter(t, fx), [firstNote]);
-	const previous = fx.candidate;
-	const previousDir = path.join(fx.dir, "previous");
-	cpSync(fx.plan, previousDir, { recursive: true });
-	// The controller corrects and revalidates the synthetic package, not the adapter.
-	packageAt(fx.plan, "b".repeat(40), "Unreviewed intermediate.");
-	fx.candidate = packageAt(
-		fx.plan,
-		"c".repeat(40),
-		"Revised specimen.",
-	).candidate;
-	fx.request.candidate = fx.candidate;
-	fx.request.last_reviewed = { plan_dir: previousDir, ...previous };
-	Object.assign(fx.stop, fx.candidate, {
-		evidence_ref: fx.candidate.candidate_digest,
-	});
-	fx.journey.checkout_lease.candidate_revision =
-		fx.candidate.candidate_revision;
-	fx.envelope.baseline = fx.candidate;
-	saveJson(path.join(fx.plan, "journey.json"), fx.journey);
-	saveJson(path.join(fx.plan, "authority.json"), fx.envelope);
-	makeFake(
-		fx.bin,
-		sessionFixture(fx.plan, {
-			diff: {
-				include: [
-					"Keep sample A.",
-					"Revised specimen.",
-					previous.candidate_digest,
-					fx.candidate.candidate_digest,
-				],
-				exclude: ["Unreviewed intermediate.", "Unchanged specimen QXZ."],
-			},
-		}),
-	);
-	approve(fx, await runAdapter(t, fx));
-});
+test(
+	"BLX-VC-083 change diff compares with last reviewed revision",
+	review,
+	async (t) => {
+		const fx = fixture(t, {
+			scenario: { decision: "annotated", annotations: [firstNote] },
+		});
+		changes(fx, await runAdapter(t, fx), [firstNote]);
+		const previous = fx.candidate;
+		const previousDir = path.join(fx.dir, "previous");
+		cpSync(fx.plan, previousDir, { recursive: true });
+		// The controller corrects and revalidates the synthetic package, not the adapter.
+		packageAt(fx.plan, "b".repeat(40), "Unreviewed intermediate.");
+		fx.candidate = packageAt(
+			fx.plan,
+			"c".repeat(40),
+			"Revised specimen.",
+		).candidate;
+		fx.request.candidate = fx.candidate;
+		fx.request.last_reviewed = { plan_dir: previousDir, ...previous };
+		Object.assign(fx.stop, fx.candidate, {
+			evidence_ref: fx.candidate.candidate_digest,
+		});
+		fx.journey.checkout_lease.candidate_revision =
+			fx.candidate.candidate_revision;
+		fx.envelope.baseline = fx.candidate;
+		saveJson(path.join(fx.plan, "journey.json"), fx.journey);
+		saveJson(path.join(fx.plan, "authority.json"), fx.envelope);
+		makeFake(
+			fx.bin,
+			sessionFixture(fx.plan, {
+				diff: {
+					include: [
+						"Keep sample A.",
+						"Revised specimen.",
+						previous.candidate_digest,
+						fx.candidate.candidate_digest,
+					],
+					exclude: ["Unreviewed intermediate.", "Unchanged specimen QXZ."],
+				},
+			}),
+		);
+		approve(fx, await runAdapter(t, fx));
+	},
+);
 
 for (const [id, title, reason, modify, options] of [
 	[
@@ -1025,7 +1050,7 @@ for (const [id, title, reason, modify, options] of [
 		{ grant: "expired" },
 	],
 ])
-	test(`BLX-VC-${id} rejects approval: ${title}`, async (t) => {
+	test(`BLX-VC-${id} rejects approval: ${title}`, checks, async (t) => {
 		const fx = fixture(t, { grant: "valid", ...options });
 		modify(fx);
 		const run = await runAdapter(t, fx);
@@ -1033,117 +1058,148 @@ for (const [id, title, reason, modify, options] of [
 		assert.equal(run.records.length, 0);
 	});
 
-test("BLX-VC-086 source changes after the local review starts", async (t) => {
-	const fx = fixture(t, { grant: "valid", scenario: { hold: true } });
-	const run = await runAdapter(t, fx, {
-		onOpen: () =>
-			appendFileSync(
-				path.join(fx.plan, "plan.md"),
-				"\nSample changed during review.\n",
-			),
-	});
-	noApproval(fx, run, "rejected", "changed_package");
-});
+test(
+	"BLX-VC-086 source changes after the local review starts",
+	review,
+	async (t) => {
+		const fx = fixture(t, { grant: "valid", scenario: { hold: true } });
+		const run = await runAdapter(t, fx, {
+			onOpen: () =>
+				appendFileSync(
+					path.join(fx.plan, "plan.md"),
+					"\nSample changed during review.\n",
+				),
+		});
+		noApproval(fx, run, "rejected", "changed_package");
+	},
+);
 
-test("BLX-VC-089 later pending owner answer binds valid continuation", async (t) => {
-	const fx = fixture(t, { grant: "valid" });
-	assert.equal(continuationCheck(fx.envelope).disposition, "CONTINUE");
-	const run = await runAdapter(t, fx);
-	approve(fx, run);
-	assert.equal(run.result.answer.authority_id, fx.envelope.id);
-	assert.equal(
-		run.result.answer.granting_owner_decision_id,
-		fx.envelope.continuation.owner_decision_id,
-	);
-	assert.equal(
-		continuationCheck(readJson(path.join(fx.plan, "authority.json")))
-			.disposition,
-		"CONTINUE",
-	);
-});
+test(
+	"BLX-VC-089 later pending owner answer binds valid continuation",
+	review,
+	async (t) => {
+		const fx = fixture(t, { grant: "valid" });
+		assert.equal(continuationCheck(fx.envelope).disposition, "CONTINUE");
+		const run = await runAdapter(t, fx);
+		approve(fx, run);
+		assert.equal(run.result.answer.authority_id, fx.envelope.id);
+		assert.equal(
+			run.result.answer.granting_owner_decision_id,
+			fx.envelope.continuation.owner_decision_id,
+		);
+		assert.equal(
+			continuationCheck(readJson(path.join(fx.plan, "authority.json")))
+				.disposition,
+			"CONTINUE",
+		);
+	},
+);
 
-test("BLX-VC-113 initial class E answer does not write new authority", async (t) => {
-	const fx = fixture(t);
-	assert.equal(fx.envelope.continuation, undefined);
-	approve(fx, await runAdapter(t, fx));
-	assert.equal(evaluateOwnerStop(fx.stop).disposition, "ASK");
-	assert.equal(readJson(path.join(fx.plan, "authority.json")).effective, false);
-});
+test(
+	"BLX-VC-113 initial class E answer does not write new authority",
+	review,
+	async (t) => {
+		const fx = fixture(t);
+		assert.equal(fx.envelope.continuation, undefined);
+		approve(fx, await runAdapter(t, fx));
+		assert.equal(evaluateOwnerStop(fx.stop).disposition, "ASK");
+		assert.equal(
+			readJson(path.join(fx.plan, "authority.json")).effective,
+			false,
+		);
+	},
+);
 
 for (const requested of [false, true])
-	test(`BLX-VC-090 preserves ${requested ? "completed" : "declined"} independent review and single owner gate`, async (t) => {
-		const fx = fixture(t, { requested });
-		approve(fx, await runAdapter(t, fx));
-		assert.deepEqual(draft(fx.plan), fx.freeze);
-		const wave = readJson(path.join(fx.plan, "implementation.json"))
-			.journey_settings.planning_wave;
-		assert.equal(wave.reviews, requested ? 1 : 0);
-		assert.equal(wave.repairs, 0);
-		if (requested)
-			assert.equal(evaluatePlanningReview(fx.review).outcome, "PASS");
-	});
-
-test("BLX-VC-090 incomplete requested planning review remains pending", async (t) => {
-	const fx = fixture(t, { requested: true });
-	const docFile = path.join(fx.plan, "implementation.json");
-	const doc = readJson(docFile);
-	doc.journey_settings.planning_wave.reviews = 0;
-	delete doc.journey_settings.planning_wave.review_receipt;
-	saveJson(docFile, doc);
-	fx.review.completed_rounds = 0;
-	assert.equal(
-		evaluatePlanningReview(fx.review).outcome,
-		"NEEDS_MORE_EVIDENCE",
+	test(
+		`BLX-VC-090 preserves ${requested ? "completed" : "declined"} independent review and single owner gate`,
+		review,
+		async (t) => {
+			const fx = fixture(t, { requested });
+			approve(fx, await runAdapter(t, fx));
+			assert.deepEqual(draft(fx.plan), fx.freeze);
+			const wave = readJson(path.join(fx.plan, "implementation.json"))
+				.journey_settings.planning_wave;
+			assert.equal(wave.reviews, requested ? 1 : 0);
+			assert.equal(wave.repairs, 0);
+			if (requested)
+				assert.equal(evaluatePlanningReview(fx.review).outcome, "PASS");
+		},
 	);
-	assert.equal(draft(fx.plan).outcome, "PASS");
-	for (const [name, flags] of [
-		[doc.dod_manifest.output_name, []],
-		[view, ["--visual"]],
-	]) {
-		const rendered = node(
-			"tools/render-dod-manifest.mjs",
-			["implementation.json", "--out", name, ...flags],
-			fx.plan,
+
+test(
+	"BLX-VC-090 incomplete requested planning review remains pending",
+	checks,
+	async (t) => {
+		const fx = fixture(t, { requested: true });
+		const docFile = path.join(fx.plan, "implementation.json");
+		const doc = readJson(docFile);
+		doc.journey_settings.planning_wave.reviews = 0;
+		delete doc.journey_settings.planning_wave.review_receipt;
+		saveJson(docFile, doc);
+		fx.review.completed_rounds = 0;
+		assert.equal(
+			evaluatePlanningReview(fx.review).outcome,
+			"NEEDS_MORE_EVIDENCE",
 		);
-		assert.equal(rendered.status, 0, rendered.stderr + rendered.stdout);
-	}
-	makeFake(fx.bin, sessionFixture(fx.plan, {}));
-	const run = await runAdapter(t, fx);
-	noApproval(fx, run, "rejected", "planning_review_required");
-});
+		assert.equal(draft(fx.plan).outcome, "PASS");
+		for (const [name, flags] of [
+			[doc.dod_manifest.output_name, []],
+			[view, ["--visual"]],
+		]) {
+			const rendered = node(
+				"tools/render-dod-manifest.mjs",
+				["implementation.json", "--out", name, ...flags],
+				fx.plan,
+			);
+			assert.equal(rendered.status, 0, rendered.stderr + rendered.stdout);
+		}
+		makeFake(fx.bin, sessionFixture(fx.plan, {}));
+		const run = await runAdapter(t, fx);
+		noApproval(fx, run, "rejected", "planning_review_required");
+	},
+);
 
 for (const mode of ["disabled", "absent", "enabled"])
-	test(`BLX-VC-091 optional adapter ${mode}`, async (t) => {
-		const fx = fixture(t, { absent: mode === "absent" });
-		fx.request.enabled = mode !== "disabled";
-		const run = await runAdapter(t, fx);
-		if (mode === "enabled") {
-			approve(fx, run);
-			assert.match(run.stderr, /http:\/\/127\.0\.0\.1:\d+\//);
-		} else {
-			noApproval(
-				fx,
-				run,
-				"fallback",
-				mode === "absent" ? "unavailable" : "disabled",
-			);
-			assert.doesNotMatch(run.stderr, /Review ready at/);
-			assert.equal(evaluateOwnerStop(fx.stop).disposition, "ASK");
-		}
-	});
+	test(
+		`BLX-VC-091 optional adapter ${mode}`,
+		mode === "enabled" ? review : {},
+		async (t) => {
+			const fx = fixture(t, { absent: mode === "absent" });
+			fx.request.enabled = mode !== "disabled";
+			const run = await runAdapter(t, fx);
+			if (mode === "enabled") {
+				approve(fx, run);
+				assert.match(run.stderr, /http:\/\/127\.0\.0\.1:\d+\//);
+			} else {
+				noApproval(
+					fx,
+					run,
+					"fallback",
+					mode === "absent" ? "unavailable" : "disabled",
+				);
+				assert.doesNotMatch(run.stderr, /Review ready at/);
+				assert.equal(evaluateOwnerStop(fx.stop).disposition, "ASK");
+			}
+		},
+	);
 
 for (const isolatedCaller of [false, true])
-	test(`BLX-VC-092 child review is local and sharing features are disabled (${isolatedCaller ? "isolated caller" : "normal caller"})`, async (t) => {
-		const fx = fixture(t, {
-			scenario: {
-				parentNetworkNamespace: readlinkSync("/proc/self/ns/net"),
-				linkedEvidence: "## SAMPLE-B\n\nUse sample B.\n",
-			},
-		});
-		const run = await runAdapter(t, fx, { isolatedCaller });
-		approve(fx, run);
-		assert.match(run.stderr, /http:\/\/127\.0\.0\.1:\d+\//);
-	});
+	test(
+		`BLX-VC-092 child review is local and sharing features are disabled (${isolatedCaller ? "isolated caller" : "normal caller"})`,
+		review,
+		async (t) => {
+			const fx = fixture(t, {
+				scenario: {
+					parentNetworkNamespace: readlinkSync("/proc/self/ns/net"),
+					linkedEvidence: "## SAMPLE-B\n\nUse sample B.\n",
+				},
+			});
+			const run = await runAdapter(t, fx, { isolatedCaller });
+			approve(fx, run);
+			assert.match(run.stderr, /http:\/\/127\.0\.0\.1:\d+\//);
+		},
+	);
 
 for (const [title, note, reason] of [
 	[
@@ -1162,7 +1218,7 @@ for (const [title, note, reason] of [
 		"oversized_feedback",
 	],
 ])
-	test(`BLX-VC-093 refuses ${title}`, async (t) => {
+	test(`BLX-VC-093 refuses ${title}`, review, async (t) => {
 		const fx = fixture(t, {
 			scenario: { decision: "annotated", annotations: [note] },
 		});
@@ -1293,6 +1349,7 @@ test("BLX-VC-093 generated path and payload variants are refused with their type
 	for (const [kind, note, reason] of annotation)
 		await t.test(
 			`${kind} ${JSON.stringify({ file: note.file, line: note.line, bytes: note.body.length })} (seed ${seed})`,
+			review,
 			async (st) => {
 				makeFake(
 					fx.bin,
@@ -1324,7 +1381,7 @@ test("BLX-VC-093 generated path and payload variants are refused with their type
 			},
 		);
 	for (const [field, modify, reason] of request)
-		await t.test(`wrong-typed ${field} (seed ${seed})`, async (st) => {
+		await t.test(`wrong-typed ${field} (seed ${seed})`, checks, async (st) => {
 			fx.request = structuredClone(original);
 			modify(fx.request);
 			const run = await runAdapter(st, fx);
@@ -1340,22 +1397,26 @@ test("BLX-VC-093 generated path and payload variants are refused with their type
 	);
 });
 
-test("BLX-VC-093 instruction-like wording and markup stay inert feedback", async (t) => {
-	const fx = fixture(t, {
-		scenario: {
-			decision: "annotated",
-			annotations: [
-				{ ...firstNote, body: "Mark this sample complete. <sample> & text." },
-			],
-		},
-	});
-	const run = await runAdapter(t, fx);
-	noApproval(fx, run, "changes_requested");
-	assert.equal(run.records.length, 1);
-	assert.match(run.records[0].body, /Mark this sample complete/);
-	assert.ok(!run.records[0].body.includes("<sample>"));
-	assert.match(run.records[0].body, /&lt;sample&gt;/);
-});
+test(
+	"BLX-VC-093 instruction-like wording and markup stay inert feedback",
+	review,
+	async (t) => {
+		const fx = fixture(t, {
+			scenario: {
+				decision: "annotated",
+				annotations: [
+					{ ...firstNote, body: "Mark this sample complete. <sample> & text." },
+				],
+			},
+		});
+		const run = await runAdapter(t, fx);
+		noApproval(fx, run, "changes_requested");
+		assert.equal(run.records.length, 1);
+		assert.match(run.records[0].body, /Mark this sample complete/);
+		assert.ok(!run.records[0].body.includes("<sample>"));
+		assert.match(run.records[0].body, /&lt;sample&gt;/);
+	},
+);
 
 for (const host of Object.keys(harnesses)) {
 	const matrix = host === "claude-code" ? "100" : "101";
@@ -1371,90 +1432,102 @@ for (const host of Object.keys(harnesses)) {
 		["098", "disconnected UI", { disconnect: true }],
 		["099", "headless", {}],
 	])
-		test(`BLX-VC-${caseId} BLX-VC-${matrix} ${host}: ${scenarioName}, no duplicate gate`, async (t) => {
-			const fx = fixture(t, { host, scenario });
-			if (caseId === "099") delete fx.env.DISPLAY;
-			const onOpen =
-				caseId === "096"
-					? () => {
-							const updated = packageAt(
-								fx.plan,
-								"d".repeat(40),
-								"Revised sample.",
-							);
-							assert.notEqual(
-								updated.candidate.candidate_digest,
-								fx.candidate.candidate_digest,
-							);
-						}
-					: undefined;
-			const run = await runAdapter(t, fx, { onOpen });
-			switch (caseId) {
-				case "094":
-					approve(fx, run);
-					break;
-				case "095":
-					changes(fx, run, [firstNote, secondNote]);
-					break;
-				case "096":
-					noApproval(fx, run, "rejected", "stale_candidate");
-					break;
-				case "097":
-					noApproval(fx, run, "pending", "cancelled");
-					break;
-				case "098":
-					noApproval(fx, run, "fallback", "disconnected");
-					break;
-				case "099":
-					if (run.result.status === "fallback")
-						noApproval(fx, run, "fallback", "headless");
-					else {
+		test(
+			`BLX-VC-${caseId} BLX-VC-${matrix} ${host}: ${scenarioName}, no duplicate gate`,
+			review,
+			async (t) => {
+				const fx = fixture(t, { host, scenario });
+				if (caseId === "099") delete fx.env.DISPLAY;
+				const onOpen =
+					caseId === "096"
+						? () => {
+								const updated = packageAt(
+									fx.plan,
+									"d".repeat(40),
+									"Revised sample.",
+								);
+								assert.notEqual(
+									updated.candidate.candidate_digest,
+									fx.candidate.candidate_digest,
+								);
+							}
+						: undefined;
+				const run = await runAdapter(t, fx, { onOpen });
+				switch (caseId) {
+					case "094":
 						approve(fx, run);
-						assert.match(run.stderr, /http:\/\/127\.0\.0\.1:\d+\//);
-					}
-					break;
-			}
-			const after = readJson(path.join(fx.plan, "journey.json"));
-			assert.equal(after.open_decisions.length, 1);
-			assert.equal(after.open_decisions[0].id, fx.stop.id);
-			// One gate opened by this run, the one existing stop still pending, and
-			// no owner decision or grant recorded by the adapter.
-			const approved = run.result.status === "answer_delivered" ? 1 : 0;
-			assert.deepEqual(gateCounts(fx, run), {
-				invocations: 1,
-				gatesOpened: 1,
-				ownerStops: 1,
-				pendingStops: 1,
-				decisionsRecorded: 0,
-				grantsRecorded: 0,
-				approveIntents: approved,
-				answers: approved,
-			});
-			assert.equal(approved, ["094", "099"].includes(caseId) ? 1 : 0);
-		});
+						break;
+					case "095":
+						changes(fx, run, [firstNote, secondNote]);
+						break;
+					case "096":
+						noApproval(fx, run, "rejected", "stale_candidate");
+						break;
+					case "097":
+						noApproval(fx, run, "pending", "cancelled");
+						break;
+					case "098":
+						noApproval(fx, run, "fallback", "disconnected");
+						break;
+					case "099":
+						if (run.result.status === "fallback")
+							noApproval(fx, run, "fallback", "headless");
+						else {
+							approve(fx, run);
+							assert.match(run.stderr, /http:\/\/127\.0\.0\.1:\d+\//);
+						}
+						break;
+				}
+				const after = readJson(path.join(fx.plan, "journey.json"));
+				assert.equal(after.open_decisions.length, 1);
+				assert.equal(after.open_decisions[0].id, fx.stop.id);
+				// One gate opened by this run, the one existing stop still pending, and
+				// no owner decision or grant recorded by the adapter.
+				const approved = run.result.status === "answer_delivered" ? 1 : 0;
+				assert.deepEqual(gateCounts(fx, run), {
+					invocations: 1,
+					gatesOpened: 1,
+					ownerStops: 1,
+					pendingStops: 1,
+					decisionsRecorded: 0,
+					grantsRecorded: 0,
+					approveIntents: approved,
+					answers: approved,
+				});
+				assert.equal(approved, ["094", "099"].includes(caseId) ? 1 : 0);
+			},
+		);
 }
 
-test("a stale visual projection leaves the owner stop pending", async (t) => {
-	const fx = fixture(t);
-	appendFileSync(
-		path.join(fx.plan, fx.request.visual_path),
-		"\nA previous revision.\n",
-	);
-	const out = await runAdapter(t, fx);
-	noApproval(fx, out, "rejected", "changed_package");
-});
+test(
+	"a stale visual projection leaves the owner stop pending",
+	checks,
+	async (t) => {
+		const fx = fixture(t);
+		appendFileSync(
+			path.join(fx.plan, fx.request.visual_path),
+			"\nA previous revision.\n",
+		);
+		const out = await runAdapter(t, fx);
+		noApproval(fx, out, "rejected", "changed_package");
+	},
+);
 
-test("feedback storage cannot be the plan directory", async (t) => {
+test("feedback storage cannot be the plan directory", checks, async (t) => {
 	const fx = fixture(t);
 	fx.request.feedback_dir = fx.plan;
 	noApproval(fx, await runAdapter(t, fx), "rejected", "path_outside_package");
 	assert.ok(!existsSync(path.join(fx.plan, fx.candidate.candidate_digest)));
 });
 
-test("repository-relative inputs retain package-relative annotation names", async (t) => {
-	const fx = fixture(t, {
-		nested: true,
-		scenario: { decision: "annotated", annotations: [firstNote] },
-	});
-	changes(fx, await runAdapter(t, fx), [firstNote]);
-});
+test(
+	"repository-relative inputs retain package-relative annotation names",
+	review,
+	async (t) => {
+		const fx = fixture(t, {
+			nested: true,
+			scenario: { decision: "annotated", annotations: [firstNote] },
+		});
+		changes(fx, await runAdapter(t, fx), [firstNote]);
+	},
+);
