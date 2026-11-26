@@ -795,4 +795,3 @@ test("BLX-VC-047: F2a dispatch binds packet digest, role and write set to contex
 	);
 	assert.equal(readFileSync(captured, "utf8"), launcherCallsBefore);
 });
-
