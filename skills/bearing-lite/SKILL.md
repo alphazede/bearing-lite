@@ -36,7 +36,11 @@ explicit setup or catalog-edit request uses [onboard-bearing](../onboard-bearing
    assemble the package using `references/planning-assembly.md`. Specialists run
    only their own artifact checker; the repository gate runs once at assembly, and
    evidence returns digests, commands, and exit codes, not narrative logs. Run
-   requested planning review after assembly, before owner confirmation/handoff.
+   requested planning review after assembly. Before asking for integrated owner
+   confirmation, open the rendered DoD Manifest HTML in the owner's browser
+   (Chrome when available), deliver the file through the harness's file-delivery
+   mechanism, and name its path in the question; if neither succeeds, return the
+   typed gap `manifest_not_delivered` without asking for approval.
 4. **Implementation:** at intake, verify the `final_freeze_receipt` in
    `handoff.md` using the [handoff template](templates/handoff.md). If the receipt
    is absent, invalid, or `draft`-only, return to planning before dispatch.
@@ -94,7 +98,7 @@ true, recommend a new Implementation Orchestrator session with this handoff.
 When false, continue from the durable handoff here. Resolve an unset choice
 during integrated owner confirmation. The owner opens a fresh session.
 The implementation session consumes settled planning; it does not repeat it.
-Handoff and closeout pass `journey` to `hooks/closeout.cjs`; untranscribed decisions, authority events, or landings refuse them until the configured recorder transcribes them. On `mode: "handoff"`, `hooks/closeout.cjs` also requires a valid `final_freeze_receipt` and refuses the handoff when absent or `draft`-only.
+Handoff and closeout pass `journey` to `hooks/closeout.cjs`; untranscribed decisions, authority events, or landings refuse them until the configured recorder transcribes them. On `mode: "handoff"`, `hooks/closeout.cjs` also requires a valid `final_freeze_receipt` and a matching `manifest_delivery` record (`path` and `sha256` on the owner confirmation or handoff input), refusing absent or `draft`-only freeze receipts and missing or mismatched Manifest deliveries (`handoff_refused:manifest_not_delivered`).
 For live-wave evidence, pass the confirmed directory as top-level `plan_dir`.
 ## Dispatch and recovery
 

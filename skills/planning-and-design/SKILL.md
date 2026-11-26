@@ -98,9 +98,16 @@ owner question box (`OWNER_DECISION_REQUIRED`), even under delegation.
    reads a stale copy).
 6. Requested planning review opens only after `hooks/planning-review.cjs`
    `evaluatePlanningReview()` passes its guards (`manifest_not_generated` without
-   the rendered Manifest). Then obtain one integrated owner confirmation (never
-   insert a profile or route pause), run the final freeze, write the handoff,
-   and recommend a new Implementation Orchestrator session.
+   the rendered Manifest). Before asking for integrated owner confirmation,
+   open the rendered DoD Manifest HTML in the owner's browser (Chrome when
+   available) and deliver the file through the harness's file-delivery
+   mechanism. Name the Manifest path in the approval question. If neither
+   browser display nor file delivery succeeds, return the typed gap
+   `manifest_not_delivered` and do not ask for approval. After delivery, obtain
+   one integrated owner confirmation (never insert a profile or route pause),
+   record `manifest_delivery` (`path`, `sha256`, `opened_in`, `delivered_at`)
+   on the confirmation record in `journey.json`, run the final freeze, write
+   the handoff, and recommend a new Implementation Orchestrator session.
 
 ## Return and recovery
 

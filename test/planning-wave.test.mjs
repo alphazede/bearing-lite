@@ -275,6 +275,12 @@ describe("#205 one planning wave, one consolidated review", () => {
 			const result = closeout.evaluate({
 				mode: "handoff",
 				final_freeze_receipt: receipt,
+				manifest_delivery: {
+					path: "plan-dod-manifest.html",
+					sha256: "b".repeat(64),
+					opened_in: "Chrome",
+					delivered_at: "2026-11-26T00:00:00Z",
+				},
 			});
 			assert.equal(result.outcome, expected, result.reason);
 		}

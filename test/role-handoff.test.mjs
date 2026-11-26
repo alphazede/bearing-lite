@@ -4,8 +4,17 @@
  */
 
 import assert from "node:assert/strict";
-import { readdirSync, readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import {
+	mkdirSync,
+	mkdtempSync,
+	readdirSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
 import { createRequire } from "node:module";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
@@ -447,6 +456,12 @@ describe("Alphazedehq#594 planning handoff requires final freeze receipt", () =>
 				manifest_digest: "a".repeat(64),
 				findings: [],
 			},
+			manifest_delivery: {
+				path: "plan-dod-manifest.html",
+				sha256: "b".repeat(64),
+				opened_in: "Chrome",
+				delivered_at: "2026-11-26T00:00:00Z",
+			},
 		});
 		assert.equal(valid.outcome, "ADVISE");
 		assert.equal(valid.reason, "handoff_complete");
@@ -524,6 +539,12 @@ describe("Alphazedehq#594 planning handoff requires final freeze receipt", () =>
 				stage: "final",
 				manifest_digest: "a".repeat(64),
 			},
+			manifest_delivery: {
+				path: "plan-dod-manifest.html",
+				sha256: "b".repeat(64),
+				opened_in: "Chrome",
+				delivered_at: "2026-11-26T00:00:00Z",
+			},
 		});
 		assert.equal(receipt.reason, "handoff_complete");
 	});
@@ -545,5 +566,150 @@ describe("Alphazedehq#594 planning handoff requires final freeze receipt", () =>
 			handoffTpl,
 			/(?:land locally|local landing).*(?:host gate cannot run|host gate is unavailable)/i,
 		);
+	});
+});
+
+describe("alphazede/bearing-lite#285 planning handoff requires delivered DoD Manifest", () => {
+	const sha256 = (data) => createHash("sha256").update(data).digest("hex");
+	const finalReceipt = {
+		outcome: "PASS",
+		stage: "final",
+		manifest_digest: "a".repeat(64),
+		findings: [],
+	};
+
+	function manifestFixture(t) {
+		const repo = mkdtempSync(path.join(tmpdir(), "bl-285-manifest-"));
+		t.after(() => rmSync(repo, { recursive: true, force: true }));
+		const planDir = path.join(repo, "docs/plans/example");
+		mkdirSync(path.join(repo, ".git"), { recursive: true });
+		mkdirSync(planDir, { recursive: true });
+		const html = "<!doctype html><title>Example DoD Manifest</title>\n";
+		const manifestName = "example-dod-manifest.html";
+		writeFileSync(path.join(planDir, manifestName), html);
+		writeFileSync(
+			path.join(planDir, "implementation.json"),
+			JSON.stringify({ dod_manifest: { output_name: manifestName } }),
+		);
+		return {
+			planDir,
+			manifestPath: "docs/plans/example/example-dod-manifest.html",
+			manifestSha256: sha256(html),
+		};
+	}
+
+	function journeyWithApproval(manifestDelivery) {
+		return {
+			schema_version: "1",
+			journey: {
+				id: "J-285",
+				title: "Manifest delivery test",
+				status: "planning",
+				planning_repository: "example/bearing-lite",
+			},
+			decisions: [
+				{
+					id: "DEC-285-APPROVAL",
+					status: "confirmed",
+					decision: "Owner approved planning package.",
+					...(manifestDelivery !== undefined
+						? { manifest_delivery: manifestDelivery }
+						: {}),
+				},
+			],
+			history: {
+				decisions: [{ id: "DEC-285-APPROVAL" }],
+			},
+			open_decisions: [],
+			planning_receipts: [],
+			profile_selection: {},
+		};
+	}
+
+	it("missing delivery refused", (t) => {
+		const { planDir } = manifestFixture(t);
+		const res = closeout.evaluate({
+			mode: "handoff",
+			plan_dir: planDir,
+			handoff: validHandoff({ verdict: "READY" }),
+			final_freeze_receipt: finalReceipt,
+			journey: journeyWithApproval(undefined),
+		});
+		assert.equal(res.outcome, "REROUTE");
+		assert.equal(res.reason, "handoff_refused:manifest_not_delivered");
+	});
+
+	it("mismatched SHA-256 refused", (t) => {
+		const { planDir, manifestPath } = manifestFixture(t);
+		const res = closeout.evaluate({
+			mode: "handoff",
+			plan_dir: planDir,
+			handoff: validHandoff({ verdict: "READY" }),
+			final_freeze_receipt: finalReceipt,
+			journey: journeyWithApproval({
+				path: manifestPath,
+				sha256: "0".repeat(64),
+				opened_in: "Chrome",
+				delivered_at: "2026-11-26T00:00:00Z",
+			}),
+		});
+		assert.equal(res.outcome, "REROUTE");
+		assert.equal(res.reason, "handoff_refused:manifest_not_delivered");
+	});
+
+	it("matching delivery accepted", (t) => {
+		const { planDir, manifestPath, manifestSha256 } = manifestFixture(t);
+		const res = closeout.evaluate({
+			mode: "handoff",
+			plan_dir: planDir,
+			handoff: validHandoff({ verdict: "READY" }),
+			final_freeze_receipt: finalReceipt,
+			journey: journeyWithApproval({
+				path: manifestPath,
+				sha256: manifestSha256,
+				opened_in: "Chrome",
+				delivered_at: "2026-11-26T00:00:00Z",
+			}),
+		});
+		assert.equal(res.outcome, "ADVISE");
+		assert.equal(res.reason, "handoff_complete");
+	});
+
+	it("skills and handoff template require Manifest browser display and delivery before approval (#285)", () => {
+		const pdStep6 =
+			readFileSync(
+				path.join(ROOT, "skills/planning-and-design/SKILL.md"),
+				"utf8",
+			).match(/^6\. [\s\S]*?(?=\n## Return and recovery)/m)?.[0] ?? "";
+		const assembly = readFileSync(
+			path.join(ROOT, "skills/bearing-lite/references/planning-assembly.md"),
+			"utf8",
+		);
+		const assemblyStep5 =
+			assembly.match(/^5\. \*\*Owner confirmation and handoff:\*\*[\s\S]*?(?=\n\nSkip inactive roles)/m)?.[0] ?? "";
+		const router = readFileSync(
+			path.join(ROOT, "skills/bearing-lite/SKILL.md"),
+			"utf8",
+		);
+		const routerStep3 =
+			router.match(/^3\. \*\*Planning:\*\*[\s\S]*?(?=\n4\. \*\*Implementation:\*\*)/m)?.[0] ?? "";
+		const handoffTpl = readFileSync(
+			path.join(ROOT, "skills/bearing-lite/templates/handoff.md"),
+			"utf8",
+		);
+
+		for (const [label, text] of [
+			["planning-and-design step 6", pdStep6],
+			["planning-assembly step 5", assemblyStep5],
+			["bearing-lite step 3", routerStep3],
+		]) {
+			assert.match(text, /Chrome/i, `${label} names Chrome`);
+			assert.match(text, /file-delivery/i, `${label} names file-delivery`);
+			assert.match(text, /manifest_not_delivered/, `${label} names typed gap`);
+		}
+		assert.match(pdStep6, /name.*manifest.*path|manifest path/i);
+		assert.match(assemblyStep5, /name.*manifest.*path|manifest path/i);
+		assert.match(handoffTpl, /manifest_delivery:/);
+		assert.match(handoffTpl, /sha256:/);
 	});
 });

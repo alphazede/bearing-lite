@@ -141,9 +141,16 @@ This is the default dependency order, not a requirement to enable every role:
    boundary. Review the exact stable package; address findings only within the
    authorized repair allowance and rerun affected deterministic checks.
    Otherwise record planning review as not requested; do not add a reviewer.
-5. **Owner confirmation and handoff:** obtain the execution authority required
-   for the exact package, complete its declared final checks, and write
-   `handoff.md`. Apply the approved clean-session choice.
+5. **Owner confirmation and handoff:** before asking for integrated owner
+   confirmation, open the rendered DoD Manifest HTML in the owner's browser
+   (Chrome when available) and deliver the file through the harness's
+   file-delivery mechanism. Name the Manifest path in the approval question.
+   If neither browser display nor file delivery succeeds, return the typed gap
+   `manifest_not_delivered` and do not ask for approval. Record
+   `manifest_delivery` (`path`, `sha256`, `opened_in`, `delivered_at`) on the
+   confirmation record in `journey.json`, obtain the execution authority
+   required for the exact package, complete its declared final checks, and
+   write `handoff.md`. Apply the approved clean-session choice.
 
 Skip inactive roles without creating substitute sessions. Record actual input
 dependencies: independent work may run in parallel once its inputs exist, while
@@ -419,7 +426,8 @@ a selected or required capability that is unavailable is a typed capability gap.
 When planning is complete and the owner agreement required for execution is
 recorded, write `handoff.md` per `../templates/handoff.md` with
 `final_freeze_receipt` (`stage: "final"`, `outcome: "PASS"`, `manifest_digest`,
-command, and exit code), exact artifact paths/digests, decisions and
+command, and exit code), `manifest_delivery` (`path`, `sha256`, `opened_in`,
+`delivered_at`), exact artifact paths/digests, decisions and
 authority, selected routes/capabilities, candidate/worktree, assignments, commands,
 evidence (digests, commands, and exit codes, not narrative logs), review status,
 blockers, and next action. Every dispatched packet carries a time target and
@@ -429,7 +437,9 @@ the structured `final_freeze_receipt` from `node <plugin root>/hooks/plan-packag
 For a live wave, also pass the confirmed directory as top-level `plan_dir`
 so closeout can re-read the exchange evidence.
 A missing or invalid final freeze receipt refuses the
-handoff (`handoff_refused:final_freeze_receipt_missing` or `_invalid`), and a
+handoff (`handoff_refused:final_freeze_receipt_missing` or `_invalid`), a
+missing or SHA-256-mismatched Manifest delivery refuses the handoff
+(`handoff_refused:manifest_not_delivered`), and a
 history coverage gap refuses the handoff until its recorder transcribes the listed
 decisions, authority events, and landings: Orchestrator when Scribe is omitted or
 disabled, otherwise the enabled Scribe on its frozen cadence—launching a

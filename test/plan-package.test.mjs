@@ -1660,8 +1660,12 @@ describe("plan-package live-wave exchange.jsonl reader (HLW-VC-025)", () => {
 		manifest_digest: "a".repeat(64),
 		findings: [],
 	};
-	const handoff = (dir) =>
-		JSON.stringify({
+	const handoff = (dir) => {
+		const manifestName = "x-dod-manifest.html";
+		const manifestPath = path.join(dir, manifestName);
+		const manifestHtml = "<!doctype html><title>Live DoD Manifest</title>\n";
+		writeFileSync(manifestPath, manifestHtml);
+		return JSON.stringify({
 			mode: "handoff",
 			plan_dir: dir,
 			journey: {
@@ -1669,7 +1673,14 @@ describe("plan-package live-wave exchange.jsonl reader (HLW-VC-025)", () => {
 				journey: { id: "x", status: "implementation" },
 			},
 			final_freeze_receipt: RECEIPT,
+			manifest_delivery: {
+				path: `docs/plans/x/${manifestName}`,
+				sha256: sha(manifestHtml),
+				opened_in: "Chrome",
+				delivered_at: "2026-11-26T00:00:00Z",
+			},
 		});
+	};
 
 	it("live-wave closeout handoff summarizes a refused record", (t) => {
 		const dir = livePlan(t);
