@@ -100,6 +100,10 @@ independent assurance (`../test-engineer/SKILL.md`) and execution assessment
    specific reason to defer a command or its seeded case when
    reserved for another role, the repository gate, a later one-run budget, or
    unavailable prerequisites.
+   Then run `node <plugin root>/hooks/plan-package.cjs commands <plan dir>`.
+   It runs only each command's declared `<executable> --help` dry-run form and
+   names a missing required or unknown option (`seit_command_args_rejected`) or
+   an unresolved executable (`seit_command_unresolved`); repair each finding.
    Repair your own defects in this assignment, folding
    all known corrections into this first return to the Planning Orchestrator
    with proof cases, boundary/assembly inputs, selected capability bindings,

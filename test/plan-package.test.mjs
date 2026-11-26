@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
+	existsSync,
 	mkdirSync,
 	mkdtempSync,
 	readFileSync,
@@ -1764,5 +1765,91 @@ describe("plan-package live-wave exchange.jsonl reader (HLW-VC-025)", () => {
 		const out = JSON.parse(run([CLOSEOUT], handoff(dir)).stdout);
 		assert.equal(out.outcome, "REROUTE", JSON.stringify(out));
 		assert.match(out.reason, /live_exchange_body_digest_mismatch/);
+	});
+});
+
+describe("plan-package commands (Alphazedehq#781 unrunnable SEIT command)", () => {
+	// Mirrors the az-lint argparse surface: one of --changed/--pre-push is required.
+	const AZ_LINT = `#!/usr/bin/env python3
+import argparse, pathlib
+p = argparse.ArgumentParser(prog="az-lint")
+g = p.add_mutually_exclusive_group(required=True)
+g.add_argument("--changed", nargs="?", const="origin/main", metavar="BASE")
+g.add_argument("--pre-push", action="store_true")
+p.add_argument("--remote")
+p.parse_args()
+pathlib.Path("ran.marker").write_text("real command ran")
+`;
+	function runCommands(t, rows) {
+		const root = mkdtempSync(path.join(os.tmpdir(), "plan-package-cmds-"));
+		t.after(() => rmSync(root, { recursive: true, force: true }));
+		mkdirSync(path.join(root, ".git"));
+		mkdirSync(path.join(root, "tools/lint"), { recursive: true });
+		writeFileSync(path.join(root, "tools/lint/az-lint"), AZ_LINT, {
+			mode: 0o755,
+		});
+		const dir = path.join(root, "docs/plans/p");
+		mkdirSync(dir, { recursive: true });
+		writeFileSync(
+			path.join(dir, "seit.json"),
+			JSON.stringify({ procedures_and_commands: rows }),
+		);
+		const cli = spawnSync(
+			process.execPath,
+			[path.join(ROOT, "hooks/plan-package.cjs"), "commands", dir],
+			{ encoding: "utf8" },
+		);
+		return { root, cli, result: JSON.parse(cli.stdout) };
+	}
+	const lint = (command) => ({
+		id: "CMD-775-LINT",
+		command,
+		dry_run_form: "tools/lint/az-lint --help",
+	});
+
+	it("SEIT-781-01: names the az-lint usage error without running the command", (t) => {
+		const { root, cli, result } = runCommands(t, [
+			lint("tools/lint/az-lint $(git diff --name-only origin/main...HEAD)"),
+		]);
+		assert.equal(cli.status, 1);
+		assert.deepEqual(
+			result.findings.map((f) => [f.code, f.command_id]),
+			[["seit_command_args_rejected", "CMD-775-LINT"]],
+		);
+		assert.match(result.findings[0].reason, /--changed \| --pre-push/);
+		assert.equal(existsSync(path.join(root, "ran.marker")), false);
+	});
+
+	it("SEIT-781-02: passes the working az-lint form", (t) => {
+		const { root, cli, result } = runCommands(t, [
+			lint("tools/lint/az-lint --changed origin/main"),
+		]);
+		assert.equal(cli.status, 0, cli.stdout);
+		assert.deepEqual(result.findings, []);
+		assert.equal(existsSync(path.join(root, "ran.marker")), false);
+	});
+
+	it("SEIT-781-03: names an option the executable does not accept", (t) => {
+		const { cli, result } = runCommands(t, [
+			lint("tools/lint/az-lint --changed origin/main --fix"),
+		]);
+		assert.equal(cli.status, 1);
+		assert.equal(result.findings[0].code, "seit_command_args_rejected");
+		assert.match(result.findings[0].reason, /--fix/);
+	});
+
+	it("SEIT-781-04: names an executable that does not resolve", (t) => {
+		const { cli, result } = runCommands(t, [
+			{
+				id: "CMD-X",
+				command: "tools/lint/missing --changed",
+				dry_run_form: "tools/lint/missing --help",
+			},
+		]);
+		assert.equal(cli.status, 1);
+		assert.deepEqual(
+			result.findings.map((f) => [f.code, f.command_id]),
+			[["seit_command_unresolved", "CMD-X"]],
+		);
 	});
 });
