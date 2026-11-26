@@ -67,7 +67,7 @@ owner question box (`OWNER_DECISION_REQUIRED`), even under delegation.
    decisions faithfully per `../bearing-lite/references/planning-assembly.md`;
    choose no new roles or capability defaults. Record `planning_wave` (`required_sessions`, `review_requested`); append post-approval corrections to `planning_corrections` without mutating round 1.
 5. Check your own final package: run the repository gate once at assembly
-   alongside the register precheck at its final stage with `--seit`, every
+   alongside the register precheck at its final stage with `--seit` and the advisory SEIT command check (`plan-package.cjs commands`; repair its findings before final freeze), every
    pending binding completed, and `plan-package.cjs draft` (planning specialists
    run only their own artifact checker, never the repository gate). Record
    evidence as digests, commands, and exit codes, not narrative logs. Repair
