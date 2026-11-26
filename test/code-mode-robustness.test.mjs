@@ -223,3 +223,58 @@ test("BLX-VC-110: partial effect is reported with receipt and is never directly 
   assert.ok(!existsSync(path.join(f.control, "direct.log")));
   assert.equal(readFileSync(path.join(f.workspace, "state/effects.log"), "utf8"), "partial\n");
 });
+
+test("BLX-VC-053: F2b reconcile partial_effect stays a wait and never dispatches a second worker", async t => {
+  const f = fixture(t);
+  const opsLog = path.join(f.control, "ops.jsonl");
+  const launcher = [
+    process.execPath,
+    "-e",
+    [
+      'const fs = require("node:fs");',
+      'const input = JSON.parse(fs.readFileSync(0, "utf8"));',
+      'fs.appendFileSync(process.argv[1], JSON.stringify(input) + "\\n");',
+      'if (input.operation === "reconcile") {',
+      '  console.log(JSON.stringify({ status: "WAITING_ON", error: { code: "partial_effect" } }));',
+      '} else {',
+      '  console.log(JSON.stringify({ status: "COMPLETE", receipt: JSON.parse(process.argv[2]) }));',
+      '}',
+    ].join("\n"),
+    opsLog,
+    JSON.stringify(f.sourceRef),
+  ];
+  configure(f, { launcher });
+  // Simulate an interrupted call journal (started before confirmation) with matching request journal.
+  const key = "op-interrupted#0";
+  const callJournal = path.join(
+    f.journal,
+    "call-" + (await import("node:crypto")).createHash("sha256").update(key).digest("hex") + ".json",
+  );
+  put(callJournal, { state: "started" });
+
+  const first = await run(f, {
+    request_id: "reconcile-1",
+    idempotency_key: "op-interrupted",
+    generation: 1,
+    capability: "dispatch",
+    input: dispatchInput("once"),
+  });
+  failure(first, "partial_effect");
+
+  const recordedOps = readFileSync(opsLog, "utf8").trim().split("\n").map(line => JSON.parse(line));
+  assert.equal(recordedOps.length, 1, "reconcile partial_effect must not fall through to dispatch");
+  assert.equal(recordedOps[0].operation, "reconcile");
+  assert.equal(recordedOps[0].idempotency_key, key);
+
+  // Repeated dispatch with the same idempotency_key replays the recorded wait without invoking launcher.
+  const repeated = await run(f, {
+    request_id: "reconcile-2",
+    idempotency_key: "op-interrupted",
+    generation: 1,
+    capability: "dispatch",
+    input: dispatchInput("once"),
+  });
+  failure(repeated, "partial_effect");
+  assert.equal(repeated.request_id, "reconcile-2");
+  assert.equal(readFileSync(opsLog, "utf8").trim().split("\n").length, 1);
+});

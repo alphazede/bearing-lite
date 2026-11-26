@@ -37,6 +37,7 @@ The host writes the context file. A request or a routine cannot change it.
 | `journey_path` | Journey file. Its `state_generation` is the application state generation. |
 | `session_id` | Session that must hold the task activation for `dispatch`. |
 | `binding_path`, `binding_sha256` | Frozen route binding and its digest, required for `dispatch`. |
+| `grant_path`, `grant_sha256` | Optional frozen dispatch grant file and its digest binding `binding_sha256`, `role`, `packet_sha256`, `write_set` and optional `session_id`. |
 | `lock_path` | Named lock held during each `dispatch` effect. |
 | `write_set` | Paths a `dispatch` may claim. A path ending in `/` covers a directory. |
 | `allowed_capabilities` | Capabilities this context may run. |
@@ -82,13 +83,19 @@ leaves out is refused, and it never falls back to the direct path.
 ## Dispatch
 
 Before the launcher runs, `dispatch` checks, in order: the binding is present
-and its digest matches, the session's task activation is ready, and every
-`write_set` entry is inside the context write set. It then takes the named
-lock and checks that the request `generation` equals the journey
-`state_generation`. It records the call in the journal before the effect. On
-a resumed request, it asks the launcher to reconcile a call that started but
-was not confirmed, so an effect that already happened is not repeated. A launcher
-result other than `COMPLETE` is reported with its receipt and is not retried.
+and its digest matches, the session's task activation is ready, every
+`write_set` entry is inside the context write set, the packet digest matches
+any supplied `packet_sha256`, and any context grant (`grant_path` and
+`grant_sha256`) matches `binding_sha256`, `role`, `packet_sha256`, normalized
+`write_set` and optional `session_id`. It then takes the named lock and checks
+that the request `generation` equals the journey `state_generation`. It
+records the call in the journal before the effect and sends `packet_sha256`,
+`idempotency_key` and any `grant_path`/`grant_sha256` to the launcher. On a
+resumed request, it asks the launcher to reconcile a call that started but was
+not confirmed, proceeds to `dispatch` only if the launcher reports
+`NOT_STARTED`, and otherwise preserves the launcher outcome without starting a
+second worker. A launcher result other than `COMPLETE` is reported with its
+receipt and is not retried.
 
 ## Outcome
 
@@ -100,10 +107,11 @@ reference has a store-relative `path`, the `sha256` of its bytes and a
 
 A refusal has status `WAITING_ON` and `error.code`. The codes are
 `schema_error`, `output_schema_error`, `capability_denied`,
-`binding_required`, `binding_mismatch`, `activation_required`,
-`write_set_denied`, `evidence_ref_invalid`, `routine_digest_mismatch`,
-`request_limit`, `resource_limit` (with `error.limit`), `output_limit`,
-`cancelled`, `partial_effect`, `program_error` and `sandbox_unavailable`.
+`binding_required`, `binding_mismatch`, `grant_mismatch`,
+`activation_required`, `write_set_denied`, `evidence_ref_invalid`,
+`routine_digest_mismatch`, `request_limit`, `resource_limit` (with
+`error.limit`), `output_limit`, `cancelled`, `partial_effect`, `program_error`
+and `sandbox_unavailable`.
 `lock_busy`, `stale_state` and `in_progress` mean "retry later". They are
 not recorded against the idempotency key. Other outcomes are recorded, and
 the same key returns the recorded outcome.

@@ -704,3 +704,95 @@ test("BLX-VC-047: evidence path rejects absolute and re-entering traversal and n
 		"evidence_ref_invalid",
 	);
 });
+
+test("BLX-VC-047: F2a dispatch binds packet digest, role and write set to context grant", async (t) => {
+	const f = fixture(t, { write_set: ["state/"] });
+	const packetPath = path.join(f.workspace, "state/packet.md");
+	writeFileSync(packetPath, "Authorized packet body.\n");
+	const packetSha = sha(readFileSync(packetPath));
+	const grantPath = path.join(f.root, "grant.json");
+	const writeGrant = (grant) => {
+		const raw = JSON.stringify(grant);
+		writeFileSync(grantPath, raw);
+		configure(f, { grant_path: grantPath, grant_sha256: sha(raw) });
+	};
+	writeGrant({
+		binding_sha256: f.context.binding_sha256,
+		role: "implementer",
+		packet_sha256: packetSha,
+		write_set: ["state/effects.log"],
+		session_id: f.context.session_id,
+	});
+	const captured = path.join(f.control, "bound-dispatch.json");
+	configure(f, {
+		launcher: [
+			process.execPath,
+			"-e",
+			[
+				'const fs = require("node:fs");',
+				'const input = JSON.parse(fs.readFileSync(0, "utf8"));',
+				"fs.writeFileSync(process.argv[1], JSON.stringify(input));",
+				"console.log(process.argv[2]);",
+			].join("\n"),
+			captured,
+			JSON.stringify({ status: "COMPLETE", receipt: f.sourceRef }),
+		],
+	});
+	const ok = await run(
+		f,
+		request("grant-ok", "dispatch", {
+			role: "implementer",
+			packet: "state/packet.md",
+			write_set: ["state/effects.log"],
+		}),
+	);
+	assert.equal(ok.status, "COMPLETE", JSON.stringify(ok));
+	const sent = json(captured);
+	assert.equal(sent.packet_sha256, packetSha);
+	assert.equal(sent.grant_path, grantPath);
+	assert.equal(sent.grant_sha256, f.context.grant_sha256);
+	assert.equal(typeof sent.idempotency_key, "string");
+	assert.ok(sent.idempotency_key.length > 0);
+
+	// Tampered packet bytes on disk must be refused before calling launcher.
+	const launcherCallsBefore = JSON.stringify(sent);
+	writeFileSync(packetPath, "Tampered packet body.\n");
+	failure(
+		await run(
+			f,
+			request("grant-bad-packet", "dispatch", {
+				role: "implementer",
+				packet: "state/packet.md",
+				write_set: ["state/effects.log"],
+			}),
+		),
+		"grant_mismatch",
+	);
+	writeFileSync(packetPath, "Authorized packet body.\n");
+
+	// Role and write_set mismatches against the grant must also be refused before calling launcher.
+	failure(
+		await run(
+			f,
+			request("grant-bad-role", "dispatch", {
+				role: "reviewer",
+				packet: "state/packet.md",
+				write_set: ["state/effects.log"],
+			}),
+		),
+		"grant_mismatch",
+	);
+	failure(
+		await run(
+			f,
+			request("grant-bad-write", "dispatch", {
+				role: "implementer",
+				packet: "state/packet.md",
+				write_set: ["state/other.log"],
+			}),
+		),
+		"grant_mismatch",
+	);
+	assert.equal(readFileSync(captured, "utf8"), launcherCallsBefore);
+});
+
