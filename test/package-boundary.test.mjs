@@ -27,6 +27,8 @@ const APPROVED_FILES_ALLOWLIST = [
   "templates/",
   "tools/",
   "com.github.copilot/",
+  // Amendment 2026-11-26 (Alphazedehq#787): Codex metadata ships so the packed tool can prepare the Codex install.
+  ".codex-plugin/",
 ];
 
 const REQUIRED_SCHEMA_FILES = [

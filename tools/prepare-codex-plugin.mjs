@@ -5,11 +5,13 @@
  *   node tools/prepare-codex-plugin.mjs --out <new directory>
  *
  * Writes <out>/.agents/plugins/marketplace.json (marketplace "bearing-lite", local source
- * ./bearing-lite) and <out>/bearing-lite/, a byte copy of the npm package file set plus
- * .codex-plugin/. The only difference from source: root plugin.json omits `$schema`, which
- * Codex 0.162.1 rejects silently (zero hooks registered). The portable source is never changed.
+ * ./bearing-lite) and <out>/bearing-lite/, a byte copy of the npm package file set (which
+ * includes .codex-plugin/). The only difference from source: root plugin.json omits `$schema`.
+ * Codex (0.162.1 through at least 0.172.0) prefers a root plugin.json that carries the Agent
+ * Plugins `$schema` over .codex-plugin/plugin.json and loads no plugin hooks for that format,
+ * silently. The portable source is never changed.
  *
- * Requires a git checkout (npm tarballs omit .codex-plugin/) and `npm` on PATH for the file set.
+ * Runs from a git checkout or an extracted npm package; needs `npm` on PATH for the file set.
  * No network, no shell, no dependencies. Refuses an existing output and any output that
  * resolves to the source tree, inside it, or to one of its ancestors.
  */
@@ -54,7 +56,7 @@ function closure() {
   if (packed.error || packed.status !== 0) fail(`npm pack --dry-run failed: ${packed.error?.message ?? packed.stderr}`);
   const files = JSON.parse(packed.stdout)[0].files.map((f) => f.path);
   const codexMeta = path.join(SOURCE, ".codex-plugin");
-  if (!existsSync(path.join(codexMeta, "plugin.json"))) fail("missing .codex-plugin/plugin.json; run from a git checkout, not the npm package");
+  if (!existsSync(path.join(codexMeta, "plugin.json"))) fail("missing .codex-plugin/plugin.json; run from a git checkout or an npm package that ships .codex-plugin/");
   const meta = listFiles(codexMeta).map((f) => path.relative(SOURCE, f).split(path.sep).join("/"));
   return [...new Set([...files, ...meta])].sort();
 }

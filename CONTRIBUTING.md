@@ -83,8 +83,9 @@ BEARING_CODEX_BIN="$RUNNER_TEMP/bearing-codex/node_modules/.bin/codex" \
 ```
 
 The test uses a disposable `HOME`/`CODEX_HOME` and makes no model call. It
-proves that Codex registers the hooks and skills of the artifact from
-`tools/prepare-codex-plugin.mjs`; it does not prove a hook runs. Release smoke
+proves that Codex registers the hooks and skills of the artifact that the
+packed copy of `tools/prepare-codex-plugin.mjs` prepares from `npm pack` output;
+it does not prove a hook runs. Release smoke
 must show a positive hook invocation plus an allowed and a denied write-lock
 case.
 

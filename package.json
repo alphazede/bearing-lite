@@ -42,6 +42,7 @@
     "catalog/",
     "templates/",
     "tools/",
-    "com.github.copilot/"
+    "com.github.copilot/",
+    ".codex-plugin/"
   ]
 }

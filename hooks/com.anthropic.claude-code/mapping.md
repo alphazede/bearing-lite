@@ -31,10 +31,12 @@ Codex, or Grok host manifests. Root `hooks` is outside the closed Agent Plugins
 both is a duplicate-file error. GitHub Copilot in VS Code discovers plugin hooks
 from `com.github.copilot/hooks/hooks.json`.
 
-Codex 0.162.1 registers no plugin hooks, silently, when the installed root
-`plugin.json` carries `$schema`. Codex therefore installs from the local
-marketplace that `tools/prepare-codex-plugin.mjs --out <new dir>` prepares: the
-same package bytes plus `.codex-plugin/`, with only root `$schema` omitted.
+Codex (0.162.1 through at least 0.172.0) registers no plugin hooks, silently,
+when the installed root `plugin.json` carries `$schema`: it then reads that Agent
+Plugins manifest instead of `.codex-plugin/plugin.json` and skips plugin hooks.
+Codex therefore installs from the local marketplace that
+`tools/prepare-codex-plugin.mjs --out <new dir>` prepares, run from a checkout or
+an extracted npm package: the same package bytes, with only root `$schema` omitted.
 `node --test test/native/codex-hook-discovery.test.mjs` proves registration
 (8 hooks, all skills, none when disabled), not invocation.
 
