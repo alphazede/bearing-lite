@@ -2,7 +2,9 @@
 
 ## [Unreleased]
 
-## [3.1.0](https://github.com/alphazede/bearing-lite/releases/tag/v3.1.0) - 2026-11-26
+## [3.1.1](https://github.com/alphazede/bearing-lite/releases/tag/v3.1.1) - 2026-11-26
+
+Version 3.1.0 was tagged but never published: its release check failed on one test. 3.1.1 carries the same changes with that test corrected.
 
 - Add the opt-in Code Mode pilot. The broker handles typed capability calls. A resource-limited sandbox runs generated programs and reviewed routines. With the pilot off, only capabilities on the direct allowlist can run. See `docs/guides/code-mode.md` and `schemas/code-mode.schema.json`. ([#279](https://github.com/alphazede/bearing-lite/pull/279))
 - Add the opt-in visual Definition of Done Manifest view (`tools/render-dod-manifest.mjs --visual`), written as a separate HTML file; the default Manifest output is unchanged.
