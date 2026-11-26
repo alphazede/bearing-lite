@@ -783,7 +783,7 @@ test("bearing-publish workflow verifies release candidate before approval and pu
 		"const latest = runs.filter((run) => run.name === name).sort((a, b) => b.id - a.id)[0];",
 		'if (latest.status !== "completed" || latest.conclusion !== "success") {',
 		'`Required check is not successful: ${name} (status=${latest.status ?? "unknown"}, conclusion=${latest.conclusion ?? "none"})`,',
-		"throw new Error(`Timed out waiting for required checks: ${pending.join(\", \") || \"deadline expired\"}`);",
+		'throw new Error(`Timed out waiting for required checks: ${pending.join(", ") || "deadline expired"}`);',
 		'"/repos/${GITHUB_REPOSITORY}/code-scanning/alerts?ref=refs/heads/main&state=open&tool_name=CodeQL&per_page=100" \\',
 		"if (alerts.length) throw new Error(`CodeQL has ${alerts.length} open alert(s)`);",
 		"pnpm install --frozen-lockfile",
@@ -892,16 +892,46 @@ test("bearing-publish check waiter waits for in-progress checks and fails fast o
 		renameSync(tmp, checksFile);
 	};
 	const baseRuns = [
-		{ id: 100, name: "quality", status: "completed", conclusion: "success", html_url: "https://example.invalid/q100" },
-		{ id: 101, name: "Semgrep scan", status: "completed", conclusion: "success", html_url: "https://example.invalid/s" },
-		{ id: 102, name: "Analyze (javascript-typescript)", status: "completed", conclusion: "success", html_url: "https://example.invalid/js" },
-		{ id: 103, name: "Analyze (actions)", status: "completed", conclusion: "success", html_url: "https://example.invalid/act" },
+		{
+			id: 100,
+			name: "quality",
+			status: "completed",
+			conclusion: "success",
+			html_url: "https://example.invalid/q100",
+		},
+		{
+			id: 101,
+			name: "Semgrep scan",
+			status: "completed",
+			conclusion: "success",
+			html_url: "https://example.invalid/s",
+		},
+		{
+			id: 102,
+			name: "Analyze (javascript-typescript)",
+			status: "completed",
+			conclusion: "success",
+			html_url: "https://example.invalid/js",
+		},
+		{
+			id: 103,
+			name: "Analyze (actions)",
+			status: "completed",
+			conclusion: "success",
+			html_url: "https://example.invalid/act",
+		},
 	];
 
 	// 1. Waits while newer tag-triggered quality run is in_progress, then passes on completed success.
 	writeChecks([
 		...baseRuns,
-		{ id: 200, name: "quality", status: "in_progress", conclusion: null, html_url: "https://example.invalid/q200" },
+		{
+			id: 200,
+			name: "quality",
+			status: "in_progress",
+			conclusion: null,
+			html_url: "https://example.invalid/q200",
+		},
 	]);
 	const waitResult = await new Promise((resolve, reject) => {
 		const child = spawn(process.execPath, ["-e", script], {
@@ -918,11 +948,22 @@ test("bearing-publish check waiter waits for in-progress checks and fails fast o
 		let updated = false;
 		child.stdout.on("data", (chunk) => {
 			stdout += chunk.toString();
-			if (!updated && stdout.includes("Waiting for required checks: quality (status=in_progress")) {
+			if (
+				!updated &&
+				stdout.includes(
+					"Waiting for required checks: quality (status=in_progress",
+				)
+			) {
 				updated = true;
 				writeChecks([
 					...baseRuns,
-					{ id: 200, name: "quality", status: "completed", conclusion: "success", html_url: "https://example.invalid/q200" },
+					{
+						id: 200,
+						name: "quality",
+						status: "completed",
+						conclusion: "success",
+						html_url: "https://example.invalid/q200",
+					},
 				]);
 			}
 		});
@@ -933,14 +974,32 @@ test("bearing-publish check waiter waits for in-progress checks and fails fast o
 		child.on("close", (code) => resolve({ code, stdout, stderr }));
 	});
 	assert.equal(waitResult.code, 0, waitResult.stderr);
-	assert.match(waitResult.stdout, /Waiting for required checks: quality \(status=in_progress/);
-	assert.match(waitResult.stdout, /Verified quality: https:\/\/example\.invalid\/q200/);
+	assert.match(
+		waitResult.stdout,
+		/Waiting for required checks: quality \(status=in_progress/,
+	);
+	assert.match(
+		waitResult.stdout,
+		/Verified quality: https:\/\/example\.invalid\/q200/,
+	);
 
 	// 2. Fails at once on a completed failure even if another required check is in_progress.
 	writeChecks([
 		...baseRuns.filter((r) => r.name !== "Semgrep scan"),
-		{ id: 200, name: "quality", status: "in_progress", conclusion: null, html_url: "https://example.invalid/q200" },
-		{ id: 201, name: "Semgrep scan", status: "completed", conclusion: "failure", html_url: "https://example.invalid/s201" },
+		{
+			id: 200,
+			name: "quality",
+			status: "in_progress",
+			conclusion: null,
+			html_url: "https://example.invalid/q200",
+		},
+		{
+			id: 201,
+			name: "Semgrep scan",
+			status: "completed",
+			conclusion: "failure",
+			html_url: "https://example.invalid/s201",
+		},
 	]);
 	const failFast = spawnSync(process.execPath, ["-e", script], {
 		env: {
@@ -960,7 +1019,13 @@ test("bearing-publish check waiter waits for in-progress checks and fails fast o
 	// 3. Fails with check name and state when timeout expires while queued.
 	writeChecks([
 		...baseRuns,
-		{ id: 200, name: "quality", status: "queued", conclusion: null, html_url: "https://example.invalid/q200" },
+		{
+			id: 200,
+			name: "quality",
+			status: "queued",
+			conclusion: null,
+			html_url: "https://example.invalid/q200",
+		},
 	]);
 	const timedOut = spawnSync(process.execPath, ["-e", script], {
 		env: {

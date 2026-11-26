@@ -1102,7 +1102,9 @@ function observeScope(scope, run) {
 function observeLimits(pid, limits, run, group = null) {
 	if (run.scopeObserved) return;
 	try {
-		const scope = group ? verifyScope(group, limits) : sandboxScope(pid, limits);
+		const scope = group
+			? verifyScope(group, limits)
+			: sandboxScope(pid, limits);
 		observeScope(scope, run);
 		run.scopeObserved = true;
 	} catch (error) {
