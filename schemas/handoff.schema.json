@@ -151,7 +151,7 @@
     },
     "commands": {
       "type": "array",
-      "minItems": 1,
+      "description": "Slice command_ids, else the commands of the Test Implementer slices that share its SEIT proof rows; empty when neither names a command. Repository-required gates stay mandatory.",
       "items": {
         "type": "object",
         "additionalProperties": false,

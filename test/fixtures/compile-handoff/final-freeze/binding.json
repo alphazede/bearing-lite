@@ -1,0 +1,48 @@
+{
+  "selection": { "profile": "fixture", "source": "catalog" },
+  "snapshot": {
+    "roles": {
+      "implementer": {
+        "enabled": true,
+        "primary": { "harness": "Fixture Harness", "model": "fixture-model-impl", "reasoning": "high" },
+        "ordered_fallbacks": [
+          { "condition": "Primary unavailable", "harness": "Fallback Harness B", "model": "fixture-model-fb-b", "reasoning": "high" }
+        ]
+      },
+      "test_implementer": {
+        "enabled": true,
+        "primary": { "harness": "Fixture Harness", "model": "fixture-model-ti", "reasoning": "medium" },
+        "ordered_fallbacks": [
+          { "condition": "Primary unavailable", "harness": "Fallback Harness B", "model": "fixture-model-fb-b", "reasoning": "medium" }
+        ]
+      },
+      "light_implementer": {
+        "enabled": true,
+        "primary": { "harness": "Fixture Harness", "model": "fixture-model-light", "reasoning": "low" },
+        "ordered_fallbacks": []
+      }
+    },
+    "review": { "coverage_assist": { "enabled": true, "required": true }, "ocr_execution_mode": "delegate" },
+    "deterministic_verification": { "reverify": { "enabled": false } }
+  },
+  "snapshot_digest": "2222222222222222222222222222222222222222222222222222222222222222",
+  "resolved": {},
+  "scoped_owner_amendment": {
+    "date": "2026-01-01",
+    "source": "DEC-FX-AMEND",
+    "implementer": {
+      "harness": "Amended Harness",
+      "model": "fixture-model-amended-impl",
+      "reasoning": "max",
+      "ordered_fallbacks": [
+        { "condition": "Amended primary unavailable", "harness": "Amended Fallback Harness", "model": "fixture-model-amended-fb", "reasoning": "high" }
+      ]
+    },
+    "test_implementer": {
+      "harness": "Amended Harness",
+      "model": "fixture-model-amended-ti",
+      "reasoning": "high",
+      "ordered_fallbacks": []
+    }
+  }
+}
