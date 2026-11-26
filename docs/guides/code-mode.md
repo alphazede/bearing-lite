@@ -117,8 +117,9 @@ the same key returns the recorded outcome for the same operation and trusted con
 
 A routine runs in this chain:
 
-1. `systemd-run --user --scope` sets `MemoryMax`, `MemorySwapMax=0` and
-   `TasksMax=64`.
+1. `systemd-run --user --scope --slice=background.slice` sets `MemoryMax`,
+   `MemorySwapMax=0`, `TasksMax=64` and `OOMPolicy=continue` (so routine memory
+   kills stay enforced without marking the scope `oom-kill` failed).
 2. `prlimit` sets CPU seconds and 48 open files.
 3. `bwrap` gives no network, an empty environment, a read-only system tree
    and a 16 MiB `/tmp` scratch area.

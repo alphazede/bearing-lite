@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Place the Code Mode sandbox scope in `background.slice` with `OOMPolicy=continue` so routine memory-limit kills stay enforced without triggering desktop `oom-kill` notifications.
+
 ## [3.1.1](https://github.com/alphazede/bearing-lite/releases/tag/v3.1.1) - 2026-11-26
 
 Version 3.1.0 was tagged but never published: its release check failed on one test. 3.1.1 carries the same changes with that test corrected.

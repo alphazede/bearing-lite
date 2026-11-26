@@ -880,14 +880,16 @@ function limitsOf(ctx) {
 	return limits;
 }
 
-// systemd user scope (memory, tasks) -> prlimit (CPU, open files) -> bwrap
-// (no network, clean environment, read-only minimal root, tmpfs scratch) ->
-// node --permission (no child process, worker or read outside scratch).
+// systemd user scope in background.slice (memory, tasks, no oom-kill unit
+// failure) -> prlimit (CPU, open files) -> bwrap (no network, clean
+// environment, read-only minimal root, tmpfs scratch) -> node --permission (no
+// child process, worker or read outside scratch).
 function sandboxArgs(limits) {
 	const runner = fs.realpathSync(__filename);
 	const scope = [
 		"--user",
 		"--scope",
+		"--slice=background.slice",
 		"--quiet",
 		"--collect",
 		"-p",
@@ -896,6 +898,8 @@ function sandboxArgs(limits) {
 		"MemorySwapMax=0",
 		"-p",
 		"TasksMax=64",
+		"-p",
+		"OOMPolicy=continue",
 		"--",
 		"prlimit",
 		`--cpu=${limits.cpu_seconds}:${limits.cpu_seconds + 1}`,
