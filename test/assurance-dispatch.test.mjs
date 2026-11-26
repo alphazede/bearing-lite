@@ -783,7 +783,7 @@ test("bearing-publish workflow verifies release candidate before approval and pu
 		"const latest = runs.filter((run) => run.name === name).sort((a, b) => b.id - a.id)[0];",
 		'if (latest.status !== "completed" || latest.conclusion !== "success") {',
 		'`Required check is not successful: ${name} (status=${latest.status ?? "unknown"}, conclusion=${latest.conclusion ?? "none"})`,',
-		"throw new Error(`Timed out waiting for required checks: ${pending.join(\", \")}`);",
+		"throw new Error(`Timed out waiting for required checks: ${pending.join(\", \") || \"deadline expired\"}`);",
 		'"/repos/${GITHUB_REPOSITORY}/code-scanning/alerts?ref=refs/heads/main&state=open&tool_name=CodeQL&per_page=100" \\',
 		"if (alerts.length) throw new Error(`CodeQL has ${alerts.length} open alert(s)`);",
 		"pnpm install --frozen-lockfile",
@@ -976,6 +976,28 @@ test("bearing-publish check waiter waits for in-progress checks and fails fast o
 		timedOut.stderr,
 		/Timed out waiting for required checks: quality \(status=queued, conclusion=none\)/,
 	);
+
+	// A single slow API call must not complete successfully after the deadline.
+	writeFileSync(
+		path.join(dir, "gh"),
+		`#!${process.execPath}\nsetTimeout(() => console.log(${JSON.stringify(JSON.stringify([{ check_runs: baseRuns }]))}), 1000);\n`,
+		{ mode: 0o755 },
+	);
+	const slowApi = spawnSync(process.execPath, ["-e", script], {
+		env: {
+			...process.env,
+			PATH: dir + path.delimiter + process.env.PATH,
+			CHECKS_FILE: "",
+			GITHUB_REPOSITORY: "example/example",
+			CHECK_SHA: "synthetic",
+			CHECK_WAIT_TIMEOUT_MS: "100",
+		},
+		encoding: "utf8",
+		timeout: 3000,
+	});
+	assert.equal(slowApi.error, undefined);
+	assert.notEqual(slowApi.status, 0);
+	assert.match(slowApi.stderr, /ETIMEDOUT/);
 });
 
 test("advance-authorized review reserves its one inline repair before launch", (t) => {

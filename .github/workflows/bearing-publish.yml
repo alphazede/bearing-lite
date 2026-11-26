@@ -95,7 +95,7 @@ jobs:
           const timeoutMs = parseMs(process.env.CHECK_WAIT_TIMEOUT_MS, 20 * 60 * 1000);
           const intervalMs = parseMs(process.env.CHECK_POLL_INTERVAL_MS, 20 * 1000);
           const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-          const readPages = () => {
+          const readPages = (remainingMs) => {
             if (process.env.CHECKS_FILE) {
               return JSON.parse(readFileSync(process.env.CHECKS_FILE, "utf8"));
             }
@@ -110,14 +110,19 @@ jobs:
                 "--slurp",
                 `/repos/${process.env.GITHUB_REPOSITORY}/commits/${process.env.CHECK_SHA}/check-runs?filter=latest&per_page=100`,
               ],
-              { encoding: "utf8", stdio: ["ignore", "pipe", "inherit"] },
+              {
+                encoding: "utf8",
+                stdio: ["ignore", "pipe", "inherit"],
+                timeout: Math.max(1, Math.ceil(remainingMs)),
+                killSignal: "SIGKILL",
+              },
             );
             return JSON.parse(raw);
           };
           async function main() {
-            const deadline = Date.now() + timeoutMs;
+            const deadline = performance.now() + timeoutMs;
             while (true) {
-              const runs = readPages().flatMap((page) => page.check_runs ?? []);
+              const runs = readPages(deadline - performance.now()).flatMap((page) => page.check_runs ?? []);
               const pending = [];
               const verified = [];
               for (const name of required) {
@@ -136,13 +141,13 @@ jobs:
                 }
                 verified.push([name, latest.html_url]);
               }
-              if (!pending.length) {
+              const remainingMs = deadline - performance.now();
+              if (!pending.length && remainingMs >= 0) {
                 for (const [name, url] of verified) console.log(`Verified ${name}: ${url}`);
                 return;
               }
-              const remainingMs = deadline - Date.now();
               if (remainingMs <= 0) {
-                throw new Error(`Timed out waiting for required checks: ${pending.join(", ")}`);
+                throw new Error(`Timed out waiting for required checks: ${pending.join(", ") || "deadline expired"}`);
               }
               console.log(`Waiting for required checks: ${pending.join(", ")}`);
               await sleep(Math.min(intervalMs, remainingMs));
