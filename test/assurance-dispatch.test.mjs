@@ -6,6 +6,7 @@ import {
 	mkdirSync,
 	mkdtempSync,
 	readFileSync,
+	renameSync,
 	rmSync,
 	writeFileSync,
 } from "node:fs";
@@ -775,11 +776,14 @@ test("bearing-publish workflow verifies release candidate before approval and pu
 		'checked_out_sha="$(git rev-parse HEAD)"',
 		'main_sha="$(gh api "/repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq .object.sha)"',
 		'test "$checked_out_sha" = "$main_sha"',
-		'"/repos/${GITHUB_REPOSITORY}/commits/${checked_out_sha}/check-runs?filter=latest&per_page=100" \\',
-		'for (const name of ["quality", "Semgrep scan", "Analyze (javascript-typescript)", "Analyze (actions)"]) {',
+		"CHECK_SHA=\"$checked_out_sha\" node <<'NODE'",
+		'const required = ["quality", "Semgrep scan", "Analyze (javascript-typescript)", "Analyze (actions)"];',
+		'const pendingStatuses = new Set(["queued", "in_progress"]);',
+		"`/repos/${process.env.GITHUB_REPOSITORY}/commits/${process.env.CHECK_SHA}/check-runs?filter=latest&per_page=100`,",
 		"const latest = runs.filter((run) => run.name === name).sort((a, b) => b.id - a.id)[0];",
-		'if (!latest || latest.status !== "completed" || latest.conclusion !== "success") {',
-		"throw new Error(`Required check is not successful: ${name}`);",
+		'if (latest.status !== "completed" || latest.conclusion !== "success") {',
+		'`Required check is not successful: ${name} (status=${latest.status ?? "unknown"}, conclusion=${latest.conclusion ?? "none"})`,',
+		"throw new Error(`Timed out waiting for required checks: ${pending.join(\", \")}`);",
 		'"/repos/${GITHUB_REPOSITORY}/code-scanning/alerts?ref=refs/heads/main&state=open&tool_name=CodeQL&per_page=100" \\',
 		"if (alerts.length) throw new Error(`CodeQL has ${alerts.length} open alert(s)`);",
 		"pnpm install --frozen-lockfile",
@@ -858,6 +862,120 @@ test("bearing-publish workflow verifies release candidate before approval and pu
 		"TARBALL_NAME: ${{ needs.verify.outputs.tarball_name }}",
 		'run: npm publish "${RUNNER_TEMP}/release-artifact/${TARBALL_NAME}" --access public',
 	]);
+});
+
+test("bearing-publish check waiter waits for in-progress checks and fails fast on completed failure", async (t) => {
+	const workflow = readFileSync(
+		path.join(ROOT, ".github/workflows/bearing-publish.yml"),
+		"utf8",
+	);
+	const marker = "CHECK_SHA=\"$checked_out_sha\" node <<'NODE'\n";
+	const start = workflow.indexOf(marker);
+	assert.notEqual(start, -1, "check waiter node block must exist");
+	const end = workflow.indexOf("\n          NODE\n", start + marker.length);
+	assert.notEqual(end, -1, "check waiter node block must terminate");
+	const script = workflow
+		.slice(start + marker.length, end)
+		.replace(/^ {10}/gm, "");
+
+	const dir = mkdtempSync(
+		path.join(
+			tmpdir(),
+			`bearing-check-wait-${process.pid}-${process.hrtime.bigint()}-`,
+		),
+	);
+	t.after(() => rmSync(dir, { recursive: true, force: true }));
+	const checksFile = path.join(dir, "check-runs.json");
+	const writeChecks = (runs) => {
+		const tmp = path.join(dir, `check-runs-${process.hrtime.bigint()}.json`);
+		json(tmp, [{ check_runs: runs }]);
+		renameSync(tmp, checksFile);
+	};
+	const baseRuns = [
+		{ id: 100, name: "quality", status: "completed", conclusion: "success", html_url: "https://example.invalid/q100" },
+		{ id: 101, name: "Semgrep scan", status: "completed", conclusion: "success", html_url: "https://example.invalid/s" },
+		{ id: 102, name: "Analyze (javascript-typescript)", status: "completed", conclusion: "success", html_url: "https://example.invalid/js" },
+		{ id: 103, name: "Analyze (actions)", status: "completed", conclusion: "success", html_url: "https://example.invalid/act" },
+	];
+
+	// 1. Waits while newer tag-triggered quality run is in_progress, then passes on completed success.
+	writeChecks([
+		...baseRuns,
+		{ id: 200, name: "quality", status: "in_progress", conclusion: null, html_url: "https://example.invalid/q200" },
+	]);
+	const waitResult = await new Promise((resolve, reject) => {
+		const child = spawn(process.execPath, ["-e", script], {
+			env: {
+				...process.env,
+				CHECKS_FILE: checksFile,
+				CHECK_POLL_INTERVAL_MS: "25",
+				CHECK_WAIT_TIMEOUT_MS: "5000",
+			},
+			stdio: ["ignore", "pipe", "pipe"],
+		});
+		let stdout = "";
+		let stderr = "";
+		let updated = false;
+		child.stdout.on("data", (chunk) => {
+			stdout += chunk.toString();
+			if (!updated && stdout.includes("Waiting for required checks: quality (status=in_progress")) {
+				updated = true;
+				writeChecks([
+					...baseRuns,
+					{ id: 200, name: "quality", status: "completed", conclusion: "success", html_url: "https://example.invalid/q200" },
+				]);
+			}
+		});
+		child.stderr.on("data", (chunk) => {
+			stderr += chunk.toString();
+		});
+		child.on("error", reject);
+		child.on("close", (code) => resolve({ code, stdout, stderr }));
+	});
+	assert.equal(waitResult.code, 0, waitResult.stderr);
+	assert.match(waitResult.stdout, /Waiting for required checks: quality \(status=in_progress/);
+	assert.match(waitResult.stdout, /Verified quality: https:\/\/example\.invalid\/q200/);
+
+	// 2. Fails at once on a completed failure even if another required check is in_progress.
+	writeChecks([
+		...baseRuns.filter((r) => r.name !== "Semgrep scan"),
+		{ id: 200, name: "quality", status: "in_progress", conclusion: null, html_url: "https://example.invalid/q200" },
+		{ id: 201, name: "Semgrep scan", status: "completed", conclusion: "failure", html_url: "https://example.invalid/s201" },
+	]);
+	const failFast = spawnSync(process.execPath, ["-e", script], {
+		env: {
+			...process.env,
+			CHECKS_FILE: checksFile,
+			CHECK_POLL_INTERVAL_MS: "5000",
+			CHECK_WAIT_TIMEOUT_MS: "5000",
+		},
+		encoding: "utf8",
+	});
+	assert.notEqual(failFast.status, 0);
+	assert.match(
+		failFast.stderr,
+		/Required check is not successful: Semgrep scan \(status=completed, conclusion=failure\)/,
+	);
+
+	// 3. Fails with check name and state when timeout expires while queued.
+	writeChecks([
+		...baseRuns,
+		{ id: 200, name: "quality", status: "queued", conclusion: null, html_url: "https://example.invalid/q200" },
+	]);
+	const timedOut = spawnSync(process.execPath, ["-e", script], {
+		env: {
+			...process.env,
+			CHECKS_FILE: checksFile,
+			CHECK_POLL_INTERVAL_MS: "10",
+			CHECK_WAIT_TIMEOUT_MS: "30",
+		},
+		encoding: "utf8",
+	});
+	assert.notEqual(timedOut.status, 0);
+	assert.match(
+		timedOut.stderr,
+		/Timed out waiting for required checks: quality \(status=queued, conclusion=none\)/,
+	);
 });
 
 test("advance-authorized review reserves its one inline repair before launch", (t) => {

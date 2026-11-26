@@ -22,7 +22,7 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     permissions:
       checks: read
       contents: read
@@ -79,20 +79,79 @@ jobs:
           checked_out_sha="$(git rev-parse HEAD)"
           main_sha="$(gh api "/repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq .object.sha)"
           test "$checked_out_sha" = "$main_sha"
-          gh api --paginate --slurp \
-            "/repos/${GITHUB_REPOSITORY}/commits/${checked_out_sha}/check-runs?filter=latest&per_page=100" \
-            > "${RUNNER_TEMP}/check-runs.json"
-          CHECKS_FILE="${RUNNER_TEMP}/check-runs.json" node <<'NODE'
+          CHECK_SHA="$checked_out_sha" node <<'NODE'
+          const { execFileSync } = require("node:child_process");
           const { readFileSync } = require("node:fs");
-          const pages = JSON.parse(readFileSync(process.env.CHECKS_FILE, "utf8"));
-          const runs = pages.flatMap((page) => page.check_runs ?? []);
-          for (const name of ["quality", "Semgrep scan", "Analyze (javascript-typescript)", "Analyze (actions)"]) {
-            const latest = runs.filter((run) => run.name === name).sort((a, b) => b.id - a.id)[0];
-            if (!latest || latest.status !== "completed" || latest.conclusion !== "success") {
-              throw new Error(`Required check is not successful: ${name}`);
+          const required = ["quality", "Semgrep scan", "Analyze (javascript-typescript)", "Analyze (actions)"];
+          const pendingStatuses = new Set(["queued", "in_progress"]);
+          const parseMs = (raw, fallback) => {
+            if (raw === undefined || raw === "") return fallback;
+            const value = Number(raw);
+            if (!Number.isFinite(value) || value < 0) {
+              throw new Error(`Invalid duration milliseconds: ${raw}`);
             }
-            console.log(`Verified ${name}: ${latest.html_url}`);
+            return value;
+          };
+          const timeoutMs = parseMs(process.env.CHECK_WAIT_TIMEOUT_MS, 20 * 60 * 1000);
+          const intervalMs = parseMs(process.env.CHECK_POLL_INTERVAL_MS, 20 * 1000);
+          const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+          const readPages = () => {
+            if (process.env.CHECKS_FILE) {
+              return JSON.parse(readFileSync(process.env.CHECKS_FILE, "utf8"));
+            }
+            if (!process.env.GITHUB_REPOSITORY || !process.env.CHECK_SHA) {
+              throw new Error("GITHUB_REPOSITORY and CHECK_SHA are required");
+            }
+            const raw = execFileSync(
+              "gh",
+              [
+                "api",
+                "--paginate",
+                "--slurp",
+                `/repos/${process.env.GITHUB_REPOSITORY}/commits/${process.env.CHECK_SHA}/check-runs?filter=latest&per_page=100`,
+              ],
+              { encoding: "utf8", stdio: ["ignore", "pipe", "inherit"] },
+            );
+            return JSON.parse(raw);
+          };
+          async function main() {
+            const deadline = Date.now() + timeoutMs;
+            while (true) {
+              const runs = readPages().flatMap((page) => page.check_runs ?? []);
+              const pending = [];
+              const verified = [];
+              for (const name of required) {
+                const latest = runs.filter((run) => run.name === name).sort((a, b) => b.id - a.id)[0];
+                if (!latest) {
+                  throw new Error(`Required check is not successful: ${name} (missing)`);
+                }
+                if (pendingStatuses.has(latest.status)) {
+                  pending.push(`${name} (status=${latest.status}, conclusion=${latest.conclusion ?? "none"})`);
+                  continue;
+                }
+                if (latest.status !== "completed" || latest.conclusion !== "success") {
+                  throw new Error(
+                    `Required check is not successful: ${name} (status=${latest.status ?? "unknown"}, conclusion=${latest.conclusion ?? "none"})`,
+                  );
+                }
+                verified.push([name, latest.html_url]);
+              }
+              if (!pending.length) {
+                for (const [name, url] of verified) console.log(`Verified ${name}: ${url}`);
+                return;
+              }
+              const remainingMs = deadline - Date.now();
+              if (remainingMs <= 0) {
+                throw new Error(`Timed out waiting for required checks: ${pending.join(", ")}`);
+              }
+              console.log(`Waiting for required checks: ${pending.join(", ")}`);
+              await sleep(Math.min(intervalMs, remainingMs));
+            }
           }
+          main().catch((err) => {
+            console.error(err instanceof Error ? err.message : String(err));
+            process.exitCode = 1;
+          });
           NODE
           gh api --paginate --slurp \
             "/repos/${GITHUB_REPOSITORY}/code-scanning/alerts?ref=refs/heads/main&state=open&tool_name=CodeQL&per_page=100" \
