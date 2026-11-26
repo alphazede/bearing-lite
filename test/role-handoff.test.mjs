@@ -675,6 +675,62 @@ describe("alphazede/bearing-lite#285 planning handoff requires delivered DoD Man
 		assert.equal(res.reason, "handoff_complete");
 	});
 
+	it("requires delivery on the current integrated confirmation, not an earlier receipt or a handoff copy", async (t) => {
+		const { planDir, manifestPath, manifestSha256 } = manifestFixture(t);
+		const delivery = { path: manifestPath, sha256: manifestSha256 };
+		const approval = (id, manifest_delivery) => ({
+			id,
+			record_type: "owner_stop",
+			class: "E",
+			status: "answered",
+			manifest_delivery,
+		});
+		for (const [label, decisions, copy, expected] of [
+			["missing from confirmation", [approval("DEC-NEW")], delivery, "REROUTE"],
+			[
+				"earlier approval only",
+				[approval("DEC-OLD", delivery), approval("DEC-NEW")],
+				undefined,
+				"REROUTE",
+			],
+			[
+				"copy differs from confirmation",
+				[approval("DEC-NEW", { ...delivery, sha256: "0".repeat(64) })],
+				delivery,
+				"REROUTE",
+			],
+			[
+				"matching current confirmation",
+				[approval("DEC-OLD"), approval("DEC-NEW", delivery)],
+				delivery,
+				"ADVISE",
+			],
+		]) {
+			await t.test(label, () => {
+				const journey = journeyWithApproval(undefined);
+				journey.decisions = decisions;
+				journey.history.decisions = decisions.map(({ id }) => ({ id }));
+				const res = closeout.evaluate({
+					mode: "handoff",
+					plan_dir: planDir,
+					handoff: {
+						...validHandoff({ verdict: "READY" }),
+						manifest_delivery: copy,
+					},
+					final_freeze_receipt: finalReceipt,
+					journey,
+				});
+				assert.equal(res.outcome, expected);
+				assert.equal(
+					res.reason,
+					expected === "REROUTE"
+						? "handoff_refused:manifest_not_delivered"
+						: "handoff_complete",
+				);
+			});
+		}
+	});
+
 	it("skills and handoff template require Manifest browser display and delivery before approval (#285)", () => {
 		const pdStep6 =
 			readFileSync(
@@ -686,13 +742,17 @@ describe("alphazede/bearing-lite#285 planning handoff requires delivered DoD Man
 			"utf8",
 		);
 		const assemblyStep5 =
-			assembly.match(/^5\. \*\*Owner confirmation and handoff:\*\*[\s\S]*?(?=\n\nSkip inactive roles)/m)?.[0] ?? "";
+			assembly.match(
+				/^5\. \*\*Owner confirmation and handoff:\*\*[\s\S]*?(?=\n\nSkip inactive roles)/m,
+			)?.[0] ?? "";
 		const router = readFileSync(
 			path.join(ROOT, "skills/bearing-lite/SKILL.md"),
 			"utf8",
 		);
 		const routerStep3 =
-			router.match(/^3\. \*\*Planning:\*\*[\s\S]*?(?=\n4\. \*\*Implementation:\*\*)/m)?.[0] ?? "";
+			router.match(
+				/^3\. \*\*Planning:\*\*[\s\S]*?(?=\n4\. \*\*Implementation:\*\*)/m,
+			)?.[0] ?? "";
 		const handoffTpl = readFileSync(
 			path.join(ROOT, "skills/bearing-lite/templates/handoff.md"),
 			"utf8",
@@ -706,6 +766,11 @@ describe("alphazede/bearing-lite#285 planning handoff requires delivered DoD Man
 			assert.match(text, /Chrome/i, `${label} names Chrome`);
 			assert.match(text, /file-delivery/i, `${label} names file-delivery`);
 			assert.match(text, /manifest_not_delivered/, `${label} names typed gap`);
+			assert.match(
+				text.replace(/\s+/g, " "),
+				/if either browser display or file delivery fails/i,
+				`${label} holds approval until both deliveries succeed`,
+			);
 		}
 		assert.match(pdStep6, /name.*manifest.*path|manifest path/i);
 		assert.match(assemblyStep5, /name.*manifest.*path|manifest path/i);

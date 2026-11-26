@@ -39,8 +39,9 @@ explicit setup or catalog-edit request uses [onboard-bearing](../onboard-bearing
    requested planning review after assembly. Before asking for integrated owner
    confirmation, open the rendered DoD Manifest HTML in the owner's browser
    (Chrome when available), deliver the file through the harness's file-delivery
-   mechanism, and name its path in the question; if neither succeeds, return the
-   typed gap `manifest_not_delivered` without asking for approval.
+   mechanism, and name its path in the question. If either browser display or
+   file delivery fails, return the typed gap `manifest_not_delivered` without
+   asking for approval. Record delivery on the answered Class E confirmation.
 4. **Implementation:** at intake, verify the `final_freeze_receipt` in
    `handoff.md` using the [handoff template](templates/handoff.md). If the receipt
    is absent, invalid, or `draft`-only, return to planning before dispatch.
@@ -98,8 +99,8 @@ true, recommend a new Implementation Orchestrator session with this handoff.
 When false, continue from the durable handoff here. Resolve an unset choice
 during integrated owner confirmation. The owner opens a fresh session.
 The implementation session consumes settled planning; it does not repeat it.
-Handoff and closeout pass `journey` to `hooks/closeout.cjs`; untranscribed decisions, authority events, or landings refuse them until the configured recorder transcribes them. On `mode: "handoff"`, `hooks/closeout.cjs` also requires a valid `final_freeze_receipt` and a matching `manifest_delivery` record (`path` and `sha256` on the owner confirmation or handoff input), refusing absent or `draft`-only freeze receipts and missing or mismatched Manifest deliveries (`handoff_refused:manifest_not_delivered`).
-For live-wave evidence, pass the confirmed directory as top-level `plan_dir`.
+Handoff and closeout pass `journey` to `hooks/closeout.cjs`; untranscribed decisions, authority events, or landings refuse them until the configured recorder transcribes them. On `mode: "handoff"`, `hooks/closeout.cjs` also requires a valid `final_freeze_receipt` and `manifest_delivery` (`path` and `sha256`) on the current owner confirmation. Any handoff copy must match that record. The hook refuses absent or `draft`-only freeze receipts and missing or mismatched Manifest deliveries (`handoff_refused:manifest_not_delivered`).
+Pass the confirmed directory as top-level `plan_dir` to check the rendered HTML digest and any live-wave evidence.
 ## Dispatch and recovery
 
 Preserve the recorded profile; use `references/profiles.md` for authorized amendments.

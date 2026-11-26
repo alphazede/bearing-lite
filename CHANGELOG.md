@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - Require the Planning Orchestrator to open the rendered DoD Manifest HTML in the owner's browser (Chrome when available) and deliver the file before asking for integrated owner confirmation, record `manifest_delivery` (`path`, `sha256`, `opened_in`, `delivered_at`) on the owner confirmation record in `journey.json` and `skills/bearing-lite/templates/handoff.md`, and refuse `mode: "handoff"` in `hooks/closeout.cjs` with `handoff_refused:manifest_not_delivered` when delivery is missing or mismatched. ([#285](https://github.com/alphazede/bearing-lite/issues/285))
+  Previously valid handoffs without this delivery record now return to planning; do not fabricate historical delivery evidence.
 
 ## [3.1.2](https://github.com/alphazede/bearing-lite/releases/tag/v3.1.2) - 2026-11-26
 
