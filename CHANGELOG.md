@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Split `.github/workflows/bearing-publish.yml` into an unapproved `verify` job that runs all release checks and packs a SHA-256-verified tarball artifact, followed by the `npm-publish`-gated `publish` job that confirms the tag commit and tarball hash before publishing that exact file with npm trusted publishing.
+
 ## [3.1.1](https://github.com/alphazede/bearing-lite/releases/tag/v3.1.1) - 2026-11-26
 
 Version 3.1.0 was tagged but never published: its release check failed on one test. 3.1.1 carries the same changes with that test corrected.

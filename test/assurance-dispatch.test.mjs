@@ -707,6 +707,44 @@ test("209 repair F04 both pinned hosted native commands include discovery and la
 	}
 });
 
+test("bearing-publish workflow verifies release candidate before approval and publishes the checked tarball", () => {
+	const workflow = readFileSync(
+		path.join(ROOT, ".github/workflows/bearing-publish.yml"),
+		"utf8",
+	);
+	const verifyIdx = workflow.indexOf("\n  verify:\n");
+	const publishIdx = workflow.indexOf("\n  publish:\n");
+	assert.ok(verifyIdx !== -1, "verify job must exist");
+	assert.ok(publishIdx !== -1 && publishIdx > verifyIdx, "publish job must follow verify job");
+
+	const verifyJob = workflow.slice(verifyIdx, publishIdx);
+	const publishJob = workflow.slice(publishIdx);
+
+	assert.doesNotMatch(verifyJob, /^\s*environment:/m, "verify job must run without approval environment");
+	assert.doesNotMatch(verifyJob, /id-token:\s*write/, "verify job must not request id-token: write");
+	assert.match(verifyJob, /checks:\s*read/);
+	assert.match(verifyJob, /contents:\s*read/);
+	assert.match(verifyJob, /security-events:\s*read/);
+	assert.match(verifyJob, /node --test test\/\*\.test\.mjs/);
+	assert.match(verifyJob, /pnpm audit --audit-level=moderate/);
+	assert.match(verifyJob, /npm pack --dry-run --json/);
+	assert.match(verifyJob, /npm pack --pack-destination/);
+	assert.match(verifyJob, /sha256sum/);
+	assert.match(verifyJob, /uses:\s*actions\/upload-artifact@[0-9a-f]{40}/);
+
+	assert.match(publishJob, /^\s*needs:\s*verify\b/m, "publish job must depend on verify");
+	assert.match(publishJob, /^\s*environment:\s*npm-publish\b/m, "publish job must gate behind npm-publish");
+	assert.match(publishJob, /id-token:\s*write/, "publish job must request id-token: write for trusted publishing");
+	assert.match(publishJob, /contents:\s*read/, "publish job must request contents: read to confirm tag commit");
+	assert.doesNotMatch(publishJob, /checks:\s*read/, "publish job must not request checks: read");
+	assert.doesNotMatch(publishJob, /security-events:\s*read/, "publish job must not request security-events: read");
+	assert.match(publishJob, /uses:\s*actions\/download-artifact@[0-9a-f]{40}/);
+	assert.match(publishJob, /needs\.verify\.outputs\.commit_sha/);
+	assert.match(publishJob, /needs\.verify\.outputs\.tarball_sha256/);
+	assert.match(publishJob, /sha256sum -c/);
+	assert.match(publishJob, /npm publish "\$\{RUNNER_TEMP\}\/release-artifact\/\$\{TARBALL_NAME\}" --access public/);
+});
+
 test("advance-authorized review reserves its one inline repair before launch", (t) => {
 	const f = fixture(t);
 	f.slots[0].inline_repair = true;
