@@ -177,6 +177,11 @@ VERIFICATION_MISSING_SCHEMA = f"missing schemas/{VERIFICATION_SCHEMA_NAME}"
 CONTROL_CATALOGUE_SCHEMA_NAME = "control-catalogue.schema.json"
 CONTROL_CATALOGUE_MISSING_SCHEMA = f"missing schemas/{CONTROL_CATALOGUE_SCHEMA_NAME}"
 CONTROL_CATALOGUE_DIR = ROOT / "catalog" / "controls"
+# Optional pilot schemas: a removed pilot drops its schema, so its rows are skipped, not passed.
+PILOT_SCHEMA_NAMES = {
+    "code_mode": "code-mode.schema.json",
+    "owner_feedback": "owner-feedback.schema.json",
+}
 EXPECTED_SEED_CONTROLS = (
     "CTRL-SEC-LUKS",
     "CTRL-SEC-NFTABLES-ONEWAY",
@@ -338,6 +343,11 @@ def load_schemas() -> dict[str, dict | None]:
             out["control_catalogue"] = json.load(fh)
     else:
         out["control_catalogue"] = None
+    for key, filename in PILOT_SCHEMA_NAMES.items():
+        path = SCHEMAS_DIR / filename
+        out[key] = (
+            json.loads(path.read_text(encoding="utf-8")) if path.is_file() else None
+        )
     return out
 
 
@@ -4179,6 +4189,129 @@ def check_nkc(implementation_schema: dict) -> tuple[bool, str]:
     return True, "n/k/c present without assistant default integers"
 
 
+def pilot_schema_cases() -> list[tuple[str, str, str, object, str]]:
+    """Code Mode outcome and owner feedback record rows (BLX-VC-040, BLX-VC-082)."""
+    ref = {"path": "calls/c1.json", "sha256": "c" * 64, "kind": "call"}
+    outcome = {
+        "request_id": "req-1",
+        "status": "COMPLETE",
+        "blockers": [],
+        "next_action": None,
+        "evidence_refs": [ref],
+        "mode": "runtime",
+        "calls": [{"capability": "ready_set", "status": "COMPLETE"}],
+    }
+    waiting = dict(
+        outcome,
+        status="WAITING_ON",
+        blockers=["sandbox_unavailable"],
+        next_action="install bwrap",
+        mode="direct",
+        error={"code": "limit_exceeded", "limit": "wall"},
+    )
+    feedback = {
+        "candidate_digest": "d" * 64,
+        "revision": SYN_REV,
+        "owner_stop_id": "Q1",
+        "request_id": "review-1",
+        "timestamp": "2026-11-26T10:00:00Z",
+        "artifact_path": "design.md",
+        "section_id": "interfaces",
+        "kind": "comment",
+        "body": "Clarify &lt;limit&gt;",
+    }
+    cm, fb = "code_mode", "owner_feedback"
+    return [
+        ("BLX-VC-040", "code_mode_complete_outcome", cm, outcome, "accept"),
+        ("BLX-VC-040", "code_mode_typed_waiting_outcome", cm, waiting, "accept"),
+        (
+            "BLX-VC-040",
+            "code_mode_unknown_status",
+            cm,
+            dict(outcome, status="DONE"),
+            "reject",
+        ),
+        (
+            "BLX-VC-040",
+            "code_mode_missing_next_action",
+            cm,
+            omit(outcome, "next_action"),
+            "reject",
+        ),
+        (
+            "BLX-VC-040",
+            "code_mode_raw_output_field",
+            cm,
+            dict(outcome, stdout="raw"),
+            "reject",
+        ),
+        (
+            "BLX-VC-040",
+            "code_mode_evidence_ref_bad_digest",
+            cm,
+            dict(outcome, evidence_refs=[dict(ref, sha256="x")]),
+            "reject",
+        ),
+        (
+            "BLX-VC-040",
+            "code_mode_unknown_limit",
+            cm,
+            dict(waiting, error={"code": "limit_exceeded", "limit": "disk"}),
+            "reject",
+        ),
+        ("BLX-VC-082", "feedback_comment_record", fb, feedback, "accept"),
+        (
+            "BLX-VC-082",
+            "feedback_approve_intent_empty_body",
+            fb,
+            dict(feedback, kind="approve_intent", section_id="candidate", body=""),
+            "accept",
+        ),
+        (
+            "BLX-VC-082",
+            "feedback_missing_section_id",
+            fb,
+            omit(feedback, "section_id"),
+            "reject",
+        ),
+        (
+            "BLX-VC-082",
+            "feedback_unknown_kind",
+            fb,
+            dict(feedback, kind="approve"),
+            "reject",
+        ),
+        (
+            "BLX-VC-082",
+            "feedback_authority_field",
+            fb,
+            dict(feedback, granted=True),
+            "reject",
+        ),
+        (
+            "BLX-VC-082",
+            "feedback_short_digest",
+            fb,
+            dict(feedback, candidate_digest="d" * 63),
+            "reject",
+        ),
+        (
+            "BLX-VC-082",
+            "feedback_local_timestamp",
+            fb,
+            dict(feedback, timestamp="2026-11-26T10:00:00+01:00"),
+            "reject",
+        ),
+        (
+            "BLX-VC-082",
+            "feedback_blank_artifact_path",
+            fb,
+            dict(feedback, artifact_path="  "),
+            "reject",
+        ),
+    ]
+
+
 def owner_stop_cases() -> list:
     grant = {
         "granted": True,
@@ -4416,7 +4549,14 @@ def run_cases() -> int:
         print(f"FAIL {label}: {detail}")
         failed += 1
 
-    for seit_id, name, schema_key, instance, expect in cases() + owner_stop_cases():
+    for seit_id, name, schema_key, instance, expect in (
+        cases() + owner_stop_cases() + pilot_schema_cases()
+    ):
+        if schemas[schema_key] is None:
+            print(
+                f"SKIP {seit_id} {name}: schemas/{PILOT_SCHEMA_NAMES[schema_key]} absent"
+            )
+            continue
         messages = errors_for(schemas[schema_key], instance)
         accepted = not messages
         want_accept = expect == "accept"
