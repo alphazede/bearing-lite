@@ -2,11 +2,55 @@
   "schema_version": "1",
   "artifact": "seit",
   "procedures_and_commands": [
-    { "id": "CMD-FF-PREFLIGHT", "repo": "demo", "status": "existing gate", "command": "node --version", "pass_rule": "exit 0", "evidence": "version line" },
-    { "id": "CMD-FF-UNIT", "repo": "demo", "status": "new gate", "command": "node --test test/ff-unit.test.mjs", "pass_rule": "exit 0", "evidence": "TAP output" }
+    {
+      "id": "CMD-FF-PREFLIGHT",
+      "repo": "demo",
+      "status": "existing gate",
+      "command": "node --version",
+      "pass_rule": "exit 0",
+      "evidence": "version line"
+    },
+    {
+      "id": "CMD-FF-UNIT",
+      "repo": "demo",
+      "status": "new gate",
+      "command": "node --test test/ff-unit.test.mjs",
+      "pass_rule": "exit 0",
+      "evidence": "TAP output"
+    },
+    {
+      "id": "CMD-FF-LINT",
+      "repo": "demo",
+      "status": "existing gate",
+      "command": "node --check test/ff-unit.test.mjs",
+      "pass_rule": "exit 0",
+      "evidence": "no syntax error"
+    }
   ],
   "proof_cases": [
-    { "id": "SEIT-FF-1", "requirement_id": "FF-001", "command_id": "CMD-FF-UNIT", "method": "test", "pass_fail_rule": "PASS-FF-1: the widget renders one row per item.", "observable_evidence": "EVIDENCE-FF-1: row count in TAP output" },
-    { "id": "SEIT-FF-2", "requirement_id": "FF-002", "command_id": "CMD-FF-UNIT", "method": "test", "pass_fail_rule": "PASS-FF-2: an empty list renders no rows.", "observable_evidence": "EVIDENCE-FF-2: empty-case assertion in TAP output" }
-  ]
+    {
+      "id": "SEIT-FF-1",
+      "requirement_id": "FF-001",
+      "command_id": "CMD-FF-UNIT",
+      "method": "test",
+      "pass_fail_rule": "PASS-FF-1: the widget renders one row per item.",
+      "observable_evidence": "EVIDENCE-FF-1: row count in TAP output"
+    },
+    {
+      "id": "SEIT-FF-2",
+      "requirement_id": "FF-002",
+      "command_id": "CMD-FF-LINT",
+      "method": "test",
+      "pass_fail_rule": "PASS-FF-2: an empty list renders no rows.",
+      "observable_evidence": "EVIDENCE-FF-2: empty-case assertion in TAP output"
+    }
+  ],
+  "source_baseline": {
+    "planning_inputs": [
+      {
+        "path": "test/fixtures/compile-handoff/final-freeze/package/plan.md",
+        "sha256": "c580ea84ebbc3521a866f7ccb852fe9bb8e329ee1a9f6e1a2f55833d2d170ef4"
+      }
+    ]
+  }
 }

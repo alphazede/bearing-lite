@@ -30,6 +30,13 @@ const textList = (value) =>
 	Array.isArray(value) && value.length > 0 && value.every(text);
 const closed = (value, keys) =>
 	record(value) && Object.keys(value).every((key) => keys.includes(key));
+const absent = (value) => value === null || value === undefined;
+/** Gap code for a value that is not usable text or not a usable list. */
+function gapCode(value) {
+	if (absent(value)) return "missing";
+	if (blank(value)) return "empty";
+	return "invalid";
+}
 
 function readPinned(file, expected, field) {
 	let bytes;
@@ -55,7 +62,7 @@ function readPinned(file, expected, field) {
 }
 
 function blank(value) {
-	if (value == null) return true;
+	if (absent(value)) return true;
 	if (typeof value === "string") return value.trim() === "";
 	if (Array.isArray(value)) return value.length === 0;
 	return false;
@@ -209,6 +216,37 @@ function validCapabilities(snap) {
 	return true;
 }
 
+/**
+ * Commands an empty-command slice inherits from the Test Implementer slices that
+ * share its proof rows; null when a sharing slice or a shared row is malformed.
+ */
+function pairedCommands(slice, plan, seit) {
+	const rows = textList(slice.seit_proof_rows) ? slice.seit_proof_rows : [];
+	const cases = Array.isArray(seit.proof_cases) ? seit.proof_cases : [];
+	const slices = Array.isArray(plan.slices) ? plan.slices : [];
+	const ids = [];
+	for (const rowId of rows) {
+		const sharing = slices.filter(
+			(item) =>
+				item !== slice &&
+				roleKey(item?.role) === "test_implementer" &&
+				Array.isArray(item.seit_proof_rows) &&
+				item.seit_proof_rows.includes(rowId),
+		);
+		if (sharing.length === 0) continue;
+		const malformed = (item) =>
+			!Array.isArray(item.command_ids) || !item.command_ids.every(text);
+		if (sharing.some(malformed)) return null;
+		const row = cases.find((item) => item?.id === rowId);
+		if (!row) continue; // An unresolved row is already an acceptance gap.
+		if (!text(row.command_id)) return null;
+		const commandId = row.command_id;
+		const owned = sharing.some((item) => item.command_ids.includes(commandId));
+		if (owned && !ids.includes(commandId)) ids.push(commandId);
+	}
+	return ids;
+}
+
 const candidate = opt["--candidate"];
 if (blank(candidate)) gap("candidate", "missing");
 
@@ -261,23 +299,33 @@ const routeKey =
 		? "implementer"
 		: role;
 if (slice && binding) {
-	const roles = binding.json.snapshot?.roles ?? {};
-	route = Object.hasOwn(roles, routeKey) ? roles[routeKey] : null;
-	// Same precedence as the route guard: a scoped owner amendment with a harness replaces the snapshot route.
+	// Route guard parity (role_routes): a binding without a snapshot roles object is invalid.
+	const roles = binding.json.snapshot?.roles;
+	if (!record(roles)) gap("binding", "invalid");
+	else route = Object.hasOwn(roles, routeKey) ? roles[routeKey] : null;
+	// A scoped owner amendment with a harness replaces the snapshot route; its own
+	// `enabled` (default true) decides whether the role is disabled.
 	const amendment = binding.json.scoped_owner_amendment;
 	const amended =
 		record(amendment) && Object.hasOwn(amendment, routeKey)
 			? amendment[routeKey]
 			: null;
-	if (record(amended) && Object.hasOwn(amended, "harness")) {
-		const { harness, model, reasoning, ordered_fallbacks = [] } = amended;
+	if (record(roles) && record(amended) && Object.hasOwn(amended, "harness")) {
+		const {
+			enabled = true,
+			harness,
+			model,
+			reasoning,
+			ordered_fallbacks = [],
+		} = amended;
 		route = {
-			enabled: true,
+			enabled,
 			primary: { harness, model, reasoning },
 			ordered_fallbacks,
 		};
 	}
-	if (!validRoute(route)) gap("route", route == null ? "missing" : "invalid");
+	if (record(roles) && !validRoute(route))
+		gap("route", absent(route) ? "missing" : "invalid");
 	if (!validCapabilities(binding.json.snapshot)) gap("binding", "incomplete");
 }
 
@@ -285,20 +333,18 @@ const commands = [];
 const acceptance = [];
 if (slice) {
 	if (!text(slice.role)) gap("route", "invalid");
-	if (blank(slice.goal))
-		gap("objective", slice.goal == null ? "missing" : "empty");
+	if (blank(slice.goal)) gap("objective", gapCode(slice.goal));
 	else if (!text(slice.goal)) gap("objective", "invalid");
-	if (blank(slice.write_set))
-		gap("write_set", slice.write_set == null ? "missing" : "empty");
+	if (blank(slice.write_set)) gap("write_set", gapCode(slice.write_set));
 	else if (!textList(slice.write_set)) gap("write_set", "invalid");
 	if (
-		slice.expected_files != null &&
+		!absent(slice.expected_files) &&
 		(!Array.isArray(slice.expected_files) || !slice.expected_files.every(text))
 	) {
 		gap("expected_files", "invalid");
 	}
 	// Final freeze accepts an empty proof-row list (schemas/implementation.schema.json); the goal is then the acceptance.
-	if (slice.seit_proof_rows == null) gap("acceptance", "missing");
+	if (absent(slice.seit_proof_rows)) gap("acceptance", "missing");
 	else if (
 		Array.isArray(slice.seit_proof_rows) &&
 		slice.seit_proof_rows.length === 0
@@ -310,11 +356,7 @@ if (slice) {
 				pass_fail_rule: slice.goal,
 				observable_evidence: stop,
 			});
-		else
-			gap(
-				"evidence",
-				stop == null ? "missing" : blank(stop) ? "empty" : "invalid",
-			);
+		else gap("evidence", gapCode(stop));
 	} else if (!textList(slice.seit_proof_rows)) gap("acceptance", "invalid");
 	else if (seit) {
 		const cases = Array.isArray(seit.proof_cases) ? seit.proof_cases : [];
@@ -327,12 +369,7 @@ if (slice) {
 				continue;
 			}
 			if (!text(row.observable_evidence)) {
-				evidenceCode =
-					row.observable_evidence == null
-						? "missing"
-						: blank(row.observable_evidence)
-							? "empty"
-							: "invalid";
+				evidenceCode = gapCode(row.observable_evidence);
 				continue;
 			}
 			acceptance.push({
@@ -345,31 +382,19 @@ if (slice) {
 		if (evidenceCode) gap("evidence", evidenceCode);
 	}
 	// An empty command list passes final freeze except on a light slice (hooks/plan-package.cjs checkWorkClass).
-	// It then takes the commands of the Test Implementer slices that share its proof rows, else none.
+	// It then inherits, for each of its proof rows, the command that seit.json ties to that row
+	// (proof_cases[].command_id), when a Test Implementer slice sharing the row lists that command.
 	let commandIds = null;
-	if (slice.command_ids == null) gap("commands", "missing");
+	if (absent(slice.command_ids)) gap("commands", "missing");
 	else if (!Array.isArray(slice.command_ids) || slice.command_ids.length > 0)
 		commandIds = slice.command_ids;
 	else if (slice.work_class === "light") gap("commands", "empty");
-	else {
-		const rows = textList(slice.seit_proof_rows) ? slice.seit_proof_rows : [];
-		const paired = implementation.json.slices.filter(
-			(item) =>
-				item !== slice &&
-				roleKey(item?.role) === "test_implementer" &&
-				Array.isArray(item.seit_proof_rows) &&
-				item.seit_proof_rows.some((id) => rows.includes(id)),
-		);
-		commandIds = [
-			...new Set(
-				paired.flatMap((item) =>
-					Array.isArray(item.command_ids) ? item.command_ids : [],
-				),
-			),
-		];
+	else if (seit) {
+		commandIds = pairedCommands(slice, implementation.json, seit);
+		if (commandIds === null) gap("commands", "invalid");
 	}
 	if (commandIds === null) {
-		// Gap already recorded.
+		// Gap already recorded, or no SEIT to resolve against.
 	} else if (!Array.isArray(commandIds) || !commandIds.every(text))
 		gap("commands", "invalid");
 	else if (seit) {
