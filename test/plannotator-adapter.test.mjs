@@ -19,6 +19,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
+import { offlineSkip } from "./fixtures/code-mode/fixture.mjs";
 import { plannotatorIsolation } from "./fixtures/plannotator/isolation-probe.mjs";
 import {
 	planningSessions,
@@ -44,6 +45,8 @@ const harnesses = readJson(path.join(fixtureDir, "harnesses.json"));
 const isolation = await plannotatorIsolation();
 const checks = { skip: isolation.tools };
 const review = { skip: isolation.review };
+// The isolated caller runs the adapter under `unshare -rn`.
+const isolatedCaller = { skip: isolation.review || offlineSkip() };
 const fakeSource = readFileSync(
 	path.join(fixtureDir, "fake-plannotator.cjs"),
 	"utf8",
@@ -1184,10 +1187,10 @@ for (const mode of ["disabled", "absent", "enabled"])
 		},
 	);
 
-for (const isolatedCaller of [false, true])
+for (const isolated of [false, true])
 	test(
-		`BLX-VC-092 child review is local and sharing features are disabled (${isolatedCaller ? "isolated caller" : "normal caller"})`,
-		review,
+		`BLX-VC-092 child review is local and sharing features are disabled (${isolated ? "isolated caller" : "normal caller"})`,
+		isolated ? isolatedCaller : review,
 		async (t) => {
 			const fx = fixture(t, {
 				scenario: {
@@ -1195,7 +1198,7 @@ for (const isolatedCaller of [false, true])
 					linkedEvidence: "## SAMPLE-B\n\nUse sample B.\n",
 				},
 			});
-			const run = await runAdapter(t, fx, { isolatedCaller });
+			const run = await runAdapter(t, fx, { isolatedCaller: isolated });
 			approve(fx, run);
 			assert.match(run.stderr, /http:\/\/127\.0\.0\.1:\d+\//);
 		},
