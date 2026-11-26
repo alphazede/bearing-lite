@@ -44,6 +44,7 @@ import {
 	mkdtempSync,
 	readdirSync,
 	readFileSync,
+	realpathSync,
 	rmSync,
 	symlinkSync,
 	writeFileSync,
@@ -1328,7 +1329,12 @@ describe("unavailable or unverifiable rows (#92 honest recording)", () => {
 	});
 
 	it("TC-COPILOT-CLI-UNAVAIL-01 copilot CLI binary absent on this host", (t) => {
-		const dir = path.join(shared.tmp, "copilot");
+		// Copilot discovers skills from cwd ancestors, even with HOME overridden.
+		// The caller's TMPDIR may be inside the operator's home; use a neutral root.
+		const dir = mkdtempSync(
+			path.join(realpathSync("/tmp"), "bearing-copilot-"),
+		);
+		t.after(() => rmSync(dir, { recursive: true, force: true }));
 		const home = path.join(dir, "home");
 		const xdg = path.join(dir, "xdg");
 		const copilotHome = path.join(dir, "copilot-home");
@@ -1340,6 +1346,9 @@ describe("unavailable or unverifiable rows (#92 honest recording)", () => {
 			PATH: process.env.PATH ?? "",
 			HOME: home,
 			XDG_CONFIG_HOME: xdg,
+			XDG_CACHE_HOME: path.join(dir, "xdg-cache"),
+			XDG_DATA_HOME: path.join(dir, "xdg-data"),
+			XDG_STATE_HOME: path.join(dir, "xdg-state"),
 			COPILOT_HOME: copilotHome,
 			COPILOT_CACHE_HOME: copilotCache,
 			COPILOT_AUTO_UPDATE: "false",
@@ -1436,12 +1445,23 @@ describe("unavailable or unverifiable rows (#92 honest recording)", () => {
 		);
 		assert.equal(entry.version, PKG.version);
 		assert.equal(entry.enabled, true);
-		const skillList = ok(COPILOT, ["skill", "list"], { env, cwd: repo });
-		for (const skill of shared.skills) {
-			assert.ok(
-				skillList.includes(skill),
-				`skill ${skill} missing from copilot skill list`,
-			);
+		assert.equal(entry.installedFrom, mkt);
+		const skillList = jsonTail(
+			ok(COPILOT, ["skill", "list", "--json"], { env, cwd: repo }),
+			"[",
+		);
+		assert.ok(
+			skillList.every((skill) => ["plugin", "builtin"].includes(skill.source)),
+			"disposable Copilot profile discovered non-plugin, non-builtin skills",
+		);
+		const pluginSkills = skillList.filter((skill) => skill.source === "plugin");
+		assert.deepEqual(
+			pluginSkills.map((skill) => skill.name).sort(),
+			shared.skills,
+		);
+		for (const skill of pluginSkills) {
+			assert.equal(skill.enabled, true);
+			assert.equal(skill.path, path.join(mkt, "plugin", "skills", skill.name));
 		}
 		assert.ok(
 			existsSync(
