@@ -20,10 +20,13 @@
  * slices, write sets, and resolved commands (#190), exit 1 on any finding.
  * CLI: node <plugin root>/hooks/plan-package.cjs ready <plan dir> -> ready slices
  * across all waves, using scheduling state read as JSON on stdin.
+ * CLI: node <plugin root>/hooks/plan-package.cjs commands <plan dir> -> SEIT commands
+ * checked against their declared `--help` form (Alphazedehq#781), exit 1 on any finding.
  */
 
 const fs = require("node:fs");
 const path = require("node:path");
+const { spawnSync } = require("node:child_process");
 const crypto = require("node:crypto");
 const { StringDecoder } = require("node:string_decoder");
 const { isDeepStrictEqual } = require("node:util");
@@ -2114,7 +2117,169 @@ function waveView(dir, waveId) {
 	};
 }
 
+/**
+ * Alphazedehq#781: words of a SEIT command line. Quotes are removed and a
+ * `$(...)` substitution stays one word; nothing is expanded or executed.
+ */
+function shellWords(line) {
+	const words = [];
+	let word = null;
+	let depth = 0;
+	let quote = "";
+	for (let i = 0; i < line.length; i++) {
+		const c = line[i];
+		if (depth > 0) {
+			word += c;
+			if (c === "(") depth++;
+			else if (c === ")") depth--;
+		} else if (quote) {
+			if (c === quote) quote = "";
+			else word += c;
+		} else if (c === "'" || c === '"') {
+			quote = c;
+			word = word ?? "";
+		} else if (c === "$" && line[i + 1] === "(") {
+			word = `${word ?? ""}$(`;
+			depth = 1;
+			i++;
+		} else if (/\s/.test(c)) {
+			if (word !== null) words.push(word);
+			word = null;
+		} else word = (word ?? "") + c;
+	}
+	if (word !== null) words.push(word);
+	while (words.length && /^[A-Za-z_]\w*=/.test(words[0])) words.shift();
+	return words;
+}
+
+const OPTION = /(?<![\w-])--?[A-Za-z0-9][\w-]*/g;
+
+/** Required option groups and known options from an argparse-style usage text. */
+function usageOf(help) {
+	const usage = /usage:\s*\S+([\s\S]*?)(?:\n\s*\n|$)/i.exec(help);
+	if (!usage) return null;
+	const required = [];
+	let top = "";
+	let group = null;
+	let depth = 0;
+	for (const c of usage[1]) {
+		if (c === "[" || c === "(") {
+			if (depth === 0 && c === "(") group = "";
+			else if (group !== null) group += c;
+			depth++;
+		} else if (c === "]" || c === ")") {
+			depth--;
+			if (depth === 0 && group !== null) {
+				required.push(group.match(OPTION) || []);
+				group = null;
+			} else if (group !== null) group += c;
+		} else if (depth === 0) top += c;
+		else if (group !== null) group += c;
+	}
+	for (const option of top.match(OPTION) || []) required.push([option]);
+	return { required, known: [...new Set(help.match(OPTION) || [])] };
+}
+
+/**
+ * Alphazedehq#781: check each SEIT command whose `dry_run_form` is the command's
+ * own executable plus `--help` or `-h`. Only that declared help form runs (no
+ * shell, stdin closed, 10 s limit); the real command never runs. A missing
+ * required option, an unknown option, or an executable that does not resolve
+ * is a named finding. Other rows are listed as unchecked with a reason. This
+ * check is advisory: the freeze does not run it.
+ */
+function checkSeitCommands(dir) {
+	const root = repoRoot(dir);
+	const seit = JSON.parse(fs.readFileSync(path.join(dir, "seit.json"), "utf8"));
+	const findings = [];
+	const unchecked = [];
+	const rows = Array.isArray(seit?.procedures_and_commands)
+		? seit.procedures_and_commands
+		: [];
+	for (const row of rows) {
+		const id = row?.id;
+		if (
+			typeof row?.command !== "string" ||
+			typeof row?.dry_run_form !== "string"
+		) {
+			unchecked.push({ command_id: id, reason: "no command or dry_run_form" });
+			continue;
+		}
+		const command = shellWords(row.command);
+		const dry = shellWords(row.dry_run_form);
+		const head = dry.slice(0, -1);
+		if (
+			!["--help", "-h"].includes(dry.at(-1)) ||
+			!head.length ||
+			head.some((word, i) => word !== command[i])
+		) {
+			unchecked.push({
+				command_id: id,
+				reason: "dry_run_form is not the command's executable plus --help",
+			});
+			continue;
+		}
+		const exe = head[0].includes("/") ? path.resolve(root, head[0]) : head[0];
+		const help = spawnSync(exe, [...head.slice(1), dry.at(-1)], {
+			cwd: root,
+			encoding: "utf8",
+			stdio: ["ignore", "pipe", "pipe"],
+			timeout: 10000,
+		});
+		if (help.error?.code === "ENOENT" || help.error?.code === "EACCES") {
+			findings.push({
+				code: "seit_command_unresolved",
+				command_id: id,
+				command: row.command,
+				reason: `${head[0]} does not resolve to an executable (${help.error.code})`,
+			});
+			continue;
+		}
+		const usage =
+			help.status === 0 ? usageOf(`${help.stdout}\n${help.stderr}`) : null;
+		if (!usage) {
+			unchecked.push({
+				command_id: id,
+				reason: help.error
+					? `help form failed: ${help.error.code}`
+					: help.status !== 0
+						? `help form exited ${help.status}`
+						: "help output has no usage line",
+			});
+			continue;
+		}
+		const args = command.slice(head.length);
+		const end = args.findIndex((a) => /^(\||\|\||&&|;|--|\d*[<>].*)$/.test(a));
+		const given = (end < 0 ? args : args.slice(0, end))
+			.filter((a) => /^--[A-Za-z0-9]|^-[A-Za-z]$/.test(a))
+			.map((a) => a.split("=")[0]);
+		// argparse accepts an unambiguous prefix of a long option.
+		const matches = (option, word) =>
+			option === word || (word.startsWith("--") && option.startsWith(word));
+		const problems = [
+			...usage.required
+				.filter(
+					(alts) =>
+						alts.length && !alts.some((o) => given.some((g) => matches(o, g))),
+				)
+				.map((alts) => `missing required option (${alts.join(" | ")})`),
+			...given
+				.filter((g) => !usage.known.some((o) => matches(o, g)))
+				.map((g) => `unknown option ${g}`),
+		];
+		if (problems.length)
+			findings.push({
+				code: "seit_command_args_rejected",
+				command_id: id,
+				command: row.command,
+				reason: `${row.dry_run_form} usage: ${problems.join("; ")}`,
+			});
+	}
+	return { outcome: findings.length ? "FAIL" : "PASS", findings, unchecked };
+}
+
 module.exports = {
+	checkSeitCommands,
 	waveView,
 	readLiveWave,
 	readyView,
@@ -2189,6 +2354,32 @@ if (require.main === module && process.argv[2] === "control") {
 		process.exit(2);
 	}
 	const result = waveView(dir, waveId);
+	process.stdout.write(JSON.stringify(result, null, 2) + "\n");
+	process.exit(result.outcome === "PASS" ? 0 : 1);
+} else if (require.main === module && process.argv[2] === "commands") {
+	const dir = process.argv[3];
+	if (!dir) {
+		process.stderr.write(
+			"usage: node hooks/plan-package.cjs commands <plan dir>\n",
+		);
+		process.exit(2);
+	}
+	let result;
+	try {
+		result = checkSeitCommands(dir);
+	} catch (error) {
+		result = {
+			outcome: "FAIL",
+			findings: [
+				{
+					code: "planning_input_unreadable",
+					path: "seit.json",
+					reason: error.code || "INVALID_INPUT",
+				},
+			],
+			unchecked: [],
+		};
+	}
 	process.stdout.write(JSON.stringify(result, null, 2) + "\n");
 	process.exit(result.outcome === "PASS" ? 0 : 1);
 } else if (require.main === module) {

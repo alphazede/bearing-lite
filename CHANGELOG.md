@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Add the advisory `node hooks/plan-package.cjs commands <plan dir>` planning check, which runs each SEIT command's declared `<executable> --help` dry-run form (never the command) and names a missing required or unknown option (`seit_command_args_rejected`) or an unresolved executable (`seit_command_unresolved`) before final freeze. ([Alphazedehq#781](https://github.com/alphazede/Alphazedehq/issues/781))
+
 ## [3.1.3](https://github.com/alphazede/bearing-lite/releases/tag/v3.1.3) - 2026-11-26
 
 - Require the Planning Orchestrator to open the rendered DoD Manifest HTML in the owner's browser (Chrome when available) and deliver the file before asking for integrated owner confirmation, record `manifest_delivery` (`path`, `sha256`, `opened_in`, `delivered_at`) on the owner confirmation record in `journey.json` and `skills/bearing-lite/templates/handoff.md`, and refuse `mode: "handoff"` in `hooks/closeout.cjs` with `handoff_refused:manifest_not_delivered` when delivery is missing or mismatched. ([#285](https://github.com/alphazede/bearing-lite/issues/285), [PR #286](https://github.com/alphazede/bearing-lite/pull/286))
