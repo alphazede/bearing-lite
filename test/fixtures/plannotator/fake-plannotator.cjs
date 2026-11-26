@@ -199,6 +199,8 @@ function formatFeedback(files) {
 }
 
 async function main() {
+	// The test counts these lines to observe each approval-gate invocation.
+	console.error("Fixture invocation");
 	const { files, resultFile } = invocation();
 	checkBundle(files);
 	checkEnvironment();

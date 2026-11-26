@@ -473,6 +473,10 @@ test("BLX-VC-074 visual output treats sample markup as data and allows no remote
 	});
 	const page = parse(rendered(dir));
 	assert.ok(page.text.includes(ordinary), "Ordinary text remains readable");
+	assertInert(page, dir);
+});
+
+function assertInert(page, dir) {
 	checkCsp(page);
 	for (const { tag, attrs } of page.elements) {
 		assert.ok(
@@ -508,6 +512,159 @@ test("BLX-VC-074 visual output treats sample markup as data and allows no remote
 			}
 		}
 	}
+}
+
+// Deterministic generator (mulberry32): a failing round reproduces from its seed.
+function seeded(seed) {
+	let state = seed;
+	return () => {
+		state = (state + 0x6d2b79f5) | 0;
+		let x = Math.imul(state ^ (state >>> 15), 1 | state);
+		x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x;
+		return ((x ^ (x >>> 14)) >>> 0) / 2 ** 32;
+	};
+}
+
+// Inert specimen text shaped like markup, script, URL and template injections.
+const hostile = [
+	"<script>void 0</script>",
+	"</script><script>void 0</script>",
+	'"><img src="https://assets.invalid/x.png" onerror="void 0">',
+	"' onmouseover='void 0' data-x='",
+	'" onfocus="void 0" autofocus="',
+	"javascript:void(0)",
+	"JaVaScRiPt:void(0)",
+	"data:text/html,<script>void 0</script>",
+	"<svg onload=void(0)>",
+	'<iframe srcdoc="<script>void 0</script>"></iframe>',
+	'<base href="https://assets.invalid/">',
+	'<meta http-equiv="refresh" content="0;url=https://assets.invalid/">',
+	'<link rel="stylesheet" href="https://assets.invalid/x.css">',
+	"</style><style>@import url(https://assets.invalid/x.css)</style>",
+	"<!-- unterminated comment",
+	"]]><![CDATA[",
+	"&lt;script&gt;void 0&lt;/script&gt;",
+	"&#x6a;avascript:void(0)",
+	"</textarea></title><script>void 0</script>",
+	'<a href="https://assets.invalid/">sample</a>',
+	"${sample} {{sample}} $& $1",
+	"sample\u2028line\u2029break",
+];
+const words = ["Sample", "note", "record", "value", "check"];
+
+// Tag and attribute names the renderer emits; hostile input must add none.
+function structure(page) {
+	return page.elements
+		.filter(({ tag }) => tag !== "a")
+		.map(({ tag, attrs }) => `${tag}[${Object.keys(attrs).sort().join(",")}]`)
+		.sort();
+}
+
+test("BLX-VC-074 generated hostile text stays inert in every HTML context", (t) => {
+	const seed = 0x5eed074;
+	const random = seeded(seed);
+	const pick = (items) => items[Math.floor(random() * items.length)];
+	const { dir, doc, seit, save } = fixture(t);
+	const baseline = parse(rendered(dir));
+	assertInert(baseline, dir);
+	const shape = structure(baseline);
+	const anchorAttrs = new Set(
+		baseline.elements
+			.filter(({ tag }) => tag === "a")
+			.flatMap(({ attrs }) => Object.keys(attrs)),
+	);
+	const flat = (value) => value.trim().split(/\s+/).join(" ");
+	const rounds = hostile.length;
+	for (let round = 0; round < rounds; round++) {
+		// Each context gets every specimen once across the rounds, plus a random one.
+		const payload = (offset) =>
+			`${pick(words)} ${hostile[(round + offset) % rounds]} ${pick(hostile)}`;
+		const inputs = {
+			title: payload(0),
+			bluf: payload(1),
+			statement: payload(2),
+			expected: payload(3),
+			caseIds: seit.proof_cases.map(
+				(_, index) => `SEIT-${round}-${index} ${payload(4 + index)}`,
+			),
+			evidence: seit.proof_cases.map((_, index) =>
+				// Odd rounds leave case 0 as a non-file link target; the rest name real files.
+				round % 2 && index === 0
+					? payload(8)
+					: `evidence/${payload(9 + index).replaceAll("/", "_")}.txt`,
+			),
+		};
+		doc.dod_manifest.title = inputs.title;
+		doc.dod_manifest.bluf = inputs.bluf;
+		doc.dod_manifest.requirements[0].statement = inputs.statement;
+		seit.proof_cases.forEach((item, index) => {
+			item.id = inputs.caseIds[index];
+			item.observable_evidence = inputs.evidence[index];
+			item.expected_result = inputs.expected;
+			if (inputs.evidence[index].startsWith("evidence/"))
+				writeFileSync(path.join(dir, inputs.evidence[index]), "Sample\n");
+		});
+		save();
+		const context = `seed=${seed} round=${round} inputs=${JSON.stringify(inputs)}`;
+		const page = parse(rendered(dir));
+		assertInert(page, dir);
+		assert.deepEqual(
+			structure(page),
+			shape,
+			`No added element or attribute: ${context}`,
+		);
+		for (const { tag, attrs } of page.elements)
+			if (tag === "a")
+				for (const name of Object.keys(attrs))
+					assert.ok(
+						anchorAttrs.has(name),
+						`Link attribute ${name}: ${context}`,
+					);
+		for (const text of [inputs.title, inputs.bluf])
+			assert.ok(
+				page.text.includes(text),
+				`Text stays readable data: ${context}`,
+			);
+		assert.ok(
+			row(page, oracle.requirements[0].id).cells.includes(
+				flat(inputs.statement),
+			),
+			`Statement stays readable data: ${context}`,
+		);
+		seit.proof_cases.forEach((item, index) => {
+			const verification = row(page, flat(item.id));
+			assert.ok(
+				verification.cells.includes(flat(inputs.expected)),
+				`Expected result stays readable data: ${context}`,
+			);
+			const requirement = row(page, item.requirement_id);
+			assert.ok(
+				requirement.links.some(
+					(href) =>
+						href.startsWith("#") &&
+						verification.ids.includes(decodeURIComponent(href.slice(1))),
+				),
+				`Generated case ID stays one link target: ${context}`,
+			);
+			const files = [...requirement.links, ...verification.links]
+				.map((href) => new URL(href, pathToFileURL(path.join(dir, output))))
+				.filter(({ protocol }) => protocol === "file:")
+				.map((link) => fileURLToPath(link));
+			if (inputs.evidence[index].startsWith("evidence/"))
+				assert.ok(
+					files.includes(path.join(dir, inputs.evidence[index])),
+					`Generated file name links to its own file: ${context}`,
+				);
+			else
+				assert.ok(
+					verification.cells.includes(flat(inputs.evidence[index])),
+					`Non-file link target stays text: ${context}`,
+				);
+		});
+	}
+	t.diagnostic(
+		`seed=${seed}; rounds=${rounds}; contexts=title, element text, case ID attribute and fragment link, evidence link target`,
+	);
 });
 
 test("visual evidence descriptions remain text and empty verification is explicit", (t) => {
